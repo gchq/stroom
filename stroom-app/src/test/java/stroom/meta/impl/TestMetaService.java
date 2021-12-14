@@ -41,9 +41,8 @@ import stroom.security.impl.SecurityContextModule;
 import stroom.security.impl.UserService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.User;
-import stroom.test.AppConfigTestModule;
+import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
-import stroom.test.common.util.db.DbTestModule;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -57,10 +56,12 @@ import javax.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(GuiceExtension.class)
-@IncludeModule(DbTestModule.class)
-@IncludeModule(AppConfigTestModule.class)
+//@IncludeModule(DbTestModule.class)
+//@IncludeModule(AppConfigTestModule.class)
 @IncludeModule(UriFactoryModule.class)
+//@IncludeModule(DbConnectionsModule.class)
 @IncludeModule(CoreModule.class)
+@IncludeModule(BootstrapTestModule.class)
 @IncludeModule(ResourceModule.class)
 @IncludeModule(stroom.cluster.impl.MockClusterModule.class)
 @IncludeModule(VolumeTestConfigModule.class)
@@ -69,6 +70,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
 @IncludeModule(MockIndexShardWriterExecutorModule.class)
+//@IncludeModule(GlobalConfigBootstrapModule.class)
+//@IncludeModule(GlobalConfigDaoModule.class)
+//@IncludeModule(DirProvidersModule.class)
 class TestMetaService extends StroomIntegrationTest {
 
     private static final String TEST_USER = "test_user";

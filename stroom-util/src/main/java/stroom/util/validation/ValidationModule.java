@@ -1,7 +1,7 @@
 package stroom.util.validation;
 
 import stroom.util.io.HomeDirProvider;
-import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -27,7 +27,7 @@ public class ValidationModule extends AbstractModule {
     protected void configure() {
         super.configure();
 
-        requireBinding(PathCreator.class);
+        requireBinding(SimplePathCreator.class);
         requireBinding(HomeDirProvider.class);
         requireBinding(TempDirProvider.class);
 

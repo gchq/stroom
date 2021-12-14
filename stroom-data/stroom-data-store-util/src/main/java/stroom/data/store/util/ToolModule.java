@@ -28,6 +28,8 @@ import stroom.util.db.ForceLegacyMigration;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.DirProvidersModule;
 import stroom.util.io.PathConfig;
+import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.servlet.MockServletModule;
 
@@ -38,27 +40,31 @@ public class ToolModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new stroom.activity.mock.MockActivityModule());
-        install(new stroom.cache.impl.CacheModule());
         install(new MockClusterLockModule());
-        install(new stroom.data.store.impl.fs.FsDataStoreModule());
-        install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
-        install(new stroom.event.logging.impl.EventLoggingModule());
-        install(new stroom.meta.impl.db.MetaDbModule());
-        install(new stroom.meta.impl.MetaModule());
-        install(new MockSecurityContextModule());
-        install(new MockInternalStatisticsModule());
-        install(new MockServletModule());
         install(new MockCollectionModule());
         install(new MockDocRefInfoModule());
-        install(new MockWordListProviderModule());
-        install(new MockTaskModule());
+        install(new MockInternalStatisticsModule());
         install(new MockNodeServiceModule());
+        install(new MockSecurityContextModule());
+        install(new MockServletModule());
+        install(new MockTaskModule());
+        install(new MockWordListProviderModule());
+        install(new stroom.activity.mock.MockActivityModule());
+        install(new stroom.cache.impl.CacheModule());
+        install(new stroom.data.store.impl.fs.FsDataStoreModule());
+        install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
+        install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
+        install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
+        install(new stroom.event.logging.impl.EventLoggingModule());
+        install(new stroom.meta.impl.MetaModule());
+        install(new stroom.meta.impl.db.MetaDaoModule());
+        install(new stroom.meta.impl.db.MetaDbModule());
 
         // Not using all the DB modules so just bind to an empty anonymous class
         bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
         });
 
+        bind(PathCreator.class).to(SimplePathCreator.class);
         bind(PathConfig.class).to(StroomPathConfig.class);
         install(new DirProvidersModule());
     }

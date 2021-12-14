@@ -166,21 +166,21 @@ public class TestAppConfigValidator {
         @AssertTrue(
                 message = "Value should be true")
         @JsonProperty("booleanValue")
-        boolean isBooleanValue() {
+        public boolean isBooleanValue() {
             return booleanValue;
         }
 
-        void setBooleanValue(final boolean booleanValue) {
+        public void setBooleanValue(final boolean booleanValue) {
             this.booleanValue = booleanValue;
         }
 
         @ValidRegex
         @JsonProperty
-        String getRegexValue() {
+        public String getRegexValue() {
             return regexValue;
         }
 
-        void setRegexValue(final String regexValue) {
+        public void setRegexValue(final String regexValue) {
             this.regexValue = regexValue;
         }
 
@@ -196,11 +196,11 @@ public class TestAppConfigValidator {
 
         @Min(100)
         @JsonProperty
-        int getIntValue() {
+        public int getIntValue() {
             return intValue;
         }
 
-        void setIntValue(final int intValue) {
+        public void setIntValue(final int intValue) {
             this.intValue = intValue;
         }
 
@@ -225,11 +225,11 @@ public class TestAppConfigValidator {
                 message = "Value should be true",
                 payload = ValidationSeverity.Warning.class)
         @JsonProperty("booleanValue")
-        boolean isBooleanValue() {
+        public boolean isBooleanValue() {
             return booleanValue;
         }
 
-        void setBooleanValue(final boolean booleanValue) {
+        public void setBooleanValue(final boolean booleanValue) {
             this.booleanValue = booleanValue;
         }
 
@@ -237,11 +237,11 @@ public class TestAppConfigValidator {
                 message = "Valid regex required",
                 payload = ValidationSeverity.Warning.class)
         @JsonProperty
-        String getRegexValue() {
+        public String getRegexValue() {
             return regexValue;
         }
 
-        void setRegexValue(final String regexValue) {
+        public void setRegexValue(final String regexValue) {
             this.regexValue = regexValue;
         }
 
@@ -262,11 +262,11 @@ public class TestAppConfigValidator {
                 message = "Value should be >= 100",
                 payload = ValidationSeverity.Warning.class)
         @JsonProperty
-        int getIntValue() {
+        public int getIntValue() {
             return intValue;
         }
 
-        void setIntValue(final int intValue) {
+        public void setIntValue(final int intValue) {
             this.intValue = intValue;
         }
 
@@ -286,11 +286,11 @@ public class TestAppConfigValidator {
         private String value;
 
         @JsonProperty
-        String getValue() {
+        public String getValue() {
             return value;
         }
 
-        void setValue(final String value) {
+        public void setValue(final String value) {
             this.value = value;
         }
     }

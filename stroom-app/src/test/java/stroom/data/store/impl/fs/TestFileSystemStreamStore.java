@@ -29,7 +29,6 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
-import stroom.index.impl.selection.VolumeConfig;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -84,10 +83,6 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private static final String FEED3 = "FEED3";
 
     @Inject
-    private MetaValueConfig metaValueConfig;
-    @Inject
-    private VolumeConfig volumeConfig;
-    @Inject
     private Store streamStore;
     @Inject
     private MetaService metaService;
@@ -112,7 +107,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         feed3 = setupFeed("FEED3");
 
         // Make sure stream attributes get flushed straight away.
-        metaValueConfig.setAddAsync(false);
+        setConfigValueMapper(MetaValueConfig.class, metaValueConfig -> metaValueConfig.withAddAsync(false));
 
         final Optional<ExplorerNode> system = explorerNodeService.getRoot();
         final DocRef root = system.get().getDocRef();
@@ -129,7 +124,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @AfterEach
     void unsetProperties() {
-        metaValueConfig.setAddAsync(true);
+        clearConfigValueMapper();
+//        metaValueConfig.setAddAsync(true);
     }
 
     /**

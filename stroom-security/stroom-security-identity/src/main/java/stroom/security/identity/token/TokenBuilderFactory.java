@@ -18,7 +18,7 @@
 
 package stroom.security.identity.token;
 
-import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.TokenConfig;
 import stroom.security.identity.exceptions.TokenCreationException;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 
@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -34,15 +35,15 @@ public class TokenBuilderFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenBuilderFactory.class);
 
-    private final IdentityConfig config;
+    private final Provider<TokenConfig> tokenConfigProvider;
     private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
 
     private Instant expiryDateForApiKeys;
 
     @Inject
-    public TokenBuilderFactory(final IdentityConfig config,
+    public TokenBuilderFactory(final Provider<TokenConfig> tokenConfigProvider,
                                final PublicJsonWebKeyProvider publicJsonWebKeyProvider) {
-        this.config = config;
+        this.tokenConfigProvider = tokenConfigProvider;
         this.publicJsonWebKeyProvider = publicJsonWebKeyProvider;
     }
 
@@ -52,23 +53,26 @@ public class TokenBuilderFactory {
     }
 
     public TokenBuilder newBuilder(TokenType tokenType) {
-        TokenBuilder tokenBuilder = new TokenBuilder();
+
+        final TokenConfig tokenConfig = tokenConfigProvider.get();
+        final TokenBuilder tokenBuilder = new TokenBuilder();
         switch (tokenType) {
             case API:
+                // Not sure why this is cached
                 if (expiryDateForApiKeys == null) {
                     expiryDateForApiKeys = Instant.now()
-                            .plus(config.getTokenConfig().getTimeUntilExpirationForUserToken());
+                            .plus(tokenConfig.getTimeUntilExpirationForUserToken());
                 }
                 tokenBuilder.expiryDate(expiryDateForApiKeys);
                 break;
             case USER:
                 Instant expiryDateForLogin = Instant.now()
-                        .plus(config.getTokenConfig().getTimeUntilExpirationForUserToken());
+                        .plus(tokenConfig.getTimeUntilExpirationForUserToken());
                 tokenBuilder.expiryDate(expiryDateForLogin);
                 break;
             case EMAIL_RESET:
                 Instant expiryDateForReset = Instant.now()
-                        .plus(config.getTokenConfig().getTimeUntilExpirationForEmailResetToken());
+                        .plus(tokenConfig.getTimeUntilExpirationForEmailResetToken());
                 tokenBuilder.expiryDate(expiryDateForReset);
                 break;
             default:
@@ -78,9 +82,9 @@ public class TokenBuilderFactory {
         }
 
         tokenBuilder
-                .issuer(config.getTokenConfig().getJwsIssuer())
+                .issuer(tokenConfig.getJwsIssuer())
                 .privateVerificationKey(publicJsonWebKeyProvider.getFirst())
-                .algorithm(config.getTokenConfig().getAlgorithm());
+                .algorithm(tokenConfig.getAlgorithm());
 
         return tokenBuilder;
     }

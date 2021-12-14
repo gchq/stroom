@@ -3,6 +3,8 @@ package stroom.app.uri;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.common.NodeUriConfig;
+import stroom.config.common.PublicUriConfig;
+import stroom.config.common.UiUriConfig;
 import stroom.config.common.UriConfig;
 import stroom.config.common.UriFactory;
 
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -23,7 +26,7 @@ class UriFactoryImpl implements UriFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UriFactoryImpl.class);
 
-    private final AppConfig appConfig;
+    private final Provider<AppConfig> appConfigProvider;
     private final Config config;
 
     private String localBaseUri;
@@ -32,9 +35,9 @@ class UriFactoryImpl implements UriFactory {
 
     @Inject
     UriFactoryImpl(final Config config,
-                   final AppConfig appConfig) {
+                   final Provider<AppConfig> appConfigProvider) {
         this.config = config;
-        this.appConfig = appConfig;
+        this.appConfigProvider = appConfigProvider;
 
         final String localBaseUri = getLocalBaseUri();
         LOGGER.info("Established Local URI:  " + localBaseUri);
@@ -69,8 +72,9 @@ class UriFactoryImpl implements UriFactory {
 
     private String getUiBaseUri() {
         if (uiBaseUri == null) {
-            if (isValid(appConfig.getUiUri())) {
-                uiBaseUri = appConfig.getUiUri().toString();
+            final UiUriConfig uiUriConfig = appConfigProvider.get().getUiUri();
+            if (isValid(uiUriConfig)) {
+                uiBaseUri = uiUriConfig.toString();
             } else {
                 uiBaseUri = getPublicBaseUri();
             }
@@ -80,8 +84,9 @@ class UriFactoryImpl implements UriFactory {
 
     private String getPublicBaseUri() {
         if (publicBaseUri == null) {
-            if (isValid(appConfig.getPublicUri())) {
-                publicBaseUri = appConfig.getPublicUri().toString();
+            final PublicUriConfig publicUriConfig = appConfigProvider.get().getPublicUri();
+            if (isValid(publicUriConfig)) {
+                publicBaseUri = publicUriConfig.toString();
             } else {
                 publicBaseUri = getLocalBaseUri();
             }
@@ -91,8 +96,9 @@ class UriFactoryImpl implements UriFactory {
 
     private String getLocalBaseUri() {
         if (localBaseUri == null) {
-            if (isValid(appConfig.getNodeUri())) {
-                localBaseUri = appConfig.getNodeUri().toString();
+            final NodeUriConfig nodeUriConfig = appConfigProvider.get().getNodeUri();
+            if (isValid(nodeUriConfig)) {
+                localBaseUri = nodeUriConfig.toString();
             } else {
                 localBaseUri = discoverLocalBaseUri();
 
@@ -111,33 +117,36 @@ class UriFactoryImpl implements UriFactory {
             if (defaultServerFactory.getApplicationConnectors().size() > 0) {
                 final ConnectorFactory connectorFactory = defaultServerFactory.getApplicationConnectors().get(0);
 
-                final UriConfig uriConfig = new NodeUriConfig();
+                NodeUriConfig uriConfig = new NodeUriConfig();
                 // Allow explicit configuration of the host/port in case they differ from what will be discovered,
                 // e.g. if running inside a docker container, or there is some sort of port mapping going on.
-                uriConfig.setHostname(appConfig.getNodeUri().getHostname());
-                uriConfig.setPort(appConfig.getNodeUri().getPort());
+                final AppConfig appConfig = appConfigProvider.get();
+                uriConfig = uriConfig.withHostname(appConfig.getNodeUri().getHostname());
+                if (appConfig.getNodeUri().getPort() != null) {
+                    uriConfig = uriConfig.withPort(appConfig.getNodeUri().getPort());
+                }
 
                 if (connectorFactory instanceof HttpsConnectorFactory) {
                     final HttpsConnectorFactory httpsConnectorFactory = (HttpsConnectorFactory) connectorFactory;
-                    uriConfig.setScheme("https");
+                    uriConfig = uriConfig.withScheme("https");
                     if (uriConfig.getHostname() == null) {
-                        uriConfig.setHostname(resolveHost(httpsConnectorFactory.getBindHost()));
+                        uriConfig = uriConfig.withHostname(resolveHost(httpsConnectorFactory.getBindHost()));
                     }
                     if (uriConfig.getPort() == null) {
-                        uriConfig.setPort(httpsConnectorFactory.getPort());
+                        uriConfig = uriConfig.withPort(httpsConnectorFactory.getPort());
                     }
 
                 } else if (connectorFactory instanceof HttpConnectorFactory) {
                     final HttpConnectorFactory httpConnectorFactory = (HttpConnectorFactory) connectorFactory;
-                    uriConfig.setScheme("http");
+                    uriConfig = uriConfig.withScheme("http");
                     if (uriConfig.getHostname() == null) {
-                        uriConfig.setHostname(resolveHost(httpConnectorFactory.getBindHost()));
+                        uriConfig = uriConfig.withHostname(resolveHost(httpConnectorFactory.getBindHost()));
                     }
                     if (uriConfig.getPort() == null) {
-                        uriConfig.setPort(httpConnectorFactory.getPort());
+                        uriConfig = uriConfig.withPort(httpConnectorFactory.getPort());
                     }
                 }
-                uriConfig.setPathPrefix(defaultServerFactory.getApplicationContextPath());
+                uriConfig = uriConfig.withPathPrefix(defaultServerFactory.getApplicationContextPath());
                 localBaseUri = uriConfig.toString();
             }
         }

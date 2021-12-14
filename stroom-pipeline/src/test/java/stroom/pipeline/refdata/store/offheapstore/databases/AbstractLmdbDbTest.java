@@ -24,6 +24,7 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ModelStringUtil;
 
@@ -57,10 +58,10 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
                 dbDir.toAbsolutePath(),
                 Arrays.toString(envFlags));
 
-        final PathCreator pathCreator = new PathCreator(() -> dbDir, () -> dbDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
         final TempDirProvider tempDirProvider = () -> dbDir;
 
-        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, new LmdbLibraryConfig())
+        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
                 .builder(dbDir)
                 .withMapSize(getMaxSizeBytes())
                 .withMaxDbCount(10)

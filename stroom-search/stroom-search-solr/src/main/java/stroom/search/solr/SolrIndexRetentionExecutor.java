@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -54,7 +55,7 @@ public class SolrIndexRetentionExecutor {
     private final SolrIndexClientCache solrIndexClientCache;
     private final WordListProvider dictionaryStore;
     private final ClusterLockService clusterLockService;
-    private final SolrSearchConfig searchConfig;
+    private final Provider<SolrSearchConfig> searchConfigProvider;
     private final TaskContext taskContext;
 
     @Inject
@@ -63,14 +64,14 @@ public class SolrIndexRetentionExecutor {
                                       final SolrIndexClientCache solrIndexClientCache,
                                       final WordListProvider dictionaryStore,
                                       final ClusterLockService clusterLockService,
-                                      final SolrSearchConfig searchConfig,
+                                      final Provider<SolrSearchConfig> searchConfigProvider,
                                       final TaskContext taskContext) {
         this.solrIndexStore = solrIndexStore;
         this.solrIndexCache = solrIndexCache;
         this.solrIndexClientCache = solrIndexClientCache;
         this.dictionaryStore = dictionaryStore;
         this.clusterLockService = clusterLockService;
-        this.searchConfig = searchConfig;
+        this.searchConfigProvider = searchConfigProvider;
         this.taskContext = taskContext;
     }
 
@@ -106,7 +107,7 @@ public class SolrIndexRetentionExecutor {
                                 new SearchExpressionQueryBuilder(
                                         dictionaryStore,
                                         indexFieldsMap,
-                                        searchConfig.getMaxBooleanClauseCount(),
+                                        searchConfigProvider.get().getMaxBooleanClauseCount(),
                                         null,
                                         System.currentTimeMillis());
                         final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(

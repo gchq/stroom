@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,9 +17,9 @@ import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestYamlUtil {
+class TestStroomYamlUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestYamlUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomYamlUtil.class);
 
     static final String EXPECTED_YAML_FILE_NAME = "expected.yaml";
     static final String ACTUAL_YAML_FILE_NAME = "actual.yaml";
@@ -81,7 +80,7 @@ class TestYamlUtil {
     }
 
     static Path getBasePath() {
-        final String codeSourceLocation = TestYamlUtil.class
+        final String codeSourceLocation = TestStroomYamlUtil.class
                 .getProtectionDomain().getCodeSource().getLocation().getPath();
 
         Path path = Paths.get(codeSourceLocation);
@@ -103,7 +102,7 @@ class TestYamlUtil {
     static String getYamlFromJavaModel() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         AppConfig appConfig = new AppConfig();
-        YamlUtil.writeConfig(appConfig, byteArrayOutputStream);
+        StroomYamlUtil.writeConfig(appConfig, byteArrayOutputStream);
         return byteArrayOutputStream.toString();
     }
 
@@ -118,18 +117,33 @@ class TestYamlUtil {
     }
 
 
+//    @Test
+//    void testAppConfigMerge() throws JsonProcessingException {
+//
+//        doYamlMergeTest("""
+//                        """,
+//                AppConfig.class,
+//                AppConfig::new,
+//                (defaultPojo, mergedPojo) -> {
+//                    // can't do equality test as not many of the classes implement
+////                    assertThat(mergedPojo)
+////                            .isEqualTo(defaultPojo);
+//                });
+//    }
+
+
     private static AppConfig loadYamlFile(final String filename) throws FileNotFoundException {
         Path path = getStroomAppFile(filename);
 
         try {
-            return YamlUtil.readAppConfig(path);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+            return StroomYamlUtil.readAppConfig(path);
+        } catch (final Exception e) {
+            throw new RuntimeException("Error parsing " + path.toAbsolutePath().normalize(), e);
         }
     }
 
     public static Path getStroomAppFile(final String filename) throws FileNotFoundException {
-        final String codeSourceLocation = TestYamlUtil.class
+        final String codeSourceLocation = TestStroomYamlUtil.class
                 .getProtectionDomain()
                 .getCodeSource()
                 .getLocation()
@@ -150,4 +164,5 @@ class TestYamlUtil {
         }
         return path;
     }
+
 }

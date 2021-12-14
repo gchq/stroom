@@ -3,7 +3,7 @@ proxyConfig:
   contentSyncConfig:
     apiKey: null
     contentSyncEnabled: false
-    syncFrequency: 0
+    syncFrequency: 60000
     upstreamUrl: null
   feedStatus:
     apiKey: null
@@ -25,12 +25,12 @@ proxyConfig:
     rollCron: null
     storingEnabled: false
   proxyRepositoryReaderConfig:
-    readCron: null
     forwardThreadCount: 3
-    maxFileScan: 100000
-    maxConcurrentMappedFiles: 100000
     maxAggregation: 1000
+    maxConcurrentMappedFiles: 100000
+    maxFileScan: 100000
     maxStreamSize: "1.0G"
+    readCron: null
   proxyRequestConfig:
     receiptPolicyUuid: null
   restClient:
@@ -49,9 +49,7 @@ proxyConfig:
     timeToLive: "PT1H"
     timeout: "PT0.5S"
     tls: null
-    userAgent:
-      empty: true
-      present: false
+    userAgent: null
     validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
   useDefaultOpenIdCredentials: true

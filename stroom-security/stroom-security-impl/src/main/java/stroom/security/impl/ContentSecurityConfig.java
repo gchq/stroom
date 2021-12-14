@@ -18,25 +18,44 @@ package stroom.security.impl;
 
 import stroom.util.shared.AbstractConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class ContentSecurityConfig extends AbstractConfig {
 
     public static final String PROP_NAME_CONTENT_SECURITY_POLICY = "contentSecurityPolicy";
 
-    private String contentSecurityPolicy = "" +
-            "default-src 'self'; " +
-            "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
-            "img-src 'self' data:; " +
-            "style-src 'self' 'unsafe-inline'; " +
-            "frame-ancestors 'self';";
-    private String contentTypeOptions = "nosniff";
-    private String frameOptions = "sameorigin";
-    private String xssProtection = "1; mode=block";
+    private final String contentSecurityPolicy;
+    private final String contentTypeOptions;
+    private final String frameOptions;
+    private final String xssProtection;
+
+    public ContentSecurityConfig() {
+        contentSecurityPolicy = "" +
+                "default-src 'self'; " +
+                "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
+                "img-src 'self' data:; " +
+                "style-src 'self' 'unsafe-inline'; " +
+                "frame-ancestors 'self';";
+        contentTypeOptions = "nosniff";
+        frameOptions = "sameorigin";
+        xssProtection = "1; mode=block";
+    }
+
+    @JsonCreator
+    public ContentSecurityConfig(@JsonProperty(PROP_NAME_CONTENT_SECURITY_POLICY) final String contentSecurityPolicy,
+                                 @JsonProperty("contentTypeOptions") final String contentTypeOptions,
+                                 @JsonProperty("frameOptions") final String frameOptions,
+                                 @JsonProperty("xssProtection") final String xssProtection) {
+        this.contentSecurityPolicy = contentSecurityPolicy;
+        this.contentTypeOptions = contentTypeOptions;
+        this.frameOptions = frameOptions;
+        this.xssProtection = xssProtection;
+    }
 
     @JsonProperty(PROP_NAME_CONTENT_SECURITY_POLICY)
     @JsonPropertyDescription("The content security policy")
@@ -44,17 +63,9 @@ public class ContentSecurityConfig extends AbstractConfig {
         return contentSecurityPolicy;
     }
 
-    public void setContentSecurityPolicy(final String contentSecurityPolicy) {
-        this.contentSecurityPolicy = contentSecurityPolicy;
-    }
-
     @JsonPropertyDescription("The content type options")
     public String getContentTypeOptions() {
         return contentTypeOptions;
-    }
-
-    public void setContentTypeOptions(final String contentTypeOptions) {
-        this.contentTypeOptions = contentTypeOptions;
     }
 
     @JsonPropertyDescription("The frame options")
@@ -62,16 +73,22 @@ public class ContentSecurityConfig extends AbstractConfig {
         return frameOptions;
     }
 
-    public void setFrameOptions(final String frameOptions) {
-        this.frameOptions = frameOptions;
-    }
-
     @JsonPropertyDescription("XSS protection")
     public String getXssProtection() {
         return xssProtection;
     }
 
-    public void setXssProtection(final String xssProtection) {
-        this.xssProtection = xssProtection;
+    public ContentSecurityConfig withContentSecurityPolicy(final String contentSecurityPolicy) {
+        return new ContentSecurityConfig(contentSecurityPolicy, contentTypeOptions, frameOptions, xssProtection);
+    }
+
+    @Override
+    public String toString() {
+        return "ContentSecurityConfig{" +
+                "contentSecurityPolicy='" + contentSecurityPolicy + '\'' +
+                ", contentTypeOptions='" + contentTypeOptions + '\'' +
+                ", frameOptions='" + frameOptions + '\'' +
+                ", xssProtection='" + xssProtection + '\'' +
+                '}';
     }
 }

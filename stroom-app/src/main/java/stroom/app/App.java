@@ -21,10 +21,11 @@ import stroom.app.commands.DbMigrationCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
+import stroom.app.guice.BootStrapModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
-import stroom.config.app.SuperDevUtil;
-import stroom.config.app.YamlUtil;
+import stroom.config.app.StroomYamlUtil;
+import stroom.config.global.impl.ConfigMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -32,12 +33,10 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
-import stroom.security.impl.AuthenticationConfig;
-import stroom.util.ColouredStringBuilder;
-import stroom.util.ConsoleColour;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.io.DirProvidersModule;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
@@ -51,10 +50,12 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.validation.ValidationModule;
+import stroom.util.yaml.YamlUtil;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
@@ -64,6 +65,7 @@ import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -72,6 +74,7 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.DispatcherType;
@@ -86,7 +89,7 @@ public class App extends Application<Config> {
 
     private static final String APP_NAME = "Stroom";
     public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
-    private static final boolean SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE = false;
+//    private static final boolean SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE = false;
 
     @Inject
     private HealthChecks healthChecks;
@@ -103,13 +106,13 @@ public class App extends Application<Config> {
     @Inject
     private BuildInfo buildInfo;
     @Inject
-    private HomeDirProvider homeDirProvider;
-    @Inject
-    private TempDirProvider tempDirProvider;
-    @Inject
     private RestResourceAutoLogger resourceAutoLogger;
     @Inject
     private Provider<Set<DataSource>> dataSourcesProvider;
+
+    // Injected manually
+    private HomeDirProvider homeDirProvider;
+    private TempDirProvider tempDirProvider;
 
     private final Path configFile;
 
@@ -144,7 +147,7 @@ public class App extends Application<Config> {
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
         // This allows us to use env var templating and relative (to stroom home) paths in the YAML configuration.
-        bootstrap.setConfigurationSourceProvider(YamlUtil.createConfigurationSourceProvider(
+        bootstrap.setConfigurationSourceProvider(StroomYamlUtil.createConfigurationSourceProvider(
                 bootstrap.getConfigurationSourceProvider(), true));
 
         // Add the GWT UI assets.
@@ -190,6 +193,15 @@ public class App extends Application<Config> {
 
         validateAppConfig(configuration, configFile);
 
+        final Injector bootStrapInjector = bootstrapApplication(configuration, environment);
+
+        LOGGER.info("Completed initialisation of database connections and application configuration");
+
+        // Merge the sparse de-serialised config with our default AppConfig tree
+        // so we have a full config tree but with any yaml overrides
+//        final AppConfig mergedAppConfig = ConfigMapper.buildMergedAppConfig(configFile);
+//        configuration.setAppConfig(mergedAppConfig);
+
         // Turn on Jersey logging of request/response payloads
         // I can't seem to get this to work unless Level is SEVERE
         // TODO need to establish if there is a performance hit for using the JUL to SLF bridge
@@ -201,9 +213,6 @@ public class App extends Application<Config> {
                         LoggingFeature.Verbosity.PAYLOAD_ANY,
                         LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
 
-        // Check if we are running GWT Super Dev Mode, if so relax security
-        SuperDevUtil.relaxSecurityInSuperDevMode(configuration.getAppConfig());
-
         // Add useful logging setup.
         registerLogConfiguration(environment);
 
@@ -214,29 +223,26 @@ public class App extends Application<Config> {
         configureSessionHandling(environment);
 
         // Ensure the session cookie that provides JSESSIONID is secure.
-        configureSessionCookie(environment, configuration.getAppConfig().getSessionCookieConfig());
+        // Need to get it from ConfigMapper not AppConfig as ConfigMapper is now the source of
+        // truth for config.
+        final ConfigMapper configMapper = bootStrapInjector.getInstance(ConfigMapper.class);
+        final stroom.config.app.SessionCookieConfig sessionCookieConfig = configMapper.getConfigObject(
+                stroom.config.app.SessionCookieConfig.class);
+        configureSessionCookie(environment, sessionCookieConfig);
 
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
         LOGGER.info("Starting Stroom Application");
 
-        final AppModule appModule = new AppModule(configuration, environment, configFile);
-
-        Guice.createInjector(appModule)
-                .injectMembers(this);
-
-        // Ensure we have our home/temp dirs set up
-        FileUtil.ensureDirExists(homeDirProvider.get());
-        FileUtil.ensureDirExists(tempDirProvider.get());
+        // Inherit all the bindings from the bootStrapInjector
+        final Injector appInjector = bootStrapInjector.createChildInjector(new AppModule());
+        appInjector.injectMembers(this);
 
         //Register REST Resource Auto Logger to automatically log calls to suitably annotated resources/methods
         //Note that if autologger is not required, and the next line removed, then it will be necessary to
         //register a DelegatingExceptionMapper directly instead.
         environment.jersey().register(resourceAutoLogger);
-
-        // Force all datasources to be created so we can force migrations to run.
-        dataSourcesProvider.get();
 
         // Add health checks
         healthChecks.register();
@@ -261,6 +267,37 @@ public class App extends Application<Config> {
         showInfo(configuration);
     }
 
+    @NotNull
+    private Injector bootstrapApplication(final Config configuration,
+                                          final Environment environment) {
+        LOGGER.info("Initialising database connections and configuration properties");
+
+        final BootStrapModule bootstrapModule = new BootStrapModule(
+                configuration, environment, configFile);
+
+        final Injector bootStrapInjector = Guice.createInjector(bootstrapModule);
+
+        // Force all datasources to be created so we can force migrations to run.
+        final Set<DataSource> dataSources = bootStrapInjector.getInstance(
+                Key.get(GuiceUtil.setOf(DataSource.class)));
+
+        LOGGER.debug(() -> LogUtil.message("Used {} data sources:\n{}",
+                dataSources.size(),
+                dataSources.stream()
+                        .map(dataSource -> dataSource.getClass().getName())
+                        .map(name -> "  " + name)
+                        .sorted()
+                        .collect(Collectors.joining("\n"))));
+
+        this.homeDirProvider = bootStrapInjector.getInstance(HomeDirProvider.class);
+        this.tempDirProvider = bootStrapInjector.getInstance(TempDirProvider.class);
+
+        // Ensure we have our home/temp dirs set up
+        FileUtil.ensureDirExists(homeDirProvider.get());
+        FileUtil.ensureDirExists(tempDirProvider.get());
+        return bootStrapInjector;
+    }
+
     private void showInfo(final Config configuration) {
         Objects.requireNonNull(buildInfo);
 
@@ -269,12 +306,12 @@ public class App extends Application<Config> {
                 + "\n  Build date:    " + buildInfo.getBuildDate()
                 + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
                 + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                + "\n  Node name:     " + getNodeName(configuration.getAppConfig()));
+                + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig()));
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {
-        if (configuration.getAppConfig().getSecurityConfig().getIdentityConfig().isUseDefaultOpenIdCredentials()) {
-            String propPath = configuration.getAppConfig().getSecurityConfig().getIdentityConfig().getFullPathStr(
+        if (configuration.getYamlAppConfig().getSecurityConfig().getIdentityConfig().isUseDefaultOpenIdCredentials()) {
+            String propPath = configuration.getYamlAppConfig().getSecurityConfig().getIdentityConfig().getFullPathStr(
                     "useDefaultOpenIdCredentials");
             LOGGER.warn("\n" +
                     "\n  -----------------------------------------------------------------------------" +
@@ -300,7 +337,7 @@ public class App extends Application<Config> {
 
     private void validateAppConfig(final Config config, final Path configFile) {
 
-        final AppConfig appConfig = config.getAppConfig();
+        final AppConfig appConfig = config.getYamlAppConfig();
 
         // Walk the config tree to decorate it with all the path names
         // so we can qualify each prop
@@ -369,29 +406,29 @@ public class App extends Application<Config> {
         environment.admin().addTask(new LogConfigurationTask());
     }
 
-    private void disableAuthentication(final AppConfig appConfig) {
-        LOGGER.warn("\n" + ConsoleColour.red(
-                "" +
-                        "\n           ***************************************************************" +
-                        "\n           FOR DEVELOPER USE ONLY!  DO NOT RUN IN PRODUCTION ENVIRONMENTS!" +
-                        "\n" +
-                        "\n                          ALL AUTHENTICATION IS DISABLED!" +
-                        "\n           ***************************************************************"));
-
-        final AuthenticationConfig authenticationConfig = appConfig.getSecurityConfig().getAuthenticationConfig();
-
-        // Auth needs HTTPS and GWT super dev mode cannot work in HTTPS
-        String msg = new ColouredStringBuilder()
-                .appendRed("In GWT Super Dev Mode, overriding ")
-                .appendCyan(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED)
-                .appendRed(" to [")
-                .appendCyan(Boolean.toString(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE))
-                .appendRed("] in appConfig")
-                .toString();
-
-        LOGGER.warn(msg);
-        authenticationConfig.setAuthenticationRequired(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE);
-    }
+//    private void disableAuthentication(final AppConfig appConfig) {
+//        LOGGER.warn("\n" + ConsoleColour.red(
+//                "" +
+//                        "\n           ***************************************************************" +
+//                        "\n           FOR DEVELOPER USE ONLY!  DO NOT RUN IN PRODUCTION ENVIRONMENTS!" +
+//                        "\n" +
+//                        "\n                          ALL AUTHENTICATION IS DISABLED!" +
+//                        "\n           ***************************************************************"));
+//
+//        final AuthenticationConfig authenticationConfig = appConfig.getSecurityConfig().getAuthenticationConfig();
+//
+//        // Auth needs HTTPS and GWT super dev mode cannot work in HTTPS
+//        String msg = new ColouredStringBuilder()
+//                .appendRed("In GWT Super Dev Mode, overriding ")
+//                .appendCyan(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED)
+//                .appendRed(" to [")
+//                .appendCyan(Boolean.toString(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE))
+//                .appendRed("] in appConfig")
+//                .toString();
+//
+//        LOGGER.warn(msg);
+//        authenticationConfig.setAuthenticationRequired(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE);
+//    }
 
     /**
      * Creates a separate guice injector just for doing javax validation on the config
@@ -402,7 +439,7 @@ public class App extends Application<Config> {
             // We need to read the AppConfig in the same way that dropwiz will so we can get the
             // possibly substituted values for stroom.(home|temp) for use with PathCreator
             LOGGER.info("Parsing config file to establish home and temp");
-            final AppConfig appConfig = YamlUtil.readAppConfig(configFile);
+            final AppConfig appConfig = StroomYamlUtil.readAppConfig(configFile);
             LOGGER.debug(() -> "pathConfig " + appConfig.getPathConfig());
 
             // Allow for someone having pathConfig set to null in the yaml, e.g. just

@@ -5,6 +5,7 @@ import stroom.cache.impl.CacheManagerImpl;
 import stroom.pipeline.PipelineConfig;
 import stroom.util.cert.SSLConfig;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -24,12 +25,13 @@ class TestHttpCall {
 
     @Test
     void test(@TempDir final Path tempDir) throws JsonProcessingException {
-        final SSLConfig sslConfig = new SSLConfig();
-        sslConfig.setKeyStorePath("/Users/stroomdev66/work/stroom-6.0/stroom-ssl-test/client.jks");
-        sslConfig.setKeyStorePassword("password");
-        sslConfig.setTrustStorePath("/Users/stroomdev66/work/stroom-6.0/stroom-ssl-test/ca.jks");
-        sslConfig.setTrustStorePassword("password");
-        sslConfig.setHostnameVerificationEnabled(false);
+        final SSLConfig sslConfig = SSLConfig.builder()
+                .withKeyStorePath("/Users/stroomdev66/work/stroom-6.0/stroom-ssl-test/client.jks")
+                .withKeyStorePassword("password")
+                .withTrustStorePath("/Users/stroomdev66/work/stroom-6.0/stroom-ssl-test/ca.jks")
+                .withTrustStorePassword("password")
+                .withHostnameVerificationEnabled(false)
+                .build();
 
         final ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -37,7 +39,7 @@ class TestHttpCall {
 
         final String clientConfig = mapper.writeValueAsString(sslConfig);
 
-        final PathCreator pathCreator = new PathCreator(
+        final PathCreator pathCreator = new SimplePathCreator(
                 () -> tempDir.resolve("home"),
                 () -> tempDir);
 

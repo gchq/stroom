@@ -2,32 +2,39 @@ package stroom.statistics.impl.hbase.internal;
 
 import stroom.util.shared.AbstractConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class KafkaTopicsConfig extends AbstractConfig {
 
-    private String count = "statisticEvents-Count";
-    private String value = "statisticEvents-Value";
+    private final String count;
+    private final String value;
+
+    public KafkaTopicsConfig() {
+        count = "statisticEvents-Count";
+        value = "statisticEvents-Value";
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public KafkaTopicsConfig(@JsonProperty("count") final String count,
+                             @JsonProperty("value") final String value) {
+        this.count = count;
+        this.value = value;
+    }
 
     @JsonPropertyDescription("The kafka topic to send Count type stroom-stats statistic events to")
     public String getCount() {
         return count;
     }
 
-    public void setCount(final String count) {
-        this.count = count;
-    }
-
     @JsonPropertyDescription("The kafka topic to send Value type stroom-stats statistic events to")
     public String getValue() {
         return value;
-    }
-
-    public void setValue(final String value) {
-        this.value = value;
     }
 
     @Override

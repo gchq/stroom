@@ -15,21 +15,21 @@ import javax.inject.Inject;
 public class DbHealthCheck implements HasHealthCheck {
 
     private final LegacyDbConnProvider legacyDbConnProvider;
-    private final LegacyDbConfig legacyDbConfig;
+    private final LegacyConfig legacyConfig;
     private final CommonDbConfig commonDbConfig;
 
     @Inject
     public DbHealthCheck(final LegacyDbConnProvider legacyDbConnProvider,
-                         final LegacyDbConfig legacyDbConfig,
+                         final LegacyConfig legacyConfig,
                          final CommonDbConfig commonDbConfig) {
         this.legacyDbConnProvider = legacyDbConnProvider;
-        this.legacyDbConfig = legacyDbConfig;
+        this.legacyConfig = legacyConfig;
         this.commonDbConfig = commonDbConfig;
     }
 
     @Override
     public HealthCheck.Result getHealth() {
-        final ConnectionConfig coreConnectionConfig = legacyDbConfig.getDbConfig().getConnectionConfig();
+        final ConnectionConfig coreConnectionConfig = legacyConfig.getDbConfig().getConnectionConfig();
         final ConnectionConfig commonConnectionConfig = commonDbConfig.getConnectionConfig();
 
         final HealthCheck.ResultBuilder builder = HealthCheck.Result.builder()

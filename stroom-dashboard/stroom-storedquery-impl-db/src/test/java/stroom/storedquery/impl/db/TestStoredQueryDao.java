@@ -27,10 +27,10 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.api.SecurityContext;
 import stroom.storedquery.impl.StoredQueryConfig;
+import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.StoredQueryHistoryCleanExecutor;
 import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
@@ -69,7 +69,7 @@ class TestStoredQueryDao {
 
         // need an explicit teardown and setup of the DB before each test method
         final StoredQueryDbConnProvider storedQueryDbConnProvider = DbTestUtil.getTestDbDatasource(
-                new StoredQueryDbModule(), new StoredQueryConfig());
+                new StoredQueryDbModule(), new StoredQueryDbConfig());
 
         // Clear the current DB.
         DbTestUtil.clear();

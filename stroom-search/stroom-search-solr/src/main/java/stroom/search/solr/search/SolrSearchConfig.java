@@ -5,12 +5,13 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class SolrSearchConfig extends AbstractConfig {
 
     /**
@@ -21,14 +22,37 @@ public class SolrSearchConfig extends AbstractConfig {
     private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
-    private int maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
-    private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
-    private String storeSize = "1000000,100,10,1";
-    private ExtractionConfig extractionConfig = new ExtractionConfig();
-    private CacheConfig searchResultCache = CacheConfig.builder()
-            .maximumSize(10000L)
-            .expireAfterAccess(StroomDuration.ofMinutes(10))
-            .build();
+    private final int maxStoredDataQueueSize;
+    private final int maxBooleanClauseCount;
+    private final String storeSize;
+    private final ExtractionConfig extractionConfig;
+    private final CacheConfig searchResultCache;
+
+    public SolrSearchConfig() {
+
+        maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
+        maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
+        storeSize = "1000000,100,10,1";
+        extractionConfig = new ExtractionConfig();
+        searchResultCache = CacheConfig.builder()
+                .maximumSize(10000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public SolrSearchConfig(@JsonProperty("maxStoredDataQueueSize") final int maxStoredDataQueueSize,
+                            @JsonProperty("maxBooleanClauseCount") final int maxBooleanClauseCount,
+                            @JsonProperty("storeSize") final String storeSize,
+                            @JsonProperty("extraction") final ExtractionConfig extractionConfig,
+                            @JsonProperty("searchResultCache") final CacheConfig searchResultCache) {
+        this.maxStoredDataQueueSize = maxStoredDataQueueSize;
+        this.maxBooleanClauseCount = maxBooleanClauseCount;
+        this.storeSize = storeSize;
+        this.extractionConfig = extractionConfig;
+        this.searchResultCache = searchResultCache;
+    }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
             "shard and queued prior to further processing")
@@ -36,17 +60,9 @@ public class SolrSearchConfig extends AbstractConfig {
         return maxStoredDataQueueSize;
     }
 
-    public void setMaxStoredDataQueueSize(final int maxStoredDataQueueSize) {
-        this.maxStoredDataQueueSize = maxStoredDataQueueSize;
-    }
-
     @JsonPropertyDescription("The maximum number of clauses that a boolean search can contain.")
     public int getMaxBooleanClauseCount() {
         return maxBooleanClauseCount;
-    }
-
-    public void setMaxBooleanClauseCount(final int maxBooleanClauseCount) {
-        this.maxBooleanClauseCount = maxBooleanClauseCount;
     }
 
     @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")
@@ -54,25 +70,13 @@ public class SolrSearchConfig extends AbstractConfig {
         return storeSize;
     }
 
-    public void setStoreSize(final String storeSize) {
-        this.storeSize = storeSize;
-    }
-
     @JsonProperty("extraction")
     public ExtractionConfig getExtractionConfig() {
         return extractionConfig;
     }
 
-    public void setExtractionConfig(final ExtractionConfig extractionConfig) {
-        this.extractionConfig = extractionConfig;
-    }
-
     public CacheConfig getSearchResultCache() {
         return searchResultCache;
-    }
-
-    public void setSearchResultCache(final CacheConfig searchResultCache) {
-        this.searchResultCache = searchResultCache;
     }
 
     @Override

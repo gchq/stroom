@@ -4,34 +4,40 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class SearchableConfig extends AbstractConfig {
 
-    private String storeSize = "1000000,100,10,1";
-    private CacheConfig searchResultCache = CacheConfig.builder()
-            .maximumSize(10000L)
-            .expireAfterAccess(StroomDuration.ofMinutes(10))
-            .build();
+    private final String storeSize;
+    private final CacheConfig searchResultCache;
+
+    public SearchableConfig() {
+        storeSize = "1000000,100,10,1";
+        searchResultCache = CacheConfig.builder()
+                .maximumSize(10000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+    }
+
+    @JsonCreator
+    public SearchableConfig(@JsonProperty("storeSize") final String storeSize,
+                            @JsonProperty("searchResultCache") final CacheConfig searchResultCache) {
+        this.storeSize = storeSize;
+        this.searchResultCache = searchResultCache;
+    }
 
     @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")
     public String getStoreSize() {
         return storeSize;
     }
 
-    public void setStoreSize(final String storeSize) {
-        this.storeSize = storeSize;
-    }
-
     public CacheConfig getSearchResultCache() {
         return searchResultCache;
-    }
-
-    public void setSearchResultCache(final CacheConfig searchResultCache) {
-        this.searchResultCache = searchResultCache;
     }
 
     @Override

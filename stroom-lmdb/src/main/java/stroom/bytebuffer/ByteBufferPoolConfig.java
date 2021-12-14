@@ -3,28 +3,42 @@ package stroom.bytebuffer;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Map;
 import java.util.TreeMap;
-import javax.inject.Singleton;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class ByteBufferPoolConfig extends AbstractConfig {
 
-    private int warningThresholdPercentage = 90;
+    private final int warningThresholdPercentage;
+    private final Map<Integer, Integer> pooledByteBufferCounts;
 
-    // Use a treemap so we get a consistent order in the yaml so TestYamlUtil doesn't fail
-    private Map<Integer, Integer> pooledByteBufferCounts = new TreeMap<>(Map.of(
-            1, 50,
-            10, 50,
-            100, 50,
-            1_000, 50,
-            10_000, 50,
-            100_000, 10,
-            1_000_000, 3));
+    public ByteBufferPoolConfig() {
+        warningThresholdPercentage = 90;
+        // Use a treemap so we get a consistent order in the yaml so TestYamlUtil doesn't fail
+        pooledByteBufferCounts = new TreeMap<>(Map.of(
+                1, 50,
+                10, 50,
+                100, 50,
+                1_000, 50,
+                10_000, 50,
+                100_000, 10,
+                1_000_000, 3));
+    }
+
+    @JsonCreator
+    public ByteBufferPoolConfig(
+            @JsonProperty("warningThresholdPercentage") final int warningThresholdPercentage,
+            @JsonProperty("pooledByteBufferCounts") final Map<Integer, Integer> pooledByteBufferCounts) {
+        this.warningThresholdPercentage = warningThresholdPercentage;
+        this.pooledByteBufferCounts = pooledByteBufferCounts;
+    }
 
     @Max(100)
     @Min(1)
@@ -33,10 +47,6 @@ public class ByteBufferPoolConfig extends AbstractConfig {
             "be logged.")
     public int getWarningThresholdPercentage() {
         return warningThresholdPercentage;
-    }
-
-    public void setWarningThresholdPercentage(final int warningThresholdPercentage) {
-        this.warningThresholdPercentage = warningThresholdPercentage;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -50,8 +60,8 @@ public class ByteBufferPoolConfig extends AbstractConfig {
         return pooledByteBufferCounts;
     }
 
-    public void setPooledByteBufferCounts(final Map<Integer, Integer> pooledByteBufferCounts) {
-        this.pooledByteBufferCounts = pooledByteBufferCounts;
+    public ByteBufferPoolConfig withPooledByteBufferCounts(final Map<Integer, Integer> pooledByteBufferCounts) {
+        return new ByteBufferPoolConfig(warningThresholdPercentage, pooledByteBufferCounts);
     }
 
     @Override

@@ -26,16 +26,16 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStoreFactory.class);
 
     private final LmdbEnvFactory lmdbEnvFactory;
-    private final ResultStoreConfig resultStoreConfig;
+    private final Provider<ResultStoreConfig> resultStoreConfigProvider;
     private final Provider<Executor> executorProvider;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
-                                final ResultStoreConfig resultStoreConfig,
+                                final Provider<ResultStoreConfig> resultStoreConfigProvider,
                                 final PathCreator pathCreator,
                                 final Provider<Executor> executorProvider) {
         this.lmdbEnvFactory = lmdbEnvFactory;
-        this.resultStoreConfig = resultStoreConfig;
+        this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.executorProvider = executorProvider;
         // As result stores are transient they serve no purpose after shutdown so delete any that
         // may still be there
@@ -53,6 +53,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final boolean producePayloads,
                             final ErrorConsumer errorConsumer) {
 
+        final ResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
         if (!resultStoreConfig.isOffHeapResults()) {
             if (producePayloads) {
                 throw new RuntimeException("MapDataStore cannot produce payloads");
@@ -83,7 +84,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
     private void cleanStoresDir(final PathCreator pathCreator) {
         final String dirFromConfig = NullSafe.get(
-                resultStoreConfig,
+                resultStoreConfigProvider.get(),
                 ResultStoreConfig::getLmdbConfig,
                 LmdbConfig::getLocalDir);
 

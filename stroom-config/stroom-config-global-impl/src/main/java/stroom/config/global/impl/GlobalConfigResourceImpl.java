@@ -90,7 +90,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     }
 
     private ListConfigResponse listWithLogging(final GlobalConfigCriteria criteria) {
-        LOGGER.info("list called for {}, is", criteria);
+        LOGGER.debug("list called for {}", criteria);
 
         final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
 
@@ -123,7 +123,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Override
     public ListConfigResponse listByNode(final String nodeName,
                                          final GlobalConfigCriteria criteria) {
-        LOGGER.info("listByNode called for node: {}, criteria: {}", nodeName, criteria);
+        LOGGER.debug("listByNode called for node: {}, criteria: {}", nodeName, criteria);
         return nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 ListConfigResponse.class,

@@ -8,6 +8,7 @@ import stroom.proxy.repo.StreamHandler;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.shared.BuildInfo;
 
 import org.junit.jupiter.api.Test;
@@ -76,22 +77,21 @@ class TestProxyHandlerFactory extends StroomUnitTest {
                                                               final boolean isStoringEnabled,
                                                               final boolean isForwardingenabled) {
         final LogStreamConfig logRequestConfig = null;
-        final ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
-        final ForwardStreamConfig forwardRequestConfig = new ForwardStreamConfig();
+        final ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig()
+                .withRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()))
+                .withStoringEnabled(isStoringEnabled);
 
-        proxyRepositoryConfig.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));
-        proxyRepositoryConfig.setStoringEnabled(isStoringEnabled);
+        ForwardDestinationConfig destinationConfig1 = new ForwardDestinationConfig()
+                .withForwardUrl("https://url1");
 
-        forwardRequestConfig.setForwardingEnabled(isForwardingenabled);
-        ForwardDestinationConfig destinationConfig1 = new ForwardDestinationConfig();
-        destinationConfig1.setForwardUrl("https://url1");
+        ForwardDestinationConfig destinationConfig2 = new ForwardDestinationConfig()
+                .withForwardUrl("https://url2");
 
-        ForwardDestinationConfig destinationConfig2 = new ForwardDestinationConfig();
-        destinationConfig2.setForwardUrl("https://url2");
-        forwardRequestConfig.getForwardDestinations().add(destinationConfig1);
-        forwardRequestConfig.getForwardDestinations().add(destinationConfig2);
+        final ForwardStreamConfig forwardRequestConfig = new ForwardStreamConfig()
+                .withForwardingEnabled(isForwardingenabled)
+                .withForwardDestinations(List.of(destinationConfig1, destinationConfig2));
 
-        final PathCreator pathCreator = new PathCreator(
+        final PathCreator pathCreator = new SimplePathCreator(
                 () -> tempDir.resolve("home"),
                 () -> tempDir);
 
@@ -109,7 +109,11 @@ class TestProxyHandlerFactory extends StroomUnitTest {
 
         final BuildInfo buildInfo = new BuildInfo("now", "test version", "now");
         final ForwardStreamHandlerFactory forwardStreamHandlerFactory = new ForwardStreamHandlerFactory(
-                logStream, forwardRequestConfig, proxyRepositoryConfig, () -> buildInfo, pathCreator);
+                logStream,
+                () -> forwardRequestConfig,
+                () -> proxyRepositoryConfig,
+                () -> buildInfo,
+                pathCreator);
 
         return new MasterStreamHandlerFactory(proxyRepositoryStreamHandlerFactory, forwardStreamHandlerFactory);
     }

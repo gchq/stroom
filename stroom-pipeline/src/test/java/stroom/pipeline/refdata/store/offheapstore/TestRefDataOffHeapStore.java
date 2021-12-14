@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore;
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -42,6 +43,8 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.task.mock.MockTaskModule;
 import stroom.util.io.ByteSize;
 import stroom.util.io.HomeDirProvider;
+import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -132,16 +135,19 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     void setup() {
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
-        referenceDataConfig.getLmdbConfig().setLocalDir(getDbDir().toAbsolutePath().toString());
-        referenceDataConfig.setMaxPurgeDeletesBeforeCommit(500_000);
+        referenceDataConfig = new ReferenceDataConfig()
+                .withLmdbConfig(new ReferenceDataLmdbConfig()
+                        .withLocalDir(getDbDir().toAbsolutePath().toString()))
+                .withMaxPutsBeforeCommit(500_000);
 
         injector = Guice.createInjector(
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
+                        bind(ReferenceDataConfig.class).toProvider(() -> getReferenceDataConfig());
                         bind(HomeDirProvider.class).toInstance(() -> getCurrentTestDir());
                         bind(TempDirProvider.class).toInstance(() -> getCurrentTestDir());
+                        bind(PathCreator.class).to(SimplePathCreator.class);
                         install(new RefDataStoreModule());
                         install(new MockTaskModule());
                         install(new PipelineScopeModule());
@@ -172,7 +178,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
     @Test
     void testNoReadAhead() {
-        getReferenceDataConfig().getLmdbConfig().setReadAheadEnabled(false);
+        referenceDataConfig = referenceDataConfig.withLmdbConfig(referenceDataConfig.getLmdbConfig()
+                .withReadAheadEnabled(false));
 
         // ensure loading and reading works with the NOREADAHEAD flag set
         bulkLoadAndAssert(true, 100);
@@ -552,7 +559,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         bulkLoadAndAssert(refStreamDefinitions, false, 0);
 
-        getReferenceDataConfig().setPurgeAge(StroomDuration.ZERO);
+        referenceDataConfig = referenceDataConfig.withPurgeAge(StroomDuration.ZERO);
 
         assertThat(refDataStore.getProcessingInfoEntryCount())
                 .isEqualTo(REF_STREAM_DEF_COUNT);
@@ -749,7 +756,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         bulkLoadAndAssert(refStreamDefinitions, false, 1000);
 
-        getReferenceDataConfig().setPurgeAge(StroomDuration.ZERO);
+        referenceDataConfig = referenceDataConfig.withPurgeAge(StroomDuration.ZERO);
 
         int entriesPerRefStream = MAPS_PER_REF_STREAM_DEF * ENTRIES_PER_MAP_DEF;
 
@@ -1589,6 +1596,6 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     }
 
     protected void setPurgeAgeProperty(final StroomDuration purgeAge) {
-        referenceDataConfig.setPurgeAge(purgeAge);
+        referenceDataConfig = referenceDataConfig.withPurgeAge(purgeAge);
     }
 }
