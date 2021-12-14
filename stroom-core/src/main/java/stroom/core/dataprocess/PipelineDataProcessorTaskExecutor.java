@@ -127,7 +127,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
     private Processor streamProcessor;
     private ProcessorFilter processorFilter;
-    private ProcessorTask streamTask;
+    private ProcessorTask processorTask;
     private Source streamSource;
 
     private long startTime;
@@ -183,7 +183,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                 final Source streamSource) {
         this.streamProcessor = processor;
         this.processorFilter = processorFilter;
-        this.streamTask = processorTask;
+        this.processorTask = processorTask;
         this.streamSource = streamSource;
 
         // Record when processing began so we know how long it took
@@ -257,7 +257,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case
             // with a batch search.
-            if (processorFilter != null && streamTask.getData() != null && streamTask.getData().length() > 0) {
+            if (processorFilter != null && processorTask.getData() != null && processorTask.getData().length() > 0) {
                 searchIdHolder.setSearchId(Long.toString(processorFilter.getId()));
             }
 
@@ -279,10 +279,14 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                     pipelineDoc.getName() +
                     ", feed=" +
                     feedName +
-                    ", id=" +
+                    ", meta_id=" +
                     meta.getId() +
                     ", created=" +
-                    DateUtil.createNormalDateTimeString(meta.getCreateMs());
+                    DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
+                    ", processor_filter_id=" +
+                    processorFilter.getId() +
+                    ", task_id=" +
+                    processorTask.getId();
 
             // Create processing start message.
             final String processingInfo = PROCESSING + info;
@@ -292,7 +296,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             LOGGER.info(processingInfo);
 
             // Hold the source and feed so the pipeline filters can get them.
-            streamProcessorHolder.setStreamProcessor(streamProcessor, streamTask);
+            streamProcessorHolder.setStreamProcessor(streamProcessor, processorTask);
 
             // Process the streams.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
@@ -392,7 +396,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
                     // If the task requires specific events to be processed then
                     // add them.
-                    final String data = streamTask.getData();
+                    final String data = processorTask.getData();
                     if (data != null && !data.isEmpty()) {
                         final List<InclusiveRange> ranges = InclusiveRanges.rangesFromString(data);
                         final SegmentInputStream raSegmentInputStream = inputStreamProvider.get();
