@@ -69,7 +69,7 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
         subparser.addArgument("-p", "--" + PASSWORD_ARG_NAME)
                 .dest(PASSWORD_ARG_NAME)
                 .type(String.class)
-                .required(true)
+                .required(false)
                 .help("The password for the account");
 
         subparser.addArgument("-e", "--" + EMAIL_ARG_NAME)
@@ -114,8 +114,8 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
 
         final String username = namespace.getString(USERNAME_ARG_NAME);
 
-        try {
-            securityContext.asProcessingUser(() -> {
+        securityContext.asProcessingUser(() -> {
+            try {
                 accountService.read(username)
                         .ifPresentOrElse(
                                 account -> {
@@ -133,13 +133,13 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
                                     logEvent(username, true, msg);
                                     System.exit(0);
                                 });
-            });
-            System.exit(0);
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
-            logEvent(username, false, e.getMessage());
-            System.exit(1);
-        }
+                System.exit(0);
+            } catch (Exception e) {
+                LOGGER.error(e.getMessage());
+                logEvent(username, false, e.getMessage());
+                System.exit(1);
+            }
+        });
     }
 
     private void createAccount(final Namespace namespace, final String username) {
