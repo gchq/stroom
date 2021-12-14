@@ -93,16 +93,21 @@ import javax.inject.Singleton;
  * The guice bound {@link AppConfig} object was de-serialised from the config.yml on boot.
  * {@link stroom.config.app.AppConfigModule} is responsible for ensuring that the tree is not
  * sparse and all branches are present with either their default compile times values or a value from
- * the yaml file.
+ * the yaml file. A null branch in the yaml will be replaced by a default object for that branch. A
+ * missing leaf in the yaml will be replaced by the compile time default. A null value in the yaml will
+ * be a null value.
  * <p>
  * Each branch of the tree (unless annotated with {@link stroom.util.shared.NotInjectableConfig} can be
  * injected into other classes to access the config. Config can be changed either by updating the config.yml
  * file or by setting a database override value. The effective value from the config is based on the following
- * precedence; yaml > database > default.
+ * precedence; yaml > database > default. The instance of this class is the source of truth for the config in
+ * the system. If another node updates a property in the DB then a period refresh of the DB props will pick this
+ * up and re-compute the effective config.
  * <p>
- * To update the guice bound object tree we hold a map of {@link Prop} objects, one for each property, that contains
- * a getter and a setter onto the corresponding guice bound object. This map of {@link Prop} objects and the
- * {@link AppConfig} tree never change, only the leaf values.
+ * The guice binding is done via providers. This class holds a map of config object instances keyed by their
+ * class. We have a set of generated provider methods to get the appropriate instance from the map. Classes
+ * should inject config using Providers to ensure they always get the latest version. The map is replaced each
+ * time config is changed as config objects are almost all immutable.
  * <p>
  * To make life more complicated the database override values are held as strings so need to be converted to/from
  * the types known to the {@link Prop} and {@link AppConfig} tree. This is a legacy from the properties UI pre-dating
