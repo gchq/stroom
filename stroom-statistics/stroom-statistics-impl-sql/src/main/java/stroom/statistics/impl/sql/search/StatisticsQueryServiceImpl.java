@@ -67,8 +67,8 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
             final DocRef docRef = Preconditions.checkNotNull(
                     Preconditions.checkNotNull(
-                            Preconditions.checkNotNull(searchRequest)
-                                    .getQuery())
+                                    Preconditions.checkNotNull(searchRequest)
+                                            .getQuery())
                             .getDataSource());
             Preconditions.checkNotNull(searchRequest.getResultRequests(),
                     "searchRequest must have at least one resultRequest");
@@ -80,7 +80,8 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
             if (statisticStoreEntity == null) {
                 return buildEmptyResponse(
                         searchRequest,
-                        "Statistic configuration could not be found for uuid " + docRef.getUuid());
+                        Collections.singletonList("Statistic configuration could not be found for uuid " +
+                                docRef.getUuid()));
             } else {
                 return buildResponse(searchRequest, statisticStoreEntity);
             }
@@ -109,10 +110,6 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
         // This will build a response from the search whether it is still running or has finished
         return searchResponseCreator.create(searchRequest);
-    }
-
-    private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final String errorMessage) {
-        return buildEmptyResponse(searchRequest, Collections.singletonList(errorMessage));
     }
 
     private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final List<String> errorMessages) {

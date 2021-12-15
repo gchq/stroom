@@ -112,7 +112,7 @@ public class TableResultCreator implements ResultCreator {
                 resultList,
                 new OffsetRange(offset, resultList.size()),
                 totalResults,
-                errorConsumer.toString());
+                errorConsumer.getErrors());
     }
 
     private int addTableResults(final DataStore data,

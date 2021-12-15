@@ -10,11 +10,13 @@ import stroom.task.api.TaskManager;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SearchProgressLog;
+import stroom.util.string.ExceptionStringUtil;
 
 import com.esotericsoftware.kryo.KryoException;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -133,11 +135,13 @@ public class RemoteSearchService {
                     }
 
                 } else {
-                    remoteSearchResultFactory.setInitialisationError("No coprocessors were created");
+                    remoteSearchResultFactory.setInitialisationError(Collections.singletonList(
+                            "No coprocessors were created"));
                 }
 
             } catch (final RuntimeException e) {
-                remoteSearchResultFactory.setInitialisationError(e.getMessage());
+                remoteSearchResultFactory.setInitialisationError(Collections.singletonList(
+                        ExceptionStringUtil.getDetail(e)));
             }
         });
 

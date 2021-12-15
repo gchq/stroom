@@ -24,6 +24,9 @@ import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.VisResult;
 import stroom.query.api.v2.VisResult.Store;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.string.ExceptionStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,15 +35,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class SearchResponseMapper {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchResponseMapper.class);
 
     public DashboardSearchResponse mapResponse(final DashboardQueryKey queryKey,
                                                final stroom.query.api.v2.SearchResponse searchResponse) {
@@ -53,12 +58,6 @@ public class SearchResponseMapper {
             highlights = new HashSet<>(searchResponse.getHighlights());
         }
 
-        String errors = null;
-        if (searchResponse.getErrors() != null) {
-            errors = searchResponse.getErrors().stream()
-                    .collect(Collectors.joining("\n"));
-        }
-
         List<Result> results = null;
         if (searchResponse.getResults() != null) {
             results = new ArrayList<>();
@@ -67,7 +66,11 @@ public class SearchResponseMapper {
             }
         }
 
-        return new DashboardSearchResponse(queryKey, highlights, errors, searchResponse.complete(), results);
+        return new DashboardSearchResponse(queryKey,
+                highlights,
+                searchResponse.getErrors(),
+                searchResponse.complete(),
+                results);
     }
 
     private Result mapResult(final Result result) {
@@ -127,9 +130,9 @@ public class SearchResponseMapper {
 
     private VisResult mapVisResult(final FlatResult result) {
         String json = null;
-        String error = result.getError();
+        List<String> errors = result.getErrors();
 
-        if (error == null) {
+        if (errors == null || errors.size() == 0) {
             try {
                 final List<stroom.query.api.v2.Field> fields = result.getStructure();
                 if (fields != null && result.getValues() != null) {
@@ -202,14 +205,12 @@ public class SearchResponseMapper {
                     json = getMapper(false).writeValueAsString(store);
                 }
             } catch (final JsonProcessingException | RuntimeException e) {
-                error = e.getMessage();
-                if (error == null || error.trim().length() == 0) {
-                    error = e.getClass().getSimpleName();
-                }
+                LOGGER.debug(e::getMessage, e);
+                errors = Collections.singletonList(ExceptionStringUtil.getDetail(e));
             }
         }
 
-        return new VisResult(result.getComponentId(), json, result.getSize(), error);
+        return new VisResult(result.getComponentId(), json, result.getSize(), errors);
     }
 
     private ObjectMapper getMapper(final boolean indent) {

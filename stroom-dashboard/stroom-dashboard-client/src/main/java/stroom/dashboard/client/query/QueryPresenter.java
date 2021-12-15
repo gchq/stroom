@@ -120,7 +120,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ButtonView warningsButton;
 
     private String params;
-    private String currentWarnings;
+    private List<String> currentWarnings;
     private ButtonView processButton;
     private long defaultProcessorTimeLimit;
     private long defaultProcessorRecordLimit;
@@ -265,7 +265,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         registerHandler(downloadQueryButton.addClickHandler(event -> downloadQuery()));
     }
 
-    public void setErrors(final String errors) {
+    public void setErrors(final List<String> errors) {
         currentWarnings = errors;
         warningsButton.setVisible(currentWarnings != null && !currentWarnings.isEmpty());
     }
@@ -440,8 +440,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void showWarnings() {
         if (currentWarnings != null && !currentWarnings.isEmpty()) {
-            AlertEvent.fireWarn(this, "The following warnings have been created while running this search:",
-                    currentWarnings, null);
+            final String errors = String.join("\n", currentWarnings);
+            AlertEvent.fireWarn(this,
+                    "The following warnings have been created while running this search:",
+                    errors, null);
         }
     }
 

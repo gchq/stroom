@@ -65,6 +65,7 @@ import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.string.ExceptionStringUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -507,11 +508,12 @@ class DashboardServiceImpl implements DashboardService {
                 searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
             }
 
-            final String errors = e.getMessage() != null
-                    ? e.getMessage()
-                    : e.getClass().getName();
-
-            result = new DashboardSearchResponse(queryKey, null, errors, true, null);
+            result = new DashboardSearchResponse(
+                    queryKey,
+                    null,
+                    Collections.singletonList(ExceptionStringUtil.getDetail(e)),
+                    true,
+                    null);
         }
 
         return result;

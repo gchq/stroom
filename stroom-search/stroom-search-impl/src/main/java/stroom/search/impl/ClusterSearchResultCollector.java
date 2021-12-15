@@ -26,6 +26,7 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.string.ExceptionStringUtil;
 
 import com.esotericsoftware.kryo.io.Input;
 
@@ -51,7 +52,7 @@ public class ClusterSearchResultCollector implements Store {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchResultCollector.class);
     private static final String TASK_NAME = "AsyncSearchTask";
 
-    private final ConcurrentHashMap<String, Set<String>> errors = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Set<Throwable>> errors = new ConcurrentHashMap<>();
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
@@ -163,9 +164,9 @@ public class ClusterSearchResultCollector implements Store {
         StreamUtil.streamToStream(inputStream, byteArrayOutputStream);
 
         try (final Input input = new Input(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
-            final Set<String> errors = new HashSet<>();
-            final Consumer<String> errorConsumer = (error) -> {
-                LOGGER.debug(() -> error);
+            final Set<Throwable> errors = new HashSet<>();
+            final Consumer<Throwable> errorConsumer = (error) -> {
+                LOGGER.debug(error::getMessage, error);
                 errors.add(error);
             };
 
@@ -183,16 +184,16 @@ public class ClusterSearchResultCollector implements Store {
     public synchronized void onFailure(final String nodeName,
                                        final Throwable throwable) {
         LOGGER.debug(throwable::getMessage, throwable);
-        addErrors(nodeName, Collections.singleton(throwable.getMessage()));
+        addErrors(nodeName, Collections.singleton(throwable));
     }
 
     private void addErrors(final String nodeName,
-                           final Set<String> newErrors) {
+                           final Set<Throwable> newErrors) {
         if (newErrors != null && newErrors.size() > 0) {
-            final Set<String> errorSet = errors.computeIfAbsent(nodeName, k ->
+            final Set<Throwable> errorSet = errors.computeIfAbsent(nodeName, k ->
                     Collections.newSetFromMap(new ConcurrentHashMap<>()));
-            for (final String error : newErrors) {
-                LOGGER.debug(() -> error);
+            for (final Throwable error : newErrors) {
+                LOGGER.debug(error::getMessage, error);
                 errorSet.add(error);
             }
         }
@@ -205,15 +206,15 @@ public class ClusterSearchResultCollector implements Store {
         }
 
         final List<String> err = new ArrayList<>();
-        for (final Entry<String, Set<String>> entry : errors.entrySet()) {
+        for (final Entry<String, Set<Throwable>> entry : errors.entrySet()) {
             final String nodeName = entry.getKey();
-            final Set<String> errors = entry.getValue();
+            final Set<Throwable> errors = entry.getValue();
 
             if (errors.size() > 0) {
                 err.add("Node: " + nodeName);
 
-                for (final String error : errors) {
-                    err.add("\t" + error);
+                for (final Throwable error : errors) {
+                    err.add("\t" + ExceptionStringUtil.getDetail(error));
                 }
             }
         }
