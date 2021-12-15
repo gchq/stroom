@@ -186,9 +186,7 @@ public class SearchResponseCreator {
             final SearchResponse searchResponse = new SearchResponse(
                     store.getHighlights(),
                     results,
-                    errors.isEmpty()
-                            ? null
-                            : errors,
+                    errors,
                     complete);
 
             if (complete) {
@@ -223,7 +221,9 @@ public class SearchResponseCreator {
                     .collect(Collectors.toList()));
         }
 
-        return errors;
+        return errors.isEmpty()
+                ? null
+                : errors;
     }
 
     private Duration getEffectiveTimeout(final SearchRequest searchRequest) {

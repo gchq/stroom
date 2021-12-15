@@ -131,7 +131,6 @@ public class SearchResponseMapper {
     private VisResult mapVisResult(final FlatResult result) {
         String json = null;
         List<String> errors = result.getErrors();
-
         if (errors == null || errors.size() == 0) {
             try {
                 final List<stroom.query.api.v2.Field> fields = result.getStructure();
