@@ -45,10 +45,14 @@ public class NodeResultSerialiser {
         coprocessors.writePayloads(output);
 
         // Drain all current errors to a list.
-        output.writeInt(errorsSnapshot.size());
-        for (final String error : errorsSnapshot) {
-            LOGGER.debug(() -> error);
-            output.writeString(error);
+        if (errorsSnapshot != null) {
+            output.writeInt(errorsSnapshot.size());
+            for (final String error : errorsSnapshot) {
+                LOGGER.debug(() -> error);
+                output.writeString(error);
+            }
+        } else {
+            output.writeInt(0);
         }
     }
 

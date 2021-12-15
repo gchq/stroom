@@ -57,7 +57,6 @@ class RemoteSearchResultFactory {
                     } else {
                         // Drain all current errors to a list.
                         final List<String> errorsSnapshot = coprocessors.getErrorConsumer().drain();
-
                         NodeResultSerialiser.write(output, complete, coprocessors, errorsSnapshot);
                     }
 

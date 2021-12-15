@@ -9040,7 +9040,10 @@
             "type" : "boolean"
           },
           "errors" : {
-            "type" : "string"
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           },
           "highlights" : {
             "type" : "array",
@@ -12883,9 +12886,13 @@
             "type" : "string",
             "description" : "The ID of the component that this result set was requested for. See ResultRequest in SearchRequest"
           },
-          "error" : {
-            "type" : "string",
-            "description" : "If an error has occurred producing this result set then this will have details of the error"
+          "errors" : {
+            "type" : "array",
+            "description" : "If an error has occurred producing this result set then this will have details of the error",
+            "items" : {
+              "type" : "string",
+              "description" : "If an error has occurred producing this result set then this will have details of the error"
+            }
           },
           "type" : {
             "type" : "string"

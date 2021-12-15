@@ -534,7 +534,7 @@ export interface DashboardSearchRequest {
 
 export interface DashboardSearchResponse {
   complete?: boolean;
-  errors?: string;
+  errors?: string[];
   highlights?: string[];
   queryKey?: DashboardQueryKey;
   results?: Result[];
@@ -2322,7 +2322,7 @@ export interface Result {
   componentId: string;
 
   /** If an error has occurred producing this result set then this will have details of the error */
-  error?: string;
+  errors?: string[];
   type: string;
 }
 

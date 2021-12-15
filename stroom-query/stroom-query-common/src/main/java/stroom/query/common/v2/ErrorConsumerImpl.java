@@ -38,7 +38,7 @@ public class ErrorConsumerImpl implements ErrorConsumer {
                     .map(ExceptionStringUtil::getDetail)
                     .collect(Collectors.toList());
         }
-        return Collections.emptyList();
+        return null;
     }
 
     @Override
@@ -51,7 +51,7 @@ public class ErrorConsumerImpl implements ErrorConsumer {
                     .map(ExceptionStringUtil::getDetail)
                     .collect(Collectors.toList());
         }
-        return Collections.emptyList();
+        return null;
     }
 
     @Override
