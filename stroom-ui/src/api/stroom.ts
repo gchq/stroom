@@ -1663,6 +1663,12 @@ export interface Meta {
   /** @format int64 */
   parentMetaId?: number;
   pipelineUuid?: string;
+
+  /** @format int32 */
+  processorFilterId?: number;
+
+  /** @format int64 */
+  processorTaskId?: number;
   processorUuid?: string;
   status?: "UNLOCKED" | "LOCKED" | "DELETED";
 

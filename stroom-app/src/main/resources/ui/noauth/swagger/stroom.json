@@ -11509,6 +11509,14 @@
           "pipelineUuid" : {
             "type" : "string"
           },
+          "processorFilterId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "processorTaskId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "processorUuid" : {
             "type" : "string"
           },

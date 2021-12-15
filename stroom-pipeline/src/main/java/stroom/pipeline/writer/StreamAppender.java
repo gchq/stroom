@@ -40,8 +40,9 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
-import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorTask;
 import stroom.util.shared.Severity;
 
 import com.google.common.base.Strings;
@@ -65,7 +66,6 @@ public class StreamAppender extends AbstractAppender {
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
     private final RecordCount recordCount;
-    private final SupersededOutputHelper supersededOutputHelper;
 
     private String feed;
     private String streamType;
@@ -82,8 +82,7 @@ public class StreamAppender extends AbstractAppender {
                           final MetaHolder metaHolder,
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
-                          final RecordCount recordCount,
-                          final SupersededOutputHelper supersededOutputHelper) {
+                          final RecordCount recordCount) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
@@ -91,7 +90,6 @@ public class StreamAppender extends AbstractAppender {
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaData = metaData;
         this.recordCount = recordCount;
-        this.supersededOutputHelper = supersededOutputHelper;
     }
 
     @Override
@@ -115,13 +113,26 @@ public class StreamAppender extends AbstractAppender {
             fatal("Stream type not specified");
         }
 
-        String processorUuid = null;
-        String pipelineUuid = null;
-
         final Processor processor = streamProcessorHolder.getStreamProcessor();
+        final ProcessorTask processorTask = streamProcessorHolder.getStreamTask();
+
+        String processorUuid = null;
+        String processorFilterUuid = null;
+        Integer processorFilterId = null;
+        String pipelineUuid = null;
+        Long processorTaskId = null;
+
         if (processor != null) {
             processorUuid = processor.getUuid();
             pipelineUuid = processor.getPipelineUuid();
+        }
+        if (processorTask != null) {
+            processorTaskId = processorTask.getId();
+            final ProcessorFilter processorFilter = processorTask.getProcessorFilter();
+            if (processorFilter != null) {
+                processorFilterUuid = processorFilter.getUuid();
+                processorFilterId = processorFilter.getId();
+            }
         }
 
         final MetaProperties metaProperties = MetaProperties.builder()
@@ -130,9 +141,11 @@ public class StreamAppender extends AbstractAppender {
                 .parent(parentMeta)
                 .processorUuid(processorUuid)
                 .pipelineUuid(pipelineUuid)
+                .processorFilterId(processorFilterId)
+                .processorTaskId(processorTaskId)
                 .build();
 
-        streamTarget = supersededOutputHelper.addTarget(() -> streamStore.openTarget(metaProperties));
+        streamTarget = streamStore.openTarget(metaProperties);
 
         wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.next().get()) {
             @Override
@@ -191,11 +204,7 @@ public class StreamAppender extends AbstractAppender {
 
                 // Close the stream target.
                 try {
-                    if (supersededOutputHelper.isSuperseded()) {
-                        streamStore.deleteTarget(streamTarget);
-                    } else {
-                        streamTarget.close();
-                    }
+                    streamTarget.close();
                 } catch (final IOException | RuntimeException e) {
                     try {
                         LOGGER.error(e.getMessage(), e);
