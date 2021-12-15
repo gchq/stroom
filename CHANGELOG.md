@@ -12,6 +12,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.167] - 2021-12-15
+
+* Issue **#2639** : Fix error message when invalid property values are used.
+
+* Issue **#2578** : Fix how application config is (re)loaded so that it copes with null or sparse branches.
+
+* Issue **#2361** : Fix create_account command so it allows creation of accounts with no password.
+
+* Issue **#2627** : Add processor filter and processor task id to meta.
+
+* Issue **#2628** : Add processor filter and processor task id to info log.
+
+* Issue **#2647** : Fix `Unrecognised permission assigned` error in logs.
+
+* Issue **#2629** : Change the way duplicate output is handled by deleting previous output from complete tasks at the end of processing.
+
+* Issue **#2603** : Add debug to diagnose buffer underflow.
+
+
 ## [v7.0-beta.166] - 2021-12-13
 
 * Issue **#2637** : Fix hanging searches.
@@ -4044,7 +4063,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.166...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.167...HEAD
+[v7.0-beta.167]: https://github.com/gchq/stroom/compare/v7.0-beta.166...v7.0-beta.167
 [v7.0-beta.166]: https://github.com/gchq/stroom/compare/v7.0-beta.165...v7.0-beta.166
 [v7.0-beta.165]: https://github.com/gchq/stroom/compare/v7.0-beta.164...v7.0-beta.165
 [v7.0-beta.164]: https://github.com/gchq/stroom/compare/v7.0-beta.163...v7.0-beta.164
