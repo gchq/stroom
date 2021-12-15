@@ -1,5 +1,6 @@
 package stroom.search.extraction;
 
+import stroom.search.extraction.StreamEventMap.EventSet;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -9,8 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,9 +46,10 @@ class TestStreamEventMap {
             CompletableFuture<Void> consumer = CompletableFuture.runAsync(() -> {
                 try {
                     while (true) {
-                        final Entry<Long, Set<Event>> entry = streamEventMap.take();
-                        final Set<Event> events = entry.getValue();
-                        total.addAndGet(events.size());
+                        final EventSet eventSet = streamEventMap.take();
+                        if (eventSet != null) {
+                            total.addAndGet(eventSet.size());
+                        }
                     }
                 } catch (final InterruptedException e) {
                     LOGGER.trace(e::getMessage, e);

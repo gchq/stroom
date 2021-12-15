@@ -5,14 +5,13 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.search.extraction.Event;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.search.extraction.StreamEventMap;
+import stroom.search.extraction.StreamEventMap.EventSet;
 import stroom.search.impl.shard.DocIdQueue;
 import stroom.search.impl.shard.ShardIdQueue;
 import stroom.util.concurrent.CompleteException;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -59,7 +58,7 @@ class TestQueues {
 
     @Test
     @SuppressWarnings("unchecked")
-    void testDocIdQueue() throws InterruptedException {
+    void testDocIdQueue() {
         final int threads = 10;
         final DocIdQueue queue = new DocIdQueue(1000000);
         final AtomicInteger produced = new AtomicInteger();
@@ -111,7 +110,7 @@ class TestQueues {
 
     @Test
     @SuppressWarnings("unchecked")
-    void testStoredDataQueue() throws InterruptedException {
+    void testStoredDataQueue() {
         final int threads = 10;
         final StoredDataQueue queue = new StoredDataQueue(1000000);
         final AtomicInteger produced = new AtomicInteger();
@@ -197,8 +196,10 @@ class TestQueues {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
                     while (true) {
-                        final Entry<Long, Set<Event>> entry = queue.take();
-                        consumed.addAndGet(entry.getValue().size());
+                        final EventSet eventSet = queue.take();
+                        if (eventSet != null) {
+                            consumed.addAndGet(eventSet.size());
+                        }
                     }
                 } catch (final InterruptedException | CompleteException e) {
                     // Ignore.

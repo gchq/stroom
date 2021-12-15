@@ -15,6 +15,7 @@ import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ErrorConsumer;
+import stroom.search.extraction.StreamEventMap.EventSet;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -140,6 +141,9 @@ public class ExtractionDecoratorFactory {
             receivers.put(docRef, receiver);
         });
 
+        // Set the delay to use for extraction of each stream.
+        streamEventMap.setExtractionDelayMs(getExtractionDelayMs());
+
         return storedDataQueue;
     }
 
@@ -215,6 +219,16 @@ public class ExtractionDecoratorFactory {
         LOGGER.debug(messageSupplier);
     }
 
+    private long getExtractionDelayMs() {
+        // Delay extraction if we are going to use one or more extraction pipelines.
+        return receivers.keySet()
+                .stream()
+                .filter(Objects::nonNull)
+                .findFirst()
+                .map(docRef -> extractionConfig.getExtractionDelayMs())
+                .orElse(0L);
+    }
+
     @SuppressWarnings("unchecked")
     public CompletableFuture<Void> startExtraction(final TaskContext parentContext,
                                                    final AtomicLong extractionCount,
@@ -243,28 +257,33 @@ public class ExtractionDecoratorFactory {
     private void extractData(final TaskContext parentContext,
                              final AtomicLong extractionCount,
                              final ErrorConsumer errorConsumer) {
-        taskContextFactory.childContext(parentContext, "Extraction Task", taskContext -> {
-            securityContext.useAsRead(() -> {
-                try {
-                    while (true) {
-                        taskContext.reset();
-                        taskContext.info(() -> "Waiting for extraction task...");
+        taskContextFactory.childContext(parentContext, "Extraction Task", taskContext ->
+                securityContext.useAsRead(() -> {
+                    try {
+                        while (true) {
+                            taskContext.reset();
+                            taskContext.info(() -> "Waiting for extraction task...");
 
-                        final Entry<Long, Set<Event>> entry = streamEventMap.take();
-                        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
-                                entry.getValue().size());
-                        extractEvents(taskContext, entry.getKey(), entry.getValue(), extractionCount, errorConsumer);
+                            final EventSet eventSet = streamEventMap.take();
+                            if (eventSet != null) {
+                                SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
+                                        eventSet.size());
+                                extractEvents(taskContext,
+                                        eventSet.getStreamId(),
+                                        eventSet.getEvents(),
+                                        extractionCount,
+                                        errorConsumer);
+                            }
+                        }
+                    } catch (final InterruptedException e) {
+                        LOGGER.trace(e::getMessage, e);
+                        // Keep interrupting this thread.
+                        Thread.currentThread().interrupt();
+                    } catch (final CompleteException e) {
+                        LOGGER.debug(() -> "Complete");
+                        LOGGER.trace(e::getMessage, e);
                     }
-                } catch (final InterruptedException e) {
-                    LOGGER.trace(e::getMessage, e);
-                    // Keep interrupting this thread.
-                    Thread.currentThread().interrupt();
-                } catch (final CompleteException e) {
-                    LOGGER.debug(() -> "Complete");
-                    LOGGER.trace(e::getMessage, e);
-                }
-            });
-        }).run();
+                })).run();
         LOGGER.debug("Completed extraction thread");
     }
 
