@@ -114,4 +114,46 @@ public class ProxyConfigProvidersModule extends AbstractModule {
                 stroom.proxy.repo.ProxyRepositoryReaderConfig.class);
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.handler.ForwardDestinationConfig getForwardDestinationConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.handler.ForwardDestinationConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.HttpClientConfig getHttpClientConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.HttpClientConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.HttpClientTlsConfig getHttpClientTlsConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.HttpClientTlsConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.util.cert.SSLConfig getSSLConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.util.cert.SSLConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
 }
