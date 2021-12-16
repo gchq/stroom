@@ -12,6 +12,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.169] - 2021-12-16
+
+* Issue **#2648** : Add error message to data viewer when ID is invalid.
+
+* Issue **#2657** : Change classes to use provided config to stop the system using stale config values.
+
+* Issue **#2603** : Suppress expected buffer underflow exception.
+
+* Make directly injected NotInjectable config throw an exception to prevent it happening.
+
+
 ## [v7.0-beta.168] - 2021-12-15
 
 * Issue **#2652** : Add delay to stream event map creation so extraction opens fewer streams.
@@ -4068,7 +4079,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.168...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.169...HEAD
+[v7.0-beta.169]: https://github.com/gchq/stroom/compare/v7.0-beta.168...v7.0-beta.169
 [v7.0-beta.168]: https://github.com/gchq/stroom/compare/v7.0-beta.167...v7.0-beta.168
 [v7.0-beta.167]: https://github.com/gchq/stroom/compare/v7.0-beta.166...v7.0-beta.167
 [v7.0-beta.166]: https://github.com/gchq/stroom/compare/v7.0-beta.165...v7.0-beta.166
