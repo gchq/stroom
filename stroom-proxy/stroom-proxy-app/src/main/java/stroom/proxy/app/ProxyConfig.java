@@ -14,14 +14,13 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
@@ -29,22 +28,43 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
 
-    private boolean useDefaultOpenIdCredentials = true;
-    private boolean haltBootOnConfigValidationFailure = true;
-    private String contentDir;
+    private final boolean useDefaultOpenIdCredentials;
+    private final boolean haltBootOnConfigValidationFailure;
+    private final String contentDir;
 
-    private ProxyPathConfig pathConfig = new ProxyPathConfig();
-    private RepoDbConfig proxyDbConfig = new RepoDbConfig();
-    private ReceiptPolicyConfig receiptPolicyConfig = new ReceiptPolicyConfig();
-    private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
-    private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
-    private AggregatorConfig aggregatorConfig = new AggregatorConfig();
-    private ForwarderConfig forwarderConfig = new ForwarderConfig();
-    private LogStreamConfig logStreamConfig = new LogStreamConfig();
-    private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
-    private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
-    private RestClientConfig restClientConfig = new RestClientConfig();
-    private ThreadConfig threadConfig = new ThreadConfig();
+    private final ProxyPathConfig pathConfig;
+    private final RepoDbConfig proxyDbConfig;
+    private final ReceiptPolicyConfig receiptPolicyConfig;
+    private final ProxyRepoConfig proxyRepoConfig;
+    private final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig;
+    private final AggregatorConfig aggregatorConfig;
+    private final ForwarderConfig forwarderConfig;
+    private final LogStreamConfig logStreamConfig;
+    private final ContentSyncConfig contentSyncConfig;
+    private final FeedStatusConfig feedStatusConfig;
+    private final RestClientConfig restClientConfig;
+    private final ThreadConfig threadConfig;
+
+    public ProxyConfig() {
+        useDefaultOpenIdCredentials = true;
+        haltBootOnConfigValidationFailure = true;
+        contentDir = null;
+
+        pathConfig = new ProxyPathConfig();
+        proxyDbConfig = new RepoDbConfig();
+        receiptPolicyConfig = new ReceiptPolicyConfig();
+        proxyRepoConfig = new ProxyRepoConfig();
+        proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
+        aggregatorConfig = new AggregatorConfig();
+        forwarderConfig = new ForwarderConfig();
+        logStreamConfig = new LogStreamConfig();
+        contentSyncConfig = new ContentSyncConfig();
+        feedStatusConfig = new FeedStatusConfig();
+        restClientConfig = new RestClientConfig();
+        threadConfig = new ThreadConfig();
+    }
+
+    ADD_CTOR
 
     @AssertTrue(
             message = "proxyConfig." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. " +
@@ -58,11 +78,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return haltBootOnConfigValidationFailure;
     }
 
-    @SuppressWarnings("unused")
-    public void setHaltBootOnConfigValidationFailure(final boolean haltBootOnConfigValidationFailure) {
-        this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
-    }
-
     @JsonProperty()
     @JsonPropertyDescription("If true, stroom will use a set of default authentication credentials to allow" +
             "API calls from stroom-proxy. For test or demonstration purposes only, set to false for production. " +
@@ -70,19 +85,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public boolean isUseDefaultOpenIdCredentials() {
         return useDefaultOpenIdCredentials;
     }
-
-    public void setUseDefaultOpenIdCredentials(final boolean useDefaultOpenIdCredentials) {
-        this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
-    }
-
     @JsonProperty
     public String getContentDir() {
         return contentDir;
-    }
-
-    @JsonProperty
-    public void setContentDir(final String contentDir) {
-        this.contentDir = contentDir;
     }
 
     @JsonProperty("path")
@@ -90,17 +95,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return pathConfig;
     }
 
-    public void setPathConfig(final ProxyPathConfig pathConfig) {
-        this.pathConfig = pathConfig;
-    }
-
     @JsonProperty("db")
     public RepoDbConfig getProxyDbConfig() {
         return proxyDbConfig;
-    }
-
-    public void setProxyDbConfig(final RepoDbConfig proxyDbConfig) {
-        this.proxyDbConfig = proxyDbConfig;
     }
 
     @JsonProperty("receiptPolicy")
@@ -108,27 +105,15 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return receiptPolicyConfig;
     }
 
-    public void setReceiptPolicyConfig(final ReceiptPolicyConfig receiptPolicyConfig) {
-        this.receiptPolicyConfig = receiptPolicyConfig;
-    }
-
     @JsonProperty("repository")
     public ProxyRepoConfig getProxyRepositoryConfig() {
         return proxyRepoConfig;
     }
 
-    @JsonProperty
-    public void setProxyRepositoryConfig(final ProxyRepoConfig proxyRepoConfig) {
-        this.proxyRepoConfig = proxyRepoConfig;
-    }
 
     @JsonProperty("scanner")
     public ProxyRepoFileScannerConfig getProxyRepoFileScannerConfig() {
         return proxyRepoFileScannerConfig;
-    }
-
-    public void setProxyRepoFileScannerConfig(final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig) {
-        this.proxyRepoFileScannerConfig = proxyRepoFileScannerConfig;
     }
 
     @JsonProperty("aggregator")
@@ -136,18 +121,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return aggregatorConfig;
     }
 
-    public void setAggregatorConfig(final AggregatorConfig aggregatorConfig) {
-        this.aggregatorConfig = aggregatorConfig;
-    }
-
     @JsonProperty("forwarder")
     public ForwarderConfig getForwarderConfig() {
         return forwarderConfig;
-    }
-
-    @JsonProperty
-    public void setForwarderConfig(final ForwarderConfig forwarderConfig) {
-        this.forwarderConfig = forwarderConfig;
     }
 
     @JsonProperty("logStream")
@@ -155,19 +131,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return logStreamConfig;
     }
 
-    @JsonProperty
-    public void setLogStreamConfig(final LogStreamConfig logStreamConfig) {
-        this.logStreamConfig = logStreamConfig;
-    }
-
     @JsonProperty("contentSync")
     public ContentSyncConfig getContentSyncConfig() {
         return contentSyncConfig;
-    }
-
-    @JsonProperty
-    public void setContentSyncConfig(final ContentSyncConfig contentSyncConfig) {
-        this.contentSyncConfig = contentSyncConfig;
     }
 
     @JsonProperty("feedStatus")
@@ -175,28 +141,13 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return feedStatusConfig;
     }
 
-    @JsonProperty("feedStatus")
-    public void setFeedStatusConfig(final FeedStatusConfig feedStatusConfig) {
-        this.feedStatusConfig = feedStatusConfig;
-    }
-
     @JsonProperty("restClient")
     public RestClientConfig getRestClientConfig() {
         return restClientConfig;
     }
 
-    @JsonProperty("restClient")
-    public void setRestClientConfig(final RestClientConfig restClientConfig) {
-        this.restClientConfig = restClientConfig;
-    }
-
     @JsonProperty("threads")
     public ThreadConfig getThreadConfig() {
         return threadConfig;
-    }
-
-    @JsonProperty("threads")
-    public void setThreadConfig(final ThreadConfig threadConfig) {
-        this.threadConfig = threadConfig;
     }
 }

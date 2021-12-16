@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -32,7 +33,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     private final IndexVolumeGroupDao indexVolumeGroupDao;
     private final IndexVolumeDao indexVolumeDao;
     private final SecurityContext securityContext;
-    private final VolumeConfig volumeConfig;
+    private final Provider<VolumeConfig> volumeConfigProvider;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final PathCreator pathCreator;
     private final NodeInfo nodeInfo;
@@ -44,14 +45,14 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     public IndexVolumeGroupServiceImpl(final IndexVolumeGroupDao indexVolumeGroupDao,
                                        final IndexVolumeDao indexVolumeDao,
                                        final SecurityContext securityContext,
-                                       final VolumeConfig volumeConfig,
+                                       final Provider<VolumeConfig> volumeConfigProvider,
                                        final ProcessingUserIdentityProvider processingUserIdentityProvider,
                                        final PathCreator pathCreator,
                                        final NodeInfo nodeInfo) {
         this.indexVolumeGroupDao = indexVolumeGroupDao;
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
-        this.volumeConfig = volumeConfig;
+        this.volumeConfigProvider = volumeConfigProvider;
         this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.pathCreator = pathCreator;
         this.nodeInfo = nodeInfo;
@@ -137,6 +138,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
             try {
                 creatingDefaultVolumes = true;
                 securityContext.insecure(() -> {
+                    final VolumeConfig volumeConfig = volumeConfigProvider.get();
                     final boolean isEnabled = volumeConfig.isCreateDefaultIndexVolumesOnStart();
                     if (isEnabled) {
                         if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
@@ -217,7 +219,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
             // to all volumes and any other data on the filesystem. I.e. once the amount of the filesystem in use
             // is greater than the limit writes to those volumes will be prevented. See Volume.isFull() and
             // this.updateVolumeState()
-            return OptionalLong.of((long) (totalBytes * volumeConfig.getDefaultIndexVolumeFilesystemUtilisation()));
+            return OptionalLong.of(
+                    (long) (totalBytes * volumeConfigProvider.get().getDefaultIndexVolumeFilesystemUtilisation()));
         } catch (IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
                     " Please manually set limit for index volume.", FileUtil.getCanonicalPath(Path.of(path))));

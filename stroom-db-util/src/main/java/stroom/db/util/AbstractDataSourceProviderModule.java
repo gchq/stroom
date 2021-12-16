@@ -1,6 +1,6 @@
 package stroom.db.util;
 
-import stroom.config.common.HasDbConfig;
+import stroom.config.common.AbstractDbConfig;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
@@ -14,11 +14,11 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 /**
- * @param <T_CONFIG>    A config class that implements {@link HasDbConfig}
+ * @param <T_CONFIG>    A config class that extends {@link AbstractDbConfig}
  * @param <T_CONN_PROV> A class that extends {@link DataSource}
  */
-public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbConfig, T_CONN_PROV extends DataSource>
-        extends AbstractModule {
+public abstract class AbstractDataSourceProviderModule<
+        T_CONFIG extends AbstractDbConfig, T_CONN_PROV extends DataSource> extends AbstractModule {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataSourceProviderModule.class);
 

@@ -79,7 +79,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private final FsVolumeDao fsVolumeDao;
     private final FsVolumeStateDao fileSystemVolumeStateDao;
     private final SecurityContext securityContext;
-    private final FsVolumeConfig volumeConfig;
+    private final Provider<FsVolumeConfig> volumeConfigProvider;
     private final InternalStatisticsReceiver statisticsReceiver;
     private final ClusterLockService clusterLockService;
     private final Provider<EntityEventBus> entityEventBusProvider;
@@ -95,7 +95,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     public FsVolumeService(final FsVolumeDao fsVolumeDao,
                            final FsVolumeStateDao fileSystemVolumeStateDao,
                            final SecurityContext securityContext,
-                           final FsVolumeConfig volumeConfig,
+                           final Provider<FsVolumeConfig> volumeConfigProvider,
                            final InternalStatisticsReceiver statisticsReceiver,
                            final ClusterLockService clusterLockService,
                            final Provider<EntityEventBus> entityEventBusProvider,
@@ -105,7 +105,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         this.fsVolumeDao = fsVolumeDao;
         this.fileSystemVolumeStateDao = fileSystemVolumeStateDao;
         this.securityContext = securityContext;
-        this.volumeConfig = volumeConfig;
+        this.volumeConfigProvider = volumeConfigProvider;
         this.statisticsReceiver = statisticsReceiver;
         this.clusterLockService = clusterLockService;
         this.entityEventBusProvider = entityEventBusProvider;
@@ -248,7 +248,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         FsVolumeSelector volumeSelector = null;
 
         try {
-            final String value = volumeConfig.getVolumeSelector();
+            final String value = volumeConfigProvider.get().getVolumeSelector();
             if (value != null) {
                 volumeSelector = volumeSelectorMap.get(value);
             }
@@ -293,8 +293,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
         // Delete default volumes.
         LOGGER.info(() -> "Deleting default volumes");
-        if (volumeConfig.getDefaultStreamVolumePaths() != null) {
-            final List<String> paths = volumeConfig.getDefaultStreamVolumePaths();
+        if (volumeConfigProvider.get().getDefaultStreamVolumePaths() != null) {
+            final List<String> paths = volumeConfigProvider.get().getDefaultStreamVolumePaths();
             for (String path : paths) {
                 final Path resolvedPath = pathCreator.toAppPath(path);
                 LOGGER.info("Deleting directory {}", resolvedPath.toAbsolutePath().normalize().toString());
@@ -453,6 +453,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             try {
                 creatingDefaultVolumes = true;
                 securityContext.insecure(() -> {
+                    final FsVolumeConfig volumeConfig = volumeConfigProvider.get();
                     final boolean isEnabled = volumeConfig.isCreateDefaultStreamVolumesOnStart();
                     if (isEnabled) {
                         final FindFsVolumeCriteria findVolumeCriteria = FindFsVolumeCriteria.matchAll();
@@ -533,7 +534,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             // to all volumes and any other data on the filesystem. I.e. once the amount of the filesystem in use
             // is greater than the limit writes to those volumes will be prevented. See Volume.isFull() and
             // this.updateVolumeState()
-            return OptionalLong.of((long) (totalBytes * volumeConfig.getDefaultStreamVolumeFilesystemUtilisation()));
+            return OptionalLong.of((long) (totalBytes * volumeConfigProvider.get()
+                    .getDefaultStreamVolumeFilesystemUtilisation()));
         } catch (IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}",
                     FileUtil.getCanonicalPath(path)));

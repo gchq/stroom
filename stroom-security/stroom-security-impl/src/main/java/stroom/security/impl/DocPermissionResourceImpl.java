@@ -470,9 +470,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     }
 
     private PermissionAttribute mapChangeItemToPermission(final String perm) {
-        if (DocumentPermissionNames.CREATE.equals(perm)) {
-            return PermissionAttribute.AUTHOR;
-        } else if (DocumentPermissionNames.DELETE.equals(perm)) {
+        if (DocumentPermissionNames.DELETE.equals(perm)) {
             return PermissionAttribute.WRITE;
         } else if (DocumentPermissionNames.OWNER.equals(perm)) {
             return PermissionAttribute.OWNER;
@@ -482,6 +480,9 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             return PermissionAttribute.WRITE;
         } else if (DocumentPermissionNames.USE.equals(perm)) {
             return PermissionAttribute.EXECUTE;
+        } else if (perm != null && perm.startsWith(DocumentPermissionNames.CREATE)) {
+            // Create perms are used on folders only and the perm is of the form 'Create - Feed'
+            return PermissionAttribute.AUTHOR;
         } else {
             LOGGER.error("Unrecognised permission assigned " + perm);
             return null;

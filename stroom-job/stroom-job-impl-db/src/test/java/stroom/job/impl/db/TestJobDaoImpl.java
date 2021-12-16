@@ -30,6 +30,7 @@ class TestJobDaoImpl {
         Guice.createInjector(
                 new TestModule(),
                 new JobDbModule(),
+                new JobDaoModule(),
                 new MockSecurityContextModule(),
                 new DbTestModule())
                 .injectMembers(this);

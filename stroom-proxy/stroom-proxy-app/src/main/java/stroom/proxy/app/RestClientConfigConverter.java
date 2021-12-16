@@ -9,6 +9,7 @@ import stroom.util.time.StroomDuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.client.ssl.TlsConfiguration;
 import io.dropwizard.util.Duration;
+import io.dropwizard.validation.ValidationMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +18,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -53,15 +55,18 @@ public class RestClientConfigConverter {
 
             sourceProps.forEach((name, sourceProp) -> {
                 final Class<?> valueClass = sourceProp.getValueClass();
-                if (isConfigClass(valueClass)) {
-                    // recurse
-                    mapMethods(valueClass);
-                }
 
-                if (destProps.containsKey(name)) {
-                    methodMap.computeIfAbsent(sourceClass, k -> new HashMap<>())
-                            .put(sourceProps.get(name).getGetter(),
-                                    destProps.get(name).getSetter());
+                if (!sourceProp.hasAnnotation(ValidationMethod.class)) {
+                    if (isConfigClass(valueClass)) {
+                        // recurse
+                        mapMethods(valueClass);
+                    }
+
+                    if (destProps.containsKey(name)) {
+                        methodMap.computeIfAbsent(sourceClass, k -> new HashMap<>())
+                                .put(sourceProps.get(name).getGetter(),
+                                        destProps.get(name).getSetter());
+                    }
                 }
             });
         } catch (InstantiationException
@@ -87,10 +92,13 @@ public class RestClientConfigConverter {
                     .forEach((sourceGetter, destSetter) -> {
                         try {
                             final Object sourcePropValue = sourceGetter.invoke(sourceObj);
+                            final Class<?> destSetterType = destSetter.getParameterTypes()[0];
                             LOGGER.debug("method: {}, sourcePropValue: {}",
                                     sourceGetter.getName(),
                                     sourcePropValue);
-                            if (sourcePropValue == null) {
+                            if (sourcePropValue == null && destSetterType.equals(Optional.class)) {
+                                destSetter.invoke(destObj, Optional.empty());
+                            } else if (sourcePropValue == null) {
                                 destSetter.invoke(destObj, sourcePropValue);
                             } else if (isConfigClass(sourcePropValue.getClass())) {
                                 // branch so recurse
@@ -99,8 +107,12 @@ public class RestClientConfigConverter {
                             } else {
                                 if (sourcePropValue.getClass().equals(StroomDuration.class)) {
                                     destSetter.invoke(destObj, convertDuration((StroomDuration) sourcePropValue));
-                                } else if (destSetter.getParameterTypes()[0].equals(File.class)) {
+                                } else if (destSetterType.equals(File.class)) {
                                     destSetter.invoke(destObj, convertFile((String) sourcePropValue));
+                                } else if (destSetterType.equals(Optional.class)) {
+                                    // We changed one of their optionals to just be a string so
+                                    // need to map string=>optional
+                                    destSetter.invoke(destObj, convertToOptional(sourcePropValue));
                                 } else {
                                     destSetter.invoke(destObj, sourcePropValue);
                                 }
@@ -140,5 +152,9 @@ public class RestClientConfigConverter {
 
     private File convertFile(final String path) {
         return pathCreator.toAppPath(path).toFile();
+    }
+
+    private <T> Optional<T> convertToOptional(final T value) {
+        return Optional.ofNullable(value);
     }
 }

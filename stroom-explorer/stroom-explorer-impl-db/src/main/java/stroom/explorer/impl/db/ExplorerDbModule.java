@@ -2,12 +2,12 @@ package stroom.explorer.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.explorer.impl.ExplorerConfig;
-import stroom.explorer.impl.ExplorerTreeDao;
+import stroom.explorer.impl.ExplorerConfig.ExplorerDbConfig;
+import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
-public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, ExplorerDbConnProvider> {
+public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerDbConfig, ExplorerDbConnProvider> {
 
     private static final String MODULE = "stroom-explorer";
     private static final String FLYWAY_LOCATIONS = "stroom/explorer/impl/db/migration";
@@ -17,7 +17,9 @@ public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, Exp
     protected void configure() {
         super.configure();
 
-        bind(ExplorerTreeDao.class).to(ExplorerTreeDaoImpl.class);
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ExplorerDbConnProvider.class);
     }
 
     @Override

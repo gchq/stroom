@@ -4,15 +4,14 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class MetaValueConfig extends AbstractConfig implements IsStroomConfig {
 
@@ -20,58 +19,65 @@ public class MetaValueConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty
     @JsonPropertyDescription("The age of streams that we store meta data in the database for. " +
             "In ISO-8601 duration format, e.g. 'P1DT12H'")
-    private StroomDuration deleteAge = StroomDuration.ofDays(30);
+    private final StroomDuration deleteAge;
 
     @JsonProperty
     @JsonPropertyDescription("How many stream attributes we want to try and delete in a single batch.")
-    private int deleteBatchSize = 500;
+    private final int deleteBatchSize;
 
     @JsonProperty
     @JsonPropertyDescription("The number of stream attributes to queue before flushing to the database. " +
             "Only applicable if property 'addAsync' is true.")
-    private int flushBatchSize = 500;
+    private final int flushBatchSize;
 
     @JsonProperty
     @JsonPropertyDescription("If true, stream attributes will be queued in memory until the queue " +
             "reaches 'flushBatchSize'. If false, stream attributes will be written to the database " +
             "immediately and synchronously.")
-    private boolean addAsync = true;
+    // TODO 01/12/2021 AT: Make final
+    private boolean addAsync;
 
+    public MetaValueConfig() {
+        deleteAge = StroomDuration.ofDays(30);
+        deleteBatchSize = 500;
+        flushBatchSize = 500;
+        addAsync = true;
+    }
+
+    @JsonCreator
+    public MetaValueConfig(@JsonProperty("deleteAge") final StroomDuration deleteAge,
+                           @JsonProperty("deleteBatchSize") final int deleteBatchSize,
+                           @JsonProperty("flushBatchSize") final int flushBatchSize,
+                           @JsonProperty("addAsync") final boolean addAsync) {
+        this.deleteAge = deleteAge;
+        this.deleteBatchSize = deleteBatchSize;
+        this.flushBatchSize = flushBatchSize;
+        this.addAsync = addAsync;
+    }
 
     public StroomDuration getDeleteAge() {
         return deleteAge;
-    }
-
-    @SuppressWarnings("unused")
-    public void setDeleteAge(final StroomDuration deleteAge) {
-        this.deleteAge = deleteAge;
     }
 
     public int getDeleteBatchSize() {
         return deleteBatchSize;
     }
 
-    @SuppressWarnings("unused")
-    public void setDeleteBatchSize(final int deleteBatchSize) {
-        this.deleteBatchSize = deleteBatchSize;
-    }
-
     public int getFlushBatchSize() {
         return flushBatchSize;
-    }
-
-    @SuppressWarnings("unused")
-    public void setFlushBatchSize(final int flushBatchSize) {
-        this.flushBatchSize = flushBatchSize;
     }
 
     public boolean isAddAsync() {
         return addAsync;
     }
 
-    @SuppressWarnings("unused")
+    @Deprecated(forRemoval = true)
     public void setAddAsync(final boolean addAsync) {
         this.addAsync = addAsync;
+    }
+
+    public MetaValueConfig withAddAsync(final boolean addAsync) {
+        return new MetaValueConfig(deleteAge, deleteBatchSize, flushBatchSize, addAsync);
     }
 
     @Override

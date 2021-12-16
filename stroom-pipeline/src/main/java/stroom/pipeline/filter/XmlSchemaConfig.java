@@ -5,27 +5,33 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class XmlSchemaConfig extends AbstractConfig implements IsStroomConfig {
 
-    private CacheConfig cacheConfig = CacheConfig.builder()
-            .maximumSize(1000L)
-            .expireAfterAccess(StroomDuration.ofMinutes(10))
-            .build();
+    private final CacheConfig cacheConfig;
+
+    public XmlSchemaConfig() {
+        cacheConfig = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+    }
+
+    @JsonCreator
+    public XmlSchemaConfig(@JsonProperty("cache") final CacheConfig cacheConfig) {
+        this.cacheConfig = cacheConfig;
+    }
 
     @JsonProperty("cache")
     @JsonPropertyDescription("The cache config for the XML schema pool.")
     public CacheConfig getCacheConfig() {
         return cacheConfig;
-    }
-
-    public void setCacheConfig(final CacheConfig cacheConfig) {
-        this.cacheConfig = cacheConfig;
     }
 
     @Override

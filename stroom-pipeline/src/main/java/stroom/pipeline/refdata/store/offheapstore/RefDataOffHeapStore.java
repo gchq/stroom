@@ -99,6 +99,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 /**
@@ -138,7 +139,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final ValueStore valueStore;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
 
-    private final ReferenceDataConfig referenceDataConfig;
+    private final Provider<ReferenceDataConfig> referenceDataConfigProvider;
 
     private final RefDataValueConverter refDataValueConverter;
 
@@ -152,7 +153,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @Inject
     RefDataOffHeapStore(
             final LmdbEnvFactory lmdbEnvFactory,
-            final ReferenceDataConfig referenceDataConfig,
+            final Provider<ReferenceDataConfig> referenceDataConfigProvider,
             final ByteBufferPool byteBufferPool,
             final Factory keyValueStoreDbFactory,
             final ValueStoreDb.Factory valueStoreDbFactory,
@@ -165,11 +166,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final TaskContext taskContext) {
 
         this.lmdbEnvFactory = lmdbEnvFactory;
-        this.referenceDataConfig = referenceDataConfig;
+        this.referenceDataConfigProvider = referenceDataConfigProvider;
         this.refDataValueConverter = refDataValueConverter;
         this.taskContext = taskContext;
 
-        this.lmdbEnvironment = createEnvironment(referenceDataConfig.getLmdbConfig());
+        this.lmdbEnvironment = createEnvironment(referenceDataConfigProvider.get().getLmdbConfig());
 
         // create all the databases
         this.keyValueStoreDb = keyValueStoreDbFactory.create(lmdbEnvironment);
@@ -200,7 +201,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
         // Need a reasonable number to try and avoid keys that are not equal from using the
         // same stripe
-        final int stripesCount = referenceDataConfig.getLoadingLockStripes();
+        final int stripesCount = referenceDataConfigProvider.get().getLoadingLockStripes();
         LOGGER.debug("Initialising striped with {} stripes", stripesCount);
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(stripesCount);
     }
@@ -415,8 +416,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Override
     public void purgeOldData() {
-        LOGGER.info("purgeAge in purgeOldData: {}", referenceDataConfig.getPurgeAge());
-        purgeOldData(Instant.now(), referenceDataConfig.getPurgeAge());
+        LOGGER.info("purgeAge in purgeOldData: {}", referenceDataConfigProvider.get().getPurgeAge());
+        purgeOldData(Instant.now(), referenceDataConfigProvider.get().getPurgeAge());
     }
 
     @Override
@@ -529,7 +530,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 refStreamDefinition,
                 effectiveTimeMs);
 
-        refDataLoader.setCommitInterval(referenceDataConfig.getMaxPutsBeforeCommit());
+        refDataLoader.setCommitInterval(referenceDataConfigProvider.get().getMaxPutsBeforeCommit());
         return refDataLoader;
     }
 
@@ -717,7 +718,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
             try {
                 try (final BatchingWriteTxn batchingWriteTxn = lmdbEnvironment.openBatchingWriteTxn(
-                        referenceDataConfig.getMaxPurgeDeletesBeforeCommit())) {
+                        referenceDataConfigProvider.get().getMaxPurgeDeletesBeforeCommit())) {
 
                     // We now hold an open write txn so re-fetch the processing info in case something has
                     // changed between our first read and now
@@ -1310,6 +1311,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         try {
             final Tuple2<Optional<Instant>, Optional<Instant>> lastAccessedTimeRange =
                     processingInfoDb.getLastAccessedTimeRange();
+
+            final ReferenceDataConfig referenceDataConfig = referenceDataConfigProvider.get();
 
             final SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName())
                     .addDetail("Path", lmdbEnvironment.getLocalDir().toAbsolutePath().normalize())

@@ -22,8 +22,8 @@ class TestByteBufferPoolImpl4 {
 
     @Test
     void testGetBuffer_nullMap() {
-        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
-        byteBufferPoolConfig.setPooledByteBufferCounts(null);
+        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig()
+                .withPooledByteBufferCounts(null);
 
         // No map means no pooled buffers so you get the size you asked for
         doTest(byteBufferPoolConfig, 50, 0);
@@ -31,8 +31,8 @@ class TestByteBufferPoolImpl4 {
 
     @Test
     void testGetBuffer_emptyMap() {
-        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
-        byteBufferPoolConfig.setPooledByteBufferCounts(new HashMap<>());
+        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig()
+                .withPooledByteBufferCounts(new HashMap<>());
 
         // No map means no pooled buffers so you get the size you asked for
         doTest(byteBufferPoolConfig, 50, 0);
@@ -40,10 +40,10 @@ class TestByteBufferPoolImpl4 {
 
     @Test
     void testGetBuffer_sparseMap() {
-        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
-        byteBufferPoolConfig.setPooledByteBufferCounts(Map.of(
-                1, 20,
-                10_000, 10));
+        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig()
+                .withPooledByteBufferCounts(Map.of(
+                        1, 20,
+                        10_000, 10));
 
         // sparse map means buffer sizes between 1 and 10_000 will get the default count and thus
         // will be pooled
@@ -53,11 +53,11 @@ class TestByteBufferPoolImpl4 {
     @SuppressWarnings("checkstyle:variabledeclarationusagedistance")
     @Test
     void testGetBuffer_zeroValue() {
-        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
-        byteBufferPoolConfig.setPooledByteBufferCounts(Map.of(
-                1, 20,
-                10, 10,
-                100, 0));
+        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig()
+                .withPooledByteBufferCounts(Map.of(
+                        1, 20,
+                        10, 10,
+                        100, 0));
 
         final ByteBufferPool byteBufferPool = doTest(byteBufferPoolConfig, 50, 0);
 

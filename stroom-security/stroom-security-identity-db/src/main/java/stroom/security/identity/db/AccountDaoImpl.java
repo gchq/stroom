@@ -57,6 +57,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static java.util.Map.entry;
@@ -165,14 +166,14 @@ class AccountDaoImpl implements AccountDao {
             FIELD_NAME_LAST_LOGIN_MS,
             Comparator.nullsFirst(Comparator.comparingLong(Account::getLastLoginMs)));
 
-    private final IdentityConfig config;
+    private final Provider<IdentityConfig> identityConfigProvider;
     private final IdentityDbConnProvider identityDbConnProvider;
     private final GenericDao<AccountRecord, Account, Integer> genericDao;
 
     @Inject
-    public AccountDaoImpl(final IdentityConfig config,
+    public AccountDaoImpl(final Provider<IdentityConfig> identityConfigProvider,
                           final IdentityDbConnProvider identityDbConnProvider) {
-        this.config = config;
+        this.identityConfigProvider = identityConfigProvider;
         this.identityDbConnProvider = identityDbConnProvider;
         genericDao = new GenericDao<>(
                 identityDbConnProvider,
@@ -381,7 +382,8 @@ class AccountDaoImpl implements AccountDao {
     public boolean incrementLoginFailures(final String userId) {
         boolean locked = false;
 
-        if (config.getFailedLoginLockThreshold() != null) {
+        final IdentityConfig identityConfig = identityConfigProvider.get();
+        if (identityConfig.getFailedLoginLockThreshold() != null) {
             JooqUtil.context(identityDbConnProvider, context -> context
                     .update(ACCOUNT)
 //                    .set(DSL.row(ACCOUNT.LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
@@ -399,7 +401,7 @@ class AccountDaoImpl implements AccountDao {
                             ACCOUNT.LOGIN_FAILURES.plus(1))
                     .set(ACCOUNT.LOCKED,
                             DSL.field(ACCOUNT.LOGIN_FAILURES
-                                    .ge(config.getFailedLoginLockThreshold())))
+                                    .ge(identityConfig.getFailedLoginLockThreshold())))
                     .where(ACCOUNT.USER_ID.eq(userId))
                     .execute());
 

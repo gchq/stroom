@@ -4,11 +4,12 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
-import stroom.config.app.YamlUtil;
+import stroom.config.app.StroomYamlUtil;
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
-import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.legacy.db.LegacyDbConfig;
+import stroom.config.global.impl.ConfigProvidersModule;
+import stroom.legacy.db.LegacyConfig;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
@@ -34,7 +35,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -93,25 +93,28 @@ class TestAppConfigModule {
         LOGGER.debug("dev yaml path: {}", devYamlPath.toAbsolutePath());
 
         // Modify the value on the common connection pool so it gets applied to all other config objects
-        final Config modifiedConfig = YamlUtil.readConfig(devYamlPath);
-//        modifiedConfig.getAppConfig().getCommonDbConfig().getConnectionPoolConfig().setPrepStmtCacheSize(250);
-        final int currentValue = modifiedConfig.getAppConfig()
+        final Config modifiedConfig = StroomYamlUtil.readConfig(devYamlPath);
+        // Merge all the default values in
+//        final AppConfig modifiedAppConfig = ConfigMapper.buildMergedAppConfig(devYamlPath);
+        final AppConfig modifiedAppConfig = modifiedConfig.getYamlAppConfig();
+
+        final int currentValue = modifiedAppConfig
                 .getCommonDbConfig()
                 .getConnectionPoolConfig()
                 .getPrepStmtCacheSize();
         final int newCacheValue = currentValue + 1000;
 
-        modifiedConfig.getAppConfig()
+        modifiedAppConfig
                 .getCommonDbConfig()
                 .getConnectionPoolConfig()
                 .setPrepStmtCacheSize(newCacheValue);
 
-        final String newUser = modifiedConfig.getAppConfig()
+        final String newUser = modifiedAppConfig
                 .getCommonDbConfig()
                 .getConnectionConfig()
                 .getUser() + "XXX";
 
-        modifiedConfig.getAppConfig()
+        modifiedAppConfig
                 .getCommonDbConfig()
                 .getConnectionConfig()
                 .setUser(newUser);
@@ -121,20 +124,21 @@ class TestAppConfigModule {
             protected void configure() {
                 install(new AppConfigModule(new ConfigHolder() {
                     @Override
-                    public AppConfig getAppConfig() {
-                        return modifiedConfig.getAppConfig();
+                    public AppConfig getBootStrapConfig() {
+                        return modifiedAppConfig;
                     }
 
                     @Override
                     public Path getConfigFile() {
-                        return devYamlPath;
+                        return Path.of("DUMMY");
                     }
                 }));
+                install(new ConfigProvidersModule());
             }
         });
 
-        AppConfig appConfig = injector.getInstance(AppConfig.class);
-        CommonDbConfig commonDbConfig = injector.getInstance(CommonDbConfig.class);
+        final AppConfig appConfig = injector.getInstance(AppConfig.class);
+        final CommonDbConfig commonDbConfig = injector.getInstance(CommonDbConfig.class);
 
 //        Assertions.assertThat(commonDbConfig.getConnectionConfig().getClassName())
 //                .isNotNull();
@@ -157,12 +161,12 @@ class TestAppConfigModule {
                 });
 
         Stream.concat(
-                Stream.of(new LegacyDbConfig()), // This is not in the tree but we want to test it
+                Stream.of(new LegacyConfig()), // This is not in the tree but we want to test it
                 hasDbConfigsStream)
                 .forEach(hasDbConfig -> {
                     LOGGER.info("Testing class: {}", hasDbConfig.getClass().getName());
 
-                    final DbConfig mergedConfig = commonDbConfig.mergeConfig(hasDbConfig.getDbConfig());
+                    final AbstractDbConfig mergedConfig = commonDbConfig.mergeConfig(hasDbConfig.getDbConfig());
 
                     // mergedConfig won't be the same as commonDbConfig as the driver class
                     // is not set in the yaml so is reliant on the default value. The default value
@@ -199,7 +203,7 @@ class TestAppConfigModule {
      * IMPORTANT: This test must be run from stroom-app so it can see all the other modules
      */
     @Test
-    void testAbstractConfigPresence() throws IOException {
+    void testAbstractConfigPresence_MASTER() throws IOException {
 
         AppConfig appConfig = new AppConfig();
         AppConfigModule appConfigModule = new AppConfigModule(new ConfigHolder() {
@@ -335,6 +339,148 @@ class TestAppConfigModule {
         }
 
         assertThat(classesWithMultipleInstances).isEmpty();
+    }
+
+    /**
+     * IMPORTANT: This test must be run from stroom-app so it can see all the other modules
+     */
+    @Test
+    void testAbstractConfigPresence() throws IOException {
+
+        AppConfig appConfig = new AppConfig();
+        AppConfigModule appConfigModule = new AppConfigModule(new ConfigHolder() {
+            @Override
+            public AppConfig getBootStrapConfig() {
+                return appConfig;
+            }
+
+            @Override
+            public Path getConfigFile() {
+                return Paths.get("NOT USED");
+            }
+        });
+        final Injector injector = Guice.createInjector(appConfigModule);
+
+        Predicate<String> packageNameFilter = name ->
+                name.startsWith(STROOM_PACKAGE_PREFIX) && !name.contains("shaded");
+
+        Predicate<Class<?>> classFilter = clazz ->
+                clazz.getSimpleName().endsWith("Config")
+                        && !clazz.equals(AbstractConfig.class)
+                        && !clazz.equals(AppConfig.class)
+                        && IsStroomConfig.class.isAssignableFrom(clazz);
+
+        LOGGER.info("Finding all stroom config classes");
+
+        // Find all config classes
+        final ClassLoader classLoader = getClass().getClassLoader();
+        final Set<Class<?>> stroomConfigClasses = ClassPath.from(classLoader)
+                .getAllClasses()
+                .stream()
+                .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
+                .map(ClassPath.ClassInfo::load)
+                .filter(classFilter)
+                .filter(clazz -> {
+                    boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
+                    if (isAbstract) {
+                        LOGGER.info("Ignoring abstract class {}", clazz.getName());
+                    }
+                    return !isAbstract;
+                }) // Ignore abstract classes, e.g. UriConfig
+                .peek(clazz -> {
+                    LOGGER.debug(clazz.getSimpleName());
+                })
+                .collect(Collectors.toSet());
+
+        // All config classes should extend AbstractConfig and IsStroomConfig
+        assertThat(stroomConfigClasses.stream()
+                .filter(clazz ->
+                        !AbstractConfig.class.isAssignableFrom(clazz)
+                                || !IsStroomConfig.class.isAssignableFrom(clazz))
+                .collect(Collectors.toList()))
+                .isEmpty();
+
+        LOGGER.info("Finding all classes in object tree");
+
+        Map<Class<?>, Integer> appConfigTreeClassToIdMap = new HashMap<>();
+
+        // Find all stroom. classes in the AppConfig tree, i.e. config POJOs
+        final Set<Class<?>> appConfigTreeClasses = new HashSet<>();
+        PropertyUtil.walkObjectTree(
+                appConfig,
+                prop -> packageNameFilter.test(prop.getValueClass().getPackageName()),
+                prop -> {
+                    // make sure we have a getter and a setter
+                    assertThat(prop.getGetter())
+                            .as(LogUtil.message("{} {}",
+                                    prop.getParentObject().getClass().getSimpleName(), prop.getGetter().getName()))
+                            .isNotNull();
+
+//                    assertThat(prop.getSetter())
+//                            .as(LogUtil.message("{} {}",
+//                                    prop.getParentObject().getClass().getSimpleName(), prop.getSetter().getName()))
+//                            .isNotNull();
+
+                    Class<?> valueClass = prop.getValueClass();
+                    if (classFilter.test(valueClass)) {
+                        appConfigTreeClasses.add(prop.getValueClass());
+                        AbstractConfig propValue = (AbstractConfig) prop.getValueFromConfigObject();
+                        // Keep a record of the instance ID of the instance in the tree
+                        appConfigTreeClassToIdMap.put(valueClass, System.identityHashCode(propValue));
+                    }
+                });
+
+//        Map<Class<?>, Integer> injectedInstanceIdMap = abstractConfigConcreteClasses.stream()
+//                .collect(Collectors.toMap(
+//                        clazz -> clazz,
+//                        clazz -> {
+//                            Object object = injector.getInstance(clazz);
+//                            return System.identityHashCode(object);
+//                        }));
+
+        // Make sure all config classes extend AbstractConfig and all AbstractConfig classes are in
+        // the AppConfig tree. If there is a mismatch then it may be due to the getter/setter not
+        // being public in the config class, else the config class may not be a property in the
+        // AppConfig object tree
+        Set<Class<?>> remaining = new HashSet<>(appConfigTreeClasses);
+        remaining.removeAll(stroomConfigClasses);
+        assertThat(remaining).isEmpty();
+
+        remaining = new HashSet<>(stroomConfigClasses);
+        remaining.removeAll(appConfigTreeClasses);
+        assertThat(remaining).isEmpty();
+
+//        // Now we know the appConfig tree contains all the concrete AbstractConfig classes
+//        // check that guice will give us the right instance. This ensures
+//
+//        List<Class<?>> classesWithMultipleInstances = appConfigTreeClassToIdMap.entrySet()
+//                .stream()
+//                .filter(entry -> {
+//                    Integer appConfigTreeInstanceId = entry.getValue();
+//                    Integer injectedInstanceId = injectedInstanceIdMap.get(entry.getKey());
+//
+//                    // Some AbstractConfig classes are shared so can't be injected themselves
+//                    // so filter them out
+//                    boolean isInjectableClass = entry.getKey().getAnnotation(NotInjectableConfig.class) == null;
+//
+//                    return !injectedInstanceId.equals(appConfigTreeInstanceId) && isInjectableClass;
+//                })
+//                .map(Map.Entry::getKey)
+//                .collect(Collectors.toList());
+//
+//        if (!classesWithMultipleInstances.isEmpty()) {
+//            LOGGER.error("The following AbstractConfig classes have a different injected instance to the " +
+//                    "instance in the AppConfig tree.\n" +
+//                    "You need to add Guice bindings for them in AppConfigModule");
+//            classesWithMultipleInstances.stream()
+//                    .sorted(Comparator.comparing(Class::getName))
+//                    .forEach(clazz -> {
+//                        AbstractConfig config = (AbstractConfig) injector.getInstance(clazz);
+//                        LOGGER.info("  {}", clazz.getName());
+//                    });
+//        }
+//
+//        Assertions.assertThat(classesWithMultipleInstances).isEmpty();
     }
 
     static Path getDevYamlPath() throws FileNotFoundException {

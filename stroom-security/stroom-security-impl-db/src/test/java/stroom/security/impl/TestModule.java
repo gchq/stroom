@@ -2,6 +2,7 @@ package stroom.security.impl;
 
 import stroom.cache.impl.CacheModule;
 import stroom.explorer.api.ExplorerService;
+import stroom.security.impl.db.SecurityDaoModule;
 import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.mock.MockProcessingUserIdentityProviderModule;
@@ -22,6 +23,7 @@ public class TestModule extends AbstractModule {
         install(new DbTestModule());
         install(new CacheModule());
         install(new SecurityDbModule());
+        install(new SecurityDaoModule());
         install(new MockSecurityContextModule());
         install(new MockProcessingUserIdentityProviderModule());
         install(new MockTaskModule());

@@ -27,7 +27,10 @@ class AppPermissionDaoImplTest {
 
     @BeforeAll
     static void beforeAll() {
-        Injector injector = Guice.createInjector(new SecurityDbModule(), new TestModule());
+        Injector injector = Guice.createInjector(
+                new SecurityDbModule(),
+                new SecurityDaoModule(),
+                new TestModule());
 
         userDao = injector.getInstance(UserDao.class);
         appPermissionDao = injector.getInstance(AppPermissionDao.class);

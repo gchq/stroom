@@ -93,10 +93,10 @@ class TestProxyConfigModule {
                                     prop.getParentObject().getClass().getSimpleName(), prop.getGetter().getName()))
                             .isNotNull();
 
-                    Assertions.assertThat(prop.getSetter())
-                            .as(LogUtil.message("{} {}",
-                                    prop.getParentObject().getClass().getSimpleName(), prop.getSetter().getName()))
-                            .isNotNull();
+//                    Assertions.assertThat(prop.getSetter())
+//                            .as(LogUtil.message("{} {}",
+//                                    prop.getParentObject().getClass().getSimpleName(), prop.getSetter().getName()))
+//                            .isNotNull();
 
                     Class<?> valueClass = prop.getValueClass();
                     if (classFilter.test(valueClass)) {

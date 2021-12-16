@@ -4,9 +4,8 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
+import stroom.config.global.impl.ConfigMapper;
 import stroom.util.io.FileUtil;
-
-import com.google.inject.Provides;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -15,14 +14,31 @@ import java.nio.file.Path;
 
 public class AppConfigTestModule extends AppConfigModule {
 
+    private final ConfigMapperSpy configMapperSpy;
+
     public AppConfigTestModule() {
         super(new ConfigHolderImpl());
+        configMapperSpy = new ConfigMapperSpy(super.getConfigHolder());
     }
 
-    @Provides
-    public Config getConfig() {
-        return ((ConfigHolderImpl) getConfigHolder()).getConfig();
+    public AppConfigTestModule(final ConfigHolder configHolder) {
+        super(configHolder);
+        configMapperSpy = new ConfigMapperSpy(configHolder);
     }
+
+    @Override
+    protected void configure() {
+        super.configure();
+
+        bind(ConfigMapper.class).toInstance(configMapperSpy);
+        // Also bind instance to its superclass
+        bind(ConfigMapperSpy.class).toInstance(configMapperSpy);
+    }
+
+//    @Provides
+//    public Config getConfig() {
+//        return ((ConfigHolderImpl) getConfigHolder()).getConfig();
+//    }
 
     private static class ConfigHolderImpl implements ConfigHolder {
 
@@ -40,14 +56,14 @@ public class AppConfigTestModule extends AppConfigModule {
                 appConfig.getPathConfig().setHome(FileUtil.getCanonicalPath(dir));
 
                 this.config = new Config();
-                this.config.setAppConfig(appConfig);
+                this.config.setYamlAppConfig(appConfig);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e.getMessage(), e);
             }
         }
 
         @Override
-        public AppConfig getAppConfig() {
+        public AppConfig getBootStrapConfig() {
             return appConfig;
         }
 

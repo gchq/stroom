@@ -23,6 +23,7 @@ import org.fusesource.restygwt.client.REST;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.ws.rs.core.MediaType;
 
 class RestFactoryImpl implements RestFactory, HasHandlers {
 
@@ -72,55 +73,34 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                         // so extract the response payload and treat it as WebApplicationException
                         // json
 //                        String msg = exception.getMessage();
-                        Throwable throwable = exception;
+                        Throwable throwable = null;
 
                         if (method.getResponse() != null &&
                                 method.getResponse().getText() != null &&
                                 !method.getResponse().getText().trim().isEmpty()) {
-                            final String json = method.getResponse().getText().trim();
+                            final String responseText = method.getResponse().getText().trim();
+                            final String contentType = method.getResponse().getHeader("Content-Type");
 
-                            try {
-                                // Assuming we get a response like { "code": "", "message": "" } or
-                                // { "code": "", "details": "" }
-                                final JSONObject responseJson = (JSONObject) JSONParser.parseStrict(json);
-                                final Integer code = JSONUtil.getInteger(responseJson.get("code"));
-                                final String message = JSONUtil.getString(responseJson.get("message"));
-                                final String details = JSONUtil.getString(responseJson.get("details"));
-                                final String responseKeyValues = responseJson.keySet()
-                                        .stream()
-                                        .map(key -> {
-                                            final String val = getJsonKey(responseJson, key);
-                                            return val != null
-                                                    ? key + ": " + val
-                                                    : null;
-                                        })
-                                        .filter(Objects::nonNull)
-                                        .collect(Collectors.joining(", "));
-
-                                if (message != null && message.length() > 0) {
-                                    throwable = new ResponseException(
-                                            method.builder.getHTTPMethod(),
-                                            method.builder.getUrl(),
-                                            json,
-                                            code,
-                                            message,
-                                            details,
-                                            responseKeyValues,
-                                            throwable);
-
-                                } else {
-                                    final String msg = "Error calling " +
-                                            method.builder.getHTTPMethod() +
-                                            " " +
-                                            method.builder.getUrl() +
-                                            " - " +
-                                            responseKeyValues;
-                                    throwable = new RuntimeException(msg, exception);
+                            if (MediaType.TEXT_PLAIN.equals(contentType)) {
+                                throwable = getThrowableFromStringResponse(method, exception, responseText);
+                            } else {
+                                try {
+                                    throwable = getThrowableFromJsonResponse(method, exception, responseText);
+                                } catch (Exception e) {
+                                    GWT.log("Error parsing response as json: " + e.getMessage());
+                                    try {
+                                        // Try parsing it as text
+                                        throwable = getThrowableFromStringResponse(method, exception, responseText);
+                                    } catch (Exception e2) {
+                                        GWT.log("Error parsing response as text: " + e.getMessage());
+                                    }
                                 }
-
-                            } catch (Exception e) {
-                                // Unable to parse message as JSON.
                             }
+                        }
+
+                        // Fallback
+                        if (throwable == null) {
+                            throwable = exception;
                         }
 
                         if (errorConsumer != null) {
@@ -168,6 +148,65 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                 }
             };
             rest = REST.withCallback(methodCallback);
+        }
+
+        private Throwable getThrowableFromStringResponse(final Method method,
+                                                         final Throwable throwable,
+                                                         final String response) {
+            return new ResponseException(
+                    method.builder.getHTTPMethod(),
+                    method.builder.getUrl(),
+                    null,
+                    method.getResponse().getStatusCode(),
+                    response,
+                    null,
+                    null,
+                    throwable);
+        }
+
+        private Throwable getThrowableFromJsonResponse(final Method method,
+                                                       final Throwable throwable,
+                                                       final String json) {
+
+            final Throwable newThrowable;
+            // Assuming we get a response like { "code": "", "message": "" } or
+            // { "code": "", "details": "" }
+            final JSONObject responseJson = (JSONObject) JSONParser.parseStrict(json);
+            final Integer code = JSONUtil.getInteger(responseJson.get("code"));
+            final String message = JSONUtil.getString(responseJson.get("message"));
+            final String details = JSONUtil.getString(responseJson.get("details"));
+            final String responseKeyValues = responseJson.keySet()
+                    .stream()
+                    .map(key -> {
+                        final String val = getJsonKey(responseJson, key);
+                        return val != null
+                                ? key + ": " + val
+                                : null;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining(", "));
+
+            if (message != null && message.length() > 0) {
+                newThrowable = new ResponseException(
+                        method.builder.getHTTPMethod(),
+                        method.builder.getUrl(),
+                        json,
+                        code,
+                        message,
+                        details,
+                        responseKeyValues,
+                        throwable);
+
+            } else {
+                final String msg = "Error calling " +
+                        method.builder.getHTTPMethod() +
+                        " " +
+                        method.builder.getUrl() +
+                        " - " +
+                        responseKeyValues;
+                newThrowable = new RuntimeException(msg, throwable);
+            }
+            return newThrowable;
         }
 
         @Override

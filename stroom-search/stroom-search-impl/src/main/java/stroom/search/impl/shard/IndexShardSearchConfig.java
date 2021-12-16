@@ -5,25 +5,45 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class IndexShardSearchConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 5;
 
-    private int maxDocIdQueueSize = 1000000;
-    private int maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
-    private CacheConfig searchResultCache = CacheConfig.builder()
-            .maximumSize(10000L)
-            .expireAfterAccess(StroomDuration.ofMinutes(10))
-            .build();
-    private CacheConfig indexShardSearcherCache = CacheConfig.builder()
-            .maximumSize(2L)
-            .expireAfterAccess(StroomDuration.ofMinutes(1))
-            .build();
+    private final int maxDocIdQueueSize;
+    private final int maxThreadsPerTask;
+    private final CacheConfig searchResultCache;
+    private final CacheConfig indexShardSearcherCache;
+
+    public IndexShardSearchConfig() {
+        maxDocIdQueueSize = 1_000_000;
+        maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
+        searchResultCache = CacheConfig.builder()
+                .maximumSize(10_000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+        indexShardSearcherCache = CacheConfig.builder()
+                .maximumSize(2L)
+                .expireAfterAccess(StroomDuration.ofMinutes(1))
+                .build();
+    }
+
+    @JsonCreator
+    public IndexShardSearchConfig(@JsonProperty("maxDocIdQueueSize") final int maxDocIdQueueSize,
+                                  @JsonProperty("maxThreadsPerTask") final int maxThreadsPerTask,
+                                  @JsonProperty("searchResultCache") final CacheConfig searchResultCache,
+                                  @JsonProperty("indexShardSearcherCache") final CacheConfig indexShardSearcherCache) {
+        this.maxDocIdQueueSize = maxDocIdQueueSize;
+        this.maxThreadsPerTask = maxThreadsPerTask;
+        this.searchResultCache = searchResultCache;
+        this.indexShardSearcherCache = indexShardSearcherCache;
+    }
 
     @JsonPropertyDescription("The maximum number of doc ids that will be queued ready for stored data to be " +
             "retrieved from the index shard")
@@ -31,33 +51,17 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
         return maxDocIdQueueSize;
     }
 
-    public void setMaxDocIdQueueSize(final int maxDocIdQueueSize) {
-        this.maxDocIdQueueSize = maxDocIdQueueSize;
-    }
-
     @JsonPropertyDescription("The maximum number of threads per search, per node, used to search Lucene index shards")
     public int getMaxThreadsPerTask() {
         return maxThreadsPerTask;
-    }
-
-    public void setMaxThreadsPerTask(final int maxThreadsPerTask) {
-        this.maxThreadsPerTask = maxThreadsPerTask;
     }
 
     public CacheConfig getSearchResultCache() {
         return searchResultCache;
     }
 
-    public void setSearchResultCache(final CacheConfig searchResultCache) {
-        this.searchResultCache = searchResultCache;
-    }
-
     public CacheConfig getIndexShardSearcherCache() {
         return indexShardSearcherCache;
-    }
-
-    public void setIndexShardSearcherCache(final CacheConfig indexShardSearcherCache) {
-        this.indexShardSearcherCache = indexShardSearcherCache;
     }
 
     @Override

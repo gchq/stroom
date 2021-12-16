@@ -31,6 +31,7 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -60,10 +61,13 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final FieldIndex fieldIndex = new FieldIndex();
 
         final TempDirProvider tempDirProvider = () -> tempDir;
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
-        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(pathCreator, tempDirProvider, lmdbLibraryConfig);
+        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
+                pathCreator,
+                tempDirProvider,
+                () -> lmdbLibraryConfig);
         final Executor executor = Executors.newCachedThreadPool();
 
         return new LmdbDataStore(

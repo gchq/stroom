@@ -5,20 +5,33 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class KafkaConfig extends AbstractConfig implements IsStroomConfig {
 
-    private String skeletonConfigContent = DEFAULT_SKELETON_CONFIG_CONTENT;
+    private final String skeletonConfigContent;
+    private final CacheConfig kafkaConfigDocCache;
 
-    private CacheConfig kafkaConfigDocCache = CacheConfig.builder()
-            .maximumSize(1000L)
-            .expireAfterAccess(StroomDuration.ofSeconds(10))
-            .build();
+    public KafkaConfig() {
+        skeletonConfigContent = DEFAULT_SKELETON_CONFIG_CONTENT;
+        kafkaConfigDocCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofSeconds(10))
+                .build();
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public KafkaConfig(@JsonProperty("skeletonConfigContent") final String skeletonConfigContent,
+                       @JsonProperty("kafkaConfigDocCache") final CacheConfig kafkaConfigDocCache) {
+        this.skeletonConfigContent = skeletonConfigContent;
+        this.kafkaConfigDocCache = kafkaConfigDocCache;
+    }
 
     @JsonProperty("skeletonConfigContent")
     @JsonPropertyDescription("The value of this property will be used to pre-populate a new Kafka Configuration. "
@@ -28,19 +41,9 @@ public class KafkaConfig extends AbstractConfig implements IsStroomConfig {
         return skeletonConfigContent;
     }
 
-    @SuppressWarnings("unused")
-    public void setSkeletonConfigContent(final String skeletonConfigContent) {
-        this.skeletonConfigContent = skeletonConfigContent;
-    }
-
     @JsonProperty("kafkaConfigDocCache")
     public CacheConfig getKafkaConfigDocCache() {
         return kafkaConfigDocCache;
-    }
-
-    @SuppressWarnings("unused")
-    public void setKafkaConfigDocCache(final CacheConfig kafkaConfigDocCache) {
-        this.kafkaConfigDocCache = kafkaConfigDocCache;
     }
 
     @Override
@@ -53,84 +56,84 @@ public class KafkaConfig extends AbstractConfig implements IsStroomConfig {
     // Put this at the bottom to keep it out of the way
     // See kafkaProducerSkeletonPropsFull.properties and
     // kafkaProducerSkeletonPropsShort.properties
-    private static final String DEFAULT_SKELETON_CONFIG_CONTENT = ""
-            + "# The following properties are taken from the v2.2 documentation\n"
-            + "# for the Kafka Producer and can be uncommented and set as required.\n"
-            + "# NOTE key.serializer and value.serializer should not be set as\n"
-            + "# these are set within stroom.\n"
-            + "# https://kafka.apache.org/22/documentation.html#producerconfigs\n"
-            + "\n"
-            + "# The following properties are recommended to be set with values appropriate\n"
-            + "# to your environment.\n"
-            + "\n"
-            + "# The list of kafka brokers (host:port) to bootstrap the Kafka client with.\n"
-            + "# This can be one or more of the  brokers in the cluster.\n"
-            + "bootstrap.servers=kafka:9092,localhost:9092\n"
-            + "\n"
-            + "# The ID to use to identify this Kafka producer instance.\n"
-            + "# E.g. 'stroom', 'stroom-statistics', 'stroom-analytics', etc.\n"
-            + "client.id=stroom\n"
-            + "\n"
-            + "\n"
-            + "# The following properties are all remaining producer properties that can\n"
-            + "# be set if the Kafka default values are not suitable.\n"
-            + "#acks=\n"
-            + "#buffer.memory=\n"
-            + "#compression.type=\n"
-            + "#retries=\n"
-            + "#ssl.key.password=\n"
-            + "#ssl.keystore.location=\n"
-            + "#ssl.keystore.password=\n"
-            + "#ssl.truststore.location=\n"
-            + "#ssl.truststore.password=\n"
-            + "#batch.size=\n"
-            + "#client.dns.lookup=\n"
-            + "#connections.max.idle.ms=\n"
-            + "#delivery.timeout.ms=\n"
-            + "#linger.ms=\n"
-            + "#max.block.ms=\n"
-            + "#max.request.size=\n"
-            + "#partitioner.class=\n"
-            + "#receive.buffer.bytes=\n"
-            + "#request.timeout.ms=\n"
-            + "#sasl.client.callback.handler.class=\n"
-            + "#sasl.jaas.config=\n"
-            + "#sasl.kerberos.service.name=\n"
-            + "#sasl.login.callback.handler.class=\n"
-            + "#sasl.login.class=\n"
-            + "#sasl.mechanism=\n"
-            + "#security.protocol=\n"
-            + "#send.buffer.bytes=\n"
-            + "#ssl.enabled.protocols=\n"
-            + "#ssl.keystore.type=\n"
-            + "#ssl.protocol=\n"
-            + "#ssl.provider=\n"
-            + "#ssl.truststore.type=\n"
-            + "#enable.idempotence=\n"
-            + "#interceptor.classes=\n"
-            + "#max.in.flight.requests.per.connection=\n"
-            + "#metadata.max.age.ms=\n"
-            + "#metric.reporters=\n"
-            + "#metrics.num.samples=\n"
-            + "#metrics.recording.level=\n"
-            + "#metrics.sample.window.ms=\n"
-            + "#reconnect.backoff.max.ms=\n"
-            + "#reconnect.backoff.ms=\n"
-            + "#retry.backoff.ms=\n"
-            + "#sasl.kerberos.kinit.cmd=\n"
-            + "#sasl.kerberos.min.time.before.relogin=\n"
-            + "#sasl.kerberos.ticket.renew.jitter=\n"
-            + "#sasl.kerberos.ticket.renew.window.factor=\n"
-            + "#sasl.login.refresh.buffer.seconds=\n"
-            + "#sasl.login.refresh.min.period.seconds=\n"
-            + "#sasl.login.refresh.window.factor=\n"
-            + "#sasl.login.refresh.window.jitter=\n"
-            + "#ssl.cipher.suites=\n"
-            + "#ssl.endpoint.identification.algorithm=\n"
-            + "#ssl.keymanager.algorithm=\n"
-            + "#ssl.secure.random.implementation=\n"
-            + "#ssl.trustmanager.algorithm=\n"
-            + "#transaction.timeout.ms=\n"
-            + "#transactional.id=\n";
+    private static final String DEFAULT_SKELETON_CONFIG_CONTENT = """
+            # The following properties are taken from the v2.2 documentation
+            # for the Kafka Producer and can be uncommented and set as required.
+            # NOTE key.serializer and value.serializer should not be set as
+            # these are set within stroom.
+            # https://kafka.apache.org/22/documentation.html#producerconfigs
 
+            # The following properties are recommended to be set with values appropriate
+            # to your environment.
+
+            # The list of kafka brokers (host:port) to bootstrap the Kafka client with.
+            # This can be one or more of the  brokers in the cluster.
+            bootstrap.servers=kafka:9092,localhost:9092
+
+            # The ID to use to identify this Kafka producer instance.
+            # E.g. 'stroom', 'stroom-statistics', 'stroom-analytics', etc.
+            client.id=stroom
+
+
+            # The following properties are all remaining producer properties that can
+            # be set if the Kafka default values are not suitable.
+            #acks=
+            #buffer.memory=
+            #compression.type=
+            #retries=
+            #ssl.key.password=
+            #ssl.keystore.location=
+            #ssl.keystore.password=
+            #ssl.truststore.location=
+            #ssl.truststore.password=
+            #batch.size=
+            #client.dns.lookup=
+            #connections.max.idle.ms=
+            #delivery.timeout.ms=
+            #linger.ms=
+            #max.block.ms=
+            #max.request.size=
+            #partitioner.class=
+            #receive.buffer.bytes=
+            #request.timeout.ms=
+            #sasl.client.callback.handler.class=
+            #sasl.jaas.config=
+            #sasl.kerberos.service.name=
+            #sasl.login.callback.handler.class=
+            #sasl.login.class=
+            #sasl.mechanism=
+            #security.protocol=
+            #send.buffer.bytes=
+            #ssl.enabled.protocols=
+            #ssl.keystore.type=
+            #ssl.protocol=
+            #ssl.provider=
+            #ssl.truststore.type=
+            #enable.idempotence=
+            #interceptor.classes=
+            #max.in.flight.requests.per.connection=
+            #metadata.max.age.ms=
+            #metric.reporters=
+            #metrics.num.samples=
+            #metrics.recording.level=
+            #metrics.sample.window.ms=
+            #reconnect.backoff.max.ms=
+            #reconnect.backoff.ms=
+            #retry.backoff.ms=
+            #sasl.kerberos.kinit.cmd=
+            #sasl.kerberos.min.time.before.relogin=
+            #sasl.kerberos.ticket.renew.jitter=
+            #sasl.kerberos.ticket.renew.window.factor=
+            #sasl.login.refresh.buffer.seconds=
+            #sasl.login.refresh.min.period.seconds=
+            #sasl.login.refresh.window.factor=
+            #sasl.login.refresh.window.jitter=
+            #ssl.cipher.suites=
+            #ssl.endpoint.identification.algorithm=
+            #ssl.keymanager.algorithm=
+            #ssl.secure.random.implementation=
+            #ssl.trustmanager.algorithm=
+            #transaction.timeout.ms=
+            #transactional.id=
+            """;
 }
