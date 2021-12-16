@@ -49,16 +49,20 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
                      @JsonProperty("trustStorePath") final String trustStorePath,
                      @JsonProperty("trustStoreType") final String trustStoreType,
                      @JsonProperty("trustStorePassword") final String trustStorePassword,
-                     @JsonProperty("hostnameVerificationEnabled") final boolean isHostnameVerificationEnabled,
+                     @JsonProperty("hostnameVerificationEnabled") final Boolean isHostnameVerificationEnabled,
                      @JsonProperty("sslProtocol") final String sslProtocol) {
+
+        // SSLConfig is defaulted to null on parent config objects so we need to apply defaults in the ctor
+        // as the default config tree will not contain an SSLConfig to use as a reference.
         this.keyStorePath = keyStorePath;
-        this.keyStoreType = keyStoreType;
+        this.keyStoreType = Objects.requireNonNullElse(keyStoreType, DEFAULT_KEYSTORE_TYPE);
         this.keyStorePassword = keyStorePassword;
         this.trustStorePath = trustStorePath;
-        this.trustStoreType = trustStoreType;
+        this.trustStoreType = Objects.requireNonNullElse(trustStoreType, DEFAULT_KEYSTORE_TYPE);
         this.trustStorePassword = trustStorePassword;
-        this.isHostnameVerificationEnabled = isHostnameVerificationEnabled;
-        this.sslProtocol = sslProtocol;
+        this.isHostnameVerificationEnabled = Objects.requireNonNullElse(
+                isHostnameVerificationEnabled, DEFAULT_HOSTNAME_VERIFICATION_ENABLED);
+        this.sslProtocol = Objects.requireNonNullElse(sslProtocol, DEFAULT_SSL_PROTOCOL);
     }
 
     /**
