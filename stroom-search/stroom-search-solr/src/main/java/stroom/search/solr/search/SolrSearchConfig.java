@@ -1,6 +1,5 @@
 package stroom.search.solr.search;
 
-import stroom.search.extraction.ExtractionConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
@@ -25,7 +24,6 @@ public class SolrSearchConfig extends AbstractConfig {
     private final int maxStoredDataQueueSize;
     private final int maxBooleanClauseCount;
     private final String storeSize;
-    private final ExtractionConfig extractionConfig;
     private final CacheConfig searchResultCache;
 
     public SolrSearchConfig() {
@@ -33,7 +31,6 @@ public class SolrSearchConfig extends AbstractConfig {
         maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
         maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
         storeSize = "1000000,100,10,1";
-        extractionConfig = new ExtractionConfig();
         searchResultCache = CacheConfig.builder()
                 .maximumSize(10000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
@@ -45,12 +42,10 @@ public class SolrSearchConfig extends AbstractConfig {
     public SolrSearchConfig(@JsonProperty("maxStoredDataQueueSize") final int maxStoredDataQueueSize,
                             @JsonProperty("maxBooleanClauseCount") final int maxBooleanClauseCount,
                             @JsonProperty("storeSize") final String storeSize,
-                            @JsonProperty("extraction") final ExtractionConfig extractionConfig,
                             @JsonProperty("searchResultCache") final CacheConfig searchResultCache) {
         this.maxStoredDataQueueSize = maxStoredDataQueueSize;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.storeSize = storeSize;
-        this.extractionConfig = extractionConfig;
         this.searchResultCache = searchResultCache;
     }
 
@@ -70,11 +65,6 @@ public class SolrSearchConfig extends AbstractConfig {
         return storeSize;
     }
 
-    @JsonProperty("extraction")
-    public ExtractionConfig getExtractionConfig() {
-        return extractionConfig;
-    }
-
     public CacheConfig getSearchResultCache() {
         return searchResultCache;
     }
@@ -85,7 +75,6 @@ public class SolrSearchConfig extends AbstractConfig {
                 "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
                 ", maxBooleanClauseCount=" + maxBooleanClauseCount +
                 ", storeSize='" + storeSize + '\'' +
-                ", extractionConfig=" + extractionConfig +
                 ", searchResultCache=" + searchResultCache +
                 '}';
     }

@@ -692,11 +692,6 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 100
     search:
-      extraction:
-        extractionDelayMs: 100
-        maxStoredDataQueueSize: 1000
-        maxStreamEventMapSize: 1000000
-        maxThreadsPerTask: 5
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
       searchResultCache:
