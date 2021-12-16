@@ -25,6 +25,7 @@ public class TempDirProviderImpl implements TempDirProvider {
     @Inject
     public TempDirProviderImpl(final PathConfig pathConfig,
                                final HomeDirProvider homeDirProvider) {
+        // PathConfig is all RestartRequired so no need for a provider
         this.pathConfig = pathConfig;
         this.homeDirProvider = homeDirProvider;
     }

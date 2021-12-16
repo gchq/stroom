@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -46,11 +47,11 @@ class ContentServiceImpl implements ContentService {
     private final ResourceStore resourceStore;
     private final DependencyService dependencyService;
     private final SecurityContext securityContext;
-    private final ExportConfig exportConfig;
+    private final Provider<ExportConfig> exportConfigProvider;
 
     @Inject
     ContentServiceImpl(final ImportExportService importExportService,
-                       final ExportConfig exportConfig,
+                       final Provider<ExportConfig> exportConfigProvider,
                        final ResourceStore resourceStore,
                        final DependencyService dependencyService,
                        final SecurityContext securityContext) {
@@ -58,7 +59,7 @@ class ContentServiceImpl implements ContentService {
         this.resourceStore = resourceStore;
         this.dependencyService = dependencyService;
         this.securityContext = securityContext;
-        this.exportConfig = exportConfig;
+        this.exportConfigProvider = exportConfigProvider;
     }
 
     @Override
@@ -127,7 +128,7 @@ class ContentServiceImpl implements ContentService {
             throw new PermissionException(securityContext.getUserId(),
                     "You do not have permission to export all config");
         }
-        if (!exportConfig.isEnabled()) {
+        if (!exportConfigProvider.get().isEnabled()) {
             throw new PermissionException(securityContext.getUserId(), "Export is not enabled");
         }
 

@@ -25,6 +25,7 @@ public class HomeDirProviderImpl implements HomeDirProvider {
 
     @Inject
     public HomeDirProviderImpl(final PathConfig pathConfig) {
+        // PathConfig is all RestartRequired so no need for a provider
         this.pathConfig = pathConfig;
     }
 
