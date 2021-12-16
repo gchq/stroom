@@ -88,7 +88,7 @@ public class YamlUtil {
                     sparseRootNode,
                     null,
                     null,
-                    "",
+                    new StringBuilder(),
                     PropertyPath.blank(),
                     defaultRootNode);
 
@@ -149,7 +149,7 @@ public class YamlUtil {
     private static void mergeNodeTrees(final JsonNode jsonNode,
                                        final JsonNode parentJsonNode,
                                        final String name,
-                                       final String indent,
+                                       final StringBuilder indentBuilder,
                                        final PropertyPath propertyPath,
                                        final JsonNode sourceRootNode) {
         final String jsonPointerExpr = "/" + propertyPath.delimitedBy("/");
@@ -157,8 +157,14 @@ public class YamlUtil {
                 ? sourceRootNode
                 : sourceRootNode.at(jsonPointerExpr);
 
+//        System.out.println(LogUtil.message("{}name: {}, type: {}, jsonPointerExpr: {}, source type: {}",
+//                indent,
+//                name,
+//                jsonNode.getNodeType(),
+//                jsonPointerExpr,
+//                equivalentSourceNode.getNodeType()));
         LOGGER.trace("{}name: {}, type: {}, jsonPointerExpr: {}, source type: {}",
-                indent,
+                indentBuilder,
                 name,
                 jsonNode.getNodeType(),
                 jsonPointerExpr,
@@ -169,25 +175,23 @@ public class YamlUtil {
             jsonNode.fieldNames().forEachRemaining(childFieldNames::add);
 
             equivalentSourceNode.fieldNames().forEachRemaining(childFieldName -> {
-                LOGGER.trace("{}Field: {}", indent, childFieldName);
+                LOGGER.trace("{}Field: {}", indentBuilder, childFieldName);
                 if (!childFieldNames.contains(childFieldName)) {
                     // Add field that is in the source node tree but not in ours
                     // I.e. assuming the absence of a field is not an explicit null
                     final JsonNode sourceNode = equivalentSourceNode.get(childFieldName);
-                    LOGGER.trace("{}Adding missing field {} from source", indent, childFieldName);
+                    LOGGER.trace("{}Adding missing field {} from source", indentBuilder, childFieldName);
                     ((ObjectNode) jsonNode).set(childFieldName, sourceNode);
                 } else {
-                    // field is in both so recurese in
+                    // field is in both so recurse in
                     final JsonNode childNode = jsonNode.get(childFieldName);
                     final PropertyPath childPropertyPath = propertyPath.merge(childFieldName);
-                    LOGGER.trace("{}Recursing into field {}", indent, childFieldName);
+                    LOGGER.trace("{}Recursing into field {}", indentBuilder, childFieldName);
                     mergeNodeTrees(
                             childNode,
                             jsonNode,
                             childFieldName,
-                            LOGGER.isTraceEnabled()
-                                    ? indent + "  "
-                                    : indent,
+                            indentBuilder.append("  "),
                             childPropertyPath,
                             sourceRootNode);
                 }
@@ -202,10 +206,12 @@ public class YamlUtil {
 
             if (equivalentSourceNode.isObject() || equivalentSourceNode.isArray()) {
                 // copy the source node into our parent
-                LOGGER.trace("{}Replacing value of this field from source", indent);
+//                System.out.println(LogUtil.message("{}Replacing value of this field from source", indent));
+                LOGGER.info("{}Replacing value of this field from source", indentBuilder);
                 ((ObjectNode) parentJsonNode).replace(name, equivalentSourceNode);
             } else {
-                LOGGER.trace("{}Treating this node as an explicit null", indent);
+//                System.out.println(LogUtil.message("{}Treating this node as an explicit null", indent));
+                LOGGER.info("{}Treating this node as an explicit null", indentBuilder);
             }
         }
     }

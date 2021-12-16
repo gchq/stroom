@@ -7,6 +7,8 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.StreamHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.SSLUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +27,7 @@ import javax.net.ssl.SSLSocketFactory;
  */
 class ForwardStreamHandler implements StreamHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardStreamHandler.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 
     private final LogStream logStream;
@@ -82,6 +84,9 @@ class ForwardStreamHandler implements StreamHandler {
             connection.setReadTimeout(0);
             // Don't set a read time out else big files will fail
             // connection.setReadTimeout(forwardTimeoutMs);
+        } else {
+            // Logging this as it is OS dependent
+            LOGGER.debug(() -> "Using default connection timeout" + connection.getConnectTimeout());
         }
 
         connection.setRequestMethod("POST");
