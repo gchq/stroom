@@ -22,6 +22,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class TestConfigProvidersModule {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestConfigProvidersModule.class);
@@ -31,54 +33,62 @@ public class TestConfigProvidersModule {
         final ConfigMapper configMapper = new ConfigMapper();
 
         final Set<Class<?>> methodReturnClasses = Arrays.stream(ConfigProvidersModule.class.getDeclaredMethods())
+                .filter(method -> !method.getName().endsWith(GenerateConfigProvidersModule.THROWING_METHOD_SUFFIX))
                 .map(Method::getReturnType)
                 .filter(clazz ->
                         !clazz.equals(PathConfig.class)) // PathConfig is a special case
                 .collect(Collectors.toSet());
 
+        final Set<Class<?>> notInjectableMethodReturnClasses = Arrays.stream(
+                ConfigProvidersModule.class.getDeclaredMethods())
+                .filter(method -> method.getName().endsWith(GenerateConfigProvidersModule.THROWING_METHOD_SUFFIX))
+                .map(Method::getReturnType)
+                .collect(Collectors.toSet());
+
+        assertThat(methodReturnClasses)
+                .doesNotContainAnyElementsOf(notInjectableMethodReturnClasses);
+
         final Set<Class<?>> injectableConfigClasses = new HashSet<>(
                 configMapper.getInjectableConfigClasses());
 
-        SoftAssertions.assertSoftly(softAssertions -> {
-            softAssertions.assertThat(methodReturnClasses)
-                    .containsExactlyInAnyOrderElementsOf(injectableConfigClasses);
+        assertThat(methodReturnClasses)
+                .containsExactlyInAnyOrderElementsOf(injectableConfigClasses);
 
-            softAssertions.assertThat(methodReturnClasses.containsAll(injectableConfigClasses))
-                    .withFailMessage(() -> {
-                        final Set<Class<?>> unwantedMethods = new HashSet<>(methodReturnClasses);
-                        unwantedMethods.removeAll(injectableConfigClasses);
+        assertThat(methodReturnClasses.containsAll(injectableConfigClasses))
+                .withFailMessage(() -> {
+                    final Set<Class<?>> unwantedMethods = new HashSet<>(methodReturnClasses);
+                    unwantedMethods.removeAll(injectableConfigClasses);
 
-                        return LogUtil.message(
-                                "{} should contain an @Provides method for each injectable config class. " +
-                                        "Found the following unwanted method return types {}. " +
-                                        "injectableConfigClasses: {}, methodReturnClasses: {}. " +
-                                        "See {}.",
-                                ConfigProvidersModule.class.getSimpleName(),
-                                unwantedMethods,
-                                injectableConfigClasses.size(),
-                                methodReturnClasses.size(),
-                                GenerateConfigProvidersModule.class.getSimpleName());
-                    })
-                    .isTrue();
+                    return LogUtil.message(
+                            "{} should contain an @Provides method for each injectable config class. " +
+                                    "Found the following unwanted method return types {}. " +
+                                    "injectableConfigClasses: {}, methodReturnClasses: {}. " +
+                                    "See {}.",
+                            ConfigProvidersModule.class.getSimpleName(),
+                            unwantedMethods,
+                            injectableConfigClasses.size(),
+                            methodReturnClasses.size(),
+                            GenerateConfigProvidersModule.class.getSimpleName());
+                })
+                .isTrue();
 
-            softAssertions.assertThat(injectableConfigClasses.containsAll(methodReturnClasses))
-                    .withFailMessage(() -> {
-                        final Set<Class<?>> missingMethods = new HashSet<>(injectableConfigClasses);
-                        missingMethods.removeAll(methodReturnClasses);
+        assertThat(injectableConfigClasses.containsAll(methodReturnClasses))
+                .withFailMessage(() -> {
+                    final Set<Class<?>> missingMethods = new HashSet<>(injectableConfigClasses);
+                    missingMethods.removeAll(methodReturnClasses);
 
-                        return LogUtil.message(
-                                "{} should contain an @Provides method for each injectable config class. " +
-                                        "Found the following missing method return types {}. " +
-                                        "injectableConfigClasses: {}, methodReturnClasses: {}. " +
-                                        "See {}.",
-                                ConfigProvidersModule.class.getSimpleName(),
-                                missingMethods,
-                                injectableConfigClasses.size(),
-                                methodReturnClasses.size(),
-                                GenerateConfigProvidersModule.class.getSimpleName());
-                    })
-                    .isTrue();
-        });
+                    return LogUtil.message(
+                            "{} should contain an @Provides method for each injectable config class. " +
+                                    "Found the following missing method return types {}. " +
+                                    "injectableConfigClasses: {}, methodReturnClasses: {}. " +
+                                    "See {}.",
+                            ConfigProvidersModule.class.getSimpleName(),
+                            missingMethods,
+                            injectableConfigClasses.size(),
+                            methodReturnClasses.size(),
+                            GenerateConfigProvidersModule.class.getSimpleName());
+                })
+                .isTrue();
     }
 
     @Test
@@ -105,6 +115,8 @@ public class TestConfigProvidersModule {
 
         SoftAssertions.assertSoftly(softAssertions -> {
             Arrays.stream(ConfigProvidersModule.class.getDeclaredMethods())
+                    .filter(method ->
+                            !method.getName().endsWith(GenerateConfigProvidersModule.THROWING_METHOD_SUFFIX))
                     .forEach(method -> {
                         LOGGER.debug("method: {}", method.getName());
 
@@ -143,5 +155,53 @@ public class TestConfigProvidersModule {
                     });
         });
 
+    }
+
+    @Test
+    void testCallingNotInjectableProviderMethods() {
+        final ConfigProvidersModule configProvidersModule = new ConfigProvidersModule();
+        final ConfigHolder configHolder = new ConfigHolder() {
+            @Override
+            public AppConfig getBootStrapConfig() {
+                return new AppConfig();
+            }
+
+            @Override
+            public Path getConfigFile() {
+                return Path.of("DUMMY");
+            }
+        };
+
+        final Injector injector = Guice.createInjector(
+                configProvidersModule,
+                new AppConfigModule(configHolder));
+
+        final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
+
+        SoftAssertions.assertSoftly(softAssertions -> {
+            Arrays.stream(ConfigProvidersModule.class.getDeclaredMethods())
+                    .filter(method ->
+                            method.getName().endsWith(GenerateConfigProvidersModule.THROWING_METHOD_SUFFIX))
+                    .forEach(method -> {
+                        LOGGER.debug("method: {}", method.getName());
+
+                        softAssertions
+                                .assertThatThrownBy(() -> {
+                                    try {
+                                        method.invoke(configProvidersModule, configMapper);
+                                    } catch (IllegalAccessException | InvocationTargetException e) {
+                                        if (e.getCause().getClass().equals(UnsupportedOperationException.class)) {
+                                            throw e.getCause();
+                                        }
+                                        LOGGER.error("Error: {}", e.getMessage(), e);
+                                        throw new RuntimeException(e);
+                                    }
+                                })
+                                .withFailMessage(() -> LogUtil.message("Method {} should throw {}",
+                                        method.getName(), UnsupportedOperationException.class.getSimpleName()))
+
+                                .isInstanceOf(UnsupportedOperationException.class);
+                    });
+        });
     }
 }

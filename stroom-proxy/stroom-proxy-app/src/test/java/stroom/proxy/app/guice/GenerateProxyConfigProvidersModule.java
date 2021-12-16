@@ -33,6 +33,8 @@ public class GenerateProxyConfigProvidersModule {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenerateProxyConfigProvidersModule.class);
 
+    static final String THROWING_METHOD_SUFFIX = "ButThrow";
+
     private static final String CLASS_HEADER = """
             package stroom.proxy.app.guice;
 
@@ -185,7 +187,7 @@ public class GenerateProxyConfigProvidersModule {
                     @Generated("%s")
                     @Provides
                     @SuppressWarnings("unused")
-                    %s get%s(
+                    %s get%s%s(
                             final ProxyConfigProvider proxyConfigProvider) {
                         throw new UnsupportedOperationException(
                                 "%s cannot be injected directly. "
@@ -198,6 +200,7 @@ public class GenerateProxyConfigProvidersModule {
                 GenerateProxyConfigProvidersModule.class.getName(),
                 fullClassName,
                 methodNameSuffix,
+                THROWING_METHOD_SUFFIX,
                 fullClassName);
 
     }

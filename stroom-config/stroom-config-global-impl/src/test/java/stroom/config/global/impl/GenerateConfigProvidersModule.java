@@ -32,6 +32,8 @@ public class GenerateConfigProvidersModule {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenerateConfigProvidersModule.class);
 
+    static final String THROWING_METHOD_SUFFIX = "ButThrow";
+
     private static final String CLASS_HEADER = """
             package stroom.config.global.impl;
 
@@ -175,7 +177,7 @@ public class GenerateConfigProvidersModule {
                     @Generated("%s")
                     @Provides
                     @SuppressWarnings("unused")
-                    %s get%s(
+                    %s get%s%s(
                             final ConfigMapper configMapper) {
                         throw new UnsupportedOperationException(
                                 "%s cannot be injected directly. "
@@ -188,6 +190,7 @@ public class GenerateConfigProvidersModule {
                 GenerateConfigProvidersModule.class.getName(),
                 fullClassName,
                 methodNameSuffix,
+                THROWING_METHOD_SUFFIX,
                 fullClassName);
 
     }
