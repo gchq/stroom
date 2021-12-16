@@ -17,7 +17,7 @@ public class ExceptionStringUtil {
         return throwable.getMessage();
     }
 
-    public static String getMessageAndClassName(final Throwable throwable) {
+    private static String getMessageAndClassName(final Throwable throwable) {
         LOGGER.debug(throwable::getMessage, throwable);
         if (throwable.getMessage() == null) {
             return "(" + throwable.getClass().getName() + ")";
@@ -25,7 +25,7 @@ public class ExceptionStringUtil {
         return throwable.getMessage() + " (" + throwable.getClass().getName() + ")";
     }
 
-    public static String getStackTrace(final Throwable throwable) {
+    private static String getStackTrace(final Throwable throwable) {
         LOGGER.debug(throwable::getMessage, throwable);
         final StringWriter sw = new StringWriter();
         final PrintWriter pw = new PrintWriter(sw);
@@ -33,7 +33,7 @@ public class ExceptionStringUtil {
         return sw.toString();
     }
 
-    public static String getDetail(final Throwable throwable) {
+    private static String getDetail(final Throwable throwable) {
         LOGGER.debug(throwable::getMessage, throwable);
         return getMessageAndClassName(throwable) + "\n" + getStackTrace(throwable);
     }

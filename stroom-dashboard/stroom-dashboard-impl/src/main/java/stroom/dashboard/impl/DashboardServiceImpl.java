@@ -511,7 +511,7 @@ class DashboardServiceImpl implements DashboardService {
             result = new DashboardSearchResponse(
                     queryKey,
                     null,
-                    Collections.singletonList(ExceptionStringUtil.getDetail(e)),
+                    Collections.singletonList(ExceptionStringUtil.getMessage(e)),
                     true,
                     null);
         }

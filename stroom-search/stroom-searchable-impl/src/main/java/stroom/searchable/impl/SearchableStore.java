@@ -148,7 +148,7 @@ class SearchableStore implements Store {
     public List<String> getErrors() {
         return errors
                 .stream()
-                .map(ExceptionStringUtil::getDetail)
+                .map(ExceptionStringUtil::getMessage)
                 .collect(Collectors.toList());
     }
 

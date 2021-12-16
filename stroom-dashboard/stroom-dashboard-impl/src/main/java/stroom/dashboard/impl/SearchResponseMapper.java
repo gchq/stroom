@@ -205,7 +205,7 @@ public class SearchResponseMapper {
                 }
             } catch (final JsonProcessingException | RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
-                errors = Collections.singletonList(ExceptionStringUtil.getDetail(e));
+                errors = Collections.singletonList(ExceptionStringUtil.getMessage(e));
             }
         }
 
