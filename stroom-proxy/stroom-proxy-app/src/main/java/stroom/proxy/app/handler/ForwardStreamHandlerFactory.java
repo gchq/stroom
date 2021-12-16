@@ -68,14 +68,15 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
 
             this.destinations = forwardStreamConfig.getForwardDestinations()
                     .stream()
-                    .map(config -> {
-                        LOGGER.info("Configuring SSLSocketFactory for destination {}", config.getForwardUrl());
+                    .map(forwardDestinationConfig -> {
+                        LOGGER.info("Configuring SSLSocketFactory for destination {}",
+                                forwardDestinationConfig.getForwardUrl());
                         SSLSocketFactory sslSocketFactory = null;
-                        if (config.getSslConfig() != null) {
+                        if (forwardDestinationConfig.getSslConfig() != null) {
                             sslSocketFactory = SSLUtil.createSslSocketFactory(
-                                    config.getSslConfig(), pathCreator);
+                                    forwardDestinationConfig.getSslConfig(), pathCreator);
                         }
-                        return new ForwardDestination(config, sslSocketFactory);
+                        return new ForwardDestination(forwardDestinationConfig, sslSocketFactory);
                     })
                     .collect(Collectors.toList());
         } else {

@@ -10,17 +10,18 @@ import javax.inject.Singleton;
 @Singleton
 public class ProxyRepositoryStreamHandlerFactory implements StreamHandlerFactory {
 
-    private final ProxyRepositoryConfig proxyRepositoryConfig;
+    private final Provider<ProxyRepositoryConfig> proxyRepositoryConfigProvider;
     private final Provider<ProxyRepositoryStreamHandler> proxyRepositoryStreamHandlerProvider;
 
     @Inject
     public ProxyRepositoryStreamHandlerFactory(
-            final ProxyRepositoryConfig proxyRepositoryConfig,
+            final Provider<ProxyRepositoryConfig> proxyRepositoryConfigProvider,
             final Provider<ProxyRepositoryStreamHandler> proxyRepositoryStreamHandlerProvider) {
 
-        this.proxyRepositoryConfig = proxyRepositoryConfig;
+        this.proxyRepositoryConfigProvider = proxyRepositoryConfigProvider;
         this.proxyRepositoryStreamHandlerProvider = proxyRepositoryStreamHandlerProvider;
 
+        final ProxyRepositoryConfig proxyRepositoryConfig = proxyRepositoryConfigProvider.get();
         if (proxyRepositoryConfig.isStoringEnabled() && Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir())) {
             throw new RuntimeException("Storing is enabled but no repo directory have been provided in 'repoDir'");
         }
@@ -41,6 +42,7 @@ public class ProxyRepositoryStreamHandlerFactory implements StreamHandlerFactory
     }
 
     private boolean isConfiguredToStore() {
+        final ProxyRepositoryConfig proxyRepositoryConfig = proxyRepositoryConfigProvider.get();
         return proxyRepositoryConfig.isStoringEnabled()
                 && !Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir());
     }

@@ -55,6 +55,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -66,7 +67,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final IndexShardService indexShardService;
     private final IndexStructureCache indexStructureCache;
     private final IndexShardManager indexShardManager;
-    private final IndexConfig indexConfig;
+    private final Provider<IndexConfig> indexConfigProvider;
 
     private final Map<Long, IndexShardWriter> openWritersByShardId = new ConcurrentHashMap<>();
     private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
@@ -82,7 +83,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     @Inject
     public IndexShardWriterCacheImpl(final NodeInfo nodeInfo,
                                      final IndexShardService indexShardService,
-                                     final IndexConfig indexConfig,
+                                     final Provider<IndexConfig> indexConfigProvider,
                                      final IndexStructureCache indexStructureCache,
                                      final IndexShardManager indexShardManager,
                                      final IndexShardWriterExecutorProvider executorProvider,
@@ -91,7 +92,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final SecurityContext securityContext) {
         this.nodeInfo = nodeInfo;
         this.indexShardService = indexShardService;
-        this.indexConfig = indexConfig;
+        this.indexConfigProvider = indexConfigProvider;
         this.indexStructureCache = indexStructureCache;
         this.indexShardManager = indexShardManager;
         this.executorProvider = executorProvider;
@@ -238,8 +239,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private int getRamBufferSize() {
         int ramBufferSizeMB = 1024;
-        if (indexConfig != null) {
-            ramBufferSizeMB = indexConfig.getRamBufferSizeMB();
+        if (indexConfigProvider != null) {
+            ramBufferSizeMB = indexConfigProvider.get().getRamBufferSizeMB();
         }
         return ramBufferSizeMB;
     }
@@ -550,7 +551,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private Settings getSettings() {
         if (settings == null || settings.creationTime < (System.currentTimeMillis() - 60_000)) {
-            final IndexCacheConfig indexCacheConfig = indexConfig.getIndexWriterConfig().getIndexCacheConfig();
+            final IndexCacheConfig indexCacheConfig = indexConfigProvider.get()
+                    .getIndexWriterConfig()
+                    .getIndexCacheConfig();
             final long timeToLive = indexCacheConfig.getTimeToLive() != null
                     ? indexCacheConfig.getTimeToLive().toMillis()
                     : 0L;

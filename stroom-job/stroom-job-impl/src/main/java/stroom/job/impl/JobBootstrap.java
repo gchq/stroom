@@ -48,7 +48,7 @@ class JobBootstrap {
 
     private final JobDao jobDao;
     private final JobNodeDao jobNodeDao;
-    private final JobSystemConfig jobSystemConfig;
+    private final Provider<JobSystemConfig> jobSystemConfigProvider;
     private final ClusterLockService clusterLockService;
     private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
@@ -58,7 +58,7 @@ class JobBootstrap {
     @Inject
     JobBootstrap(final JobDao jobDao,
                  final JobNodeDao jobNodeDao,
-                 final JobSystemConfig jobSystemConfig,
+                 final Provider<JobSystemConfig> jobSystemConfigProvider,
                  final ClusterLockService clusterLockService,
                  final SecurityContext securityContext,
                  final NodeInfo nodeInfo,
@@ -66,7 +66,7 @@ class JobBootstrap {
                  final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry) {
         this.jobDao = jobDao;
         this.jobNodeDao = jobNodeDao;
-        this.jobSystemConfig = jobSystemConfig;
+        this.jobSystemConfigProvider = jobSystemConfigProvider;
         this.clusterLockService = clusterLockService;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
@@ -157,6 +157,7 @@ class JobBootstrap {
                 // Add the job node to the DB if it isn't there already.
                 final JobNode jobNode = localJobNodeMap.get(jobName);
                 if (jobNode == null) {
+                    final JobSystemConfig jobSystemConfig = jobSystemConfigProvider.get();
                     // Get or create the actual parent job record
                     Job job = new Job();
                     job.setName(jobName);

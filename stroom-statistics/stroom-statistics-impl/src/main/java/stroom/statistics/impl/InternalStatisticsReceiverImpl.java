@@ -22,15 +22,15 @@ public class InternalStatisticsReceiverImpl implements InternalStatisticsReceive
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticsReceiverImpl.class);
 
     private final Collection<Provider<InternalStatisticsService>> providers;
-    private final InternalStatisticsConfig internalStatisticsConfig;
+    private final Provider<InternalStatisticsConfig> internalStatisticsConfigProvider;
 
     private volatile InternalStatisticsReceiver internalStatisticsReceiver = new DoNothingInternalStatisticsReceiver();
 
     @Inject
     InternalStatisticsReceiverImpl(final Collection<Provider<InternalStatisticsService>> providers,
-                                   final InternalStatisticsConfig internalStatisticsConfig) {
+                                   final Provider<InternalStatisticsConfig> internalStatisticsConfigProvider) {
         this.providers = providers;
-        this.internalStatisticsConfig = internalStatisticsConfig;
+        this.internalStatisticsConfigProvider = internalStatisticsConfigProvider;
     }
 
     void initStatisticEventStore() {
@@ -47,7 +47,7 @@ public class InternalStatisticsReceiverImpl implements InternalStatisticsReceive
 
         internalStatisticsReceiver = new MultiServiceInternalStatisticsReceiver(
                 docRefTypeToServiceMap,
-                internalStatisticsConfig);
+                internalStatisticsConfigProvider);
     }
 
     @Override
