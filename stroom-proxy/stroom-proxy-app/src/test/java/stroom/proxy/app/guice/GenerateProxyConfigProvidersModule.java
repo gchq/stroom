@@ -1,6 +1,12 @@
 package stroom.proxy.app.guice;
 
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.ProxyPathConfig;
+import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.proxy.repo.ProxyRepoDbConfig;
+import stroom.proxy.repo.RepoConfig;
+import stroom.proxy.repo.RepoDbConfig;
+import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
@@ -42,21 +48,12 @@ public class GenerateProxyConfigProvidersModule {
              */
             @Generated("%s")
             public class ProxyConfigProvidersModule extends AbstractModule {
-
-                // Special case to allow ProxyPathConfig to be injected as itself or as
-                // PathConfig
-                @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
-                @Provides
-                @SuppressWarnings("unused")
-                stroom.util.io.PathConfig getPathConfig(
-                        final ProxyConfigProvider proxyConfigProvider) {
-                    return proxyConfigProvider.getConfigObject(
-                            stroom.proxy.app.ProxyPathConfig.class);
-                }
             """;
 
-    private static final String CLASS_FOOTER = """
-            }
+    private static final String CLASS_FOOTER = "}\n";
+
+    private static final String SEPARATOR = """
+                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             """;
 
     public static void main(String[] args) {
@@ -67,6 +64,28 @@ public class GenerateProxyConfigProvidersModule {
         final ProxyConfigProvider proxyConfigProvider = new ProxyConfigProvider(new ProxyConfig());
         final Set<Class<? extends AbstractConfig>> injectableClasses = proxyConfigProvider.getInjectableClasses();
 
+        final String header = String.format(CLASS_HEADER,
+                GenerateProxyConfigProvidersModule.class.getName(),
+                GenerateProxyConfigProvidersModule.class.getName());
+
+        // Special case to allow ProxyPathConfig to be injected as itself or as
+        // PathConfig
+        final String pathConfigMethodStr = buildMethod(
+                simpleNames,
+                simpleNameToFullNamesMap,
+                ProxyPathConfig.class,
+                PathConfig.class);
+        final String repoConfigMethodStr = buildMethod(
+                simpleNames,
+                simpleNameToFullNamesMap,
+                ProxyRepoConfig.class,
+                RepoConfig.class);
+        final String repoDbConfigMethodStr = buildMethod(
+                simpleNames,
+                simpleNameToFullNamesMap,
+                ProxyRepoDbConfig.class,
+                RepoDbConfig.class);
+
         final String methodsStr = injectableClasses
                 .stream()
                 .sorted(Comparator.comparing(Class::getName))
@@ -74,29 +93,38 @@ public class GenerateProxyConfigProvidersModule {
                         buildMethod(simpleNames, simpleNameToFullNamesMap, clazz))
                 .collect(Collectors.joining("\n"));
 
-        final String header = String.format(CLASS_HEADER,
-                GenerateProxyConfigProvidersModule.class.getName(),
-                GenerateProxyConfigProvidersModule.class.getName());
-
         final String fileContent = String.join(
                 "\n",
                 header,
+                pathConfigMethodStr,
+                repoConfigMethodStr,
+                repoDbConfigMethodStr,
+                SEPARATOR,
                 methodsStr,
                 CLASS_FOOTER);
 
         updateFile(fileContent);
     }
 
-    private static String buildMethod(final Set<String> simpleNames,
-                                      final Map<String, List<String>> simpleNameToFullNamesMap,
-                                      final Class<? extends AbstractConfig> clazz) {
-        final String simpleClassName = clazz.getSimpleName();
-        // Fix the name for nested classes
-        final String fullClassName = clazz.getName()
-                .replace("$", ".");
+    private static <T extends AbstractConfig> String buildMethod(
+            final Set<String> simpleNames,
+            final Map<String, List<String>> simpleNameToFullNamesMap,
+            final Class<T> instanceClass) {
+        return buildMethod(simpleNames, simpleNameToFullNamesMap, instanceClass, instanceClass);
+    }
+
+    private static <T extends AbstractConfig, I> String buildMethod(
+            final Set<String> simpleNames,
+            final Map<String, List<String>> simpleNameToFullNamesMap,
+            final Class<T> instanceClass,
+            final Class<I> returnClass) {
+
+        final String simpleClassName = returnClass.getSimpleName();
+        final String fullInstanceClassName = instanceClass.getCanonicalName();
+        final String fullReturnClassName = returnClass.getCanonicalName();
 
         simpleNameToFullNamesMap.computeIfAbsent(simpleClassName, k -> new ArrayList<>())
-                .add(fullClassName);
+                .add(fullReturnClassName);
 
         String methodNameSuffix = simpleClassName;
         int i = 2;
@@ -118,12 +146,13 @@ public class GenerateProxyConfigProvidersModule {
                                 %s.class);
                     }
                 """;
+
         return String.format(
                 template,
                 GenerateProxyConfigProvidersModule.class.getName(),
-                fullClassName,
+                fullReturnClassName,
                 methodNameSuffix,
-                fullClassName);
+                fullInstanceClassName);
     }
 
     private static void updateFile(final String content) {
@@ -133,7 +162,7 @@ public class GenerateProxyConfigProvidersModule {
 
         LOGGER.debug("PWD: {}", pwd.toString());
 
-        Path moduleFile = pwd.resolve("stroom-proxy/stroom-proxy-app/src/main/java")
+        final Path moduleFile = pwd.resolve("stroom-proxy/stroom-proxy-app/src/main/java")
                 .resolve(ProxyConfigProvidersModule.class.getName().replace(".", File.separator) + ".java")
                 .normalize();
 

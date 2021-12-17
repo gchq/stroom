@@ -49,4 +49,12 @@ public class ProxyPathConfig extends PathConfig implements IsProxyConfig {
     public String getTemp() {
         return super.getTemp();
     }
+
+    public ProxyPathConfig withHome(final String home) {
+        return new ProxyPathConfig(home, getTemp());
+    }
+
+    public ProxyPathConfig withTemp(final String temp) {
+        return new ProxyPathConfig(getHome(), temp);
+    }
 }

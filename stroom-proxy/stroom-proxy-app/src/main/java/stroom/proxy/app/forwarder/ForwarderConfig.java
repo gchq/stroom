@@ -78,4 +78,8 @@ public class ForwarderConfig extends AbstractConfig implements IsProxyConfig {
         return new ForwarderConfig(forwardingEnabled, userAgent, forwardDestinations, retryFrequency);
     }
 
+    public ForwarderConfig withForwardDestinations(final ForwardDestinationConfig... forwardDestinations) {
+        return new ForwarderConfig(forwardingEnabled, userAgent, List.of(forwardDestinations), retryFrequency);
+    }
+
 }

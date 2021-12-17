@@ -1,7 +1,5 @@
 package stroom.security.identity.openid;
 
-import stroom.security.identity.config.TokenConfig;
-import stroom.security.identity.token.JsonWebKeyFactoryImpl;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.token.JwkFactoryImpl;
 import stroom.security.identity.token.TokenBuilder;
@@ -91,7 +89,6 @@ public class GenerateTestOpenIdDetails {
 
         final OpenIdClient oAuth2Client = OpenIdClientDetailsFactoryImpl.createRandomisedOAuth2Client(CLIENT_NAME);
 
-        FIXME - should we pass IC or TokenConfig here?
         final TokenBuilderFactory tokenBuilderFactory = new TokenBuilderFactory(
                 IdentityConfig::new,
                 publicJsonWebKeyProvider);

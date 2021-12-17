@@ -43,6 +43,7 @@ import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -157,53 +158,55 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
      * Will construct a full immutable AppConfig tree will ALL defaults set.
      */
     public AppConfig() {
-        this(true,
-                new ActivityConfig(),
-                new AlertConfig(),
-                new AnnotationConfig(),
-                new ByteBufferPoolConfig(),
-                new ClusterConfig(),
-                new ClusterLockConfig(),
-                new CommonDbConfig(),
-                new ContentPackImportConfig(),
-                new LegacyConfig(),
-                new DashboardConfig(),
-                new DataConfig(),
-                new DataSourceUrlConfig(),
-                new DocStoreConfig(),
-                new ElasticConfig();
-                new ExplorerConfig(),
-                new ExportConfig(),
-                new FeedConfig(),
-                new IndexConfig(),
-                new JobSystemConfig(),
-                new KafkaConfig(),
-                new LifecycleConfig(),
-                new LmdbLibraryConfig(),
-                new LoggingConfig(),
-                new NodeConfig(),
-                new NodeUriConfig(),
-                new PipelineConfig(),
-                new ProcessorConfig(),
-                new PropertyServiceConfig(),
-                new ProxyAggregationConfig(),
-                new PublicUriConfig(),
-                new ReceiveDataConfig(),
-                new SearchConfig(),
-                new SearchableConfig(),
-                new SecurityConfig(),
-                new ServiceDiscoveryConfig(),
-                new SessionCookieConfig(),
-                new SolrConfig(),
-                new StatisticsConfig(),
-                new StoredQueryConfig(),
-                new StroomPathConfig(),
-                new UiConfig(),
-                new UiUriConfig(),
-                new VolumeConfig());
+        haltBootOnConfigValidationFailure = true;
+
+        activityConfig = new ActivityConfig();
+        alertConfig = new AlertConfig();
+        annotationConfig = new AnnotationConfig();
+        byteBufferPoolConfig = new ByteBufferPoolConfig();
+        clusterConfig = new ClusterConfig();
+        clusterLockConfig = new ClusterLockConfig();
+        commonDbConfig = new CommonDbConfig();
+        contentPackImportConfig = new ContentPackImportConfig();
+        legacyConfig = new LegacyConfig();
+        dashboardConfig = new DashboardConfig();
+        dataConfig = new DataConfig();
+        dataSourceUrlConfig = new DataSourceUrlConfig();
+        docStoreConfig = new DocStoreConfig();
+        elasticConfig = new ElasticConfig();
+        explorerConfig = new ExplorerConfig();
+        exportConfig = new ExportConfig();
+        feedConfig = new FeedConfig();
+        indexConfig = new IndexConfig();
+        jobSystemConfig = new JobSystemConfig();
+        kafkaConfig = new KafkaConfig();
+        lifecycleConfig = new LifecycleConfig();
+        lmdbLibraryConfig = new LmdbLibraryConfig();
+        loggingConfig = new LoggingConfig();
+        nodeConfig = new NodeConfig();
+        nodeUri = new NodeUriConfig();
+        pipelineConfig = new PipelineConfig();
+        processorConfig = new ProcessorConfig();
+        propertyServiceConfig = new PropertyServiceConfig();
+        proxyAggregationConfig = new ProxyAggregationConfig();
+        publicUri = new PublicUriConfig();
+        receiveDataConfig = new ReceiveDataConfig();
+        searchConfig = new SearchConfig();
+        searchableConfig = new SearchableConfig();
+        securityConfig = new SecurityConfig();
+        serviceDiscoveryConfig = new ServiceDiscoveryConfig();
+        sessionCookieConfig = new SessionCookieConfig();
+        solrConfig = new SolrConfig();
+        statisticsConfig = new StatisticsConfig();
+        storedQueryConfig = new StoredQueryConfig();
+        pathConfig = new StroomPathConfig();
+        uiConfig = new UiConfig();
+        uiUri = new UiUriConfig();
+        volumeConfig = new VolumeConfig();
     }
 
     @SuppressWarnings("checkstyle:linelength")
+    @JsonCreator
     public AppConfig(@JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
                      @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                      @JsonProperty(PROP_NAME_ALERTING) final AlertConfig alertConfig,

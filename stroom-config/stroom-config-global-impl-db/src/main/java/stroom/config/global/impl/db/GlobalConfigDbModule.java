@@ -1,9 +1,6 @@
 package stroom.config.global.impl.db;
 
 import stroom.config.app.PropertyServiceConfig.PropertyServiceDbConfig;
-import stroom.config.app.PropertyServiceConfig;
-import stroom.config.global.impl.ConfigPropertyDao;
-import stroom.config.global.impl.GlobalConfigModule;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.util.guice.GuiceUtil;
@@ -23,10 +20,6 @@ public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyService
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
                 .addBinding(GlobalConfigDbConnProvider.class);
-
-
-        FIXME // this needs to go somewhere
-        bind(UserPreferencesDao.class).to(UserPreferencesDaoImpl.class);
     }
 
     @Override

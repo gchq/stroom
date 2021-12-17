@@ -17,17 +17,15 @@
 package stroom.alert.impl;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.TableSettings;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class AlertQueryHits {
+
     private final Map<DocRef, Set<RuleConfig>> pipelineRulesMap = new HashMap<>();
     private final Map<String, Set<Long>> queryHitsMap = new HashMap<>();
 
@@ -42,7 +40,7 @@ public class AlertQueryHits {
         return pipelineRulesMap.get(pipeline);
     }
 
-    public long [] getSortedQueryHitsForRule(final RuleConfig ruleConfig) {
+    public long[] getSortedQueryHitsForRule(final RuleConfig ruleConfig) {
         Set<Long> hitSet = queryHitsMap.get(ruleConfig.getQueryId());
         return hitSet.stream().mapToLong(i -> i).toArray();
     }
@@ -66,5 +64,4 @@ public class AlertQueryHits {
         }
         pipelineRulesMap.get(pipeline).add(ruleConfig);
     }
-
 }

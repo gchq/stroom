@@ -1,5 +1,6 @@
 package stroom.config.common;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
@@ -9,6 +10,8 @@ public class UiUriConfig extends UriConfig {
         super("https", null, 443, null);
     }
 
+    @SuppressWarnings("unused")
+    @JsonCreator
     public UiUriConfig(@JsonProperty("scheme") final String scheme,
                        @JsonProperty("hostname") final String hostname,
                        @JsonProperty("port") final Integer port,

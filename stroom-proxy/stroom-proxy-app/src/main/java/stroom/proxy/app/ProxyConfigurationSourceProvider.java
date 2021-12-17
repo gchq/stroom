@@ -3,7 +3,6 @@ package stroom.proxy.app;
 import stroom.util.io.DiffUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
-import stroom.util.io.PathConfig;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.StreamUtil;
@@ -47,7 +46,7 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
             "currentLogFilename",
             "archivedLogFilenamePattern");
 
-    private static final String PATH_CONFIG_JSON_POINTER = "/proxyConfig/path";
+    private static final String PATH_CONFIG_JSON_POINTER = PROXY_CONFIG_JSON_POINTER + "/path";
     private static final String STROOM_HOME_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/home";
     private static final String STROOM_TEMP_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/temp";
 
@@ -191,7 +190,7 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
         final Optional<String> optTemp = getNodeValue(rootNode, STROOM_TEMP_JSON_POINTER);
 
         // A vanilla PathConfig with the hard coded defaults
-        final PathConfig pathConfig = new ProxyPathConfig();
+        ProxyPathConfig pathConfig = new ProxyPathConfig();
 
         final String homeSource = Objects.equals(pathConfig.getHome(), optHome.orElse(null))
                 ? SOURCE_DEFAULTS
@@ -201,8 +200,10 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
                 : SOURCE_YAML;
 
         // Set the values from the YAML if we have them
-        optHome.ifPresent(pathConfig::setHome);
-        optTemp.ifPresent(pathConfig::setTemp);
+        pathConfig = optHome.map(pathConfig::withHome)
+                .orElse(pathConfig);
+        pathConfig = optTemp.map(pathConfig::withTemp)
+                .orElse(pathConfig);
 
         final HomeDirProvider homeDirProvider = new HomeDirProviderImpl(pathConfig);
         final TempDirProvider tempDirProvider = new TempDirProviderImpl(pathConfig, homeDirProvider);

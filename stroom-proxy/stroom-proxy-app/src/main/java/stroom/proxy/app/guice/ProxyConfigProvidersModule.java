@@ -13,8 +13,6 @@ import javax.annotation.processing.Generated;
 @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
 public class ProxyConfigProvidersModule extends AbstractModule {
 
-    // Special case to allow ProxyPathConfig to be injected as itself or as
-    // PathConfig
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
@@ -23,6 +21,26 @@ public class ProxyConfigProvidersModule extends AbstractModule {
         return proxyConfigProvider.getConfigObject(
                 stroom.proxy.app.ProxyPathConfig.class);
     }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.repo.RepoConfig getRepoConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.repo.ProxyRepoConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.repo.RepoDbConfig getRepoDbConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.repo.ProxyRepoDbConfig.class);
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
@@ -63,6 +81,24 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.proxy.app.forwarder.ForwarderConfig getForwarderConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.app.forwarder.ForwarderConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.forwarder.ThreadConfig getThreadConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.app.forwarder.ThreadConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.proxy.app.handler.FeedStatusConfig getFeedStatusConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
@@ -72,46 +108,55 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.handler.ForwardStreamConfig getForwardStreamConfig(
+    stroom.proxy.app.handler.ReceiptPolicyConfig getReceiptPolicyConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.handler.ForwardStreamConfig.class);
+                stroom.proxy.app.handler.ReceiptPolicyConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.handler.LogStreamConfig getLogStreamConfig(
+    stroom.proxy.repo.AggregatorConfig getAggregatorConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.handler.LogStreamConfig.class);
+                stroom.proxy.repo.AggregatorConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.handler.ProxyRequestConfig getProxyRequestConfig(
+    stroom.proxy.repo.LogStreamConfig getLogStreamConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.handler.ProxyRequestConfig.class);
+                stroom.proxy.repo.LogStreamConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.repo.ProxyRepositoryConfig getProxyRepositoryConfig(
+    stroom.proxy.repo.ProxyRepoConfig getProxyRepoConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.repo.ProxyRepositoryConfig.class);
+                stroom.proxy.repo.ProxyRepoConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.repo.ProxyRepositoryReaderConfig getProxyRepositoryReaderConfig(
+    stroom.proxy.repo.ProxyRepoDbConfig getProxyRepoDbConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.repo.ProxyRepositoryReaderConfig.class);
+                stroom.proxy.repo.ProxyRepoDbConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.repo.ProxyRepoFileScannerConfig getProxyRepoFileScannerConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.repo.ProxyRepoFileScannerConfig.class);
     }
 
 }

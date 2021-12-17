@@ -42,6 +42,7 @@ public class SecurityConfig extends AbstractConfig implements IsStroomConfig {
         this.authenticationConfig = authenticationConfig;
         this.authorisationConfig = authorisationConfig;
         this.contentSecurityConfig = contentSecurityConfig;
+        this.cryptoConfig = cryptoConfig;
         this.identityConfig = identityConfig;
     }
 

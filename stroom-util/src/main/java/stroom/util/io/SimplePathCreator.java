@@ -18,7 +18,8 @@ package stroom.util.io;
 
 import com.google.common.base.Strings;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -110,14 +111,15 @@ public class SimplePathCreator implements PathCreator {
     }
 
     @Override
-    public String makeAbsolute(String path) {
-        if (path != null) {
-            // If this isn't an absolute path then make it so.
-            if (!path.startsWith("/") && !path.startsWith("\\")) {
-                path = FileUtil.getCanonicalPath(homeDirProvider.get()) + File.separator + path;
-            }
+    public Path toAppPath(String pathString) {
+        if (pathString == null) {
+            pathString = "";
+        } else {
+            pathString = pathString.trim();
         }
-        return path;
+
+        pathString = replaceSystemProperties(pathString);
+        return toAbsolutePath(pathString);
     }
 
     @Override
@@ -226,4 +228,16 @@ public class SimplePathCreator implements PathCreator {
                 ", homeDir=" + homeDirProvider.get() +
                 '}';
     }
+
+    private Path toAbsolutePath(final String pathString) {
+        Path path = Paths.get(pathString);
+        path = path.toAbsolutePath();
+
+        // If this isn't an absolute path then make it so.
+        if (!pathString.equals(path.toString())) {
+            path = homeDirProvider.get().resolve(pathString).toAbsolutePath();
+        }
+        return path.normalize();
+    }
+
 }

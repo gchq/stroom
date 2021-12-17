@@ -40,7 +40,6 @@ import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.NullSafe;
 
 import com.google.inject.AbstractModule;
 
@@ -70,8 +69,6 @@ public class AppConfigModule extends AbstractModule {
         // get hold of it via guice
         bind(ConfigLocation.class)
                 .toInstance(new ConfigLocation(configHolder.getConfigFile()));
-
-        FIXME bind(RepoConfig.class).to(ProxyAggregationConfig.class);
 
         // Bind the AbstractDbConfig instances in bootStrapConfig so we can inject the config
         // to connect to the DBs. Once the DB is up we can read the db config props and work

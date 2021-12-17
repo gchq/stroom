@@ -38,18 +38,6 @@ public interface PathCreator {
      */
     Path toAppPath(String pathString);
 
-    FIXME // add to SimplePathCreator
-    private Path toAbsolutePath(final String pathString) {
-        Path path = Paths.get(pathString);
-        path = path.toAbsolutePath();
-
-        // If this isn't an absolute path then make it so.
-        if (!pathString.equals(path.toString())) {
-            path = homeDirProvider.get().resolve(pathString).toAbsolutePath();
-        }
-        return path.normalize();
-    }
-
     String replaceUUIDVars(String path);
 
     String replaceFileName(String path, String fileName);

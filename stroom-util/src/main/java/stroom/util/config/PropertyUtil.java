@@ -306,6 +306,8 @@ public final class PropertyUtil {
         final List<Constructor<T>> jsonCreatorConstructors = beanDescription.getConstructors()
                 .stream()
                 .map(constructor -> (Constructor<T>) constructor.getAnnotated())
+                .filter(constructor ->
+                        constructor.isAnnotationPresent(JsonCreator.class))
                 .collect(Collectors.toList());
 
         final Optional<Constructor<T>> optConstructor;

@@ -3,12 +3,7 @@ package stroom.security.identity.db;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.security.identity.config.IdentityConfig.IdentityDbConfig;
-import stroom.security.identity.account.AccountDao;
-import stroom.security.identity.config.IdentityConfig;
-import stroom.security.identity.openid.OpenIdClientDao;
-import stroom.security.identity.token.JwkDao;
-import stroom.security.identity.token.TokenDao;
-import stroom.security.identity.token.TokenTypeDao;
+import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
@@ -25,13 +20,6 @@ public class IdentityDbModule extends AbstractFlyWayDbModule<IdentityDbConfig, I
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
                 .addBinding(IdentityDbConnProvider.class);
-
-        FIXME // These need to go somewhere
-        bind(TokenDao.class).to(TokenDaoImpl.class);
-        bind(AccountDao.class).to(AccountDaoImpl.class);
-        bind(JwkDao.class).to(JwkDaoImpl.class);
-        bind(TokenTypeDao.class).to(TokenTypeDaoImpl.class);
-        bind(OpenIdClientDao.class).to(OpenIdClientDaoImpl.class);
     }
 
     @Override

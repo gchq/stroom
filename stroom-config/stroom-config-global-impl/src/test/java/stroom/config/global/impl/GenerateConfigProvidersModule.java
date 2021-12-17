@@ -1,5 +1,9 @@
 package stroom.config.global.impl;
 
+import stroom.core.receive.ProxyAggregationConfig;
+import stroom.core.receive.ProxyAggregationRepoDbConfig;
+import stroom.proxy.repo.RepoConfig;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
@@ -42,17 +46,22 @@ public class GenerateConfigProvidersModule {
              */
             @Generated("%s")
             public class ConfigProvidersModule extends AbstractModule {
-
             """;
 
-    private static final String CLASS_FOOTER = """
-            }
+    private static final String CLASS_FOOTER = "}\n";
+
+    private static final String SEPARATOR = """
+                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             """;
 
     public static void main(String[] args) {
         final ConfigMapper configMapper = new ConfigMapper();
         final Set<String> simpleNames = new HashSet<>();
         final Map<String, List<String>> simpleNameToFullNamesMap = new HashMap<>();
+
+        final String header = String.format(CLASS_HEADER,
+                GenerateConfigProvidersModule.class.getName(),
+                GenerateConfigProvidersModule.class.getName());
 
         // Filter out the DB ones as they are bound separately.
         final String methodsStr = configMapper.getInjectableConfigClasses()
@@ -64,29 +73,48 @@ public class GenerateConfigProvidersModule {
                         buildMethod(simpleNames, simpleNameToFullNamesMap, clazz))
                 .collect(Collectors.joining("\n"));
 
-        final String header = String.format(CLASS_HEADER,
-                GenerateConfigProvidersModule.class.getName(),
-                GenerateConfigProvidersModule.class.getName());
+        final String repoConfigMethodStr = buildMethod(
+                simpleNames,
+                simpleNameToFullNamesMap,
+                ProxyAggregationConfig.class,
+                RepoConfig.class);
+        final String repoDbConfigMethodStr = buildMethod(
+                simpleNames,
+                simpleNameToFullNamesMap,
+                ProxyAggregationRepoDbConfig.class,
+                RepoDbConfig.class);
 
         final String fileContent = String.join(
                 "\n",
                 header,
+                repoConfigMethodStr,
+                repoDbConfigMethodStr,
+                SEPARATOR,
                 methodsStr,
                 CLASS_FOOTER);
 
         updateFile(fileContent);
     }
 
-    private static String buildMethod(final Set<String> simpleNames,
-                                      final Map<String, List<String>> simpleNameToFullNamesMap,
-                                      final Class<? extends AbstractConfig> clazz) {
-        final String simpleClassName = clazz.getSimpleName();
-        // Fix the name for nested classes
-        final String fullClassName = clazz.getName()
-                .replace("$", ".");
+    private static <T extends AbstractConfig> String buildMethod(
+            final Set<String> simpleNames,
+            final Map<String, List<String>> simpleNameToFullNamesMap,
+            final Class<T> instanceClass) {
+        return buildMethod(simpleNames, simpleNameToFullNamesMap, instanceClass, instanceClass);
+    }
+
+    private static <T extends AbstractConfig, I> String buildMethod(
+            final Set<String> simpleNames,
+            final Map<String, List<String>> simpleNameToFullNamesMap,
+            final Class<T> instanceClass,
+            final Class<I> returnClass) {
+
+        final String simpleClassName = returnClass.getSimpleName();
+        final String fullInstanceClassName = instanceClass.getCanonicalName();
+        final String fullReturnClassName = returnClass.getCanonicalName();
 
         simpleNameToFullNamesMap.computeIfAbsent(simpleClassName, k -> new ArrayList<>())
-                .add(fullClassName);
+                .add(fullReturnClassName);
 
         String methodNameSuffix = simpleClassName;
         int i = 1;
@@ -114,9 +142,9 @@ public class GenerateConfigProvidersModule {
         return String.format(
                 template,
                 GenerateConfigProvidersModule.class.getName(),
-                fullClassName,
+                fullReturnClassName,
                 methodNameSuffix,
-                fullClassName);
+                fullInstanceClassName);
     }
 
     private static void updateFile(final String content) {

@@ -1,7 +1,8 @@
 package stroom.proxy.repo;
 
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
-import stroom.config.common.DbConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.AbstractDataSourceProviderModule;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
@@ -38,17 +39,16 @@ public class ProxyRepoDbModule extends AbstractModule {
     public ProxyRepoDbConnProvider getConnectionProvider(
             final RepoDbDirProvider repoDbDirProvider,
             final DataSourceFactory dataSourceFactory,
-            final RepoDbConfig proxyDbConfig) {
+            final RepoDbConfig repoDbConfig) {
         LOGGER.debug(() -> "Getting connection provider for " + MODULE);
 
-        final DbConfig config = getDbConfig(repoDbDirProvider);
-        final DataSource dataSource = dataSourceFactory.create(() -> config, MODULE, true);
+        final AbstractDbConfig config = getDbConfig(repoDbDirProvider);
+        final DataSource dataSource = dataSourceFactory.create(config, MODULE, true);
         FlywayUtil.migrate(dataSource, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
-        return new DataSourceImpl(dataSource, proxyDbConfig);
+        return new DataSourceImpl(dataSource, repoDbConfig);
     }
 
-    private DbConfig getDbConfig(final RepoDbDirProvider repoDbDirProvider) {
-        final DbConfig dbConfig = new DbConfig();
+    private AbstractDbConfig getDbConfig(final RepoDbDirProvider repoDbDirProvider) {
         final Path dbDir = repoDbDirProvider.get();
 
         FileUtil.mkdirs(dbDir);
@@ -59,23 +59,31 @@ public class ProxyRepoDbModule extends AbstractModule {
         final Path path = dbDir.resolve("proxy-repo.db");
         final String fullPath = FileUtil.getCanonicalPath(path);
 
-        final ConnectionConfig connectionConfig = new ConnectionConfig();
-        connectionConfig.setClassName("org.sqlite.JDBC");
-        connectionConfig.setUrl("jdbc:sqlite:" + fullPath);
-        dbConfig.setConnectionConfig(connectionConfig);
-        return dbConfig;
+        final ConnectionConfig connectionConfig = ConnectionConfig.builder()
+                .jdbcDriverClassName("org.sqlite.JDBC")
+                .url("jdbc:sqlite:" + fullPath)
+                .build();
+
+        return new MyProxyRepoDbConfig(connectionConfig);
+    }
+
+    private static class MyProxyRepoDbConfig extends AbstractDbConfig {
+
+        public MyProxyRepoDbConfig(final ConnectionConfig connectionConfig) {
+            super(connectionConfig, new ConnectionPoolConfig());
+        }
     }
 
     public static class DataSourceImpl extends DataSourceProxy implements ProxyRepoDbConnProvider {
 
-        private final RepoDbConfig proxyDbConfig;
+        private final RepoDbConfig repoDbConfig;
 
         private DataSourceImpl(final DataSource dataSource,
-                               final RepoDbConfig proxyDbConfig) {
+                               final RepoDbConfig repoDbConfig) {
             super(dataSource);
-            this.proxyDbConfig = proxyDbConfig;
+            this.repoDbConfig = repoDbConfig;
 
-            for (final String pragma : proxyDbConfig.getGlobalPragma()) {
+            for (final String pragma : repoDbConfig.getGlobalPragma()) {
                 try (final Connection connection = super.getConnection()) {
                     pragma(connection, pragma);
                 } catch (final SQLException e) {
@@ -87,7 +95,7 @@ public class ProxyRepoDbModule extends AbstractModule {
         @Override
         public Connection getConnection() throws SQLException {
             final Connection connection = super.getConnection();
-            for (final String pragma : proxyDbConfig.getConnectionPragma()) {
+            for (final String pragma : repoDbConfig.getConnectionPragma()) {
                 pragma(connection, pragma);
             }
             return connection;

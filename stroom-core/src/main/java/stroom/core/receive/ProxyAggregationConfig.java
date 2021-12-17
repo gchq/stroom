@@ -2,7 +2,6 @@ package stroom.core.receive;
 
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.RepoConfig;
-import stroom.proxy.repo.RepoDbConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
@@ -16,26 +15,23 @@ public class ProxyAggregationConfig extends AbstractConfig implements IsStroomCo
 
     private final String repoDir;
     private final AggregatorConfig aggregatorConfig;
-    private final RepoDbConfig repoDbConfig;
+    private final ProxyAggregationRepoDbConfig repoDbConfig;
 
     public ProxyAggregationConfig() {
-       FIXTHIS repoDbConfig.setDbDir("proxy_repo_db");
+        repoDbConfig = new ProxyAggregationRepoDbConfig("proxi_repo_db");
         repoDir = "proxy_repo";
         aggregatorConfig = new AggregatorConfig();
-        repoDbConfig = new RepoDbConfig();
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ProxyAggregationConfig(@JsonProperty("repoDir") final String repoDir,
-                                  @JsonProperty("aggregatorConfig") final AggregatorConfig aggregatorConfig,
-                                  @JsonProperty("repoDbConfig") final RepoDbConfig repoDbConfig) {
+                                  @JsonProperty("aggregator") final AggregatorConfig aggregatorConfig,
+                                  @JsonProperty("repoDb") final ProxyAggregationRepoDbConfig repoDbConfig) {
         this.repoDir = repoDir;
         this.aggregatorConfig = aggregatorConfig;
         this.repoDbConfig = repoDbConfig;
     }
-
-
 
     @Override
     @JsonProperty
@@ -44,9 +40,9 @@ public class ProxyAggregationConfig extends AbstractConfig implements IsStroomCo
         return repoDir;
     }
 
-    @JsonProperty
+    @JsonProperty("repoDb")
     @JsonPropertyDescription("The location of the local SQLite DB to use for the proxy aggregation process")
-    public RepoDbConfig getRepoDbConfig() {
+    public ProxyAggregationRepoDbConfig getRepoDbConfig() {
         return repoDbConfig;
     }
 

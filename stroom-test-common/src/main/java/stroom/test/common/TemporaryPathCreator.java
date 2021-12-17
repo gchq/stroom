@@ -31,9 +31,19 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
     private final HomeDirProvider homeDirProvider;
     private final TempDirProvider tempDirProvider;
 
+    /**
+     * Creates a temporary directory and builds home and temp sub dirs in it.
+     */
     public TemporaryPathCreator() {
+        this(createTempDir());
+    }
+
+    /**
+     * Builds home and temp sub dirs in tempBaseDir
+     */
+    public TemporaryPathCreator(final Path tempBaseDir) {
         try {
-            baseDir = Files.createTempDirectory("stroom");
+            baseDir = tempBaseDir;
             LOGGER.debug(() -> "Created directory " + baseDir.toAbsolutePath().normalize());
             homeDir = baseDir.resolve("home");
             tempDir = baseDir.resolve("temp");
@@ -79,8 +89,8 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
     }
 
     @Override
-    public String makeAbsolute(final String path) {
-        return delegate.makeAbsolute(path);
+    public Path toAppPath(final String pathString) {
+        return delegate.toAppPath(pathString);
     }
 
     @Override
@@ -131,5 +141,13 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
     @Override
     public void close() {
         delete();
+    }
+
+    private static Path createTempDir() {
+        try {
+            return Files.createTempDirectory("stroom");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

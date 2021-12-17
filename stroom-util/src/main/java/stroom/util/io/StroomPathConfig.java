@@ -62,4 +62,12 @@ public class StroomPathConfig extends PathConfig implements IsStroomConfig {
     public String getTemp() {
         return super.getTemp();
     }
+
+    public StroomPathConfig withHome(final String home) {
+        return new StroomPathConfig(home, getTemp());
+    }
+
+    public StroomPathConfig withTemp(final String temp) {
+        return new StroomPathConfig(getHome(), temp);
+    }
 }
