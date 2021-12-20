@@ -92,7 +92,7 @@ public final class SetupSampleDataBean {
     private static final String STATS_COUNT_API_DATA_FILE =
             "./stroom-app/src/test/resources/SetupSampleDataBean_COUNT_V3.xml";
 
-    private static final int LOAD_CYCLES = 1000;
+    private static final int LOAD_CYCLES = 10;
 
     private final FeedStore feedStore;
     private final FeedProperties feedProperties;

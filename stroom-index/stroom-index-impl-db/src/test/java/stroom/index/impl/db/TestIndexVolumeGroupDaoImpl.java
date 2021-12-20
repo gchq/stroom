@@ -20,7 +20,10 @@ class TestIndexVolumeGroupDaoImpl {
 
     @BeforeAll
     static void beforeAll() {
-        final Injector injector = Guice.createInjector(new IndexDbModule(), new TestModule());
+        final Injector injector = Guice.createInjector(
+                new IndexDbModule(),
+                new IndexDaoModule(),
+                new TestModule());
         indexVolumeGroupDao = injector.getInstance(IndexVolumeGroupDao.class);
     }
 

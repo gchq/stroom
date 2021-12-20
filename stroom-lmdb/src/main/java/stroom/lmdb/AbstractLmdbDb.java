@@ -192,7 +192,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         return byteBufferPool.getPooledBufferPair(keyBufferCapacity, minValueBufferCapacity);
     }
 
-    protected LmdbEnv getLmdbEnvironment() {
+    public LmdbEnv getLmdbEnvironment() {
         return lmdbEnvironment;
     }
 

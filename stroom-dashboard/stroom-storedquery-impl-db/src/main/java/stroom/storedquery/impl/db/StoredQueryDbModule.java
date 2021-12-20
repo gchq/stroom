@@ -2,12 +2,12 @@ package stroom.storedquery.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.storedquery.impl.StoredQueryConfig;
-import stroom.storedquery.impl.StoredQueryDao;
+import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
+import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
-public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfig, StoredQueryDbConnProvider> {
+public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryDbConfig, StoredQueryDbConnProvider> {
 
     private static final String MODULE = "stroom-storedquery";
     private static final String FLYWAY_LOCATIONS = "stroom/storedquery/impl/db/migration";
@@ -16,7 +16,10 @@ public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfi
     @Override
     protected void configure() {
         super.configure();
-        bind(StoredQueryDao.class).to(StoredQueryDaoImpl.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(StoredQueryDbConnProvider.class);
     }
 
     @Override

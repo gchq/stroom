@@ -1,10 +1,10 @@
-package stroom.dropwizard.common;
+package stroom.config.app;
 
 import stroom.util.io.DiffUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
-import stroom.util.io.PathConfig;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
@@ -12,6 +12,7 @@ import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,19 +40,15 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
     private static final List<String> JSON_POINTERS_TO_INSPECT = List.of(
             "/server",
             "/logging");
+    private static final String APP_CONFIG_JSON_POINTER = "/" + AppConfig.ROOT_PROPERTY_NAME;
 
     private static final List<String> KEYS_TO_MUTATE = List.of(
             "currentLogFilename",
             "archivedLogFilenamePattern");
 
-    private static final String APP_CONFIG_JSON_POINTER = "/appConfig/path";
-    private static final String STROOM_HOME_JSON_POINTER = APP_CONFIG_JSON_POINTER + "/home";
-    private static final String STROOM_TEMP_JSON_POINTER = APP_CONFIG_JSON_POINTER + "/temp";
-
-    // Used by proxy too.
-    private static final String PROXY_CONFIG_JSON_POINTER = "/proxyConfig/path";
-    private static final String PROXY_HOME_JSON_POINTER = PROXY_CONFIG_JSON_POINTER + "/home";
-    private static final String PROXY_TEMP_JSON_POINTER = PROXY_CONFIG_JSON_POINTER + "/temp";
+    private static final String PATH_CONFIG_JSON_POINTER = APP_CONFIG_JSON_POINTER + "/path";
+    private static final String STROOM_HOME_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/home";
+    private static final String STROOM_TEMP_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/temp";
 
     private final ConfigurationSourceProvider delegate;
     private final boolean logChanges;
@@ -86,6 +83,8 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
             JSON_POINTERS_TO_INSPECT.forEach(jsonPointerExp ->
                     mutateNodes(rootNode, jsonPointerExp, KEYS_TO_MUTATE, logDirMutator));
 
+            mergeInDefaultConfig(mapper, rootNode);
+
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             mapper.writeValue(byteArrayOutputStream, rootNode);
 
@@ -93,6 +92,30 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
 
             return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
         }
+    }
+
+    /**
+     * Merge our compile time defaults with the de-serialised config so we have a full tree
+     */
+    private void mergeInDefaultConfig(final ObjectMapper objectMapper,
+                                      final JsonNode rootNode) {
+        final JsonNode appConfigNode = rootNode.at(APP_CONFIG_JSON_POINTER);
+        final AppConfig defaultConfig = new AppConfig();
+        final JsonNode defaultConfigNode = objectMapper.valueToTree(defaultConfig);
+
+        if (appConfigNode == null || appConfigNode.isMissingNode()) {
+            ((ObjectNode) rootNode).set(
+                    AppConfig.ROOT_PROPERTY_NAME,
+                    defaultConfigNode);
+            throw new RuntimeException("No config node found at " + APP_CONFIG_JSON_POINTER);
+        }
+
+        YamlUtil.mergeYamlNodeTrees(
+                objectMapper,
+                objectMapper2 ->
+                        appConfigNode,
+                objectMapper2 ->
+                        objectMapper.valueToTree(defaultConfig));
     }
 
     private void dumpYamlDiff(final String path,
@@ -164,13 +187,11 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
     private PathCreator getPathCreator(final JsonNode rootNode) {
         Objects.requireNonNull(rootNode);
 
-        final Optional<String> optHome = getNodeValue(rootNode, STROOM_HOME_JSON_POINTER)
-                .or(() -> getNodeValue(rootNode, PROXY_HOME_JSON_POINTER));
-        final Optional<String> optTemp = getNodeValue(rootNode, STROOM_TEMP_JSON_POINTER)
-                .or(() -> getNodeValue(rootNode, PROXY_TEMP_JSON_POINTER));
+        final Optional<String> optHome = getNodeValue(rootNode, STROOM_HOME_JSON_POINTER);
+        final Optional<String> optTemp = getNodeValue(rootNode, STROOM_TEMP_JSON_POINTER);
 
         // A vanilla PathConfig with the hard coded defaults
-        final PathConfig pathConfig = new StroomPathConfig();
+        StroomPathConfig pathConfig = new StroomPathConfig();
 
         final String homeSource = Objects.equals(pathConfig.getHome(), optHome.orElse(null))
                 ? SOURCE_DEFAULTS
@@ -180,12 +201,14 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
                 : SOURCE_YAML;
 
         // Set the values from the YAML if we have them
-        optHome.ifPresent(pathConfig::setHome);
-        optTemp.ifPresent(pathConfig::setTemp);
+        pathConfig = optHome.map(pathConfig::withHome)
+                .orElse(pathConfig);
+        pathConfig = optTemp.map(pathConfig::withTemp)
+                .orElse(pathConfig);
 
         final HomeDirProvider homeDirProvider = new HomeDirProviderImpl(pathConfig);
         final TempDirProvider tempDirProvider = new TempDirProviderImpl(pathConfig, homeDirProvider);
-        final PathCreator pathCreator = new PathCreator(homeDirProvider, tempDirProvider);
+        final PathCreator pathCreator = new SimplePathCreator(homeDirProvider, tempDirProvider);
 
         log("Using stroom home [{}] from {} for Drop Wizard config path substitutions",
                 homeDirProvider.get().toAbsolutePath(),

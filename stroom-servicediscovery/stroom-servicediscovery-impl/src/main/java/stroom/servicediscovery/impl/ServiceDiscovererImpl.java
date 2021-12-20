@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -29,7 +30,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
-    private final ServiceDiscoveryConfig serviceDiscoveryConfig;
+    private final Provider<ServiceDiscoveryConfig> serviceDiscoveryConfig;
 
     /*
     Note: When using Curator 2.x (Zookeeper 3.4.x) it's essential that service provider objects are cached by your
@@ -40,7 +41,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private final Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
 
     @Inject
-    ServiceDiscovererImpl(final ServiceDiscoveryConfig serviceDiscoveryConfig,
+    ServiceDiscovererImpl(final Provider<ServiceDiscoveryConfig> serviceDiscoveryConfig,
                           final ServiceDiscoveryManager serviceDiscoveryManager) {
         //create the service providers once service discovery has started up
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
@@ -62,7 +63,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     @Override
     public boolean isEnabled() {
-        return serviceDiscoveryConfig.isEnabled();
+        return serviceDiscoveryConfig.get().isEnabled();
     }
 
     private void initProviders(final ServiceDiscovery<String> serviceDiscovery) {
@@ -106,7 +107,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     @Override
     public Result getHealth() {
-        if (serviceDiscoveryConfig.isEnabled()) {
+        if (serviceDiscoveryConfig.get().isEnabled()) {
             if (serviceProviders.isEmpty()) {
                 return HealthCheck.Result.unhealthy("No service providers found");
             } else {

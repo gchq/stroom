@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -33,18 +34,18 @@ public class Aggregator {
 
     private final RepoSourceItems sourceItems;
     private final AggregateDao aggregateDao;
-    private final AggregatorConfig config;
+    private final Provider<AggregatorConfig> aggregatorConfigProvider;
     private final ProgressLog progressLog;
     private final StripedLock stripedLock = new StripedLock();
 
     @Inject
     Aggregator(final RepoSourceItems sourceItems,
                final AggregateDao aggregateDao,
-               final AggregatorConfig config,
+               final Provider<AggregatorConfig> aggregatorConfigProvider,
                final ProgressLog progressLog) {
         this.sourceItems = sourceItems;
         this.aggregateDao = aggregateDao;
-        this.config = config;
+        this.aggregatorConfigProvider = aggregatorConfigProvider;
         this.progressLog = progressLog;
     }
 
@@ -64,10 +65,11 @@ public class Aggregator {
         try {
             lock.lockInterruptibly();
             try {
+                final AggregatorConfig aggregatorConfig = aggregatorConfigProvider.get();
                 aggregateDao.addItem(
                         sourceItem,
-                        config.getMaxItemsPerAggregate(),
-                        config.getMaxUncompressedByteSize());
+                        aggregatorConfig.getMaxItemsPerAggregate(),
+                        aggregatorConfig.getMaxUncompressedByteSize());
             } finally {
                 lock.unlock();
             }
@@ -80,14 +82,15 @@ public class Aggregator {
 
     public void closeOldAggregates() {
         final long now = System.currentTimeMillis();
-        final long oldest = now - config.getMaxAggregateAge().toMillis();
+        final long oldest = now - aggregatorConfigProvider.get().getMaxAggregateAge().toMillis();
         closeOldAggregates(oldest);
     }
 
     public void closeOldAggregates(final long oldest) {
+        final AggregatorConfig aggregatorConfig = aggregatorConfigProvider.get();
         final List<Aggregate> aggregates = aggregateDao.getClosableAggregates(
-                config.getMaxItemsPerAggregate(),
-                config.getMaxUncompressedByteSize(),
+                aggregatorConfig.getMaxItemsPerAggregate(),
+                aggregatorConfig.getMaxUncompressedByteSize(),
                 oldest
         );
 

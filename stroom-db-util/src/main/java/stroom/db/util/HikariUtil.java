@@ -1,8 +1,8 @@
 package stroom.db.util;
 
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.config.common.DbConfig;
 import stroom.util.time.StroomDuration;
 
 import com.codahale.metrics.MetricRegistry;
@@ -19,11 +19,11 @@ public class HikariUtil {
         // Utility class.
     }
 
-    public static HikariConfig createConfig(final DbConfig dbConfig) {
+    public static HikariConfig createConfig(final AbstractDbConfig dbConfig) {
         return createConfig(dbConfig, null, null, null);
     }
 
-    public static HikariConfig createConfig(final DbConfig dbConfig,
+    public static HikariConfig createConfig(final AbstractDbConfig dbConfig,
                                             final String poolName,
                                             final MetricRegistry metricRegistry,
                                             final HealthCheckRegistry healthCheckRegistry) {

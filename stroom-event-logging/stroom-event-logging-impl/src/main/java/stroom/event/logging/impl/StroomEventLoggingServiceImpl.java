@@ -111,17 +111,17 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private final ObjectMapper objectMapper;
 
-    private final LoggingConfig loggingConfig;
+    private final Provider<LoggingConfig> loggingConfigProvider;
 
     @Inject
-    StroomEventLoggingServiceImpl(final LoggingConfig loggingConfig,
+    StroomEventLoggingServiceImpl(final Provider<LoggingConfig> loggingConfigProvider,
                                   final SecurityContext securityContext,
                                   final Provider<HttpServletRequest> httpServletRequestProvider,
                                   final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap,
                                   final CurrentActivity currentActivity,
                                   final Provider<BuildInfo> buildInfoProvider,
                                   final DeviceCache deviceCache) {
-        this.loggingConfig = loggingConfig;
+        this.loggingConfigProvider = loggingConfigProvider;
         this.securityContext = securityContext;
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.objectInfoProviderMap = objectInfoProviderMap;
@@ -502,7 +502,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      */
     @Override
     public List<Data> getDataItems(Object obj) {
-        if (obj == null || loggingConfig.getMaxDataElementStringLength() == 0) {
+        if (obj == null || loggingConfigProvider.get().getMaxDataElementStringLength() == 0) {
             return null;
         }
 
@@ -535,7 +535,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 .findPropertyIgnorals(beanDescription.getClassInfo())
                 .getIgnored()); // Filter properties removing the class level ignored ones
 
-        if (loggingConfig.isOmitRecordDetailsLoggingEnabled()) {
+        if (loggingConfigProvider.get().isOmitRecordDetailsLoggingEnabled()) {
             final Set<String> standardInterfaceProperties = ignorePropertiesFromStandardInterfaces(bean);
             ignoredProperties.addAll(standardInterfaceProperties);
         }
@@ -555,6 +555,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         final Data.Builder<?> builder = Data.builder().withName(name);
 
         if (valObj != null) {
+            final LoggingConfig loggingConfig = loggingConfigProvider.get();
             if (valObj instanceof Collection<?>) {
                 Collection<?> collection = (Collection<?>) valObj;
 

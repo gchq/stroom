@@ -61,10 +61,10 @@ class TestStroomEventLoggingServiceImpl {
     void setup() {
         final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap =
                 new HashMap<>();
-        objectInfoProviderMap.put(new ObjectType(TestObj.class), () -> new TestObjInfoProvider());
+        objectInfoProviderMap.put(new ObjectType(TestObj.class), TestObjInfoProvider::new);
 
         stroomEventLoggingService = new StroomEventLoggingServiceImpl(
-                new LoggingConfig(),
+                LoggingConfig::new,
                 securityContext,
                 () -> httpServletRequest,
                 objectInfoProviderMap,

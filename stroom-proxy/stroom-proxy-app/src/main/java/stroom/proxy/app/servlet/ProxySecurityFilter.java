@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -57,21 +58,21 @@ public class ProxySecurityFilter implements Filter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxySecurityFilter.class);
 
-    private final ContentSyncConfig contentSyncConfig;
-    private final FeedStatusConfig feedStatusConfig;
-    private final ProxyConfig proxyConfig;
+    private final Provider<ContentSyncConfig> contentSyncConfigProvider;
+    private final Provider<FeedStatusConfig> feedStatusConfigProvider;
+    private final Provider<ProxyConfig> proxyConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
 
     private Pattern pattern = null;
 
     @Inject
-    public ProxySecurityFilter(final ContentSyncConfig contentSyncConfig,
-                               final FeedStatusConfig feedStatusConfig,
-                               final ProxyConfig proxyConfig,
+    public ProxySecurityFilter(final Provider<ContentSyncConfig> contentSyncConfigProvider,
+                               final Provider<FeedStatusConfig> feedStatusConfigProvider,
+                               final Provider<ProxyConfig> proxyConfigProvider,
                                final DefaultOpenIdCredentials defaultOpenIdCredentials) {
-        this.contentSyncConfig = contentSyncConfig;
-        this.feedStatusConfig = feedStatusConfig;
-        this.proxyConfig = proxyConfig;
+        this.contentSyncConfigProvider = contentSyncConfigProvider;
+        this.feedStatusConfigProvider = feedStatusConfigProvider;
+        this.proxyConfigProvider = proxyConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
     }
 
@@ -150,7 +151,9 @@ public class ProxySecurityFilter implements Filter {
     private String getConfiguredApiKey(final String requestUri) {
         // TODO it could be argued that we should have a single API key to use for all of these resources.
         final String apiKey;
+        final ProxyConfig proxyConfig = proxyConfigProvider.get();
         if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
+            final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
             if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
                 LOGGER.info("Authenticating using default API key. For production use, set up an API key in Stroom!");
                 apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
@@ -158,6 +161,7 @@ public class ProxySecurityFilter implements Filter {
                 apiKey = feedStatusConfig.getApiKey();
             }
         } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
+            final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
             if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(contentSyncConfig.getApiKey())) {
                 LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
                 apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());

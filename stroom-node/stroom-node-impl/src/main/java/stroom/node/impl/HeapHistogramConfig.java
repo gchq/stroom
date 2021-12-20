@@ -4,16 +4,31 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class HeapHistogramConfig extends AbstractConfig implements IsStroomConfig {
 
-    private String classNameMatchRegex = "^stroom\\..*$";
-    private String classNameReplacementRegex =
-            "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\$\\$Lambda\\$)[0-9]+\\/[0-9]+)";
+    private final String classNameMatchRegex;
+    private final String classNameReplacementRegex;
+
+    public HeapHistogramConfig() {
+        classNameMatchRegex = "^stroom\\..*$";
+        classNameReplacementRegex =
+                "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\$\\$Lambda\\$)[0-9]+\\/[0-9]+)";
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public HeapHistogramConfig(@JsonProperty("classNameMatchRegex") final String classNameMatchRegex,
+                               @JsonProperty("classNameReplacementRegex") final String classNameReplacementRegex) {
+        this.classNameMatchRegex = classNameMatchRegex;
+        this.classNameReplacementRegex = classNameReplacementRegex;
+    }
 
     @ValidRegex
     @JsonPropertyDescription("A single regex that will be used to filter classes from the heap histogram internal " +
@@ -21,11 +36,6 @@ public class HeapHistogramConfig extends AbstractConfig implements IsStroomConfi
             "be included. If a value is supplied only those class names matching the regex will be included.")
     public String getClassNameMatchRegex() {
         return classNameMatchRegex;
-    }
-
-    @SuppressWarnings("unused")
-    public void setClassNameMatchRegex(final String classNameMatchRegex) {
-        this.classNameMatchRegex = classNameMatchRegex;
     }
 
     @ValidRegex
@@ -37,8 +47,15 @@ public class HeapHistogramConfig extends AbstractConfig implements IsStroomConfi
         return classNameReplacementRegex;
     }
 
-    @SuppressWarnings("unused")
-    public void setClassNameReplacementRegex(final String classNameReplacementRegex) {
-        this.classNameReplacementRegex = classNameReplacementRegex;
+    public HeapHistogramConfig withClassNameMatchRegex(final String classNameMatchRegex) {
+        return new HeapHistogramConfig(classNameMatchRegex, classNameReplacementRegex);
+    }
+
+    @Override
+    public String toString() {
+        return "HeapHistogramConfig{" +
+                "classNameMatchRegex='" + classNameMatchRegex + '\'' +
+                ", classNameReplacementRegex='" + classNameReplacementRegex + '\'' +
+                '}';
     }
 }

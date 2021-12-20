@@ -1,8 +1,7 @@
 package stroom.config.global.impl;
 
 import stroom.config.app.AppConfig;
-import stroom.config.app.SuperDevUtil;
-import stroom.config.app.YamlUtil;
+import stroom.config.app.StroomYamlUtil;
 import stroom.util.HasHealthCheck;
 import stroom.util.config.AbstractFileChangeMonitor;
 import stroom.util.config.AppConfigValidator;
@@ -24,20 +23,17 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigMonitor.class);
 
-    private final AppConfig appConfig;
     private final Path configFile;
-    private final GlobalConfigService globalConfigService;
+    private final ConfigMapper configMapper;
     private final AppConfigValidator appConfigValidator;
 
     @Inject
-    public AppConfigMonitor(final AppConfig appConfig,
-                            final ConfigLocation configLocation,
-                            final GlobalConfigService globalConfigService,
+    public AppConfigMonitor(final ConfigLocation configLocation,
+                            final ConfigMapper configMapper,
                             final AppConfigValidator appConfigValidator) {
         super(configLocation.getConfigFilePath());
-        this.appConfig = appConfig;
         this.configFile = configLocation.getConfigFilePath();
-        this.globalConfigService = globalConfigService;
+        this.configMapper = configMapper;
         this.appConfigValidator = appConfigValidator;
     }
 
@@ -50,10 +46,7 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
         final AppConfig newAppConfig;
         try {
             LOGGER.info("Reading updated config file");
-            newAppConfig = YamlUtil.readAppConfig(configFile);
-
-            // Check if we are running GWT Super Dev Mode, if so relax security
-            SuperDevUtil.relaxSecurityInSuperDevMode(newAppConfig);
+            newAppConfig = StroomYamlUtil.readAppConfig(configFile);
 
             final ConfigValidator.Result<AbstractConfig> result = validateNewConfig(newAppConfig);
 
@@ -64,10 +57,8 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
             } else {
                 try {
                     LOGGER.info("Updating application config from file.");
-                    globalConfigService.updateConfigFromDb(newAppConfig);
+                    configMapper.updateConfigFromYaml(newAppConfig);
 
-                    // Update the config objects using the DB as the removal of a yaml value may trigger
-                    // a DB value to be effective
                     LOGGER.info("Completed updating application config from file.");
                 } catch (Throwable e) {
                     // Swallow error as we don't want to break the app because the new config is bad
@@ -89,7 +80,7 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
         // can log their locations with full paths.
         PropertyPathDecorator.decoratePaths(newAppConfig, AppConfig.ROOT_PROPERTY_PATH);
 
-        LOGGER.info("Validating modified config file (home: {})", newAppConfig.getPathConfig().getHome());
+        LOGGER.info("Validating modified config (home: {})", newAppConfig.getPathConfig().getHome());
         final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(newAppConfig);
         result.handleViolations(AppConfigValidator::logConstraintViolation);
 

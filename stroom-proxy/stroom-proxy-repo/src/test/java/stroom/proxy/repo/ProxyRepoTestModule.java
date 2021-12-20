@@ -23,5 +23,6 @@ public class ProxyRepoTestModule extends AbstractModule {
         bind(ForwarderDestinations.class).to(MockForwardDestinations.class);
         bind(Sender.class).to(MockSender.class);
         bind(ProgressLog.class).to(ProgressLogImpl.class);
+        bind(RepoDbConfig.class).to(ProxyRepoDbConfig.class);
     }
 }

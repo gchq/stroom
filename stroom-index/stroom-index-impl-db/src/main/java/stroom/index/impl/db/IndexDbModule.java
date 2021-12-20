@@ -2,14 +2,12 @@ package stroom.index.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.index.impl.IndexConfig;
-import stroom.index.impl.IndexShardDao;
-import stroom.index.impl.IndexVolumeDao;
-import stroom.index.impl.IndexVolumeGroupDao;
+import stroom.index.impl.IndexConfig.IndexDbConfig;
+import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
-public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbConnProvider> {
+public class IndexDbModule extends AbstractFlyWayDbModule<IndexDbConfig, IndexDbConnProvider> {
 
     private static final String MODULE = "stroom-index";
     private static final String FLYWAY_LOCATIONS = "stroom/index/impl/db/migration";
@@ -18,9 +16,11 @@ public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbCo
     @Override
     protected void configure() {
         super.configure();
-        bind(IndexShardDao.class).to(IndexShardDaoImpl.class);
-        bind(IndexVolumeDao.class).to(IndexVolumeDaoImpl.class);
-        bind(IndexVolumeGroupDao.class).to(IndexVolumeGroupDaoImpl.class);
+
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(IndexDbConnProvider.class);
     }
 
     @Override

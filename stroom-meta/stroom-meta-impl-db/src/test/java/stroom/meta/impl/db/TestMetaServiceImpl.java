@@ -36,6 +36,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.time.TimePeriod;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -50,7 +51,6 @@ import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestMetaServiceImpl {
 
@@ -68,27 +68,41 @@ class TestMetaServiceImpl {
     private MetaService metaService;
     @Inject
     private MetaDaoImpl metaDao;
-    @Inject
+
     private DataRetentionConfig dataRetentionConfig;
 
     @BeforeEach
     void setup() {
+        dataRetentionConfig = new DataRetentionConfig();
+
         Guice.createInjector(
-                        new MetaModule(),
-                        new MetaDbModule(),
-                        new MockClusterLockModule(),
-                        new MockSecurityContextModule(),
-                        new MockCollectionModule(),
-                        new MockDocRefInfoModule(),
-                        new MockWordListProviderModule(),
-                        new CacheModule(),
-                        new DbTestModule(),
-                        new MetaTestModule(),
-                        new MockTaskModule(),
-                        new MockStroomEventLoggingModule())
+                new MetaModule(),
+                new MetaDbModule(),
+                new MetaDaoModule(),
+                new MockClusterLockModule(),
+                new MockSecurityContextModule(),
+                new MockCollectionModule(),
+                new MockDocRefInfoModule(),
+                new MockWordListProviderModule(),
+                new CacheModule(),
+                new DbTestModule(),
+                new MetaTestModule(),
+                new MockTaskModule(),
+                new MockStroomEventLoggingModule(),
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(DataRetentionConfig.class)
+                                .toProvider(() -> getDataRetentionConfig());
+                    }
+                })
                 .injectMembers(this);
         // Delete everything
         cleanup.cleanup();
+    }
+
+    public DataRetentionConfig getDataRetentionConfig() {
+        return dataRetentionConfig;
     }
 
     @Test
@@ -462,7 +476,7 @@ class TestMetaServiceImpl {
 
         // Use a batch size smaller than the expected number of deletes to ensure we exercise
         // batching
-        dataRetentionConfig.setDeleteBatchSize(Math.max(1, (expectedRowsDeleted / 2) - 10));
+        dataRetentionConfig = dataRetentionConfig.withDeleteBatchSize(Math.max(1, (expectedRowsDeleted / 2) - 10));
 //        dataRetentionConfig.setDeleteBatchSize(7);
 
         LOGGER.info("Doing data retention delete for period {}, batch size {}",

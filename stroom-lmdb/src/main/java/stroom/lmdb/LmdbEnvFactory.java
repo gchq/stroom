@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -32,15 +33,15 @@ public class LmdbEnvFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnvFactory.class);
 
     private final PathCreator pathCreator;
-    private final LmdbLibraryConfig lmdbLibraryConfig;
+    private final Provider<LmdbLibraryConfig> lmdbLibraryConfigProvider;
     private final TempDirProvider tempDirProvider;
 
     @Inject
     public LmdbEnvFactory(final PathCreator pathCreator,
                           final TempDirProvider tempDirProvider,
-                          final LmdbLibraryConfig lmdbLibraryConfig) {
+                          final Provider<LmdbLibraryConfig> lmdbLibraryConfigProvider) {
         this.pathCreator = pathCreator;
-        this.lmdbLibraryConfig = lmdbLibraryConfig;
+        this.lmdbLibraryConfigProvider = lmdbLibraryConfigProvider;
         this.tempDirProvider = tempDirProvider;
     }
 
@@ -48,7 +49,7 @@ public class LmdbEnvFactory {
         return new SimpleEnvBuilder(
                 pathCreator,
                 tempDirProvider,
-                lmdbLibraryConfig,
+                lmdbLibraryConfigProvider.get(),
                 lmdbConfig);
     }
 
@@ -60,7 +61,7 @@ public class LmdbEnvFactory {
         return new CustomEnvBuilder(
                 pathCreator,
                 tempDirProvider,
-                lmdbLibraryConfig,
+                lmdbLibraryConfigProvider.get(),
                 dir);
     }
 
@@ -74,7 +75,7 @@ public class LmdbEnvFactory {
         return new CustomEnvBuilder(
                 pathCreator,
                 tempDirProvider,
-                lmdbLibraryConfig,
+                lmdbLibraryConfigProvider.get(),
                 pathCreator.toAppPath(dir));
     }
 

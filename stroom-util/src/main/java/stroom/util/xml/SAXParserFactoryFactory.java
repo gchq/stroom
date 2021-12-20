@@ -75,8 +75,9 @@ public final class SAXParserFactoryFactory {
 
     private static void secureProcessing(final SAXParserFactory factory) {
         try {
-            final boolean secureProcessing = ParserConfig.secureProcessing;
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, secureProcessing);
+            factory.setFeature(
+                    XMLConstants.FEATURE_SECURE_PROCESSING,
+                    SAXParserSettings.isSecureProcessingEnabled());
 
 
 //            System.setProperty(XalanConstants.SP_TOTAL_ENTITY_SIZE_LIMIT, "50000010");

@@ -1,6 +1,6 @@
 package stroom.app.commands;
 
-import stroom.app.guice.AppModule;
+import stroom.app.guice.BootStrapModule;
 import stroom.config.app.Config;
 import stroom.util.guice.GuiceUtil;
 
@@ -48,17 +48,18 @@ public class DbMigrationCommand extends ConfiguredCommand<Config> {
 
         LOGGER.info("Running all DB migrations");
 
-        LOGGER.debug("Creating dbMigrationModule");
-        final AppModule appModule = new AppModule(config, configFile);
+        LOGGER.debug("Creating bootstrapModule");
+        final BootStrapModule bootstrapModule = new BootStrapModule(config, configFile);
 
         LOGGER.debug("Creating injector");
         try {
-            final Injector injector = Guice.createInjector(appModule);
+            final Injector injector = Guice.createInjector(bootstrapModule);
 
             // Force guice to get all datasource instances from the multibinder
             // so the migration will be run for each stroom module
             // Relies on all db modules adding an entry to the multibinder
-            final Set<DataSource> dataSources = injector.getInstance(Key.get(GuiceUtil.setOf(DataSource.class)));
+            final Set<DataSource> dataSources = injector.getInstance(
+                    Key.get(GuiceUtil.setOf(DataSource.class)));
             LOGGER.info("Used {} data sources:\n{}",
                     dataSources.size(),
                     dataSources.stream()

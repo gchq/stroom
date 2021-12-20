@@ -30,7 +30,12 @@ public class TestSource {
     @Test
     void testAddSource() {
         for (int i = 0; i < 10; i++) {
-            proxyRepoSources.addSource("path_" + i, "test", null, System.currentTimeMillis(), null);
+            proxyRepoSources.addSource(
+                    "path_" + i,
+                    "test",
+                    null,
+                    System.currentTimeMillis(),
+                    null);
         }
     }
 
@@ -49,12 +54,22 @@ public class TestSource {
                 System.currentTimeMillis(),
                 null);
         proxyRepoSources.clear();
-        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
+        proxyRepoSources.addSource(
+                "path",
+                "test",
+                null,
+                System.currentTimeMillis(),
+                null);
     }
 
     @Test
     void testSourceExists() {
-        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
+        proxyRepoSources.addSource(
+                "path",
+                "test",
+                null,
+                System.currentTimeMillis(),
+                null);
         final boolean exists = proxyRepoSources.sourceExists("path");
         assertThat(exists).isTrue();
     }

@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public class FunctionFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FunctionFactory.class);
 
     // Hold them statically as we only want to scan the class path once

@@ -6,15 +6,15 @@ import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.annotation.Nonnull;
-import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig, IsStroomConfig {
 
@@ -25,12 +25,29 @@ public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig,
     // Not something we want to expose to admins. Search breaks if this is set to true.
     static final boolean DEFAULT_IS_READER_BLOCKED_BY_WRITER = false;
 
-    private String localDir = DEFAULT_LOCAL_DIR;
-    private int maxReaders = DEFAULT_MAX_READERS;
-    private ByteSize maxStoreSize = DEFAULT_MAX_STORE_SIZE;
-    private boolean isReadAheadEnabled = DEFAULT_IS_READ_AHEAD_ENABLED;
+    private final String localDir;
+    private final int maxReaders;
+    private final ByteSize maxStoreSize;
+    private final boolean isReadAheadEnabled;
+
 
     public ResultStoreLmdbConfig() {
+        localDir = DEFAULT_LOCAL_DIR;
+        maxReaders = DEFAULT_MAX_READERS;
+        maxStoreSize = DEFAULT_MAX_STORE_SIZE;
+        isReadAheadEnabled = DEFAULT_IS_READ_AHEAD_ENABLED;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public ResultStoreLmdbConfig(@JsonProperty("localDir") final String localDir,
+                                 @JsonProperty("maxReaders") final int maxReaders,
+                                 @JsonProperty("maxStoreSize") final ByteSize maxStoreSize,
+                                 @JsonProperty("readAheadEnabled") final boolean isReadAheadEnabled) {
+        this.localDir = localDir;
+        this.maxReaders = maxReaders;
+        this.maxStoreSize = maxStoreSize;
+        this.isReadAheadEnabled = isReadAheadEnabled;
     }
 
     @Override
@@ -44,22 +61,12 @@ public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig,
         return localDir;
     }
 
-    @SuppressWarnings("unused")
-    public void setLocalDir(final String localDir) {
-        this.localDir = localDir;
-    }
-
     @Override
     @Min(1)
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The maximum number of concurrent readers/threads that can use the off-heap store.")
     public int getMaxReaders() {
         return maxReaders;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMaxReaders(final int maxReaders) {
-        this.maxReaders = maxReaders;
     }
 
     @Override
@@ -72,13 +79,9 @@ public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig,
         return maxStoreSize;
     }
 
-    @SuppressWarnings("unused")
-    public void setMaxStoreSize(final ByteSize maxStoreSize) {
-        this.maxStoreSize = maxStoreSize;
-    }
-
     @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonProperty("readAheadEnabled")
     @JsonPropertyDescription("Read ahead means the OS will pre-fetch additional data from the disk in the " +
             "expectation that it will be used at some point. This generally improves performance as more data is " +
             "available in the page cache. Read ahead is enabled by default. It may be worth disabling it if " +
@@ -86,11 +89,6 @@ public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig,
             "entries to make space for pre-fetched data.")
     public boolean isReadAheadEnabled() {
         return isReadAheadEnabled;
-    }
-
-    @SuppressWarnings("unused")
-    public void setReadAheadEnabled(final boolean isReadAheadEnabled) {
-        this.isReadAheadEnabled = isReadAheadEnabled;
     }
 
     @Override

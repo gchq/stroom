@@ -43,11 +43,11 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
     UserGroupsCache(final CacheManager cacheManager,
                     final UserService userService,
                     final Provider<EntityEventBus> eventBusProvider,
-                    final AuthorisationConfig authorisationConfig) {
+                    final Provider<AuthorisationConfig> authorisationConfigProvider) {
         this.eventBusProvider = eventBusProvider;
         cache = cacheManager.create(
                 CACHE_NAME,
-                authorisationConfig::getUserGroupsCache,
+                () -> authorisationConfigProvider.get().getUserGroupsCache(),
                 userService::findGroupUuidsForUser);
     }
 

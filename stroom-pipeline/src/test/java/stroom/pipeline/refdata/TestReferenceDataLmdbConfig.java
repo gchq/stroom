@@ -56,30 +56,30 @@ class TestReferenceDataLmdbConfig {
                 .isEqualTo("my_dir");
     }
 
-    @Test
-    void testJsonDeserialisation_sparse() throws IOException {
-
-        ObjectMapper objectMapper = new ObjectMapper()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-
-        final String json = """
-                {
-                    "localDir":"my_dir"
-                }
-                 """;
-
-        final ReferenceDataLmdbConfig lmdbConfig = objectMapper.readValue(json, ReferenceDataLmdbConfig.class);
-
-        Assertions.assertThat(lmdbConfig.getLocalDir())
-                .isEqualTo("my_dir");
-        Assertions.assertThat(lmdbConfig.getMaxReaders())
-                .isEqualTo(ReferenceDataLmdbConfig.DEFAULT_MAX_READERS);
-        Assertions.assertThat(lmdbConfig.getMaxStoreSize())
-                .isEqualTo(ReferenceDataLmdbConfig.DEFAULT_MAX_STORE_SIZE);
-        Assertions.assertThat(lmdbConfig.isReadAheadEnabled())
-                .isEqualTo(ReferenceDataLmdbConfig.DEFAULT_IS_READ_AHEAD_ENABLED);
-        Assertions.assertThat(lmdbConfig.isReaderBlockedByWriter())
-                .isEqualTo(ReferenceDataLmdbConfig.DEFAULT_IS_READER_BLOCKED_BY_WRITER);
-
-    }
+//    @Test
+//    void testJsonDeserialisation_sparse() throws IOException {
+//
+//        ObjectMapper objectMapper = new ObjectMapper()
+//                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+//
+//        final String json = """
+//                {
+//                    "localDir":"my_dir"
+//                }
+//                 """;
+//
+//        final ReferenceDataLmdbConfig lmdbConfig = objectMapper.readValue(json, ReferenceDataLmdbConfig.class);
+//
+//        Assertions.assertThat(lmdbConfig.getLocalDir())
+//                .isEqualTo("my_dir");
+//        Assertions.assertThat(lmdbConfig.getMaxReaders())
+//                .isEqualTo(ReferenceDataLmdbConfig.DEFAULT_MAX_READERS);
+//        Assertions.assertThat(lmdbConfig.getMaxStoreSize())
+//                .isEqualTo(ReferenceDataLmdbConfig.DEFAULT_MAX_STORE_SIZE);
+//        Assertions.assertThat(lmdbConfig.isReadAheadEnabled())
+//                .isEqualTo(ReferenceDataLmdbConfig.DEFAULT_IS_READ_AHEAD_ENABLED);
+//        Assertions.assertThat(lmdbConfig.isReaderBlockedByWriter())
+//                .isEqualTo(ReferenceDataLmdbConfig.DEFAULT_IS_READER_BLOCKED_BY_WRITER);
+//
+//    }
 }

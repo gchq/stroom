@@ -4,7 +4,6 @@ import stroom.node.api.NodeInfo;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.SimpleTaskContextFactory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,13 +35,14 @@ class TestHeapHistogramStatisticsExecutor {
     @Captor
     private ArgumentCaptor<List<InternalStatisticEvent>> eventsCaptor;
     private HeapHistogramStatisticsExecutor executor;
-    private final HeapHistogramConfig heapHistogramConfig = new HeapHistogramConfig();
+
+    private HeapHistogramConfig heapHistogramConfig = new HeapHistogramConfig();
 
     @BeforeEach
     void setup() {
         try {
             Mockito.when(nodeInfo.getThisNodeName()).thenReturn("1a");
-            final HeapHistogramService heapHistogramService = new HeapHistogramService(heapHistogramConfig);
+            final HeapHistogramService heapHistogramService = new HeapHistogramService(this::getHeapHistogramConfig);
             executor = new HeapHistogramStatisticsExecutor(heapHistogramService,
                     mockInternalStatisticsReceiver,
                     nodeInfo, new SimpleTaskContext());
@@ -88,7 +88,7 @@ class TestHeapHistogramStatisticsExecutor {
 
         //Given
         //no regex so should get all classes back
-        heapHistogramConfig.setClassNameMatchRegex("");
+        heapHistogramConfig = heapHistogramConfig.withClassNameMatchRegex("");
 
 //        mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "");
 
@@ -131,6 +131,10 @@ class TestHeapHistogramStatisticsExecutor {
         String output = pattern.matcher(input).replaceAll("--");
 
         assertThat(output).isEqualTo("stroom.query.audit.client.DocRefResourceHttpClient$$Lambda$--");
+    }
+
+    private HeapHistogramConfig getHeapHistogramConfig() {
+        return heapHistogramConfig;
     }
 }
 

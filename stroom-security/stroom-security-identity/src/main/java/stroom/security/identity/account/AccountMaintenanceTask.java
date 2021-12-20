@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -16,15 +17,15 @@ class AccountMaintenanceTask {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountMaintenanceTask.class);
 
-    private final PasswordPolicyConfig passwordPolicyConfig;
+    private final Provider<PasswordPolicyConfig> passwordPolicyConfigProvider;
     private final AccountDao accountDao;
     private final TaskContext taskContext;
 
     @Inject
-    AccountMaintenanceTask(final PasswordPolicyConfig passwordPolicyConfig,
+    AccountMaintenanceTask(final Provider<PasswordPolicyConfig> passwordPolicyConfigProvider,
                            final AccountDao accountDao,
                            final TaskContext taskContext) {
-        this.passwordPolicyConfig = passwordPolicyConfig;
+        this.passwordPolicyConfigProvider = passwordPolicyConfigProvider;
         this.accountDao = accountDao;
         this.taskContext = taskContext;
     }
@@ -33,7 +34,8 @@ class AccountMaintenanceTask {
         LOGGER.info("Checking for accounts that are not being used.");
         taskContext.info(() -> "Checking for accounts that are not being used.");
 
-        final StroomDuration neverUsedAgeThreshold = passwordPolicyConfig.getNeverUsedAccountDeactivationThreshold();
+        final StroomDuration neverUsedAgeThreshold = passwordPolicyConfigProvider.get()
+                .getNeverUsedAccountDeactivationThreshold();
         int numberOfInactiveNewAccounts = accountDao.deactivateNewInactiveUsers(neverUsedAgeThreshold.getDuration());
         LOGGER.info("Deactivated {} new user account(s) that have been inactive for {} or more.",
                 numberOfInactiveNewAccounts, neverUsedAgeThreshold);
@@ -42,7 +44,8 @@ class AccountMaintenanceTask {
                 numberOfInactiveNewAccounts,
                 neverUsedAgeThreshold));
 
-        final StroomDuration unusedAgeThreshold = passwordPolicyConfig.getUnusedAccountDeactivationThreshold();
+        final StroomDuration unusedAgeThreshold = passwordPolicyConfigProvider.get()
+                .getUnusedAccountDeactivationThreshold();
         int numberOfInactiveAccounts = accountDao.deactivateInactiveUsers(unusedAgeThreshold.getDuration());
         LOGGER.info("Deactivated {} user account(s) that have been inactive for {} or more.",
                 numberOfInactiveAccounts, unusedAgeThreshold);

@@ -23,6 +23,7 @@ import stroom.util.shared.Clearable;
 
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -35,10 +36,13 @@ class UserCache implements Clearable {
 
     @Inject
     UserCache(final CacheManager cacheManager,
-              final AuthorisationConfig authorisationConfig,
+              final Provider<AuthorisationConfig> authorisationConfigProvider,
               final AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
-        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserCache, this::getUser);
+        cache = cacheManager.create(
+                CACHE_NAME,
+                () -> authorisationConfigProvider.get().getUserCache(),
+                this::getUser);
     }
 
     private Optional<User> getUser(final String name) {

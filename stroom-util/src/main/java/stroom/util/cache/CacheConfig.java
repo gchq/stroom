@@ -1,33 +1,42 @@
 package stroom.util.cache;
 
+import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.validation.constraints.Min;
 
 // The descriptions have mostly been taken from the Caffine javadoc
 @NotInjectableConfig
+@JsonPropertyOrder(alphabetic = true)
 public class CacheConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_MAXIMUM_SIZE = "maximumSize";
     public static final String PROP_NAME_EXPIRE_AFTER_ACCESS = "expireAfterAccess";
     public static final String PROP_NAME_EXPIRE_AFTER_WRITE = "expireAfterWrite";
 
-    private Long maximumSize;
-    private StroomDuration expireAfterAccess;
-    private StroomDuration expireAfterWrite;
+    private final Long maximumSize;
+    private final StroomDuration expireAfterAccess;
+    private final StroomDuration expireAfterWrite;
 
     public CacheConfig() {
+        maximumSize = null;
+        expireAfterAccess = null;
+        expireAfterWrite = null;
     }
 
-    private CacheConfig(final Long maximumSize,
-                        final StroomDuration expireAfterAccess,
-                        final StroomDuration expireAfterWrite) {
+    @JsonCreator
+    public CacheConfig(@JsonProperty(PROP_NAME_MAXIMUM_SIZE) final Long maximumSize,
+                       @JsonProperty(PROP_NAME_EXPIRE_AFTER_ACCESS) final StroomDuration expireAfterAccess,
+                       @JsonProperty(PROP_NAME_EXPIRE_AFTER_WRITE) final StroomDuration expireAfterWrite) {
         this.maximumSize = maximumSize;
         this.expireAfterAccess = expireAfterAccess;
         this.expireAfterWrite = expireAfterWrite;
@@ -42,12 +51,9 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig {
             "no size limit will be applied.")
     @JsonProperty(PROP_NAME_MAXIMUM_SIZE)
     @Min(0)
+    @RequiresRestart(RestartScope.SYSTEM)
     public Long getMaximumSize() {
         return maximumSize;
-    }
-
-    public void setMaximumSize(final Long maximumSize) {
-        this.maximumSize = maximumSize;
     }
 
     @JsonPropertyDescription("Specifies that each entry should be automatically removed from the cache once " +
@@ -55,12 +61,9 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig {
             "its value, or its last read. In ISO-8601 duration format, e.g. 'PT10M'. If no value is set then " +
             " entries will not be aged out based these criteria.")
     @JsonProperty(PROP_NAME_EXPIRE_AFTER_ACCESS)
+    @RequiresRestart(RestartScope.SYSTEM)
     public StroomDuration getExpireAfterAccess() {
         return expireAfterAccess;
-    }
-
-    public void setExpireAfterAccess(final StroomDuration expireAfterAccess) {
-        this.expireAfterAccess = expireAfterAccess;
     }
 
     @JsonPropertyDescription("Specifies that each entry should be automatically removed from the cache once " +
@@ -68,13 +71,9 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig {
             "In ISO-8601 duration format, e.g. 'PT5M'. If no value is set then entries will not be aged out based on " +
             " these criteria.")
     @JsonProperty(PROP_NAME_EXPIRE_AFTER_WRITE)
+    @RequiresRestart(RestartScope.SYSTEM)
     public StroomDuration getExpireAfterWrite() {
         return expireAfterWrite;
-    }
-
-    @SuppressWarnings("unused")
-    public void setExpireAfterWrite(final StroomDuration expireAfterWrite) {
-        this.expireAfterWrite = expireAfterWrite;
     }
 
     public static Builder builder() {

@@ -8,28 +8,47 @@ import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class SecurityConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_IDENTITY = "identity";
 
-    private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
-    private AuthorisationConfig authorisationConfig = new AuthorisationConfig();
-    private ContentSecurityConfig contentSecurityConfig = new ContentSecurityConfig();
-    private CryptoConfig cryptoConfig = new CryptoConfig();
-    private IdentityConfig identityConfig = new IdentityConfig();
+    private final AuthenticationConfig authenticationConfig;
+    private final AuthorisationConfig authorisationConfig;
+    private final ContentSecurityConfig contentSecurityConfig;
+    private final CryptoConfig cryptoConfig;
+    private final IdentityConfig identityConfig;
+
+    public SecurityConfig() {
+        authenticationConfig = new AuthenticationConfig();
+        authorisationConfig = new AuthorisationConfig();
+        contentSecurityConfig = new ContentSecurityConfig();
+        cryptoConfig = new CryptoConfig();
+        identityConfig = new IdentityConfig();
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public SecurityConfig(@JsonProperty("authentication") final AuthenticationConfig authenticationConfig,
+                          @JsonProperty("authorisation") final AuthorisationConfig authorisationConfig,
+                          @JsonProperty("webContent") final ContentSecurityConfig contentSecurityConfig,
+                          @JsonProperty("crypto") final CryptoConfig cryptoConfig,
+                          @JsonProperty(PROP_NAME_IDENTITY) final IdentityConfig identityConfig) {
+        this.authenticationConfig = authenticationConfig;
+        this.authorisationConfig = authorisationConfig;
+        this.contentSecurityConfig = contentSecurityConfig;
+        this.cryptoConfig = cryptoConfig;
+        this.identityConfig = identityConfig;
+    }
 
     @JsonProperty("authentication")
     public AuthenticationConfig getAuthenticationConfig() {
         return authenticationConfig;
-    }
-
-    public void setAuthenticationConfig(final AuthenticationConfig authenticationConfig) {
-        this.authenticationConfig = authenticationConfig;
     }
 
     @JsonProperty("authorisation")
@@ -37,8 +56,9 @@ public class SecurityConfig extends AbstractConfig implements IsStroomConfig {
         return authorisationConfig;
     }
 
-    public void setAuthorisationConfig(final AuthorisationConfig authorisationConfig) {
-        this.authorisationConfig = authorisationConfig;
+    @JsonProperty("webContent")
+    public ContentSecurityConfig getContentSecurityConfig() {
+        return contentSecurityConfig;
     }
 
     @JsonProperty("crypto")
@@ -46,27 +66,9 @@ public class SecurityConfig extends AbstractConfig implements IsStroomConfig {
         return cryptoConfig;
     }
 
-    public void setCryptoConfig(final CryptoConfig cryptoConfig) {
-        this.cryptoConfig = cryptoConfig;
-    }
-
-    @JsonProperty("webContent")
-    public ContentSecurityConfig getContentSecurityConfig() {
-        return contentSecurityConfig;
-    }
-
-    public void setContentSecurityConfig(final ContentSecurityConfig contentSecurityConfig) {
-        this.contentSecurityConfig = contentSecurityConfig;
-    }
-
     @JsonProperty(PROP_NAME_IDENTITY)
     public IdentityConfig getIdentityConfig() {
         return identityConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setIdentityConfig(final IdentityConfig identityConfig) {
-        this.identityConfig = identityConfig;
     }
 
     @Override
@@ -75,7 +77,8 @@ public class SecurityConfig extends AbstractConfig implements IsStroomConfig {
                 "authenticationConfig=" + identityConfig +
                 ", authorisationConfig=" + authorisationConfig +
                 ", contentSecurityConfig=" + contentSecurityConfig +
-                ", authenticationConfig=" + identityConfig +
+                ", cryptoConfig=" + cryptoConfig +
+                ", identityConfig=" + identityConfig +
                 '}';
     }
 }

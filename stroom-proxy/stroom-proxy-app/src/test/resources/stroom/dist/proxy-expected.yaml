@@ -10,7 +10,7 @@ proxyConfig:
   contentSync:
     apiKey: null
     contentSyncEnabled: false
-    syncFrequency: 0
+    syncFrequency: 60000
     upstreamUrl: null
   db:
     connectionPragma:
@@ -59,14 +59,12 @@ proxyConfig:
     timeToLive: "PT1H"
     timeout: "PT0.5S"
     tls: null
-    userAgent:
-      empty: true
-      present: false
+    userAgent: null
     validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
   scanner:
-    scanningEnabled: false
     scanFrequency: "PT10S"
+    scanningEnabled: false
   threads:
     aggregatorThreadCount: 2
     createForwardRecordThreadCount: 2

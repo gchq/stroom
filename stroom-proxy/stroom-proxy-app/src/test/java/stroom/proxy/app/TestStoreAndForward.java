@@ -9,11 +9,15 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.forwarder.ForwardDestinationConfig;
+import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.app.handler.ReceiveStreamHandlers;
+import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProgressHandler;
 import stroom.proxy.repo.ProgressLog;
+import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoDbConnProvider;
 import stroom.proxy.repo.ProxyRepoFileNames;
+import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceEntry;
 import stroom.proxy.repo.RepoSourceItem;
@@ -75,29 +79,36 @@ class TestStoreAndForward {
 
     @Test
     void testStoreAndForward() throws Exception {
-        final ForwardDestinationConfig forwardDestinationConfig = new ForwardDestinationConfig();
-        forwardDestinationConfig.setForwardUrl("null");
-
         final Path tempDir = Files.createTempDirectory("stroom-proxy-temp");
         final Path homeDir = Files.createTempDirectory("stroom-proxy-home");
         final Path configPath = tempDir.resolve("temp-config.yml");
         FileUtil.deleteContents(homeDir);
-        final ProxyConfig proxyConfig = new ProxyConfig();
-        proxyConfig.getPathConfig().setTemp(tempDir.toAbsolutePath().toString());
-        proxyConfig.getPathConfig().setHome(homeDir.toAbsolutePath().toString());
-        proxyConfig.getProxyRepositoryConfig().setStoringEnabled(true);
-        proxyConfig.getProxyRepositoryConfig().setFormat("${pathId}/${id}");
-        proxyConfig.getProxyRepositoryConfig().setCleanupFrequency(StroomDuration.ofHours(1));
-        proxyConfig.getProxyRepositoryConfig().setLockDeleteAge(StroomDuration.ofHours(1));
-        proxyConfig.getProxyRepositoryConfig().setDirCleanDelay(StroomDuration.ofSeconds(10));
-        proxyConfig.getProxyRepoFileScannerConfig().setScanningEnabled(false);
-        proxyConfig.getProxyRepoFileScannerConfig().setScanFrequency(StroomDuration.ofSeconds(10));
-        proxyConfig.getAggregatorConfig().setMaxItemsPerAggregate(1000);
-        proxyConfig.getAggregatorConfig().setMaxUncompressedByteSizeString("1G");
-        proxyConfig.getAggregatorConfig().setMaxAggregateAge(StroomDuration.ofMinutes(10));
-        proxyConfig.getAggregatorConfig().setAggregationFrequency(StroomDuration.ofMinutes(1));
-        proxyConfig.getForwarderConfig().setForwardingEnabled(true);
-        proxyConfig.getForwarderConfig().setForwardDestinations(List.of(forwardDestinationConfig));
+
+        final ProxyConfig proxyConfig = ProxyConfig.builder()
+                .withPathConfig(new ProxyPathConfig(
+                        homeDir.toAbsolutePath().toString(),
+                        tempDir.toAbsolutePath().toString()))
+                .withProxyRepoConfig(ProxyRepoConfig.builder()
+                        .withStoringEnabled(true)
+                        .withFormat("${pathId}/${id}")
+                        .withCleanupFrequency(StroomDuration.ofHours(1))
+                        .withLockDeleteAge(StroomDuration.ofHours(1))
+                        .withDirCleanDelay(StroomDuration.ofSeconds(10))
+                        .build())
+                .withProxyRepoFileScannerConfig(new ProxyRepoFileScannerConfig()
+                        .withScanningEnabled(false)
+                        .withScanFrequency(StroomDuration.ofSeconds(10)))
+                .withAggregatorConfig(AggregatorConfig.builder()
+                        .withMaxItemsPerAggregate(1000)
+                        .withMaxUncompressedByteSizeString("1G")
+                        .withMaxAggregateAge(StroomDuration.ofMinutes(10))
+                        .withAggregationFrequency(StroomDuration.ofMinutes(1))
+                        .build())
+                .withForwarderConfig(new ForwarderConfig()
+                        .withForwardingEnabled(true)
+                        .withForwardDestinations(new ForwardDestinationConfig()
+                                .withForwardUrl("null")))
+                .build();
 
         final Config config = new Config();
         config.setProxyConfig(proxyConfig);
@@ -181,25 +192,31 @@ class TestStoreAndForward {
             }
         }
 
-        final ForwardDestinationConfig forwardDestinationConfig = new ForwardDestinationConfig();
-        forwardDestinationConfig.setForwardUrl("null");
-
-        final ProxyConfig proxyConfig = new ProxyConfig();
-        proxyConfig.getPathConfig().setTemp(tempDir.toAbsolutePath().toString());
-        proxyConfig.getPathConfig().setHome(homeDir.toAbsolutePath().toString());
-        proxyConfig.getProxyRepositoryConfig().setStoringEnabled(true);
-        proxyConfig.getProxyRepositoryConfig().setFormat("${pathId}/${id}");
-        proxyConfig.getProxyRepositoryConfig().setCleanupFrequency(StroomDuration.ofHours(1));
-        proxyConfig.getProxyRepositoryConfig().setLockDeleteAge(StroomDuration.ofHours(1));
-        proxyConfig.getProxyRepositoryConfig().setDirCleanDelay(StroomDuration.ofSeconds(10));
-        proxyConfig.getProxyRepoFileScannerConfig().setScanningEnabled(true);
-        proxyConfig.getProxyRepoFileScannerConfig().setScanFrequency(StroomDuration.ofSeconds(10));
-        proxyConfig.getAggregatorConfig().setMaxItemsPerAggregate(100);
-        proxyConfig.getAggregatorConfig().setMaxUncompressedByteSizeString("1G");
-        proxyConfig.getAggregatorConfig().setMaxAggregateAge(StroomDuration.ofMinutes(1));
-        proxyConfig.getAggregatorConfig().setAggregationFrequency(StroomDuration.ofMinutes(1));
-        proxyConfig.getForwarderConfig().setForwardingEnabled(true);
-        proxyConfig.getForwarderConfig().setForwardDestinations(List.of(forwardDestinationConfig));
+        final ProxyConfig proxyConfig = ProxyConfig.builder()
+                .withPathConfig(new ProxyPathConfig(
+                        homeDir.toAbsolutePath().toString(),
+                        tempDir.toAbsolutePath().toString()))
+                .withProxyRepoConfig(ProxyRepoConfig.builder()
+                        .withStoringEnabled(true)
+                        .withFormat("${pathId}/${id}")
+                        .withCleanupFrequency(StroomDuration.ofHours(1))
+                        .withLockDeleteAge(StroomDuration.ofHours(1))
+                        .withDirCleanDelay(StroomDuration.ofSeconds(10))
+                        .build())
+                .withProxyRepoFileScannerConfig(new ProxyRepoFileScannerConfig()
+                        .withScanningEnabled(true)
+                        .withScanFrequency(StroomDuration.ofSeconds(10)))
+                .withAggregatorConfig(AggregatorConfig.builder()
+                        .withMaxItemsPerAggregate(100)
+                        .withMaxUncompressedByteSizeString("1G")
+                        .withMaxAggregateAge(StroomDuration.ofMinutes(1))
+                        .withAggregationFrequency(StroomDuration.ofMinutes(1))
+                        .build())
+                .withForwarderConfig(new ForwarderConfig()
+                        .withForwardingEnabled(true)
+                        .withForwardDestinations(new ForwardDestinationConfig()
+                                .withForwardUrl("null")))
+                .build();
 
         final Config config = new Config();
         config.setProxyConfig(proxyConfig);
@@ -237,25 +254,31 @@ class TestStoreAndForward {
         final Path configPath = tempDir.resolve("temp-config.yml");
         FileUtil.deleteContents(homeDir);
 
-        final ForwardDestinationConfig forwardDestinationConfig = new ForwardDestinationConfig();
-        forwardDestinationConfig.setForwardUrl("null");
-
-        final ProxyConfig proxyConfig = new ProxyConfig();
-        proxyConfig.getPathConfig().setTemp(tempDir.toAbsolutePath().toString());
-        proxyConfig.getPathConfig().setHome(homeDir.toAbsolutePath().toString());
-        proxyConfig.getProxyRepositoryConfig().setStoringEnabled(true);
-        proxyConfig.getProxyRepositoryConfig().setFormat("${pathId}/${id}");
-        proxyConfig.getProxyRepositoryConfig().setCleanupFrequency(StroomDuration.ofHours(1));
-        proxyConfig.getProxyRepositoryConfig().setLockDeleteAge(StroomDuration.ofHours(1));
-        proxyConfig.getProxyRepositoryConfig().setDirCleanDelay(StroomDuration.ofSeconds(10));
-        proxyConfig.getProxyRepoFileScannerConfig().setScanningEnabled(false);
-        proxyConfig.getProxyRepoFileScannerConfig().setScanFrequency(StroomDuration.ofSeconds(10));
-        proxyConfig.getAggregatorConfig().setMaxItemsPerAggregate(100);
-        proxyConfig.getAggregatorConfig().setMaxUncompressedByteSizeString("1G");
-        proxyConfig.getAggregatorConfig().setMaxAggregateAge(StroomDuration.ofMinutes(1));
-        proxyConfig.getAggregatorConfig().setAggregationFrequency(StroomDuration.ofMinutes(1));
-        proxyConfig.getForwarderConfig().setForwardingEnabled(true);
-        proxyConfig.getForwarderConfig().setForwardDestinations(List.of(forwardDestinationConfig));
+        final ProxyConfig proxyConfig = ProxyConfig.builder()
+                .withPathConfig(new ProxyPathConfig(
+                        homeDir.toAbsolutePath().toString(),
+                        tempDir.toAbsolutePath().toString()))
+                .withProxyRepoConfig(ProxyRepoConfig.builder()
+                        .withStoringEnabled(true)
+                        .withFormat("${pathId}/${id}")
+                        .withCleanupFrequency(StroomDuration.ofHours(1))
+                        .withLockDeleteAge(StroomDuration.ofHours(1))
+                        .withDirCleanDelay(StroomDuration.ofSeconds(10))
+                        .build())
+                .withProxyRepoFileScannerConfig(new ProxyRepoFileScannerConfig()
+                        .withScanningEnabled(false)
+                        .withScanFrequency(StroomDuration.ofSeconds(10)))
+                .withAggregatorConfig(AggregatorConfig.builder()
+                        .withMaxItemsPerAggregate(100)
+                        .withMaxUncompressedByteSizeString("1G")
+                        .withMaxAggregateAge(StroomDuration.ofMinutes(1))
+                        .withAggregationFrequency(StroomDuration.ofMinutes(1))
+                        .build())
+                .withForwarderConfig(new ForwarderConfig()
+                        .withForwardingEnabled(true)
+                        .withForwardDestinations(new ForwardDestinationConfig()
+                                .withForwardUrl("null")))
+                .build();
 
         final Config config = new Config();
         config.setProxyConfig(proxyConfig);

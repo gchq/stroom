@@ -19,6 +19,7 @@ package stroom.pipeline.destination;
 
 import stroom.util.date.DateUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.scheduler.SimpleCron;
 
 import org.junit.jupiter.api.Test;
@@ -38,7 +39,7 @@ class TestRollingFileDestination {
         final Path dir = Files.createTempDirectory("stroom");
         final Path file = dir.resolve("test.log");
 
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final RollingFileDestination rollingFileDestination = new RollingFileDestination(
                 pathCreator,
                 "test",
@@ -63,7 +64,7 @@ class TestRollingFileDestination {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
         final Path dir = Files.createTempDirectory("stroom");
         final Path file = dir.resolve("test.log");
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final RollingFileDestination rollingFileDestination = new RollingFileDestination(
                 pathCreator,
                 "test",

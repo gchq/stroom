@@ -39,6 +39,7 @@ import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.validation.ValidationModule;
+import stroom.util.yaml.YamlUtil;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -104,7 +105,7 @@ public class App extends Application<Config> {
     }
 
     public static void main(final String[] args) throws Exception {
-        final Path yamlConfigFile = ProxyYamlUtil.getYamlFileFromArgs(args);
+        final Path yamlConfigFile = YamlUtil.getYamlFileFromArgs(args);
         new App(yamlConfigFile).run(args);
     }
 
