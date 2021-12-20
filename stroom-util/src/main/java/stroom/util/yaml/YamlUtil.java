@@ -207,11 +207,11 @@ public class YamlUtil {
             if (equivalentSourceNode.isObject() || equivalentSourceNode.isArray()) {
                 // copy the source node into our parent
 //                System.out.println(LogUtil.message("{}Replacing value of this field from source", indent));
-                LOGGER.info("{}Replacing value of this field from source", indentBuilder);
+                LOGGER.trace("{}Replacing value of this field from source", indentBuilder);
                 ((ObjectNode) parentJsonNode).replace(name, equivalentSourceNode);
             } else {
 //                System.out.println(LogUtil.message("{}Treating this node as an explicit null", indent));
-                LOGGER.info("{}Treating this node as an explicit null", indentBuilder);
+                LOGGER.trace("{}Treating this node as an explicit null", indentBuilder);
             }
         }
     }
