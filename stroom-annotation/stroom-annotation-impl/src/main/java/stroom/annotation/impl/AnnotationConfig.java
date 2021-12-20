@@ -5,8 +5,8 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.BootStrapConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
