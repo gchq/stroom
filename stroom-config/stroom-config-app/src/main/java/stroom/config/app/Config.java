@@ -1,9 +1,11 @@
 package stroom.config.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.Configuration;
 
 // Can't use a JsonCreator for this as the superclass doesn't use 'JsonCreator
+@JsonPropertyOrder(alphabetic = true)
 public class Config extends Configuration {
 
     private AppConfig appConfig;
