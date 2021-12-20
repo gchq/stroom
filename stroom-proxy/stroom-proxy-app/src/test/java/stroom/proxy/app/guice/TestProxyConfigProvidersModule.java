@@ -2,6 +2,10 @@ package stroom.proxy.app.guice;
 
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyPathConfig;
+import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.proxy.repo.ProxyRepoDbConfig;
+import stroom.proxy.repo.RepoConfig;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -22,6 +26,11 @@ public class TestProxyConfigProvidersModule {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProxyConfigProvidersModule.class);
 
+    private static final Set<Class<?>> SPECIAL_CASE_CLASSES = Set.of(
+            PathConfig.class,
+            RepoConfig.class,
+            RepoDbConfig.class);
+
     @Test
     void testProviderMethodPresence() {
         final ProxyConfigProvider proxyConfigProvider = new ProxyConfigProvider(new ProxyConfig());
@@ -29,7 +38,7 @@ public class TestProxyConfigProvidersModule {
         final Set<Class<?>> methodReturnClasses = Arrays.stream(ProxyConfigProvidersModule.class.getDeclaredMethods())
                 .map(Method::getReturnType)
                 .filter(clazz ->
-                        !clazz.equals(PathConfig.class)) // PathConfig is a special case
+                        !SPECIAL_CASE_CLASSES.contains(clazz))
                 .collect(Collectors.toSet());
 
         final Set<Class<? extends AbstractConfig>> injectableConfigClasses = proxyConfigProvider.getInjectableClasses();
@@ -101,6 +110,14 @@ public class TestProxyConfigProvidersModule {
                                 // StroomPathConfig is also mapped to PathConfig
                                 softAssertions.assertThat(config.getClass())
                                         .isEqualTo(ProxyPathConfig.class);
+                            } else if (method.getName().equals("getRepoConfig")) {
+                                // StroomPathConfig is also mapped to PathConfig
+                                softAssertions.assertThat(config.getClass())
+                                        .isEqualTo(ProxyRepoConfig.class);
+                            } else if (method.getName().equals("getRepoDbConfig")) {
+                                // StroomPathConfig is also mapped to PathConfig
+                                softAssertions.assertThat(config.getClass())
+                                        .isEqualTo(ProxyRepoDbConfig.class);
                             } else {
                                 softAssertions.assertThat(config.getClass().getSimpleName())
                                         .withFailMessage(LogUtil.message("method {} returned {}, expecting {}",

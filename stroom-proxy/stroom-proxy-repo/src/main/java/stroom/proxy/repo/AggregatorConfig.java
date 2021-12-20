@@ -95,6 +95,8 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
         return maxAggregateAge;
     }
 
+    @JsonPropertyDescription("The the length of time that data is added to an aggregate for before the " +
+            "aggregate is closed")
     @JsonProperty("aggregationFrequency")
     public StroomDuration getAggregationFrequency() {
         return aggregationFrequency;
