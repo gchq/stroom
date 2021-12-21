@@ -245,24 +245,28 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     private void addMessage() {
 
         getView().addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(this::convertToStoredError, storedError -> {
-                    // Some messages, e.g. ref data ones have multiple sub msgs within the msgs so split them out
-                    final SplitResult splitResult = messageCauseDelimiterPattern.split(storedError.getMessage());
+                DataGridUtil
+                        .htmlColumnBuilder(this::convertToStoredError, storedError -> {
+                            // Some messages, e.g. ref data ones have multiple sub msgs within the msgs
+                            // so split them out
+                            final SplitResult splitResult = messageCauseDelimiterPattern.split(
+                                    storedError.getMessage());
 
-                    final Builder builder = TooltipUtil.builder();
+                            final Builder builder = TooltipUtil.builder();
 
-                    for (int i = 0; i < splitResult.length(); i++) {
-                        if (i != 0) {
-                            builder.addEnSpace()
-                                    .appendWithoutBreak("> ");
-                        }
+                            for (int i = 0; i < splitResult.length(); i++) {
+                                if (i != 0) {
+                                    builder.addEnSpace()
+                                            .appendWithoutBreak("> ");
+                                }
 
-                        builder.addLine(splitResult.get(i));
-                    }
-                    return builder.build();
-                })
+                                builder.addLine(splitResult.get(i));
+                            }
+                            return builder.build();
+                        })
                         .topAligned()
                         .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellWrapText())
                         .build(),
                 "Message",
                 800);
