@@ -51,7 +51,9 @@ import stroom.util.shared.Severity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import javax.inject.Inject;
 
 /**
@@ -191,6 +193,9 @@ class ReferenceDataLoadTaskHandler {
             // and know that this stream has not already been loaded.
 
             try {
+                // set this loader in the holder so it is available to the pipeline filters
+                refDataLoaderHolder.setRefDataLoader(refDataLoader);
+
                 // Start processing.
                 pipeline.startProcessing();
 
@@ -217,8 +222,6 @@ class ReferenceDataLoadTaskHandler {
                         // Get the stream.
                         final InputStream inputStream = inputStreamProvider.get();
 
-                        // set this loader in the holder so it is available to the pipeline filters
-                        refDataLoaderHolder.setRefDataLoader(refDataLoader);
                         // Process the boundary.
                         //process the pipeline, ref data will be loaded via the ReferenceDataFilter
                         pipeline.process(inputStream, encoding);
@@ -234,6 +237,17 @@ class ReferenceDataLoadTaskHandler {
                 // Task terminated
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
                 refDataLoader.completeProcessing(ProcessingState.TERMINATED);
+            } catch (UncheckedIOException | IOException e) {
+                // Missing ref strm file or unable to read it
+                log(Severity.FATAL_ERROR,
+                        "Error reading reference stream "
+                                + refStreamDefinition.getStreamId()
+                                + ":"
+                                + refStreamDefinition.getPartNumber()
+                                + " - "
+                                + e.getMessage(),
+                        e);
+                refDataLoader.completeProcessing(ProcessingState.FAILED);
             } catch (Exception e) {
                 // Something unexpected happened
                 log(Severity.ERROR, e.getMessage(), e);
