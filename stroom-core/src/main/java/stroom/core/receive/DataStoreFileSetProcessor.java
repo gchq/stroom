@@ -140,8 +140,16 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
                     deleteFileList.add(file);
 
                 } catch (final IOException | RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
+                    LOGGER.error("Error processing file {} ({}) in fileset {}, " +
+                                    "no further files in this set will be processed. - {} " +
+                                    "(Enable DEBUG for stack trace)",
+                            count,
+                            file.toAbsolutePath().normalize(),
+                            fileSet,
+                            e.getMessage());
+                    LOGGER.debug("Error processing file", e);
                     handlers = closeDeleteStreamHandlers(handlers);
+                    break;
                 }
             }
             closeStreamHandlers(handlers);
