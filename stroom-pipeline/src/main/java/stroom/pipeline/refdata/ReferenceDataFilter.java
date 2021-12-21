@@ -197,6 +197,18 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 //        } catch (SAXException e) {
 //            throw new RuntimeException(e);
 //        }
+        final PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader()
+                .initialise(overrideExistingValues);
+
+        if (!putOutcome.isSuccess()) {
+            errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                    LogUtil.message(
+                            "A processing info entry already exists for this reference pipeline {}, " +
+                                    "version {}, streamId {}",
+                            refStreamDefinition.getPipelineDocRef(),
+                            refStreamDefinition.getPipelineVersion(),
+                            refStreamDefinition.getStreamId()), null);
+        }
     }
 
     @Override
@@ -218,18 +230,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
         LOGGER.debug("StartStream called, refStreamDefinition: {}", refStreamDefinition);
 
-        final PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader()
-                .initialise(overrideExistingValues);
-
-        if (!putOutcome.isSuccess()) {
-            errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                    LogUtil.message(
-                            "A processing info entry already exists for this reference pipeline {}, " +
-                                    "version {}, streamId {}",
-                            refStreamDefinition.getPipelineDocRef(),
-                            refStreamDefinition.getPipelineVersion(),
-                            refStreamDefinition.getStreamId()), null);
-        }
     }
 
     @Override

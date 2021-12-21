@@ -92,10 +92,18 @@ public class RefStreamDefinition {
     }
 
     /**
-     * Zero based
+     * Zero based part in the stream.
      */
     public long getPartIndex() {
         return partIndex;
+    }
+
+    /**
+     * One based part in the stream.
+     */
+    @JsonIgnore
+    public long getPartNumber() {
+        return partIndex + 1;
     }
 
     @Override

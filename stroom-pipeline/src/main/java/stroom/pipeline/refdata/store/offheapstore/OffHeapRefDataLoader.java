@@ -235,10 +235,11 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                     ? refStreamDefinition.getPipelineDocRef().getName()
                     : refStreamDefinition.getPipelineDocRef().getUuid();
 
-            LOGGER.info("Processed {} entries (" +
+            LOGGER.info("Processed {} entries with outcome {} (" +
                             "new: {}, dup-key value updated: {}, dup-key value identical: {}, dup-key ignored: {}) " +
                             "with map name(s): [{}], stream: {}, pipeline: {} in {}",
                     inputCount,
+                    processingState,
                     newEntriesCount,
                     replacedEntriesCount,
                     unchangedEntriesCount,
