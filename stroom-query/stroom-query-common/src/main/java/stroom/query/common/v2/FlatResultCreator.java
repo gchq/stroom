@@ -198,7 +198,7 @@ public class FlatResultCreator implements ResultCreator {
                         .builder()
                         .componentId(resultRequest.getComponentId())
                         .size(totalResults)
-                        .error(errorConsumer.toString())
+                        .errors(errorConsumer.getErrors())
                         .structure(structure)
                         .values(results)
                         .build();
@@ -210,7 +210,7 @@ public class FlatResultCreator implements ResultCreator {
         }
 
         return new FlatResult(resultRequest.getComponentId(), null, null, 0L,
-                errorConsumer.toString());
+                errorConsumer.getErrors());
     }
 
     private int addResults(final DataStore data,

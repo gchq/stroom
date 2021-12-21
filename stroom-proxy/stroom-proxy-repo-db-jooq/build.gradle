@@ -73,7 +73,6 @@ jooq {
                         packageName = 'stroom.proxy.repo.db.jooq'
                         directory = 'src/main/java'
                     }
-                    strategy.name = 'org.jooq.codegen.DefaultGeneratorStrategy'
                 }
             }
         }

@@ -95,6 +95,9 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
 
     @Inject
     public ByteBufferPoolImpl4(final ByteBufferPoolConfig byteBufferPoolConfig) {
+
+        // Don't use a provider as all the props are RequiresRestart and we want system info to
+        // report on config that matches what we init'd with.
         this.byteBufferPoolConfig = byteBufferPoolConfig;
 
         final Map<Integer, Integer> pooledByteBufferCounts = byteBufferPoolConfig.getPooledByteBufferCounts();

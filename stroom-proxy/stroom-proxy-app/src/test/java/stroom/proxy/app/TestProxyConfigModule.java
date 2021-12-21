@@ -108,6 +108,7 @@ class TestProxyConfigModule {
                 });
 
         Map<Class<?>, Integer> injectedInstanceIdMap = isProxyConfigConcreteClasses.stream()
+                .filter(clazz -> !clazz.isAnnotationPresent(NotInjectableConfig.class))
                 .collect(Collectors.toMap(
                         clazz -> clazz,
                         clazz -> {
@@ -140,7 +141,7 @@ class TestProxyConfigModule {
                     // so filter them out
                     boolean isInjectableClass = entry.getKey().getAnnotation(NotInjectableConfig.class) == null;
 
-                    return !injectedInstanceId.equals(appConfigTreeInstanceId) && isInjectableClass;
+                    return isInjectableClass && !injectedInstanceId.equals(appConfigTreeInstanceId);
                 })
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());

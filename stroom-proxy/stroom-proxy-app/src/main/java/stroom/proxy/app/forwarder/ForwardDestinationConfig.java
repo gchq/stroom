@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@NotInjectableConfig
+@NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)
 public class ForwardDestinationConfig extends AbstractConfig implements IsProxyConfig {
 
@@ -24,7 +24,7 @@ public class ForwardDestinationConfig extends AbstractConfig implements IsProxyC
 
     public ForwardDestinationConfig() {
         forwardUrl = null;
-        forwardTimeoutMs = 30000;
+        forwardTimeoutMs = 30_000;
         forwardDelayMs = null;
         forwardChunkSize = null;
         sslConfig = null;

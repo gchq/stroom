@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -151,7 +152,7 @@ public class SQLStatisticAggregationTransactionHelper {
             "AND VAL_TP = ?";
 
     private final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
-    private final SQLStatisticsConfig config;
+    private final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider;
 
     // @formatter:on
     private final AggregateConfig[] aggregateConfig = new AggregateConfig[]{
@@ -186,9 +187,9 @@ public class SQLStatisticAggregationTransactionHelper {
 
     @Inject
     SQLStatisticAggregationTransactionHelper(final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider,
-                                             final SQLStatisticsConfig config) {
+                                             final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider) {
         this.sqlStatisticsDbConnProvider = sqlStatisticsDbConnProvider;
-        this.config = config;
+        this.sqlStatisticsConfigProvider = sqlStatisticsConfigProvider;
     }
 
     public static final long round(final long timeMs, final int precision) {
@@ -265,7 +266,7 @@ public class SQLStatisticAggregationTransactionHelper {
         final AggregateConfig mostCoarseLevel = new AggregateConfig(StatisticType.COUNT, MS_MONTH, MONTH_PRECISION,
                 DEFAULT_PRECISION);
 
-        final StroomDuration maxProcessingAge = config.getMaxProcessingAge();
+        final StroomDuration maxProcessingAge = sqlStatisticsConfigProvider.get().getMaxProcessingAge();
 
         LOGGER.debug("Deleting stats using a max processing age of {}ms", maxProcessingAge);
 

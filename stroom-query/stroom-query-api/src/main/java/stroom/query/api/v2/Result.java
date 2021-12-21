@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.List;
 import java.util.Objects;
 
 @JsonTypeInfo(
@@ -51,21 +52,21 @@ public abstract class Result {
     @Schema(description = "If an error has occurred producing this result set then this will have details " +
             "of the error")
     @JsonProperty
-    private final String error;
+    private final List<String> errors;
 
     @JsonCreator
     public Result(@JsonProperty("componentId") final String componentId,
-                  @JsonProperty("error") final String error) {
+                  @JsonProperty("errors") final List<String> errors) {
         this.componentId = componentId;
-        this.error = error;
+        this.errors = errors;
     }
 
     public String getComponentId() {
         return componentId;
     }
 
-    public String getError() {
-        return error;
+    public List<String> getErrors() {
+        return errors;
     }
 
     @Override
@@ -78,19 +79,19 @@ public abstract class Result {
         }
         Result result = (Result) o;
         return Objects.equals(componentId, result.componentId) &&
-                Objects.equals(error, result.error);
+                Objects.equals(errors, result.errors);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(componentId, error);
+        return Objects.hash(componentId, errors);
     }
 
     @Override
     public String toString() {
         return "Result{" +
                 "componentId='" + componentId + '\'' +
-                ", error='" + error + '\'' +
+                ", errors='" + errors + '\'' +
                 '}';
     }
 
@@ -104,19 +105,19 @@ public abstract class Result {
     public abstract static class Builder<T extends Result, T_CHILD_CLASS extends Builder<T, ?>> {
 
         String componentId;
-        String error;
+        List<String> errors;
 
         Builder() {
         }
 
         Builder(final Result result) {
             this.componentId = result.componentId;
-            this.error = result.error;
+            this.errors = result.errors;
         }
 
         /**
-         * @param value The ID of the component that this result set was requested for. See ResultRequest in
-         *              SearchRequest
+         * @param componentId The ID of the component that this result set was requested for. See ResultRequest in
+         *                    SearchRequest
          * @return The {@link Builder}, enabling method chaining
          */
         public T_CHILD_CLASS componentId(final String componentId) {
@@ -125,11 +126,11 @@ public abstract class Result {
         }
 
         /**
-         * @param value If an error has occurred producing this result set then this will have details
+         * @param errors If an error has occurred producing this result set then this will have details
          * @return The {@link Builder}, enabling method chaining
          */
-        public T_CHILD_CLASS error(final String error) {
-            this.error = error;
+        public T_CHILD_CLASS errors(final List<String> errors) {
+            this.errors = errors;
             return self();
         }
 

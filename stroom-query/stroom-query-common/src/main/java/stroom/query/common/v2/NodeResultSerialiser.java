@@ -15,7 +15,7 @@ public class NodeResultSerialiser {
 
     public static boolean read(final Input input,
                                final Coprocessors coprocessors,
-                               final Consumer<String> errorConsumer) {
+                               final Consumer<Throwable> errorConsumer) {
 
         // Read completion status.
         final boolean complete = input.readBoolean();
@@ -28,7 +28,7 @@ public class NodeResultSerialiser {
         for (int i = 0; i < length; i++) {
             final String error = input.readString();
             LOGGER.debug(() -> error);
-            errorConsumer.accept(error);
+            errorConsumer.accept(new RuntimeException(error));
         }
 
         return complete || allRejected;
@@ -45,10 +45,14 @@ public class NodeResultSerialiser {
         coprocessors.writePayloads(output);
 
         // Drain all current errors to a list.
-        output.writeInt(errorsSnapshot.size());
-        for (final String error : errorsSnapshot) {
-            LOGGER.debug(() -> error);
-            output.writeString(error);
+        if (errorsSnapshot != null) {
+            output.writeInt(errorsSnapshot.size());
+            for (final String error : errorsSnapshot) {
+                LOGGER.debug(() -> error);
+                output.writeString(error);
+            }
+        } else {
+            output.writeInt(0);
         }
     }
 

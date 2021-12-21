@@ -28,9 +28,12 @@ import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
+import stroom.util.string.ExceptionStringUtil;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,18 +80,18 @@ public class SearchResponseCreator {
     }
 
     /**
-     * @param errorMessages List of errors to add to the {@link SearchResponse}
+     * @param throwable List of errors to add to the {@link SearchResponse}
      * @return An empty {@link SearchResponse} with the passed error messages
      */
     private static SearchResponse createErrorResponse(final Store store, final Throwable throwable) {
         Objects.requireNonNull(store);
         Objects.requireNonNull(throwable);
 
-        LOGGER.debug(throwable::getMessage, throwable);
         final List<String> errors = new ArrayList<>();
-        if (throwable.getMessage() != null) {
-            errors.add(throwable.getMessage());
-        }
+
+        LOGGER.debug(throwable::getMessage, throwable);
+        errors.add(ExceptionStringUtil.getMessage(throwable));
+
         if (store.getErrors() != null) {
             errors.addAll(store.getErrors());
         }
@@ -184,9 +187,7 @@ public class SearchResponseCreator {
             final SearchResponse searchResponse = new SearchResponse(
                     store.getHighlights(),
                     results,
-                    errors.isEmpty()
-                            ? null
-                            : errors,
+                    errors,
                     complete);
 
             if (complete) {
@@ -207,23 +208,23 @@ public class SearchResponseCreator {
     }
 
     private List<String> buildCompoundErrorList(final Store store, final List<Result> results) {
-        List<String> errors = new ArrayList<>();
+        final List<String> errors = new ArrayList<>();
+
         if (store.getErrors() != null) {
             errors.addAll(store.getErrors());
         }
 
         if (results != null) {
-            final List<String> uniqueResultErrors = results.stream()
-                    .map(Result::getError)
+            errors.addAll(results.stream()
+                    .map(Result::getErrors)
                     .filter(Objects::nonNull)
-                    .distinct()
-                    .collect(Collectors.toList());
-            errors.addAll(uniqueResultErrors);
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList()));
         }
 
-        return errors.stream()
-                .distinct()
-                .collect(Collectors.toList());
+        return errors.isEmpty()
+                ? null
+                : errors;
     }
 
     private Duration getEffectiveTimeout(final SearchRequest searchRequest) {
@@ -320,7 +321,8 @@ public class SearchResponseCreator {
                     result = resultCreator.create(data, resultRequest);
                 }
             } catch (final RuntimeException e) {
-                result = new TableResult(componentId, null, null, null, 0, e.getMessage());
+                result = new TableResult(componentId, null, null, null, 0,
+                        Collections.singletonList(ExceptionStringUtil.getMessage(e)));
             }
         }
 

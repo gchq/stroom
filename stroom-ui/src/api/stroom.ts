@@ -584,7 +584,7 @@ export interface DashboardSearchRequest {
 
 export interface DashboardSearchResponse {
   complete?: boolean;
-  errors?: string;
+  errors?: string[];
   highlights?: string[];
   queryKey?: DashboardQueryKey;
   results?: Result[];
@@ -1809,6 +1809,12 @@ export interface Meta {
   /** @format int64 */
   parentMetaId?: number;
   pipelineUuid?: string;
+
+  /** @format int32 */
+  processorFilterId?: number;
+
+  /** @format int64 */
+  processorTaskId?: number;
   processorUuid?: string;
   status?: "UNLOCKED" | "LOCKED" | "DELETED";
 
@@ -2474,7 +2480,7 @@ export interface Result {
   componentId: string;
 
   /** If an error has occurred producing this result set then this will have details of the error */
-  error?: string;
+  errors?: string[];
   type: string;
 }
 

@@ -12,6 +12,32 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2648** : Add error message to data viewer when ID is invalid.
+
+* Issue **#2657** : Change classes to use provided config to stop the system using stale config values.
+
+* Issue **#2603** : Suppress expected buffer underflow exception.
+
+* Make directly injected NotInjectable config throw an exception to prevent it happening.
+
+* Issue **#2652** : Add delay to stream event map creation so extraction opens fewer streams.
+
+* Issue **#2639** : Fix error message when invalid property values are used.
+
+* Issue **#2578** : Fix how application config is (re)loaded so that it copes with null or sparse branches.
+
+* Issue **#2361** : Fix create_account command so it allows creation of accounts with no password.
+
+* Issue **#2627** : Add processor filter and processor task id to meta.
+
+* Issue **#2628** : Add processor filter and processor task id to info log.
+
+* Issue **#2647** : Fix `Unrecognised permission assigned` error in logs.
+
+* Issue **#2629** : Change the way duplicate output is handled by deleting previous output from complete tasks at the end of processing.
+
+* Issue **#2603** : Add debug to diagnose buffer underflow.
+
 * Issue **#2637** : Fix hanging searches.
 
 * Issue **#2631** : Add debug to diagnose UI issue.

@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -37,13 +38,13 @@ public class RollingDestinations {
 
     private static final ConcurrentHashMap<Object, RollingDestination> currentDestinations = new ConcurrentHashMap<>();
 
-    private final AppenderConfig appenderConfig;
+    private final Provider<AppenderConfig> appenderConfigProvider;
     private final TaskContext taskContext;
 
     @Inject
-    public RollingDestinations(final AppenderConfig appenderConfig,
+    public RollingDestinations(final Provider<AppenderConfig> appenderConfigProvider,
                                final TaskContext taskContext) {
-        this.appenderConfig = appenderConfig;
+        this.appenderConfigProvider = appenderConfigProvider;
         this.taskContext = taskContext;
     }
 
@@ -66,7 +67,7 @@ public class RollingDestinations {
         // Try and get an existing destination for the key or create one if necessary.
         final RollingDestination destination = currentDestinations.computeIfAbsent(key, k -> {
             try {
-                final int maxActiveDestinations = appenderConfig.getMaxActiveDestinations();
+                final int maxActiveDestinations = appenderConfigProvider.get().getMaxActiveDestinations();
 
                 // Try and cope with too many active destinations.
                 if (currentDestinations.size() > maxActiveDestinations) {

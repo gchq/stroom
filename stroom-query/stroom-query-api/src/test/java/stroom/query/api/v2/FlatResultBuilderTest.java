@@ -3,6 +3,7 @@ package stroom.query.api.v2;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -10,11 +11,12 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FlatResultBuilderTest {
+
     @Test
     void doesBuild() {
         // Given
         final String componentId = "someComponentId";
-        final String error = "something went wrong";
+        final List<String> errors = Collections.singletonList("something went wrong");
 
         final int numberFields = 3;
         final int numberResultSets = 10;
@@ -23,7 +25,7 @@ class FlatResultBuilderTest {
         final FlatResult.Builder flatResultBuilder = FlatResult
                 .builder()
                 .componentId(componentId)
-                .error(error);
+                .errors(errors);
         final List<Field> fields = new ArrayList<>();
         IntStream.range(0, numberFields).forEach(x ->
                 fields
@@ -48,7 +50,7 @@ class FlatResultBuilderTest {
 
         // Then
         assertThat(flatResult.getComponentId()).isEqualTo(componentId);
-        assertThat(flatResult.getError()).isEqualTo(error);
+        assertThat(flatResult.getErrors()).isEqualTo(errors);
         assertThat(flatResult.getSize()).isEqualTo(Long.valueOf(numberResultSets));
 
         final long fieldsCount = flatResult.getStructure().stream()
