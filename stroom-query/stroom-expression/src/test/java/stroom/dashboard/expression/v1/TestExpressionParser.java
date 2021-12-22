@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,6 +56,8 @@ class TestExpressionParser {
     @TestFactory
     Stream<DynamicTest> testBasic() {
         return List.of(
+                "1+1",
+                "-1+2",
                 "${val1}",
                 "max(${val1})",
                 "sum(${val1})",
@@ -681,7 +684,8 @@ class TestExpressionParser {
 
             final Val out = gen.eval();
             final String str = out.toString();
-            assertThat(str).isEqualTo("[t%7Dhis+%5Bis%5D+a+tit%28le+w%7Bit%7Dh+%28brack%5Bets%29](http%3A%2F%2Fwww.somehost.com%2Fsomepath%3Fk1%3Dv1%26k%5B2%5D%3D%7Bv2%7D){browser}");
+            assertThat(str).isEqualTo(
+                    "[t%7Dhis+%5Bis%5D+a+tit%28le+w%7Bit%7Dh+%28brack%5Bets%29](http%3A%2F%2Fwww.somehost.com%2Fsomepath%3Fk1%3Dv1%26k%5B2%5D%3D%7Bv2%7D){browser}");
 
             final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
             final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
@@ -703,7 +707,8 @@ class TestExpressionParser {
 
             final Val out = gen.eval();
             final String str = out.toString();
-            assertThat(str).isEqualTo("[blah](%3Fuuid%3Dabcdefg%26params%3Ddt%253D2014-02-23T00%253A00%253A00.000Z%252B1h){dashboard}");
+            assertThat(str).isEqualTo(
+                    "[blah](%3Fuuid%3Dabcdefg%26params%3Ddt%253D2014-02-23T00%253A00%253A00.000Z%252B1h){dashboard}");
 
             final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
             final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
@@ -715,48 +720,55 @@ class TestExpressionParser {
 
     @Test
     void testLink4() {
-        createGenerator("link('blah', '?annotationId=1&streamId=2&eventId=3&title='+encodeUrl('this is a title')+'&subject='+encodeUrl('this is a subject')+'&status=New&assignedTo='+encodeUrl('test user')+'&comment='+encodeUrl('new comment'), 'annotation')", 2, gen -> {
-            final String expectedText = "blah";
-            final String expectedUrl = "?annotationId=1&streamId=2&eventId=3&title=this+is+a+title&subject=this+is+a+subject&status=New&assignedTo=test+user&comment=new+comment";
-            final String expectedType = "annotation";
+        createGenerator(
+                "link('blah', '?annotationId=1&streamId=2&eventId=3&title='+encodeUrl('this is a title')+'&subject='+encodeUrl('this is a subject')+'&status=New&assignedTo='+encodeUrl('test user')+'&comment='+encodeUrl('new comment'), 'annotation')",
+                2,
+                gen -> {
+                    final String expectedText = "blah";
+                    final String expectedUrl = "?annotationId=1&streamId=2&eventId=3&title=this+is+a+title&subject=this+is+a+subject&status=New&assignedTo=test+user&comment=new+comment";
+                    final String expectedType = "annotation";
 
-            gen.set(getVal(expectedText, expectedUrl));
+                    gen.set(getVal(expectedText, expectedUrl));
 
-            final Val out = gen.eval();
-            final String str = out.toString();
-            assertThat(str).isEqualTo("[blah](%3FannotationId%3D1%26streamId%3D2%26eventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");
+                    final Val out = gen.eval();
+                    final String str = out.toString();
+                    assertThat(str).isEqualTo(
+                            "[blah](%3FannotationId%3D1%26streamId%3D2%26eventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");
 
-            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-            final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
+                    final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
+                    final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
+                    final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
 
-            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-            assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
-        });
+                    assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
+                    assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
+                    assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
+                });
     }
 
     @Test
     void testAnnotation() {
-        createGenerator("annotation('blah', '1', '2', '3', 'this is a title', 'this is a subject', 'New', 'test user', 'new comment')", gen -> {
-            final String expectedText = "blah";
-            final String expectedUrl = "?annotationId=1&streamId=2&eventId=3&title=this+is+a+title&subject=this+is+a+subject&status=New&assignedTo=test+user&comment=new+comment";
-            final String expectedType = "annotation";
+        createGenerator(
+                "annotation('blah', '1', '2', '3', 'this is a title', 'this is a subject', 'New', 'test user', 'new comment')",
+                gen -> {
+                    final String expectedText = "blah";
+                    final String expectedUrl = "?annotationId=1&streamId=2&eventId=3&title=this+is+a+title&subject=this+is+a+subject&status=New&assignedTo=test+user&comment=new+comment";
+                    final String expectedType = "annotation";
 
-            gen.set(getVal(expectedText, expectedUrl));
+                    gen.set(getVal(expectedText, expectedUrl));
 
-            final Val out = gen.eval();
-            final String str = out.toString();
-            assertThat(str).isEqualTo("[blah](%3FannotationId%3D1%26streamId%3D2%26eventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");
+                    final Val out = gen.eval();
+                    final String str = out.toString();
+                    assertThat(str).isEqualTo(
+                            "[blah](%3FannotationId%3D1%26streamId%3D2%26eventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");
 
-            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-            final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
+                    final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
+                    final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
+                    final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
 
-            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-            assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
-        });
+                    assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
+                    assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
+                    assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
+                });
     }
 
     @Test
@@ -1679,7 +1691,8 @@ class TestExpressionParser {
             gen.set(getVal("test"));
 
             final Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff");
+            assertThat(out.toString()).isEqualTo(
+                    "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff");
         });
     }
 
@@ -1689,7 +1702,8 @@ class TestExpressionParser {
             gen.set(getVal("test"));
 
             final Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("af2910d4d8acf3fcf9683d3ca4425327cb1b4b48bc690f566e27b0e0144c17af82066cf6af14d3a30312ed9df671e0e24b1c66ed3973d1a7836899d75c4d6bb8");
+            assertThat(out.toString()).isEqualTo(
+                    "af2910d4d8acf3fcf9683d3ca4425327cb1b4b48bc690f566e27b0e0144c17af82066cf6af14d3a30312ed9df671e0e24b1c66ed3973d1a7836899d75c4d6bb8");
         });
     }
 
@@ -2643,7 +2657,7 @@ class TestExpressionParser {
 
     @Test
     void testErrorHandling1() {
-        ValLong valLong = ValLong.create(10);
+        final ValLong valLong = ValLong.create(10);
         assertThatItEvaluatesToValErr("(${val1}=err())", valLong);
         assertThatItEvaluatesToValErr("(err()=${val1})", valLong);
         assertThatItEvaluatesToValErr("(err()=null())", valLong);
@@ -2687,8 +2701,29 @@ class TestExpressionParser {
             System.out.println(expression + " - " +
                     out.getClass().getSimpleName() + ": " +
                     out.toString() +
-                    (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : ""));
+                    (out instanceof ValErr
+                            ? (" - " + ((ValErr) out).getMessage())
+                            : ""));
             assertThat(out).isInstanceOf(ValErr.class);
+        });
+    }
+
+    private void assertThatItEvaluatesTo(final String expression,
+                                         final Val expectedOutput,
+                                         final Val... inputValues) {
+        createGenerator(expression, gen -> {
+            if (inputValues != null && inputValues.length > 0) {
+                gen.set(inputValues);
+            }
+            final Val out = gen.eval();
+            System.out.println(expression + " - " +
+                    out.getClass().getSimpleName() + ": " +
+                    out.toString() +
+                    (out instanceof ValErr
+                            ? (" - " + ((ValErr) out).getMessage())
+                            : ""));
+            assertThat(out)
+                    .isEqualTo(expectedOutput);
         });
     }
 
@@ -2745,7 +2780,34 @@ class TestExpressionParser {
         testMap.computeIfAbsent("isError", k -> new HashSet<>(Collections.singletonList(vError)));
 
         final List<Val> types = Arrays.asList(vTrue, vFals, vNull, vError, vLong, vInt, vDbl, vString);
-        testMap.forEach((k, v) -> types.forEach(type -> assertIsExpression(type, k, ValBoolean.create(v.contains(type)))));
+        testMap.forEach((k, v) -> types.forEach(type -> assertIsExpression(type,
+                k,
+                ValBoolean.create(v.contains(type)))));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testNegation() {
+        final ValLong val1 = ValLong.create(10);
+        final ValLong val2 = ValLong.create(5);
+
+        return List
+                .of(
+                        TestCase.of("20-10", ValDouble.create(10)),
+                        TestCase.of("-20-10", ValDouble.create(-30)),
+                        TestCase.of("-20+-10", ValDouble.create(-30)),
+                        TestCase.of("-10", ValDouble.create(-10)),
+                        TestCase.of("${val1}", val1, val1),
+                        TestCase.of("-${val1}", ValDouble.create(-val1.toDouble()), val1),
+                        TestCase.of("add(-10, 20)", ValDouble.create(10)),
+                        TestCase.of(
+                                "add(${val1}, ${val2})",
+                                ValDouble.create(val1.toDouble() + val2.toDouble()),
+                                val1, val2)
+                )
+                .stream()
+                .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () -> {
+                    assertThatItEvaluatesTo(testCase.expression, testCase.expectedResult, testCase.inputValues);
+                }));
     }
 
     private void createGenerator(final String expression, final Consumer<Generator> consumer) {
@@ -2784,12 +2846,17 @@ class TestExpressionParser {
         exp.setStaticMappedValues(mappedValues);
 
         final String actual = exp.toString();
-        assertThat(actual).isEqualTo(expression);
+        assertThat(actual)
+                .describedAs("Comparing the toString() of the parsed expression to the input")
+                .isEqualTo(expression);
 
         consumer.accept(exp);
     }
 
-    private void assertBooleanExpression(final Val val1, final String operator, final Val val2, final Val expectedOutput) {
+    private void assertBooleanExpression(final Val val1,
+                                         final String operator,
+                                         final Val val2,
+                                         final Val expectedOutput) {
         final String expression = String.format("(${val1}%s${val2})", operator);
         createGenerator(expression, 2, gen -> {
             gen.set(new Val[]{val1, val2});
@@ -2800,7 +2867,9 @@ class TestExpressionParser {
                     operator,
                     val2.getClass().getSimpleName(), val2.toString(),
                     out.getClass().getSimpleName(), out.toString(),
-                    (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : ""));
+                    (out instanceof ValErr
+                            ? (" - " + ((ValErr) out).getMessage())
+                            : ""));
 
             if (!(expectedOutput instanceof ValErr)) {
                 assertThat(out).isEqualTo(expectedOutput);
@@ -2816,7 +2885,9 @@ class TestExpressionParser {
             System.out.printf("%s => [%s:%s%s]%n",
                     expression,
                     out.getClass().getSimpleName(), out.toString(),
-                    (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : ""));
+                    (out instanceof ValErr
+                            ? (" - " + ((ValErr) out).getMessage())
+                            : ""));
 
             // The output type is always wrapped in a ValString
             assertThat(out.type().toString()).isEqualTo("string");
@@ -2836,7 +2907,9 @@ class TestExpressionParser {
                     expression,
                     val1.getClass().getSimpleName(), val1.toString(),
                     out.getClass().getSimpleName(), out.toString(),
-                    (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : ""));
+                    (out instanceof ValErr
+                            ? (" - " + ((ValErr) out).getMessage())
+                            : ""));
 
             // The output type is always wrapped in a ValString
             assertThat(out.type().toString()).isEqualTo("string");
@@ -2856,7 +2929,9 @@ class TestExpressionParser {
                     function,
                     val1.getClass().getSimpleName(), val1.toString(),
                     out.getClass().getSimpleName(), out.toString(),
-                    (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : ""));
+                    (out instanceof ValErr
+                            ? (" - " + ((ValErr) out).getMessage())
+                            : ""));
 
             if (!(expectedOutput instanceof ValErr)) {
                 assertThat(out).isEqualTo(expectedOutput);
@@ -2894,4 +2969,37 @@ class TestExpressionParser {
         }
         LOGGER.info(Arrays.toString(bytes));
     }
+
+    private static class TestCase {
+
+        private final String expression;
+        private final Val expectedResult;
+        private final Val[] inputValues;
+
+        private TestCase(final String expression, final Val expectedResult, final Val... inputValues) {
+            this.expression = expression;
+            this.expectedResult = expectedResult;
+            this.inputValues = inputValues;
+        }
+
+        static TestCase of(final String expression, final Val expectedResult, final Val... inputValues) {
+            return new TestCase(expression, expectedResult, inputValues);
+        }
+
+        @Override
+        public String toString() {
+            final String inputValuesStr = inputValues == null
+                    ? ""
+                    : Arrays.stream(inputValues)
+                            .map(val -> val.getClass().getSimpleName() + "(" + val + ")")
+                            .collect(Collectors.joining(", "));
+            return
+                    "\"" + (expression.equals("")
+                            ? "<BLANK STRING>"
+                            : expression) + "\" : "
+                            + expectedResult + " : ["
+                            + inputValuesStr + "]";
+        }
+    }
+
 }

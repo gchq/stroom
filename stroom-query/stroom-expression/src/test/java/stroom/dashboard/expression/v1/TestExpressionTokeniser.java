@@ -16,84 +16,123 @@
 
 package stroom.dashboard.expression.v1;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionTokeniser {
-    @Test
-    void testBasic() throws ParseException {
-        // Test string tokenisation.
-        test("");
 
-        test("A", true);
-        test("'B'");
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionTokeniser.class);
 
-        test("A'B'A'B'A'B'", true);
-        test("'B'A'B'A'B'A", true);
-        test("A'B'A'B'A'B'A", true);
-        test("'B'A'B'A'B'A'B'", true);
+    @TestFactory
+    Stream<DynamicTest> testBasic() throws ParseException {
+        return List
+                .of(
+                        // Test string tokenisation.
+                        TestCase.of(""),
 
-        test("FOO'BAR'FOO'BAR'FOO'BAR'", true);
-        test("'BAR'FOO'BAR'FOO'BAR'FOO", true);
-        test("FOO'BAR'FOO'BAR'FOO'BAR'FOO", true);
-        test("'BAR'FOO'BAR'FOO'BAR'FOO'BAR'", true);
+                        TestCase.of("A", true),
+                        TestCase.of("'B'"),
 
-        test("ABC", true);
-        test("ABC'simple string'DEF", true);
-        test("'simple string'DEF'simple string'", true);
-        test("'simple string'");
-        test("'simple string with ''quoted section'''");
+                        TestCase.of("A'B'A'B'A'B'", true),
+                        TestCase.of("'B'A'B'A'B'A", true),
+                        TestCase.of("A'B'A'B'A'B'A", true),
+                        TestCase.of("'B'A'B'A'B'A'B'", true),
 
-        test("''");
-        test("'''", true);
-        test("''''");
+                        TestCase.of("FOO'BAR'FOO'BAR'FOO'BAR'", true),
+                        TestCase.of("'BAR'FOO'BAR'FOO'BAR'FOO", true),
+                        TestCase.of("FOO'BAR'FOO'BAR'FOO'BAR'FOO", true),
+                        TestCase.of("'BAR'FOO'BAR'FOO'BAR'FOO'BAR'", true),
 
-        // Test field tokenisation.
-        test("${val}");
-        test("min(${val})");
-        test("max(${val})");
-        test("sum(${val})");
-        test("min(round(${val}, 4))");
-        test("min(roundDay(${val}))");
-        test("min(roundMinute(${val}))");
-        test("ceiling(${val})");
-        test("floor(${val})");
-        test("ceiling(floor(min(roundMinute(${val}))))");
-        test("ceiling(floor(min(round(${val}))))");
-        test("max(${val})-min(${val})");
-        test("max(${val})/count()");
-        test("round(${val})/(min(${val})+max(${val}))");
-        test("concat('this is', 'it')");
-        test("concat('it''s a string', 'with a quote')");
-        test("'it''s a string'");
-        test("stringLength('it''s a string')");
-        test("upperCase('it''s a string')");
-        test("lowerCase('it''s a string')");
-        test("substring('Hello', 0, 1)");
-        test("equals(${val}, ${val})");
-        test("greaterThan(1, 0)");
-        test("lessThan(1, 0)");
-        test("greaterThanOrEqualTo(1, 0)");
-        test("lessThanOrEqualTo(1, 0)");
-        test("1=0");
-        test("decode('fred', 'fr.+', 'freda', 'freddy')");
+                        TestCase.of("ABC", true),
+                        TestCase.of("ABC'simple string'DEF", true),
+                        TestCase.of("'simple string'DEF'simple string'", true),
+                        TestCase.of("'simple string'"),
+                        TestCase.of("'simple string with ''quoted section'''"),
 
-        // Test fields with non letters.
-        test("sum(${user-id})");
-        test("sum(${user id})");
+                        TestCase.of("''"),
+                        TestCase.of("'''", true),
+                        TestCase.of("''''"),
+
+                        // Test handling of negation
+                        TestCase.of("-10", 1),
+                        TestCase.of(" -10", 2),
+                        TestCase.of("10 - 10", 5),
+                        TestCase.of("10+12", 3),
+                        TestCase.of("10+-12", 3),
+                        TestCase.of("12-11", 3),
+                        TestCase.of("-10+20", 3),
+                        TestCase.of("50-10+20", 5),
+                        TestCase.of("add(-10,20)", 5),
+                        TestCase.of("add(10,-20)", 5),
+                        TestCase.of("-${val}", 2),
+                        TestCase.of("(10+12)", 5),
+                        TestCase.of("-(10+12)", 6),
+                        TestCase.of("min(-10,-20, -30)", 8),
+
+                        // Test field tokenisation.
+                        TestCase.of("${val}"),
+                        TestCase.of("min(${val})"),
+                        TestCase.of("max(${val})"),
+                        TestCase.of("sum(${val})"),
+                        TestCase.of("min(round(${val}, 4))"),
+                        TestCase.of("min(roundDay(${val}))"),
+                        TestCase.of("min(roundMinute(${val}))"),
+                        TestCase.of("ceiling(${val})"),
+                        TestCase.of("floor(${val})"),
+                        TestCase.of("ceiling(floor(min(roundMinute(${val}))))"),
+                        TestCase.of("ceiling(floor(min(round(${val}))))"),
+                        TestCase.of("max(${val})-min(${val})"),
+                        TestCase.of("max(${val})/count()"),
+                        TestCase.of("round(${val})/(min(${val})+max(${val}))"),
+                        TestCase.of("concat('this is', 'it')"),
+                        TestCase.of("concat('it''s a string', 'with a quote')"),
+                        TestCase.of("'it''s a string'"),
+                        TestCase.of("stringLength('it''s a string')"),
+                        TestCase.of("upperCase('it''s a string')"),
+                        TestCase.of("lowerCase('it''s a string')"),
+                        TestCase.of("substring('Hello', 0, 1)"),
+                        TestCase.of("equals(${val}, ${val})"),
+                        TestCase.of("greaterThan(1, 0)"),
+                        TestCase.of("lessThan(1, 0)"),
+                        TestCase.of("greaterThanOrEqualTo(1, 0)"),
+                        TestCase.of("lessThanOrEqualTo(1, 0)"),
+                        TestCase.of("1=0"),
+                        TestCase.of("decode('fred', 'fr.+', 'freda', 'freddy')"),
+
+                        // Test fields with non letters.
+                        TestCase.of("sum(${user-id})"),
+                        TestCase.of("sum(${user id})"))
+                .stream()
+//                .sorted(Comparator.comparing(testCase -> testCase.expression))
+                .map(testCase ->
+                        DynamicTest.dynamicTest(testCase.toString(), () ->
+                                test(testCase)));
     }
 
-    private void test(final String expression) throws ParseException {
-        test(expression, false);
-    }
-
-    private void test(final String expression, final boolean expectValidationFailure) throws ParseException {
+    private void test(final TestCase testCase) throws ParseException {
         final ExpressionTokeniser expressionTokeniser = new ExpressionTokeniser();
-        final List<ExpressionTokeniser.Token> tokens = expressionTokeniser.tokenise(expression);
+        final List<ExpressionTokeniser.Token> tokens = expressionTokeniser.tokenise(testCase.expression);
+
+        LOGGER.debug("\"{}\" - {} [{}]",
+                testCase.expression,
+                tokens.size(),
+                tokens.stream()
+                        .map(token -> token.getType().toString())
+                        .collect(Collectors.joining(", ")));
+
+        if (testCase.expectedTokenCount != null) {
+            assertThat(tokens)
+                    .hasSize(testCase.expectedTokenCount);
+        }
 
         final StringBuilder sb = new StringBuilder();
         for (final ExpressionTokeniser.Token token : tokens) {
@@ -101,18 +140,64 @@ class TestExpressionTokeniser {
         }
 
         // Make sure all the tokens have captured the expression fully.
-        assertThat(sb.toString()).isEqualTo(expression);
+        assertThat(sb.toString())
+                .isEqualTo(testCase.expression);
 
         try {
             // Do some basic validation of the tokens.
             final ExpressionValidator expressionValidator = new ExpressionValidator();
             expressionValidator.validate(tokens);
 
-            assertThat(expectValidationFailure).withFailMessage("Expected failure").isFalse();
+            assertThat(testCase.isFailureExpected)
+                    .withFailMessage("Expected failure")
+                    .isFalse();
         } catch (final ParseException e) {
-            if (!expectValidationFailure) {
+            if (!testCase.isFailureExpected) {
                 throw e;
             }
+        }
+    }
+
+    private static class TestCase {
+
+        private final String expression;
+        private final boolean isFailureExpected;
+        private final Integer expectedTokenCount;
+
+        private TestCase(final String expression,
+                         final boolean isFailureExpected,
+                         final Integer expectedTokenCount) {
+            this.expression = expression;
+            this.isFailureExpected = isFailureExpected;
+            this.expectedTokenCount = expectedTokenCount;
+        }
+
+        static TestCase of(final String expression,
+                           final boolean isFailureExpected,
+                           final Integer expectedTokenCount) {
+            return new TestCase(expression, isFailureExpected, expectedTokenCount);
+        }
+
+        static TestCase of(final String expression, final boolean isFailureExpected) {
+            return new TestCase(expression, isFailureExpected, null);
+        }
+
+        static TestCase of(final String expression) {
+            return new TestCase(expression, false, null);
+        }
+
+        static TestCase of(final String expression, final Integer expectedTokenCount) {
+            return new TestCase(expression, false, expectedTokenCount);
+        }
+
+        @Override
+        public String toString() {
+            return
+                    "[" + (expression.equals("")
+                            ? "<BLANK STRING>"
+                            : expression) + "] : "
+                            + isFailureExpected + " : "
+                            + expectedTokenCount;
         }
     }
 }
