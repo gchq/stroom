@@ -3,6 +3,7 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.util.io.ByteSizeUnit;
+import stroom.util.logging.Metrics;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
