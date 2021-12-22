@@ -19,7 +19,11 @@ package stroom.processor.impl;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTaskList;
@@ -27,6 +31,7 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.util.logging.Metrics;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -52,6 +57,8 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
     private ProcessorTaskService processorTaskService;
     @Inject
     private NodeInfo nodeInfo;
+    @Inject
+    private MetaService metaService;
 
     @Test
     void testBasic() {
@@ -154,6 +161,59 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 
         processorConfig.setQueueSize(initialQueueSize);
         processorConfig.setFillTaskQueue(true);
+    }
+
+    @Test
+    void testPerformance() {
+        Metrics.setEnabled(true);
+
+        final String nodeName = nodeInfo.getThisNodeName();
+
+        processorTaskManager.shutdown();
+        processorTaskManager.startup();
+
+        assertThat(getTaskCount()).isZero();
+        assertThat(getTaskCount()).isZero();
+
+        for (int j = 0; j < 1000; j++) {
+            final String feedName = FileSystemTestUtil.getUniqueTestString();
+            final QueryData findStreamQueryData = QueryData
+                    .builder()
+                    .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                    .expression(ExpressionOperator.builder()
+                            .addOperator(ExpressionOperator.builder().op(Op.OR)
+                                    .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName)
+                                    .build())
+                            .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                            .build())
+                    .build();
+
+            commonTestScenarioCreator.createProcessor(findStreamQueryData);
+
+            final MetaProperties metaProperties = MetaProperties.builder()
+                    .feedName(feedName)
+                    .typeName(StreamTypeNames.RAW_EVENTS)
+                    .build();
+            Meta meta = metaService.create(metaProperties);
+            meta = metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
+        }
+
+        final int initialQueueSize = processorConfig.getQueueSize();
+        processorConfig.setQueueSize(1000000);
+        processorConfig.setFillTaskQueue(false);
+
+        processorTaskManager.createTasks();
+
+        Metrics.report();
+
+//        assertThat(getTaskCount()).isEqualTo(1000000);
+//        ProcessorTaskList tasks = processorTaskManager.assignTasks(nodeName, 1000000);
+//        assertThat(tasks.getList().size()).isEqualTo(1000000);
+//
+//        processorConfig.setQueueSize(initialQueueSize);
+//        processorConfig.setFillTaskQueue(true);
+//
+//        processorConfig.getClass().equals(ProcessorConfig.class);
     }
 
     private int getTaskCount() {

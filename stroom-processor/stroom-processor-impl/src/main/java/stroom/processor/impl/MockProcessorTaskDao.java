@@ -84,6 +84,17 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
+    public ResultPage<ProcessorTask> changeTaskStatus(final ExpressionCriteria criteria,
+                                                      final String nodeName,
+                                                      final TaskStatus status,
+                                                      final Long startTime,
+                                                      final Long endTime) {
+        final ResultPage<ProcessorTask> tasks = find(criteria);
+        tasks.forEach(task -> changeTaskStatus(task, nodeName, status, startTime, endTime));
+        return tasks;
+    }
+
+    @Override
     public ProcessorTask changeTaskStatus(final ProcessorTask processorTask,
                                           final String nodeName,
                                           final TaskStatus status,

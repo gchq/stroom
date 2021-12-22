@@ -730,6 +730,58 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
+    public ResultPage<ProcessorTask> changeTaskStatus(final ExpressionCriteria criteria,
+                                                      final String nodeName,
+                                                      final TaskStatus status,
+                                                      final Long startTime,
+                                                      final Long endTime) {
+        LOGGER.debug(() -> LogUtil.message(
+                "changeTaskStatus() - Changing task status of {} to node={}, status={}",
+                criteria, nodeName, status));
+        final long now = System.currentTimeMillis();
+
+        final Integer nodeId;
+        if (nodeName != null) {
+            nodeId = processorNodeCache.getOrCreate(nodeName);
+        } else {
+            nodeId = null;
+        }
+
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
+
+        // Do everything within a single transaction.
+        final Result<Record> result = JooqUtil.transactionResult(processorDbConnProvider, context -> {
+            context
+                    .update(PROCESSOR_TASK)
+                    .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, nodeId)
+                    .set(PROCESSOR_TASK.STATUS, status.getPrimitiveValue())
+                    .set(PROCESSOR_TASK.STATUS_TIME_MS, now)
+                    .set(PROCESSOR_TASK.START_TIME_MS, startTime)
+                    .set(PROCESSOR_TASK.END_TIME_MS, endTime)
+                    .where(condition)
+                    .execute();
+
+            return context
+                    .select()
+                    .from(PROCESSOR_TASK)
+                    .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
+                    .leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
+                    .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
+                    .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
+                            PROCESSOR_FILTER_TRACKER.ID))
+                    .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                    .where(condition)
+                    .orderBy(orderFields)
+                    .limit(offset, limit)
+                    .fetch();
+        });
+        return convert(criteria, result, new HashMap<>());
+    }
+
+    @Override
     public ProcessorTask changeTaskStatus(final ProcessorTask processorTask,
                                           final String nodeName,
                                           final TaskStatus status,
