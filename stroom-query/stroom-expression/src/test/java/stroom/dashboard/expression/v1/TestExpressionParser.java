@@ -20,10 +20,13 @@ import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import io.vavr.Tuple;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,21 +129,6 @@ class TestExpressionParser {
         });
     }
 
-    private Val[] getVal(final String... str) {
-        final Val[] result = new Val[str.length];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = ValString.create(str[i]);
-        }
-        return result;
-    }
-
-    private Val[] getVal(final double... d) {
-        final Val[] result = new Val[d.length];
-        for (int i = 0; i < d.length; i++) {
-            result[i] = ValDouble.create(d[i]);
-        }
-        return result;
-    }
 
     @Test
     void testMinUngrouped2() {
@@ -1396,8 +1384,8 @@ class TestExpressionParser {
         });
     }
 
-    @Test
-    void testBooleanExpressions() {
+    @TestFactory
+    Stream<DynamicTest> testBooleanExpressions() {
         ValBoolean vTrue = ValBoolean.TRUE;
         ValBoolean vFals = ValBoolean.FALSE; // intentional typo to keep var name length consistent
         ValNull vNull = ValNull.INSTANCE;
@@ -1424,245 +1412,263 @@ class TestExpressionParser {
         ValString vStrF = ValString.create("false");
         ValString vStr_ = ValString.EMPTY;
 
+        // Don't use List.of() as there are so many varargs it kills IJ performance
+        final QuadList<Val, String, Val, Val> testCases = new QuadList<>();
+
         // null/error, equals
-        assertBooleanExpression(vNull, "=", vNull, vEror);
-        assertBooleanExpression(vNull, "=", vEror, vEror);
-        assertBooleanExpression(vEror, "=", vEror, vEror);
+        testCases.add(vNull, "=", vNull, vEror);
+        testCases.add(vNull, "=", vEror, vEror);
+        testCases.add(vEror, "=", vEror, vEror);
 
         // booleans, equals
-        assertBooleanExpression(vTrue, "=", vTrue, vTrue);
-        assertBooleanExpression(vFals, "=", vFals, vTrue);
-        assertBooleanExpression(vTrue, "=", vFals, vFals);
+        testCases.add(vTrue, "=", vTrue, vTrue);
+        testCases.add(vFals, "=", vFals, vTrue);
+        testCases.add(vTrue, "=", vFals, vFals);
 
         // longs, equals
-        assertBooleanExpression(vLng1, "=", vNull, vEror);
-        assertBooleanExpression(vNull, "=", vLng1, vEror);
-        assertBooleanExpression(vLng1, "=", vLng1, vTrue);
-        assertBooleanExpression(vLng1, "=", vLng2, vFals);
-        assertBooleanExpression(vLng1, "=", vTrue, vTrue); // true() cast to 1
-        assertBooleanExpression(vLng1, "=", vFals, vFals);
+        testCases.add(vLng1, "=", vNull, vEror);
+        testCases.add(vNull, "=", vLng1, vEror);
+        testCases.add(vLng1, "=", vLng1, vTrue);
+        testCases.add(vLng1, "=", vLng2, vFals);
+        testCases.add(vLng1, "=", vTrue, vTrue); // true() cast to 1
+        testCases.add(vLng1, "=", vFals, vFals);
 
         // integers, equals
-        assertBooleanExpression(vInt1, "=", vNull, vEror);
-        assertBooleanExpression(vNull, "=", vInt1, vEror);
-        assertBooleanExpression(vInt1, "=", vInt1, vTrue);
-        assertBooleanExpression(vInt1, "=", vInt2, vFals);
-        assertBooleanExpression(vInt1, "=", vTrue, vTrue); // true() cast to 1
-        assertBooleanExpression(vInt1, "=", vFals, vFals);
+        testCases.add(vInt1, "=", vNull, vEror);
+        testCases.add(vNull, "=", vInt1, vEror);
+        testCases.add(vInt1, "=", vInt1, vTrue);
+        testCases.add(vInt1, "=", vInt2, vFals);
+        testCases.add(vInt1, "=", vTrue, vTrue); // true() cast to 1
+        testCases.add(vInt1, "=", vFals, vFals);
 
         // doubles, equals
-        assertBooleanExpression(vDbl1, "=", vNull, vEror);
-        assertBooleanExpression(vNull, "=", vDbl1, vEror);
-        assertBooleanExpression(vDbl1, "=", vDbl1, vTrue);
-        assertBooleanExpression(vDbl1, "=", vDbl2, vFals);
-        assertBooleanExpression(vDbl1, "=", vTrue, vTrue); // true() cast to 1
-        assertBooleanExpression(vDbl1, "=", vFals, vFals);
+        testCases.add(vDbl1, "=", vNull, vEror);
+        testCases.add(vNull, "=", vDbl1, vEror);
+        testCases.add(vDbl1, "=", vDbl1, vTrue);
+        testCases.add(vDbl1, "=", vDbl2, vFals);
+        testCases.add(vDbl1, "=", vTrue, vTrue); // true() cast to 1
+        testCases.add(vDbl1, "=", vFals, vFals);
 
         // strings, equals
-        assertBooleanExpression(vStrA, "=", vNull, vEror);
-        assertBooleanExpression(vNull, "=", vStrA, vEror);
-        assertBooleanExpression(vStrA, "=", vStrA, vTrue);
-        assertBooleanExpression(vStrA, "=", vStrB, vFals);
-        assertBooleanExpression(vStrA, "=", vTrue, vFals);
-        assertBooleanExpression(vStrA, "=", vFals, vFals);
-        assertBooleanExpression(vStrA, "=", vStra, vFals);
+        testCases.add(vStrA, "=", vNull, vEror);
+        testCases.add(vNull, "=", vStrA, vEror);
+        testCases.add(vStrA, "=", vStrA, vTrue);
+        testCases.add(vStrA, "=", vStrB, vFals);
+        testCases.add(vStrA, "=", vTrue, vFals);
+        testCases.add(vStrA, "=", vFals, vFals);
+        testCases.add(vStrA, "=", vStra, vFals);
 
         // mixed types, equals
-        assertBooleanExpression(vLng1, "=", vStr1, vTrue);
-        assertBooleanExpression(vDbl1, "=", vStr1, vTrue);
-        assertBooleanExpression(vLng1, "=", vTrue, vTrue); //true cast to 1
-        assertBooleanExpression(vInt1, "=", vTrue, vTrue); //true cast to 1
-        assertBooleanExpression(vDbl1, "=", vTrue, vTrue);
-        assertBooleanExpression(vLng0, "=", vFals, vTrue); // false() cast to 0
-        assertBooleanExpression(vInt0, "=", vFals, vTrue); // false() cast to 0
-        assertBooleanExpression(vDbl0, "=", vFals, vTrue); // false() cast to 0
-        assertBooleanExpression(vDbl1, "=", vLng1, vTrue);
-        assertBooleanExpression(vStrT, "=", vTrue, vTrue); // true() cast to "true"
-        assertBooleanExpression(vStrF, "=", vFals, vTrue); // false() cast to "false"
-
+        testCases.add(vLng1, "=", vStr1, vTrue);
+        testCases.add(vDbl1, "=", vStr1, vTrue);
+        testCases.add(vLng1, "=", vTrue, vTrue); //true cast to 1
+        testCases.add(vInt1, "=", vTrue, vTrue); //true cast to 1
+        testCases.add(vDbl1, "=", vTrue, vTrue);
+        testCases.add(vLng0, "=", vFals, vTrue); // false() cast to 0
+        testCases.add(vInt0, "=", vFals, vTrue); // false() cast to 0
+        testCases.add(vDbl0, "=", vFals, vTrue); // false() cast to 0
+        testCases.add(vDbl1, "=", vLng1, vTrue);
+        testCases.add(vStrT, "=", vTrue, vTrue); // true() cast to "true"
+        testCases.add(vStrF, "=", vFals, vTrue); // false() cast to "false"
 
         // booleans, greater than
-        assertBooleanExpression(vTrue, ">", vTrue, vFals);
-        assertBooleanExpression(vFals, ">", vFals, vFals);
-        assertBooleanExpression(vTrue, ">", vFals, vTrue);
+        testCases.add(vTrue, ">", vTrue, vFals);
+        testCases.add(vFals, ">", vFals, vFals);
+        testCases.add(vTrue, ">", vFals, vTrue);
 
         // longs, greater than
-        assertBooleanExpression(vLng1, ">", vNull, vEror);
-        assertBooleanExpression(vNull, ">", vLng1, vEror);
-        assertBooleanExpression(vLng1, ">", vLng1, vFals);
-        assertBooleanExpression(vLng1, ">", vLng2, vFals);
-        assertBooleanExpression(vLng2, ">", vLng1, vTrue);
-        assertBooleanExpression(vLng1, ">", vTrue, vFals); //true cast to 1
-        assertBooleanExpression(vLng2, ">", vDbl1, vTrue);
-        assertBooleanExpression(vLng2, ">", vStr1, vTrue);
+        testCases.add(vLng1, ">", vNull, vEror);
+        testCases.add(vNull, ">", vLng1, vEror);
+        testCases.add(vLng1, ">", vLng1, vFals);
+        testCases.add(vLng1, ">", vLng2, vFals);
+        testCases.add(vLng2, ">", vLng1, vTrue);
+        testCases.add(vLng1, ">", vTrue, vFals); //true cast to 1
+        testCases.add(vLng2, ">", vDbl1, vTrue);
+        testCases.add(vLng2, ">", vStr1, vTrue);
 
         // longs, greater than
-        assertBooleanExpression(vInt1, ">", vNull, vEror);
-        assertBooleanExpression(vNull, ">", vInt1, vEror);
-        assertBooleanExpression(vInt1, ">", vInt1, vFals);
-        assertBooleanExpression(vInt1, ">", vInt2, vFals);
-        assertBooleanExpression(vInt2, ">", vInt1, vTrue);
-        assertBooleanExpression(vInt1, ">", vTrue, vFals); // true cast to 1
-        assertBooleanExpression(vInt2, ">", vDbl1, vTrue);
-        assertBooleanExpression(vInt2, ">", vStr1, vTrue);
+        testCases.add(vInt1, ">", vNull, vEror);
+        testCases.add(vNull, ">", vInt1, vEror);
+        testCases.add(vInt1, ">", vInt1, vFals);
+        testCases.add(vInt1, ">", vInt2, vFals);
+        testCases.add(vInt2, ">", vInt1, vTrue);
+        testCases.add(vInt1, ">", vTrue, vFals); // true cast to 1
+        testCases.add(vInt2, ">", vDbl1, vTrue);
+        testCases.add(vInt2, ">", vStr1, vTrue);
 
         // doubles, greater than
-        assertBooleanExpression(vDbl1, ">", vNull, vEror);
-        assertBooleanExpression(vNull, ">", vDbl1, vEror);
-        assertBooleanExpression(vDbl1, ">", vDbl1, vFals);
-        assertBooleanExpression(vDbl1, ">", vDbl2, vFals);
-        assertBooleanExpression(vDbl2, ">", vDbl1, vTrue);
-        assertBooleanExpression(vDbl1, ">", vTrue, vFals); //true() cast to 1
-        assertBooleanExpression(vDbl2, ">", vDbl1, vTrue);
-        assertBooleanExpression(vDbl2, ">", vStr1, vTrue);
+        testCases.add(vDbl1, ">", vNull, vEror);
+        testCases.add(vNull, ">", vDbl1, vEror);
+        testCases.add(vDbl1, ">", vDbl1, vFals);
+        testCases.add(vDbl1, ">", vDbl2, vFals);
+        testCases.add(vDbl2, ">", vDbl1, vTrue);
+        testCases.add(vDbl1, ">", vTrue, vFals); //true() cast to 1
+        testCases.add(vDbl2, ">", vDbl1, vTrue);
+        testCases.add(vDbl2, ">", vStr1, vTrue);
 
         // strings, greater than
-        assertBooleanExpression(vStrA, ">", vStrA, vFals);
-        assertBooleanExpression(vStrA, ">", vStrB, vFals);
-        assertBooleanExpression(vStrB, ">", vStrA, vTrue);
-        assertBooleanExpression(vStrA, ">", vStr_, vTrue);
-        assertBooleanExpression(vStrA, ">", vStr1, vTrue);
-        assertBooleanExpression(vStrA, ">", vNull, vEror);
-        assertBooleanExpression(vStrA, ">", vStra, vFals);
-        assertBooleanExpression(vStra, ">", vStrA, vTrue);
-
+        testCases.add(vStrA, ">", vStrA, vFals);
+        testCases.add(vStrA, ">", vStrB, vFals);
+        testCases.add(vStrB, ">", vStrA, vTrue);
+        testCases.add(vStrA, ">", vStr_, vTrue);
+        testCases.add(vStrA, ">", vStr1, vTrue);
+        testCases.add(vStrA, ">", vNull, vEror);
+        testCases.add(vStrA, ">", vStra, vFals);
+        testCases.add(vStra, ">", vStrA, vTrue);
 
         // booleans, greater than or equal to
-        assertBooleanExpression(vTrue, ">=", vTrue, vTrue);
-        assertBooleanExpression(vFals, ">=", vFals, vTrue);
-        assertBooleanExpression(vTrue, ">=", vFals, vTrue);
-        assertBooleanExpression(vFals, ">=", vTrue, vFals);
+        testCases.add(vTrue, ">=", vTrue, vTrue);
+        testCases.add(vFals, ">=", vFals, vTrue);
+        testCases.add(vTrue, ">=", vFals, vTrue);
+        testCases.add(vFals, ">=", vTrue, vFals);
 
         // longs, greater than or equal to
-        assertBooleanExpression(vLng1, ">=", vNull, vEror);
-        assertBooleanExpression(vNull, ">=", vLng1, vEror);
-        assertBooleanExpression(vLng1, ">=", vLng1, vTrue);
-        assertBooleanExpression(vLng1, ">=", vLng2, vFals);
-        assertBooleanExpression(vLng2, ">=", vLng1, vTrue);
-        assertBooleanExpression(vLng1, ">=", vTrue, vTrue); // true() cast to 1
-        assertBooleanExpression(vLng2, ">=", vDbl1, vTrue);
-        assertBooleanExpression(vLng2, ">=", vStr1, vTrue);
+        testCases.add(vLng1, ">=", vNull, vEror);
+        testCases.add(vNull, ">=", vLng1, vEror);
+        testCases.add(vLng1, ">=", vLng1, vTrue);
+        testCases.add(vLng1, ">=", vLng2, vFals);
+        testCases.add(vLng2, ">=", vLng1, vTrue);
+        testCases.add(vLng1, ">=", vTrue, vTrue); // true() cast to 1
+        testCases.add(vLng2, ">=", vDbl1, vTrue);
+        testCases.add(vLng2, ">=", vStr1, vTrue);
 
         // integers, greater than or equal to
-        assertBooleanExpression(vInt1, ">=", vNull, vEror);
-        assertBooleanExpression(vNull, ">=", vInt1, vEror);
-        assertBooleanExpression(vInt1, ">=", vInt1, vTrue);
-        assertBooleanExpression(vInt1, ">=", vInt2, vFals);
-        assertBooleanExpression(vInt2, ">=", vInt1, vTrue);
-        assertBooleanExpression(vInt1, ">=", vTrue, vTrue); //true() cast to 1
-        assertBooleanExpression(vInt2, ">=", vDbl1, vTrue);
-        assertBooleanExpression(vInt2, ">=", vStr1, vTrue);
+        testCases.add(vInt1, ">=", vNull, vEror);
+        testCases.add(vNull, ">=", vInt1, vEror);
+        testCases.add(vInt1, ">=", vInt1, vTrue);
+        testCases.add(vInt1, ">=", vInt2, vFals);
+        testCases.add(vInt2, ">=", vInt1, vTrue);
+        testCases.add(vInt1, ">=", vTrue, vTrue); //true() cast to 1
+        testCases.add(vInt2, ">=", vDbl1, vTrue);
+        testCases.add(vInt2, ">=", vStr1, vTrue);
 
         // doubles, greater than or equal to
-        assertBooleanExpression(vDbl1, ">=", vNull, vEror);
-        assertBooleanExpression(vNull, ">=", vDbl1, vEror);
-        assertBooleanExpression(vDbl1, ">=", vDbl1, vTrue);
-        assertBooleanExpression(vDbl1, ">=", vDbl2, vFals);
-        assertBooleanExpression(vDbl2, ">=", vDbl1, vTrue);
-        assertBooleanExpression(vDbl1, ">=", vTrue, vTrue); // true() cast to 1
-        assertBooleanExpression(vDbl2, ">=", vDbl1, vTrue);
-        assertBooleanExpression(vDbl2, ">=", vStr1, vTrue);
+        testCases.add(vDbl1, ">=", vNull, vEror);
+        testCases.add(vNull, ">=", vDbl1, vEror);
+        testCases.add(vDbl1, ">=", vDbl1, vTrue);
+        testCases.add(vDbl1, ">=", vDbl2, vFals);
+        testCases.add(vDbl2, ">=", vDbl1, vTrue);
+        testCases.add(vDbl1, ">=", vTrue, vTrue); // true() cast to 1
+        testCases.add(vDbl2, ">=", vDbl1, vTrue);
+        testCases.add(vDbl2, ">=", vStr1, vTrue);
 
         // strings, greater than or equal to
-        assertBooleanExpression(vStrA, ">=", vStrA, vTrue);
-        assertBooleanExpression(vStrA, ">=", vStrB, vFals);
-        assertBooleanExpression(vStrB, ">=", vStrA, vTrue);
-        assertBooleanExpression(vStrA, ">=", vStr_, vTrue);
-        assertBooleanExpression(vStrA, ">=", vStr1, vTrue);
-        assertBooleanExpression(vStrA, ">=", vNull, vEror);
+        testCases.add(vStrA, ">=", vStrA, vTrue);
+        testCases.add(vStrA, ">=", vStrB, vFals);
+        testCases.add(vStrB, ">=", vStrA, vTrue);
+        testCases.add(vStrA, ">=", vStr_, vTrue);
+        testCases.add(vStrA, ">=", vStr1, vTrue);
+        testCases.add(vStrA, ">=", vNull, vEror);
 
 
         // booleans, less than
-        assertBooleanExpression(vTrue, "<", vTrue, vFals);
-        assertBooleanExpression(vFals, "<", vFals, vFals);
-        assertBooleanExpression(vTrue, "<", vFals, vFals);
-        assertBooleanExpression(vFals, "<", vTrue, vTrue);
+        testCases.add(vTrue, "<", vTrue, vFals);
+        testCases.add(vFals, "<", vFals, vFals);
+        testCases.add(vTrue, "<", vFals, vFals);
+        testCases.add(vFals, "<", vTrue, vTrue);
 
         // longs, less than
-        assertBooleanExpression(vLng1, "<", vNull, vEror);
-        assertBooleanExpression(vNull, "<", vLng1, vEror);
-        assertBooleanExpression(vLng1, "<", vLng1, vFals);
-        assertBooleanExpression(vLng1, "<", vLng2, vTrue);
-        assertBooleanExpression(vLng2, "<", vLng1, vFals);
-        assertBooleanExpression(vLng1, "<", vTrue, vFals); // true() cast to 1
-        assertBooleanExpression(vLng2, "<", vDbl1, vFals);
-        assertBooleanExpression(vLng2, "<", vStr1, vFals);
+        testCases.add(vLng1, "<", vNull, vEror);
+        testCases.add(vNull, "<", vLng1, vEror);
+        testCases.add(vLng1, "<", vLng1, vFals);
+        testCases.add(vLng1, "<", vLng2, vTrue);
+        testCases.add(vLng2, "<", vLng1, vFals);
+        testCases.add(vLng1, "<", vTrue, vFals); // true() cast to 1
+        testCases.add(vLng2, "<", vDbl1, vFals);
+        testCases.add(vLng2, "<", vStr1, vFals);
 
         // integers, less than
-        assertBooleanExpression(vInt1, "<", vNull, vEror);
-        assertBooleanExpression(vNull, "<", vInt1, vEror);
-        assertBooleanExpression(vInt1, "<", vInt1, vFals);
-        assertBooleanExpression(vInt1, "<", vInt2, vTrue);
-        assertBooleanExpression(vInt2, "<", vInt1, vFals);
-        assertBooleanExpression(vInt1, "<", vTrue, vFals); // true() cast to 1
-        assertBooleanExpression(vInt2, "<", vDbl1, vFals);
-        assertBooleanExpression(vInt2, "<", vStr1, vFals);
+        testCases.add(vInt1, "<", vNull, vEror);
+        testCases.add(vNull, "<", vInt1, vEror);
+        testCases.add(vInt1, "<", vInt1, vFals);
+        testCases.add(vInt1, "<", vInt2, vTrue);
+        testCases.add(vInt2, "<", vInt1, vFals);
+        testCases.add(vInt1, "<", vTrue, vFals); // true() cast to 1
+        testCases.add(vInt2, "<", vDbl1, vFals);
+        testCases.add(vInt2, "<", vStr1, vFals);
 
         // doubles, less than
-        assertBooleanExpression(vDbl1, "<", vNull, vEror);
-        assertBooleanExpression(vNull, "<", vDbl1, vEror);
-        assertBooleanExpression(vDbl1, "<", vDbl1, vFals);
-        assertBooleanExpression(vDbl1, "<", vDbl2, vTrue);
-        assertBooleanExpression(vDbl2, "<", vDbl1, vFals);
-        assertBooleanExpression(vDbl1, "<", vTrue, vFals); // true() cast to 1
-        assertBooleanExpression(vDbl2, "<", vDbl1, vFals);
-        assertBooleanExpression(vDbl2, "<", vStr1, vFals);
+        testCases.add(vDbl1, "<", vNull, vEror);
+        testCases.add(vNull, "<", vDbl1, vEror);
+        testCases.add(vDbl1, "<", vDbl1, vFals);
+        testCases.add(vDbl1, "<", vDbl2, vTrue);
+        testCases.add(vDbl2, "<", vDbl1, vFals);
+        testCases.add(vDbl1, "<", vTrue, vFals); // true() cast to 1
+        testCases.add(vDbl2, "<", vDbl1, vFals);
+        testCases.add(vDbl2, "<", vStr1, vFals);
 
         // strings, less than
-        assertBooleanExpression(vStrA, "<", vStrA, vFals);
-        assertBooleanExpression(vStrA, "<", vStrB, vTrue);
-        assertBooleanExpression(vStrB, "<", vStrA, vFals);
-        assertBooleanExpression(vStrA, "<", vStr_, vFals);
-        assertBooleanExpression(vStrA, "<", vStr1, vFals);
-        assertBooleanExpression(vStrA, "<", vNull, vEror);
-
+        testCases.add(vStrA, "<", vStrA, vFals);
+        testCases.add(vStrA, "<", vStrB, vTrue);
+        testCases.add(vStrB, "<", vStrA, vFals);
+        testCases.add(vStrA, "<", vStr_, vFals);
+        testCases.add(vStrA, "<", vStr1, vFals);
+        testCases.add(vStrA, "<", vNull, vEror);
 
         // booleans, less than or equal to
-        assertBooleanExpression(vTrue, "<=", vTrue, vTrue);
-        assertBooleanExpression(vFals, "<=", vFals, vTrue);
-        assertBooleanExpression(vTrue, "<=", vFals, vFals);
-        assertBooleanExpression(vFals, "<=", vTrue, vTrue);
+        testCases.add(vTrue, "<=", vTrue, vTrue);
+        testCases.add(vFals, "<=", vFals, vTrue);
+        testCases.add(vTrue, "<=", vFals, vFals);
+        testCases.add(vFals, "<=", vTrue, vTrue);
 
         // longs, less than or equal to
-        assertBooleanExpression(vLng1, "<=", vNull, vEror);
-        assertBooleanExpression(vNull, "<=", vLng1, vEror);
-        assertBooleanExpression(vLng1, "<=", vLng1, vTrue);
-        assertBooleanExpression(vLng1, "<=", vLng2, vTrue);
-        assertBooleanExpression(vLng2, "<=", vLng1, vFals);
-        assertBooleanExpression(vLng1, "<=", vTrue, vTrue); // true() cast to 1
-        assertBooleanExpression(vLng2, "<=", vDbl1, vFals);
-        assertBooleanExpression(vDbl1, "<=", vLng2, vTrue);
-        assertBooleanExpression(vLng2, "<=", vStr1, vFals);
+        testCases.add(vLng1, "<=", vNull, vEror);
+        testCases.add(vNull, "<=", vLng1, vEror);
+        testCases.add(vLng1, "<=", vLng1, vTrue);
+        testCases.add(vLng1, "<=", vLng2, vTrue);
+        testCases.add(vLng2, "<=", vLng1, vFals);
+        testCases.add(vLng1, "<=", vTrue, vTrue); // true() cast to 1
+        testCases.add(vLng2, "<=", vDbl1, vFals);
+        testCases.add(vDbl1, "<=", vLng2, vTrue);
+        testCases.add(vLng2, "<=", vStr1, vFals);
 
         // integers, less than or equal to
-        assertBooleanExpression(vInt1, "<=", vNull, vEror);
-        assertBooleanExpression(vNull, "<=", vInt1, vEror);
-        assertBooleanExpression(vInt1, "<=", vInt1, vTrue);
-        assertBooleanExpression(vInt1, "<=", vInt2, vTrue);
-        assertBooleanExpression(vInt2, "<=", vInt1, vFals);
-        assertBooleanExpression(vInt1, "<=", vTrue, vTrue); //true() cast to 1
-        assertBooleanExpression(vInt2, "<=", vDbl1, vFals);
-        assertBooleanExpression(vInt1, "<=", vDbl2, vTrue);
-        assertBooleanExpression(vInt2, "<=", vStr1, vFals);
-        assertBooleanExpression(vInt1, "<=", vStr2, vTrue);
+        testCases.add(vInt1, "<=", vNull, vEror);
+        testCases.add(vNull, "<=", vInt1, vEror);
+        testCases.add(vInt1, "<=", vInt1, vTrue);
+        testCases.add(vInt1, "<=", vInt2, vTrue);
+        testCases.add(vInt2, "<=", vInt1, vFals);
+        testCases.add(vInt1, "<=", vTrue, vTrue); //true() cast to 1
+        testCases.add(vInt2, "<=", vDbl1, vFals);
+        testCases.add(vInt1, "<=", vDbl2, vTrue);
+        testCases.add(vInt2, "<=", vStr1, vFals);
+        testCases.add(vInt1, "<=", vStr2, vTrue);
 
         // doubles, less than or equal to
-        assertBooleanExpression(vDbl1, "<=", vNull, vEror);
-        assertBooleanExpression(vNull, "<=", vDbl1, vEror);
-        assertBooleanExpression(vDbl1, "<=", vDbl1, vTrue);
-        assertBooleanExpression(vDbl1, "<=", vDbl2, vTrue);
-        assertBooleanExpression(vDbl2, "<=", vDbl1, vFals);
-        assertBooleanExpression(vDbl1, "<=", vTrue, vTrue); // true() caste to 1
-        assertBooleanExpression(vDbl2, "<=", vStr1, vFals);
-        assertBooleanExpression(vDbl1, "<=", vStr2, vTrue);
+        testCases.add(vDbl1, "<=", vNull, vEror);
+        testCases.add(vNull, "<=", vDbl1, vEror);
+        testCases.add(vDbl1, "<=", vDbl1, vTrue);
+        testCases.add(vDbl1, "<=", vDbl2, vTrue);
+        testCases.add(vDbl2, "<=", vDbl1, vFals);
+        testCases.add(vDbl1, "<=", vTrue, vTrue); // true() caste to 1
+        testCases.add(vDbl2, "<=", vStr1, vFals);
+        testCases.add(vDbl1, "<=", vStr2, vTrue);
 
         // strings, less than or equal to
-        assertBooleanExpression(vStrA, "<=", vStrA, vTrue);
-        assertBooleanExpression(vStrA, "<=", vStrB, vTrue);
-        assertBooleanExpression(vStrB, "<=", vStrA, vFals);
-        assertBooleanExpression(vStrA, "<=", vStr_, vFals);
-        assertBooleanExpression(vStrA, "<=", vStr1, vFals);
-        assertBooleanExpression(vStrA, "<=", vNull, vEror);
+        testCases.add(vStrA, "<=", vStrA, vTrue);
+        testCases.add(vStrA, "<=", vStrB, vTrue);
+        testCases.add(vStrB, "<=", vStrA, vFals);
+        testCases.add(vStrA, "<=", vStr_, vFals);
+        testCases.add(vStrA, "<=", vStr1, vFals);
+        testCases.add(vStrA, "<=", vNull, vEror);
+
+        return testCases.stream()
+                .map(tuple4 -> {
+                    final Val val1 = tuple4._1;
+                    final String operator = tuple4._2;
+                    final Val val2 = tuple4._3;
+                    final Val expectedOutput = tuple4._4;
+
+                    return DynamicTest.dynamicTest(
+                            String.join(
+                                    ", ",
+                                    valToString(val1),
+                                    operator,
+                                    valToString(val2),
+                                    valToString(expectedOutput)),
+                            () ->
+                                    assertBooleanExpression(val1, operator, val2, expectedOutput));
+                });
     }
 
     @Test
@@ -2655,43 +2661,49 @@ class TestExpressionParser {
         });
     }
 
-    @Test
-    void testErrorHandling1() {
+    @TestFactory
+    Stream<DynamicTest> testErrorHandling1() {
         final ValLong valLong = ValLong.create(10);
-        assertThatItEvaluatesToValErr("(${val1}=err())", valLong);
-        assertThatItEvaluatesToValErr("(err()=${val1})", valLong);
-        assertThatItEvaluatesToValErr("(err()=null())", valLong);
-        assertThatItEvaluatesToValErr("(null()=err())", valLong);
-        assertThatItEvaluatesToValErr("(null()=${val1})", valLong);
-        assertThatItEvaluatesToValErr("(${val1}=null())", valLong);
+        return List
+                .of(
+                        "(${val1}=err())",
+                        "(err()=${val1})",
+                        "(err()=null())",
+                        "(null()=err())",
+                        "(null()=${val1})",
+                        "(${val1}=null())",
 
-        assertThatItEvaluatesToValErr("(${val1}>=err())", valLong);
-        assertThatItEvaluatesToValErr("(err()>=${val1})", valLong);
-        assertThatItEvaluatesToValErr("(err()>=null())", valLong);
-        assertThatItEvaluatesToValErr("(null()>=err())", valLong);
-        assertThatItEvaluatesToValErr("(null()>=${val1})", valLong);
-        assertThatItEvaluatesToValErr("(${val1}>=null())", valLong);
+                        "(${val1}>=err())",
+                        "(err()>=${val1})",
+                        "(err()>=null())",
+                        "(null()>=err())",
+                        "(null()>=${val1})",
+                        "(${val1}>=null())",
 
-        assertThatItEvaluatesToValErr("(${val1}>err())", valLong);
-        assertThatItEvaluatesToValErr("(err()>${val1})", valLong);
-        assertThatItEvaluatesToValErr("(err()>null())", valLong);
-        assertThatItEvaluatesToValErr("(null()>err())", valLong);
-        assertThatItEvaluatesToValErr("(null()>${val1})", valLong);
-        assertThatItEvaluatesToValErr("(${val1}>null())", valLong);
+                        "(${val1}>err())",
+                        "(err()>${val1})",
+                        "(err()>null())",
+                        "(null()>err())",
+                        "(null()>${val1})",
+                        "(${val1}>null())",
 
-        assertThatItEvaluatesToValErr("(${val1}<=err())", valLong);
-        assertThatItEvaluatesToValErr("(err()<=${val1})", valLong);
-        assertThatItEvaluatesToValErr("(err()<=null())", valLong);
-        assertThatItEvaluatesToValErr("(null()<=err())", valLong);
-        assertThatItEvaluatesToValErr("(null()<=${val1})", valLong);
-        assertThatItEvaluatesToValErr("(${val1}<=null())", valLong);
+                        "(${val1}<=err())",
+                        "(err()<=${val1})",
+                        "(err()<=null())",
+                        "(null()<=err())",
+                        "(null()<=${val1})",
+                        "(${val1}<=null())",
 
-        assertThatItEvaluatesToValErr("(${val1}<err())", valLong);
-        assertThatItEvaluatesToValErr("(err()<${val1})", valLong);
-        assertThatItEvaluatesToValErr("(err()<null())", valLong);
-        assertThatItEvaluatesToValErr("(null()<err())", valLong);
-        assertThatItEvaluatesToValErr("(null()<${val1})", valLong);
-        assertThatItEvaluatesToValErr("(${val1}<null())", valLong);
+                        "(${val1}<err())",
+                        "(err()<${val1})",
+                        "(err()<null())",
+                        "(null()<err())",
+                        "(null()<${val1})",
+                        "(${val1}<null())")
+                .stream()
+                .map(expr ->
+                        DynamicTest.dynamicTest(expr, () ->
+                                assertThatItEvaluatesToValErr(expr, valLong)));
     }
 
     private void assertThatItEvaluatesToValErr(final String expression, final Val... values) {
@@ -2727,38 +2739,46 @@ class TestExpressionParser {
         });
     }
 
-    @Test
-    void testTypeOf() {
-        ValBoolean vTrue = ValBoolean.TRUE;
-        ValBoolean vFals = ValBoolean.FALSE; // intentional typo to keep var name length consistent
-        ValNull vNull = ValNull.INSTANCE;
-        ValErr vEror = ValErr.create("Expecting an error"); // intentional typo to keep var name length consistent
-        ValLong vLng0 = ValLong.create(0L);
-        ValInteger vInt0 = ValInteger.create(1);
-        ValDouble vDbl0 = ValDouble.create(1.1);
-        ValString vStr1 = ValString.create("abc");
 
-        assertTypeOf(vTrue, "boolean");
-        assertTypeOf(vFals, "boolean");
-        assertTypeOf(vNull, "null");
-        assertTypeOf(vEror, "error");
-        assertTypeOf(vLng0, "long");
-        assertTypeOf(vInt0, "integer");
-        assertTypeOf(vDbl0, "double");
-        assertTypeOf(vStr1, "string");
-
-        assertTypeOf("typeOf(err())", "error");
-        assertTypeOf("typeOf(null())", "null");
-        assertTypeOf("typeOf(true())", "boolean");
-        assertTypeOf("typeOf(1+2)", "double");
-        assertTypeOf("typeOf(concat('a', 'b'))", "string");
-        assertTypeOf("typeOf('xxx')", "string");
-        assertTypeOf("typeOf(1.234)", "double");
-        assertTypeOf("typeOf(2>=1)", "boolean");
+    @ParameterizedTest
+    @CsvSource(useHeadersInDisplayName = true, quoteCharacter = '"', textBlock = """
+            expr, expectedType
+            "typeOf(err())", error
+            "typeOf(null())", null
+            "typeOf(true())", boolean
+            "typeOf(1+2)", double
+            "typeOf(concat('a', 'b'))", string
+            "typeOf('xxx')", string
+            "typeOf(1.234)", double
+            "typeOf(2>=1)", boolean
+            """)
+    void testTypeOf_1(final String expr, final String expectedType) {
+        assertTypeOf(expr, expectedType);
     }
 
-    @Test
-    void testIsExpressions() {
+    @TestFactory
+    Stream<DynamicTest> testTypeOf_2() {
+        return List.of(
+                Tuple.of(ValBoolean.TRUE, "boolean"),
+                Tuple.of(ValBoolean.FALSE, "boolean"),
+                Tuple.of(ValNull.INSTANCE, "null"),
+                Tuple.of(ValErr.create("Expecting an error"), "error"),
+                Tuple.of(ValLong.create(0L), "long"),
+                Tuple.of(ValInteger.create(1), "integer"),
+                Tuple.of(ValDouble.create(1.1), "double"),
+                Tuple.of(ValString.create("abc"), "string"))
+                .stream()
+                .map(tuple2 -> {
+                    final Val inputVal = tuple2._1;
+                    final String expectedType = tuple2._2;
+                    return DynamicTest.dynamicTest(
+                            valToString(inputVal) + " - " + expectedType,
+                            () -> assertTypeOf(inputVal, expectedType));
+                });
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIsExpressions() {
         final ValBoolean vTrue = ValBoolean.TRUE;
         final ValBoolean vFals = ValBoolean.FALSE; // intentional typo to keep var name length consistent
         final ValNull vNull = ValNull.INSTANCE;
@@ -2779,12 +2799,35 @@ class TestExpressionParser {
         testMap.computeIfAbsent("isNull", k -> new HashSet<>(Collections.singletonList(vNull)));
         testMap.computeIfAbsent("isError", k -> new HashSet<>(Collections.singletonList(vError)));
 
-        final List<Val> types = Arrays.asList(vTrue, vFals, vNull, vError, vLong, vInt, vDbl, vString);
-        testMap.forEach((k, v) -> types.forEach(type -> assertIsExpression(type,
-                k,
-                ValBoolean.create(v.contains(type)))));
+        final List<Val> types = Arrays.asList(
+                vTrue,
+                vFals,
+                vNull,
+                vError,
+                vLong,
+                vInt,
+                vDbl,
+                vString);
+
+        return testMap.entrySet()
+                .stream()
+                .flatMap(entry -> {
+                    final String expr = entry.getKey();
+                    final Set<Val> vals = entry.getValue();
+                    return types.stream()
+                            .map(type ->
+                                    DynamicTest.dynamicTest(
+                                            String.join(", ", expr, valToString(type)),
+                                            () -> assertIsExpression(
+                                                    type,
+                                                    expr,
+                                                    ValBoolean.create(vals.contains(type)))));
+                });
     }
 
+    /**
+     * Depending on context, `-X` should be turned into negate(X)
+     */
     @TestFactory
     Stream<DynamicTest> testNegation() {
         final ValLong val1 = ValLong.create(10);
@@ -2794,6 +2837,7 @@ class TestExpressionParser {
                 .of(
                         TestCase.of("20-10", ValDouble.create(10)),
                         TestCase.of("-20-10", ValDouble.create(-30)),
+                        TestCase.of("-20--10", ValDouble.create(-10)),
                         TestCase.of("-20+-10", ValDouble.create(-30)),
                         TestCase.of("-10", ValDouble.create(-10)),
                         TestCase.of("${val1}", val1, val1),
@@ -2802,12 +2846,22 @@ class TestExpressionParser {
                         TestCase.of(
                                 "add(${val1}, ${val2})",
                                 ValDouble.create(val1.toDouble() + val2.toDouble()),
+                                val1, val2),
+                        TestCase.of(
+                                "add(${val1}, -${val2})",
+                                ValDouble.create(val1.toDouble() - val2.toDouble()),
+                                val1, val2),
+                        TestCase.of(
+                                "-add(${val1}, ${val2})",
+                                ValDouble.create((val1.toDouble() + val2.toDouble()) * -1),
                                 val1, val2)
                 )
                 .stream()
-                .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () -> {
-                    assertThatItEvaluatesTo(testCase.expression, testCase.expectedResult, testCase.inputValues);
-                }));
+                .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
+                        assertThatItEvaluatesTo(
+                                testCase.expression,
+                                testCase.expectedResult,
+                                testCase.inputValues)));
     }
 
     private void createGenerator(final String expression, final Consumer<Generator> consumer) {
@@ -2970,6 +3024,26 @@ class TestExpressionParser {
         LOGGER.info(Arrays.toString(bytes));
     }
 
+    private static String valToString(final Val val) {
+        return val.getClass().getSimpleName() + "(" + val + ")";
+    }
+
+    private Val[] getVal(final String... str) {
+        final Val[] result = new Val[str.length];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = ValString.create(str[i]);
+        }
+        return result;
+    }
+
+    private Val[] getVal(final double... d) {
+        final Val[] result = new Val[d.length];
+        for (int i = 0; i < d.length; i++) {
+            result[i] = ValDouble.create(d[i]);
+        }
+        return result;
+    }
+
     private static class TestCase {
 
         private final String expression;
@@ -2991,7 +3065,7 @@ class TestExpressionParser {
             final String inputValuesStr = inputValues == null
                     ? ""
                     : Arrays.stream(inputValues)
-                            .map(val -> val.getClass().getSimpleName() + "(" + val + ")")
+                            .map(TestExpressionParser::valToString)
                             .collect(Collectors.joining(", "));
             return
                     "\"" + (expression.equals("")
@@ -3002,4 +3076,9 @@ class TestExpressionParser {
         }
     }
 
+    @FunctionalInterface
+    private interface QuadConsumer<T1, T2, T3, T4> {
+
+        void accept(T1 t1, T2 t2, T3 t3, T4 t4);
+    }
 }
