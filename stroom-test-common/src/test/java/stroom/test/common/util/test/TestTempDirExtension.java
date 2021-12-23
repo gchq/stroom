@@ -34,9 +34,9 @@ class TestTempDirExtension extends TempDirSuperClass {
         assertThat(tempDir1).exists();
         assertThat(tempDir1).isDirectory();
 
-        // No matter how many times you use the annotation in a test (as an instance variable
-        // of as a method arg) they will all get the same value
-        assertThat(tempDir1).isEqualTo(getInstanceTempDir());
+        // As of Junit 5.8.0 each use of @TempDir will get a new dir, previous releases
+        // used the same dir for all @TempDir uses.
+        assertThat(tempDir1).isNotEqualTo(getInstanceTempDir());
     }
 
 }
