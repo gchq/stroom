@@ -16,10 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.ByteBufferInputStream;
-import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import io.vavr.Tuple;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DynamicTest;
@@ -30,8 +26,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,22 +33,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// TODO @AT This really ought to be refactored to split it up into more manageable chunks.
-//   See related tests that extend stroom.dashboard.expression.v1.AbstractFunctionTest
-//   Currently the whole class it suppressed in checkstyle in suppressions.xml
-// TODO variable names need fixing
 @SuppressWarnings("checkstyle:localvariablename")
-class TestExpressionParser {
+class TestExpressionParser extends AbstractExpressionParserTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionParser.class);
-
-    private final ExpressionParser parser = new ExpressionParser(new ParamFactory());
 
     @TestFactory
     Stream<DynamicTest> testBasic() {
@@ -100,212 +86,6 @@ class TestExpressionParser {
                                 test(expr)));
     }
 
-    private void test(final String expression) {
-        createExpression(expression, exp ->
-                System.out.println(exp.toString()));
-    }
-
-    @Test
-    void testMin1() {
-        createGenerator("min(${val1})", gen -> {
-            gen.set(getVal(300D));
-            gen.set(getVal(180D));
-
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(180D, Offset.offset(0D));
-
-            gen.set(getVal(500D));
-
-            out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(180D, Offset.offset(0D));
-
-            gen.set(getVal(600D));
-            gen.set(getVal(13D));
-            gen.set(getVal(99.3D));
-            gen.set(getVal(87D));
-
-            out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(13D, Offset.offset(0D));
-        });
-    }
-
-
-    @Test
-    void testMinUngrouped2() {
-        createGenerator("min(${val1}, 100, 30, 8)", gen -> {
-            gen.set(getVal(300D));
-
-            final Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testMinGrouped2() {
-        createGenerator("min(min(${val1}), 100, 30, 8)", gen -> {
-            gen.set(getVal(300D));
-            gen.set(getVal(180D));
-
-            final Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testMin3() {
-        createGenerator("min(min(${val1}), 100, 30, 8, count(), 55)", gen -> {
-            gen.set(getVal(300D));
-            gen.set(getVal(180D));
-
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
-
-            gen.set(getVal(300D));
-            gen.set(getVal(180D));
-
-            out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testMax1() {
-        createGenerator("max(${val1})", gen -> {
-            gen.set(getVal(300D));
-            gen.set(getVal(180D));
-
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(300D, Offset.offset(0D));
-
-            gen.set(getVal(500D));
-
-            out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(500D, Offset.offset(0D));
-
-            gen.set(getVal(600D));
-            gen.set(getVal(13D));
-            gen.set(getVal(99.3D));
-            gen.set(getVal(87D));
-
-            out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(600D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testMaxUngrouped2() {
-        createGenerator("max(${val1}, 100, 30, 8)", gen -> {
-            gen.set(getVal(10D));
-
-            final Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(100D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testMaxGrouped2() {
-        createGenerator("max(max(${val1}), 100, 30, 8)", gen -> {
-            gen.set(getVal(10D));
-            gen.set(getVal(40D));
-
-            final Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(100D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testMax3() {
-        createGenerator("max(max(${val1}), count())", gen -> {
-            gen.set(getVal(3D));
-            gen.set(getVal(2D));
-
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
-
-            gen.set(getVal(1D));
-            gen.set(getVal(1D));
-
-            out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testSum() {
-        // This is a bad usage of functions as ${val1} will produce the last set
-        // value when we evaluate the sum. As we are effectively grouping and we
-        // don't have any control over the order that cell values are inserted
-        // we will end up with indeterminate behaviour.
-        createGenerator("sum(${val1}, count())", gen -> {
-            gen.set(getVal(3D));
-            gen.set(getVal(2D));
-
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
-
-            gen.set(getVal(1D));
-            gen.set(getVal(1D));
-
-            out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(5D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testSumOfSum() {
-        createGenerator("sum(sum(${val1}), count())", gen -> {
-            gen.set(getVal(3D));
-            gen.set(getVal(2D));
-
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(7D, Offset.offset(0D));
-
-            gen.set(getVal(1D));
-            gen.set(getVal(1D));
-
-            out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(11D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testAverageUngrouped() {
-        // This is a bad usage of functions as ${val1} will produce the last set
-        // value when we evaluate the sum. As we are effectively grouping and we
-        // don't have any control over the order that cell values are inserted
-        // we will end up with indeterminate behaviour.
-        createGenerator("average(${val1}, count())", gen -> {
-            gen.set(getVal(3D));
-            gen.set(getVal(4D));
-
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
-
-            gen.set(getVal(1D));
-            gen.set(getVal(8D));
-
-            out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(6D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testAverageGrouped() {
-        createGenerator("average(${val1})", gen -> {
-            gen.set(getVal(3D));
-            gen.set(getVal(4D));
-
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(3.5D, Offset.offset(0D));
-
-            gen.set(getVal(1D));
-            gen.set(getVal(8D));
-
-            out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
-        });
-    }
-
     @Test
     void testMatch1() {
         createGenerator("match('this', 'this')", gen -> {
@@ -325,7 +105,7 @@ class TestExpressionParser {
     @Test
     void testMatch3() {
         createGenerator("match(${val1}, 'this')", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toBoolean()).isTrue();
@@ -335,7 +115,7 @@ class TestExpressionParser {
     @Test
     void testMatch4() {
         createGenerator("match(${val1}, 'that')", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toBoolean()).isFalse();
@@ -409,7 +189,7 @@ class TestExpressionParser {
     @Test
     void testIf3() {
         createGenerator("if(${val1}, 'this', 'that')", gen -> {
-            gen.set(getVal("true"));
+            gen.set(getVals("true"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("this");
@@ -419,7 +199,7 @@ class TestExpressionParser {
     @Test
     void testIf4() {
         createGenerator("if(${val1}, 'this', 'that')", gen -> {
-            gen.set(getVal("false"));
+            gen.set(getVals("false"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("that");
@@ -429,7 +209,7 @@ class TestExpressionParser {
     @Test
     void testIf5() {
         createGenerator("if(match(${val1}, 'foo'), 'this', 'that')", gen -> {
-            gen.set(getVal("foo"));
+            gen.set(getVals("foo"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("this");
@@ -439,7 +219,7 @@ class TestExpressionParser {
     @Test
     void testIf6() {
         createGenerator("if(match(${val1}, 'foo'), 'this', 'that')", gen -> {
-            gen.set(getVal("bar"));
+            gen.set(getVals("bar"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("that");
@@ -449,7 +229,7 @@ class TestExpressionParser {
     @Test
     void testNotIf() {
         createGenerator("if(not(${val1}), 'this', 'that')", gen -> {
-            gen.set(getVal("false"));
+            gen.set(getVals("false"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("this");
@@ -469,7 +249,7 @@ class TestExpressionParser {
     @Test
     void testReplace1() {
         createGenerator("replace('this', 'is', 'at')", gen -> {
-            gen.set(getVal(3D));
+            gen.set(getVals(3D));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("that");
@@ -479,7 +259,7 @@ class TestExpressionParser {
     @Test
     void testReplace2() {
         createGenerator("replace(${val1}, 'is', 'at')", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("that");
@@ -489,7 +269,7 @@ class TestExpressionParser {
     @Test
     void testConcat1() {
         createGenerator("concat('this', ' is ', 'it')", gen -> {
-            gen.set(getVal(3D));
+            gen.set(getVals(3D));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("this is it");
@@ -500,7 +280,7 @@ class TestExpressionParser {
     @Test
     void testConcat1Plus() {
         createGenerator("'this'+' is '+'it'", gen -> {
-            gen.set(getVal(3D));
+            gen.set(getVals(3D));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("this is it");
@@ -510,7 +290,7 @@ class TestExpressionParser {
     @Test
     void testConcat2() {
         createGenerator("concat(${val1}, ' is ', 'it')", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("this is it");
@@ -520,7 +300,7 @@ class TestExpressionParser {
     @Test
     void testConcatSingle1() {
         createGenerator("concat(${val1})", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("this");
@@ -530,7 +310,7 @@ class TestExpressionParser {
     @Test
     void testConcatSingle2() {
         createGenerator("concat('hello')", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("hello");
@@ -618,151 +398,11 @@ class TestExpressionParser {
         });
     }
 
-    @Test
-    void testLink1() {
-        createGenerator("link('Title', 'http://www.somehost.com/somepath')", gen -> {
-            final String expectedText = "Title";
-            final String expectedUrl = "http://www.somehost.com/somepath";
-
-            gen.set(getVal("this"));
-
-            final Val out = gen.eval();
-            final String str = out.toString();
-            assertThat(str).isEqualTo("[Title](http%3A%2F%2Fwww.somehost.com%2Fsomepath)");
-
-            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-
-            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-        });
-    }
-
-    @Test
-    void testLink2() {
-        createGenerator("link('Title', 'http://www.somehost.com/somepath', 'browser')", gen -> {
-            final String expectedText = "Title";
-            final String expectedUrl = "http://www.somehost.com/somepath";
-            final String expectedType = "browser";
-
-            gen.set(getVal("this"));
-
-            final Val out = gen.eval();
-            final String str = out.toString();
-            assertThat(str).isEqualTo("[Title](http%3A%2F%2Fwww.somehost.com%2Fsomepath){browser}");
-
-            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-            final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
-
-            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-            assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
-        });
-    }
-
-    @Test
-    void testLink3() {
-        createGenerator("link(${val1}, ${val2}, 'browser')", 2, gen -> {
-            final String expectedText = "t}his [is] a tit(le w{it}h (brack[ets)";
-            final String expectedUrl = "http://www.somehost.com/somepath?k1=v1&k[2]={v2}";
-            final String expectedType = "browser";
-
-            gen.set(getVal(expectedText, expectedUrl));
-
-            final Val out = gen.eval();
-            final String str = out.toString();
-            assertThat(str).isEqualTo(
-                    "[t%7Dhis+%5Bis%5D+a+tit%28le+w%7Bit%7Dh+%28brack%5Bets%29](http%3A%2F%2Fwww.somehost.com%2Fsomepath%3Fk1%3Dv1%26k%5B2%5D%3D%7Bv2%7D){browser}");
-
-            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-            final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
-
-            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-            assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
-        });
-    }
-
-    @Test
-    void testDashboard() {
-        createGenerator("dashboard('blah', 'abcdefg', 'dt='+formatDate(roundDay(${val1}))+'+1h')", gen -> {
-            final String expectedText = "blah";
-            final String expectedUrl = "?uuid=abcdefg&params=dt%3D2014-02-23T00%3A00%3A00.000Z%2B1h";
-
-            gen.set(getVal("2014-02-22T12:12:12.000Z"));
-
-            final Val out = gen.eval();
-            final String str = out.toString();
-            assertThat(str).isEqualTo(
-                    "[blah](%3Fuuid%3Dabcdefg%26params%3Ddt%253D2014-02-23T00%253A00%253A00.000Z%252B1h){dashboard}");
-
-            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-
-            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-        });
-    }
-
-    @Test
-    void testLink4() {
-        createGenerator(
-                "link('blah', '?annotationId=1&streamId=2&eventId=3&title='+encodeUrl('this is a title')+'&subject='+encodeUrl('this is a subject')+'&status=New&assignedTo='+encodeUrl('test user')+'&comment='+encodeUrl('new comment'), 'annotation')",
-                2,
-                gen -> {
-                    final String expectedText = "blah";
-                    final String expectedUrl = "?annotationId=1&streamId=2&eventId=3&title=this+is+a+title&subject=this+is+a+subject&status=New&assignedTo=test+user&comment=new+comment";
-                    final String expectedType = "annotation";
-
-                    gen.set(getVal(expectedText, expectedUrl));
-
-                    final Val out = gen.eval();
-                    final String str = out.toString();
-                    assertThat(str).isEqualTo(
-                            "[blah](%3FannotationId%3D1%26streamId%3D2%26eventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");
-
-                    final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-                    final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-                    final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
-
-                    assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-                    assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-                    assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
-                });
-    }
-
-    @Test
-    void testAnnotation() {
-        createGenerator(
-                "annotation('blah', '1', '2', '3', 'this is a title', 'this is a subject', 'New', 'test user', 'new comment')",
-                gen -> {
-                    final String expectedText = "blah";
-                    final String expectedUrl = "?annotationId=1&streamId=2&eventId=3&title=this+is+a+title&subject=this+is+a+subject&status=New&assignedTo=test+user&comment=new+comment";
-                    final String expectedType = "annotation";
-
-                    gen.set(getVal(expectedText, expectedUrl));
-
-                    final Val out = gen.eval();
-                    final String str = out.toString();
-                    assertThat(str).isEqualTo(
-                            "[blah](%3FannotationId%3D1%26streamId%3D2%26eventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");
-
-                    final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-                    final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-                    final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
-
-                    assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-                    assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-                    assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
-                });
-    }
 
     @Test
     void testStaticString1() {
         createGenerator("'hello'", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("hello");
@@ -772,7 +412,7 @@ class TestExpressionParser {
     @Test
     void testStaticString2() {
         createGenerator("'[Click Here](http://www.somehost.com/somepath){DIALOG}'", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("[Click Here](http://www.somehost.com/somepath){DIALOG}");
@@ -782,7 +422,7 @@ class TestExpressionParser {
     @Test
     void testStaticNumber() {
         createGenerator("50", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("50");
@@ -792,7 +432,7 @@ class TestExpressionParser {
     @Test
     void testStringLength1() {
         createGenerator("stringLength(${val1})", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
@@ -802,7 +442,7 @@ class TestExpressionParser {
     @Test
     void testSubstring1() {
         createGenerator("substring(${val1}, 1, 2)", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("h");
@@ -812,7 +452,7 @@ class TestExpressionParser {
     @Test
     void testSubstring3() {
         createGenerator("substring(${val1}, 2, 99)", gen -> {
-            gen.set(getVal("his"));
+            gen.set(getVals("his"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("s");
@@ -822,7 +462,7 @@ class TestExpressionParser {
     @Test
     void testSubstring4() {
         createGenerator("substring(${val1}, 1+1, 99-1)", gen -> {
-            gen.set(getVal("his"));
+            gen.set(getVals("his"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("s");
@@ -832,7 +472,7 @@ class TestExpressionParser {
     @Test
     void testSubstring5() {
         createGenerator("substring(${val1}, 2+5, 99-1)", gen -> {
-            gen.set(getVal("his"));
+            gen.set(getVals("his"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEmpty();
@@ -842,7 +482,7 @@ class TestExpressionParser {
     @Test
     void testSubstringBefore1() {
         createGenerator("substringBefore(${val1}, '-')", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("aa");
@@ -852,7 +492,7 @@ class TestExpressionParser {
     @Test
     void testSubstringBefore2() {
         createGenerator("substringBefore(${val1}, 'a')", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEmpty();
@@ -862,7 +502,7 @@ class TestExpressionParser {
     @Test
     void testSubstringBefore3() {
         createGenerator("substringBefore(${val1}, 'b')", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("aa-");
@@ -872,7 +512,7 @@ class TestExpressionParser {
     @Test
     void testSubstringBefore4() {
         createGenerator("substringBefore(${val1}, 'q')", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEmpty();
@@ -882,7 +522,7 @@ class TestExpressionParser {
     @Test
     void testSubstringAfter1() {
         createGenerator("substringAfter(${val1}, '-')", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("bb");
@@ -892,7 +532,7 @@ class TestExpressionParser {
     @Test
     void testSubstringAfter2() {
         createGenerator("substringAfter(${val1}, 'a')", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("a-bb");
@@ -902,7 +542,7 @@ class TestExpressionParser {
     @Test
     void testSubstringAfter3() {
         createGenerator("substringAfter(${val1}, 'b')", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("b");
@@ -912,7 +552,7 @@ class TestExpressionParser {
     @Test
     void testSubstringAfter4() {
         createGenerator("substringAfter(${val1}, 'q')", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEmpty();
@@ -922,7 +562,7 @@ class TestExpressionParser {
     @Test
     void testIndexOf() {
         createGenerator("indexOf(${val1}, '-')", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toInteger().intValue()).isEqualTo(2);
@@ -932,7 +572,7 @@ class TestExpressionParser {
     @Test
     void testIndexOf1() {
         createGenerator("substring(${val1}, indexOf(${val1}, '-'), stringLength(${val1}))", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("-bb");
@@ -942,7 +582,7 @@ class TestExpressionParser {
     @Test
     void testIndexOf2() {
         createGenerator("substring(${val1}, indexOf(${val1}, 'a'), stringLength(${val1}))", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("aa-bb");
@@ -952,7 +592,7 @@ class TestExpressionParser {
     @Test
     void testIndexOf3() {
         createGenerator("substring(${val1}, indexOf(${val1}, 'b'), stringLength(${val1}))", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("bb");
@@ -962,7 +602,7 @@ class TestExpressionParser {
     @Test
     void testIndexOf4() {
         createGenerator("substring(${val1}, indexOf(${val1}, 'q'), stringLength(${val1}))", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.type().isError()).isTrue();
@@ -972,7 +612,7 @@ class TestExpressionParser {
     @Test
     void testLastIndexOf1() {
         createGenerator("substring(${val1}, lastIndexOf(${val1}, '-'), stringLength(${val1}))", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("-bb");
@@ -982,7 +622,7 @@ class TestExpressionParser {
     @Test
     void testLastIndexOf2() {
         createGenerator("substring(${val1}, lastIndexOf(${val1}, 'a'), stringLength(${val1}))", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("a-bb");
@@ -992,7 +632,7 @@ class TestExpressionParser {
     @Test
     void testLastIndexOf3() {
         createGenerator("substring(${val1}, lastIndexOf(${val1}, 'b'), stringLength(${val1}))", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("b");
@@ -1002,7 +642,7 @@ class TestExpressionParser {
     @Test
     void testLastIndexOf4() {
         createGenerator("substring(${val1}, lastIndexOf(${val1}, 'q'), stringLength(${val1}))", gen -> {
-            gen.set(getVal("aa-bb"));
+            gen.set(getVals("aa-bb"));
 
             final Val out = gen.eval();
             assertThat(out.type().isError()).isTrue();
@@ -1012,7 +652,7 @@ class TestExpressionParser {
     @Test
     void testDecode1() {
         createGenerator("decode(${val1}, 'hullo', 'hello', 'goodbye')", gen -> {
-            gen.set(getVal("hullo"));
+            gen.set(getVals("hullo"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("hello");
@@ -1022,7 +662,7 @@ class TestExpressionParser {
     @Test
     void testDecode2() {
         createGenerator("decode(${val1}, 'h.+o', 'hello', 'goodbye')", gen -> {
-            gen.set(getVal("hullo"));
+            gen.set(getVals("hullo"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("hello");
@@ -1032,7 +672,7 @@ class TestExpressionParser {
     @Test
     void testInclude1() {
         createGenerator("include(${val1}, 'this', 'that')", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("this");
         });
@@ -1041,7 +681,7 @@ class TestExpressionParser {
     @Test
     void testInclude2() {
         createGenerator("include(${val1}, 'this', 'that')", gen -> {
-            gen.set(getVal("that"));
+            gen.set(getVals("that"));
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("that");
         });
@@ -1050,7 +690,7 @@ class TestExpressionParser {
     @Test
     void testInclude3() {
         createGenerator("include(${val1}, 'this', 'that')", gen -> {
-            gen.set(getVal("other"));
+            gen.set(getVals("other"));
             final Val out = gen.eval();
             assertThat(out.toString()).isNull();
         });
@@ -1059,7 +699,7 @@ class TestExpressionParser {
     @Test
     void testExclude1() {
         createGenerator("exclude(${val1}, 'this', 'that')", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
             final Val out = gen.eval();
             assertThat(out.toString()).isNull();
         });
@@ -1068,7 +708,7 @@ class TestExpressionParser {
     @Test
     void testExclude2() {
         createGenerator("exclude(${val1}, 'this', 'that')", gen -> {
-            gen.set(getVal("that"));
+            gen.set(getVals("that"));
             final Val out = gen.eval();
             assertThat(out.toString()).isNull();
         });
@@ -1077,7 +717,7 @@ class TestExpressionParser {
     @Test
     void testExclude3() {
         createGenerator("exclude(${val1}, 'this', 'that')", gen -> {
-            gen.set(getVal("other"));
+            gen.set(getVals("other"));
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("other");
         });
@@ -1086,7 +726,7 @@ class TestExpressionParser {
     @Test
     void testEncodeUrl() {
         createGenerator("encodeUrl('https://www.somesite.com:8080/this/path?query=string')", gen -> {
-            gen.set(getVal(""));
+            gen.set(getVals(""));
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring");
         });
@@ -1095,7 +735,7 @@ class TestExpressionParser {
     @Test
     void testDecodeUrl() {
         createGenerator("decodeUrl('https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring')", gen -> {
-            gen.set(getVal(""));
+            gen.set(getVals(""));
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("https://www.somesite.com:8080/this/path?query=string");
         });
@@ -1104,7 +744,7 @@ class TestExpressionParser {
     @Test
     void testEquals1() {
         createGenerator("equals(${val1}, 'plop')", gen -> {
-            gen.set(getVal("plop"));
+            gen.set(getVals("plop"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1114,7 +754,7 @@ class TestExpressionParser {
     @Test
     void testEquals2() {
         createGenerator("equals(${val1}, ${val1})", gen -> {
-            gen.set(getVal("plop"));
+            gen.set(getVals("plop"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1124,7 +764,7 @@ class TestExpressionParser {
     @Test
     void testEquals3() {
         createGenerator("equals(${val1}, 'plip')", gen -> {
-            gen.set(getVal("plop"));
+            gen.set(getVals("plop"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("false");
@@ -1134,7 +774,7 @@ class TestExpressionParser {
     @Test
     void testEquals4() {
         createGenerator("equals(${val1}, ${val2})", 2, gen -> {
-            gen.set(getVal("plop", "plip"));
+            gen.set(getVals("plop", "plip"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("false");
@@ -1144,7 +784,7 @@ class TestExpressionParser {
     @Test
     void testEquals5() {
         createGenerator("equals(${val1}, ${val2})", 2, gen -> {
-            gen.set(getVal("plop", "plop"));
+            gen.set(getVals("plop", "plop"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1154,7 +794,7 @@ class TestExpressionParser {
     @Test
     void testEquals6() {
         createGenerator("${val1}=${val2}", 2, gen -> {
-            gen.set(getVal("plop", "plop"));
+            gen.set(getVals("plop", "plop"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1174,7 +814,7 @@ class TestExpressionParser {
     @Test
     void testEqualsNull2() {
         createGenerator("${val1}=null()", gen -> {
-            gen.set(getVal("plop"));
+            gen.set(getVals("plop"));
 
             final Val out = gen.eval();
             assertThat(out.type().isError()).isTrue();
@@ -1184,7 +824,7 @@ class TestExpressionParser {
     @Test
     void testEqualsNull3() {
         createGenerator("null()=null()", gen -> {
-            gen.set(getVal("plop"));
+            gen.set(getVals("plop"));
 
             final Val out = gen.eval();
             assertThat(out.type().isError()).isTrue();
@@ -1214,7 +854,7 @@ class TestExpressionParser {
     @Test
     void testIsNull2() {
         createGenerator("isNull(${val1})", gen -> {
-            gen.set(getVal("plop"));
+            gen.set(getVals("plop"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("false");
@@ -1224,7 +864,7 @@ class TestExpressionParser {
     @Test
     void testIsNull3() {
         createGenerator("isNull(null())", gen -> {
-            gen.set(getVal("plop"));
+            gen.set(getVals("plop"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1261,7 +901,7 @@ class TestExpressionParser {
     @Test
     void testLessThan3() {
         createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
-            gen.set(getVal(1D, 2D));
+            gen.set(getVals(1D, 2D));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1271,7 +911,7 @@ class TestExpressionParser {
     @Test
     void testLessThan4() {
         createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
-            gen.set(getVal("fred", "fred"));
+            gen.set(getVals("fred", "fred"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("false");
@@ -1281,7 +921,7 @@ class TestExpressionParser {
     @Test
     void testLessThan5() {
         createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
-            gen.set(getVal("fred", "fred1"));
+            gen.set(getVals("fred", "fred1"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1291,7 +931,7 @@ class TestExpressionParser {
     @Test
     void testLessThan6() {
         createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
-            gen.set(getVal("fred1", "fred"));
+            gen.set(getVals("fred1", "fred"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("false");
@@ -1317,7 +957,7 @@ class TestExpressionParser {
     @Test
     void testLessThanOrEqualTo3() {
         createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
-            gen.set(getVal(1D, 2D));
+            gen.set(getVals(1D, 2D));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1327,7 +967,7 @@ class TestExpressionParser {
     @Test
     void testLessThanOrEqualTo3_mk2() {
         createGenerator("(${val1}<=${val2})", 2, gen -> {
-            gen.set(getVal(1D, 2D));
+            gen.set(getVals(1D, 2D));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1337,7 +977,7 @@ class TestExpressionParser {
     @Test
     void testLessThanOrEqualTo4() {
         createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
-            gen.set(getVal("fred", "fred"));
+            gen.set(getVals("fred", "fred"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1347,7 +987,7 @@ class TestExpressionParser {
     @Test
     void testLessThanOrEqualTo5() {
         createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
-            gen.set(getVal("fred", "fred1"));
+            gen.set(getVals("fred", "fred1"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1357,7 +997,7 @@ class TestExpressionParser {
     @Test
     void testLessThanOrEqualTo6() {
         createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
-            gen.set(getVal("fred1", "fred"));
+            gen.set(getVals("fred1", "fred"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("false");
@@ -1367,7 +1007,7 @@ class TestExpressionParser {
     @Test
     void testGreaterThanOrEqualTo1() {
         createGenerator("greaterThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
-            gen.set(getVal(2D, 1D));
+            gen.set(getVals(2D, 1D));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1377,7 +1017,7 @@ class TestExpressionParser {
     @Test
     void testGreaterThanOrEqualTo1_mk2() {
         createGenerator("(${val1}>=${val2})", 2, gen -> {
-            gen.set(getVal(2D, 1D));
+            gen.set(getVals(2D, 1D));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("true");
@@ -1386,31 +1026,31 @@ class TestExpressionParser {
 
     @TestFactory
     Stream<DynamicTest> testBooleanExpressions() {
-        ValBoolean vTrue = ValBoolean.TRUE;
-        ValBoolean vFals = ValBoolean.FALSE; // intentional typo to keep var name length consistent
-        ValNull vNull = ValNull.INSTANCE;
-        ValErr vEror = ValErr.create("Expecting an error"); // intentional typo to keep var name length consistent
+        final ValBoolean vTrue = ValBoolean.TRUE;
+        final ValBoolean vFals = ValBoolean.FALSE; // intentional typo to keep var name length consistent
+        final ValNull vNull = ValNull.INSTANCE;
+        final ValErr vEror = ValErr.create("Expecting an error"); // intentional typo to keep var name length consistent
 
-        ValLong vLng0 = ValLong.create(0L);
-        ValLong vLng1 = ValLong.create(1L);
-        ValLong vLng2 = ValLong.create(2L);
+        final ValLong vLng0 = ValLong.create(0L);
+        final ValLong vLng1 = ValLong.create(1L);
+        final ValLong vLng2 = ValLong.create(2L);
 
-        ValInteger vInt0 = ValInteger.create(0);
-        ValInteger vInt1 = ValInteger.create(1);
-        ValInteger vInt2 = ValInteger.create(2);
+        final ValInteger vInt0 = ValInteger.create(0);
+        final ValInteger vInt1 = ValInteger.create(1);
+        final ValInteger vInt2 = ValInteger.create(2);
 
-        ValDouble vDbl0 = ValDouble.create(0);
-        ValDouble vDbl1 = ValDouble.create(1);
-        ValDouble vDbl2 = ValDouble.create(2);
+        final ValDouble vDbl0 = ValDouble.create(0);
+        final ValDouble vDbl1 = ValDouble.create(1);
+        final ValDouble vDbl2 = ValDouble.create(2);
 
-        ValString vStr1 = ValString.create("1");
-        ValString vStr2 = ValString.create("2");
-        ValString vStrA = ValString.create("AAA");
-        ValString vStrB = ValString.create("BBB");
-        ValString vStra = ValString.create("aaa");
-        ValString vStrT = ValString.create("true");
-        ValString vStrF = ValString.create("false");
-        ValString vStr_ = ValString.EMPTY;
+        final ValString vStr1 = ValString.create("1");
+        final ValString vStr2 = ValString.create("2");
+        final ValString vStrA = ValString.create("AAA");
+        final ValString vStrB = ValString.create("BBB");
+        final ValString vStra = ValString.create("aaa");
+        final ValString vStrT = ValString.create("true");
+        final ValString vStrF = ValString.create("false");
+        final ValString vStr_ = ValString.EMPTY;
 
         // Don't use List.of() as there are so many varargs it kills IJ performance
         final QuadList<Val, String, Val, Val> testCases = new QuadList<>();
@@ -1674,7 +1314,7 @@ class TestExpressionParser {
     @Test
     void testSubstring2() {
         createGenerator("substring(${val1}, 0, 99)", gen -> {
-            gen.set(getVal("this"));
+            gen.set(getVals("this"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("this");
@@ -1684,7 +1324,7 @@ class TestExpressionParser {
     @Test
     void testHash1() {
         createGenerator("hash(${val1})", gen -> {
-            gen.set(getVal("test"));
+            gen.set(getVals("test"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
@@ -1694,7 +1334,7 @@ class TestExpressionParser {
     @Test
     void testHash2() {
         createGenerator("hash(${val1}, 'SHA-512')", gen -> {
-            gen.set(getVal("test"));
+            gen.set(getVals("test"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo(
@@ -1705,7 +1345,7 @@ class TestExpressionParser {
     @Test
     void testHash3() {
         createGenerator("hash(${val1}, 'SHA-512', 'mysalt')", gen -> {
-            gen.set(getVal("test"));
+            gen.set(getVals("test"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo(
@@ -1716,9 +1356,9 @@ class TestExpressionParser {
     @Test
     void testJoining1() {
         createGenerator("joining(${val1}, ',')", gen -> {
-            gen.set(getVal("one"));
-            gen.set(getVal("two"));
-            gen.set(getVal("three"));
+            gen.set(getVals("one"));
+            gen.set(getVals("two"));
+            gen.set(getVals("three"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("one,two,three");
@@ -1728,9 +1368,9 @@ class TestExpressionParser {
     @Test
     void testJoining2() {
         createGenerator("joining(${val1})", gen -> {
-            gen.set(getVal("one"));
-            gen.set(getVal("two"));
-            gen.set(getVal("three"));
+            gen.set(getVals("one"));
+            gen.set(getVals("two"));
+            gen.set(getVals("three"));
 
             final Val out = gen.eval();
             assertThat(out.toString()).isEqualTo("onetwothree");
@@ -1740,14 +1380,14 @@ class TestExpressionParser {
     @Test
     void testCount() {
         createGenerator("count()", gen -> {
-            gen.set(getVal(122D));
-            gen.set(getVal(133D));
+            gen.set(getVals(122D));
+            gen.set(getVals(133D));
 
             Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
 
-            gen.set(getVal(11D));
-            gen.set(getVal(122D));
+            gen.set(getVals(11D));
+            gen.set(getVals(122D));
 
             out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
@@ -1757,8 +1397,8 @@ class TestExpressionParser {
     @Test
     void testCountGroups() {
         createGenerator("countGroups()", gen -> {
-            gen.set(getVal(122D));
-            gen.set(getVal(133D));
+            gen.set(getVals(122D));
+            gen.set(getVals(133D));
 
             final GroupKey parent = new GroupKey(null, ValSerialiser.toBytes(new Val[]{ValString.create("parent")}));
             final byte[] parentBytes = GroupKeySerialiser.toBytes(parent);
@@ -1775,14 +1415,14 @@ class TestExpressionParser {
     @Test
     void testCountUnique() {
         createGenerator("countUnique(${val1})", gen -> {
-            gen.set(getVal(122D));
-            gen.set(getVal(133D));
+            gen.set(getVals(122D));
+            gen.set(getVals(133D));
 
             Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
 
-            gen.set(getVal(11D));
-            gen.set(getVal(122D));
+            gen.set(getVals(11D));
+            gen.set(getVals(122D));
 
             out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
@@ -1792,14 +1432,14 @@ class TestExpressionParser {
     @Test
     void testCountUniqueStaticValue() {
         createGenerator("countUnique('test')", gen -> {
-            gen.set(getVal(122D));
-            gen.set(getVal(133D));
+            gen.set(getVals(122D));
+            gen.set(getVals(133D));
 
             Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
 
-            gen.set(getVal(11D));
-            gen.set(getVal(122D));
+            gen.set(getVals(11D));
+            gen.set(getVals(122D));
 
             out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
@@ -1809,7 +1449,7 @@ class TestExpressionParser {
     @Test
     void testAdd1() {
         createGenerator("3+4", gen -> {
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(7D, Offset.offset(0D));
@@ -1819,7 +1459,7 @@ class TestExpressionParser {
     @Test
     void testAdd2() {
         createGenerator("3+4+5", gen -> {
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D));
@@ -1829,14 +1469,14 @@ class TestExpressionParser {
     @Test
     void testAdd3() {
         createGenerator("2+count()", gen -> {
-            gen.set(getVal(1D));
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
+            gen.set(getVals(1D));
 
             Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
 
-            gen.set(getVal(1D));
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
+            gen.set(getVals(1D));
 
             out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(6D, Offset.offset(0D));
@@ -1846,7 +1486,7 @@ class TestExpressionParser {
     @Test
     void testSubtract1() {
         createGenerator("3-4", gen -> {
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(-1D, Offset.offset(0D));
@@ -1856,14 +1496,14 @@ class TestExpressionParser {
     @Test
     void testSubtract2() {
         createGenerator("2-count()", gen -> {
-            gen.set(getVal(1D));
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
+            gen.set(getVals(1D));
 
             Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(0D, Offset.offset(0D));
 
-            gen.set(getVal(1D));
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
+            gen.set(getVals(1D));
 
             out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(-2D, Offset.offset(0D));
@@ -1873,7 +1513,7 @@ class TestExpressionParser {
     @Test
     void testMultiply1() {
         createGenerator("3*4", gen -> {
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D));
@@ -1883,14 +1523,14 @@ class TestExpressionParser {
     @Test
     void testMultiply2() {
         createGenerator("2*count()", gen -> {
-            gen.set(getVal(1D));
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
+            gen.set(getVals(1D));
 
             Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
 
-            gen.set(getVal(1D));
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
+            gen.set(getVals(1D));
 
             out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
@@ -1910,14 +1550,14 @@ class TestExpressionParser {
     @Test
     void testDivide2() {
         createGenerator("8/count()", gen -> {
-            gen.set(getVal(1D));
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
+            gen.set(getVals(1D));
 
             Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
 
-            gen.set(getVal(1D));
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
+            gen.set(getVals(1D));
 
             out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
@@ -1936,7 +1576,7 @@ class TestExpressionParser {
     @Test
     void testFloorNum1() {
         createGenerator("floor(8.4234)", gen -> {
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
@@ -1946,7 +1586,7 @@ class TestExpressionParser {
     @Test
     void testFloorNum2() {
         createGenerator("floor(8.5234)", gen -> {
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
@@ -1956,7 +1596,7 @@ class TestExpressionParser {
     @Test
     void testFloorNum3() {
         createGenerator("floor(${val1})", gen -> {
-            gen.set(getVal(1.34D));
+            gen.set(getVals(1.34D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
@@ -1966,8 +1606,8 @@ class TestExpressionParser {
     @Test
     void testFloorNum4() {
         createGenerator("floor(${val1}+count())", gen -> {
-            gen.set(getVal(1.34D));
-            gen.set(getVal(1.8655D));
+            gen.set(getVals(1.34D));
+            gen.set(getVals(1.8655D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
@@ -1977,8 +1617,8 @@ class TestExpressionParser {
     @Test
     void testFloorNum5() {
         createGenerator("floor(${val1}+count(), 1)", gen -> {
-            gen.set(getVal(1.34D));
-            gen.set(getVal(1.8655D));
+            gen.set(getVals(1.34D));
+            gen.set(getVals(1.8655D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(3.8D, Offset.offset(0D));
@@ -1988,8 +1628,8 @@ class TestExpressionParser {
     @Test
     void testFloorNum6() {
         createGenerator("floor(${val1}+count(), 2)", gen -> {
-            gen.set(getVal(1.34D));
-            gen.set(getVal(1.8655D));
+            gen.set(getVals(1.34D));
+            gen.set(getVals(1.8655D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(3.86D, Offset.offset(0D));
@@ -1999,7 +1639,7 @@ class TestExpressionParser {
     @Test
     void testCeilNum1() {
         createGenerator("ceiling(8.4234)", gen -> {
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
@@ -2009,7 +1649,7 @@ class TestExpressionParser {
     @Test
     void testCeilNum2() {
         createGenerator("ceiling(8.5234)", gen -> {
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
@@ -2019,7 +1659,7 @@ class TestExpressionParser {
     @Test
     void testCeilNum3() {
         createGenerator("ceiling(${val1})", gen -> {
-            gen.set(getVal(1.34D));
+            gen.set(getVals(1.34D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
@@ -2029,8 +1669,8 @@ class TestExpressionParser {
     @Test
     void testCeilNum4() {
         createGenerator("ceiling(${val1}+count())", gen -> {
-            gen.set(getVal(1.34D));
-            gen.set(getVal(1.8655D));
+            gen.set(getVals(1.34D));
+            gen.set(getVals(1.8655D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
@@ -2041,8 +1681,8 @@ class TestExpressionParser {
     void testCeilNum5() {
         createGenerator("ceiling(${val1}+count(), 1)", gen -> {
 
-            gen.set(getVal(1.34D));
-            gen.set(getVal(1.8655D));
+            gen.set(getVals(1.34D));
+            gen.set(getVals(1.8655D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(3.9D, Offset.offset(0D));
@@ -2052,8 +1692,8 @@ class TestExpressionParser {
     @Test
     void testCeilNum6() {
         createGenerator("ceiling(${val1}+count(), 2)", gen -> {
-            gen.set(getVal(1.34D));
-            gen.set(getVal(1.8655D));
+            gen.set(getVals(1.34D));
+            gen.set(getVals(1.8655D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(3.87D, Offset.offset(0D));
@@ -2063,7 +1703,7 @@ class TestExpressionParser {
     @Test
     void testRoundNum1() {
         createGenerator("round(8.4234)", gen -> {
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
@@ -2073,7 +1713,7 @@ class TestExpressionParser {
     @Test
     void testRoundNum2() {
         createGenerator("round(8.5234)", gen -> {
-            gen.set(getVal(1D));
+            gen.set(getVals(1D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
@@ -2084,7 +1724,7 @@ class TestExpressionParser {
     void testRoundNum3() {
         createGenerator("round(${val1})", gen -> {
 
-            gen.set(getVal(1.34D));
+            gen.set(getVals(1.34D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
@@ -2094,8 +1734,8 @@ class TestExpressionParser {
     @Test
     void testRoundNum4() {
         createGenerator("round(${val1}+count())", gen -> {
-            gen.set(getVal(1.34D));
-            gen.set(getVal(1.8655D));
+            gen.set(getVals(1.34D));
+            gen.set(getVals(1.8655D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
@@ -2105,8 +1745,8 @@ class TestExpressionParser {
     @Test
     void testRoundNum5() {
         createGenerator("round(${val1}+count(), 1)", gen -> {
-            gen.set(getVal(1.34D));
-            gen.set(getVal(1.8655D));
+            gen.set(getVals(1.34D));
+            gen.set(getVals(1.8655D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(3.9D, Offset.offset(0D));
@@ -2116,539 +1756,148 @@ class TestExpressionParser {
     @Test
     void testRoundNum6() {
         createGenerator("round(${val1}+count(), 2)", gen -> {
-            gen.set(getVal(1.34D));
-            gen.set(getVal(1.8655D));
+            gen.set(getVals(1.34D));
+            gen.set(getVals(1.8655D));
 
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(3.87D, Offset.offset(0D));
         });
     }
 
-    @Test
-    void testTime() {
-        testTime("floorSecond", "2014-02-22T12:12:12.888Z", "2014-02-22T12:12:12.000Z");
-        testTime("floorMinute", "2014-02-22T12:12:12.888Z", "2014-02-22T12:12:00.000Z");
-        testTime("floorHour", "2014-02-22T12:12:12.888Z", "2014-02-22T12:00:00.000Z");
-        testTime("floorDay", "2014-02-22T12:12:12.888Z", "2014-02-22T00:00:00.000Z");
-        testTime("floorMonth", "2014-02-22T12:12:12.888Z", "2014-02-01T00:00:00.000Z");
-        testTime("floorYear", "2014-02-22T12:12:12.888Z", "2014-01-01T00:00:00.000Z");
+    @ParameterizedTest
+    @CsvSource(useHeadersInDisplayName = true, textBlock = """
+            expr, input, expectedResult
+            floorSecond, 2014-02-22T12:12:12.888Z, 2014-02-22T12:12:12.000Z
+            floorMinute, 2014-02-22T12:12:12.888Z, 2014-02-22T12:12:00.000Z
+            floorHour, 2014-02-22T12:12:12.888Z, 2014-02-22T12:00:00.000Z
+            floorDay, 2014-02-22T12:12:12.888Z, 2014-02-22T00:00:00.000Z
+            floorMonth, 2014-02-22T12:12:12.888Z, 2014-02-01T00:00:00.000Z
+            floorYear, 2014-02-22T12:12:12.888Z, 2014-01-01T00:00:00.000Z
 
-        testTime("ceilingSecond", "2014-02-22T12:12:12.888Z", "2014-02-22T12:12:13.000Z");
-        testTime("ceilingMinute", "2014-02-22T12:12:12.888Z", "2014-02-22T12:13:00.000Z");
-        testTime("ceilingHour", "2014-02-22T12:12:12.888Z", "2014-02-22T13:00:00.000Z");
-        testTime("ceilingDay", "2014-02-22T12:12:12.888Z", "2014-02-23T00:00:00.000Z");
-        testTime("ceilingMonth", "2014-02-22T12:12:12.888Z", "2014-03-01T00:00:00.000Z");
-        testTime("ceilingYear", "2014-02-22T12:12:12.888Z", "2015-01-01T00:00:00.000Z");
+            ceilingSecond, 2014-02-22T12:12:12.888Z, 2014-02-22T12:12:13.000Z
+            ceilingMinute, 2014-02-22T12:12:12.888Z, 2014-02-22T12:13:00.000Z
+            ceilingHour, 2014-02-22T12:12:12.888Z, 2014-02-22T13:00:00.000Z
+            ceilingDay, 2014-02-22T12:12:12.888Z, 2014-02-23T00:00:00.000Z
+            ceilingMonth, 2014-02-22T12:12:12.888Z, 2014-03-01T00:00:00.000Z
+            ceilingYear, 2014-02-22T12:12:12.888Z, 2015-01-01T00:00:00.000Z
 
-        testTime("roundSecond", "2014-02-22T12:12:12.888Z", "2014-02-22T12:12:13.000Z");
-        testTime("roundMinute", "2014-02-22T12:12:12.888Z", "2014-02-22T12:12:00.000Z");
-        testTime("roundHour", "2014-02-22T12:12:12.888Z", "2014-02-22T12:00:00.000Z");
-        testTime("roundDay", "2014-02-22T12:12:12.888Z", "2014-02-23T00:00:00.000Z");
-        testTime("roundMonth", "2014-02-22T12:12:12.888Z", "2014-03-01T00:00:00.000Z");
-        testTime("roundYear", "2014-02-22T12:12:12.888Z", "2014-01-01T00:00:00.000Z");
-    }
-
-    private void testTime(final String function, final String in, final String expected) {
-        final double expectedMs = DateUtil.parseNormalDateTimeString(expected);
-        final String expression = function + "(${val1})";
+            roundSecond, 2014-02-22T12:12:12.888Z, 2014-02-22T12:12:13.000Z
+            roundMinute, 2014-02-22T12:12:12.888Z, 2014-02-22T12:12:00.000Z
+            roundHour, 2014-02-22T12:12:12.888Z, 2014-02-22T12:00:00.000Z
+            roundDay, 2014-02-22T12:12:12.888Z, 2014-02-23T00:00:00.000Z
+            roundMonth, 2014-02-22T12:12:12.888Z, 2014-03-01T00:00:00.000Z
+            roundYear, 2014-02-22T12:12:12.888Z, 2014-01-01T00:00:00.000Z
+            """)
+    void testTime(final String expr, final String input, final String expectedResult) {
+        final double expectedMs = DateUtil.parseNormalDateTimeString(expectedResult);
+        final String expression = expr + "(${val1})";
         createGenerator(expression, gen -> {
-            gen.set(getVal(in));
+            gen.set(getVals(input));
             final Val out = gen.eval();
             assertThat(out.toDouble()).isEqualTo(expectedMs, Offset.offset(0D));
         });
     }
 
-    @Test
-    void testBODMAS1() {
-        createGenerator("4+4/2+2", gen -> {
-            final Val out = gen.eval();
-
-            // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 8.
-            assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
-        });
+    @TestFactory
+    Stream<DynamicTest> testBODMAS() {
+        return List.of(
+                TestCase.of("4+4/2+2", ValDouble.create(8)),
+                TestCase.of("(4+4)/2+2", ValDouble.create(6)),
+                TestCase.of("(4+4)/(2+2)", ValDouble.create(2)),
+                TestCase.of("4+4/2+2*3", ValDouble.create(12)),
+                TestCase.of("8%3", ValDouble.create(2))
+        )
+                .stream()
+                .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
+                        createGenerator(testCase.expression, gen -> {
+                            gen.set(testCase.inputValues);
+                            assertThat(gen.eval().toDouble())
+                                    .isEqualTo(testCase.expectedResult.toDouble(), Offset.offset(0D));
+                        })));
     }
 
-    @Test
-    void testBODMAS2() {
-        createGenerator("(4+4)/2+2", gen -> {
-            final Val out = gen.eval();
-
-            // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 6.
-            assertThat(out.toDouble()).isEqualTo(6D, Offset.offset(0D));
-        });
+    @TestFactory
+    Stream<DynamicTest> testParseDate() {
+        return List.of(
+                TestCase.of(
+                        "parseDate(${val1})",
+                        ValLong.create(1393071132888L),
+                        getVals("2014-02-22T12:12:12.888Z")),
+                TestCase.of(
+                        "parseDate(${val1}, 'yyyy MM dd')",
+                        ValLong.create(1393027200000L),
+                        getVals("2014 02 22")),
+                TestCase.of(
+                        "parseDate(${val1}, 'yyyy MM dd', '+0400')",
+                        ValLong.create(1393012800000L),
+                        getVals("2014 02 22"))
+        )
+                .stream()
+                .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
+                        createGenerator(testCase.expression, gen -> {
+                            gen.set(testCase.inputValues);
+                            assertThat(gen.eval())
+                                    .isEqualTo(testCase.expectedResult);
+                        })));
     }
 
-    @Test
-    void testBODMAS3() {
-        createGenerator("(4+4)/(2+2)", gen -> {
-            final Val out = gen.eval();
-
-            // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 2.
-            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
-        });
+    @TestFactory
+    Stream<DynamicTest> testFormatDate() {
+        return List.of(
+                TestCase.of(
+                        "formatDate(${val1})",
+                        ValString.create("2014-02-22T12:12:12.888Z"),
+                        ValLong.create(1393071132888L)),
+                TestCase.of(
+                        "formatDate(${val1}, 'yyyy MM dd')",
+                        ValString.create("2014 02 22"),
+                        ValLong.create(1393071132888L)),
+                TestCase.of(
+                        "formatDate(${val1}, 'yyyy MM dd', '+1200')",
+                        ValString.create("2014 02 23"),
+                        ValLong.create(1393071132888L))
+        )
+                .stream()
+                .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
+                        createGenerator(testCase.expression, gen -> {
+                            gen.set(testCase.inputValues);
+                            assertThat(gen.eval())
+                                    .isEqualTo(testCase.expectedResult);
+                        })));
     }
 
-    @Test
-    void testBODMAS4() {
-        createGenerator("4+4/2+2*3", gen -> {
-            final Val out = gen.eval();
+    @TestFactory
+    Stream<DynamicTest> testCasts() {
+        return List.of(
+                TestCase.of("toBoolean('true')", ValBoolean.TRUE),
+                TestCase.of("toBoolean(${val1})", ValBoolean.TRUE, getVals("true")),
 
-            // Non BODMAS would evaluate as 18 - BODMAS should be 12.
-            assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D));
-        });
-    }
+                TestCase.of("toDouble('100')", ValDouble.create(100)),
+                TestCase.of("toDouble(${val1})", ValDouble.create(100), getVals("100")),
 
-    @Test
-    void testBODMAS5() {
-        createGenerator("8%3", gen -> {
-            final Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
-        });
-    }
+                TestCase.of("toInteger('100')", ValInteger.create(100)),
+                TestCase.of("toInteger(${val1})", ValInteger.create(100), getVals("100")),
 
-    @Test
-    void testExtractAuthorityFromUri() {
-        createGenerator("extractAuthorityFromUri(${val1})", gen -> {
-            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("www.example.com:1234");
-        });
-    }
+                TestCase.of("toLong('100')", ValLong.create(100)),
+                TestCase.of("toLong(${val1})", ValLong.create(100), getVals("100")),
 
-    @Test
-    void testExtractFragmentFromUri() {
-        createGenerator("extractFragmentFromUri(${val1})", gen -> {
-            gen.set(getVal("http://www.example.com:1234/this/is/a/path#frag"));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("frag");
-        });
-    }
-
-    @Test
-    void testExtractHostFromUri() {
-        createGenerator("extractHostFromUri(${val1})", gen -> {
-            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("www.example.com");
-        });
-    }
-
-    @Test
-    void testExtractPathFromUri() {
-        createGenerator("extractPathFromUri(${val1})", gen -> {
-            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("/this/is/a/path");
-        });
-    }
-
-    @Test
-    void testExtractPortFromUri() {
-        createGenerator("extractPortFromUri(${val1})", gen -> {
-            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("1234");
-        });
-    }
-
-    @Test
-    void testExtractQueryFromUri() {
-        createGenerator("extractQueryFromUri(${val1})", gen -> {
-            gen.set(getVal("http://www.example.com:1234/this/is/a/path?this=that&foo=bar"));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("this=that&foo=bar");
-        });
-    }
-
-    @Test
-    void testExtractSchemeFromUri() {
-        createGenerator("extractSchemeFromUri(${val1})", gen -> {
-            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("http");
-        });
-    }
-
-    @Test
-    void testExtractSchemeSpecificPartFromUri() {
-        createGenerator("extractSchemeSpecificPartFromUri(${val1})", gen -> {
-            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("//www.example.com:1234/this/is/a/path");
-        });
-    }
-
-    @Test
-    void testExtractUserInfoFromUri() {
-        createGenerator("extractUserInfoFromUri(${val1})", gen -> {
-            gen.set(getVal("http://john:doe@example.com:81/"));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("john:doe");
-        });
-    }
-
-    @Test
-    void testParseDate1() {
-        createGenerator("parseDate(${val1})", gen -> {
-            gen.set(getVal("2014-02-22T12:12:12.888Z"));
-            Val out = gen.eval();
-            assertThat(out.toLong().longValue()).isEqualTo(1393071132888L);
-        });
-    }
-
-    @Test
-    void testParseDate2() {
-        createGenerator("parseDate(${val1}, 'yyyy MM dd')", gen -> {
-            gen.set(getVal("2014 02 22"));
-            Val out = gen.eval();
-            assertThat(out.toLong().longValue()).isEqualTo(1393027200000L);
-        });
-    }
-
-    @Test
-    void testParseDate3() {
-        createGenerator("parseDate(${val1}, 'yyyy MM dd', '+0400')", gen -> {
-            gen.set(getVal("2014 02 22"));
-            Val out = gen.eval();
-            assertThat(out.toLong().longValue()).isEqualTo(1393012800000L);
-        });
-    }
-
-    @Test
-    void testFormatDate1() {
-        createGenerator("formatDate(${val1})", gen -> {
-            gen.set(getVal(1393071132888L));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("2014-02-22T12:12:12.888Z");
-        });
-    }
-
-    @Test
-    void testFormatDate2() {
-        createGenerator("formatDate(${val1}, 'yyyy MM dd')", gen -> {
-            gen.set(getVal(1393071132888L));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("2014 02 22");
-        });
-    }
-
-    @Test
-    void testFormatDate3() {
-        createGenerator("formatDate(${val1}, 'yyyy MM dd', '+1200')", gen -> {
-            gen.set(getVal(1393071132888L));
-            Val out = gen.eval();
-            assertThat(out.toString()).isEqualTo("2014 02 23");
-        });
-    }
-
-    @Test
-    void testVariance1() {
-        createGenerator("variance(600, 470, 170, 430, 300)", gen -> {
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(21704D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testVariance2() {
-        createGenerator("variance(${val1})", gen -> {
-            gen.set(getVal(600));
-            gen.set(getVal(470));
-            gen.set(getVal(170));
-            gen.set(getVal(430));
-            gen.set(getVal(300));
-
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(21704D, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testStDev1() {
-        createGenerator("round(stDev(600, 470, 170, 430, 300))", gen -> {
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(147, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testStDev2() {
-        createGenerator("round(stDev(${val1}))", gen -> {
-            gen.set(getVal(600));
-            gen.set(getVal(470));
-            gen.set(getVal(170));
-            gen.set(getVal(430));
-            gen.set(getVal(300));
-
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(147, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testAny() {
-        createGenerator("any(${val1})", gen -> {
-            gen.set(getVal(300));
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("any(${val1})", child -> {
-                    child.set(getVal(300));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toDouble()).isEqualTo(300, Offset.offset(0D));
-        });
-    }
-
-    private Selection<Val> createSelection(final Generator[] generators) {
-        return new Selection<Val>() {
-            @Override
-            public int size() {
-                return generators.length;
-            }
-
-            @Override
-            public Val get(final int pos) {
-                return generators[pos].eval();
-            }
-        };
-    }
-
-    @Test
-    void testFirst() {
-        createGenerator("first(${val1})", gen -> {
-            gen.set(getVal(300));
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("first(${val1})", child -> {
-                    child.set(getVal(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toDouble()).isEqualTo(1, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testLast() {
-        createGenerator("last(${val1})", gen -> {
-            gen.set(getVal(300));
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("last(${val1})", child -> {
-                    child.set(getVal(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toDouble()).isEqualTo(10, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testNth() {
-        createGenerator("nth(${val1}, 7)", gen -> {
-            gen.set(getVal(300));
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("nth(${val1}, 7)", child -> {
-                    child.set(getVal(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toDouble()).isEqualTo(7, Offset.offset(0D));
-        });
-    }
-
-    @Test
-    void testTop() {
-        createGenerator("top(${val1}, ',', 3)", gen -> {
-            gen.set(getVal(300));
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("top(${val1}, ',', 3)", child -> {
-                    child.set(getVal(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toString()).isEqualTo("1,2,3");
-        });
-    }
-
-    @Test
-    void testTopSmall() {
-        createGenerator("top(${val1}, ',', 3)", gen -> {
-            gen.set(getVal(300));
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final Generator[] children = new Generator[2];
-            for (int i = 0; i < 2; i++) {
-                final int idx = i;
-                createGenerator("top(${val1}, ',', 3)", child -> {
-                    child.set(getVal(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toString()).isEqualTo("1,2");
-        });
-    }
-
-    @Test
-    void testBottom() {
-        createGenerator("bottom(${val1}, ',', 3)", gen -> {
-            gen.set(getVal(300));
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("bottom(${val1}, ',', 3)", child -> {
-                    child.set(getVal(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toString()).isEqualTo("8,9,10");
-        });
-    }
-
-    @Test
-    void testBottomSmall() {
-        createGenerator("bottom(${val1}, ',', 3)", gen -> {
-            gen.set(getVal(300));
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final Generator[] children = new Generator[2];
-            for (int i = 0; i < 2; i++) {
-                final int idx = i;
-                createGenerator("bottom(${val1}, ',', 3)", child -> {
-                    child.set(getVal(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toString()).isEqualTo("1,2");
-        });
-    }
-
-    @Test
-    void testToBoolean1() {
-        createGenerator("toBoolean('true')", gen ->
-                assertThat(gen.eval()).isEqualTo(ValBoolean.TRUE));
-    }
-
-    @Test
-    void testToBoolean2() {
-        createGenerator("toBoolean(${val1})", gen -> {
-            gen.set(getVal("true"));
-            assertThat(gen.eval()).isEqualTo(ValBoolean.TRUE);
-        });
-    }
-
-    @Test
-    void testToDouble1() {
-        createGenerator("toDouble('100')", gen ->
-                assertThat(gen.eval()).isEqualTo(ValDouble.create(100)));
-    }
-
-    @Test
-    void testToDouble2() {
-        createGenerator("toDouble(${val1})", gen -> {
-            gen.set(getVal("100"));
-            assertThat(gen.eval()).isEqualTo(ValDouble.create(100));
-        });
-    }
-
-    @Test
-    void testToInteger1() {
-        createGenerator("toInteger('100')", gen ->
-                assertThat(gen.eval()).isEqualTo(ValInteger.create(100)));
-    }
-
-    @Test
-    void testToInteger2() {
-        createGenerator("toInteger(${val1})", gen -> {
-            gen.set(getVal("100"));
-            assertThat(gen.eval()).isEqualTo(ValInteger.create(100));
-        });
-    }
-
-    @Test
-    void testToLong1() {
-        createGenerator("toLong('100')", gen ->
-                assertThat(gen.eval()).isEqualTo(ValLong.create(100)));
-    }
-
-    @Test
-    void testToLong2() {
-        createGenerator("toLong(${val1})", gen -> {
-            gen.set(getVal("100"));
-            assertThat(gen.eval()).isEqualTo(ValLong.create(100));
-        });
-    }
-
-    @Test
-    void testToString1() {
-        createGenerator("toString('100')", gen ->
-                assertThat(gen.eval()).isEqualTo(ValString.create("100")));
-    }
-
-    @Test
-    void testToString2() {
-        createGenerator("toString(${val1})", gen -> {
-            gen.set(getVal("100"));
-            assertThat(gen.eval()).isEqualTo(ValString.create("100"));
-        });
+                TestCase.of("toString('100')", ValString.create("100")),
+                TestCase.of("toString(100)", ValString.create("100")),
+                TestCase.of("toString(${val1})", ValString.create("100"), getVals("100"))
+        )
+                .stream()
+                .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
+                        createGenerator(testCase.expression, gen -> {
+                            gen.set(testCase.inputValues);
+                            assertThat(gen.eval())
+                                    .isEqualTo(testCase.expectedResult);
+                        })));
     }
 
     @Test
     void testMappedValues1() {
         createGenerator("param('testkey')", gen -> {
-            gen.set(getVal("100"));
+            gen.set(getVals("100"));
             assertThat(gen.eval()).isEqualTo(ValString.create("testvalue"));
         });
     }
@@ -2656,7 +1905,7 @@ class TestExpressionParser {
     @Test
     void testMappedValues2() {
         createGenerator("params()", gen -> {
-            gen.set(getVal("100"));
+            gen.set(getVals("100"));
             assertThat(gen.eval()).isEqualTo(ValString.create("testkey=\"testvalue\""));
         });
     }
@@ -2705,40 +1954,6 @@ class TestExpressionParser {
                         DynamicTest.dynamicTest(expr, () ->
                                 assertThatItEvaluatesToValErr(expr, valLong)));
     }
-
-    private void assertThatItEvaluatesToValErr(final String expression, final Val... values) {
-        createGenerator(expression, gen -> {
-            gen.set(values);
-            Val out = gen.eval();
-            System.out.println(expression + " - " +
-                    out.getClass().getSimpleName() + ": " +
-                    out.toString() +
-                    (out instanceof ValErr
-                            ? (" - " + ((ValErr) out).getMessage())
-                            : ""));
-            assertThat(out).isInstanceOf(ValErr.class);
-        });
-    }
-
-    private void assertThatItEvaluatesTo(final String expression,
-                                         final Val expectedOutput,
-                                         final Val... inputValues) {
-        createGenerator(expression, gen -> {
-            if (inputValues != null && inputValues.length > 0) {
-                gen.set(inputValues);
-            }
-            final Val out = gen.eval();
-            System.out.println(expression + " - " +
-                    out.getClass().getSimpleName() + ": " +
-                    out.toString() +
-                    (out instanceof ValErr
-                            ? (" - " + ((ValErr) out).getMessage())
-                            : ""));
-            assertThat(out)
-                    .isEqualTo(expectedOutput);
-        });
-    }
-
 
     @ParameterizedTest
     @CsvSource(useHeadersInDisplayName = true, quoteCharacter = '"', textBlock = """
@@ -2862,223 +2077,5 @@ class TestExpressionParser {
                                 testCase.expression,
                                 testCase.expectedResult,
                                 testCase.inputValues)));
-    }
-
-    private void createGenerator(final String expression, final Consumer<Generator> consumer) {
-        createGenerator(expression, 1, consumer);
-    }
-
-    private void createExpression(final String expression, final Consumer<Expression> consumer) {
-        createExpression(expression, 1, consumer);
-    }
-
-    private void createGenerator(final String expression, final int valueCount, final Consumer<Generator> consumer) {
-        createExpression(expression, valueCount, exp -> {
-            final Generator gen = exp.createGenerator();
-            consumer.accept(gen);
-
-            final Generator generator2 = exp.createGenerator();
-            testKryo(gen, generator2);
-        });
-    }
-
-    private void createExpression(final String expression, final int valueCount, final Consumer<Expression> consumer) {
-        final FieldIndex fieldIndex = new FieldIndex();
-        for (int i = 1; i <= valueCount; i++) {
-            fieldIndex.create("val" + i);
-        }
-
-        Expression exp;
-        try {
-            exp = parser.parse(fieldIndex, expression);
-        } catch (final ParseException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
-        final Map<String, String> mappedValues = new HashMap<>();
-        mappedValues.put("testkey", "testvalue");
-        exp.setStaticMappedValues(mappedValues);
-
-        final String actual = exp.toString();
-        assertThat(actual)
-                .describedAs("Comparing the toString() of the parsed expression to the input")
-                .isEqualTo(expression);
-
-        consumer.accept(exp);
-    }
-
-    private void assertBooleanExpression(final Val val1,
-                                         final String operator,
-                                         final Val val2,
-                                         final Val expectedOutput) {
-        final String expression = String.format("(${val1}%s${val2})", operator);
-        createGenerator(expression, 2, gen -> {
-            gen.set(new Val[]{val1, val2});
-            Val out = gen.eval();
-
-            System.out.printf("[%s: %s] %s [%s: %s] => [%s: %s%s]%n",
-                    val1.getClass().getSimpleName(), val1.toString(),
-                    operator,
-                    val2.getClass().getSimpleName(), val2.toString(),
-                    out.getClass().getSimpleName(), out.toString(),
-                    (out instanceof ValErr
-                            ? (" - " + ((ValErr) out).getMessage())
-                            : ""));
-
-            if (!(expectedOutput instanceof ValErr)) {
-                assertThat(out).isEqualTo(expectedOutput);
-            }
-            assertThat(out.getClass()).isEqualTo(expectedOutput.getClass());
-        });
-    }
-
-    private void assertTypeOf(final String expression, final String expectedType) {
-        createGenerator(expression, gen -> {
-            Val out = gen.eval();
-
-            System.out.printf("%s => [%s:%s%s]%n",
-                    expression,
-                    out.getClass().getSimpleName(), out.toString(),
-                    (out instanceof ValErr
-                            ? (" - " + ((ValErr) out).getMessage())
-                            : ""));
-
-            // The output type is always wrapped in a ValString
-            assertThat(out.type().toString()).isEqualTo("string");
-
-            assertThat(out).isInstanceOf(ValString.class);
-            assertThat(out.toString()).isEqualTo(expectedType);
-        });
-    }
-
-    private void assertTypeOf(final Val val1, final String expectedType) {
-        final String expression = "typeOf(${val1})";
-        createGenerator(expression, gen -> {
-            gen.set(new Val[]{val1});
-            Val out = gen.eval();
-
-            System.out.printf("%s - [%s:%s] => [%s:%s%s]%n",
-                    expression,
-                    val1.getClass().getSimpleName(), val1.toString(),
-                    out.getClass().getSimpleName(), out.toString(),
-                    (out instanceof ValErr
-                            ? (" - " + ((ValErr) out).getMessage())
-                            : ""));
-
-            // The output type is always wrapped in a ValString
-            assertThat(out.type().toString()).isEqualTo("string");
-
-            assertThat(out).isInstanceOf(ValString.class);
-            assertThat(out.toString()).isEqualTo(expectedType);
-        });
-    }
-
-    private void assertIsExpression(final Val val1, final String function, final Val expectedOutput) {
-        final String expression = String.format("%s(${val1})", function);
-        createGenerator(expression, 2, gen -> {
-            gen.set(new Val[]{val1});
-            Val out = gen.eval();
-
-            System.out.printf("%s([%s: %s]) => [%s: %s%s]%n",
-                    function,
-                    val1.getClass().getSimpleName(), val1.toString(),
-                    out.getClass().getSimpleName(), out.toString(),
-                    (out instanceof ValErr
-                            ? (" - " + ((ValErr) out).getMessage())
-                            : ""));
-
-            if (!(expectedOutput instanceof ValErr)) {
-                assertThat(out).isEqualTo(expectedOutput);
-            }
-            assertThat(out.getClass()).isEqualTo(expectedOutput.getClass());
-        });
-    }
-
-    private void testKryo(final Generator inputGenerator, final Generator outputGenerator) {
-        final Val val = inputGenerator.eval();
-
-        ByteBuffer buffer = ByteBuffer.allocateDirect(1000);
-
-        try (final Output output = new Output(new ByteBufferOutputStream(buffer))) {
-            inputGenerator.write(output);
-        }
-
-        buffer.flip();
-        print(buffer);
-
-        try (final Input input = new Input(new ByteBufferInputStream(buffer))) {
-            outputGenerator.read(input);
-        }
-
-        final Val newVal = outputGenerator.eval();
-
-        assertThat(newVal).isEqualTo(val);
-    }
-
-    private void print(final ByteBuffer byteBuffer) {
-        final ByteBuffer copy = byteBuffer.duplicate();
-        byte[] bytes = new byte[copy.limit()];
-        for (int i = 0; i < copy.limit(); i++) {
-            bytes[i] = copy.get();
-        }
-        LOGGER.info(Arrays.toString(bytes));
-    }
-
-    private static String valToString(final Val val) {
-        return val.getClass().getSimpleName() + "(" + val + ")";
-    }
-
-    private Val[] getVal(final String... str) {
-        final Val[] result = new Val[str.length];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = ValString.create(str[i]);
-        }
-        return result;
-    }
-
-    private Val[] getVal(final double... d) {
-        final Val[] result = new Val[d.length];
-        for (int i = 0; i < d.length; i++) {
-            result[i] = ValDouble.create(d[i]);
-        }
-        return result;
-    }
-
-    private static class TestCase {
-
-        private final String expression;
-        private final Val expectedResult;
-        private final Val[] inputValues;
-
-        private TestCase(final String expression, final Val expectedResult, final Val... inputValues) {
-            this.expression = expression;
-            this.expectedResult = expectedResult;
-            this.inputValues = inputValues;
-        }
-
-        static TestCase of(final String expression, final Val expectedResult, final Val... inputValues) {
-            return new TestCase(expression, expectedResult, inputValues);
-        }
-
-        @Override
-        public String toString() {
-            final String inputValuesStr = inputValues == null
-                    ? ""
-                    : Arrays.stream(inputValues)
-                            .map(TestExpressionParser::valToString)
-                            .collect(Collectors.joining(", "));
-            return
-                    "\"" + (expression.equals("")
-                            ? "<BLANK STRING>"
-                            : expression) + "\" : "
-                            + expectedResult + " : ["
-                            + inputValuesStr + "]";
-        }
-    }
-
-    @FunctionalInterface
-    private interface QuadConsumer<T1, T2, T3, T4> {
-
-        void accept(T1 t1, T2 t2, T3 t3, T4 t4);
     }
 }
