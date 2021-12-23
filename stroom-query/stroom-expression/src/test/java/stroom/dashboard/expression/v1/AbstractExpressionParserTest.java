@@ -286,7 +286,7 @@ public class AbstractExpressionParserTest {
                     "Expr: \"" + expression
                             + "\", inputs: ["
                             + inputValuesStr + "], expResult: "
-                            + expectedResult;
+                            + valToString(expectedResult);
         }
     }
 }

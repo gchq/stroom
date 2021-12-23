@@ -37,10 +37,10 @@ class TestExpressionTokeniser {
         return List
                 .of(
                         // Test string tokenisation.
-                        TestCase.of(""),
+                        TestCase.of("", 0),
 
                         TestCase.of("A", true),
-                        TestCase.of("'B'"),
+                        TestCase.of("'B'", 1),
 
                         TestCase.of("A'B'A'B'A'B'", true),
                         TestCase.of("'B'A'B'A'B'A", true),
@@ -55,12 +55,12 @@ class TestExpressionTokeniser {
                         TestCase.of("ABC", true),
                         TestCase.of("ABC'simple string'DEF", true),
                         TestCase.of("'simple string'DEF'simple string'", true),
-                        TestCase.of("'simple string'"),
-                        TestCase.of("'simple string with ''quoted section'''"),
+                        TestCase.of("'simple string'", 1),
+                        TestCase.of("'simple string with ''quoted section'''", 1),
 
-                        TestCase.of("''"),
+                        TestCase.of("''", 1),
                         TestCase.of("'''", true),
-                        TestCase.of("''''"),
+                        TestCase.of("''''", 1),
 
                         // Test handling of negation
                         TestCase.of("-10", 1),
@@ -77,40 +77,41 @@ class TestExpressionTokeniser {
                         TestCase.of("(10+12)", 5),
                         TestCase.of("-(10+12)", 6),
                         TestCase.of("min(-10,-20, -30)", 8),
+                        TestCase.of("-'test'", 2),
 
                         // Test field tokenisation.
-                        TestCase.of("${val}"),
-                        TestCase.of("min(${val})"),
-                        TestCase.of("max(${val})"),
-                        TestCase.of("sum(${val})"),
-                        TestCase.of("min(round(${val}, 4))"),
-                        TestCase.of("min(roundDay(${val}))"),
-                        TestCase.of("min(roundMinute(${val}))"),
-                        TestCase.of("ceiling(${val})"),
-                        TestCase.of("floor(${val})"),
-                        TestCase.of("ceiling(floor(min(roundMinute(${val}))))"),
-                        TestCase.of("ceiling(floor(min(round(${val}))))"),
-                        TestCase.of("max(${val})-min(${val})"),
-                        TestCase.of("max(${val})/count()"),
-                        TestCase.of("round(${val})/(min(${val})+max(${val}))"),
-                        TestCase.of("concat('this is', 'it')"),
-                        TestCase.of("concat('it''s a string', 'with a quote')"),
-                        TestCase.of("'it''s a string'"),
-                        TestCase.of("stringLength('it''s a string')"),
-                        TestCase.of("upperCase('it''s a string')"),
-                        TestCase.of("lowerCase('it''s a string')"),
-                        TestCase.of("substring('Hello', 0, 1)"),
-                        TestCase.of("equals(${val}, ${val})"),
-                        TestCase.of("greaterThan(1, 0)"),
-                        TestCase.of("lessThan(1, 0)"),
-                        TestCase.of("greaterThanOrEqualTo(1, 0)"),
-                        TestCase.of("lessThanOrEqualTo(1, 0)"),
-                        TestCase.of("1=0"),
-                        TestCase.of("decode('fred', 'fr.+', 'freda', 'freddy')"),
+                        TestCase.of("${val}", 1),
+                        TestCase.of("min(${val})", 3),
+                        TestCase.of("max(${val})", 3),
+                        TestCase.of("sum(${val})", 3),
+                        TestCase.of("min(round(${val}, 4))", 8),
+                        TestCase.of("min(roundDay(${val}))", 5),
+                        TestCase.of("min(roundMinute(${val}))", 5),
+                        TestCase.of("ceiling(${val})", 3),
+                        TestCase.of("floor(${val})", 3),
+                        TestCase.of("ceiling(floor(min(roundMinute(${val}))))", 9),
+                        TestCase.of("ceiling(floor(min(round(${val}))))", 9),
+                        TestCase.of("max(${val})-min(${val})", 7),
+                        TestCase.of("max(${val})/count()", 6),
+                        TestCase.of("round(${val})/(min(${val})+max(${val}))", 13),
+                        TestCase.of("concat('this is', 'it')", 6),
+                        TestCase.of("concat('it''s a string', 'with a quote')", 6),
+                        TestCase.of("'it''s a string'", 1),
+                        TestCase.of("stringLength('it''s a string')", 3),
+                        TestCase.of("upperCase('it''s a string')", 3),
+                        TestCase.of("lowerCase('it''s a string')", 3),
+                        TestCase.of("substring('Hello', 0, 1)", 9),
+                        TestCase.of("equals(${val}, ${val})", 6),
+                        TestCase.of("greaterThan(1, 0)", 6),
+                        TestCase.of("lessThan(1, 0)", 6),
+                        TestCase.of("greaterThanOrEqualTo(1, 0)", 6),
+                        TestCase.of("lessThanOrEqualTo(1, 0)", 6),
+                        TestCase.of("1=0", 3),
+                        TestCase.of("decode('fred', 'fr.+', 'freda', 'freddy')", 12),
 
                         // Test fields with non letters.
-                        TestCase.of("sum(${user-id})"),
-                        TestCase.of("sum(${user id})"))
+                        TestCase.of("sum(${user-id})", 3),
+                        TestCase.of("sum(${user id})", 3))
                 .stream()
 //                .sorted(Comparator.comparing(testCase -> testCase.expression))
                 .map(testCase ->
@@ -193,10 +194,8 @@ class TestExpressionTokeniser {
         @Override
         public String toString() {
             return
-                    "[" + (expression.equals("")
-                            ? "<BLANK STRING>"
-                            : expression) + "] : "
-                            + isFailureExpected + " : "
+                    "expr: \"" + expression + "\", expFailure: "
+                            + isFailureExpected + ", expTokenCnt: "
                             + expectedTokenCount;
         }
     }

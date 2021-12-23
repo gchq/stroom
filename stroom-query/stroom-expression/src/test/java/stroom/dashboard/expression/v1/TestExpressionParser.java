@@ -2057,6 +2057,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
                         TestCase.of("-10", ValDouble.create(-10)),
                         TestCase.of("${val1}", val1, val1),
                         TestCase.of("-${val1}", ValDouble.create(-val1.toDouble()), val1),
+                        TestCase.of("-'text'", ValErr.INSTANCE),
                         TestCase.of("add(-10, 20)", ValDouble.create(10)),
                         TestCase.of(
                                 "add(${val1}, ${val2})",
