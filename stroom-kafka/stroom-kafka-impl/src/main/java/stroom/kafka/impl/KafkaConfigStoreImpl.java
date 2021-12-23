@@ -32,19 +32,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
 class KafkaConfigStoreImpl implements KafkaConfigStore {
 
     private final Store<KafkaConfigDoc> store;
-    private final KafkaConfig kafkaConfig;
+    private final Provider<KafkaConfig> kafkaConfigProvider;
 
     @Inject
     KafkaConfigStoreImpl(final StoreFactory storeFactory,
-                         final KafkaConfig kafkaConfig,
+                         final Provider<KafkaConfig> kafkaConfigProvider,
                          final KafkaConfigSerialiser serialiser) {
-        this.kafkaConfig = kafkaConfig;
+        this.kafkaConfigProvider = kafkaConfigProvider;
         this.store = storeFactory.createStore(serialiser, KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigDoc.class);
     }
 
@@ -59,7 +60,7 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
                 name,
                 (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
 
-                    final String skeletonConfigText = kafkaConfig.getSkeletonConfigContent();
+                    final String skeletonConfigText = kafkaConfigProvider.get().getSkeletonConfigContent();
 
                     return new KafkaConfigDoc(
                             type,

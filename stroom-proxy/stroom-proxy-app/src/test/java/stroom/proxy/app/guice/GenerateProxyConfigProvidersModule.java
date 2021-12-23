@@ -4,6 +4,11 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NotInjectableConfig;
+
+import com.google.common.reflect.ClassPath;
+import com.google.common.reflect.ClassPath.ClassInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +32,8 @@ import java.util.stream.Collectors;
 public class GenerateProxyConfigProvidersModule {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenerateProxyConfigProvidersModule.class);
+
+    static final String THROWING_METHOD_SUFFIX = "ButThrow";
 
     private static final String CLASS_HEADER = """
             package stroom.proxy.app.guice;
@@ -59,7 +67,7 @@ public class GenerateProxyConfigProvidersModule {
             }
             """;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 //        final ConfigMapper configMapper = new ConfigMapper();
         final Set<String> simpleNames = new HashSet<>();
         final Map<String, List<String>> simpleNameToFullNamesMap = new HashMap<>();
@@ -74,6 +82,27 @@ public class GenerateProxyConfigProvidersModule {
                         buildMethod(simpleNames, simpleNameToFullNamesMap, clazz))
                 .collect(Collectors.joining("\n"));
 
+        final Predicate<String> packageNameFilter = name ->
+                name.startsWith("stroom") && !name.contains("shaded");
+
+        // Methods that throw for non injectable config
+        // We don't want the risk of a dev accidentally injecting a NotInjectable config
+        // with the resulting confusion it will cause when it has the wrong values so make
+        // providers that always throw.
+        final ClassLoader classLoader = GenerateProxyConfigProvidersModule.class.getClassLoader();
+        final String notInjectableMethodsStr = ClassPath.from(classLoader)
+                .getAllClasses()
+                .stream()
+                .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
+                .map(ClassInfo::load)
+                .filter(clazz -> clazz.isAnnotationPresent(NotInjectableConfig.class))
+                .filter(AbstractConfig.class::isAssignableFrom)
+                .filter(clazz -> IsProxyConfig.class.isAssignableFrom(clazz))
+                .map(clazz ->
+                        buildThrowingMethod(simpleNames, simpleNameToFullNamesMap,
+                                (Class<? extends AbstractConfig>) clazz))
+                .collect(Collectors.joining("\n"));
+
         final String header = String.format(CLASS_HEADER,
                 GenerateProxyConfigProvidersModule.class.getName(),
                 GenerateProxyConfigProvidersModule.class.getName());
@@ -82,6 +111,10 @@ public class GenerateProxyConfigProvidersModule {
                 "\n",
                 header,
                 methodsStr,
+                """
+                            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                        """,
+                notInjectableMethodsStr,
                 CLASS_FOOTER);
 
         updateFile(fileContent);
@@ -124,6 +157,52 @@ public class GenerateProxyConfigProvidersModule {
                 fullClassName,
                 methodNameSuffix,
                 fullClassName);
+    }
+
+    private static String buildThrowingMethod(final Set<String> simpleNames,
+                                              final Map<String, List<String>> simpleNameToFullNamesMap,
+                                              final Class<? extends AbstractConfig> clazz) {
+        final String simpleClassName = clazz.getSimpleName();
+        // Fix the name for nested classes
+        final String fullClassName = clazz.getName()
+                .replace("$", ".");
+
+        simpleNameToFullNamesMap.computeIfAbsent(simpleClassName, k -> new ArrayList<>())
+                .add(fullClassName);
+
+        String methodNameSuffix = simpleClassName;
+        int i = 1;
+        while (simpleNames.contains(methodNameSuffix)) {
+            methodNameSuffix = simpleClassName + ++i;
+        }
+        if (i != 1) {
+            LOGGER.warn("Simple class name {} is used by multiple classes {}, using method name suffix {}",
+                    simpleClassName,
+                    simpleNameToFullNamesMap.get(simpleClassName),
+                    methodNameSuffix);
+        }
+        simpleNames.add(methodNameSuffix);
+
+        final String template = """
+                    @Generated("%s")
+                    @Provides
+                    @SuppressWarnings("unused")
+                    %s get%s%s(
+                            final ProxyConfigProvider proxyConfigProvider) {
+                        throw new UnsupportedOperationException(
+                                "%s cannot be injected directly. "
+                                        + "Inject a config class that uses it or one of its sub-class instead.");
+                    }
+                """;
+
+        return String.format(
+                template,
+                GenerateProxyConfigProvidersModule.class.getName(),
+                fullClassName,
+                methodNameSuffix,
+                THROWING_METHOD_SUFFIX,
+                fullClassName);
+
     }
 
     private static void updateFile(final String content) {

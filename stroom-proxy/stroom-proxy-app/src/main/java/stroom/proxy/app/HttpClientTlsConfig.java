@@ -6,6 +6,7 @@ import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.Strings;
@@ -13,6 +14,7 @@ import io.dropwizard.validation.ValidationMethod;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -25,6 +27,11 @@ import javax.annotation.Nullable;
 @NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
 public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig {
+
+    protected static final String DEFAULT_PROTOCOL = "TLSv1.2";
+    protected static final String DEFAULT_KEY_STORE_TYPE = "JKS";
+    protected static final boolean DEFAULT_TRUST_SELF_SIGNED_CERTIFICATES = false;
+    protected static final boolean DEFAULT_VERIFY_HOSTNAME = true;
 
     @NotEmpty
     private final String protocol;
@@ -64,16 +71,16 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
     private final String certAlias;
 
     public HttpClientTlsConfig() {
-        protocol = "TLSv1.2";
+        protocol = DEFAULT_PROTOCOL;
         provider = null;
         keyStorePath = null;
         keyStorePassword = null;
-        keyStoreType = "JKS";
+        keyStoreType = DEFAULT_KEY_STORE_TYPE;
         trustStorePath = null;
         trustStorePassword = null;
-        trustStoreType = "JKS";
-        trustSelfSignedCertificates = false;
-        verifyHostname = true;
+        trustStoreType = DEFAULT_KEY_STORE_TYPE;
+        trustSelfSignedCertificates = DEFAULT_TRUST_SELF_SIGNED_CERTIFICATES;
+        verifyHostname = DEFAULT_VERIFY_HOSTNAME;
         supportedProtocols = null;
         supportedCiphers = null;
         certAlias = null;
@@ -89,21 +96,25 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
                                @Nullable @JsonProperty("trustStorePath") final String trustStorePath,
                                @Nullable @JsonProperty("trustStorePassword") final String trustStorePassword,
                                @JsonProperty("trustStoreType") final String trustStoreType,
-                               @JsonProperty("trustSelfSignedCertificates") final boolean trustSelfSignedCertificates,
-                               @JsonProperty("verifyHostname") final boolean verifyHostname,
+                               @JsonProperty("trustSelfSignedCertificates") final Boolean trustSelfSignedCertificates,
+                               @JsonProperty("verifyHostname") final Boolean verifyHostname,
                                @Nullable @JsonProperty("supportedProtocols") final List<String> supportedProtocols,
                                @Nullable @JsonProperty("supportedCiphers") final List<String> supportedCiphers,
                                @Nullable @JsonProperty("certAlias") final String certAlias) {
-        this.protocol = protocol;
+
+        // HttpClientTlsConfig is defaulted to null on parent config objects so we need to apply defaults in the ctor
+        // as the default config tree will not contain an HttpClientTlsConfig to use as a reference.
+        this.protocol = Objects.requireNonNullElse(protocol, DEFAULT_PROTOCOL);
         this.provider = provider;
         this.keyStorePath = keyStorePath;
         this.keyStorePassword = keyStorePassword;
-        this.keyStoreType = keyStoreType;
+        this.keyStoreType = Objects.requireNonNullElse(keyStoreType, DEFAULT_KEY_STORE_TYPE);
         this.trustStorePath = trustStorePath;
         this.trustStorePassword = trustStorePassword;
-        this.trustStoreType = trustStoreType;
-        this.trustSelfSignedCertificates = trustSelfSignedCertificates;
-        this.verifyHostname = verifyHostname;
+        this.trustStoreType = Objects.requireNonNullElse(trustStoreType, DEFAULT_KEY_STORE_TYPE);
+        this.trustSelfSignedCertificates = Objects.requireNonNullElse(
+                trustSelfSignedCertificates, DEFAULT_TRUST_SELF_SIGNED_CERTIFICATES);
+        this.verifyHostname = Objects.requireNonNullElse(verifyHostname, DEFAULT_VERIFY_HOSTNAME);
         this.supportedProtocols = supportedProtocols;
         this.supportedCiphers = supportedCiphers;
         this.certAlias = certAlias;
@@ -184,11 +195,13 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
         return certAlias;
     }
 
+    @JsonIgnore
     @ValidationMethod(message = "keyStorePassword should not be null or empty if keyStorePath not null")
     public boolean isValidKeyStorePassword() {
         return keyStorePath == null || keyStoreType.startsWith("Windows-") || !Strings.isNullOrEmpty(keyStorePassword);
     }
 
+    @JsonIgnore
     @ValidationMethod(message = "trustStorePassword should not be null or empty if trustStorePath not null")
     public boolean isValidTrustStorePassword() {
         return trustStorePath == null || trustStoreType.startsWith("Windows-") || !Strings.isNullOrEmpty(

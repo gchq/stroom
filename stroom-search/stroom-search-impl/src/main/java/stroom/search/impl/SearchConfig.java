@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-
 @JsonPropertyOrder(alphabetic = true)
 public class SearchConfig extends AbstractConfig {
 

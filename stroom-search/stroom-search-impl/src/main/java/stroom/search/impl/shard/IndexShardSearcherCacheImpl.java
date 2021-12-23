@@ -45,6 +45,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -60,7 +61,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final TaskContext taskContext;
-    private final IndexShardSearchConfig indexShardSearchConfig;
+    private final Provider<IndexShardSearchConfig> indexShardSearchConfigProvider;
     private final SecurityContext securityContext;
 
     private volatile ICache<Key, IndexShardSearcher> cache;
@@ -72,14 +73,14 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                                 final ExecutorProvider executorProvider,
                                 final TaskContextFactory taskContextFactory,
                                 final TaskContext taskContext,
-                                final IndexShardSearchConfig indexShardSearchConfig,
+                                final Provider<IndexShardSearchConfig> indexShardSearchConfigProvider,
                                 final SecurityContext securityContext) {
         this.cacheManager = cacheManager;
         this.indexShardService = indexShardService;
         this.indexShardWriterCache = indexShardWriterCache;
         this.taskContextFactory = taskContextFactory;
         this.taskContext = taskContext;
-        this.indexShardSearchConfig = indexShardSearchConfig;
+        this.indexShardSearchConfigProvider = indexShardSearchConfigProvider;
         this.securityContext = securityContext;
 
         final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Searcher Cache", 3);
@@ -93,7 +94,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                 result = cache;
                 if (result == null) {
                     result = cacheManager.create(CACHE_NAME,
-                            indexShardSearchConfig::getIndexShardSearcherCache,
+                            () -> indexShardSearchConfigProvider.get().getIndexShardSearcherCache(),
                             this::create,
                             this::destroy);
                     cache = result;

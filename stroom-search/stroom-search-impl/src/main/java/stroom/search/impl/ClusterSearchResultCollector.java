@@ -28,6 +28,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;
 
+import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
 
 import java.io.ByteArrayInputStream;
@@ -172,6 +173,9 @@ public class ClusterSearchResultCollector implements Store {
 
             complete = NodeResultSerialiser.read(input, coprocessors, errorConsumer);
             addErrors(nodeName, errors);
+        } catch (final KryoException e) {
+            // Expected as sometimes the output stream is closed by the receiving node.
+            LOGGER.debug(e::getMessage, e);
         } catch (final RuntimeException e) {
             onFailure(nodeName, e);
         }
@@ -214,7 +218,7 @@ public class ClusterSearchResultCollector implements Store {
                 err.add("Node: " + nodeName);
 
                 for (final Throwable error : errors) {
-                    err.add("\t" + ExceptionStringUtil.getDetail(error));
+                    err.add("\t" + ExceptionStringUtil.getMessage(error));
                 }
             }
         }

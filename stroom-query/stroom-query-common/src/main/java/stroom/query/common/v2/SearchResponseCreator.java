@@ -89,7 +89,7 @@ public class SearchResponseCreator {
         final List<String> errors = new ArrayList<>();
 
         LOGGER.debug(throwable::getMessage, throwable);
-        errors.add(ExceptionStringUtil.getDetail(throwable));
+        errors.add(ExceptionStringUtil.getMessage(throwable));
 
         if (store.getErrors() != null) {
             errors.addAll(store.getErrors());
@@ -321,7 +321,7 @@ public class SearchResponseCreator {
                 }
             } catch (final RuntimeException e) {
                 result = new TableResult(componentId, null, null, null, 0,
-                        Collections.singletonList(ExceptionStringUtil.getDetail(e)));
+                        Collections.singletonList(ExceptionStringUtil.getMessage(e)));
             }
         }
 

@@ -35,7 +35,7 @@ public class ErrorConsumerImpl implements ErrorConsumer {
         if (hasErrors()) {
             return errors
                     .stream()
-                    .map(ExceptionStringUtil::getDetail)
+                    .map(ExceptionStringUtil::getMessage)
                     .collect(Collectors.toList());
         }
         return null;
@@ -48,7 +48,7 @@ public class ErrorConsumerImpl implements ErrorConsumer {
             copy.forEach(errors::remove);
             return copy
                     .stream()
-                    .map(ExceptionStringUtil::getDetail)
+                    .map(ExceptionStringUtil::getMessage)
                     .collect(Collectors.toList());
         }
         return null;

@@ -44,7 +44,7 @@ public class ResolvedOpenIdConfig {
             AUTHENTICATION_BASE_PATH, "/logout");
 
     private final UriFactory uriFactory;
-    private final OpenIdConfig openIdConfig;
+    private final Provider<OpenIdConfig> openIdConfigProvider;
     private final OpenIdClientFactory openIdClientDetailsFactory;
     private final Provider<CloseableHttpClient> httpClientProvider;
 
@@ -53,16 +53,17 @@ public class ResolvedOpenIdConfig {
 
     @Inject
     public ResolvedOpenIdConfig(final UriFactory uriFactory,
-                                final OpenIdConfig openIdConfig,
+                                final Provider<OpenIdConfig> openIdConfigProvider,
                                 final OpenIdClientFactory openIdClientDetailsFactory,
                                 final Provider<CloseableHttpClient> httpClientProvider) {
         this.uriFactory = uriFactory;
-        this.openIdConfig = openIdConfig;
+        this.openIdConfigProvider = openIdConfigProvider;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
         this.httpClientProvider = httpClientProvider;
     }
 
     private OpenIdConfigurationResponse getOpenIdConfiguration() {
+        final OpenIdConfig openIdConfig = openIdConfigProvider.get();
         final String configurationEndpoint = openIdConfig.getOpenIdConfigurationEndpoint();
         if (openIdConfiguration == null || !Objects.equals(lastConfigurationEndpoint, configurationEndpoint)) {
             if (openIdConfig.isUseInternal()) {
@@ -167,6 +168,7 @@ public class ResolvedOpenIdConfig {
     }
 
     public String getClientId() {
+        final OpenIdConfig openIdConfig = openIdConfigProvider.get();
         if (openIdConfig.isUseInternal()) {
             return openIdClientDetailsFactory.getClient().getClientId();
         }
@@ -174,6 +176,7 @@ public class ResolvedOpenIdConfig {
     }
 
     public String getClientSecret() {
+        final OpenIdConfig openIdConfig = openIdConfigProvider.get();
         if (openIdConfig.isUseInternal()) {
             return openIdClientDetailsFactory.getClient().getClientSecret();
         }
@@ -181,6 +184,7 @@ public class ResolvedOpenIdConfig {
     }
 
     public boolean isFormTokenRequest() {
+        final OpenIdConfig openIdConfig = openIdConfigProvider.get();
         if (openIdConfig.isUseInternal()) {
             return false;
         }

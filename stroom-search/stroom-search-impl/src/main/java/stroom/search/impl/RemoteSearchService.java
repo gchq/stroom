@@ -141,7 +141,7 @@ public class RemoteSearchService {
 
             } catch (final RuntimeException e) {
                 remoteSearchResultFactory.setInitialisationError(Collections.singletonList(
-                        ExceptionStringUtil.getDetail(e)));
+                        ExceptionStringUtil.getMessage(e)));
             }
         });
 

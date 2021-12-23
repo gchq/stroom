@@ -548,7 +548,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 // and pick an appropriate one.
                 currentAvailableStreamTypes = null;
 
-                if (getCurrentMetaId() != null) {
+                final Long currentMetaId = getCurrentMetaId();
+                if (currentMetaId != null && currentMetaId >= 0) {
                     final Rest<Set<String>> rest = restFactory.create();
                     rest
                             .onSuccess(availableChildStreamTypes -> {
@@ -562,9 +563,29 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                             .getChildStreamTypes(
                                     currentSourceLocation.getMetaId(),
                                     currentSourceLocation.getPartIndex());
+                } else {
+                    showInvalidStreamErrorMsg();
+                    itemNavigatorPresenter.setRefreshing(false);
                 }
             }
         }
+    }
+
+    private void showInvalidStreamErrorMsg() {
+        final Long currentMetaId = getCurrentMetaId();
+        final long currentPartNo = getCurrentPartIndex() + 1;
+        final long currentRecordNo = getCurrentRecordIndex() + 1;
+        textPresenter.setErrorText("Error: Invalid stream ID "
+                + (currentMetaId != null
+                ? currentMetaId
+                : "null")
+                + ":"
+                + currentPartNo
+                + ":"
+                + currentRecordNo, "");
+        showTextPresenter();
+        itemNavigatorPresenter.setDisplay(noNavigatorData);
+        getView().setSourceLinkVisible(false, false);
     }
 
     private void update(final boolean fireEvents,
