@@ -113,7 +113,7 @@ ext.versions = [
         hikari            : '3.2.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
         jooq              : '3.12.3',
-        junit_jupiter     : '5.7.2',
+        junit_jupiter     : '5.8.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
         mockito           : '3.12.4',
