@@ -316,8 +316,7 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public boolean readPayload(final Input input) {
-                return false;
+            public void readPayload(final Input input) {
             }
 
             @Override

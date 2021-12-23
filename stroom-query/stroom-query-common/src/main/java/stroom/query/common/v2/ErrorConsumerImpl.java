@@ -24,9 +24,11 @@ public class ErrorConsumerImpl implements ErrorConsumer {
     @Override
     public void add(final Throwable exception) {
         LOGGER.debug(exception::getMessage, exception);
-        int count = errorCount.incrementAndGet();
-        if (count <= MAX_ERROR_COUNT) {
-            errors.add(exception);
+        if (!ErrorConsumerUtil.isInterruption(exception)) {
+            int count = errorCount.incrementAndGet();
+            if (count <= MAX_ERROR_COUNT) {
+                errors.add(exception);
+            }
         }
     }
 
