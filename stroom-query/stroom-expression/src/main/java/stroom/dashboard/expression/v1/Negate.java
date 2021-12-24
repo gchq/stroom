@@ -44,6 +44,14 @@ class Negate extends NumericFunction {
         return CALC;
     }
 
+    @Override
+    protected void appendParams(final StringBuilder sb) {
+        // Negate differs from the other NumericFunctions in that it only allows 1 param and the name ("-")
+        // goes before the first (and only) param and not after it.
+        sb.append(name);
+        appendParam(sb, params[0]);
+    }
+
     static class Calc extends Calculator {
 
         private static final long serialVersionUID = 1099553839843710283L;
