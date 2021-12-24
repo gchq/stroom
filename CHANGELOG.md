@@ -12,6 +12,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.170] - 2021-12-24
+
+* Issue **#2666** : Fix handling of missing reference stream file.
+
+* Change error table to wrap error message text.
+
+* Issue **#2644** : Fix error handling when volume is full during proxy aggregation.
+
+* Issue **#2650** : Fix handling of negative numbers and negation in expression parser.
+
+* Issue **#2664** : Fix issue with search where a complete coprocessor was causing other coprocessor payloads to be read incorrectly.
+
+
 ## [v7.0-beta.169] - 2021-12-16
 
 * Issue **#2648** : Add error message to data viewer when ID is invalid.
@@ -4079,7 +4092,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.169...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.170...HEAD
+[v7.0-beta.170]: https://github.com/gchq/stroom/compare/v7.0-beta.169...v7.0-beta.170
 [v7.0-beta.169]: https://github.com/gchq/stroom/compare/v7.0-beta.168...v7.0-beta.169
 [v7.0-beta.168]: https://github.com/gchq/stroom/compare/v7.0-beta.167...v7.0-beta.168
 [v7.0-beta.167]: https://github.com/gchq/stroom/compare/v7.0-beta.166...v7.0-beta.167
