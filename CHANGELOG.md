@@ -12,6 +12,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2666** : Fix handling of missing reference stream file.
+
+* Change error table to wrap error message text.
+
+* Issue **#2644** : Fix error handling when volume is full during proxy aggregation.
+
+* Issue **#2650** : Fix handling of negative numbers and negation in expression parser.
+
+* Issue **#2664** : Fix issue with search where a complete coprocessor was causing other coprocessor payloads to be read incorrectly.
+
 * Issue **#2648** : Add error message to data viewer when ID is invalid.
 
 * Issue **#2657** : Change classes to use provided config to stop the system using stale config values.
