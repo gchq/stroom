@@ -94,7 +94,7 @@ public class EventCoprocessor implements Coprocessor {
     }
 
     @Override
-    public boolean readPayload(final Input input) {
+    public void readPayload(final Input input) {
         final EventRef[] array = EventRefsSerialiser.readArray(input);
         if (array.length > 0) {
             eventRefsLock.lock();
@@ -110,7 +110,6 @@ public class EventCoprocessor implements Coprocessor {
                 eventRefsLock.unlock();
             }
         }
-        return true;
     }
 
     @Override

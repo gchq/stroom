@@ -110,7 +110,7 @@ class AsyncSearchTaskHandler {
                     // Get the nodes that we are going to send the search request
                     // to.
                     final Set<String> targetNodes = targetNodeSetFactory.getEnabledTargetNodeSet();
-                    parentContext.info(() -> task.getSearchName() + " - initialising");
+                    parentContext.info(task::getSearchName);
                     final Query query = task.getQuery();
 
                     // Get a list of search index shards to look through.

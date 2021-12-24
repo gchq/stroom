@@ -107,7 +107,7 @@ public class RemoteNodeSearch implements NodeSearch {
                     resultCollector.onFailure(targetNode, new SearchException("Failed to destroy remote search"));
                 }
             } catch (final Throwable e) {
-                resultCollector.onFailure(targetNode, new SearchException(e.getMessage(), e));
+                resultCollector.onFailure(targetNode, e);
             }
         }
     }

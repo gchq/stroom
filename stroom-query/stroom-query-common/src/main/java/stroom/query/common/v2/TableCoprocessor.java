@@ -52,8 +52,8 @@ public class TableCoprocessor implements Coprocessor {
     }
 
     @Override
-    public boolean readPayload(final Input input) {
-        return dataStore.readPayload(input);
+    public void readPayload(final Input input) {
+        dataStore.readPayload(input);
     }
 
     @Override

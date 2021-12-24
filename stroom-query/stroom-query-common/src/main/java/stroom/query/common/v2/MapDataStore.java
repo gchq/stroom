@@ -321,7 +321,7 @@ public class MapDataStore implements DataStore {
      * @return True if we still happy to keep on receiving data, false otherwise.
      */
     @Override
-    public boolean readPayload(final Input input) {
+    public void readPayload(final Input input) {
         throw new RuntimeException("Not implemented");
 //        return Metrics.measure("readPayload", () -> {
 //            final int count = input.readInt();
