@@ -18,6 +18,7 @@ package stroom.search.impl;
 
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.ErrorConsumerUtil;
 import stroom.query.common.v2.NodeResultSerialiser;
 import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContext;
@@ -61,7 +62,6 @@ public class ClusterSearchResultCollector implements Store {
     private final String nodeName;
     private final Set<String> highlights;
     private final Coprocessors coprocessors;
-
 
     private volatile AsyncSearchTaskHandler asyncSearchTaskHandler;
     private volatile TaskContext taskContext;
@@ -168,7 +168,9 @@ public class ClusterSearchResultCollector implements Store {
             final Set<Throwable> errors = new HashSet<>();
             final Consumer<Throwable> errorConsumer = (error) -> {
                 LOGGER.debug(error::getMessage, error);
-                errors.add(error);
+                if (!ErrorConsumerUtil.isInterruption(error)) {
+                    errors.add(error);
+                }
             };
 
             complete = NodeResultSerialiser.read(input, coprocessors, errorConsumer);
@@ -188,7 +190,9 @@ public class ClusterSearchResultCollector implements Store {
     public synchronized void onFailure(final String nodeName,
                                        final Throwable throwable) {
         LOGGER.debug(throwable::getMessage, throwable);
-        addErrors(nodeName, Collections.singleton(throwable));
+        if (!ErrorConsumerUtil.isInterruption(throwable)) {
+            addErrors(nodeName, Collections.singleton(throwable));
+        }
     }
 
     private void addErrors(final String nodeName,

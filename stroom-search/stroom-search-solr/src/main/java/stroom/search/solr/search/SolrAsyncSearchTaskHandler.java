@@ -67,7 +67,7 @@ public class SolrAsyncSearchTaskHandler {
                         executorProvider.get());
 
                 try {
-                    parentContext.info(() -> task.getSearchName() + " - initialising");
+                    parentContext.info(task::getSearchName);
                     final Query query = task.getQuery();
 
                     if (coprocessors != null && coprocessors.size() > 0) {

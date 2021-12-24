@@ -44,7 +44,7 @@ public interface Coprocessor extends ValuesConsumer {
      * @param input The input to read.
      * @return True if we still happy to keep on receiving data, false otherwise.
      */
-    boolean readPayload(Input input);
+    void readPayload(Input input);
 
     /**
      * Write data from the data store to an output removing them from the datastore as we go as they will be transferred

@@ -753,13 +753,9 @@ public class LmdbDataStore implements DataStore {
      * @return True if we are still happy to keep on receiving data, false otherwise.
      */
     @Override
-    public boolean readPayload(final Input input) {
+    public void readPayload(final Input input) {
         // Return false if we aren't happy to accept any more data.
-        if (acceptingData()) {
-            payloadCreator.readPayload(input);
-        }
-        // Return true if we are still happy to accept more data.
-        return acceptingData();
+        payloadCreator.readPayload(input);
     }
 
     /**

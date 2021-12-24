@@ -21,7 +21,7 @@ public class NodeResultSerialiser {
         final boolean complete = input.readBoolean();
 
         // Read payloads for each coprocessor.
-        final boolean allRejected = coprocessors.readPayloads(input);
+        coprocessors.readPayloads(input);
 
         // Read all errors.
         final int length = input.readInt();
@@ -31,7 +31,7 @@ public class NodeResultSerialiser {
             errorConsumer.accept(new RuntimeException(error));
         }
 
-        return complete || allRejected;
+        return complete;
     }
 
     public static void write(final Output output,

@@ -35,8 +35,8 @@ public class LocalNodeSearch implements NodeSearch {
                            final AsyncSearchTask task,
                            final Query query,
                            final TaskContext parentContext) {
-        LOGGER.debug(() -> task.getSearchName() + " - start searching node: " + targetNode);
-        parentContext.info(() -> task.getSearchName() + " - start searching node: " + targetNode);
+        LOGGER.debug(() -> task.getSearchName() + " - searching node: " + targetNode + "...");
+        parentContext.info(() -> task.getSearchName() + " - searching node: " + targetNode + "...");
         final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
         // Start local cluster search execution.
