@@ -118,6 +118,9 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
         getView().setDescription(index.getDescription());
         clusterPresenter.setSelectedEntityReference(index.getClusterRef());
         getView().setIndexName(index.getIndexName());
+        getView().setSearchSlices(index.getSearchSlices());
+        getView().setSearchScrollSize(index.getSearchScrollSize());
+
 
         if (index.getRetentionExpression() == null) {
             index.setRetentionExpression(ExpressionOperator.builder().op(Op.AND).build());
@@ -139,6 +142,9 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
             index.setIndexName(indexName);
         }
 
+        index.setSearchSlices(getView().getSearchSlices());
+        index.setSearchScrollSize(getView().getSearchScrollSize());
+
         index.setRetentionExpression(editExpressionPresenter.write());
     }
 
@@ -152,7 +158,15 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
         String getIndexName();
 
-        void setIndexName(String indexName);
+        void setIndexName(final String indexName);
+
+        int getSearchSlices();
+
+        void setSearchSlices(final int searchSlices);
+
+        int getSearchScrollSize();
+
+        void setSearchScrollSize(final int searchScrollSize);
 
         void setRetentionExpressionView(final View view);
     }
