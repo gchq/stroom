@@ -16,25 +16,39 @@
 
 package stroom.dashboard.impl.download;
 
+import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.FormatSettings;
 import stroom.query.api.v2.NumberFormatSettings;
+import stroom.query.common.v2.format.DateTimeFormatter;
 
+import com.github.nmorel.gwtjackson.client.utils.DateFormat;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.RegionUtil;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -46,9 +60,10 @@ public class ExcelTarget implements SearchResultWriter.Target {
     private static final String TRUNCATION_MARKER = "...";
 
     private final OutputStream outputStream;
+    private final DateTimeSettings dateTimeSettings;
 
-    private SXSSFWorkbook wb;
-    private Sheet sh;
+    private SXSSFWorkbook workbook;
+    private SXSSFSheet sheet;
     private Row row;
 
     private int colNum = 0;
@@ -57,40 +72,49 @@ public class ExcelTarget implements SearchResultWriter.Target {
     private CellStyle headingStyle;
     private final Map<Field, Optional<CellStyle>> fieldStyles = new HashMap<>();
 
-    public ExcelTarget(final OutputStream outputStream) {
+    public ExcelTarget(final OutputStream outputStream, final DateTimeSettings dateTimeSettings) {
         this.outputStream = outputStream;
+        this.dateTimeSettings = dateTimeSettings;
     }
 
     @Override
     public void start() {
         // Create a workbook with 100 rows in memory. Exceeding rows will be
         // flushed to disk.
-        wb = new SXSSFWorkbook(100);
-        sh = wb.createSheet();
+        workbook = new SXSSFWorkbook(100);
+        sheet = workbook.createSheet();
 
         // Create a style for headings.
-        final Font headingFont = wb.createFont();
+        final Font headingFont = workbook.createFont();
         headingFont.setBold(true);
-        headingStyle = wb.createCellStyle();
+        headingFont.setColor(IndexedColors.WHITE.getIndex());
+        headingStyle = workbook.createCellStyle();
         headingStyle.setFont(headingFont);
+        headingStyle.setFillBackgroundColor(IndexedColors.BLACK.getIndex());
+        headingStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
     }
 
     @Override
     public void end() throws IOException {
+        // Auto-size tracked columns
+        for (var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
+            sheet.autoSizeColumn(columnIndex);
+        }
+
         // Write the workbook to the output stream.
-        wb.write(outputStream);
+        workbook.write(outputStream);
         outputStream.close();
 
         // Close the workbook.
-        wb.close();
+        workbook.close();
 
         // Dispose of temporary files backing workbook on disk.
-        wb.dispose();
+        workbook.dispose();
     }
 
     @Override
     public void startLine() {
-        row = sh.createRow(rowNum++);
+        row = sheet.createRow(rowNum++);
         colNum = 0;
     }
 
@@ -100,11 +124,16 @@ public class ExcelTarget implements SearchResultWriter.Target {
     }
 
     @Override
-    public void writeHeading(final Field field, final String heading) {
+    public void writeHeading(final int fieldIndex, final Field field, final String heading) {
         final Cell cell = row.createCell(colNum++);
-        cell.setCellType(CellType.STRING);
         cell.setCellValue(heading);
         cell.setCellStyle(headingStyle);
+
+        // Auto-size datetime and numeric columns
+        final Format.Type fieldType = field.getFormat().getType();
+        if (fieldType == Type.DATE_TIME || fieldType == Type.NUMBER) {
+            sheet.trackColumnForAutoSizing(fieldIndex);
+        }
     }
 
     @Override
@@ -113,11 +142,11 @@ public class ExcelTarget implements SearchResultWriter.Target {
             colNum++;
         } else {
             final Cell cell = row.createCell(colNum++);
-            setCellValue(wb, cell, field, value);
+            setCellValue(workbook, cell, field, value);
         }
     }
 
-    private void setCellValue(final SXSSFWorkbook wb, final Cell cell, final Field field, final String value) {
+    private void setCellValue(final SXSSFWorkbook workbook, final Cell cell, final Field field, final String value) {
         if (value != null) {
             if (field == null) {
                 general(cell, value);
@@ -130,10 +159,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
 
                 switch (type) {
                     case TEXT:
-                        getText(value).ifPresent(str -> {
-                            cell.setCellValue(str);
-                            cell.setCellType(CellType.STRING);
-                        });
+                        text(cell, value, field);
                         break;
                     case NUMBER:
                         number(cell, value, field);
@@ -153,19 +179,29 @@ public class ExcelTarget implements SearchResultWriter.Target {
         getText(value).ifPresent(cell::setCellValue);
     }
 
+    private void text(final Cell cell, final String value, final Field field) {
+        getText(value).ifPresent(cell::setCellValue);
+        setCellFormat(cell, field);
+    }
+
     private void dateTime(final Cell cell, final String value, final Field field) {
         final Double dbl = TypeConverter.getDouble(value);
         if (dbl != null) {
             final long ms = dbl.longValue();
             final Date date = new Date(ms);
             cell.setCellValue(date);
-            cell.setCellType(CellType.NUMERIC);
-
-            final Optional<CellStyle> fieldStyle = getFieldStyle(field);
-            fieldStyle.ifPresent(cell::setCellStyle);
+            setCellFormat(cell, field);
 
         } else {
-            general(cell, value);
+            try {
+                final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.create(
+                        (DateTimeFormatSettings) field.getFormat().getSettings(), dateTimeSettings);
+                final Date date = dateTimeFormatter.parse(value);
+                cell.setCellValue(date);
+                setCellFormat(cell, field);
+            } catch (DateTimeParseException e) {
+                general(cell, value);
+            }
         }
     }
 
@@ -173,13 +209,11 @@ public class ExcelTarget implements SearchResultWriter.Target {
         final Double dbl = TypeConverter.getDouble(value);
         if (dbl != null) {
             cell.setCellValue(dbl);
-            cell.setCellType(CellType.NUMERIC);
-
-            final Optional<CellStyle> fieldStyle = getFieldStyle(field);
-            fieldStyle.ifPresent(cell::setCellStyle);
         } else {
             general(cell, value);
         }
+
+        setCellFormat(cell, field);
     }
 
     private Optional<String> getText(final String value) {
@@ -193,25 +227,37 @@ public class ExcelTarget implements SearchResultWriter.Target {
                 });
     }
 
-    private Optional<CellStyle> getFieldStyle(final Field field) {
-        if (field == null) {
+    private void setCellFormat(final Cell cell, final Field field) {
+        final Optional<CellStyle> fieldStyle = getFieldStyle(field);
+        fieldStyle.ifPresent(cell::setCellStyle);
+    }
+
+    private Optional<CellStyle> getFieldStyle(final Field key) {
+        if (key == null) {
             return Optional.empty();
         }
 
-        return fieldStyles.computeIfAbsent(field, k -> {
-            CellStyle cs = null;
+        return fieldStyles.computeIfAbsent(key, field -> {
+            DataFormat dataFormat = null;
+            CellStyle cellStyle = null;
 
             Type type = Type.GENERAL;
             FormatSettings settings = null;
-            if (k.getFormat() != null) {
-                type = k.getFormat().getType();
-                settings = k.getFormat().getSettings();
+            if (field.getFormat() != null) {
+                type = field.getFormat().getType();
+                settings = field.getFormat().getSettings();
             }
 
             switch (type) {
                 case TEXT:
+                    dataFormat = workbook.createDataFormat();
+                    cellStyle = workbook.createCellStyle();
+                    cellStyle.setDataFormat(dataFormat.getFormat("@"));
                     break;
                 case NUMBER:
+                    dataFormat = workbook.createDataFormat();
+                    cellStyle = workbook.createCellStyle();
+
                     if (settings instanceof NumberFormatSettings) {
                         final NumberFormatSettings numberFormatSettings = (NumberFormatSettings) settings;
                         final StringBuilder sb = new StringBuilder();
@@ -230,10 +276,10 @@ public class ExcelTarget implements SearchResultWriter.Target {
                         }
 
                         final String pattern = sb.toString();
-
-                        final DataFormat df = wb.createDataFormat();
-                        cs = wb.createCellStyle();
-                        cs.setDataFormat(df.getFormat(pattern));
+                        cellStyle.setDataFormat(dataFormat.getFormat(pattern));
+                    } else {
+                        // Basic number format, with no decimals
+                        cellStyle.setDataFormat(dataFormat.getFormat("#"));
                     }
                     break;
                 case DATE_TIME:
@@ -245,19 +291,19 @@ public class ExcelTarget implements SearchResultWriter.Target {
                                 && dateTimeFormatSettings.getPattern().trim().length() > 0) {
                             pattern = dateTimeFormatSettings.getPattern();
                             pattern = pattern.replaceAll("'", "");
-                            pattern = pattern.replaceAll("\\.SSS", "");
+                            pattern = pattern.replaceAll("\\.SSS.*$", "");
                         }
                     }
 
-                    final DataFormat df = wb.createDataFormat();
-                    cs = wb.createCellStyle();
-                    cs.setDataFormat(df.getFormat(pattern));
+                    dataFormat = workbook.createDataFormat();
+                    cellStyle = workbook.createCellStyle();
+                    cellStyle.setDataFormat(dataFormat.getFormat(pattern));
                     break;
                 default:
                     break;
             }
 
-            return Optional.ofNullable(cs);
+            return Optional.ofNullable(cellStyle);
         });
     }
 }

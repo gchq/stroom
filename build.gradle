@@ -263,8 +263,8 @@ ext.libs = [
         objenesis                      : "org.objenesis:objenesis", // version controlled by DW BOM
         okhttp                         : "com.squareup.okhttp3:okhttp:4.8.1",
         okhttp_logging_interceptor     : 'com.squareup.okhttp3:logging-interceptor:4.8.1',
-        poi                            : "org.apache.poi:poi:3.17",
-        poi_ooxml                      : "org.apache.poi:poi-ooxml:3.17",
+        poi                            : "org.apache.poi:poi:5.1.0",
+        poi_ooxml                      : "org.apache.poi:poi-ooxml:5.1.0",
         restygwt                       : "org.fusesource.restygwt:restygwt:2.2.7",
         saxon_he                       : "net.sf.saxon:Saxon-HE:9.9.1-8",
         simple_java_mail               : 'org.simplejavamail:simple-java-mail:4.3.0',
