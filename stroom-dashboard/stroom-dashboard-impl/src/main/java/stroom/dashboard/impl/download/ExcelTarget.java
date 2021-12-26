@@ -16,7 +16,6 @@
 
 package stroom.dashboard.impl.download;
 
-import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
@@ -26,9 +25,6 @@ import stroom.query.api.v2.FormatSettings;
 import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.common.v2.format.DateTimeFormatter;
 
-import com.github.nmorel.gwtjackson.client.utils.DateFormat;
-import org.apache.poi.hssf.util.HSSFColor;
-import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
@@ -36,19 +32,14 @@ import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
