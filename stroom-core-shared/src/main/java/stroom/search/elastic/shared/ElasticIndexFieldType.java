@@ -137,7 +137,8 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
             return nativeTypeRegistry.get(nativeType);
         }
 
-        throw new IllegalArgumentException("Field '" + fieldName + "' has an unsupported mapping type '" + nativeType + "'");
+        throw new IllegalArgumentException("Field '" + fieldName + "' has an unsupported mapping type '" +
+                nativeType + "'");
     }
 
     /**
