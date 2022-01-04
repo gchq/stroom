@@ -37,6 +37,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.HashMap;
@@ -189,8 +190,8 @@ public class ExcelTarget implements SearchResultWriter.Target {
             try {
                 final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.create(
                         (DateTimeFormatSettings) field.getFormat().getSettings(), dateTimeSettings);
-                final Date date = dateTimeFormatter.parse(value);
-                cell.setCellValue(date);
+                final LocalDateTime dateTime = dateTimeFormatter.parse(value);
+                cell.setCellValue(dateTime);
                 setCellFormat(cell, field);
             } catch (DateTimeParseException e) {
                 general(cell, value);

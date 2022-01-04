@@ -23,6 +23,7 @@ import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.TimeZone;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
@@ -90,12 +91,12 @@ public class DateTimeFormatter implements Formatter {
         return i;
     }
 
-    public Date parse(final String value) throws DateTimeParseException {
+    public LocalDateTime parse(final String value) throws DateTimeParseException {
         if (value == null) {
             return null;
         }
 
-        return new Date(DateUtil.parse(value, format, zone));
+        return DateUtil.parseLocal(value, format, zone);
     }
 
     @Override

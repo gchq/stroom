@@ -95,6 +95,15 @@ public final class DateUtil {
         return dateTime.toInstant().toEpochMilli();
     }
 
+    public static LocalDateTime parseLocal(final String value, final DateTimeFormatter formatter, final ZoneId zoneId) {
+        final ZonedDateTime dateTime = parseInternal(value, formatter, zoneId);
+        if (dateTime == null) {
+            throw new IllegalArgumentException("Unable to parse date: \"" + value + '"');
+        }
+
+        return dateTime.toLocalDateTime();
+    }
+
     public static String format(final Long value, final DateTimeFormatter formatter, final ZoneId zoneId) {
         return formatter.format(Instant.ofEpochMilli(value).atZone(zoneId));
     }
