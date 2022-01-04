@@ -43,7 +43,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -86,41 +85,56 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
         return fieldMappings.entrySet().stream().map(field -> {
             final String fieldName = field.getKey();
             final FieldMappingMetadata fieldMeta = field.getValue();
-            final Optional<Entry<String, Object>> firstFieldEntry =
-                    fieldMeta.sourceAsMap().entrySet().stream().findFirst();
+            String nativeType = getFieldPropertyFromMapping(fieldName, field.getValue(), "type");
 
-            if (firstFieldEntry.isPresent()) {
-                final Object properties = firstFieldEntry.get().getValue();
-                final String fullName = fieldMeta.fullName();
-                if (properties instanceof Map) {
-                    @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
-                    final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
-                    final String nativeType = (String) propertiesMap.get("type");
-
-                    // If field type is null, this is a system field, so ignore
-                    if (nativeType == null) {
-                        return null;
-                    }
-                    try {
-                        final ElasticIndexFieldType elasticFieldType =
-                                ElasticIndexFieldType.fromNativeType(fullName, nativeType);
-
-                        return elasticFieldType.toDataSourceField(fieldName, true);
-                    } catch (IllegalArgumentException e) {
-                        LOGGER.warn(e::getMessage);
-                        return null;
-                    }
-                } else {
-                    LOGGER.debug(() ->
-                            "Mapping properties for field '" + field.getKey() +
-                                    "' were in an unrecognised format. Field ignored.");
-                    return null;
+            if (nativeType == null) {
+                // If field type is null, this is a system field, so ignore
+                return null;
+            } else if (nativeType.equals("alias")) {
+                // Determine the mapping type of the field the alias is referring to
+                try {
+                    final String aliasPath = getFieldPropertyFromMapping(fieldName, field.getValue(), "path");
+                    final FieldMappingMetadata targetFieldMeta = fieldMappings.get(aliasPath);
+                    nativeType = getFieldPropertyFromMapping(aliasPath, targetFieldMeta, "type");
+                } catch (Exception e) {
+                    LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
                 }
             }
-            return null;
+
+            try {
+                final String fullName = fieldMeta.fullName();
+                final ElasticIndexFieldType elasticFieldType =
+                        ElasticIndexFieldType.fromNativeType(fullName, nativeType);
+
+                return elasticFieldType.toDataSourceField(fieldName, true);
+            } catch (IllegalArgumentException e) {
+                LOGGER.warn(e::getMessage);
+                return null;
+            }
         })
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
+    }
+
+    private String getFieldPropertyFromMapping(final String fieldName, final FieldMappingMetadata fieldMeta,
+                                               final String propertyName) {
+        final Optional<Entry<String, Object>> firstFieldEntry =
+                fieldMeta.sourceAsMap().entrySet().stream().findFirst();
+
+        if (firstFieldEntry.isPresent()) {
+            final Object properties = firstFieldEntry.get().getValue();
+            if (properties instanceof Map) {
+                @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
+                final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+                return (String) propertiesMap.get(propertyName);
+            } else {
+                LOGGER.debug(() ->
+                        "Mapping properties for field '" + fieldName +
+                                "' were in an unrecognised format. Field ignored.");
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -134,33 +148,32 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
         final Map<String, ElasticIndexField> fieldsMap = new HashMap<>();
 
         fieldMappings.forEach((key, fieldMeta) -> {
-            final Optional<Entry<String, Object>> firstFieldEntry =
-                    fieldMeta.sourceAsMap().entrySet().stream().findFirst();
-            if (firstFieldEntry.isPresent()) {
-                final Object properties = firstFieldEntry.get().getValue();
-                if (properties instanceof Map) {
+            try {
+                String nativeType = getFieldPropertyFromMapping(key, fieldMeta, "type");
+                final String fieldName = fieldMeta.fullName();
+                final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
+                final boolean stored = fieldIsStored(key, fieldMeta);
+
+                if (nativeType == null) {
+                    return;
+                } else if (nativeType.equals("alias")) {
+                    // Determine the mapping type of the field the alias is referring to
                     try {
-                        @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
-                        final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
-                        final String fieldName = fieldMeta.fullName();
-                        final String fieldType = (String) propertiesMap.get("type");
-                        final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
-                        final boolean stored = fieldIsStored(key, fieldMeta);
-                        if (fieldType != null) {
-                            fieldsMap.put(fieldName, new ElasticIndexField(
-                                    ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
-                                    fieldName,
-                                    fieldType,
-                                    sourceFieldEnabled || stored));
-                        }
+                        final String aliasPath = getFieldPropertyFromMapping(fieldName, fieldMeta, "path");
+                        final FieldMappingMetadata targetFieldMeta = fieldMappings.get(aliasPath);
+                        nativeType = getFieldPropertyFromMapping(aliasPath, targetFieldMeta, "type");
                     } catch (Exception e) {
-                        LOGGER.error(e::getMessage, e);
+                        LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
                     }
-                } else {
-                    LOGGER.debug(() ->
-                            "Mapping properties for field '" + key +
-                            "' were in an unrecognised format. Field ignored.");
                 }
+
+                fieldsMap.put(fieldName, new ElasticIndexField(
+                        ElasticIndexFieldType.fromNativeType(fieldName, nativeType),
+                        fieldName,
+                        nativeType,
+                        sourceFieldEnabled || stored));
+            } catch (Exception e) {
+                LOGGER.error(e::getMessage, e);
             }
         });
 
