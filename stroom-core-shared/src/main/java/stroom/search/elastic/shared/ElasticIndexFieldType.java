@@ -111,11 +111,7 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     private List<Condition> getConditions() {
         final List<Condition> conditions = new ArrayList<>();
 
-        if (dataSourceFieldType.equals(FieldTypes.ID)) {
-            conditions.add(Condition.EQUALS);
-            conditions.add(Condition.IN);
-            conditions.add(Condition.IN_DICTIONARY);
-        } else if (dataSourceFieldType.equals(FieldTypes.DATE) || numeric) {
+        if (dataSourceFieldType.equals(FieldTypes.DATE) || numeric) {
             conditions.add(Condition.EQUALS);
             conditions.add(Condition.GREATER_THAN);
             conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
@@ -137,17 +133,11 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
      * Given a native Elasticsearch data type, return an equivalent Stroom field type
      */
     public static ElasticIndexFieldType fromNativeType(final String fieldName, final String nativeType) {
-        if (fieldName.equals(ElasticIndexConstants.EVENT_ID) ||
-            fieldName.equals(ElasticIndexConstants.STREAM_ID) ||
-            fieldName.equals(ElasticIndexConstants.FEED_ID)) {
-            return ID;
-        }
-
         if (nativeTypeRegistry.containsKey(nativeType)) {
             return nativeTypeRegistry.get(nativeType);
         }
 
-        throw new IllegalArgumentException("Unsupported field mapping type: '" + nativeType + "'");
+        throw new IllegalArgumentException("Field '" + fieldName + "' has an unsupported mapping type '" + nativeType + "'");
     }
 
     /**
