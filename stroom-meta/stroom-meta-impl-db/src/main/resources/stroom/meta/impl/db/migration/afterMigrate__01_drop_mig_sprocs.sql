@@ -5,6 +5,8 @@ DELIMITER $$
 
 DROP PROCEDURE IF EXISTS meta_run_sql_v1 $$
 
+DROP PROCEDURE IF EXISTS meta_create_unique_index_v1 $$
+
 DROP PROCEDURE IF EXISTS meta_create_non_unique_index_v1 $$
 
 DROP PROCEDURE IF EXISTS meta_add_column_v1 $$
@@ -14,6 +16,10 @@ DROP PROCEDURE IF EXISTS meta_drop_column_v1 $$
 DROP PROCEDURE IF EXISTS meta_rename_column_v1 $$
 
 DROP PROCEDURE IF EXISTS meta_drop_constraint_v1 $$
+
+DROP PROCEDURE IF EXISTS meta_rename_table_if_exists_v1 $$
+
+DROP PROCEDURE IF EXISTS meta_rename_legacy_table_if_exists_v1$$
 
 DELIMITER ;
 
