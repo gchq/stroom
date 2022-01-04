@@ -121,9 +121,11 @@ public class ExcelTarget implements SearchResultWriter.Target {
         cell.setCellStyle(headingStyle);
 
         // Auto-size datetime and numeric columns
-        final Format.Type fieldType = field.getFormat().getType();
-        if (fieldType == Type.DATE_TIME || fieldType == Type.NUMBER) {
-            sheet.trackColumnForAutoSizing(fieldIndex);
+        if (field.getFormat() != null) {
+            final Format.Type fieldType = field.getFormat().getType();
+            if (fieldType == Type.DATE_TIME || fieldType == Type.NUMBER) {
+                sheet.trackColumnForAutoSizing(fieldIndex);
+            }
         }
     }
 
