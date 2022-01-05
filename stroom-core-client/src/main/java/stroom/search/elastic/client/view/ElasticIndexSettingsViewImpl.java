@@ -19,6 +19,8 @@ package stroom.search.elastic.client.view;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsUiHandlers;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -42,6 +44,10 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     TextBox indexName;
     @UiField
+    ValueSpinner searchSlices;
+    @UiField
+    ValueSpinner searchScrollSize;
+    @UiField
     SimplePanel cluster;
     @UiField
     Button testConnection;
@@ -54,6 +60,14 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
         description.addKeyDownHandler(e -> fireChange());
         indexName.addKeyDownHandler(e -> fireChange());
+
+        searchSlices.setMin(1L);
+        searchSlices.setMax(1000L);
+        searchSlices.getSpinner().addSpinnerHandler(e -> fireChange());
+
+        searchScrollSize.setMin(1L);
+        searchScrollSize.setMax(1000000L);
+        searchScrollSize.getSpinner().addSpinnerHandler(e -> fireChange());
     }
 
     private void fireChange() {
@@ -93,6 +107,26 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
+    public int getSearchSlices() {
+        return searchSlices.getValue();
+    }
+
+    @Override
+    public void setSearchSlices(final int searchSlices) {
+        this.searchSlices.setValue(searchSlices);
+    }
+
+    @Override
+    public int getSearchScrollSize() {
+        return searchScrollSize.getValue();
+    }
+
+    @Override
+    public void setSearchScrollSize(final int searchScrollSize) {
+        this.searchScrollSize.setValue(searchScrollSize);
+    }
+
+    @Override
     public void setRetentionExpressionView(final View view) {
         retentionExpressionPanel.setWidget(view.asWidget());
     }
@@ -101,6 +135,8 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     public void onReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
         indexName.setEnabled(!readOnly);
+        searchSlices.setEnabled(!readOnly);
+        searchScrollSize.setEnabled(!readOnly);
     }
 
     @UiHandler("testConnection")

@@ -41,10 +41,11 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.slice.SliceBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,6 +56,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 public class ElasticSearchTaskHandler {
@@ -65,11 +67,6 @@ public class ElasticSearchTaskHandler {
      * Number of minutes to allow a scroll request to continue before being aborted
      */
     private static final long SCROLL_DURATION = 1L;
-
-    /**
-     * Number of documents to return in a single search scroll request
-     */
-    private static final int SCROLL_SIZE = 1000;
 
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Elasticsearch Index");
 
@@ -147,41 +144,50 @@ public class ElasticSearchTaskHandler {
         elasticClientCache.context(connectionConfig, elasticClient -> {
             try {
                 final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(SCROLL_DURATION));
-                SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName());
-                searchRequest.scroll(scroll);
 
-                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
-                        .query(task.getQuery())
-                        .size(SCROLL_SIZE);
-                searchRequest.source(searchSourceBuilder);
+                SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
+                        .scroll(scroll);
 
-                SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
-                String scrollId = searchResponse.getScrollId();
+                IntStream.range(0, elasticIndex.getSearchSlices()).parallel().forEach(slice -> {
+                    try {
+                        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
+                                .query(task.getQuery())
+                                .size(elasticIndex.getSearchScrollSize())
+                                .slice(new SliceBuilder(slice, elasticIndex.getSearchSlices()));
 
-                SearchHit[] searchHits = searchResponse.getHits().getHits();
-                processBatch(task, searchHits);
+                        searchRequest.source(searchSourceBuilder);
+                        SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
+                        String scrollId = searchResponse.getScrollId();
 
-                // Continue requesting results until we have all results
-                final int maxResultSize = task.getResultCollector().getMaxResultSizes().size(0);
-                while (searchHits != null && searchHits.length > 0 && task.getTracker().getHitCount() < maxResultSize) {
-                    if (task.getAsyncSearchTask().getResultCollector().isComplete()) {
-                        break;
+                        SearchHit[] searchHits = searchResponse.getHits().getHits();
+                        processBatch(task, searchHits);
+
+                        // Continue requesting results until we have all results
+                        final int maxResultSize = task.getResultCollector().getMaxResultSizes().size(0);
+                        while (searchHits != null && searchHits.length > 0 &&
+                                task.getTracker().getHitCount() < maxResultSize) {
+                            if (task.getAsyncSearchTask().getResultCollector().isComplete()) {
+                                break;
+                            }
+
+                            SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
+                            scrollRequest.scroll(scroll);
+                            searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
+                            searchHits = searchResponse.getHits().getHits();
+
+                            processBatch(task, searchHits);
+                        }
+
+                        ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+                        clearScrollRequest.addScrollId(scrollId);
+                        elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+                    } catch (final IOException e) {
+                        error(task, e.getMessage(), e);
                     }
-
-                    SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-                    scrollRequest.scroll(scroll);
-                    searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
-                    searchHits = searchResponse.getHits().getHits();
-
-                    processBatch(task, searchHits);
-                }
-
-                ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
-                clearScrollRequest.addScrollId(scrollId);
-                elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+                });
 
                 LOGGER.debug(() -> "Total hits: " + task.getTracker().getHitCount());
-            } catch (final IOException | RuntimeException e) {
+            } catch (final RuntimeException e) {
                 error(task, e.getMessage(), e);
             }
         });
