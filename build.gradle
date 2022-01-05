@@ -20,7 +20,7 @@ buildscript {
 
 plugins {
     // Plugin for downloading content from the 'net
-    id "de.undercouch.download" version "3.4.3" apply false
+    id "de.undercouch.download" version "4.1.2" apply false
 
     // Plugin for producing a tree of task dependencies, run task 'taskTree'
     id "com.dorongold.task-tree" version "1.3.1" apply true

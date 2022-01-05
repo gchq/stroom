@@ -65,7 +65,6 @@ import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
-import javax.validation.constraints.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -82,6 +81,7 @@ import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
 import javax.sql.DataSource;
 import javax.validation.ValidatorFactory;
+import javax.validation.constraints.NotNull;
 
 public class App extends Application<Config> {
 
