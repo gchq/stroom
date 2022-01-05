@@ -10,6 +10,6 @@ dependencies {
 //    compile libs.vavr
     compile libs.swagger_annotations
 
-    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jakarta_activation
     testRuntimeOnly libs.jaxb_runtime
 }

@@ -35,6 +35,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.PipelineStore;
@@ -67,6 +68,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.ResultPage;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -122,9 +124,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private StreamTargetStreamHandlers streamHandlers;
 
-    private static boolean HAVE_IMPORTED_CONTENT = false;
-    private static boolean HAVE_LOADED_REF_DATA = false;
-
     /**
      * NOTE some of the input data for this test is buried in the following zip file so you will need
      * to crack it open to see what is being loaded.
@@ -171,32 +170,28 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     protected void loadAllRefData() {
-        if (!HAVE_LOADED_REF_DATA) {
-            final Path samplesDir = getSamplesDir();
-            final Path inputDir = samplesDir.resolve("input");
-            final Path outputDir = samplesDir.resolve("output");
-            FileUtil.mkdirs(outputDir);
+        final Path samplesDir = getSamplesDir();
+        final Path inputDir = samplesDir.resolve("input");
+        final Path outputDir = samplesDir.resolve("output");
+        FileUtil.mkdirs(outputDir);
 
-            LOGGER.info("Processing ref data in {}", inputDir.toAbsolutePath().normalize());
-            // Process reference data.
-            final List<Exception> exceptions = new ArrayList<>();
-            processData(inputDir, outputDir, true, false, exceptions);
-            if (exceptions.size() > 0) {
-                fail(exceptions.get(0).getMessage());
-            }
-            HAVE_LOADED_REF_DATA = true;
+        LOGGER.info("Processing ref data in {}", inputDir.toAbsolutePath().normalize());
+        // Process reference data.
+        final List<Exception> exceptions = new ArrayList<>();
+        processData(inputDir, outputDir, true, false, exceptions);
+        if (exceptions.size() > 0) {
+            fail(exceptions.get(0).getMessage());
         }
     }
 
     protected void importConfig() {
-        if (!HAVE_IMPORTED_CONTENT) {
+        if (pipelineStore.list().size() == 0) {
             final Path samplesDir = getSamplesDir();
             final Path configDir = samplesDir.resolve("config");
 
             importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
             contentImportService.importStandardPacks();
-            HAVE_IMPORTED_CONTENT = true;
         }
     }
 
@@ -290,57 +285,62 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // Create a stream processor for each pipeline.
         final List<DocRef> pipelines = pipelineStore.list();
         for (final DocRef pipelineRef : pipelines) {
-            final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
+            final FindMetaCriteria findMetaCriteria =
+                    new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(pipelineRef.getName()));
+            final ResultPage<Meta> metaResultPage = metaService.find(findMetaCriteria);
+            if (metaResultPage.size() == 0) {
+                final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
 
-            FeedDoc feed = null;
-            if (feedRefs.size() > 0) {
-                feed = feedStore.readDocument(feedRefs.get(0));
-            }
-            final FeedDoc feedDoc = feed;
-
-            if (feedDoc != null && feedDoc.isReference() == reference) {
-                int priority = 1;
-                if (feed.isReference()) {
-                    priority++;
+                FeedDoc feed = null;
+                if (feedRefs.size() > 0) {
+                    feed = feedStore.readDocument(feedRefs.get(0));
                 }
+                final FeedDoc feedDoc = feed;
 
-                final String streamType = feed.isReference()
-                        ? StreamTypeNames.RAW_REFERENCE
-                        : StreamTypeNames.RAW_EVENTS;
-
-                final QueryData findStreamQueryData = QueryData.builder()
-                        .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                        .expression(ExpressionOperator.builder()
-                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
-                                .build())
-                        .build();
-
-                processorFilterService.create(
-                        CreateProcessFilterRequest
-                                .builder()
-                                .pipeline(pipelineRef)
-                                .queryData(findStreamQueryData)
-                                .priority(priority)
-                                .build());
-
-                // Add data.
-                final List<Path> files = new ArrayList<>();
-                addFiles(inputDir, files, feed.getName(), "in");
-                addFiles(inputDir, files, feed.getName(), "zip");
-                files.sort(Comparator.naturalOrder());
-                files.forEach(filePath -> {
-                    // Add and test each file.
-                    final String fileName = filePath.getFileName().toString();
-                    final int index = fileName.lastIndexOf(".");
-                    final String stem = fileName.substring(0, index);
-
-                    try {
-                        test(filePath, feedDoc, outputDir, stem, compareOutput, exceptions);
-                    } catch (final IOException | RuntimeException e) {
-                        fail(e.getMessage());
+                if (feedDoc != null && feedDoc.isReference() == reference) {
+                    int priority = 1;
+                    if (feed.isReference()) {
+                        priority++;
                     }
-                });
+
+                    final String streamType = feed.isReference()
+                            ? StreamTypeNames.RAW_REFERENCE
+                            : StreamTypeNames.RAW_EVENTS;
+
+                    final QueryData findStreamQueryData = QueryData.builder()
+                            .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                            .expression(ExpressionOperator.builder()
+                                    .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                                    .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
+                                    .build())
+                            .build();
+
+                    processorFilterService.create(
+                            CreateProcessFilterRequest
+                                    .builder()
+                                    .pipeline(pipelineRef)
+                                    .queryData(findStreamQueryData)
+                                    .priority(priority)
+                                    .build());
+
+                    // Add data.
+                    final List<Path> files = new ArrayList<>();
+                    addFiles(inputDir, files, feed.getName(), "in");
+                    addFiles(inputDir, files, feed.getName(), "zip");
+                    files.sort(Comparator.naturalOrder());
+                    files.forEach(filePath -> {
+                        // Add and test each file.
+                        final String fileName = filePath.getFileName().toString();
+                        final int index = fileName.lastIndexOf(".");
+                        final String stem = fileName.substring(0, index);
+
+                        try {
+                            test(filePath, feedDoc, outputDir, stem, compareOutput, exceptions);
+                        } catch (final IOException | RuntimeException e) {
+                            fail(e.getMessage());
+                        }
+                    });
+                }
             }
         }
     }

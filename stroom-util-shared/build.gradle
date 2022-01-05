@@ -6,7 +6,7 @@ dependencies {
     compile libs.jackson_annotations
 //    compile libs.jaxb_api
     compile libs.swagger_annotations
-    compile libs.validation_api
+    compile libs.jakarta_validation_api
 
     testCompile libs.assertj_core
     testCompile libs.jackson_databind
@@ -14,7 +14,7 @@ dependencies {
     testCompile libs.slf4j_api
 
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jakarta_activation
     testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j

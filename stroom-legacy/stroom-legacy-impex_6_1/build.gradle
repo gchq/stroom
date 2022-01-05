@@ -25,7 +25,7 @@ dependencies {
 //    compile libs.saxon_he
 //    compile libs.slf4j_api
 //    compile libs.swagger_annotations
-//    compile libs.validation_api
+//    compile libs.jakarta_validation_api
 
 //    compile libs.commons_compress
 //    compile libs.commons_io
@@ -60,7 +60,7 @@ dependencies {
 //    testCompile libs.mockito_junit_jupiter
 //
 //    // The following logging libs are needed when running junits outside dropwizard
-//    testRuntimeOnly libs.javax_activation
+//    testRuntimeOnly libs.jakarta_activation
 //    testRuntimeOnly libs.jaxb_runtime
 //    testRuntimeOnly libs.jcl_over_slf4j
 //    testRuntimeOnly libs.jul_to_slf4j

@@ -50,9 +50,7 @@ dependencies {
     compile libs.slf4j_api
     compile libs.xml_apis
 
-    compile libs.javax_el
-    
-    compile libs.javax_el_api
+    compile libs.jakarta_el
     
     runtimeOnly libs.logback_classic
 }

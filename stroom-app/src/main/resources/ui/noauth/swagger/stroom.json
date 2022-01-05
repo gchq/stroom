@@ -10141,6 +10141,14 @@
           "retentionExpression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
           },
+          "searchScrollSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "searchSlices" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "type" : {
             "type" : "string"
           },

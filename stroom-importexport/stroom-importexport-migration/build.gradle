@@ -20,6 +20,6 @@ dependencies {
 //
 //    testRuntimeOnly libs.mysql_connector_java
 //    testRuntimeOnly libs.jaxb_runtime
-//    testRuntimeOnly libs.javax_activation
+//    testRuntimeOnly libs.jakarta_activation
 //    testRuntimeOnly libs.junit_jupiter_engine
 }

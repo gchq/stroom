@@ -35,7 +35,7 @@ dependencies {
     compile libs.lmdbjava
     compile libs.slf4j_api
 //    compile libs.jaxb_api
-    compile libs.validation_api
+    compile libs.jakarta_validation_api
 
     //--------testing----------
     testCompile libs.assertj_core

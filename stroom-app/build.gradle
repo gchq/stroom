@@ -161,11 +161,10 @@ dependencies {
     compile libs.logback_classic
     compile libs.slf4j_api
     compile project(':stroom-docref')
-    compile libs.validation_api
+    compile libs.jakarta_validation_api
     compile libs.ws_rs_api
 
-    runtimeOnly libs.javax_el
-    runtimeOnly libs.javax_el_api
+    runtimeOnly libs.jakarta_el
 
     testCompile project(':stroom-app')
     // Use default DB config.
@@ -230,8 +229,8 @@ dependencies {
     testCompile libs.stroomTestData
     testCompile libs.vavr
 
-    testRuntimeOnly libs.javax_activation
-    testRuntimeOnly libs.javax_el
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jakarta_el
     testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.junit_jupiter_engine
 

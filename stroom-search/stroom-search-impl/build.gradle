@@ -25,8 +25,8 @@ dependencies {
     testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter
 
-    testRuntimeOnly libs.javax_activation
-    testRuntimeOnly libs.javax_el
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jakarta_el
     testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.junit_jupiter_engine
 

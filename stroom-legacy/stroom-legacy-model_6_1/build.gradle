@@ -9,5 +9,5 @@ dependencies {
     compile libs.saxon_he
     compile libs.slf4j_api
     compile libs.swagger_annotations
-    compile libs.validation_api
+    compile libs.jakarta_validation_api
 }

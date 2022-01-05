@@ -8,6 +8,6 @@ dependencies {
 
 //    compile libs.jaxb_api
     
-    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jakarta_activation
     testRuntimeOnly libs.jaxb_runtime
 }

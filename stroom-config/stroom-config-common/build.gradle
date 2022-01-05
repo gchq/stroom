@@ -6,6 +6,5 @@ dependencies {
 
     compile libs.jackson_annotations
     compile libs.javax_inject
-    compile libs.validation_api
-//    compile libs.hibernate_validator
+    compile libs.jakarta_validation_api
 }

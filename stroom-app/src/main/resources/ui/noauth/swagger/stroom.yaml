@@ -5957,7 +5957,7 @@ components:
           - ERROR
           - INTEGER
           - LONG
-          - NULL
+          - "NULL"
           - NUMBER
           - STRING
         defaultValue:
@@ -6056,7 +6056,7 @@ components:
         cascade:
           type: string
           enum:
-          - NO
+          - "NO"
           - CHANGES_ONLY
           - ALL
         changes:
@@ -7014,6 +7014,12 @@ components:
           type: string
         retentionExpression:
           $ref: '#/components/schemas/ExpressionOperator'
+        searchScrollSize:
+          type: integer
+          format: int32
+        searchSlices:
+          type: integer
+          format: int32
         type:
           type: string
         updateTime:
@@ -7946,7 +7952,7 @@ components:
           - ERROR
           - INTEGER
           - LONG
-          - NULL
+          - "NULL"
           - NUMBER
           - STRING
     GetFeedStatusRequest:

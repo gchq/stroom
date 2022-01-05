@@ -24,7 +24,7 @@ dependencies {
     compile libs.saxon_he
     compile libs.slf4j_api
 //    compile libs.vavr
-    compile libs.validation_api
+    compile libs.jakarta_validation_api
     compile libs.ws_rs_api
 
     testCompile project(':stroom-test-common')
@@ -37,7 +37,7 @@ dependencies {
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime
-    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jakarta_activation
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine
