@@ -24,6 +24,7 @@ import stroom.query.api.v2.TimeZone;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Locale;
 
 public class DateTimeFormatter implements Formatter {
 
@@ -67,7 +68,7 @@ public class DateTimeFormatter implements Formatter {
                     }
                 }
 
-                format = java.time.format.DateTimeFormatter.ofPattern(pattern);
+                format = java.time.format.DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH);
             }
         }
 

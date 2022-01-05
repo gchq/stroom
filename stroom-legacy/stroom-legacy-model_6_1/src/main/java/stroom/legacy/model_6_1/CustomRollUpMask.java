@@ -86,7 +86,7 @@ public class CustomRollUpMask implements HasDisplayValue, SharedObject {
     public CustomRollUpMask deepCopy() {
         final List<Integer> tagPositions = new ArrayList<>();
         for (final Integer tagPosition : tagPositions) {
-            tagPositions.add(new Integer(tagPosition));
+            tagPositions.add(Integer.valueOf(tagPosition));
         }
 
         return new CustomRollUpMask(tagPositions);

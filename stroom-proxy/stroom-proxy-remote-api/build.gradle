@@ -1,5 +1,7 @@
+ext.moduleName = 'stroom.proxy.remote.api'
+
 dependencies {
-//    compile libs.commons_lang
-    compile libs.jackson_annotations
-    compile libs.javax_servlet_api
+//    implementation libs.commons_lang
+    implementation libs.jackson_annotations
+    implementation libs.javax_servlet_api
 }

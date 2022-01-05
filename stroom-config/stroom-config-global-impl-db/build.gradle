@@ -1,15 +1,24 @@
 ext.moduleName = 'stroom.config.global.impl.db'
 
 dependencies {
-    compile project(':stroom-config:stroom-config-global-impl')
-    compile project(':stroom-config:stroom-config-global-impl-db-jooq')
+    implementation project(':stroom-config:stroom-config-app')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-config:stroom-config-global-impl')
+    implementation project(':stroom-config:stroom-config-global-impl-db-jooq')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.flyway_core
-    compile libs.guice5
-    compile libs.hikari
+    implementation libs.flyway_core
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.hikari
+    implementation libs.jooq
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
 
     testRuntimeOnly libs.junit_jupiter_engine
 }

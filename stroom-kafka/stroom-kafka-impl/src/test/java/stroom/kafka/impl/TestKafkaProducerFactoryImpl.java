@@ -8,7 +8,6 @@ import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -20,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -220,7 +220,7 @@ public class TestKafkaProducerFactoryImpl {
         assertThat((List<?>) (systemInfoResult3.getDetails().get("sharedProducers"))).hasSize(2);
     }
 
-    @NotNull
+    @Nonnull
     private KafkaConfigDoc createKafkaConfigDoc(final String name, final String version) {
         final KafkaConfigDoc kafkaConfigDoc = new KafkaConfigDoc(
                 KafkaConfigDoc.DOCUMENT_TYPE,

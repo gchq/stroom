@@ -10,7 +10,7 @@ import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.slf4j.Logger;

@@ -1,38 +1,40 @@
 ext.moduleName = 'stroom.statistics.impl.hbase'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-docstore:stroom-docstore-api')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-kafka:stroom-kafka-api')
-    compile project(':stroom-pipeline')
-    compile project(':stroom-statistics:stroom-statistics-api')
-    compile project(':stroom-statistics:stroom-statistics-impl')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-kafka:stroom-kafka-api')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-statistics:stroom-statistics-api')
+    implementation project(':stroom-statistics:stroom-statistics-impl')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.guava
-    compile libs.guice5
-    compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
-    compile libs.jackson_annotations
-    compile libs.javax_inject
-    compile libs.jaxb_api
-    compile libs.kafka_clients
-    compile project(':stroom-docref')
-    compile libs.stroomStatsSchema
-    compile libs.xml_apis
+    implementation libs.guava
+    implementation libs.guice5
+    implementation(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.kafka_clients
+    implementation libs.restygwt
+    implementation libs.stroomStatsSchema
+    implementation libs.xml_apis
 
-    testCompile project(':stroom-docstore:stroom-docstore-impl')
-    testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
-    testCompile project(':stroom-security:stroom-security-mock')
-    testCompile project(':stroom-test-common')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-test-common')
 
-    testCompile libs.assertj_core
-    testCompile libs.mockito_core
-    testCompile libs.mockito_junit_jupiter
+    testImplementation libs.assertj_core
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

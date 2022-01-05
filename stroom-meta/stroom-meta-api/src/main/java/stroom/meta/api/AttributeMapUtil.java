@@ -43,6 +43,7 @@ import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -75,7 +76,7 @@ public class AttributeMapUtil {
             .appendValue(ChronoField.YEAR, 4)
             .appendLiteral(' ')
             .appendZoneText(TextStyle.SHORT)
-            .toFormatter();
+            .toFormatter(Locale.ENGLISH);
 
     private static final String HEADER_DELIMITER = ":";
     static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;

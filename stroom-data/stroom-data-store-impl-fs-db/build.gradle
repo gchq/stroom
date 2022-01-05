@@ -1,30 +1,40 @@
 ext.moduleName = 'stroom.data.store.impl.fs.db'
 
 dependencies {
-    compile project(':stroom-db-util')
-    compile project(':stroom-data:stroom-data-store-impl-fs')
-    compile project(':stroom-data:stroom-data-store-impl-fs-db-jooq')
+    implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-data:stroom-data-store-impl-fs')
+    implementation project(':stroom-data:stroom-data-store-impl-fs-db-jooq')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile project(':stroom-docref')
-    compile libs.eventLogging
-
-    compile libs.flyway_core
-    compile libs.guice5
-    compile libs.hikari
-    compile libs.javax_inject
-    compile libs.jooq
-    compile libs.slf4j_api
+    implementation libs.eventLogging
+    implementation libs.flyway_core
+    implementation libs.guice5
+    implementation libs.hikari
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jooq
+    implementation libs.slf4j_api
 
     runtimeOnly libs.mysql_connector_java
 
-    testCompile project(':stroom-node:stroom-node-mock')
-    testCompile project(':stroom-security:stroom-security-mock')
-    testCompile project(':stroom-test-common')
-    
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-    testCompile libs.mockito_core
-    testCompile libs.mockito_junit_jupiter
+    testImplementation project(':stroom-cluster:stroom-cluster-lock-api')
+    testImplementation project(':stroom-node:stroom-node-mock')
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-statistics:stroom-statistics-api')
+    testImplementation project(':stroom-test-common')
+
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

@@ -17,30 +17,31 @@
 ext.moduleName = 'stroom.query.common'
 
 dependencies {
-    compile project(':stroom-docref')
-    compile project(':stroom-lmdb')
-    compile project(':stroom-query:stroom-expression')
-    compile project(':stroom-query:stroom-query-api')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-util')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-lmdb')
+    implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 
-    //--------3rd party--------
-//    compile libs.agrona
-    compile libs.guava
-    compile libs.jackson_databind
-    compile libs.jackson_annotations
-    compile libs.jackson_core
-    compile libs.javax_inject
-    compile libs.kryo
-    compile libs.lmdbjava
-    compile libs.slf4j_api
-//    compile libs.jaxb_api
-    compile libs.validation_api
+    implementation libs.guava
+    implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.jackson_core
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.kryo
+    implementation libs.lmdbjava
+    implementation libs.slf4j_api
+    implementation libs.validation_api
+    implementation libs.zero_allocation_hashing
 
     //--------testing----------
-    testCompile libs.assertj_core
+    testImplementation libs.assertj_core
     testCompileOnly libs.junit_jupiter_api
-    testCompile libs.mockito_core
+    testImplementation libs.jaxb_api
+    testImplementation libs.mockito_core
 
     testRuntimeOnly libs.junit_jupiter_engine
     testRuntimeOnly libs.logback_classic

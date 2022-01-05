@@ -31,7 +31,6 @@ import com.google.inject.Provides;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.MarkerFactory;
 
 import java.sql.Connection;
@@ -46,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -267,7 +267,7 @@ public class LegacyDbModule extends AbstractModule {
         }
     }
 
-    @NotNull
+    @Nonnull
     private Optional<Version> establishDbSchemaVersion(final DataSource dataSource,
                                                        final AtomicBoolean isDbUsingFlyWay) {
         Optional<Version> optVersion;

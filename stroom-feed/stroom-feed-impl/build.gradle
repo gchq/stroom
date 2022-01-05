@@ -1,24 +1,26 @@
 ext.moduleName = 'stroom.feed.impl'
 
 dependencies {
-    compile project(':stroom-cache:stroom-cache-api')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-docstore:stroom-docstore-api')
-    compile project(':stroom-event-logging:stroom-event-logging-api')
-    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    compile project(':stroom-feed:stroom-feed-api')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-meta:stroom-meta-api')
-    compile project(':stroom-security:stroom-security-api')
-//    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-feed:stroom-feed-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile project(':stroom-docref')
-
-//    compile libs.guava
-    compile libs.guice5
-//    compile libs.jackson_annotations
-    compile libs.javax_inject
-    compile libs.slf4j_api
+    implementation libs.eventLogging
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.restygwt
+    implementation libs.slf4j_api
 }

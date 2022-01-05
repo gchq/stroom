@@ -70,7 +70,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Indicators;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

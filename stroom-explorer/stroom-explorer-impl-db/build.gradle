@@ -1,28 +1,28 @@
 ext.moduleName = 'stroom.explorer.impl.db'
 
 dependencies {
-    compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-db-util')
-    compile project(':stroom-explorer:stroom-explorer-impl')
-    compile project(':stroom-explorer:stroom-explorer-impl-db-jooq')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-explorer:stroom-explorer-impl')
+    implementation project(':stroom-explorer:stroom-explorer-impl-db-jooq')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile project(':stroom-docref')
-
-    compile libs.flyway_core
-    compile libs.guice5
-    compile libs.hikari
-    compile libs.jackson_annotations
-    compile libs.javax_inject
-    compile libs.jooq
-    compile libs.slf4j_api
+    implementation libs.flyway_core
+    implementation libs.guice5
+    implementation libs.hikari
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jooq
+    implementation libs.slf4j_api
 
     runtimeOnly libs.mysql_connector_java
     
-    testCompile libs.assertj_core
+    testImplementation libs.assertj_core
     
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

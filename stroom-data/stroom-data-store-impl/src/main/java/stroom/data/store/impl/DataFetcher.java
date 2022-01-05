@@ -78,7 +78,6 @@ import stroom.util.string.HexDumpUtil;
 
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.CountingInputStream;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -95,6 +94,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nonnull;
 import javax.inject.Provider;
 import javax.xml.transform.TransformerException;
 
@@ -355,7 +355,7 @@ public class DataFetcher {
         }).get();
     }
 
-    @NotNull
+    @Nonnull
     private FetchDataResult createEmptyResult(final FetchDataRequest fetchDataRequest,
                                               final String feedName,
                                               final String streamTypeName,
@@ -509,7 +509,7 @@ public class DataFetcher {
                 taskContext);
     }
 
-    @NotNull
+    @Nonnull
     private FetchDataResult buildFetchDataResult(final String feedName,
                                                  final String streamTypeName,
                                                  final Set<String> availableChildStreamTypes,

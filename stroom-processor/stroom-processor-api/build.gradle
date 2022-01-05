@@ -2,23 +2,26 @@ ext.moduleName = 'stroom.processor.api'
 
 dependencies {
     // Stroom modules
-    compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-data:stroom-data-store-api')
-    compile project(':stroom-meta:stroom-meta-api')
-    compile project(':stroom-query:stroom-query-api')
-    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-data:stroom-data-store-api')
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
     // Stroom external bintray libs
-    compile project(':stroom-docref')
+    implementation project(':stroom-docref')
 
     // 3rd party libs
-    compile libs.jackson_annotations
-    compile libs.javax_inject
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
+    implementation libs.javax_inject
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

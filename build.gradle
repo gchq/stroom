@@ -25,7 +25,7 @@ plugins {
     // Plugin for producing a tree of task dependencies, run task 'taskTree'
     id "com.dorongold.task-tree" version "1.3.1" apply true
 
-    id "com.github.johnrengelman.shadow" version "6.1.0" apply false
+    id "com.github.johnrengelman.shadow" version "7.1.2" apply false
 
     id 'nu.studer.jooq' version '5.2' apply false
 
@@ -48,7 +48,7 @@ apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
-def javaVersion = JavaVersion.VERSION_15;
+def javaVersion = JavaVersion.VERSION_17;
 if (JavaVersion.current() != javaVersion) {
     throw new GradleException(
         "This build must be run with Java " + javaVersion + " (current = " + JavaVersion.current() + ")")
@@ -130,7 +130,7 @@ ext.versions = [
 ext.libs = [
         //------Stroom-libs---------------
         eventLogging                   : "uk.gov.gchq.eventlogging:event-logging:$versions.eventLogging",
-        hadoopCommonShaded             : "uk.gov.gchq.stroom.hadoop.common:hadoop-common-shaded:$versions.hadoopCommonShaded",
+        hadoopCommonShaded             : files('libs/hadoop-common-shaded-j17.jar'),//"uk.gov.gchq.stroom.hadoop.common:hadoop-common-shaded:$versions.hadoopCommonShaded",
         hadoopHdfsShaded               : "uk.gov.gchq.stroom.hadoop.hdfs:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
         stroomStatsSchema              : "uk.gov.gchq.stroom.stats:stroom-stats-schema:$versions.stroomStats",
         stroomTestData                 : "uk.gov.gchq.stroom.testdata:stroom-test-data:$versions.stroomTestData",
@@ -189,15 +189,16 @@ ext.libs = [
         gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
         gwtp_mvp_client                : "com.gwtplatform:gwtp-mvp-client:0.7",
         gson                           : 'com.google.code.gson:gson:2.6.2',
-        hbase                          : "org.apache.hbase:hbase-common:2.1.5", //should be set to be consistent with CDH version
+        hbase                          : "org.apache.hbase:hbase-common:2.1.5", // should be set to be consistent with CDH version
         hessian                        : "com.caucho:hessian:4.0.51",
+        hibernate_jpa                  : "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final", // remove when legacy code is removed
         hikari                         : "com.zaxxer:HikariCP:$versions.hikari",
         hsqldb                         : "org.hsqldb:hsqldb", // version controlled by DW BOM
         http_client                    : "org.apache.httpcomponents:httpclient:4.5.12",
         jBCrypt                        : "de.svenkubiak:jBCrypt:0.4.1",
         jackson_annotations            : "com.fasterxml.jackson.core:jackson-annotations", // version controlled by DW BOM
-        jackson_core                   : "com.fasterxml.jackson.core:jackson-core", // version controlled by DW BOM
-        jackson_databind               : "com.fasterxml.jackson.core:jackson-databind", // version controlled by DW BOM
+        jackson_core                   : "com.fasterxml.jackson.core:jackson-core:2.9.10", // version controlled by DW BOM
+        jackson_databind               : files('libs/jackson-databind-2.9.10.8.jar'),//"com.fasterxml.jackson.core:jackson-databind", // version controlled by DW BOM
         jackson_dataformat_yaml        : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", // version controlled by DW BOM
         jackson_datatype_jsr310        : "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", // version controlled by DW BOM
         java_diff_utils                : "io.github.java-diff-utils:java-diff-utils:4.5",
@@ -306,7 +307,6 @@ allprojects {
         options.addStringOption('Xdoclint:none', '-quiet')
         options.addBooleanOption('html5', true)
     }
-
 }
 
 // Variable to capture the version of slf4j defined in the DW BOM, so
@@ -321,7 +321,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
     apply plugin: 'idea'
-    apply plugin: 'ca.cutterslade.analyze'
+//    apply plugin: 'ca.cutterslade.analyze'
 //    apply plugin: 'java-library'
 //    apply plugin: 'nebula.lint'
 //
@@ -335,7 +335,7 @@ subprojects {
 
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
-        compile platform(libs.dropwizard_bom)
+        implementation platform(libs.dropwizard_bom)
     }
 
     //println project.getConfigurations().getByName("implementation").getAllDependencies()
@@ -372,6 +372,7 @@ subprojects {
                 dependencySubstitution {
                     //println "Slf4j version = $dropwizardBomSlf4jVersion"
                     substitute module('log4j:log4j') with module("org.slf4j:log4j-over-slf4j:1.7.25")
+//                    substitute module('com.fasterxml.jackson.core:jackson-databind') with files('libs/jackson-databind-2.10.1.jar')//module("com.fasterxml.jackson.core:jackson-databind:2.10.1")
                     // substitute module('javax.validation:validation-api') with module("javax.validation:validation-api:1.1.0.Final")
                 }
 
@@ -463,7 +464,7 @@ subprojects {
 //    tasks.check.dependsOn integrationTest
 //    tasks.integrationTest.mustRunAfter test
 
-//    afterEvaluate {
+    afterEvaluate {
 //        repositories {
 //            jcenter()
 //        }
@@ -491,18 +492,21 @@ subprojects {
 //            }
 //        }
 //
-//        test {
-//            inputs.property("moduleName", moduleName)
-//            doFirst {
-//                jvmArgs = [
-//                        '--module-path', classpath.asPath,
-//                        '--add-modules', 'ALL-MODULE-PATH',
-////                        '--add-reads', "$moduleName=junit",
-//                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
-//                ]
-//                classpath = files()
-//            }
-//        }
+        test {
+            inputs.property("moduleName", moduleName)
+            doFirst {
+                jvmArgs = [
+                        '--module-path', classpath.asPath,
+                        '--add-modules', 'ALL-MODULE-PATH',
+//                        '--add-reads', "$moduleName=junit",
+                        '--add-modules', 'java.base/java.nio=ALL-UNNAMED',
+                        '--add-modules', 'java.base/sun.nio.ch=ALL-UNNAMED',
+                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
+                        '-verbose', '',
+                ]
+                classpath = files()
+            }
+        }
 //
 //        javadoc {
 //            options.addStringOption('-module-path', classpath.asPath)
@@ -518,8 +522,8 @@ subprojects {
 //            }
 //            version versions.stroomQuery
 //        }
-//    }
-//
+    }
+
 
     //task analyzeJavaLibraryDependencies(type: ca.cutterslade.gradle.analyze.AnalyzeDependenciesTask) {
 //    classesDirs = sourceSets.main.output.classesDirs
@@ -547,13 +551,13 @@ subprojects {
 //tasks.build.dependsOn analyzeJavaLibraryDependencies
 //tasks.build.dependsOn analyzeJavaLibraryTestDependencies
 //
-    analyzeClassesDependencies {
-        justWarn = true
-    }
-
-    analyzeTestClassesDependencies {
-        justWarn = true
-    }
+//    analyzeClassesDependencies {
+//        justWarn = true
+//    }
+//
+//    analyzeTestClassesDependencies {
+//        justWarn = true
+//    }
 
     // Check style plugin configuration
     // config files in config/checkstyle
@@ -764,7 +768,7 @@ gradle.buildFinished {
 task dependenciesPng() {
     def reportsDir = new File("build/reports")
     def compileDepsDot = file("$reportsDir/compileDeps.dot")
-    inputs.files subprojects.configurations.compile
+    inputs.files subprojects.configurations.implementation
     outputs.files compileDepsDot
     doFirst {
         if (!reportsDir.exists()) reportsDir.mkdirs()

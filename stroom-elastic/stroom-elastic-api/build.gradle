@@ -1,7 +1,7 @@
 ext.moduleName = 'stroom.elastic.api'
 
 dependencies {
-    compile libs.jackson_annotations
-    compile libs.jaxb_api
-    compile project(':stroom-docref')
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
+    implementation project(':stroom-docref')
 }

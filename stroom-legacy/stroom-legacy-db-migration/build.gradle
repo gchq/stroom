@@ -1,64 +1,44 @@
 ext.moduleName = 'stroom.legacy.db.migration'
 
 dependencies {
-//    compile project(':stroom-config:stroom-config-app')
-//    compile project(':stroom-config:stroom-config-global-impl')
-    compile project(':stroom-config:stroom-config-global-impl-db-jooq')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-dashboard:stroom-dashboard-impl')
-    compile project(':stroom-dictionary:stroom-dictionary-impl')
-    compile project(':stroom-docstore:stroom-docstore-impl')
-    compile project(':stroom-feed:stroom-feed-impl')
-    compile project(':stroom-index:stroom-index-impl')
-    compile project(':stroom-legacy:stroom-legacy-impex_6_1')
-    compile project(':stroom-legacy:stroom-legacy-model_6_1')
-    compile project(':stroom-pipeline')
-    compile project(':stroom-processor:stroom-processor-impl-db')
-    compile project(':stroom-statistics:stroom-statistics-impl-hbase')
-    compile project(':stroom-statistics:stroom-statistics-impl-sql')
-    compile project(':stroom-dashboard:stroom-storedquery-impl-db')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-config:stroom-config-global-impl-db-jooq')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-dashboard:stroom-dashboard-impl')
+    implementation project(':stroom-dashboard:stroom-storedquery-impl-db')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-dictionary:stroom-dictionary-impl')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-feed:stroom-feed-impl')
+    implementation project(':stroom-index:stroom-index-impl')
+    implementation project(':stroom-legacy:stroom-legacy-impex_6_1')
+    implementation project(':stroom-legacy:stroom-legacy-model_6_1')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-processor:stroom-processor-impl-db')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-statistics:stroom-statistics-impl-hbase')
+    implementation project(':stroom-statistics:stroom-statistics-impl-sql')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.flyway_core
+    implementation libs.guice5
+    implementation libs.hibernate_jpa
+    implementation libs.hikari
+    implementation libs.jackson_annotations
+    implementation libs.jooq
+    implementation libs.slf4j_api
 
+    testImplementation project(':stroom-test-common')
 
-//    compile libs.hibernate_jpa_api
-//    compile libs.jackson_annotations
-//    compile libs.javassist
-//    compile libs.saxon_he
-//    compile libs.slf4j_api
-//    compile libs.swagger_annotations
-//    compile libs.validation_api
-
-//    compile libs.commons_compress
-//    compile libs.commons_io
-//    compile libs.commons_lang
-//    compile libs.dropwizard_lifecycle
-//    compile libs.dropwizard_metrics_annotation
-//    compile libs.eventLogging
-    compile libs.flyway_core
-//    compile libs.guava
-    compile libs.guice5
-//    compile libs.gwt_servlet
-    compile libs.hikari
-//    compile libs.jackson_annotations
-//    compile libs.jackson_core
-//    compile libs.jackson_databind
-//    compile libs.javassist
-//    compile libs.javax_inject
-//    compile libs.javax_servlet_api
-//    compile libs.jaxb_api
-//    compile libs.saxon_he
-    compile libs.slf4j_api
-//    compile project(':stroom-docref')
-//    compile libs.swagger_annotations
-//    compile libs.ws_rs_api
-//    compile libs.xml_apis
-
-    testCompile project(':stroom-test-common')
-
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-    testCompile libs.mockito_core
-    testCompile libs.mockito_junit_jupiter
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

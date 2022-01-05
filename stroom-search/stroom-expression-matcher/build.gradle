@@ -1,19 +1,18 @@
 ext.moduleName = 'stroom.expression.matcher'
 
 dependencies {
-    compile project(':stroom-dictionary:stroom-dictionary-api')
-    compile project(':stroom-explorer:stroom-collection-api')
-//    compile project(':stroom-query:stroom-expression')
-    compile project(':stroom-query:stroom-query-api')
-    compile project(':stroom-query:stroom-query-common')
-//    compile project(':stroom-util')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-explorer:stroom-collection-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
 
-    compile project(':stroom-docref')
-    
-    compile libs.javax_inject
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

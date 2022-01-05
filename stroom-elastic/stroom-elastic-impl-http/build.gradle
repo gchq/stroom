@@ -3,22 +3,23 @@
 ext.moduleName = 'stroom.elastic.impl.http'
 
 dependencies {
-    compile project(':stroom-elastic:stroom-elastic-api')
-    compile project(':stroom-elastic:stroom-elastic-impl')
-    compile project(':stroom-pipeline')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-security:stroom-security-impl')
+    implementation project(':stroom-elastic:stroom-elastic-api')
+    implementation project(':stroom-elastic:stroom-elastic-impl')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-impl')
 
-    compile project(':stroom-docref')
-    compile libs.stroomQueryAudit
+    implementation project(':stroom-docref')
+    implementation libs.stroomQueryAudit
 
-    compile libs.guice5
-    compile libs.jackson_databind
-    compile libs.javax_inject
-    compile libs.jaxb_api
-    compile libs.slf4j_api
+    implementation libs.guice5
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.slf4j_api
 
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

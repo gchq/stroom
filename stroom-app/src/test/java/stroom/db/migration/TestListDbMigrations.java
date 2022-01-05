@@ -6,7 +6,7 @@ import stroom.util.ConsoleColour;
 import com.google.common.base.Strings;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

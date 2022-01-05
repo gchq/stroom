@@ -1,12 +1,16 @@
 ext.moduleName = 'stroom.docstore.impl.db'
 
 dependencies {
-    compile project(':stroom-db-util')
-    compile project(':stroom-docstore:stroom-docstore-impl')
-
-    compile project(':stroom-docref')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
     
-    compile libs.guice5
-//    compile libs.jaxb_api
-    compile libs.slf4j_api
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
+    implementation libs.slf4j_api
 }

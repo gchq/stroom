@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 @JsonPropertyOrder(alphabetic = true)
 public class IndexCacheConfig extends AbstractConfig {
@@ -51,14 +51,14 @@ public class IndexCacheConfig extends AbstractConfig {
         this.maxItems = maxItems;
     }
 
-    @NotNull
+    @Nonnull
     @JsonPropertyDescription("How long a cache item can live before it is removed from the cache " +
             "during a sweep. A duration of zero means items will not be aged out of the cache.")
     public StroomDuration getTimeToLive() {
         return timeToLive;
     }
 
-    @NotNull
+    @Nonnull
     @JsonPropertyDescription("How long a cache item can idle before it is removed from the cache " +
             "during a sweep. A duration of zero means items will not be aged out of the cache.")
     public StroomDuration getTimeToIdle() {

@@ -13,7 +13,6 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.filter.QuickFilterPredicateFactory;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +27,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -88,7 +88,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         return fieldToMatch.getName().equals(request.getField().getName());
     }
 
-    @NotNull
+    @Nonnull
     private List<String> createPipelineList(final String userInput) {
         final List<String> result;
         final Stream<String> stream = pipelineStore.list().stream()
@@ -100,7 +100,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         return result;
     }
 
-    @NotNull
+    @Nonnull
     private List<String> createStatusList(final String userInput) {
         final List<String> result;
         Stream<String> stream = Arrays.stream(Status.values())

@@ -1,31 +1,39 @@
 ext.moduleName = 'stroom.index.impl.db'
 
 dependencies {
-    compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-index:stroom-index-impl')
-    compile project(':stroom-index:stroom-index-impl-db-jooq')
-    compile project(':stroom-util')
-    compile project(':stroom-db-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-explorer:stroom-collection-api')
+    implementation project(':stroom-explorer:stroom-docrefinfo-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-index:stroom-index-impl')
+    implementation project(':stroom-index:stroom-index-impl-db-jooq')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile project(':stroom-docref')
+    implementation libs.flyway_core
+    implementation libs.guice5
+    implementation libs.hikari
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jooq
+    implementation libs.slf4j_api
 
-    compile libs.flyway_core
-    compile libs.guice5
-    compile libs.hikari
-    compile libs.jackson_annotations
-    compile libs.javax_inject
-    compile libs.jooq
-    compile libs.slf4j_api
+    runtimeOnly libs.mysql_connector_java
 
-    runtime libs.mysql_connector_java
+    testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-index:stroom-index-mock')
 
-    testCompile project(':stroom-test-common')
-    testCompile project(':stroom-index:stroom-index-mock')
-
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-    testCompile libs.mockito_core
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
 
     testRuntimeOnly libs.junit_jupiter_engine
 }

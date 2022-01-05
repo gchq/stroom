@@ -1,12 +1,12 @@
 ext.moduleName = 'stroom.explorer.api'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-util-shared')
-    
-    compile project(':stroom-docref')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-util-shared')
 
-//    compile libs.jaxb_api
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
     
     testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.jaxb_runtime

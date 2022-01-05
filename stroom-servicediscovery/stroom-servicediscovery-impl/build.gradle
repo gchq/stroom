@@ -1,35 +1,35 @@
 ext.moduleName = 'stroom.servicediscovery.impl'
 
 dependencies {
-//    compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-lifecycle:stroom-lifecycle-api')
-    compile project(':stroom-servicediscovery:stroom-servicediscovery-api')
-//    compile project(':stroom-statistics:stroom-statistics-api')
+//    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
+    implementation project(':stroom-servicediscovery:stroom-servicediscovery-api')
+//    implementation project(':stroom-statistics:stroom-statistics-api')
 
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
-//    compile project(':stroom-docref')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+//    implementation project(':stroom-docref')
 
 
 
-    compile libs.curator_client
-    compile libs.curator_framework
-    compile libs.curator_x_discovery
-    compile libs.dropwizard_metrics_healthchecks
-    compile libs.guava
-    compile libs.guice5
-    compile libs.vavr
-    compile libs.jackson_annotations
-    compile libs.javax_inject
-//    compile libs.jaxb_api
-    compile libs.slf4j_api
-//    compile libs.vavr
+    implementation libs.curator_client
+    implementation libs.curator_framework
+    implementation libs.curator_x_discovery
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.guava
+    implementation libs.guice5
+    implementation libs.vavr
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+//    implementation libs.jaxb_api
+    implementation libs.slf4j_api
+//    implementation libs.vavr
 //
-//    testCompile libs.assertj_core
-//    testCompile libs.mockito_core
-//    testCompile libs.mockito_junit_jupiter
+//    testImplementation libs.assertj_core
+//    testImplementation libs.mockito_core
+//    testImplementation libs.mockito_junit_jupiter
 //
-//    testCompile libs.junit_jupiter_api
+//    testImplementation libs.junit_jupiter_api
 //
 //    // The following logging libs are needed when running junits outside dropwizard
 //    testRuntimeOnly libs.javax_activation
