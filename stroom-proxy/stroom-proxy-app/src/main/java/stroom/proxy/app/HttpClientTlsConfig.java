@@ -8,10 +8,10 @@ import stroom.util.shared.validation.ValidFilePath;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import io.dropwizard.validation.ValidationMethod;
-import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.List;
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * This class is essentially a copy of

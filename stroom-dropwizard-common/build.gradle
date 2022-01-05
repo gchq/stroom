@@ -17,7 +17,7 @@ dependencies {
     compile libs.dropwizard_metrics_healthchecks
     compile libs.javax_inject
     compile libs.jetty_servlet
-    compile libs.javax_servlet_api
+    compile libs.jakarta_servlet_api
     compile libs.logback_classic
     compile libs.slf4j_api
     compile libs.vavr

@@ -9,6 +9,6 @@ dependencies {
     compile libs.eventLogging
     compile project(':stroom-docref')
 
-//    compile libs.javax_servlet_api
+//    compile libs.jakarta_servlet_api
     compile libs.guice5
 }

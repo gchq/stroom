@@ -151,7 +151,7 @@ dependencies {
     compile libs.guava
     compile libs.guice5
     compile libs.javax_inject
-    compile libs.javax_servlet_api
+    compile libs.jakarta_servlet_api
     compile libs.jaxb_api
     compile libs.jcommander
     compile libs.jersey_common

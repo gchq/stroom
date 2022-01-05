@@ -451,7 +451,7 @@ class TestDataRetentionPolicyExecutor {
 
         dataRetentionPolicyExecutor.exec(now);
 
-        Mockito.verifyZeroInteractions(metaService);
+        Mockito.verifyNoInteractions(metaService);
     }
 
     @Test

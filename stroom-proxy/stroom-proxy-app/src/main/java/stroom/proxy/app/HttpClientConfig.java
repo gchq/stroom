@@ -5,7 +5,6 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.hibernate.validator.valuehandling.UnwrapValidatedValue;
 
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -50,8 +49,6 @@ public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
     @Max(1000)
     private int retries = 0;
 
-    @NotNull
-    @UnwrapValidatedValue(false)
     private Optional<String> userAgent = Optional.empty();
 
     // Commented this out as we are unlikely to need configuration of a

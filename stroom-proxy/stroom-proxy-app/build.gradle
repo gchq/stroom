@@ -54,7 +54,7 @@ dependencies {
     compile libs.jackson_core
     compile libs.jackson_databind
     compile libs.javax_inject
-    compile libs.javax_servlet_api
+    compile libs.jakarta_servlet_api
     compile libs.jaxb_api
     compile libs.jetty_server
     compile libs.slf4j_api

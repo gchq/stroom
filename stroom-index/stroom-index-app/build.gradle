@@ -45,7 +45,7 @@ dependencies {
     compile libs.guice5
     compile libs.jackson_annotations
     compile libs.javax_inject
-    compile libs.javax_servlet_api
+    compile libs.jakarta_servlet_api
     compile libs.jcommander
     compile libs.jetty_server
     compile libs.jetty_servlets

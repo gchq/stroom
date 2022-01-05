@@ -30,7 +30,7 @@ dependencies {
 //    compile libs.jackson_databind
     compile libs.slf4j_api
     compile libs.javax_inject
-    compile libs.javax_servlet_api
+    compile libs.jakarta_servlet_api
     compile libs.jersey_common
 //    compile libs.jersey_server
     compile libs.ws_rs_api

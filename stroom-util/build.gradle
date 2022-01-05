@@ -12,13 +12,14 @@ dependencies {
     compile libs.commons_codec
     compile libs.dropwizard_metrics_healthchecks
     compile libs.guava
+    compile libs.google_findbugs
     compile libs.guice5
     compile libs.jackson_annotations
     compile libs.jackson_core
     compile libs.jackson_databind
     compile libs.javassist
     compile libs.javax_inject
-    compile libs.javax_servlet_api
+    compile libs.jakarta_servlet_api
     compile libs.jaxb_api
     compile libs.saxon_he
     compile libs.slf4j_api

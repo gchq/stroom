@@ -22,7 +22,7 @@ dependencies {
 //    compile libs.jackson_annotations
 //    compile libs.jackson_databind
 //    compile libs.javax_inject
-//    compile libs.javax_servlet_api
+//    compile libs.jakarta_servlet_api
 //    compile libs.jaxb_api
 //    compile libs.poi
 //    compile libs.poi_ooxml
