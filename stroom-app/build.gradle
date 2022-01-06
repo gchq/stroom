@@ -533,6 +533,9 @@ task copySupportingFiles(type: Copy) {
 
     from 'src/main/resources/banner.txt'
     from 'src/dist'
+    from('..') {
+        include 'scripts/**'
+    }
     into releaseBuildDir
 
     doLast {

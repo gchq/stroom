@@ -945,8 +945,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
         }
 
         JooqUtil.context(metaDbConnProvider, context -> {
-            int offset = 0;
-            int numberOfRows = 1000000;
+            Integer offset = null;
+            Integer numberOfRows = null;
 
             if (pageRequest != null) {
                 offset = pageRequest.getOffset();

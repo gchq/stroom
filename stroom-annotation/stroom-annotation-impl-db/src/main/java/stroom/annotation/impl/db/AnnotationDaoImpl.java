@@ -495,8 +495,8 @@ class AnnotationDaoImpl implements AnnotationDao {
         final Mapper<?>[] mappers = valueMapper.getMappers(fields);
 
         JooqUtil.context(connectionProvider, context -> {
-            int offset = 0;
-            int numberOfRows = 1000000;
+            Integer offset = null;
+            Integer numberOfRows = null;
 
             if (pageRequest != null) {
                 offset = pageRequest.getOffset();
