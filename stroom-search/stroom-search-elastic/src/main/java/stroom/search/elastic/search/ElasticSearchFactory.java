@@ -32,9 +32,7 @@ import javax.inject.Inject;
 public class ElasticSearchFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchFactory.class);
-
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
-            "Search Elastic Index");
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Elastic Index");
 
     private final WordListProvider wordListProvider;
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
@@ -80,17 +78,20 @@ public class ElasticSearchFactory {
         // Create a map of index fields keyed by name.
         final Map<String, ElasticIndexField> indexFieldsMap = elasticIndexService.getFieldsMap(index);
         final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, dateTimeSettings, now);
+        final Runnable runnable = taskContextFactory.childContext(
+                parentContext,
+                "Search Index",
+                taskContext -> elasticSearchTaskHandler.search(
+                        parentContext,
+                        index,
+                        queryBuilder,
+                        fieldIndex,
+                        storedDataQueue,
+                        errorConsumer,
+                        hitCount));
+
         return CompletableFuture
-                .runAsync(() -> taskContextFactory
-                        .childContext(parentContext, "Search Index", taskContext ->
-                                elasticSearchTaskHandler.search(
-                                        parentContext,
-                                        index,
-                                        queryBuilder,
-                                        fieldIndex,
-                                        storedDataQueue,
-                                        errorConsumer,
-                                        hitCount)), executor)
+                .runAsync(runnable, executor)
                 .whenCompleteAsync((r, t) ->
                         taskContextFactory.childContext(parentContext, "Search Index", taskContext -> {
                             taskContext.info(() -> "Complete stored data queue");
