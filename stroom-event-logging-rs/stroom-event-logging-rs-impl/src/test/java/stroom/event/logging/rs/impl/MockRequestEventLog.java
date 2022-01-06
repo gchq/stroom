@@ -16,7 +16,7 @@
 
 package stroom.event.logging.rs.impl;
 
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class MockRequestEventLog implements RequestEventLog {
 

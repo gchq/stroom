@@ -16,31 +16,32 @@
 ext.moduleName = 'stroom.event.logging.rs.impl'
 
 dependencies {
-    compile project(':stroom-dropwizard-common')
-    compile project(':stroom-event-logging:stroom-event-logging-api')
-    compile project(':stroom-event-logging:stroom-event-logging-impl')
-    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-dropwizard-common')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-impl')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-security:stroom-security-api')
 
-    compile libs.guice5
-    compile libs.jackson_annotations
-    compile libs.jackson_core
-//    compile libs.jackson_databind
-    compile libs.slf4j_api
-    compile libs.javax_inject
-    compile libs.jakarta_servlet_api
-    compile libs.jersey_common
-//    compile libs.jersey_server
-    compile libs.ws_rs_api
+    implementation libs.eventLogging
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.slf4j_api
+    implementation libs.jakarta_servlet_api
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.jersey_common
+    implementation libs.ws_rs_api
 
-    //--------testing----------
-    testCompile project(':stroom-security:stroom-security-mock')
-    testCompile project(':stroom-event-logging:stroom-event-logging-mock')
-    testCompile libs.assertj_core
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
+    testImplementation libs.assertj_core
     testCompileOnly libs.junit_jupiter_api
-    testCompile libs.mockito_core
+    testImplementation libs.mockito_core
 
     testRuntimeOnly libs.junit_jupiter_engine
 }

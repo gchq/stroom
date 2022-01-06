@@ -1,25 +1,25 @@
 ext.moduleName = 'stroom.dictionary.impl'
 
 dependencies {
-    compile project(':stroom-dictionary:stroom-dictionary-api')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-docstore:stroom-docstore-api')
-    compile project(':stroom-event-logging:stroom-event-logging-api')
-    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-resource:stroom-resource-api')
-    compile project(':stroom-security:stroom-security-api')
-//    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    
-    compile project(':stroom-docref')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-resource:stroom-resource-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-importexport:stroom-importexport-api')
 
-    compile libs.dropwizard_metrics_annotation
-    compile libs.guice5
-//    compile libs.jackson_annotations
-    compile libs.javax_inject
-    compile libs.swagger_annotations
-    compile libs.ws_rs_api
+    implementation libs.dropwizard_metrics_annotation
+    implementation libs.guice5
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.restygwt
+    implementation libs.slf4j_api
+    implementation libs.swagger_annotations
+    implementation libs.ws_rs_api
 }

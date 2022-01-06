@@ -8,8 +8,8 @@ import stroom.util.AuditUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 
 public class StoredQueryServiceImpl implements StoredQueryService {
 
@@ -23,13 +23,13 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     }
 
     @Override
-    public StoredQuery create(@Nonnull final StoredQuery storedQuery) {
+    public StoredQuery create(@NotNull final StoredQuery storedQuery) {
         AuditUtil.stamp(securityContext.getUserId(), storedQuery);
         return securityContext.secureResult(() -> dao.create(storedQuery));
     }
 
     @Override
-    public StoredQuery update(@Nonnull final StoredQuery storedQuery) {
+    public StoredQuery update(@NotNull final StoredQuery storedQuery) {
         AuditUtil.stamp(securityContext.getUserId(), storedQuery);
         return securityContext.secureResult(() -> dao.update(storedQuery));
     }

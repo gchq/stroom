@@ -16,6 +16,8 @@
 
 package stroom.job.shared;
 
+import stroom.node.shared.NodeSetJobsEnabledRequest;
+import stroom.node.shared.NodeSetJobsEnabledResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -39,6 +41,8 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface JobResource extends RestResource, DirectRestService {
 
+    String NODE_NAME_PATH_PARAM = "/{nodeName}";
+
     @GET
     @Operation(
             summary = "Lists jobs",
@@ -52,4 +56,15 @@ public interface JobResource extends RestResource, DirectRestService {
             operationId = "setJobEnabled")
     void setEnabled(@PathParam("id") Integer id,
                     @Parameter(description = "enabled", required = true) Boolean enabled);
+
+    @PUT
+    @Path("/setJobsEnabled" + NODE_NAME_PATH_PARAM)
+    @Operation(
+            summary = "Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` " +
+                    "are unspecified or empty, this action will apply to ALL jobs.",
+            operationId = "setNodeJobsEnabled"
+    )
+    NodeSetJobsEnabledResponse setJobsEnabled(
+            @PathParam("nodeName") String nodeName,
+            @Parameter(description = "Request parameters", required = true) NodeSetJobsEnabledRequest params);
 }

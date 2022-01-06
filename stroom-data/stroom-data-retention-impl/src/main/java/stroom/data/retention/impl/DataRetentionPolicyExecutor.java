@@ -36,6 +36,7 @@ import stroom.util.time.TimeUtils;
 import com.google.common.collect.Ordering;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -53,7 +54,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Provider;
 

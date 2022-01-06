@@ -23,8 +23,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 
 import static stroom.job.impl.db.jooq.Tables.JOB;
 import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
@@ -89,14 +89,14 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
     }
 
     @Override
-    public JobNode create(@Nonnull final JobNode jobNode) {
+    public JobNode create(@NotNull final JobNode jobNode) {
         final JobNode result = genericDao.create(jobNode);
         result.setJob(jobNode.getJob());
         return result;
     }
 
     @Override
-    public JobNode update(@Nonnull final JobNode jobNode) {
+    public JobNode update(@NotNull final JobNode jobNode) {
         Objects.requireNonNull(jobNode, "Null JobNode");
         Objects.requireNonNull(jobNode.getJob(), "Null JobNode Job");
 

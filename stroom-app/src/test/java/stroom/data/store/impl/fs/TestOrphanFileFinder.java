@@ -43,6 +43,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
@@ -77,7 +78,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
         final Meta md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
         final String date = ZonedDateTime
                 .ofInstant(Instant.ofEpochMilli(md.getCreateMs()), ZoneOffset.UTC)
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH));
 
         commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, md);
 
@@ -116,7 +117,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
         final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         final ZonedDateTime oldDate = now.plusDays(NEG_SIXTY);
-        final String date = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        final String date = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH));
 
         // Write a file 2 files ... on we leave locked and the other not locked
         final String feedName = FileSystemTestUtil.getUniqueTestString();

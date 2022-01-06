@@ -1,31 +1,27 @@
 ext.moduleName = 'stroom.docstore.impl'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-docstore:stroom-docstore-api')
-//    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-event-logging:stroom-event-logging-api')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-util')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 
-    // stroom libs
-    compile project(':stroom-docref')
-
-    // 3rd party libs
-//    compile libs.guice5
-//    compile libs.guice_assistedinject
-//    compile libs.jackson_annotations
-//    compile libs.jackson_databind
-    compile libs.javax_inject
-//    compile libs.jaxb_api
-    compile libs.slf4j_api
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.slf4j_api
     
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-    testCompile libs.mockito_core
-    testCompile libs.mockito_junit_jupiter
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

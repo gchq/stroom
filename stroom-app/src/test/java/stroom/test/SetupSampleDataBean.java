@@ -19,7 +19,6 @@ package stroom.test;
 
 import stroom.dashboard.impl.DashboardStore;
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.Store;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
@@ -65,6 +64,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -454,7 +454,7 @@ public final class SetupSampleDataBean {
     }
 
     private String createRandomData() {
-        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy,HH:mm:ss");
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy,HH:mm:ss", Locale.ENGLISH);
         final ZonedDateTime refDateTime = ZonedDateTime.of(
                 2010, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 

@@ -1,49 +1,42 @@
 ext.moduleName = 'stroom.search.solr'
 
 dependencies {
-    compile project(':stroom-annotation:stroom-annotation-api')
-    compile project(':stroom-cluster:stroom-cluster-lock-api')
-//    compile project(':stroom-core-server')
-//    compile project(':stroom-core-shared')
-//    compile project(':stroom-docstore-server')
-////    compile project(':stroom-entity-shared')
-//    compile project(':stroom-explorer-api')
-    compile project(':stroom-pipeline')
-    compile project(':stroom-query:stroom-expression')
-    compile project(':stroom-query:stroom-query-api')
-    compile project(':stroom-query:stroom-query-common')
-    compile project(':stroom-search:stroom-search-extraction')
-        compile project(':stroom-search:stroom-search-api')
-//    compile project(':stroom-security-api')
-    compile project(':stroom-util')
-//    compile project(':stroom-util-shared')
-//
-//    compile project(':stroom-connectors')
-//    permitUnusedDeclared project(':stroom-connectors')
+    implementation project(':stroom-annotation:stroom-annotation-api')
+    implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-cluster:stroom-cluster-task-api')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-search:stroom-search-extraction')
+    implementation project(':stroom-search:stroom-search-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.dropwizard_metrics_annotation
-    compile libs.dropwizard_metrics_healthchecks
-    compile libs.guava
-    compile libs.http_client
-    compile libs.lucene_core
-    compile libs.slf4j_api
-    compile libs.solrj
-    compile libs.swagger_annotations
-    compile libs.javax_inject
-    compile libs.ws_rs_api
-    compile libs.xml_apis
-
-//    testCompile project(':stroom-test-common')
-//    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-//    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-//
-//    testCompile libs.commons_io
-//    testCompile libs.junit
-//
-//    //the following logging libs are needed when running junits outside dropwizard
-//    testRuntime libs.jcl_over_slf4j
-//    testRuntime libs.jul_to_slf4j
-//    testRuntime libs.log4j_over_slf4j
-//    testRuntime libs.logback_classic
-//    testRuntime libs.logback_core
+    implementation libs.dropwizard_metrics_annotation
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.guava
+    implementation libs.guice5
+    implementation libs.http_client
+    implementation libs.lucene_core
+    implementation libs.restygwt
+    implementation libs.slf4j_api
+    implementation libs.solrj
+    implementation libs.swagger_annotations
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.ws_rs_api
+    implementation libs.xml_apis
 }

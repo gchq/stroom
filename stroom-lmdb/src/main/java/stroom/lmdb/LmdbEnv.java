@@ -37,7 +37,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A wrapper around {@link org.lmdbjava.Env<java.nio.ByteBuffer>} with additional concurrency
@@ -456,7 +455,6 @@ public class LmdbEnv implements AutoCloseable {
                 .build();
     }
 
-    @NotThreadSafe
     public static class WriteTxn implements AutoCloseable {
 
         private final Lock writeLock;
@@ -512,7 +510,6 @@ public class LmdbEnv implements AutoCloseable {
     /**
      * Creates a write txn on calls to {@link BatchingWriteTxn#getTxn()}
      */
-    @NotThreadSafe
     public static class BatchingWriteTxn implements AutoCloseable {
 
         private final Lock writeLock;

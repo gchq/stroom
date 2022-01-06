@@ -1,15 +1,16 @@
 ext.moduleName = 'stroom.task.api'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-util')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 
-    compile libs.javax_inject
-    compile libs.slf4j_api
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.slf4j_api
     
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

@@ -1,5 +1,5 @@
 ext.moduleName = 'stroom.security.client.api'
 
 dependencies {
-    compile libs.gwt_user
+    implementation libs.gwt_user
 }

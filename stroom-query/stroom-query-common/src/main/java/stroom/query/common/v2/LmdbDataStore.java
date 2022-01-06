@@ -64,8 +64,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.annotation.Nonnull;
 import javax.inject.Provider;
+import javax.validation.constraints.NotNull;
 
 public class LmdbDataStore implements DataStore {
 
@@ -571,7 +571,7 @@ public class LmdbDataStore implements DataStore {
 
             return new Items() {
                 @Override
-                @Nonnull
+                @NotNull
                 public Iterator<Item> iterator() {
                     return new Iterator<>() {
                         private int pos = 0;

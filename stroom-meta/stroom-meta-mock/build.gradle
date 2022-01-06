@@ -1,18 +1,17 @@
 ext.moduleName = 'stroom.meta.mock'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-meta:stroom-meta-api')
-    compile project(':stroom-data:stroom-data-retention-api')
-    compile project(':stroom-search:stroom-expression-matcher')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-util')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-data:stroom-data-retention-api')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-search:stroom-expression-matcher')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 
-//    compile project(':stroom-docref')
-
-//    compile libs.guice5
-//    compile libs.jackson_annotations
-    compile libs.javax_inject
-//    compile libs.jaxb_api
-//    compile libs.slf4j_api
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
 }

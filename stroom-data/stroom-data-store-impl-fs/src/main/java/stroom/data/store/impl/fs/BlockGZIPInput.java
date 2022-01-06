@@ -24,7 +24,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.zip.GZIPInputStream;
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 /**
  * @see BlockGZIPConstants
@@ -265,7 +265,7 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
      * Read X bytes of uncompressed data
      */
     @Override
-    public int read(@Nonnull final byte[] bytes) throws IOException {
+    public int read(@NotNull final byte[] bytes) throws IOException {
         return read(bytes, 0, bytes.length);
     }
 
@@ -273,7 +273,7 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
      * Read some uncompressed data from our stream.
      */
     @Override
-    public int read(@Nonnull final byte[] bytes, final int off, final int tryLen) throws IOException {
+    public int read(@NotNull final byte[] bytes, final int off, final int tryLen) throws IOException {
         int realLen = tryLen;
 
         // Are we going to read past the length of the file?
@@ -405,7 +405,7 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
         }
 
         @Override
-        public int read(@Nonnull final byte[] b, final int off, final int tryLen) throws IOException {
+        public int read(@NotNull final byte[] b, final int off, final int tryLen) throws IOException {
             // Make sure we don't max
             final long maxSize = getCurrentBlockRawGzipSize();
             int realLen = tryLen;

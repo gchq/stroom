@@ -31,7 +31,6 @@ import com.google.inject.Provides;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.MarkerFactory;
 
 import java.sql.Connection;
@@ -50,6 +49,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
+import javax.validation.constraints.NotNull;
 
 /**
  * Configures anything related to persistence, e.g. transaction management, the

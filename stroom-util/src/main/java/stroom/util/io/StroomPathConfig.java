@@ -11,8 +11,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.annotation.Nonnull;
 import javax.inject.Singleton;
+import javax.validation.constraints.NotNull;
 
 @BootStrapConfig
 @Singleton
@@ -54,7 +54,7 @@ public class StroomPathConfig extends PathConfig implements IsStroomConfig {
      * Will be created on boot in App
      */
     @Override
-    @Nonnull
+    @NotNull
     @ReadOnly
     @RequiresRestart(RestartScope.SYSTEM)
     @JsonPropertyDescription("This directory is used by stroom to write any temporary file to. " +

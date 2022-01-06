@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Locale;
 
 @SuppressWarnings("checkstyle:LineLength")
 public class NetworkMonitoringDataGenerator {
@@ -27,12 +28,12 @@ public class NetworkMonitoringDataGenerator {
                         "Date",
                         startInc,
                         endExc,
-                        DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.ENGLISH)))
                 .addFieldDefinition(TestDataGenerator.randomDateTimeField(
                         "Time",
                         startInc,
                         endExc,
-                        DateTimeFormatter.ofPattern("HH:mm:ss")))
+                        DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ENGLISH)))
                 .addFieldDefinition(TestDataGenerator.randomValueField(
                         "EventType",
                         Arrays.asList("authenticationFailed", "authorisationFailed")))

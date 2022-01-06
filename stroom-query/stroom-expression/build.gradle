@@ -1,15 +1,15 @@
 ext.moduleName = 'stroom.expression'
 
 dependencies {
-    compile libs.classgraph
-    compile libs.jaxb_api
-    compile libs.kryo
-    compile libs.slf4j_api
+    implementation libs.classgraph
+    implementation libs.jaxb_api
+    implementation libs.kryo
+    implementation libs.slf4j_api
+    implementation libs.vavr
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-    testCompile libs.junit_jupiter_params
-    testCompile libs.vavr
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_params
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

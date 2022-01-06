@@ -18,7 +18,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 /**
  * Provides mechanisms for filtering data based on a quick filter terms, e.g.
@@ -633,7 +632,7 @@ public class QuickFilterPredicateFactory {
         private final String qualifier;
         private final String matchInput;
 
-        private MatchToken(@Nullable final String qualifier, final String input) {
+        private MatchToken(final String qualifier, final String input) {
             this.qualifier = qualifier;
             this.matchInput = Objects.requireNonNull(input);
         }

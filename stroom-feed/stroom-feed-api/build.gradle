@@ -1,11 +1,13 @@
 ext.moduleName = 'stroom.feed.api'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-docstore:stroom-docstore-api')
-    compile project(':stroom-util-shared')
-    
-    compile project(':stroom-docref')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-util-shared')
 
-    compile libs.jaxb_api
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
 }

@@ -1,17 +1,18 @@
 ext.moduleName = 'stroom.util.shared'
 
 dependencies {
-    compile project(':stroom-docref')
+    implementation project(':stroom-docref')
 
-    compile libs.jackson_annotations
-//    compile libs.jaxb_api
-    compile libs.swagger_annotations
-    compile libs.jakarta_validation_api
+    implementation libs.jackson_annotations
+    implementation libs.jakarta_validation_api
+    implementation libs.jaxb_api
+    implementation libs.swagger_annotations
 
-    testCompile libs.assertj_core
-    testCompile libs.jackson_databind
-    testCompile libs.junit_jupiter_api
-    testCompile libs.slf4j_api
+    testImplementation libs.assertj_core
+    testImplementation libs.jackson_core
+    testImplementation libs.jackson_databind
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.slf4j_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

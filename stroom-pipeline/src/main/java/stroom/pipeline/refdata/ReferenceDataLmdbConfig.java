@@ -11,8 +11,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.annotation.Nonnull;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfig, IsStroomConfig {
@@ -53,7 +53,7 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
     }
 
     @Override
-    @Nonnull
+    @NotNull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The path relative to the home directory to use for storing the reference data store. " +
             "It MUST be on local disk, NOT network storage, due to use of memory mapped files. " +

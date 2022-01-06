@@ -1,35 +1,37 @@
 ext.moduleName = 'stroom.importexport.impl'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-event-logging:stroom-event-logging-api')
-    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-lifecycle:stroom-lifecycle-api')
-    compile project(':stroom-resource:stroom-resource-api')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-resource:stroom-resource-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
     
-    compile libs.eventLogging
-    compile libs.guice5
-//    compile libs.jackson_annotations
-    compile libs.javax_inject
-//    compile libs.jaxb_api
-    compile libs.slf4j_api
-    compile project(':stroom-docref')
-    compile libs.swagger_annotations
-    compile libs.ws_rs_api
+    implementation libs.eventLogging
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.restygwt
+    implementation libs.slf4j_api
+    implementation project(':stroom-docref')
+    implementation libs.swagger_annotations
+    implementation libs.ws_rs_api
 
-    testCompile project(':stroom-test-common')
+    testImplementation project(':stroom-test-common')
 
-    testCompile libs.assertj_core
-    testCompile libs.mockito_core
-    testCompile libs.mockito_junit_jupiter
+    testImplementation libs.assertj_core
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

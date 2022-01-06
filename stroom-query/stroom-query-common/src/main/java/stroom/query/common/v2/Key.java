@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 public class Key implements Iterable<KeyPart> {
 
@@ -152,7 +152,7 @@ public class Key implements Iterable<KeyPart> {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public Iterator<KeyPart> iterator() {
         final List<KeyPart> keyParts = getKeyParts();
         return keyParts.iterator();

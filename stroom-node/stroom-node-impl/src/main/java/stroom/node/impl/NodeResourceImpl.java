@@ -29,17 +29,12 @@ import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
-import stroom.node.shared.NodeSetJobsEnabledRequest;
-import stroom.node.shared.NodeSetJobsEnabledResponse;
 import stroom.node.shared.NodeStatusResult;
-import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
 import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.List;
@@ -53,7 +48,6 @@ import javax.ws.rs.client.SyncInvoker;
 
 @AutoLogged
 class NodeResourceImpl implements NodeResource {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final Provider<NodeServiceImpl> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
@@ -64,7 +58,6 @@ class NodeResourceImpl implements NodeResource {
     NodeResourceImpl(final Provider<NodeServiceImpl> nodeServiceProvider,
                      final Provider<NodeInfo> nodeInfoProvider,
                      final Provider<ClusterNodeManager> clusterNodeManagerProvider,
-                     final Provider<WebTargetFactory> webTargetFactoryProvider,
                      final Provider<DocumentEventLog> documentEventLogProvider) {
         this.nodeServiceProvider = nodeServiceProvider;
         this.nodeInfoProvider = nodeInfoProvider;
@@ -246,22 +239,5 @@ class NodeResourceImpl implements NodeResource {
             documentEventLog.update(before, after, e);
             throw e;
         }
-    }
-
-    @Override
-    public NodeSetJobsEnabledResponse setJobsEnabled(final String nodeName, final NodeSetJobsEnabledRequest params) {
-        final NodeServiceImpl nodeService = nodeServiceProvider.get();
-        final int recordsUpdated = nodeService.setJobsEnabledForNode(
-                nodeName,
-                params.isEnabled(),
-                params.getIncludeJobs(),
-                params.getExcludeJobs());
-
-        if (recordsUpdated > 0) {
-            String enabledState = params.isEnabled() ? "Enabled" : "Disabled";
-            LOGGER.info(enabledState + " " + recordsUpdated + " tasks for node " + nodeName);
-        }
-
-        return new NodeSetJobsEnabledResponse(recordsUpdated);
     }
 }

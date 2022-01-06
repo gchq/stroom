@@ -13,13 +13,11 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.util.Objects;
 import java.util.function.Supplier;
-import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Class to decode a byte stream one 'char' at a time. A 'char' may consist of one or more bytes
  * in the stream.
  */
-@NotThreadSafe
 public class ByteStreamDecoder {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteStreamDecoder.class);

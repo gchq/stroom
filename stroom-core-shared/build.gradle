@@ -1,27 +1,21 @@
 ext.moduleName = 'stroom.core.shared'
 
 dependencies {
-    compile project(':stroom-query:stroom-query-api')
-//    compile project(':stroom-query:stroom-expression')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-util-shared')
 
-    compile project(':stroom-docref')
+    implementation libs.jackson_annotations
+    implementation libs.jakarta_validation_api
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.restygwt
+    implementation libs.swagger_annotations
+    implementation libs.ws_rs_api
 
-//    compile libs.gwt_servlet
-    compile libs.jackson_annotations
-//    compile libs.jackson_databind
-    compile libs.javax_inject
-    compile libs.jaxb_api
-//    compile libs.slf4j_api
-//    compile libs.jakarta_servlet_api
-    compile libs.restygwt
-    compile libs.swagger_annotations
-    compile libs.jakarta_validation_api
-    compile libs.ws_rs_api
-
-    testCompile libs.assertj_core
-    testCompile libs.jackson_core
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.assertj_core
+    testImplementation libs.jackson_core
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

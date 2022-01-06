@@ -31,7 +31,6 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import javax.annotation.concurrent.NotThreadSafe;
 import javax.inject.Inject;
 
 /*
@@ -65,7 +64,6 @@ import javax.inject.Inject;
  * Once getPooledByteBuffer is called, any calls to write(*) will throw and exception until
  * clear or release are called.
  */
-@NotThreadSafe
 public class PooledByteBufferOutputStream extends OutputStream implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PooledByteBufferOutputStream.class);

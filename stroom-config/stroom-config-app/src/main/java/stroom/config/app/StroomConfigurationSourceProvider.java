@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 public class StroomConfigurationSourceProvider implements ConfigurationSourceProvider {
 
@@ -183,7 +183,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
         }
     }
 
-    @Nonnull
+    @NotNull
     private PathCreator getPathCreator(final JsonNode rootNode) {
         Objects.requireNonNull(rootNode);
 

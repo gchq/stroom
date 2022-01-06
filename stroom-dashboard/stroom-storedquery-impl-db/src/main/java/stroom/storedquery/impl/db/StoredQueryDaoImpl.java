@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 
 import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 
@@ -43,7 +43,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     }
 
     @Override
-    public StoredQuery create(@Nonnull final StoredQuery storedQuery) {
+    public StoredQuery create(@NotNull final StoredQuery storedQuery) {
         StoredQuerySerialiser.serialise(storedQuery);
         StoredQuery result = genericDao.create(storedQuery);
         StoredQuerySerialiser.deserialise(result);
@@ -51,7 +51,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     }
 
     @Override
-    public StoredQuery update(@Nonnull final StoredQuery storedQuery) {
+    public StoredQuery update(@NotNull final StoredQuery storedQuery) {
         StoredQuerySerialiser.serialise(storedQuery);
         StoredQuery result = genericDao.update(storedQuery);
         StoredQuerySerialiser.deserialise(result);

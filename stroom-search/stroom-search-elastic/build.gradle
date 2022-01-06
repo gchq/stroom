@@ -4,8 +4,17 @@ apply plugin: 'java-library'
 
 dependencies {
     implementation project(':stroom-annotation:stroom-annotation-api')
+    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
@@ -13,17 +22,37 @@ dependencies {
     implementation project(path: ":stroom-search:elastic-shaded", configuration: 'shadow') // Use shadow JAR
     implementation project(':stroom-search:stroom-search-extraction')
     implementation project(':stroom-search:stroom-search-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard_metrics_annotation
+    implementation libs.guice5
     implementation libs.httpcore
     implementation libs.http_client
-    implementation libs.dropwizard_metrics_annotation
-    implementation libs.slf4j_api
-    implementation libs.swagger_annotations
+    implementation libs.jackson_annotations
     implementation libs.javax_inject
     implementation libs.json_path
+    implementation libs.restygwt
+    implementation libs.slf4j_api
+    implementation libs.swagger_annotations
     implementation libs.ws_rs_api
     implementation libs.xml_apis
 
     testImplementation project(':stroom-test-common')
+
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_params
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
 }

@@ -24,7 +24,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A lazy wrapper for a {@link ByteBuffer} obtained from a {@link ByteBufferPool} that can be used
@@ -36,7 +35,6 @@ import javax.annotation.concurrent.NotThreadSafe;
  * The wrapper is empty on creation and when getByteBuffer is called, it will be populated
  * with a {@link ByteBuffer} from the pool. Depending on the implementation of the pool this may block.
  */
-@NotThreadSafe
 public class PooledByteBuffer implements AutoCloseable {
 
     private ByteBuffer byteBuffer;

@@ -4,11 +4,10 @@ apply plugin: 'nu.studer.jooq'
 ext.moduleName = 'stroom.proxy.repo.db.jooq'
 
 dependencies {
-    compile libs.jakarta_annotation_api
-    permitUnusedDeclared libs.jakarta_annotation_api
-    compile libs.jooq
+    implementation libs.jakarta_annotation_api
+    implementation libs.jooq
 
-    runtime libs.sqlite
+    runtimeOnly libs.sqlite
     jooqGenerator libs.sqlite
 }
 
