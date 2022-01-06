@@ -39,11 +39,12 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.slice.SliceBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,6 +53,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 public class ElasticSearchTaskHandler {
@@ -62,11 +64,6 @@ public class ElasticSearchTaskHandler {
      * Number of minutes to allow a scroll request to continue before being aborted
      */
     private static final long SCROLL_DURATION = 1L;
-
-    /**
-     * Number of documents to return in a single search scroll request
-     */
-    private static final int SCROLL_SIZE = 1000;
 
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
@@ -145,46 +142,53 @@ public class ElasticSearchTaskHandler {
         elasticClientCache.context(connectionConfig, elasticClient -> {
             try {
                 final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(SCROLL_DURATION));
-                SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName());
-                searchRequest.scroll(scroll);
+                SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
+                        .scroll(scroll);
 
-                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
-                        .query(query)
-                        .size(SCROLL_SIZE);
-                searchRequest.source(searchSourceBuilder);
+                IntStream.range(0, elasticIndex.getSearchSlices()).parallel().forEach(slice -> {
+                    try {
+                        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
+                                .query(query)
+                                .size(elasticIndex.getSearchScrollSize())
+                                .slice(new SliceBuilder(slice, elasticIndex.getSearchSlices()));
 
-                SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
-                String scrollId = searchResponse.getScrollId();
+                        searchRequest.source(searchSourceBuilder);
+                        SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
+                        String scrollId = searchResponse.getScrollId();
 
-                SearchHit[] searchHits = searchResponse.getHits().getHits();
-                processBatch(
-                        fieldIndex,
-                        valuesConsumer,
-                        errorConsumer,
-                        hitCount,
-                        searchHits);
+                        SearchHit[] searchHits = searchResponse.getHits().getHits();
+                        processBatch(
+                                fieldIndex,
+                                valuesConsumer,
+                                errorConsumer,
+                                hitCount,
+                                searchHits);
 
-                // Continue requesting results until we have all results
-                while (searchHits != null && searchHits.length > 0) {
-                    SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-                    scrollRequest.scroll(scroll);
-                    searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
-                    searchHits = searchResponse.getHits().getHits();
+                        // Continue requesting results until we have all results
+                        while (searchHits != null && searchHits.length > 0) {
+                            SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
+                            scrollRequest.scroll(scroll);
+                            searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
+                            searchHits = searchResponse.getHits().getHits();
 
-                    processBatch(
-                            fieldIndex,
-                            valuesConsumer,
-                            errorConsumer,
-                            hitCount,
-                            searchHits);
-                }
+                            processBatch(
+                                    fieldIndex,
+                                    valuesConsumer,
+                                    errorConsumer,
+                                    hitCount,
+                                    searchHits);
+                        }
 
-                ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
-                clearScrollRequest.addScrollId(scrollId);
-                elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+                        ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+                        clearScrollRequest.addScrollId(scrollId);
+                        elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+                    } catch (final IOException | RuntimeException e) {
+                        error(errorConsumer, e);
+                    }
+                });
 
                 LOGGER.debug(() -> "Total hits: " + hitCount.get());
-            } catch (final IOException | RuntimeException e) {
+            } catch (final RuntimeException e) {
                 error(errorConsumer, e);
             }
         });

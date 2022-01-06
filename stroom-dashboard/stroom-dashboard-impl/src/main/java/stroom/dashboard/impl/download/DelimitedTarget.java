@@ -59,7 +59,7 @@ public class DelimitedTarget implements SearchResultWriter.Target {
     }
 
     @Override
-    public void writeHeading(final Field field, final String heading) throws IOException {
+    public void writeHeading(final int fieldIndex, final Field field, final String heading) throws IOException {
         delimitedWriter.writeValue(heading);
     }
 

@@ -23,8 +23,11 @@ import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.TimeZone;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
+import java.util.Date;
 
 public class DateTimeFormatter implements Formatter {
 
@@ -86,6 +89,14 @@ public class DateTimeFormatter implements Formatter {
             return 0;
         }
         return i;
+    }
+
+    public LocalDateTime parse(final String value) throws DateTimeParseException {
+        if (value == null) {
+            return null;
+        }
+
+        return DateUtil.parseLocal(value, format, zone);
     }
 
     @Override

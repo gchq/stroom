@@ -4,7 +4,7 @@
              xmlns:c="urn:import:stroom.widget.customdatebox.client"
 >
     <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-        <g:south size="50">
+        <g:south size="60">
             <g:FlowPanel styleName="stroom-control-page">
                 <g:Grid styleName="stroom-control-grid">
                     <g:row>

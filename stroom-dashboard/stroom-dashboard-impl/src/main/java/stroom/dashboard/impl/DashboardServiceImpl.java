@@ -44,6 +44,7 @@ import stroom.dashboard.shared.VisResultRequest;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
@@ -321,7 +322,8 @@ class DashboardServiceImpl implements DashboardService {
                 final List<Field> fields = tableResultRequest.getTableSettings().getFields();
                 final List<Row> rows = tableResult.getRows();
 
-                download(fields, rows, file, request.getFileType(), request.isSample(), request.getPercent());
+                download(fields, rows, file, request.getFileType(), request.isSample(), request.getPercent(),
+                        searchRequest.getDateTimeSettings());
 
                 searchEventLog.downloadResults(search.getDataSourceRef(),
                         search.getExpression(),
@@ -338,8 +340,13 @@ class DashboardServiceImpl implements DashboardService {
         });
     }
 
-    private void download(final List<Field> fields, final List<Row> rows, final Path file,
-                          final DownloadSearchResultFileType fileType, final boolean sample, final int percent) {
+    private void download(final List<Field> fields,
+                          final List<Row> rows,
+                          final Path file,
+                          final DownloadSearchResultFileType fileType,
+                          final boolean sample,
+                          final int percent,
+                          final DateTimeSettings dateTimeSettings) {
         try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
             SearchResultWriter.Target target = null;
 
@@ -352,7 +359,7 @@ class DashboardServiceImpl implements DashboardService {
                     target = new DelimitedTarget(outputStream, "\t");
                     break;
                 case EXCEL:
-                    target = new ExcelTarget(outputStream);
+                    target = new ExcelTarget(outputStream, dateTimeSettings);
                     break;
             }
 
