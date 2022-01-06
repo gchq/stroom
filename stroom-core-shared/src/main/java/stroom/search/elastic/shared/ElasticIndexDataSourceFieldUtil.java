@@ -47,8 +47,6 @@ public final class ElasticIndexDataSourceFieldUtil {
         final String fieldName = field.getFieldName();
         final List<Condition> supportedConditions = fieldType.getSupportedConditions();
         switch (fieldType) {
-            case ID:
-                return new IdField(fieldName, true, supportedConditions);
             case BOOLEAN:
                 return new BooleanField(fieldName, true, supportedConditions);
             case INTEGER:

@@ -41,7 +41,6 @@ import java.util.Set;
  * @see "https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-types.html"
  */
 public enum ElasticIndexFieldType implements HasDisplayValue {
-    ID(FieldTypes.ID, "Id", true, null),
     BOOLEAN(FieldTypes.BOOLEAN, "Boolean", false, new String[]{ "boolean" }),
     INTEGER(FieldTypes.INTEGER, "Integer", true, new String[]{ "integer", "short", "byte" }),
     LONG(FieldTypes.LONG, "Long", true, new String[]{ "long", "unsigned_long" }),
