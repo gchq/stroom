@@ -884,6 +884,12 @@ export interface ElasticIndexDoc {
 
   /** A logical addOperator term in a query expression tree */
   retentionExpression?: ExpressionOperator;
+
+  /** @format int32 */
+  searchScrollSize?: number;
+
+  /** @format int32 */
+  searchSlices?: number;
   type?: string;
 
   /** @format int64 */

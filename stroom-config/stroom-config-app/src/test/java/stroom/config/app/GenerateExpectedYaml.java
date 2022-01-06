@@ -89,11 +89,10 @@ public class GenerateExpectedYaml {
     public static List<String> removeDropWizardLines(final String value) {
         return value.lines()
                 .sequential()
-                .takeWhile(line ->
-                        line.startsWith("---") || line.startsWith(APP_CONFIG + ":") || line.startsWith(" "))
+                .dropWhile(line -> !line.startsWith(APP_CONFIG + ":"))
+                .takeWhile(line -> line.startsWith(APP_CONFIG + ":") || line.startsWith("  "))
                 .collect(Collectors.toList());
     }
-
 
     static void generateJsonSchema(final Path schemaFile) throws IOException {
         final ObjectMapper objectMapper = new ObjectMapper();
