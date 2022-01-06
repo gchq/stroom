@@ -30,7 +30,7 @@ class TestSAXParserFactoryFactory {
     @Test
     void testExceedingTotalEntities() throws Exception {
         // Set this to true to test limits.
-        ParserConfig.secureProcessing = false;
+        SAXParserSettings.setSecureProcessingEnabled(false);
 
         final SAXParserFactory factory = SAXParserFactoryFactory.newInstance();
         final XMLReader xmlReader = factory.newSAXParser().getXMLReader();

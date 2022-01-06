@@ -1,16 +1,16 @@
 package stroom.db.util;
 
-import stroom.config.common.DbConfig;
+import stroom.config.common.AbstractDbConfig;
 
 import java.util.Objects;
 
 public class DataSourceKey {
 
-    private final DbConfig config;
+    private final AbstractDbConfig config;
     private final String name;
     private final boolean unique;
 
-    public DataSourceKey(final DbConfig config,
+    public DataSourceKey(final AbstractDbConfig config,
                          final String name,
                          final boolean unique) {
         this.config = config;
@@ -18,7 +18,7 @@ public class DataSourceKey {
         this.unique = unique;
     }
 
-    public DbConfig getConfig() {
+    public AbstractDbConfig getConfig() {
         return config;
     }
 

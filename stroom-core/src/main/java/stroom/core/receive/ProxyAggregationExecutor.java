@@ -45,14 +45,14 @@ public class ProxyAggregationExecutor {
     private final Exec exec;
 
     @Inject
-    public ProxyAggregationExecutor(final AggregatorConfig aggregatorConfig,
+    public ProxyAggregationExecutor(final Provider<AggregatorConfig> aggregatorConfigProvider,
                                     final Provider<ProxyRepoFileScanner> proxyRepoFileScannerProvider,
                                     final Provider<RepoSourceItems> proxyRepoSourceEntriesProvider,
                                     final Provider<Aggregator> aggregatorProvider,
                                     final Provider<AggregateForwarder> aggregatorForwarderProvider,
                                     final Provider<SourceForwarder> sourceForwarderProvider,
                                     final Provider<Cleanup> cleanupProvider) {
-        if (aggregatorConfig.isEnabled()) {
+        if (aggregatorConfigProvider.get().isEnabled()) {
             final ProxyRepoFileScanner proxyRepoFileScanner = proxyRepoFileScannerProvider.get();
             final RepoSourceItems repoSourceItems = proxyRepoSourceEntriesProvider.get();
             final Aggregator aggregator = aggregatorProvider.get();

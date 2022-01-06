@@ -109,7 +109,6 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        //Hold values for later use
         if (DATA.equals(localName) && values != null) {
             SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_DATA);
             String name = atts.getValue(NAME);
@@ -123,7 +122,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 }
 
                 if (name.length() > 0 && value.length() > 0) {
-                    final Integer pos = fieldIndexes.getPos(name);
+                    final Integer pos = fieldIndex.getPos(name);
                     if (pos != null) {
                         values[pos] = ValString.create(value);
                     }
@@ -131,7 +130,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             }
         } else if (RECORD.equals(localName)) {
             SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_RECORD);
-            values = new Val[fieldIndexes.size()];
+            values = new Val[fieldIndex.size()];
             recordAtts = atts;
             indexVals.clear();
         } else if (isConfiguredForAlerting() && !DATA.equals(localName)) {
@@ -162,7 +161,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 //Standard (typically dashboard populating) search extraction, pass onto consumers (e.g. dashboards)
                 SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
                 SearchDebugUtil.writeExtractionData(values);
-                consumer.accept(values);
+                receiver.add(values);
                 count++;
                 values = null;
             }
@@ -267,7 +266,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 .build();
 
         final List<stroom.query.api.v2.Field> fields = tableSettings.getFields();
-        final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndexes,
+        final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex,
                 paramMapForAlerting);
 
         final CompiledFieldValue[] output = new CompiledFieldValue[compiledFields.length];

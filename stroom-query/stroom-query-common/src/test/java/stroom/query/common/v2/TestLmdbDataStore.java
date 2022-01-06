@@ -31,6 +31,7 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -58,10 +61,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final FieldIndex fieldIndex = new FieldIndex();
 
         final TempDirProvider tempDirProvider = () -> tempDir;
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
-        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(pathCreator, tempDirProvider, lmdbLibraryConfig);
+        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
+                pathCreator,
+                tempDirProvider,
+                () -> lmdbLibraryConfig);
+        final Executor executor = Executors.newCachedThreadPool();
 
         return new LmdbDataStore(
                 lmdbEnvFactory,
@@ -72,7 +79,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 fieldIndex,
                 Collections.emptyMap(),
                 maxResults,
-                storeSize);
+                false,
+                () -> executor,
+                new ErrorConsumerImpl());
     }
 
     @Test

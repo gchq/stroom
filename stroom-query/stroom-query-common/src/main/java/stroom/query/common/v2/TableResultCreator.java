@@ -32,14 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TableResultCreator implements ResultCreator {
@@ -59,15 +56,7 @@ public class TableResultCreator implements ResultCreator {
 
     @Override
     public Result create(final DataStore data, final ResultRequest resultRequest) {
-        final Set<String> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        final Consumer<Throwable> errorConsumer = throwable -> {
-            if (throwable.getMessage() == null || throwable.getMessage().isBlank()) {
-                errors.add(throwable.getClass().getName());
-            } else {
-                errors.add(throwable.getMessage());
-            }
-        };
-
+        final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
         final List<Row> resultList = new ArrayList<>();
         int offset = 0;
         int length = Integer.MAX_VALUE;
@@ -114,12 +103,7 @@ public class TableResultCreator implements ResultCreator {
                     errorConsumer);
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
-            errorConsumer.accept(e);
-        }
-
-        String errorString = null;
-        if (errors.size() > 0) {
-            errorString = String.join("\n", errors);
+            errorConsumer.add(e);
         }
 
         return new TableResult(
@@ -128,7 +112,7 @@ public class TableResultCreator implements ResultCreator {
                 resultList,
                 new OffsetRange(offset, resultList.size()),
                 totalResults,
-                errorString);
+                errorConsumer.getErrors());
     }
 
     private int addTableResults(final DataStore data,
@@ -142,7 +126,7 @@ public class TableResultCreator implements ResultCreator {
                                 final int depth,
                                 final int position,
                                 final RowCreator rowCreator,
-                                final Consumer<Throwable> errorConsumer) {
+                                final ErrorConsumer errorConsumer) {
         int maxResultsAtThisDepth = maxResults.size(depth);
         int pos = position;
         int resultCountAtThisLevel = 0;
@@ -202,7 +186,7 @@ public class TableResultCreator implements ResultCreator {
         Row create(Field[] fields,
                    Item item,
                    int depth,
-                   Consumer<Throwable> errorConsumer);
+                   ErrorConsumer errorConsumer);
 
         boolean hidesRows();
     }
@@ -223,7 +207,7 @@ public class TableResultCreator implements ResultCreator {
         public Row create(final Field[] fields,
                           final Item item,
                           final int depth,
-                          final Consumer<Throwable> errorConsumer) {
+                          final ErrorConsumer errorConsumer) {
             final List<String> stringValues = new ArrayList<>(fields.length);
             for (int i = 0; i < fields.length; i++) {
                 final Field field = fields[i];
@@ -282,7 +266,7 @@ public class TableResultCreator implements ResultCreator {
         public Row create(final Field[] fields,
                           final Item item,
                           final int depth,
-                          final Consumer<Throwable> errorConsumer) {
+                          final ErrorConsumer errorConsumer) {
             Row row = null;
 
             final Map<String, Object> fieldIdToValueMap = new HashMap<>();
@@ -314,12 +298,12 @@ public class TableResultCreator implements ResultCreator {
                                         " - " +
                                         e.getMessage());
                         LOGGER.debug(exception.getMessage(), exception);
-                        errorConsumer.accept(exception);
+                        errorConsumer.add(exception);
                     }
                 }
             } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
-                errorConsumer.accept(e);
+                errorConsumer.add(e);
             }
 
             if (matchingRule != null) {

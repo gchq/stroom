@@ -15,6 +15,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
@@ -46,7 +47,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -485,7 +485,7 @@ class AnnotationDaoImpl implements AnnotationDao {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
+                       final ValuesConsumer consumer) {
         final List<AbstractField> fieldList = Arrays.asList(fields);
 
         final PageRequest pageRequest = criteria.getPageRequest();
@@ -495,8 +495,8 @@ class AnnotationDaoImpl implements AnnotationDao {
         final Mapper<?>[] mappers = valueMapper.getMappers(fields);
 
         JooqUtil.context(connectionProvider, context -> {
-            int offset = 0;
-            int numberOfRows = 1000000;
+            Integer offset = null;
+            Integer numberOfRows = null;
 
             if (pageRequest != null) {
                 offset = pageRequest.getOffset();
@@ -522,7 +522,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                             }
                             arr[i] = val;
                         }
-                        consumer.accept(arr);
+                        consumer.add(arr);
                     });
                 }
             }

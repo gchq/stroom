@@ -8,12 +8,12 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
-
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class SearchConfig extends AbstractConfig implements IsStroomConfig {
 
     /**
@@ -24,21 +24,52 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
     private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
-    private int maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
-    private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
-    private String storeSize = "1000000,100,10,1";
-    private ExtractionConfig extractionConfig = new ExtractionConfig();
-    private IndexShardSearchConfig shardConfig = new IndexShardSearchConfig();
-    private ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
+    private final int maxStoredDataQueueSize;
+    private final int maxBooleanClauseCount;
+    private final String storeSize;
+    private final ExtractionConfig extractionConfig;
+    private final IndexShardSearchConfig shardConfig;
+    private final ResultStoreConfig resultStoreConfig;
 
-    private CacheConfig resultStoreCache = CacheConfig.builder()
-            .maximumSize(100L)
-            .expireAfterAccess(StroomDuration.ofMinutes(1))
-            .build();
-    private CacheConfig remoteSearchResultCache = CacheConfig.builder()
-            .maximumSize(100L)
-            .expireAfterAccess(StroomDuration.ofMinutes(1))
-            .build();
+    private final CacheConfig resultStoreCache;
+    private final CacheConfig remoteSearchResultCache;
+
+    public SearchConfig() {
+        maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
+        maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
+        storeSize = "1000000,100,10,1";
+        extractionConfig = new ExtractionConfig();
+        shardConfig = new IndexShardSearchConfig();
+        resultStoreConfig = new ResultStoreConfig();
+
+        resultStoreCache = CacheConfig.builder()
+                .maximumSize(100L)
+                .expireAfterAccess(StroomDuration.ofMinutes(1))
+                .build();
+        remoteSearchResultCache = CacheConfig.builder()
+                .maximumSize(100L)
+                .expireAfterAccess(StroomDuration.ofMinutes(1))
+                .build();
+    }
+
+    @JsonCreator
+    public SearchConfig(@JsonProperty("maxStoredDataQueueSize") final int maxStoredDataQueueSize,
+                        @JsonProperty("maxBooleanClauseCount") final int maxBooleanClauseCount,
+                        @JsonProperty("storeSize") final String storeSize,
+                        @JsonProperty("extraction") final ExtractionConfig extractionConfig,
+                        @JsonProperty("shard") final IndexShardSearchConfig shardConfig,
+                        @JsonProperty("resultStore") final ResultStoreConfig resultStoreConfig,
+                        @JsonProperty("resultStoreCache") final CacheConfig resultStoreCache,
+                        @JsonProperty("remoteSearchResultCache") final CacheConfig remoteSearchResultCache) {
+        this.maxStoredDataQueueSize = maxStoredDataQueueSize;
+        this.maxBooleanClauseCount = maxBooleanClauseCount;
+        this.storeSize = storeSize;
+        this.extractionConfig = extractionConfig;
+        this.shardConfig = shardConfig;
+        this.resultStoreConfig = resultStoreConfig;
+        this.resultStoreCache = resultStoreCache;
+        this.remoteSearchResultCache = remoteSearchResultCache;
+    }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
             "shard and queued prior to further processing")
@@ -46,17 +77,9 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
         return maxStoredDataQueueSize;
     }
 
-    public void setMaxStoredDataQueueSize(final int maxStoredDataQueueSize) {
-        this.maxStoredDataQueueSize = maxStoredDataQueueSize;
-    }
-
     @JsonPropertyDescription("The maximum number of clauses that a boolean search can contain.")
     public int getMaxBooleanClauseCount() {
         return maxBooleanClauseCount;
-    }
-
-    public void setMaxBooleanClauseCount(final int maxBooleanClauseCount) {
-        this.maxBooleanClauseCount = maxBooleanClauseCount;
     }
 
     @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")
@@ -64,17 +87,9 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
         return storeSize;
     }
 
-    public void setStoreSize(final String storeSize) {
-        this.storeSize = storeSize;
-    }
-
     @JsonProperty("extraction")
     public ExtractionConfig getExtractionConfig() {
         return extractionConfig;
-    }
-
-    public void setExtractionConfig(final ExtractionConfig extractionConfig) {
-        this.extractionConfig = extractionConfig;
     }
 
     @JsonProperty("shard")
@@ -82,16 +97,8 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
         return shardConfig;
     }
 
-    public void setShardConfig(final IndexShardSearchConfig shardConfig) {
-        this.shardConfig = shardConfig;
-    }
-
     public CacheConfig getResultStoreCache() {
         return resultStoreCache;
-    }
-
-    public void setResultStoreCache(final CacheConfig resultStoreCache) {
-        this.resultStoreCache = resultStoreCache;
     }
 
     @JsonProperty("remoteSearchResultCache")
@@ -99,17 +106,9 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
         return remoteSearchResultCache;
     }
 
-    public void setRemoteSearchResultCache(final CacheConfig remoteSearchResultCache) {
-        this.remoteSearchResultCache = remoteSearchResultCache;
-    }
-
     @JsonProperty("resultStore")
     public ResultStoreConfig getLmdbConfig() {
         return resultStoreConfig;
-    }
-
-    public void setLmdbConfig(final ResultStoreConfig resultStoreConfig) {
-        this.resultStoreConfig = resultStoreConfig;
     }
 
     @Override

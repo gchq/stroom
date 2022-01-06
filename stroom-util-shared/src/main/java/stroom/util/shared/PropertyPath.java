@@ -29,12 +29,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Class for representing a path to a property in an object tree, i.e
  * stroom.node.name
  * The aim is to break the dot delimited path strings into its parts to
- * reduce the memory overhead of holding all the paths as many parts are similar
+ * reduce the memory overhead of holding all the paths as many parts are similar.
+ * Also makes it easier to merge property paths together.
  */
 @JsonInclude(Include.NON_NULL)
 public class PropertyPath implements Comparable<PropertyPath>, HasName {
@@ -49,28 +51,42 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     @JsonProperty("parts")
     private final List<String> parts;
 
+    // Cache the hash to speed up map look-ups
+    @JsonIgnore
+    private final int hashCode;
+
     @JsonCreator
     PropertyPath(@JsonProperty("parts") final List<String> parts) {
         if (parts == null) {
             this.parts = Collections.emptyList();
         } else {
             validateParts(parts);
-            this.parts = new ArrayList<>(parts);
+            // Can't use List.copyOf() as GWT doesn't know about it.
+            this.parts = Collections.unmodifiableList(new ArrayList<>(parts));
         }
+        hashCode = buildHashCode(this.parts);
     }
 
     private PropertyPath(final List<String> parts1, final List<String> parts2) {
-        parts = new ArrayList<>(parts1.size() + parts2.size());
-        parts.addAll(parts1);
-        parts.addAll(parts2);
+        final List<String> mutableParts = new ArrayList<>(parts1.size() + parts2.size());
+        mutableParts.addAll(parts1);
+        mutableParts.addAll(parts2);
+        parts = Collections.unmodifiableList(mutableParts);
         validateParts(parts);
+        hashCode = buildHashCode(this.parts);
     }
 
     private PropertyPath(final List<String> parts1, final String finalPart) {
-        parts = new ArrayList<>(parts1.size() + 1);
-        parts.addAll(parts1);
-        parts.add(finalPart);
+        final List<String> mutableParts = new ArrayList<>(parts1.size() + 1);
+        mutableParts.addAll(parts1);
+        mutableParts.add(finalPart);
+        parts = Collections.unmodifiableList(mutableParts);
         validateParts(parts);
+        hashCode = buildHashCode(this.parts);
+    }
+
+    private int buildHashCode(final List<String> parts) {
+        return Objects.hashCode(parts);
     }
 
     public static PropertyPath blank() {
@@ -85,7 +101,6 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     public boolean containsPart(final String part) {
         return parts.contains(part);
     }
-
 
     /**
      * Create a {@link PropertyPath} from a path string, e.g "stroom.node.name"
@@ -129,7 +144,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         if (parts.isEmpty()) {
             return Collections.emptyList();
         } else {
-            return new ArrayList<>(parts);
+            return parts;
         }
     }
 
@@ -155,6 +170,15 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         }
     }
 
+    @JsonIgnore
+    public Optional<PropertyPath> getParent() {
+        if (parts.size() <= 1) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new PropertyPath(parts.subList(0, parts.size() - 1)));
+        }
+    }
+
     /**
      * @return The property name from a property path, i.e. "name" from "stroom.node.name"
      */
@@ -177,6 +201,14 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
             return "";
         } else {
             return String.join(DELIMITER, parts);
+        }
+    }
+
+    public String delimitedBy(final String delimiter) {
+        if (parts == null || parts.isEmpty()) {
+            return "";
+        } else {
+            return String.join(delimiter, parts);
         }
     }
 
@@ -212,7 +244,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
 
     @Override
     public int hashCode() {
-        return Objects.hash(parts);
+        return hashCode;
     }
 
     public static Builder builder() {

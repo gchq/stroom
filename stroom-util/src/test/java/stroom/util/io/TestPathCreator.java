@@ -29,7 +29,7 @@ class TestPathCreator {
 
     @Test
     void testReplaceFileName(@TempDir Path tempDir) {
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         assertThat(pathCreator.replaceFileName("${fileStem}.txt", "test.tmp")).isEqualTo("test.txt");
 
         assertThat(pathCreator.replaceFileName("${fileStem}", "test.tmp")).isEqualTo("test");
@@ -45,7 +45,7 @@ class TestPathCreator {
 
     @Test
     void testFindVars(@TempDir Path tempDir) {
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final String[] vars = pathCreator.findVars("/temp/${feed}-FLAT/${pipe}_less-${uuid}/${searchId}");
         assertThat(vars.length).isEqualTo(4);
         assertThat(vars[0]).isEqualTo("feed");
@@ -56,7 +56,7 @@ class TestPathCreator {
 
     @Test
     void testReplaceTime(@TempDir Path tempDir) {
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final ZonedDateTime zonedDateTime = ZonedDateTime.of(2018, 8, 20, 13, 17, 22, 2111444, ZoneOffset.UTC);
 
         String path = "${feed}/${year}/${year}-${month}/${year}-${month}-${day}/${pathId}/${id}";

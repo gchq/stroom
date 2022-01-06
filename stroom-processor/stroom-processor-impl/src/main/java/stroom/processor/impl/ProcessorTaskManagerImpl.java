@@ -109,7 +109,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final TaskContextFactory taskContextFactory;
     private final TaskContext taskContext;
     private final NodeInfo nodeInfo;
-    private final ProcessorConfig processorConfig;
+    private final Provider<ProcessorConfig> processorConfigProvider;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
     private final MetaService metaService;
     private final EventSearch eventSearch;
@@ -162,7 +162,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final TaskContextFactory taskContextFactory,
                              final TaskContext taskContext,
                              final NodeInfo nodeInfo,
-                             final ProcessorConfig processorConfig,
+                             final Provider<ProcessorConfig> processorConfigProvider,
                              final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
                              final MetaService metaService,
                              final EventSearch eventSearch,
@@ -176,7 +176,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.taskContext = taskContext;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
-        this.processorConfig = processorConfig;
+        this.processorConfigProvider = processorConfigProvider;
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
         this.metaService = metaService;
         this.eventSearch = eventSearch;
@@ -232,7 +232,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         List<ProcessorTask> assignedStreamTasks = Collections.emptyList();
         try {
-            if (processorConfig.isAssignTasks() && count > 0) {
+            if (processorConfigProvider.get().isAssignTasks() && count > 0) {
                 // Get local reference to list in case it is swapped out.
                 final List<ProcessorFilter> filters = prioritisedFiltersRef.get();
                 if (filters != null && filters.size() > 0) {
@@ -269,6 +269,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         index++;
                     }
                 }
+            } else {
+                LOGGER.debug("assignTasks is disabled");
             }
 
             // Have a go at kicking off a fill
@@ -501,6 +503,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // Now fill the stream task store with tasks for each filter.
         // The aim is to create N tasks in total where N is processorConfig.getQueueSize
         // Also need to ensure each filter queue has no more than N in it.
+        final ProcessorConfig processorConfig = processorConfigProvider.get();
         final int maxTasksToCreate = processorConfig.getQueueSize();
         final int maxTasksPerFilterQueue = maxTasksToCreate;
         // If a queue is already half full then don't bother adding more
@@ -575,7 +578,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private int getTaskCountToCreate(final ProcessorTaskQueue queue,
                                      final TaskCreationProgressTracker progressTracker) {
         return Math.min(
-                processorConfig.getQueueSize() - queue.size(),
+                processorConfigProvider.get().getQueueSize() - queue.size(),
                 progressTracker.getTotalRemainingTasksToCreate());
     }
 
@@ -606,6 +609,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         // previously created but are unprocessed, not owned by any
                         // node and their associated stream is unlocked then add
                         // them here.
+                        final ProcessorConfig processorConfig = processorConfigProvider.get();
                         if (processorConfig.isFillTaskQueue()) {
                             addUnownedTasks(
                                     taskContext,
@@ -929,10 +933,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                             final BiConsumer<TaskContext, T> consumer) {
         return t ->
                 taskContextFactory.childContext(
-                                parentContext,
-                                taskName,
-                                taskContext ->
-                                        consumer.accept(taskContext, t))
+                        parentContext,
+                        taskName,
+                        taskContext ->
+                                consumer.accept(taskContext, t))
                         .run();
     }
 

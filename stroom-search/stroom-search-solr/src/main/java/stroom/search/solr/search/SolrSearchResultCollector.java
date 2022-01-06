@@ -25,12 +25,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Provider;
@@ -40,7 +38,6 @@ public class SolrSearchResultCollector implements Store {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrSearchResultCollector.class);
     private static final String TASK_NAME = "SolrSearchTask";
 
-    private final Set<String> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider;
@@ -84,7 +81,7 @@ public class SolrSearchResultCollector implements Store {
             // Don't begin execution if we have been asked to complete already.
             if (!coprocessors.getCompletionState().isComplete()) {
                 final SolrAsyncSearchTaskHandler asyncSearchTaskHandler = solrAsyncSearchTaskHandlerProvider.get();
-                asyncSearchTaskHandler.exec(taskContext, task, coprocessors, this);
+                asyncSearchTaskHandler.search(taskContext, task, coprocessors, this);
             }
         });
         CompletableFuture
@@ -99,7 +96,7 @@ public class SolrSearchResultCollector implements Store {
                         // as they may be terminated before we even try to execute them.
                         if (!(t instanceof TaskTerminatedException)) {
                             LOGGER.error(t.getMessage(), t);
-                            coprocessors.getErrorConsumer().accept(t);
+                            coprocessors.getErrorConsumer().add(t);
                             coprocessors.getCompletionState().signalComplete();
                             throw new RuntimeException(t.getMessage(), t);
                         }
@@ -111,11 +108,10 @@ public class SolrSearchResultCollector implements Store {
 
     @Override
     public void destroy() {
-        complete();
         coprocessors.clear();
     }
 
-    public void complete() {
+    public void signalComplete() {
         coprocessors.getCompletionState().signalComplete();
     }
 
@@ -136,16 +132,7 @@ public class SolrSearchResultCollector implements Store {
 
     @Override
     public List<String> getErrors() {
-        if (errors.size() == 0) {
-            return null;
-        }
-
-        final List<String> err = new ArrayList<>();
-        for (final String error : errors) {
-            err.add("\t" + error);
-        }
-
-        return err;
+        return coprocessors.getErrorConsumer().getErrors();
     }
 
     @Override

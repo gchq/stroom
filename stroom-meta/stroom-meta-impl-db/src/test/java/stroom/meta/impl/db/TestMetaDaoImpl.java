@@ -20,6 +20,7 @@ package stroom.meta.impl.db;
 import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
+import stroom.data.shared.StreamTypeNames;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
@@ -84,6 +85,7 @@ class TestMetaDaoImpl {
         Guice.createInjector(
                 new MetaTestModule(),
                 new MetaDbModule(),
+                new MetaDaoModule(),
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockTaskModule(),
@@ -360,6 +362,37 @@ class TestMetaDaoImpl {
     }
 
     @Test
+    void testFindReprocess_ensureSingleParent() {
+        setup();
+
+        final Meta parent = metaDao.create(createRawProperties(TEST1_FEED_NAME));
+        final Meta processedMeta = metaDao.create(createProcessedProperties(parent, TEST1_FEED_NAME));
+        final Meta errorMeta = metaDao.create(createErrorProperties(parent, TEST1_FEED_NAME));
+
+        metaValueDao.flush();
+        // Unlock all streams.
+        metaDao.updateStatus(new FindMetaCriteria(ExpressionOperator.builder().build()),
+                Status.LOCKED,
+                Status.UNLOCKED,
+                System.currentTimeMillis());
+
+        ResultPage<Meta> resultPage = metaDao.findReprocess(
+                new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
+        assertThat(resultPage.size())
+                .isEqualTo(11);
+
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder().op(Op.OR)
+                        .addTerm(MetaFields.ID, Condition.EQUALS, processedMeta.getId())
+                        .addTerm(MetaFields.ID, Condition.EQUALS, errorMeta.getId())
+                        .build())
+                .build();
+        resultPage = metaDao.findReprocess(new FindMetaCriteria(expression));
+        assertThat(resultPage.size())
+                .isOne();
+    }
+
+    @Test
     void testGetSelectionSummary() {
         setup();
 
@@ -436,13 +469,21 @@ class TestMetaDaoImpl {
     }
 
     private MetaProperties createProcessedProperties(final Meta parent, final String feedName) {
+        return createMetaProperties(parent, feedName, PROCESSED_STREAM_TYPE_NAME);
+    }
+
+    private MetaProperties createErrorProperties(final Meta parent, final String feedName) {
+        return createMetaProperties(parent, feedName, StreamTypeNames.ERROR);
+    }
+
+    private MetaProperties createMetaProperties(final Meta parent, final String feedName, final String typeName) {
         return MetaProperties.builder()
                 .parent(parent)
                 .createMs(System.currentTimeMillis())
                 .feedName(feedName)
                 .processorUuid("12345")
                 .pipelineUuid("PIPELINE_UUID")
-                .typeName(PROCESSED_STREAM_TYPE_NAME)
+                .typeName(typeName)
                 .build();
     }
 }

@@ -11,6 +11,7 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.util.concurrent.HighWaterMarkTracker;
 import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 
 import org.assertj.core.api.Assertions;
@@ -169,10 +170,10 @@ public class TestLmdbEnv {
                 dbDir.toAbsolutePath(),
                 Arrays.toString(envFlags));
 
-        final PathCreator pathCreator = new PathCreator(() -> dbDir, () -> dbDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
         final TempDirProvider tempDirProvider = () -> dbDir;
 
-        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, new LmdbLibraryConfig())
+        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
                 .builder(dbDir)
                 .withMapSize(DB_MAX_SIZE)
                 .withMaxDbCount(1)

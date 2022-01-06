@@ -1,0 +1,109 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.dashboard.expression.v1;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestExpressionParserUris extends AbstractExpressionParserTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionParserUris.class);
+
+    @Test
+    void testExtractAuthorityFromUri() {
+        createGenerator("extractAuthorityFromUri(${val1})", gen -> {
+            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("www.example.com:1234");
+        });
+    }
+
+    @Test
+    void testExtractFragmentFromUri() {
+        createGenerator("extractFragmentFromUri(${val1})", gen -> {
+            gen.set(getVals("http://www.example.com:1234/this/is/a/path#frag"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("frag");
+        });
+    }
+
+    @Test
+    void testExtractHostFromUri() {
+        createGenerator("extractHostFromUri(${val1})", gen -> {
+            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("www.example.com");
+        });
+    }
+
+    @Test
+    void testExtractPathFromUri() {
+        createGenerator("extractPathFromUri(${val1})", gen -> {
+            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("/this/is/a/path");
+        });
+    }
+
+    @Test
+    void testExtractPortFromUri() {
+        createGenerator("extractPortFromUri(${val1})", gen -> {
+            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("1234");
+        });
+    }
+
+    @Test
+    void testExtractQueryFromUri() {
+        createGenerator("extractQueryFromUri(${val1})", gen -> {
+            gen.set(getVals("http://www.example.com:1234/this/is/a/path?this=that&foo=bar"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this=that&foo=bar");
+        });
+    }
+
+    @Test
+    void testExtractSchemeFromUri() {
+        createGenerator("extractSchemeFromUri(${val1})", gen -> {
+            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("http");
+        });
+    }
+
+    @Test
+    void testExtractSchemeSpecificPartFromUri() {
+        createGenerator("extractSchemeSpecificPartFromUri(${val1})", gen -> {
+            gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("//www.example.com:1234/this/is/a/path");
+        });
+    }
+
+    @Test
+    void testExtractUserInfoFromUri() {
+        createGenerator("extractUserInfoFromUri(${val1})", gen -> {
+            gen.set(getVals("http://john:doe@example.com:81/"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("john:doe");
+        });
+    }
+}

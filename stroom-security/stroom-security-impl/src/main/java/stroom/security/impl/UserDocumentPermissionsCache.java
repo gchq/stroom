@@ -25,6 +25,7 @@ import stroom.security.impl.event.RemovePermissionEvent;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -37,9 +38,9 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     @Inject
     public UserDocumentPermissionsCache(final CacheManager cacheManager,
                                         final DocumentPermissionDao documentPermissionDao,
-                                        final AuthorisationConfig authorisationConfig) {
+                                        final Provider<AuthorisationConfig> authorisationConfigProvider) {
         cache = cacheManager.create(CACHE_NAME,
-                authorisationConfig::getUserDocumentPermissionsCache,
+                () -> authorisationConfigProvider.get().getUserDocumentPermissionsCache(),
                 documentPermissionDao::getPermissionsForUser);
     }
 

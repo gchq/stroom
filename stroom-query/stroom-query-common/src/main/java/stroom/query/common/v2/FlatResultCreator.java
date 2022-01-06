@@ -47,7 +47,7 @@ public class FlatResultCreator implements ResultCreator {
     private final List<Mapper> mappers;
     private final List<Field> fields;
 
-    private String error;
+    private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
     public FlatResultCreator(final DataStoreFactory dataStoreFactory,
                              final String queryKey,
@@ -70,7 +70,6 @@ public class FlatResultCreator implements ResultCreator {
                 // parent table and the default maximum sizes.
                 final Sizes sizes = Sizes.min(Sizes.create(parent.getMaxResults()), defaultMaxResultsSizes);
                 final int maxItems = sizes.size(0);
-
                 mappers.add(new Mapper(
                         dataStoreFactory,
                         queryKey,
@@ -78,7 +77,8 @@ public class FlatResultCreator implements ResultCreator {
                         parent,
                         child,
                         paramMap,
-                        maxItems));
+                        maxItems,
+                        errorConsumer));
             }
         } else {
             mappers = Collections.emptyList();
@@ -140,7 +140,7 @@ public class FlatResultCreator implements ResultCreator {
 
     @Override
     public Result create(final DataStore data, final ResultRequest resultRequest) {
-        if (error == null) {
+        if (!errorConsumer.hasErrors()) {
             try {
                 // Map data.
                 DataStore mappedData = data;
@@ -171,7 +171,7 @@ public class FlatResultCreator implements ResultCreator {
                     for (final Field field : fields) {
                         if (field.getGroup() != null) {
                             groupFields.computeIfAbsent(field.getGroup(), k ->
-                                    new ArrayList<>())
+                                            new ArrayList<>())
                                     .add(field);
                         }
                     }
@@ -198,18 +198,19 @@ public class FlatResultCreator implements ResultCreator {
                         .builder()
                         .componentId(resultRequest.getComponentId())
                         .size(totalResults)
-                        .error(error)
+                        .errors(errorConsumer.getErrors())
                         .structure(structure)
                         .values(results)
                         .build();
 
             } catch (final Exception e) {
                 LOGGER.error("Error creating result for resultRequest {}", resultRequest.getComponentId(), e);
-                error = e.getMessage();
+                errorConsumer.add(e);
             }
         }
 
-        return new FlatResult(resultRequest.getComponentId(), null, null, 0L, error);
+        return new FlatResult(resultRequest.getComponentId(), null, null, 0L,
+                errorConsumer.getErrors());
     }
 
     private int addResults(final DataStore data,
@@ -330,7 +331,8 @@ public class FlatResultCreator implements ResultCreator {
                final TableSettings parent,
                final TableSettings child,
                final Map<String, String> paramMap,
-               final int maxItems) {
+               final int maxItems,
+               final ErrorConsumer errorConsumer) {
             this.maxItems = maxItems;
 
             final FieldIndex parentFieldIndex = new FieldIndex();
@@ -362,7 +364,9 @@ public class FlatResultCreator implements ResultCreator {
                     childFieldIndex,
                     paramMap,
                     maxResults,
-                    Sizes.create(Integer.MAX_VALUE));
+                    Sizes.create(Integer.MAX_VALUE),
+                    false,
+                    errorConsumer);
         }
 
         public DataStore map(final DataStore data) {

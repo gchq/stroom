@@ -17,14 +17,46 @@
 package stroom.test;
 
 import stroom.test.common.util.db.DbTestModule;
+import stroom.util.shared.AbstractConfig;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import java.util.Map;
+import java.util.function.UnaryOperator;
+import javax.inject.Inject;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(DbTestModule.class)
 @IncludeModule(CoreTestModule.class)
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
 
+    @Inject
+    private ConfigMapperSpy configMapperSpy;
+
+    /**
+     * Sets all the config value mappers that allow you to change the config values from their
+     * defaults. Multiple calls to this will override previous calls.
+     */
+    public <T extends AbstractConfig> void setConfigValueMappers(final Map<Class<T>, UnaryOperator<T>> valueMappers) {
+        configMapperSpy.setConfigValueMappers(valueMappers);
+    }
+
+    /**
+     * Sets a single config value mapper that allows you to change the config value from its
+     * defaults. Multiple call to this for the same class will override previous calls for that
+     * class.
+     */
+    public <T extends AbstractConfig> void setConfigValueMapper(final Class<T> clazz,
+                                                                final UnaryOperator<T> valueMapper) {
+        configMapperSpy.setConfigValueMapper(clazz, valueMapper);
+    }
+
+    /**
+     * Clears all config value mappers, thus returning to default config values.
+     */
+    public void clearConfigValueMapper() {
+        configMapperSpy.clearConfigValueMappers();
+    }
 }

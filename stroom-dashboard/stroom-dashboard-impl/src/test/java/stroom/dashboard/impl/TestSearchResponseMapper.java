@@ -55,7 +55,7 @@ class TestSearchResponseMapper {
                 rows,
                 new OffsetRange(1, 2),
                 1,
-                "tableResultError");
+                Collections.singletonList("tableResultError"));
         return new SearchResponse(Arrays.asList("highlight1", "highlight2"),
                 Arrays.asList(tableResult, getVisResult1()),
                 Collections.singletonList("some error"),
@@ -79,7 +79,8 @@ class TestSearchResponseMapper {
         data.add(Arrays.asList("test6", 34.66, 44, "this6"));
         data.add(Arrays.asList("test7", 2.33, 74, "this7"));
 
-        return new FlatResult("vis-1234", structure, data, 200L, "visResultError");
+        return new FlatResult("vis-1234", structure, data, 200L,
+                Collections.singletonList("visResultError"));
     }
 
 //    private VisResult getVisResult2() {

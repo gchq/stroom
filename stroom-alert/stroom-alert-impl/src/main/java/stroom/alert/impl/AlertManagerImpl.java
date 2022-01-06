@@ -31,6 +31,8 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.index.impl.IndexStructure;
 import stroom.index.impl.IndexStructureCache;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.factory.PipelineDataCache;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.extraction.ExtractionTaskHandler;
@@ -57,31 +59,37 @@ public class AlertManagerImpl implements AlertManager {
     private final TaskContext taskContext;
     private final ExplorerNodeService explorerNodeService;
     private final DashboardStore dashboardStore;
-    private final int maxBooleanClauseCount;
     private final WordListProvider wordListProvider;
     private final IndexStructureCache indexStructureCache;
+    private final PipelineStore pipelineStore;
+    private final PipelineDataCache pipelineDataCache;
     private final Provider<ExtractionTaskHandler> handlerProvider;
-    private final AlertConfig alertConfig;
-    private Map<DocRef, List<RuleConfig>> indexToRules = new HashMap<>();
+    private final Provider<AlertConfig> alertConfigProvider;
+    private final Provider<SearchConfig> searchConfigProvider;
 
+    private Map<DocRef, List<RuleConfig>> indexToRules = new HashMap<>();
     private boolean initialised = false;
 
     @Inject
     AlertManagerImpl(final TaskContext taskContext,
-                     final AlertConfig config,
+                     final Provider<AlertConfig> alertConfigProvider,
                      final ExplorerNodeService explorerNodeService,
                      final DashboardStore dashboardStore,
                      final WordListProvider wordListProvider,
-                     final SearchConfig searchConfig,
+                     final Provider<SearchConfig> searchConfigProvider,
                      final IndexStructureCache indexStructureCache,
+                     final PipelineStore pipelineStore,
+                     final PipelineDataCache pipelineDataCache,
                      final Provider<ExtractionTaskHandler> handlerProvider) {
         this.taskContext = taskContext;
-        this.alertConfig = config;
+        this.alertConfigProvider = alertConfigProvider;
         this.explorerNodeService = explorerNodeService;
         this.dashboardStore = dashboardStore;
         this.wordListProvider = wordListProvider;
-        this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
+        this.searchConfigProvider = searchConfigProvider;
         this.indexStructureCache = indexStructureCache;
+        this.pipelineStore = pipelineStore;
+        this.pipelineDataCache = pipelineDataCache;
         this.handlerProvider = handlerProvider;
     }
 
@@ -102,14 +110,19 @@ public class AlertManagerImpl implements AlertManager {
                 LOGGER.warn("Unable to locate index " + indexDocRef + " specified in rule");
                 return Optional.empty();
             } else {
+
                 final AlertProcessorImpl processor = new AlertProcessorImpl(
                         taskContext,
                         handlerProvider,
                         rules,
                         indexStructure,
+                        pipelineStore,
+                        pipelineDataCache,
                         wordListProvider,
-                        maxBooleanClauseCount,
-                        DateTimeSettings.builder().localZoneId(getTimeZoneId()).build());
+                        searchConfigProvider.get().getMaxBooleanClauseCount(),
+                        DateTimeSettings.builder()
+                                .localZoneId(getTimeZoneId())
+                                .build());
                 return Optional.of(processor);
             }
         }
@@ -118,11 +131,11 @@ public class AlertManagerImpl implements AlertManager {
 
     @Override
     public String getTimeZoneId() {
-        return alertConfig.getTimezone();
+        return alertConfigProvider.get().getTimezone();
     }
 
     private final List<String> findRulesPaths() {
-        return alertConfig.getRulesFolderList();
+        return alertConfigProvider.get().getRulesFolderList();
     }
 
     private DocRef getFolderForPath(String folderPath) {
@@ -142,7 +155,7 @@ public class AlertManagerImpl implements AlertManager {
         for (String name : path) {
             List<ExplorerNode> matchingChildren =
                     explorerNodeService.getNodesByName(currentNode, name).stream().filter(explorerNode ->
-                                    ExplorerConstants.FOLDER.equals(explorerNode.getDocRef().getType()))
+                            ExplorerConstants.FOLDER.equals(explorerNode.getDocRef().getType()))
                             .collect(Collectors.toList());
 
             if (matchingChildren.size() == 0) {
@@ -167,6 +180,7 @@ public class AlertManagerImpl implements AlertManager {
         return new HashMap<>();
     }
 
+    @Override
     public void initialiseCache() {
         Map<DocRef, List<RuleConfig>> indexToRules = new HashMap<>();
 
@@ -250,11 +264,11 @@ public class AlertManagerImpl implements AlertManager {
 
     @Override
     public String getAdditionalFieldsPrefix() {
-        return alertConfig.getAdditionalFieldsPrefix();
+        return alertConfigProvider.get().getAdditionalFieldsPrefix();
     }
 
     @Override
     public boolean isReportAllExtractedFieldsEnabled() {
-        return alertConfig.isReportAllExtractedFieldsEnabled();
+        return alertConfigProvider.get().isReportAllExtractedFieldsEnabled();
     }
 }

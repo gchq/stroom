@@ -25,7 +25,10 @@ class UserDaoImplTest {
 
     @BeforeAll
     static void beforeAll() {
-        final Injector injector = Guice.createInjector(new SecurityDbModule(), new TestModule());
+        Injector injector = Guice.createInjector(
+                new SecurityDbModule(),
+                new SecurityDaoModule(),
+                new TestModule());
         userDao = injector.getInstance(UserDao.class);
     }
 

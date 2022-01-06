@@ -21,17 +21,20 @@ import stroom.annotation.api.AnnotationFields;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.Receiver;
-import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
+import stroom.search.extraction.StoredDataQueue;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
@@ -43,126 +46,112 @@ class ElasticClusterSearchTaskHandler {
     private final ElasticSearchFactory elasticSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
+    private final ExecutorProvider executorProvider;
+
+    private final AtomicLong hitCount = new AtomicLong();
+    private final AtomicLong extractionCount = new AtomicLong();
+
+    private TaskContext taskContext;
 
     @Inject
     ElasticClusterSearchTaskHandler(final ElasticSearchFactory elasticSearchFactory,
                                     final ExtractionDecoratorFactory extractionDecoratorFactory,
-                                    final SecurityContext securityContext
-    ) {
+                                    final SecurityContext securityContext,
+                                    final ExecutorProvider executorProvider) {
         this.elasticSearchFactory = elasticSearchFactory;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
         this.securityContext = securityContext;
+        this.executorProvider = executorProvider;
     }
 
-    public void exec(final TaskContext taskContext,
-                     final ElasticAsyncSearchTask task,
-                     final ElasticIndexDoc elasticIndex,
-                     final Query query,
-                     final String[] storedFields,
-                     final long now,
-                     final DateTimeSettings dateTimeSettings,
-                     final Coprocessors coprocessors
-    ) {
+    public void search(final TaskContext taskContext,
+                       final Query query,
+                       final long now,
+                       final DateTimeSettings dateTimeSettings,
+                       final Coprocessors coprocessors) {
+        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
+        this.taskContext = taskContext;
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
 
-                try {
-                    // Make sure we have been given a query.
-                    if (query.getExpression() == null) {
-                        throw new SearchException("Search expression has not been set");
-                    }
-
-                    // Get the stored fields that search is hoping to use.
-                    if (storedFields == null || storedFields.length == 0) {
-                        throw new SearchException("No stored fields have been requested");
-                    }
-
-                    if (coprocessors.size() > 0) {
-                        // Start searching.
-                        search(taskContext, task, elasticIndex, query, now, dateTimeSettings, coprocessors);
-                    }
-                } catch (final RuntimeException e) {
-                    try {
-                        coprocessors.getErrorConsumer().accept(e);
-                    } catch (final RuntimeException e2) {
-                        // If we failed to send the result or the source node rejected the result because the
-                        // source task has been terminated then terminate the task.
-                        LOGGER.info(() -> "Terminating search because we were unable to send result");
-                        Thread.currentThread().interrupt();
-                    }
-                } finally {
-                    LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
-                            "counting down searchCompleteLatch");
-                    // Tell the client that the search has completed.
-                    coprocessors.getCompletionState().signalComplete();
-                }
+                // Start searching.
+                doSearch(taskContext, now, dateTimeSettings, query, coprocessors);
             }
         });
     }
 
-    private void search(final TaskContext taskContext,
-                        final ElasticAsyncSearchTask task,
-                        final ElasticIndexDoc elasticIndex,
-                        final Query query,
-                        final long now,
-                        final DateTimeSettings dateTimeSettings,
-                        final Coprocessors coprocessors) {
+    private void doSearch(final TaskContext taskContext,
+                          final long now,
+                          final DateTimeSettings dateTimeSettings,
+                          final Query query,
+                          final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
+        // Start searching.
+        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_SEARCH);
+
         try {
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, coprocessors, query);
+            final StoredDataQueue storedDataQueue = extractionDecoratorFactory.createStoredDataQueue(
+                    coprocessors,
+                    query);
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = ExpressionFilter.builder()
                     .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
-            final AtomicLong hitCount = new AtomicLong();
-
-            elasticSearchFactory.search(
-                    task,
-                    elasticIndex,
-                    coprocessors.getFieldIndex(),
+            final CompletableFuture<Void> indexShardSearchFuture = elasticSearchFactory.search(
+                    query,
                     now,
+                    dateTimeSettings,
                     expression,
-                    extractionReceiver,
+                    coprocessors.getFieldIndex(),
                     taskContext,
                     hitCount,
-                    dateTimeSettings);
+                    storedDataQueue,
+                    coprocessors.getErrorConsumer());
 
-            // Wait for search completion.
-            boolean allComplete = false;
-            while (!allComplete) {
-                allComplete = true;
-                for (final Coprocessor coprocessor : coprocessors) {
-                    if (!Thread.currentThread().isInterrupted()) {
-                        taskContext.info(() -> "" +
-                                "Searching... " +
-                                "found " +
-                                hitCount.get() +
-                                " documents" +
-                                " performed "
-                                + coprocessor.getValuesCount() +
-                                " extractions");
+            // Start mapping streams.
+            final CompletableFuture<Void> streamMappingFuture = extractionDecoratorFactory
+                    .startMapping(taskContext, coprocessors);
 
-                        final boolean complete = coprocessor.getCompletionState()
-                                .awaitCompletion(1, TimeUnit.SECONDS);
-                        if (!complete) {
-                            allComplete = false;
-                        }
-                    }
-                }
+            // Start extracting data.
+            final CompletableFuture<Void> extractionFuture = extractionDecoratorFactory
+                    .startExtraction(taskContext, extractionCount, coprocessors.getErrorConsumer());
+
+            // Create a countdown latch to keep updating status until we complete.
+            final CountDownLatch complete = new CountDownLatch(1);
+
+            // Wait for all to complete.
+            final CompletableFuture<Void> all = CompletableFuture
+                    .allOf(indexShardSearchFuture, streamMappingFuture, extractionFuture);
+            all.whenCompleteAsync((r, t) -> complete.countDown(), executorProvider.get());
+
+            // Update status until we complete.
+            while (!complete.await(1, TimeUnit.SECONDS)) {
+                updateInfo();
             }
 
             LOGGER.debug(() -> "Complete");
         } catch (final InterruptedException e) {
-            // Continue to interrupt.
+            LOGGER.trace(e::getMessage, e);
+            // Keep interrupting this thread.
             Thread.currentThread().interrupt();
-            LOGGER.debug(e::getMessage, e);
         } catch (final RuntimeException e) {
             throw SearchException.wrap(e);
         }
+    }
+
+    public void updateInfo() {
+        taskContext.info(() -> "" +
+                "Searching... " +
+                "found "
+                + hitCount.get() +
+                " documents" +
+                " performed " +
+                extractionCount.get() +
+                " extractions");
     }
 }

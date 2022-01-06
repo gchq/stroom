@@ -6,29 +6,55 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig, RepoConfig {
 
-    private boolean storingEnabled = false;
-    private String repoDir = "repo";
-    private String format = "${pathId}/${id}";
-    private StroomDuration cleanupFrequency = StroomDuration.ofHours(1);
-    private StroomDuration lockDeleteAge = StroomDuration.ofHours(1);
-    private StroomDuration dirCleanDelay = StroomDuration.ofSeconds(10);
+    protected static final boolean DEFAULT_STORING_ENABLED = false;
+    protected static final String DEFAULT_REPO_DIR = "repo";
+    protected static final String DEFAULT_FORMAT = "${pathId}/${id}";
+    protected static final StroomDuration DEFAULT_CLEANUP_FREQUENCY = StroomDuration.ofHours(1);
+    protected static final StroomDuration DEFAULT_LOCK_DELETE_AGE = StroomDuration.ofHours(1);
+    protected static final StroomDuration DEFAULT_DIR_CLEAN_DELAY = StroomDuration.ofSeconds(10);
+
+    private final boolean storingEnabled;
+    private final String repoDir;
+    private final String format;
+    private final StroomDuration cleanupFrequency;
+    private final StroomDuration lockDeleteAge;
+    private final StroomDuration dirCleanDelay;
+
+    public ProxyRepoConfig() {
+        storingEnabled = DEFAULT_STORING_ENABLED;
+        repoDir = DEFAULT_REPO_DIR;
+        format = DEFAULT_FORMAT;
+        cleanupFrequency = DEFAULT_CLEANUP_FREQUENCY;
+        lockDeleteAge = DEFAULT_LOCK_DELETE_AGE;
+        dirCleanDelay = DEFAULT_DIR_CLEAN_DELAY;
+    }
+
+    @JsonCreator
+    public ProxyRepoConfig(@JsonProperty("storingEnabled") final boolean storingEnabled,
+                           @JsonProperty("repoDir") final String repoDir,
+                           @JsonProperty("format") final String format,
+                           @JsonProperty("cleanupFrequency") final StroomDuration cleanupFrequency,
+                           @JsonProperty("lockDeleteAge") final StroomDuration lockDeleteAge,
+                           @JsonProperty("dirCleanDelay") final StroomDuration dirCleanDelay) {
+        this.storingEnabled = storingEnabled;
+        this.repoDir = repoDir;
+        this.format = format;
+        this.cleanupFrequency = cleanupFrequency;
+        this.lockDeleteAge = lockDeleteAge;
+        this.dirCleanDelay = dirCleanDelay;
+    }
 
     @JsonProperty
     public boolean isStoringEnabled() {
         return storingEnabled;
-    }
-
-    public void setStoringEnabled(final boolean storingEnabled) {
-        this.storingEnabled = storingEnabled;
     }
 
     /**
@@ -39,10 +65,6 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig, Re
     @Override
     public String getRepoDir() {
         return repoDir;
-    }
-
-    public void setRepoDir(final String repoDir) {
-        this.repoDir = repoDir;
     }
 
     /**
@@ -66,17 +88,9 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig, Re
         return format;
     }
 
-    public void setFormat(final String format) {
-        this.format = format;
-    }
-
     @JsonProperty
     public StroomDuration getCleanupFrequency() {
         return cleanupFrequency;
-    }
-
-    public void setCleanupFrequency(final StroomDuration cleanupFrequency) {
-        this.cleanupFrequency = cleanupFrequency;
     }
 
     @JsonProperty
@@ -84,16 +98,73 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig, Re
         return lockDeleteAge;
     }
 
-    public void setLockDeleteAge(final StroomDuration lockDeleteAge) {
-        this.lockDeleteAge = lockDeleteAge;
-    }
-
     @JsonProperty
     public StroomDuration getDirCleanDelay() {
         return dirCleanDelay;
     }
 
-    public void setDirCleanDelay(final StroomDuration dirCleanDelay) {
-        this.dirCleanDelay = dirCleanDelay;
+    public ProxyRepoConfig withRepoDir(final String repoDir) {
+        return new ProxyRepoConfig(storingEnabled, repoDir, format, cleanupFrequency, lockDeleteAge, dirCleanDelay);
+    }
+
+    public ProxyRepoConfig withStoringEnabled(final boolean storingEnabled) {
+        return new ProxyRepoConfig(storingEnabled, repoDir, format, cleanupFrequency, lockDeleteAge, dirCleanDelay);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private boolean storingEnabled = DEFAULT_STORING_ENABLED;
+        private String repoDir = DEFAULT_REPO_DIR;
+        private String format = DEFAULT_FORMAT;
+        private StroomDuration cleanupFrequency = DEFAULT_CLEANUP_FREQUENCY;
+        private StroomDuration lockDeleteAge = DEFAULT_LOCK_DELETE_AGE;
+        private StroomDuration dirCleanDelay = DEFAULT_DIR_CLEAN_DELAY;
+
+        private Builder() {
+        }
+
+        public Builder withStoringEnabled(final boolean storingEnabled) {
+            this.storingEnabled = storingEnabled;
+            return this;
+        }
+
+        public Builder withRepoDir(final String repoDir) {
+            this.repoDir = repoDir;
+            return this;
+        }
+
+        public Builder withFormat(final String format) {
+            this.format = format;
+            return this;
+        }
+
+        public Builder withCleanupFrequency(final StroomDuration cleanupFrequency) {
+            this.cleanupFrequency = cleanupFrequency;
+            return this;
+        }
+
+        public Builder withLockDeleteAge(final StroomDuration lockDeleteAge) {
+            this.lockDeleteAge = lockDeleteAge;
+            return this;
+        }
+
+        public Builder withDirCleanDelay(final StroomDuration dirCleanDelay) {
+            this.dirCleanDelay = dirCleanDelay;
+            return this;
+        }
+
+        public ProxyRepoConfig build() {
+            return new ProxyRepoConfig(
+                    storingEnabled,
+                    repoDir,
+                    format,
+                    cleanupFrequency,
+                    lockDeleteAge,
+                    dirCleanDelay);
+        }
     }
 }

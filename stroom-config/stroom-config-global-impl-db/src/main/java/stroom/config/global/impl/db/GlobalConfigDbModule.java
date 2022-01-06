@@ -1,15 +1,13 @@
 package stroom.config.global.impl.db;
 
-import stroom.config.app.PropertyServiceConfig;
-import stroom.config.global.impl.ConfigPropertyDao;
-import stroom.config.global.impl.GlobalConfigModule;
-import stroom.config.global.impl.UserPreferencesDao;
+import stroom.config.app.PropertyServiceConfig.PropertyServiceDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
+import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
-public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyServiceConfig, GlobalConfigDbConnProvider> {
+public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyServiceDbConfig, GlobalConfigDbConnProvider> {
 
     private static final String MODULE = "stroom-config";
     private static final String FLYWAY_LOCATIONS = "stroom/config/global/impl/db/migration";
@@ -18,10 +16,10 @@ public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyService
     @Override
     protected void configure() {
         super.configure();
-        install(new GlobalConfigModule());
 
-        bind(ConfigPropertyDao.class).to(ConfigPropertyDaoImpl.class);
-        bind(UserPreferencesDao.class).to(UserPreferencesDaoImpl.class);
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(GlobalConfigDbConnProvider.class);
     }
 
     @Override

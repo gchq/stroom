@@ -523,11 +523,17 @@ public final class JooqUtil {
     }
 
     private static RuntimeException convertException(final Exception e) {
-        LOGGER.error(e::getMessage, e);
-        if (e instanceof RuntimeException) {
-            return (RuntimeException) e;
-        } else {
+        if (e.getCause() instanceof InterruptedException) {
+            // We expect interruption during searches so don't log the error.
+            LOGGER.debug(e::getMessage, e);
             return new RuntimeException(e.getMessage(), e);
+        } else {
+            LOGGER.error(e::getMessage, e);
+            if (e instanceof RuntimeException) {
+                return (RuntimeException) e;
+            } else {
+                return new RuntimeException(e.getMessage(), e);
+            }
         }
     }
 

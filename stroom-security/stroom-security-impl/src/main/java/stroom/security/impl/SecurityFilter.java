@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -60,18 +61,18 @@ class SecurityFilter implements Filter {
     private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(
             ".js", ".css", ".htm", ".html", ".json", ".png", ".jpg", ".gif", ".ico", ".svg", ".woff", ".woff2");
 
-    private final AuthenticationConfig authenticationConfig;
+    private final Provider<AuthenticationConfig> authenticationConfigProvider;
     private final UriFactory uriFactory;
     private final SecurityContext securityContext;
     private final OpenIdManager openIdManager;
 
     @Inject
     SecurityFilter(
-            final AuthenticationConfig authenticationConfig,
+            final Provider<AuthenticationConfig> authenticationConfigProvider,
             final UriFactory uriFactory,
             final SecurityContext securityContext,
             final OpenIdManager openIdManager) {
-        this.authenticationConfig = authenticationConfig;
+        this.authenticationConfigProvider = authenticationConfigProvider;
         this.uriFactory = uriFactory;
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
@@ -137,9 +138,9 @@ class SecurityFilter implements Filter {
                             .map(str -> "/" + str)
                             .orElse("")));
 
-            if (!authenticationConfig.isAuthenticationRequired()) {
+            if (!authenticationConfigProvider.get().isAuthenticationRequired()) {
                 // If authentication is turned off then proceed as admin.
-                final String propPath = authenticationConfig.getFullPathStr(
+                final String propPath = authenticationConfigProvider.get().getFullPathStr(
                         AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
                 LOGGER.debug("{} is false, authenticating as admin for {}", propPath, fullPath);
                 securityContext.asAdminUser(() -> {

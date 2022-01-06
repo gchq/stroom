@@ -3,11 +3,12 @@ package stroom.search.extraction;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
-
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
 
     /**
@@ -16,22 +17,37 @@ public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
      * until the docs are drained from the queue.
      */
     private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000;
-
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 5;
     private static final int DEFAULT_MAX_STREAM_EVENT_MAP_SIZE = 1000000;
+    private static final long DEFAULT_EXTRACTION_DELAY_MS = 100;
 
-    private int maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
-    private int maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
-    private int maxStreamEventMapSize = DEFAULT_MAX_STREAM_EVENT_MAP_SIZE;
+    private final int maxStoredDataQueueSize;
+    private final int maxThreadsPerTask;
+    private final int maxStreamEventMapSize;
+    private final long extractionDelayMs;
+
+    public ExtractionConfig() {
+        maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
+        maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
+        maxStreamEventMapSize = DEFAULT_MAX_STREAM_EVENT_MAP_SIZE;
+        extractionDelayMs = DEFAULT_EXTRACTION_DELAY_MS;
+    }
+
+    @JsonCreator
+    public ExtractionConfig(@JsonProperty("maxStoredDataQueueSize") final int maxStoredDataQueueSize,
+                            @JsonProperty("maxThreadsPerTask") final int maxThreadsPerTask,
+                            @JsonProperty("maxStreamEventMapSize") final int maxStreamEventMapSize,
+                            @JsonProperty("extractionDelayMs") final long extractionDelayMs) {
+        this.maxStoredDataQueueSize = maxStoredDataQueueSize;
+        this.maxThreadsPerTask = maxThreadsPerTask;
+        this.maxStreamEventMapSize = maxStreamEventMapSize;
+        this.extractionDelayMs = extractionDelayMs;
+    }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
             "shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
         return maxStoredDataQueueSize;
-    }
-
-    public void setMaxStoredDataQueueSize(final int maxStoredDataQueueSize) {
-        this.maxStoredDataQueueSize = maxStoredDataQueueSize;
     }
 
     @JsonPropertyDescription("The maximum number of threads per search, per node, used to extract search results " +
@@ -40,17 +56,15 @@ public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
         return maxThreadsPerTask;
     }
 
-    public void setMaxThreadsPerTask(final int maxThreadsPerTask) {
-        this.maxThreadsPerTask = maxThreadsPerTask;
-    }
-
     @JsonPropertyDescription("The maximum size of the stream event map used to queue events prior to extraction")
     public int getMaxStreamEventMapSize() {
         return maxStreamEventMapSize;
     }
 
-    public void setMaxStreamEventMapSize(final int maxStreamEventMapSize) {
-        this.maxStreamEventMapSize = maxStreamEventMapSize;
+    @JsonPropertyDescription("Extraction delay in milliseconds. " +
+            "A delay reduces the chance of a stream being extracted more than once.")
+    public long getExtractionDelayMs() {
+        return extractionDelayMs;
     }
 
     @Override
@@ -59,6 +73,7 @@ public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
                 "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
                 ", maxThreadsPerTask=" + maxThreadsPerTask +
                 ", maxStreamEventMapSize=" + maxStreamEventMapSize +
+                ", extractionDelayMs=" + extractionDelayMs +
                 '}';
     }
 }

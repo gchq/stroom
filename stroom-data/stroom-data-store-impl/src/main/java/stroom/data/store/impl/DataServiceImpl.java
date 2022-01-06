@@ -368,6 +368,12 @@ class DataServiceImpl implements DataService {
                     pipelineName));
             entries.add(new DataInfoSection.Entry("Processor Pipeline", pipeline));
         }
+        if (meta.getProcessorFilterId() != null) {
+            entries.add(new DataInfoSection.Entry("Processor Filter Id", String.valueOf(meta.getProcessorFilterId())));
+        }
+        if (meta.getProcessorTaskId() != null) {
+            entries.add(new DataInfoSection.Entry("Processor Task Id", String.valueOf(meta.getProcessorTaskId())));
+        }
         return entries;
     }
 

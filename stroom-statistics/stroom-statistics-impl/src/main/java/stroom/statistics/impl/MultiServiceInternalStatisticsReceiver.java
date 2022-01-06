@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.inject.Provider;
 
 /**
  * Passes the internal statistic events to zero-many {@link InternalStatisticsService} instances
@@ -24,13 +25,13 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiServiceInternalStatisticsReceiver.class);
 
     private final Map<String, InternalStatisticsService> docRefTypeToServiceMap;
-    private final InternalStatisticsConfig internalStatisticsConfig;
+    private final Provider<InternalStatisticsConfig> internalStatisticsConfigProvider;
 
     MultiServiceInternalStatisticsReceiver(final Map<String, InternalStatisticsService> docRefTypeToServiceMap,
-                                           final InternalStatisticsConfig internalStatisticsConfig) {
+                                           final Provider<InternalStatisticsConfig> internalStatisticsConfigProvider) {
 
         this.docRefTypeToServiceMap = Objects.requireNonNull(docRefTypeToServiceMap);
-        this.internalStatisticsConfig = Objects.requireNonNull(internalStatisticsConfig);
+        this.internalStatisticsConfigProvider = Objects.requireNonNull(internalStatisticsConfigProvider);
     }
 
     @Override
@@ -41,6 +42,7 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
     @Override
     public void putEvents(final List<InternalStatisticEvent> statisticEvents) {
         try {
+            final InternalStatisticsConfig internalStatisticsConfig = internalStatisticsConfigProvider.get();
             // Group the events by service and docref
             Map<InternalStatisticsService, Map<DocRef, List<InternalStatisticEvent>>> serviceToEventsMapMap =
                     statisticEvents.stream()

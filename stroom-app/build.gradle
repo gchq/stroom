@@ -219,6 +219,7 @@ dependencies {
     testCompile libs.classgraph
     testCompile libs.guice5
     testCompile libs.guice_extension
+    testCompile libs.guice_grapher
     testCompile libs.hikari
     testCompile libs.jinjava
     testCompile libs.junit_jupiter_api
@@ -531,6 +532,9 @@ task copySupportingFiles(type: Copy) {
 
     from 'src/main/resources/banner.txt'
     from 'src/dist'
+    from('..') {
+        include 'scripts/**'
+    }
     into releaseBuildDir
 
     doLast {

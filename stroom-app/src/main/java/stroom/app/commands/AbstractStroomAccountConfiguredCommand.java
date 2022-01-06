@@ -1,9 +1,11 @@
 package stroom.app.commands;
 
 import stroom.app.guice.AppModule;
+import stroom.app.guice.BootStrapModule;
 import stroom.config.app.Config;
 import stroom.util.guice.GuiceUtil;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -48,12 +50,19 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
 
         LOGGER.debug("Creating dbMigrationModule");
 
-        // We could use a heavily cut down module
-        final AppModule appModule = new AppModule(config, configFile);
+        final AbstractModule module = new AbstractModule() {
+            @Override
+            protected void configure() {
+                // It would be nice to only load the bits we need but the web of dependencies
+                // spreads far and wide
+                install(new BootStrapModule(config, configFile));
+                install(new AppModule());
+            }
+        };
 
         LOGGER.debug("Creating injector");
         try {
-            final Injector injector = Guice.createInjector(appModule);
+            final Injector injector = Guice.createInjector(module);
 
             // Force guice to get all datasource instances from the multibinder
             // so the migration will be run for each stroom module

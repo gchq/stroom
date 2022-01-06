@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
@@ -54,7 +55,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
 
     private final MetaDbConnProvider metaDbConnProvider;
     private final MetaKeyDao metaKeyService;
-    private final MetaValueConfig metaValueConfig;
+    private final Provider<MetaValueConfig> metaValueConfigProvider;
     private final ClusterLockService clusterLockService;
     private final TaskContext taskContext;
 
@@ -63,12 +64,12 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     @Inject
     MetaValueDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                      final MetaKeyDao metaKeyService,
-                     final MetaValueConfig metaValueConfig,
+                     final Provider<MetaValueConfig> metaValueConfigProvider,
                      final ClusterLockService clusterLockService,
                      final TaskContext taskContext) {
         this.metaDbConnProvider = metaDbConnProvider;
         this.metaKeyService = metaKeyService;
-        this.metaValueConfig = metaValueConfig;
+        this.metaValueConfigProvider = metaValueConfigProvider;
         this.clusterLockService = clusterLockService;
         this.taskContext = taskContext;
     }
@@ -95,8 +96,9 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 .map(Optional::get);
 
         final List<Row> records = stream.collect(Collectors.toList());
-        if (metaValueConfig.isAddAsync()) {
-            final Optional<List<Row>> optional = add(records, metaValueConfig.getFlushBatchSize());
+        if (metaValueConfigProvider.get().isAddAsync()) {
+            final Optional<List<Row>> optional = add(records, metaValueConfigProvider.get()
+                    .getFlushBatchSize());
             optional.ifPresent(this::insertRecords);
         } else {
             insertRecords(records);
@@ -151,7 +153,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
         clusterLockService.tryLock(LOCK_NAME, () -> {
             taskContext.info(() -> "Deleting old meta values");
             final long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
-            final int batchSize = metaValueConfig.getDeleteBatchSize();
+            final int batchSize = metaValueConfigProvider.get().getDeleteBatchSize();
             int count = batchSize;
             while (count >= batchSize) {
                 if (Thread.currentThread().isInterrupted()) {
@@ -213,7 +215,9 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
      * @return The oldest data attribute that we should keep
      */
     private long getAttributeCreateTimeThresholdEpochMs() {
-        final Duration deleteAge = metaValueConfig.getDeleteAge().getDuration();
+        final Duration deleteAge = metaValueConfigProvider.get()
+                .getDeleteAge()
+                .getDuration();
         return System.currentTimeMillis() - deleteAge.toMillis();
     }
 
@@ -230,14 +234,14 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 .collect(Collectors.toList());
 
         JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        .select(
-                                META_VAL.META_ID,
-                                META_VAL.META_KEY_ID,
-                                META_VAL.VAL
-                        )
-                        .from(META_VAL)
-                        .where(META_VAL.META_ID.in(idList))
-                        .fetch())
+                .select(
+                        META_VAL.META_ID,
+                        META_VAL.META_KEY_ID,
+                        META_VAL.VAL
+                )
+                .from(META_VAL)
+                .where(META_VAL.META_ID.in(idList))
+                .fetch())
                 .forEach(r -> {
                     final int keyId = r.get(META_VAL.META_KEY_ID);
                     metaKeyService.getNameForId(keyId).ifPresent(name -> {

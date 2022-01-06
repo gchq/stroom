@@ -42,8 +42,6 @@ import java.util.Objects;
 @JsonInclude(Include.NON_EMPTY)
 public class KafkaConfigDoc extends Doc implements HasData {
 
-    private static final long serialVersionUID = -334504830584034766L;
-
     public static final String DOCUMENT_TYPE = "KafkaConfig";
 
     @JsonProperty

@@ -11,65 +11,62 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import javax.inject.Singleton;
 
-@Singleton
-@JsonPropertyOrder({
-        "backgroundAttachment",
-        "backgroundColour",
-        "backgroundImage",
-        "backgroundPosition",
-        "backgroundRepeat",
-        "backgroundOpacity",
-        "tubeVisible",
-        "tubeOpacity",
-        "topMenuTextColour",
-        "labelColours"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class ThemeConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
-    private String backgroundAttachment;
+    private final String backgroundAttachment;
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
-    private String backgroundColour;
+    private final String backgroundColour;
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
-    private String backgroundImage;
+    private final String backgroundImage;
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
-    private String backgroundPosition;
+    private final String backgroundPosition;
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
-    private String backgroundRepeat;
+    private final String backgroundRepeat;
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
-    private String backgroundOpacity;
+    private final String backgroundOpacity;
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
-    private String tubeVisible;
+    private final String tubeVisible;
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
-    private String tubeOpacity;
+    private final String tubeOpacity;
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
-    private String topMenuTextColour;
+    private final String topMenuTextColour;
 
     @JsonProperty
     @JsonPropertyDescription("A comma separated list of KV pairs to provide colours for labels.")
-    private String labelColours;
+    private final String labelColours;
 
     public ThemeConfig() {
-        setDefaults();
+        backgroundAttachment = "scroll";
+        backgroundColour = "#1E88E5";
+        backgroundImage = "none";
+        backgroundPosition = "0 0";
+        backgroundRepeat = "repeat";
+        backgroundOpacity = "0";
+        tubeVisible = "hidden";
+        tubeOpacity = "0.6";
+        topMenuTextColour = "#FFFFFF";
+        labelColours = "TEST1=#FF0000,TEST2=#FF9900";
     }
 
     @JsonCreator
@@ -93,121 +90,46 @@ public class ThemeConfig extends AbstractConfig implements IsStroomConfig {
         this.tubeOpacity = tubeOpacity;
         this.topMenuTextColour = topMenuTextColour;
         this.labelColours = labelColours;
-
-        setDefaults();
-    }
-
-    private void setDefaults() {
-        if (backgroundAttachment == null) {
-            backgroundAttachment = "scroll";
-        }
-        if (backgroundColour == null) {
-            backgroundColour = "#1E88E5";
-        }
-        if (backgroundImage == null) {
-            backgroundImage = "none";
-        }
-        if (backgroundPosition == null) {
-            backgroundPosition = "0 0";
-        }
-        if (backgroundRepeat == null) {
-            backgroundRepeat = "repeat";
-        }
-        if (backgroundOpacity == null) {
-            backgroundOpacity = "0";
-        }
-        if (tubeVisible == null) {
-            tubeVisible = "hidden";
-        }
-        if (tubeOpacity == null) {
-            tubeOpacity = "0.6";
-        }
-        if (topMenuTextColour == null) {
-            topMenuTextColour = "#FFFFFF";
-        }
-        if (labelColours == null) {
-            labelColours = "TEST1=#FF0000,TEST2=#FF9900";
-        }
     }
 
     public String getBackgroundAttachment() {
         return backgroundAttachment;
     }
 
-    public void setBackgroundAttachment(final String backgroundAttachment) {
-        this.backgroundAttachment = backgroundAttachment;
-    }
-
     public String getBackgroundColour() {
         return backgroundColour;
-    }
-
-    public void setBackgroundColour(final String backgroundColour) {
-        this.backgroundColour = backgroundColour;
     }
 
     public String getBackgroundImage() {
         return backgroundImage;
     }
 
-    public void setBackgroundImage(final String backgroundImage) {
-        this.backgroundImage = backgroundImage;
-    }
-
     public String getBackgroundPosition() {
         return backgroundPosition;
-    }
-
-    public void setBackgroundPosition(final String backgroundPosition) {
-        this.backgroundPosition = backgroundPosition;
     }
 
     public String getBackgroundRepeat() {
         return backgroundRepeat;
     }
 
-    public void setBackgroundRepeat(final String backgroundRepeat) {
-        this.backgroundRepeat = backgroundRepeat;
-    }
-
     public String getBackgroundOpacity() {
         return backgroundOpacity;
-    }
-
-    public void setBackgroundOpacity(final String backgroundOpacity) {
-        this.backgroundOpacity = backgroundOpacity;
     }
 
     public String getTubeVisible() {
         return tubeVisible;
     }
 
-    public void setTubeVisible(final String tubeVisible) {
-        this.tubeVisible = tubeVisible;
-    }
-
     public String getTubeOpacity() {
         return tubeOpacity;
-    }
-
-    public void setTubeOpacity(final String tubeOpacity) {
-        this.tubeOpacity = tubeOpacity;
     }
 
     public String getTopMenuTextColour() {
         return topMenuTextColour;
     }
 
-    public void setTopMenuTextColour(final String topMenuTextColour) {
-        this.topMenuTextColour = topMenuTextColour;
-    }
-
     public String getLabelColours() {
         return labelColours;
-    }
-
-    public void setLabelColours(final String labelColours) {
-        this.labelColours = labelColours;
     }
 
     @Override

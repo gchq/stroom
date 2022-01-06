@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Optional;
 import java.util.UUID;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -38,16 +39,16 @@ class AuthenticationService {
 
     private final UserDao userDao;
     private final AppPermissionDao appPermissionDao;
-    private final OpenIdConfig openIdConfig;
+    private final Provider<OpenIdConfig> openIdConfigProvider;
 
     @Inject
     AuthenticationService(
             final UserDao userDao,
             final AppPermissionDao appPermissionDao,
-            final OpenIdConfig openIdConfig) {
+            final Provider<OpenIdConfig> openIdConfigProvider) {
         this.userDao = userDao;
         this.appPermissionDao = appPermissionDao;
-        this.openIdConfig = openIdConfig;
+        this.openIdConfigProvider = openIdConfigProvider;
     }
 
     User getOrCreateUser(final String userId) {
@@ -105,7 +106,7 @@ class AuthenticationService {
         try {
             optUser = userDao.getByName(username, false);
             if (optUser.isEmpty()
-                    && openIdConfig.isUseInternal()
+                    && openIdConfigProvider.get().isUseInternal()
                     && User.ADMIN_USER_NAME.equals(username)) {
 
                 // TODO @AT Probably should be an explicit command to create this to avoid the accidental
@@ -142,7 +143,7 @@ class AuthenticationService {
                     final User userRef = create(name, isGroup);
 
                     // Creating the admin user so create its group too
-                    if (User.ADMIN_USER_NAME.equals(name) && openIdConfig.isUseInternal()) {
+                    if (User.ADMIN_USER_NAME.equals(name) && openIdConfigProvider.get().isUseInternal()) {
                         try {
                             User userGroup = createOrRefreshAdminUserGroup();
                             userDao.addUserToGroup(userRef.getUuid(), userGroup.getUuid());

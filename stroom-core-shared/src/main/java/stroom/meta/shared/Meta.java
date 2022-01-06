@@ -37,6 +37,10 @@ public class Meta {
     @JsonProperty
     private String pipelineUuid;
     @JsonProperty
+    private Integer processorFilterId;
+    @JsonProperty
+    private Long processorTaskId;
+    @JsonProperty
     private Long parentMetaId;
     @JsonProperty
     private Status status;
@@ -56,6 +60,8 @@ public class Meta {
                 @JsonProperty("typeName") final String typeName,
                 @JsonProperty("processorUuid") final String processorUuid,
                 @JsonProperty("pipelineUuid") final String pipelineUuid,
+                @JsonProperty("processorFilterId") final Integer processorFilterId,
+                @JsonProperty("processorTaskId") final Long processorTaskId,
                 @JsonProperty("parentMetaId") final Long parentMetaId,
                 @JsonProperty("status") final Status status,
                 @JsonProperty("statusMs") final Long statusMs,
@@ -66,6 +72,8 @@ public class Meta {
         this.typeName = typeName;
         this.processorUuid = processorUuid;
         this.pipelineUuid = pipelineUuid;
+        this.processorFilterId = processorFilterId;
+        this.processorTaskId = processorTaskId;
         this.parentMetaId = parentMetaId;
         this.status = status;
         this.statusMs = statusMs;
@@ -111,6 +119,22 @@ public class Meta {
 
     public void setPipelineUuid(final String pipelineUuid) {
         this.pipelineUuid = pipelineUuid;
+    }
+
+    public Integer getProcessorFilterId() {
+        return processorFilterId;
+    }
+
+    public void setProcessorFilterId(final Integer processorFilterId) {
+        this.processorFilterId = processorFilterId;
+    }
+
+    public Long getProcessorTaskId() {
+        return processorTaskId;
+    }
+
+    public void setProcessorTaskId(final Long processorTaskId) {
+        this.processorTaskId = processorTaskId;
     }
 
     public Long getParentMetaId() {
@@ -190,6 +214,8 @@ public class Meta {
         private String typeName;
         private String processorUuid;
         private String pipelineUuid;
+        private Integer processorFilterId;
+        private Long processorTaskId;
         private Long parentMetaId;
         private Status status;
         private Long statusMs;
@@ -205,6 +231,8 @@ public class Meta {
             this.typeName = meta.typeName;
             this.processorUuid = meta.processorUuid;
             this.pipelineUuid = meta.pipelineUuid;
+            this.processorFilterId = meta.processorFilterId;
+            this.processorTaskId = meta.processorTaskId;
             this.parentMetaId = meta.parentMetaId;
             this.status = meta.status;
             this.statusMs = meta.statusMs;
@@ -234,6 +262,16 @@ public class Meta {
 
         public Builder pipelineUuid(final String pipelineUuid) {
             this.pipelineUuid = pipelineUuid;
+            return this;
+        }
+
+        public Builder processorFilterId(final Integer processorFilterId) {
+            this.processorFilterId = processorFilterId;
+            return this;
+        }
+
+        public Builder processorTaskId(final Long processorTaskId) {
+            this.processorTaskId = processorTaskId;
             return this;
         }
 
@@ -269,6 +307,8 @@ public class Meta {
                     typeName,
                     processorUuid,
                     pipelineUuid,
+                    processorFilterId,
+                    processorTaskId,
                     parentMetaId,
                     status,
                     statusMs,

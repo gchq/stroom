@@ -6,21 +6,21 @@ import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.Receiver;
+import stroom.query.common.v2.ErrorConsumer;
+import stroom.search.extraction.StoredDataQueue;
 import stroom.search.impl.ClusterSearchTask;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.search.impl.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SearchProgressLog;
@@ -29,16 +29,13 @@ import stroom.util.logging.SearchProgressLog.SearchPhase;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -73,12 +70,14 @@ public class IndexShardSearchFactory {
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
     }
 
-    public void search(final ClusterSearchTask task,
-                       final ExpressionOperator expression,
-                       final FieldIndex fieldIndex,
-                       final Receiver receiver,
-                       final TaskContext taskContext,
-                       final AtomicLong hitCount) {
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<Void> search(final ClusterSearchTask task,
+                                          final ExpressionOperator expression,
+                                          final FieldIndex fieldIndex,
+                                          final TaskContext parentContext,
+                                          final AtomicLong hitCount,
+                                          final StoredDataQueue storedDataQueue,
+                                          final ErrorConsumer errorConsumer) {
         SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
 
         // Reload the index.
@@ -103,82 +102,68 @@ public class IndexShardSearchFactory {
             }
         }
 
-        final IndexShardSearchProgressTracker tracker = new IndexShardSearchProgressTracker(
-                hitCount,
-                task.getShards().size());
+        // Get the stored fields that search is hoping to use.
+        if (storedFieldNames.length == 0) {
+            throw new SearchException("No stored fields have been requested");
+        }
+
+        final int threadCount = indexShardSearchConfig.getMaxThreadsPerTask();
+        final CompletableFuture<Void>[] futures = new CompletableFuture[threadCount];
+        final Executor executor = executorProvider.get(INDEX_SHARD_SEARCH_THREAD_POOL);
+
         if (task.getShards().size() > 0) {
-            final Map<Version, Optional<SearchExpressionQuery>> queryMap = new HashMap<>();
-            final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
-                    task, expression, indexFieldsMap, queryMap, receiver.getErrorConsumer());
+            try {
+                final Map<Version, Optional<SearchExpressionQuery>> queryMap = new ConcurrentHashMap<>();
+                final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
+                        task, expression, indexFieldsMap, queryMap, errorConsumer);
 
-            final Executor executor = executorProvider.get(INDEX_SHARD_SEARCH_THREAD_POOL);
-            final LinkedBlockingQueue<Optional<Long>> queue = new LinkedBlockingQueue<>();
-            for (final Long shard : task.getShards()) {
-                queue.add(Optional.of(shard));
-            }
-
-            final AtomicInteger shardNo = new AtomicInteger();
-            for (int i = 0; i < indexShardSearchConfig.getMaxThreadsPerTask(); i++) {
-                queue.add(Optional.empty());
-
-                final Runnable runnable = taskContextFactory
-                        .childContext(taskContext, "Search Index Shard", tc -> {
-                            try {
-                                boolean complete = false;
-                                while (!complete) {
-                                    final Optional<Long> optional = queue.take();
-                                    if (optional.isEmpty()) {
-                                        complete = true;
-
-                                    } else {
-                                        final long shard = optional.get();
-                                        final IndexShardSearchTask t = new IndexShardSearchTask(queryFactory,
-                                                shard,
+                // Create a queue of shards to search.
+                final ShardIdQueue queue = new ShardIdQueue(task.getShards());
+                final AtomicInteger shardNo = new AtomicInteger();
+                for (int i = 0; i < indexShardSearchConfig.getMaxThreadsPerTask(); i++) {
+                    futures[i] = CompletableFuture.runAsync(() -> taskContextFactory
+                            .childContext(parentContext, "Search Index Shard", taskContext -> {
+                                try {
+                                    while (true) {
+                                        taskContext.reset();
+                                        taskContext.info(() -> "Waiting for index shard...");
+                                        final long shardId = queue.take();
+                                        final IndexShardSearchTaskHandler handler =
+                                                indexShardSearchTaskHandlerProvider.get();
+                                        handler.searchShard(
+                                                taskContext,
+                                                queryFactory,
                                                 storedFieldNames,
-                                                receiver,
-                                                tracker.getHitCount());
-                                        try {
-                                            t.setShardTotal(tracker.getShardTotal());
-                                            t.setShardNumber(shardNo.incrementAndGet());
-                                            final IndexShardSearchTaskHandler handler =
-                                                    indexShardSearchTaskHandlerProvider.get();
-                                            handler.exec(tc, t);
-                                        } finally {
-                                            tracker.incrementCompleteShardCount();
-                                        }
+                                                hitCount,
+                                                shardNo.incrementAndGet(),
+                                                task.getShards().size(),
+                                                shardId,
+                                                storedDataQueue,
+                                                errorConsumer);
                                     }
+                                } catch (final CompleteException e) {
+                                    LOGGER.trace(() -> "Complete");
+                                } catch (final InterruptedException e) {
+                                    LOGGER.trace(e::getMessage, e);
+                                    // Keep interrupting this thread.
+                                    Thread.currentThread().interrupt();
                                 }
-
-                            } catch (final InterruptedException e) {
-                                LOGGER.debug(e::getMessage, e);
-                                Thread.currentThread().interrupt();
-                            }
-                        });
-
-                CompletableFuture.runAsync(runnable, executor);
+                            }).run(), executor);
+                }
+            } catch (final InterruptedException e) {
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
+                Thread.currentThread().interrupt();
             }
         }
 
-        // Wait until we finish.
-        try {
-            while (!tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
-                taskContext.info(() -> "" +
-                        "Searching... " +
-                        "found "
-                        + hitCount.get() +
-                        " hits");
-                LOGGER.debug(tracker::toString);
-            }
-        } catch (final InterruptedException e) {
-            LOGGER.debug(this::toString);
-            // Keep interrupting.
-            Thread.currentThread().interrupt();
-        } finally {
-            LOGGER.debug(() -> "Complete - " + tracker);
-        }
-
-        // Let the receiver know we are complete.
-        receiver.getCompletionConsumer().accept(hitCount.get());
+        // When we complete the index shard search tell the stored data queue we are complete.
+        return CompletableFuture.allOf(futures).whenCompleteAsync((r, t) ->
+                taskContextFactory.childContext(parentContext, "Search Index Shard", taskContext -> {
+                    taskContext.info(() -> "Complete stored data queue");
+                    LOGGER.debug("Complete stored data queue");
+                    storedDataQueue.complete();
+                }).run(), executor);
     }
 
     private IndexShardQueryFactory createIndexShardQueryFactory(
@@ -186,7 +171,7 @@ public class IndexShardSearchFactory {
             final ExpressionOperator expression,
             final IndexFieldsMap indexFieldsMap,
             final Map<Version, Optional<SearchExpressionQuery>> queryMap,
-            final Consumer<Throwable> errorConsumer) {
+            final ErrorConsumer errorConsumer) {
 
         return new IndexShardQueryFactory() {
             @Override
@@ -222,7 +207,7 @@ public class IndexShardSearchFactory {
                     LOGGER.debug(e::getMessage, e);
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
-                    errorConsumer.accept(new Error(MessageUtil.getMessage(e.getMessage(), e), e));
+                    errorConsumer.add(e);
                 }
 
                 return Optional.empty();

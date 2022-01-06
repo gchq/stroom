@@ -23,23 +23,19 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 public class EventCoprocessor implements Coprocessor {
 
     private static final String STREAM_ID = "StreamId";
     private static final String EVENT_ID = "EventId";
 
-    private final Consumer<Throwable> errorConsumer;
+    private final ErrorConsumer errorConsumer;
     private final EventRef minEvent;
     private final long maxStreams;
     private final long maxEvents;
     private final long maxEventsPerStream;
     private final ReentrantLock eventRefsLock = new ReentrantLock();
-    private final AtomicLong valuesCount = new AtomicLong();
     private final CompletionState completionState = new CompletionStateImpl();
     private final Integer streamIdIndex;
     private final Integer eventIdIndex;
@@ -48,7 +44,7 @@ public class EventCoprocessor implements Coprocessor {
 
     public EventCoprocessor(final EventCoprocessorSettings settings,
                             final FieldIndex fieldIndex,
-                            final Consumer<Throwable> errorConsumer) {
+                            final ErrorConsumer errorConsumer) {
         this.errorConsumer = errorConsumer;
         this.minEvent = settings.getMinEvent();
         this.maxEvent = settings.getMaxEvent();
@@ -65,34 +61,7 @@ public class EventCoprocessor implements Coprocessor {
     }
 
     @Override
-    public Consumer<Val[]> getValuesConsumer() {
-        return values -> {
-            valuesCount.incrementAndGet();
-            receive(values);
-        };
-    }
-
-    @Override
-    public Consumer<Throwable> getErrorConsumer() {
-        return errorConsumer;
-    }
-
-    @Override
-    public Consumer<Long> getCompletionConsumer() {
-        return completionState;
-    }
-
-    @Override
-    public long getValuesCount() {
-        return valuesCount.get();
-    }
-
-    @Override
-    public CompletionState getCompletionState() {
-        return completionState;
-    }
-
-    private void receive(final Val[] values) {
+    public void add(final Val[] values) {
         final Long longStreamId = getLong(values, streamIdIndex);
         final Long longEventId = getLong(values, eventIdIndex);
 
@@ -115,7 +84,17 @@ public class EventCoprocessor implements Coprocessor {
     }
 
     @Override
-    public boolean readPayload(final Input input) {
+    public ErrorConsumer getErrorConsumer() {
+        return errorConsumer;
+    }
+
+    @Override
+    public CompletionState getCompletionState() {
+        return completionState;
+    }
+
+    @Override
+    public void readPayload(final Input input) {
         final EventRef[] array = EventRefsSerialiser.readArray(input);
         if (array.length > 0) {
             eventRefsLock.lock();
@@ -131,7 +110,6 @@ public class EventCoprocessor implements Coprocessor {
                 eventRefsLock.unlock();
             }
         }
-        return true;
     }
 
     @Override
@@ -152,11 +130,6 @@ public class EventCoprocessor implements Coprocessor {
         }
 
         EventRefsSerialiser.writeArray(output, array);
-    }
-
-    @Override
-    public boolean awaitTransfer(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return true;
     }
 
     public EventRefs getEventRefs() {

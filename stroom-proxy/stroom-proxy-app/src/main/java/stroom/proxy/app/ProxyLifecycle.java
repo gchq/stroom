@@ -82,7 +82,7 @@ public class ProxyLifecycle implements Managed {
                             () -> repoSourceItems::examineNext,
                             threadConfig.getExamineSourceThreadCount());
 
-                    // Just kep trying to aggregate based on a frequency and not changes to source entries.
+                    // Just keep trying to aggregate based on a frequency and not changes to source entries.
                     addParallelExecutor("Aggregator - aggregate",
                             () -> aggregator::aggregateNext,
                             threadConfig.getAggregatorThreadCount());

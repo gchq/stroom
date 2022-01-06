@@ -5,6 +5,7 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
@@ -79,12 +80,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.Meta.META;
@@ -120,6 +121,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
             .typeName(record.get(metaType.NAME))
             .processorUuid(record.get(metaProcessor.PROCESSOR_UUID))
             .pipelineUuid(record.get(metaProcessor.PIPELINE_UUID))
+            .processorFilterId(record.get(meta.PROCESSOR_FILTER_ID))
+            .processorTaskId(record.get(meta.PROCESSOR_TASK_ID))
             .parentDataId(record.get(meta.PARENT_ID))
             .status(MetaStatusId.getStatus(record.get(meta.STATUS)))
             .statusMs(record.get(meta.STATUS_TIME))
@@ -133,6 +136,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
             .typeName(record.get(parentType.NAME))
             .processorUuid(record.get(parentProcessor.PROCESSOR_UUID))
             .pipelineUuid(record.get(parentProcessor.PIPELINE_UUID))
+            .processorFilterId(record.get(parent.PROCESSOR_FILTER_ID))
+            .processorTaskId(record.get(parent.PROCESSOR_TASK_ID))
             .parentDataId(record.get(parent.PARENT_ID))
             .status(MetaStatusId.getStatus(record.get(parent.STATUS)))
             .statusMs(record.get(parent.STATUS_TIME))
@@ -145,7 +150,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private final MetaTypeDaoImpl metaTypeDao;
     private final MetaProcessorDaoImpl metaProcessorDao;
     private final MetaKeyDaoImpl metaKeyDao;
-    private final DataRetentionConfig dataRetentionConfig;
+    private final Provider<DataRetentionConfig> dataRetentionConfigProvider;
     private final DocRefInfoService docRefInfoService;
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
@@ -160,7 +165,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 final MetaTypeDaoImpl metaTypeDao,
                 final MetaProcessorDaoImpl metaProcessorDao,
                 final MetaKeyDaoImpl metaKeyDao,
-                final DataRetentionConfig dataRetentionConfig,
+                final Provider<DataRetentionConfig> dataRetentionConfigProvider,
                 final ExpressionMapperFactory expressionMapperFactory,
                 final DocRefInfoService docRefInfoService,
                 final TermHandlerFactory termHandlerFactory) {
@@ -169,7 +174,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         this.metaTypeDao = metaTypeDao;
         this.metaProcessorDao = metaProcessorDao;
         this.metaKeyDao = metaKeyDao;
-        this.dataRetentionConfig = dataRetentionConfig;
+        this.dataRetentionConfigProvider = dataRetentionConfigProvider;
         this.docRefInfoService = docRefInfoService;
 
         // Extended meta fields.
@@ -189,6 +194,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
         expressionMapper = expressionMapperFactory.create(metaExpressionMapper);
         expressionMapper.map(MetaFields.ID, meta.ID, Long::valueOf);
         expressionMapper.map(MetaFields.META_INTERNAL_PROCESSOR_ID, meta.PROCESSOR_ID, Integer::valueOf);
+        expressionMapper.map(MetaFields.META_PROCESSOR_FILTER_ID, meta.PROCESSOR_FILTER_ID, Integer::valueOf);
+        expressionMapper.map(MetaFields.META_PROCESSOR_TASK_ID, meta.PROCESSOR_TASK_ID, Long::valueOf);
         expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, this::getFeedIds, true);
         expressionMapper.multiMap(MetaFields.TYPE, meta.TYPE_ID, this::getTypeIds);
         expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
@@ -220,6 +227,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
         valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, ValLong::create);
         valueMapper.map(MetaFields.META_INTERNAL_PROCESSOR_ID, meta.PROCESSOR_ID, ValInteger::create);
+        valueMapper.map(MetaFields.META_PROCESSOR_FILTER_ID, meta.PROCESSOR_FILTER_ID, ValInteger::create);
+        valueMapper.map(MetaFields.META_PROCESSOR_TASK_ID, meta.PROCESSOR_TASK_ID, ValLong::create);
         valueMapper.map(MetaFields.STATUS, meta.STATUS, v -> Optional.ofNullable(MetaStatusId.getStatus(v))
                 .map(w -> (Val) ValString.create(w.getDisplayValue()))
                 .orElse(ValNull.INSTANCE));
@@ -312,7 +321,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                 META.STATUS_TIME,
                                 META.FEED_ID,
                                 META.TYPE_ID,
-                                META.PROCESSOR_ID)
+                                META.PROCESSOR_ID,
+                                META.PROCESSOR_FILTER_ID,
+                                META.PROCESSOR_TASK_ID)
                         .values(
                                 metaProperties.getCreateMs(),
                                 metaProperties.getEffectiveMs(),
@@ -321,7 +332,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                 metaProperties.getStatusMs(),
                                 feedId,
                                 typeId,
-                                processorId)
+                                processorId,
+                                metaProperties.getProcessorFilterId(),
+                                metaProperties.getProcessorTaskId())
                         .returning(META.ID)
                         .fetchOne())
                 .getId();
@@ -333,6 +346,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 .typeName(metaProperties.getTypeName())
                 .processorUuid(metaProperties.getProcessorUuid())
                 .pipelineUuid(metaProperties.getPipelineUuid())
+                .processorFilterId((metaProperties.getProcessorFilterId()))
+                .processorTaskId(metaProperties.getProcessorTaskId())
                 .parentDataId(metaProperties.getParentId())
                 .status(Status.LOCKED)
                 .statusMs(metaProperties.getStatusMs())
@@ -382,7 +397,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                     META.STATUS_TIME,
                                                     META.FEED_ID,
                                                     META.TYPE_ID,
-                                                    META.PROCESSOR_ID);
+                                                    META.PROCESSOR_ID,
+                                                    META.PROCESSOR_FILTER_ID,
+                                                    META.PROCESSOR_TASK_ID);
 
                                     metaPropertiesBatch.forEach(metaProperties ->
                                             insertStep.values(
@@ -393,7 +410,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                     metaProperties.getStatusMs(),
                                                     feedIds.get(metaProperties.getFeedName()),
                                                     typeIds.get(metaProperties.getTypeName()),
-                                                    processorIds.get(metaProperties.getProcessorUuid())));
+                                                    processorIds.get(metaProperties.getProcessorUuid()),
+                                                    metaProperties.getProcessorFilterId(),
+                                                    metaProperties.getProcessorTaskId()));
                                     return insertStep;
                                 })
                                 .collect(Collectors.toList()))
@@ -439,7 +458,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                             .where(conditions)
                             .execute());
         } else {
-            Select ids = metaExpressionMapper.addJoins(
+            final Select ids = metaExpressionMapper.addJoins(
                             DSL
                                     .select(meta.ID)
                                     .from(meta)
@@ -623,6 +642,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
         final AtomicInteger totalUpdateCount = new AtomicInteger(0);
         if (ruleActions != null && !ruleActions.isEmpty()) {
+            final DataRetentionConfig dataRetentionConfig = dataRetentionConfigProvider.get();
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
@@ -796,6 +816,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
         CaseConditionStep<Boolean> caseConditionStep = null;
         final List<Condition> orConditions = new ArrayList<>();
+        final DataRetentionConfig dataRetentionConfig = dataRetentionConfigProvider.get();
         // Order is critical here as we are building a case statement
         // Highest priority rules first, i.e. largest rule number
         for (DataRetentionRuleAction ruleAction : ruleActions) {
@@ -885,7 +906,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
+                       final ValuesConsumer consumer) {
         final List<AbstractField> fieldList = Arrays.asList(fields);
         final boolean feedUsed = isUsed(Set.of(MetaFields.FEED), fieldList, criteria);
         final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE), fieldList, criteria);
@@ -924,8 +945,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
         }
 
         JooqUtil.context(metaDbConnProvider, context -> {
-            int offset = 0;
-            int numberOfRows = 1000000;
+            Integer offset = null;
+            Integer numberOfRows = null;
 
             if (pageRequest != null) {
                 offset = pageRequest.getOffset();
@@ -986,7 +1007,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                             }
                             arr[i] = val;
                         }
-                        consumer.accept(arr);
+                        consumer.add(arr);
                     });
                 }
             }
@@ -1079,7 +1100,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
         return identified;
     }
 
-
     private List<Meta> find(final Collection<Condition> conditions,
                             final Collection<OrderField<?>> orderFields,
                             final int offset,
@@ -1098,7 +1118,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                         meta.STATUS,
                                                         meta.STATUS_TIME,
                                                         meta.CREATE_TIME,
-                                                        meta.EFFECTIVE_TIME
+                                                        meta.EFFECTIVE_TIME,
+                                                        meta.PROCESSOR_FILTER_ID,
+                                                        meta.PROCESSOR_TASK_ID
                                                 )
                                                 .from(meta)
                                                 .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
@@ -1151,7 +1173,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                         parent.STATUS,
                                                         parent.STATUS_TIME,
                                                         parent.CREATE_TIME,
-                                                        parent.EFFECTIVE_TIME
+                                                        parent.EFFECTIVE_TIME,
+                                                        parent.PROCESSOR_FILTER_ID,
+                                                        parent.PROCESSOR_TASK_ID
                                                 )
                                                 .from(meta)
                                                 .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))

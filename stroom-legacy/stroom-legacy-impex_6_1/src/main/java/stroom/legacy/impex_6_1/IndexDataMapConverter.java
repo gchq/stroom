@@ -7,22 +7,24 @@ import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexDoc;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 @Deprecated
 class IndexDataMapConverter implements DataMapConverter {
+
     private final IndexSerialiser serialiser;
-    private final VolumeConfig volumeConfig;
+    private final Provider<VolumeConfig> volumeConfigProvider;
 
     @Inject
     IndexDataMapConverter(final IndexSerialiser serialiser,
-                          final VolumeConfig volumeConfig) {
+                          final Provider<VolumeConfig> volumeConfigProvider) {
         this.serialiser = serialiser;
-        this.volumeConfig = volumeConfig;
+        this.volumeConfigProvider = volumeConfigProvider;
     }
 
     @Override
@@ -41,7 +43,7 @@ class IndexDataMapConverter implements DataMapConverter {
                                         docRef.getUuid(),
                                         docRef.getName()),
                                 dataMap,
-                                volumeConfig);
+                                volumeConfigProvider.get());
 
                 result = serialiser.write(document);
 

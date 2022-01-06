@@ -87,6 +87,16 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                 if (!started) {
                     // Can only be started once attached
                     editor.startEditor(theme.getName());
+
+                    // TODO 04/01/2022 AT: This should be made configurable for dev use but can wait till v7.1
+                    //  as lots of the UI code has changed between 7.0 and 7.1.
+                    //  It does not work with modal dialogs as GWT's PopupPanel will intercept all mouse/key
+                    //  events that are not in the dialog, thus stopping you interacting with or closing the
+                    //  settings menu.
+                    // For list of commands see
+                    // https://github.com/ajaxorg/ace/blob/master/lib/ace/commands/default_commands.js
+                    editor.removeCommandByName("showSettingsMenu");
+
                     editor.setShowPrintMargin(false);
                     editor.setUseSoftTabs(true);
                     editor.setTabSize(2);

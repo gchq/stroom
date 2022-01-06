@@ -14,12 +14,19 @@ public class MapDataStoreFactory implements DataStoreFactory {
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
                             final Sizes maxResults,
-                            final Sizes storeSize) {
+                            final Sizes storeSize,
+                            boolean producePayloads,
+                            final ErrorConsumer errorConsumer) {
+        if (producePayloads) {
+            throw new RuntimeException("MapDataStore cannot produce payloads");
+        }
+
         return new MapDataStore(
                 tableSettings,
                 fieldIndex,
                 paramMap,
                 maxResults,
-                storeSize);
+                storeSize,
+                errorConsumer);
     }
 }

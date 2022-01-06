@@ -54,8 +54,8 @@ public class TableResult extends Result {
                        @JsonProperty("rows") final List<Row> rows,
                        @JsonProperty("resultRange") final OffsetRange resultRange,
                        @JsonProperty("totalResults") final Integer totalResults,
-                       @JsonProperty("error") final String error) {
-        super(componentId, error);
+                       @JsonProperty("errors") final List<String> errors) {
+        super(componentId, errors);
         this.fields = fields;
         this.rows = rows;
         this.resultRange = resultRange;
@@ -185,7 +185,7 @@ public class TableResult extends Result {
             if (totalResults == null && rows != null) {
                 totalResults = rows.size();
             }
-            return new TableResult(componentId, fields, rows, resultRange, totalResults, error);
+            return new TableResult(componentId, fields, rows, resultRange, totalResults, errors);
         }
     }
 }

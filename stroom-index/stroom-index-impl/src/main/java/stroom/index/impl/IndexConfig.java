@@ -1,35 +1,55 @@
 package stroom.index.impl;
 
-import stroom.config.common.DbConfig;
+import stroom.config.common.AbstractDbConfig;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
-    private DbConfig dbConfig = new DbConfig();
-    private int ramBufferSizeMB = 1024;
-    private IndexWriterConfig indexWriterConfig = new IndexWriterConfig();
-    private CacheConfig indexStructureCache = CacheConfig.builder()
-            .maximumSize(100L)
-            .expireAfterWrite(StroomDuration.ofSeconds(10))
-            .build();
+    private final IndexDbConfig dbConfig;
+    private final int ramBufferSizeMB;
+    private final IndexWriterConfig indexWriterConfig;
+    private final CacheConfig indexStructureCache;
 
-    @JsonProperty("db")
-    public DbConfig getDbConfig() {
-        return dbConfig;
+    public IndexConfig() {
+        dbConfig = new IndexDbConfig();
+        ramBufferSizeMB = 1024;
+        indexWriterConfig = new IndexWriterConfig();
+        indexStructureCache = CacheConfig.builder()
+                .maximumSize(100L)
+                .expireAfterWrite(StroomDuration.ofSeconds(10))
+                .build();
     }
 
-    public void setDbConfig(final DbConfig dbConfig) {
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public IndexConfig(@JsonProperty("db") final IndexDbConfig dbConfig,
+                       @JsonProperty("ramBufferSizeMB") final int ramBufferSizeMB,
+                       @JsonProperty("writer") final IndexWriterConfig indexWriterConfig,
+                       @JsonProperty("indexStructureCache") final CacheConfig indexStructureCache) {
         this.dbConfig = dbConfig;
+        this.ramBufferSizeMB = ramBufferSizeMB;
+        this.indexWriterConfig = indexWriterConfig;
+        this.indexStructureCache = indexStructureCache;
+    }
+
+    @Override
+    @JsonProperty("db")
+    public IndexDbConfig getDbConfig() {
+        return dbConfig;
     }
 
     @JsonPropertyDescription("The amount of RAM Lucene can use to buffer when indexing in Mb")
@@ -37,25 +57,13 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
         return ramBufferSizeMB;
     }
 
-    public void setRamBufferSizeMB(final int ramBufferSizeMB) {
-        this.ramBufferSizeMB = ramBufferSizeMB;
-    }
-
     @JsonProperty("writer")
     public IndexWriterConfig getIndexWriterConfig() {
         return indexWriterConfig;
     }
 
-    public void setIndexWriterConfig(final IndexWriterConfig indexWriterConfig) {
-        this.indexWriterConfig = indexWriterConfig;
-    }
-
     public CacheConfig getIndexStructureCache() {
         return indexStructureCache;
-    }
-
-    public void setIndexStructureCache(final CacheConfig indexStructureCache) {
-        this.indexStructureCache = indexStructureCache;
     }
 
     @Override
@@ -66,5 +74,20 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
                 ", indexWriterConfig=" + indexWriterConfig +
                 ", indexStructureCache=" + indexStructureCache +
                 '}';
+    }
+
+    @BootStrapConfig
+    public static class IndexDbConfig extends AbstractDbConfig {
+
+        public IndexDbConfig() {
+            super();
+        }
+
+        @JsonCreator
+        public IndexDbConfig(
+                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
+                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
+            super(connectionConfig, connectionPoolConfig);
+        }
     }
 }

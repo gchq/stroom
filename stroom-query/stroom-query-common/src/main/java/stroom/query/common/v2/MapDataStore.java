@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -72,7 +71,8 @@ public class MapDataStore implements DataStore {
                         final FieldIndex fieldIndex,
                         final Map<String, String> paramMap,
                         final Sizes maxResults,
-                        final Sizes storeSize) {
+                        final Sizes storeSize,
+                        final ErrorConsumer errorConsumer) {
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         final CompiledDepths compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
         this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
@@ -321,7 +321,7 @@ public class MapDataStore implements DataStore {
      * @return True if we still happy to keep on receiving data, false otherwise.
      */
     @Override
-    public boolean readPayload(final Input input) {
+    public void readPayload(final Input input) {
         throw new RuntimeException("Not implemented");
 //        return Metrics.measure("readPayload", () -> {
 //            final int count = input.readInt();
@@ -376,19 +376,6 @@ public class MapDataStore implements DataStore {
 //                output.writeBytes(item);
 //            }
 //        });
-    }
-
-    /**
-     * Wait for all current items that might be queued for adding to be added.
-     *
-     * @param timeout How long to wait for items to be added.
-     * @param unit    The time unit for the wait period.
-     * @return True if we didn't timeout and all items are now added.
-     * @throws InterruptedException Thrown if the thread is interrupted while waiting.
-     */
-    @Override
-    public boolean awaitTransfer(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return true;
     }
 
     public static class ItemsImpl implements Items {

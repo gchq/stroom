@@ -4,24 +4,31 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class LifecycleConfig extends AbstractConfig implements IsStroomConfig {
 
-    private boolean enabled = true;
+    private final boolean enabled;
+
+    public LifecycleConfig() {
+        enabled = true;
+    }
+
+    @JsonCreator
+    public LifecycleConfig(@JsonProperty("enabled") final boolean enabled) {
+        this.enabled = enabled;
+    }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Set this to false for development and testing purposes otherwise the Stroom will " +
             "try and process files automatically outside of test cases.")
     public boolean isEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
     }
 
     @Override

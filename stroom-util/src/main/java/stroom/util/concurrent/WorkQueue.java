@@ -1,26 +1,25 @@
 package stroom.util.concurrent;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class WorkQueue {
 
     private final int threadCount;
-    private final LinkedBlockingQueue<Optional<Runnable>> queue;
-    private final List<CompletableFuture<Void>> futures;
+    private final ArrayBlockingQueue<Optional<Runnable>> queue;
+    private final CompletableFuture<Void>[] futures;
 
+    @SuppressWarnings("unchecked")
     public WorkQueue(final Executor executor,
                      final int threadCount,
                      final int capacity) {
         this.threadCount = threadCount;
-        queue = new LinkedBlockingQueue<>(capacity);
-        futures = new ArrayList<>();
+        queue = new ArrayBlockingQueue<>(capacity);
+        futures = new CompletableFuture[threadCount];
         for (int i = 0; i < threadCount; i++) {
-            futures.add(CompletableFuture.runAsync(() -> {
+            futures[i] = CompletableFuture.runAsync(() -> {
                 try {
                     Optional<Runnable> optional = queue.take();
                     while (optional.isPresent()) {
@@ -31,7 +30,7 @@ public class WorkQueue {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }, executor));
+            }, executor);
         }
     }
 
@@ -54,6 +53,6 @@ public class WorkQueue {
             }
         }
 
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        CompletableFuture.allOf(futures).join();
     }
 }

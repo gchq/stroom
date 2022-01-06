@@ -25,16 +25,16 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStoreFactory.class);
 
     private final LmdbEnvFactory lmdbEnvFactory;
-    private final ResultStoreConfig resultStoreConfig;
+    private final Provider<ResultStoreConfig> resultStoreConfigProvider;
     private final Provider<Executor> executorProvider;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
-                                final ResultStoreConfig resultStoreConfig,
-                                final Provider<Executor> executorProvider,
-                                final PathCreator pathCreator) {
+                                final Provider<ResultStoreConfig> resultStoreConfigProvider,
+                                final PathCreator pathCreator,
+                                final Provider<Executor> executorProvider) {
         this.lmdbEnvFactory = lmdbEnvFactory;
-        this.resultStoreConfig = resultStoreConfig;
+        this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.executorProvider = executorProvider;
         // As result stores are transient they serve no purpose after shutdown so delete any that
         // may still be there
@@ -48,15 +48,23 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
                             final Sizes maxResults,
-                            final Sizes storeSize) {
+                            final Sizes storeSize,
+                            final boolean producePayloads,
+                            final ErrorConsumer errorConsumer) {
 
+        final ResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
         if (!resultStoreConfig.isOffHeapResults()) {
+            if (producePayloads) {
+                throw new RuntimeException("MapDataStore cannot produce payloads");
+            }
+
             return new MapDataStore(
                     tableSettings,
                     fieldIndex,
                     paramMap,
                     maxResults,
-                    storeSize);
+                    storeSize,
+                    errorConsumer);
         } else {
             return new LmdbDataStore(
                     lmdbEnvFactory,
@@ -67,13 +75,15 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     fieldIndex,
                     paramMap,
                     maxResults,
-                    storeSize);
+                    producePayloads,
+                    executorProvider,
+                    errorConsumer);
         }
     }
 
     private void cleanStoresDir(final PathCreator pathCreator) {
         final String dirFromConfig = NullSafe.get(
-                resultStoreConfig,
+                resultStoreConfigProvider.get(),
                 ResultStoreConfig::getLmdbConfig,
                 LmdbConfig::getLocalDir);
 

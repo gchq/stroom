@@ -28,9 +28,11 @@ import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
+import stroom.util.string.ExceptionStringUtil;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -78,27 +80,26 @@ public class SearchResponseCreator {
     }
 
     /**
-     * @param errorMessages List of errors to add to the {@link SearchResponse}
+     * @param throwable List of errors to add to the {@link SearchResponse}
      * @return An empty {@link SearchResponse} with the passed error messages
      */
-    public static SearchResponse createErrorResponse(final List<String> errorMessages) {
-        Objects.requireNonNull(errorMessages);
-        final List<String> errors = new ArrayList<>(errorMessages);
+    private static SearchResponse createErrorResponse(final Store store, final Throwable throwable) {
+        Objects.requireNonNull(store);
+        Objects.requireNonNull(throwable);
+
+        final List<String> errors = new ArrayList<>();
+
+        LOGGER.debug(throwable::getMessage, throwable);
+        errors.add(ExceptionStringUtil.getMessage(throwable));
+
+        if (store.getErrors() != null) {
+            errors.addAll(store.getErrors());
+        }
         return new SearchResponse(
                 null,
                 null,
                 errors,
                 false);
-    }
-
-    private static SearchResponse createErrorResponse(final Store store, List<String> errorMessages) {
-        Objects.requireNonNull(store);
-        Objects.requireNonNull(errorMessages);
-        final List<String> errors = new ArrayList<>(errorMessages);
-        if (store.getErrors() != null) {
-            errors.addAll(store.getErrors());
-        }
-        return createErrorResponse(errors);
     }
 
     /**
@@ -144,14 +145,17 @@ public class SearchResponseCreator {
                     // Search didn't complete non-incremental search in time so return a timed out error response
                     return createErrorResponse(
                             store,
-                            Collections.singletonList("The search timed out after " + effectiveTimeout));
+                            new RuntimeException("The search timed out after " + effectiveTimeout));
                 }
 
             } catch (InterruptedException e) {
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
                 Thread.currentThread().interrupt();
-                LOGGER.debug(() -> "Thread " + Thread.currentThread().getName() + " interrupted", e);
+
                 return createErrorResponse(
-                        store, Collections.singletonList("Thread was interrupted before the search could complete"));
+                        store,
+                        new RuntimeException("Thread was interrupted before the search could complete"));
             }
         }
 
@@ -183,9 +187,7 @@ public class SearchResponseCreator {
             final SearchResponse searchResponse = new SearchResponse(
                     store.getHighlights(),
                     results,
-                    errors.isEmpty()
-                            ? null
-                            : errors,
+                    errors,
                     complete);
 
             if (complete) {
@@ -198,31 +200,31 @@ public class SearchResponseCreator {
         } catch (final RuntimeException e) {
             LOGGER.error(() -> "Error getting search results for query " + searchRequest.getKey().toString(), e);
 
-            return createErrorResponse(store, Collections.singletonList(
-                    "Error getting search results: [" +
+            return createErrorResponse(store,
+                    new RuntimeException("Error getting search results: [" +
                             e.getMessage() +
-                            "], see service's logs for details"));
+                            "], see service's logs for details", e));
         }
     }
 
     private List<String> buildCompoundErrorList(final Store store, final List<Result> results) {
-        List<String> errors = new ArrayList<>();
+        final List<String> errors = new ArrayList<>();
+
         if (store.getErrors() != null) {
             errors.addAll(store.getErrors());
         }
 
         if (results != null) {
-            final List<String> uniqueResultErrors = results.stream()
-                    .map(Result::getError)
+            errors.addAll(results.stream()
+                    .map(Result::getErrors)
                     .filter(Objects::nonNull)
-                    .distinct()
-                    .collect(Collectors.toList());
-            errors.addAll(uniqueResultErrors);
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList()));
         }
 
-        return errors.stream()
-                .distinct()
-                .collect(Collectors.toList());
+        return errors.isEmpty()
+                ? null
+                : errors;
     }
 
     private Duration getEffectiveTimeout(final SearchRequest searchRequest) {
@@ -319,7 +321,8 @@ public class SearchResponseCreator {
                     result = resultCreator.create(data, resultRequest);
                 }
             } catch (final RuntimeException e) {
-                result = new TableResult(componentId, null, null, null, 0, e.getMessage());
+                result = new TableResult(componentId, null, null, null, 0,
+                        Collections.singletonList(ExceptionStringUtil.getMessage(e)));
             }
         }
 

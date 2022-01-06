@@ -20,19 +20,21 @@ package stroom.search.impl;
 import stroom.annotation.api.AnnotationFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.Receiver;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
+import stroom.search.extraction.StoredDataQueue;
 import stroom.search.impl.shard.IndexShardSearchFactory;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SearchProgressLog;
 import stroom.util.logging.SearchProgressLog.SearchPhase;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
@@ -44,53 +46,51 @@ class ClusterSearchTaskHandler {
     private final IndexShardSearchFactory indexShardSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
+    private final ExecutorProvider executorProvider;
+
+    private final AtomicLong hitCount = new AtomicLong();
+    private final AtomicLong extractionCount = new AtomicLong();
+
+    private TaskContext taskContext;
 
     @Inject
     ClusterSearchTaskHandler(final IndexShardSearchFactory indexShardSearchFactory,
                              final ExtractionDecoratorFactory extractionDecoratorFactory,
-                             final SecurityContext securityContext) {
+                             final SecurityContext securityContext,
+                             final ExecutorProvider executorProvider) {
         this.indexShardSearchFactory = indexShardSearchFactory;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
         this.securityContext = securityContext;
-    }
-
-    public void exec(final TaskContext taskContext,
-                     final ClusterSearchTask task,
-                     final Coprocessors coprocessors) {
-        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
-        securityContext.useAsRead(() -> {
-            if (!Thread.currentThread().isInterrupted()) {
-                taskContext.info(() -> "Initialising...");
-
-                try {
-                    if (coprocessors.size() > 0 && task.getShards().size() > 0) {
-                        // Start searching.
-                        search(taskContext, task, task.getQuery(), coprocessors);
-                    }
-
-                } catch (final RuntimeException e) {
-                    coprocessors.getErrorConsumer().accept(e);
-                } finally {
-                    LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
-                            "counting down searchCompleteLatch");
-                    // Tell the client that the search has completed.
-                    coprocessors.getCompletionState().signalComplete();
-                }
-            }
-        });
+        this.executorProvider = executorProvider;
     }
 
     public void search(final TaskContext taskContext,
                        final ClusterSearchTask task,
-                       final Query query,
                        final Coprocessors coprocessors) {
-        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_SEARCH);
+        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
+        this.taskContext = taskContext;
+        securityContext.useAsRead(() -> {
+            if (!Thread.currentThread().isInterrupted()) {
+                taskContext.info(() -> "Initialising...");
+
+                // Start searching.
+                doSearch(taskContext, task, task.getQuery(), coprocessors);
+            }
+        });
+    }
+
+    private void doSearch(final TaskContext taskContext,
+                          final ClusterSearchTask task,
+                          final Query query,
+                          final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
+        // Start searching.
+        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_SEARCH);
+
         try {
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(
-                    taskContext,
+            final StoredDataQueue storedDataQueue = extractionDecoratorFactory.createStoredDataQueue(
                     coprocessors,
                     query);
 
@@ -99,47 +99,54 @@ class ClusterSearchTaskHandler {
                     .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
-            final AtomicLong hitCount = new AtomicLong();
-            indexShardSearchFactory.search(
+            final CompletableFuture<Void> indexShardSearchFuture = indexShardSearchFactory.search(
                     task,
                     expression,
                     coprocessors.getFieldIndex(),
-                    extractionReceiver,
                     taskContext,
-                    hitCount);
+                    hitCount,
+                    storedDataQueue,
+                    coprocessors.getErrorConsumer());
 
-            // Wait for search completion.
-            boolean allComplete = false;
-            while (!allComplete) {
-                allComplete = true;
-                for (final Coprocessor coprocessor : coprocessors) {
-                    if (!Thread.currentThread().isInterrupted()) {
-                        taskContext.info(() -> "" +
-                                "Searching... " +
-                                "found " +
-                                hitCount.get() +
-                                " documents" +
-                                " performed " +
-                                coprocessor.getValuesCount() +
-                                " extractions");
+            // Start mapping streams.
+            final CompletableFuture<Void> streamMappingFuture = extractionDecoratorFactory
+                    .startMapping(taskContext, coprocessors);
 
-                        final boolean complete = coprocessor.getCompletionState()
-                                .awaitCompletion(1, TimeUnit.SECONDS);
-                        if (!complete) {
-                            allComplete = false;
-                        }
-                    }
-                }
+            // Start extracting data.
+            final CompletableFuture<Void> extractionFuture = extractionDecoratorFactory
+                    .startExtraction(taskContext, extractionCount, coprocessors.getErrorConsumer());
+
+            // Create a countdown latch to keep updating status until we complete.
+            final CountDownLatch complete = new CountDownLatch(1);
+
+            // Wait for all to complete.
+            final CompletableFuture<Void> all = CompletableFuture
+                    .allOf(indexShardSearchFuture, streamMappingFuture, extractionFuture);
+            all.whenCompleteAsync((r, t) -> complete.countDown(), executorProvider.get());
+
+            // Update status until we complete.
+            while (!complete.await(1, TimeUnit.SECONDS)) {
+                updateInfo();
             }
 
             LOGGER.debug(() -> "Complete");
+        } catch (final InterruptedException e) {
+            LOGGER.trace(e::getMessage, e);
+            // Keep interrupting this thread.
+            Thread.currentThread().interrupt();
         } catch (final RuntimeException e) {
             throw SearchException.wrap(e);
-        } catch (final InterruptedException e) {
-            // Continue to interrupt.
-            Thread.currentThread().interrupt();
-            LOGGER.debug(e::getMessage, e);
-            throw SearchException.wrap(e);
         }
+    }
+
+    public void updateInfo() {
+        taskContext.info(() -> "" +
+                "Searching... " +
+                "found "
+                + hitCount.get() +
+                " documents" +
+                " performed " +
+                extractionCount.get() +
+                " extractions");
     }
 }

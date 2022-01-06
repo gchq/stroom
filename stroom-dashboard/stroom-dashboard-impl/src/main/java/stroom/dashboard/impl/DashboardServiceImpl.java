@@ -66,6 +66,7 @@ import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.string.ExceptionStringUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -411,8 +412,9 @@ class DashboardServiceImpl implements DashboardService {
                 final Executor executor = executorProvider.get();
                 final CountDownLatch countDownLatch = new CountDownLatch(request.getSearchRequests().size());
                 for (final DashboardSearchRequest searchRequest : request.getSearchRequests()) {
-                    Runnable runnable = taskContextFactory.context("Search", taskContext -> {
+                    Runnable runnable = taskContextFactory.context("Dashboard Search Poll", taskContext -> {
                         try {
+                            taskContext.info(() -> "Polling for new search results");
                             httpServletRequestHolder.set(httpServletRequest);
                             final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
                             if (searchRequest.getSearch() != null) {
@@ -514,11 +516,12 @@ class DashboardServiceImpl implements DashboardService {
                 searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
             }
 
-            final String errors = e.getMessage() != null
-                    ? e.getMessage()
-                    : e.getClass().getName();
-
-            result = new DashboardSearchResponse(queryKey, null, errors, true, null);
+            result = new DashboardSearchResponse(
+                    queryKey,
+                    null,
+                    Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                    true,
+                    null);
         }
 
         return result;

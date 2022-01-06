@@ -12,27 +12,29 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import javax.inject.Singleton;
 
-@Singleton
-@JsonPropertyOrder({"enabled", "title", "validationRegex"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class InfoPopupConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("If you would like users to provide some query info when performing a query " +
             "set this property to true.")
-    private boolean enabled;
+    private final boolean enabled;
+
     @JsonProperty
     @JsonPropertyDescription("The title of the query info popup.")
-    private String title;
+    private final String title;
+
     @JsonProperty
     @JsonPropertyDescription("A regex used to validate query info.")
     @ValidRegex
-    private String validationRegex;
+    private final String validationRegex;
 
     public InfoPopupConfig() {
-        setDefaults();
+        enabled = false;
+        title = "Please Provide Query Info";
+        validationRegex = "^[\\s\\S]{3,}$";
     }
 
     @JsonCreator
@@ -42,41 +44,18 @@ public class InfoPopupConfig extends AbstractConfig implements IsStroomConfig {
         this.enabled = enabled;
         this.title = title;
         this.validationRegex = validationRegex;
-
-        setDefaults();
-    }
-
-    private void setDefaults() {
-        if (title == null) {
-            title = "Please Provide Query Info";
-        }
-        if (validationRegex == null) {
-            validationRegex = "^[\\s\\S]{3,}$";
-        }
     }
 
     public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public String getTitle() {
         return title;
     }
 
-    public void setTitle(final String title) {
-        this.title = title;
-    }
-
     public String getValidationRegex() {
         return validationRegex;
-    }
-
-    public void setValidationRegex(final String validationRegex) {
-        this.validationRegex = validationRegex;
     }
 
     @Override

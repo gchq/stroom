@@ -20,6 +20,7 @@ package stroom.activity.impl.db;
 import stroom.activity.api.ActivityService;
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.ActivityServiceImpl;
+import stroom.activity.impl.db.ActivityConfig.ActivityDbConfig;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityValidationResult;
@@ -50,7 +51,7 @@ class TestActivityServiceImpl {
     @BeforeEach
     void before() {
         final ActivityDbConnProvider activityDbConnProvider = DbTestUtil.getTestDbDatasource(
-                new ActivityDbModule(), new ActivityConfig());
+                new ActivityDbModule(), new ActivityDbConfig());
 
         final ActivityDao activityDao = new ActivityDaoImpl(activityDbConnProvider);
         activityService = new ActivityServiceImpl(securityContext, activityDao);

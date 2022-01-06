@@ -30,6 +30,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProviderImpl;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,17 +71,20 @@ class TestStreamDumpTool {
     void setup() {
         final Injector injector = Guice.createInjector(
                 new DbTestModule(),
-                new ToolModule());
+                new ToolModule(),
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        super.configure();
+                        bind(FsVolumeConfig.class)
+                                .toProvider(() -> getVolumeConfig());
+                    }
+                });
         injector.injectMembers(this);
 
         // Clear any lingering volumes or data.
         homeDirProvider.setHomeDir(tempDir);
         tempDirProvider.setTempDir(tempDir);
-        final String path = tempDir
-                .resolve("volumes/defaultStreamVolume")
-                .toAbsolutePath()
-                .toString();
-        volumeConfig.setDefaultStreamVolumePaths(List.of(path));
         fsVolumeService.clear();
 
         Mockito.when(toolInjector.getInjector())
@@ -88,6 +92,16 @@ class TestStreamDumpTool {
 
         // Clear the current DB.
         DbTestUtil.clear();
+    }
+
+    private FsVolumeConfig getVolumeConfig() {
+        final String path = tempDir
+                .resolve("volumes/defaultStreamVolume")
+                .toAbsolutePath()
+                .toString();
+
+        return new FsVolumeConfig()
+                .withDefaultStreamVolumePaths(List.of(path));
     }
 
     @Test

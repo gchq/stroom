@@ -101,11 +101,16 @@ class AsyncSearchTaskHandler {
                 final String sourceNode = targetNodeSetFactory.getSourceNode();
                 final Map<String, List<Long>> shardMap = new HashMap<>();
 
+                // Create an async call that will terminate the whole task if the coprocessors decide they have enough
+                // data.
+                CompletableFuture.runAsync(() -> awaitCompletionAndTerminate(resultCollector, parentContext, task),
+                        executorProvider.get());
+
                 try {
                     // Get the nodes that we are going to send the search request
                     // to.
                     final Set<String> targetNodes = targetNodeSetFactory.getEnabledTargetNodeSet();
-                    parentContext.info(() -> task.getSearchName() + " - initialising");
+                    parentContext.info(task::getSearchName);
                     final Query query = task.getQuery();
 
                     // Get a list of search index shards to look through.
@@ -175,29 +180,49 @@ class AsyncSearchTaskHandler {
                     resultCollector.onFailure(sourceNode, e);
 
                 } finally {
+                    parentContext.info(() -> task.getSearchName() + " - complete");
+                    LOGGER.debug(() -> task.getSearchName() + " - complete");
+
                     // Ensure search is complete even if we had errors.
-                    LOGGER.debug(() -> "Search complete");
                     resultCollector.complete();
+
+                    // Await final completion and terminate all tasks.
+                    awaitCompletionAndTerminate(resultCollector, parentContext, task);
 
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
                     parentContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
-
-                    // Make sure we try and terminate any child tasks on worker
-                    // nodes if we need to.
-                    terminateTasks(task, parentContext.getTaskId());
                 }
             }
         }));
     }
 
-    private void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
-        // Terminate this task.
-        taskManager.terminate(taskId);
+    private void awaitCompletionAndTerminate(final ClusterSearchResultCollector resultCollector,
+                                             final TaskContext parentContext,
+                                             final AsyncSearchTask task) {
+        // Wait for the result collector to complete.
+        try {
+            resultCollector.awaitCompletion();
+        } catch (final InterruptedException e) {
+            LOGGER.trace(e.getMessage(), e);
+            // Keep interrupting this thread.
+            Thread.currentThread().interrupt();
+        } finally {
+            // Make sure we try and terminate any child tasks on worker
+            // nodes if we need to.
+            terminateTasks(task, parentContext.getTaskId());
+        }
+    }
 
-        // We have to wrap the cluster termination task in another task or
-        // ClusterDispatchAsyncImpl
-        // will not execute it if the parent task is terminated.
-        clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
+    public void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
+        securityContext.asProcessingUser(() -> {
+            // Terminate this task.
+            taskManager.terminate(taskId);
+
+            // We have to wrap the cluster termination task in another task or
+            // ClusterDispatchAsyncImpl
+            // will not execute it if the parent task is terminated.
+            clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
+        });
     }
 }

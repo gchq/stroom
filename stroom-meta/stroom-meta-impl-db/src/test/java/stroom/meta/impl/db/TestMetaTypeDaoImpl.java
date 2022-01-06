@@ -48,6 +48,7 @@ class TestMetaTypeDaoImpl {
         Guice.createInjector(
                 new MetaTestModule(),
                 new MetaDbModule(),
+                new MetaDaoModule(),
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockTaskModule(),

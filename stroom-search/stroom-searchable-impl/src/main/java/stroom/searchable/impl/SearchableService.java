@@ -67,8 +67,8 @@ class SearchableService {
 
             final DocRef docRef = Preconditions.checkNotNull(
                     Preconditions.checkNotNull(
-                            Preconditions.checkNotNull(modifiedSearchRequest)
-                                    .getQuery())
+                                    Preconditions.checkNotNull(modifiedSearchRequest)
+                                            .getQuery())
                             .getDataSource());
             Preconditions.checkNotNull(modifiedSearchRequest.getResultRequests(),
                     "searchRequest must have at least one resultRequest");
@@ -79,7 +79,7 @@ class SearchableService {
             if (searchable == null) {
                 return buildEmptyResponse(
                         modifiedSearchRequest,
-                        "Searchable could not be found for uuid " + docRef.getUuid());
+                        Collections.singletonList("Searchable could not be found for uuid " + docRef.getUuid()));
             } else {
                 return buildResponse(modifiedSearchRequest, searchable);
             }
@@ -108,11 +108,7 @@ class SearchableService {
         return searchResponseCreator.create(searchRequest);
     }
 
-    private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final String errorMessage) {
-        return buildEmptyResponse(searchRequest, Collections.singletonList(errorMessage));
-    }
-
-    private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final List<String> errorMessages) {
+    private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final List<String> errors) {
 
         List<Result> results;
         if (searchRequest.getResultRequests() != null) {
@@ -132,7 +128,7 @@ class SearchableService {
         return new SearchResponse(
                 Collections.emptyList(),
                 results,
-                errorMessages,
+                errors,
                 true);
     }
 }

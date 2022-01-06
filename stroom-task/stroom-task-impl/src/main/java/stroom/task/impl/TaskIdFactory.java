@@ -18,9 +18,12 @@ package stroom.task.impl;
 
 import stroom.task.shared.TaskId;
 
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 class TaskIdFactory {
+
+    private static final long start = (long) Math.abs(Long.MAX_VALUE * Math.random());
+    private static final AtomicLong sequence = new AtomicLong();
 
     static TaskId create() {
         return new TaskId(createUUID(), null);
@@ -35,6 +38,7 @@ class TaskIdFactory {
     }
 
     private static String createUUID() {
-        return UUID.randomUUID().toString();
+        final long num = sequence.incrementAndGet();
+        return start + "_" + num;
     }
 }

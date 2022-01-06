@@ -14,14 +14,16 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.string.ExceptionStringUtil;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,7 +39,7 @@ class SearchableStore implements Store {
     private final String searchKey;
 
     private final Coprocessors coprocessors;
-    private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
+    private final Set<Throwable> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final AtomicBoolean terminate = new AtomicBoolean();
     private volatile Thread thread;
 
@@ -85,10 +87,11 @@ class SearchableStore implements Store {
         final Instant queryStart = Instant.now();
         try {
             // Give the data array to each of our coprocessors
-            searchable.search(criteria, fieldArray, coprocessors.getValuesConsumer());
+            searchable.search(criteria, fieldArray, coprocessors);
 
         } catch (final RuntimeException e) {
-            errors.add(e.getMessage());
+            LOGGER.debug(e::getMessage, e);
+            errors.add(e);
         }
 
         LOGGER.debug(() ->
@@ -143,7 +146,10 @@ class SearchableStore implements Store {
 
     @Override
     public List<String> getErrors() {
-        return errors;
+        return errors
+                .stream()
+                .map(ExceptionStringUtil::getMessage)
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -102,7 +102,8 @@ public class SolrEventSearchTaskHandler {
             final Coprocessors coprocessors = coprocessorsFactory.create(
                     task.getKey().getUuid(),
                     Collections.singletonList(settings),
-                    modifiedQuery.getParams());
+                    modifiedQuery.getParams(),
+                    false);
             final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
             // Create a collector to store search results.
