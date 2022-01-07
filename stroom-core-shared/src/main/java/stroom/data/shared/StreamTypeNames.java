@@ -1,9 +1,17 @@
 package stroom.data.shared;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 public class StreamTypeNames {
+
+    // TODO 06/01/2022 AT: The ultimate aim is for stream types to be fully configurable and not baked in
+    //  however we have a lot of code that is conditional on certain stream type names so we have to make do
+    //  for now.
+
+    // TODO 06/01/2022 AT: This ought to be an enum but not going to take the risk of a refactor
+    //  when we are about to deploy v7.0 and the resulting merge pain. A job for master.
 
     /**
      * Saved raw version for the archive.
@@ -37,30 +45,30 @@ public class StreamTypeNames {
      * Context file for use with an events file.
      */
     public static final String CONTEXT = "Context";
-
     /**
      * Processed test events data files
      */
     public static final String TEST_EVENTS = "Test Events";
-
     /**
      * Processed test reference data files
      */
     public static final String TEST_REFERENCE = "Test Reference";
-
     /**
      * Processed detections
      */
     public static final String DETECTIONS = "Detections";
 
-    public static final Set<String> VALID_RECEIVE_TYPE_NAMES = new HashSet<>();
-
-    static {
-        VALID_RECEIVE_TYPE_NAMES.add(RAW_EVENTS);
-        VALID_RECEIVE_TYPE_NAMES.add(RAW_REFERENCE);
-        VALID_RECEIVE_TYPE_NAMES.add(EVENTS);
-        VALID_RECEIVE_TYPE_NAMES.add(REFERENCE);
-        VALID_RECEIVE_TYPE_NAMES.add(TEST_EVENTS);
-        VALID_RECEIVE_TYPE_NAMES.add(TEST_REFERENCE);
-    }
+    // GWT so can't use Set.of() :-(
+    public static final Set<String> ALL_TYPE_NAMES = new HashSet<>(Arrays.asList(
+            CONTEXT,
+            DETECTIONS,
+            ERROR,
+            EVENTS,
+            META,
+            RAW_EVENTS,
+            RAW_REFERENCE,
+            RECORDS,
+            REFERENCE,
+            TEST_EVENTS,
+            TEST_REFERENCE));
 }

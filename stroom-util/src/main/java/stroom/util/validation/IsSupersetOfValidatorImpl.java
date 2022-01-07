@@ -1,7 +1,7 @@
 package stroom.util.validation;
 
-import stroom.util.shared.validation.IsSubsetOf;
-import stroom.util.shared.validation.IsSubsetOfValidator;
+import stroom.util.shared.validation.IsSupersetOf;
+import stroom.util.shared.validation.IsSupersetOfValidator;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintValidatorContext;
 
-public class IsSubsetOfValidatorImpl implements IsSubsetOfValidator {
+public class IsSupersetOfValidatorImpl implements IsSupersetOfValidator {
 
     private Collection<String> allowedValues;
 
     @Override
-    public void initialize(IsSubsetOf constraintAnnotation) {
+    public void initialize(IsSupersetOf constraintAnnotation) {
         allowedValues = Arrays.asList(constraintAnnotation.allowedValues());
     }
 
