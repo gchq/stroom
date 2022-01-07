@@ -351,7 +351,7 @@ class TestByteBufferPool {
         final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl();
         final ByteBufferPool byteBufferPool2 = new ByteBufferPoolImpl2();
         final ByteBufferPool byteBufferPool3 = new ByteBufferPoolImpl3();
-        final ByteBufferPool byteBufferPool4 = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
+        final ByteBufferPool byteBufferPool4 = new ByteBufferPoolImpl4(ByteBufferPoolConfig::new);
         final ByteBufferPool byteBufferPool5 = new ByteBufferPoolImpl5();
 
         // Do them all twice so on the second run the jvm is all warmed up and the pools

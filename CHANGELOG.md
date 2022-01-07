@@ -12,6 +12,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2679** : Add unique index on `meta_processor.pipeline_uuid`.
+
+* Issue **#2596** : Disable the Ace editor settings menu (`ctrl-,`) as users should not have access to it and it does not work with modal dialogs.
+
+* Issue **#2139** : Add DB migration scripts to the ZIP distribution.
+
+* Issue **#2685** : Fix issue where searchable stores are limited to 1 million rows.
+
+* Issue **#2696** : Change the byte buffer pool to not block by default and make that configurable.
+
 * Issue **#2666** : Fix handling of missing reference stream file.
 
 * Change error table to wrap error message text.
