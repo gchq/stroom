@@ -2,8 +2,6 @@ ext.moduleName = 'elastic.shaded'
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
-apply plugin: 'java-library'
-
 configurations {
     shadow {
         canBeConsumed = true

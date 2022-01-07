@@ -108,7 +108,7 @@ shadowJar {
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
 
-    archiveName fatJarName
+    archiveFileName = fatJarName
 }
 
 def proxyDockerBuildDir = "${projectDir}/docker/build"
@@ -119,7 +119,7 @@ clean {
 // Generate the confi.yml files for the zip and docker distributions
 task generateConfigFiles(type: JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
-    main = "stroom.proxy.dist.GenerateProxyDistributionConfig"
+    mainClass = "stroom.proxy.dist.GenerateProxyDistributionConfig"
 }
 
 // Copy all the files needed by the stroom-proxy docker build into stroom-app/proxy-docker/build
@@ -190,7 +190,7 @@ task generateConfigDefaultsYamlFile(type: JavaExec) {
     //dependsOn ':stroom-config:stroom-config-app:compileTestJava'
 
     classpath = project(':stroom-proxy:stroom-proxy-app').sourceSets.test.runtimeClasspath
-    main = 'stroom.proxy.dist.GenerateProxyExpectedYaml'
+    mainClass = 'stroom.proxy.dist.GenerateProxyExpectedYaml'
     args = [configDefaultsFile, configSchemaFile]
 }
 
