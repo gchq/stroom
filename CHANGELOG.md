@@ -12,6 +12,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.171] - 2022-01-07
+
+* Issue **#2679** : Add unique index on `meta_processor.pipeline_uuid`.
+
+* Issue **#2596** : Disable the Ace editor settings menu (`ctrl-,`) as users should not have access to it and it does not work with modal dialogs.
+
+* Issue **#2139** : Add DB migration scripts to the ZIP distribution.
+
+* Issue **#2685** : Fix issue where searchable stores are limited to 1 million rows.
+
+* Issue **#2696** : Change the byte buffer pool to not block by default and make that configurable.
+
+
 ## [v7.0-beta.170] - 2021-12-24
 
 * Issue **#2666** : Fix handling of missing reference stream file.
@@ -4092,7 +4105,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.170...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.171...HEAD
+[v7.0-beta.171]: https://github.com/gchq/stroom/compare/v7.0-beta.170...v7.0-beta.171
 [v7.0-beta.170]: https://github.com/gchq/stroom/compare/v7.0-beta.169...v7.0-beta.170
 [v7.0-beta.169]: https://github.com/gchq/stroom/compare/v7.0-beta.168...v7.0-beta.169
 [v7.0-beta.168]: https://github.com/gchq/stroom/compare/v7.0-beta.167...v7.0-beta.168
