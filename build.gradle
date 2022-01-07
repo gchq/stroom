@@ -19,6 +19,8 @@ buildscript {
 }
 
 plugins {
+    id 'java-library'
+
     // Plugin for downloading content from the 'net
     id "de.undercouch.download" version "4.1.2" apply false
 
@@ -31,9 +33,9 @@ plugins {
 
     id 'org.flywaydb.flyway' version '7.5.4' apply false
 
-    id "ca.cutterslade.analyze" version "1.4.3"
+    id 'org.kordamp.gradle.jdeps' version '0.16.0'
 
-//    id 'java-library'
+//    id "ca.cutterslade.analyze" version "1.4.3"
 
 //    id 'nebula.lint' version '10.4.2'
 
@@ -44,11 +46,11 @@ plugins {
 //    gradleVersion = '5.6.4'
 //}
 
-apply plugin: 'ca.cutterslade.analyze'
+//apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
-def javaVersion = JavaVersion.VERSION_17;
+def javaVersion = JavaVersion.VERSION_15;
 if (JavaVersion.current() != javaVersion) {
     throw new GradleException(
         "This build must be run with Java " + javaVersion + " (current = " + JavaVersion.current() + ")")
@@ -201,7 +203,7 @@ ext.libs = [
         jBCrypt                        : "de.svenkubiak:jBCrypt:0.4.1",
         jackson_annotations            : "com.fasterxml.jackson.core:jackson-annotations", // version controlled by DW BOM
         jackson_core                   : "com.fasterxml.jackson.core:jackson-core:2.9.10", // version controlled by DW BOM
-        jackson_databind               : files('libs/jackson-databind-2.9.10.8.jar'),//"com.fasterxml.jackson.core:jackson-databind", // version controlled by DW BOM
+        jackson_databind               : "com.fasterxml.jackson.core:jackson-databind", // version controlled by DW BOM
         jackson_dataformat_yaml        : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", // version controlled by DW BOM
         jackson_datatype_jsr310        : "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", // version controlled by DW BOM
         jakarta_activation             : "jakarta.activation:jakarta.activation-api", // version controlled by DW BOM
@@ -213,7 +215,7 @@ ext.libs = [
         java_jwt                       : "com.auth0:java-jwt:3.1.0",
         javassist                      : "org.javassist:javassist", // version controlled by DW BOM
         javax_inject                   : "javax.inject:javax.inject:1",
-        jaxb_api                       : "javax.xml.bind:jaxb-api:2.4.0-b180830.0359", // Using beta versions of jaxb libs as they resolve the split pkg problem between jaxb-core and jaxb-runtime
+        jaxb_api                       : "javax.xml.bind:jaxb-api:2.3.1", // Using beta versions of jaxb libs as they resolve the split pkg problem between jaxb-core and jaxb-runtime
         jaxb_impl                      : "com.sun.xml.bind:jaxb-impl:2.4.0-b180830.0438",
         jaxb_runtime                   : "org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438",
         jaxws_api                      : "javax.xml.ws:jaxws-api:2.2.6",
@@ -317,11 +319,11 @@ def dropwizardBomSlf4jVersion = null
 subprojects {
     //println "Configuring subproject ${project.name}"
 
-    apply plugin: 'java'
+    apply plugin: 'java-library'
     apply plugin: 'checkstyle'
     apply plugin: 'idea'
+//    apply plugin: 'org.kordamp.gradle.jdeps'
 //    apply plugin: 'ca.cutterslade.analyze'
-//    apply plugin: 'java-library'
 //    apply plugin: 'nebula.lint'
 //
 //    gradleLint {
@@ -468,7 +470,6 @@ subprojects {
 
     afterEvaluate {
 //        repositories {
-//            jcenter()
 //        }
 //
 //        compileJava {
@@ -494,21 +495,21 @@ subprojects {
 //            }
 //        }
 //
-        test {
-            inputs.property("moduleName", moduleName)
-            doFirst {
-                jvmArgs = [
-                        '--module-path', classpath.asPath,
-                        '--add-modules', 'ALL-MODULE-PATH',
-//                        '--add-reads', "$moduleName=junit",
-                        '--add-modules', 'java.base/java.nio=ALL-UNNAMED',
-                        '--add-modules', 'java.base/sun.nio.ch=ALL-UNNAMED',
-                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
-                        '-verbose', '',
-                ]
-                classpath = files()
-            }
-        }
+//        test {
+//            inputs.property("moduleName", moduleName)
+//            doFirst {
+//                jvmArgs = [
+//                        '--module-path', classpath.asPath,
+//                        '--add-modules', 'ALL-MODULE-PATH',
+////                        '--add-reads', "$moduleName=junit",
+////                        '--add-modules', 'java.base/java.nio=ALL-UNNAMED',
+////                        '--add-modules', 'java.base/sun.nio.ch=ALL-UNNAMED',
+//                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
+//                        '-verbose', '',
+//                ]
+//                classpath = files()
+//            }
+//        }
 //
 //        javadoc {
 //            options.addStringOption('-module-path', classpath.asPath)
@@ -524,6 +525,11 @@ subprojects {
 //            }
 //            version versions.stroomQuery
 //        }
+
+
+        jdepsReport {
+            multiRelease = '15'
+        }
     }
 
 
@@ -823,5 +829,3 @@ if (hasProperty('buildScan')) {
 //dependencyGraphGenerator {
 //    generators = [ stroomGenerator ]
 //}
-
-

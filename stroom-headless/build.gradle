@@ -84,7 +84,7 @@ shadowJar {
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
 
-    archiveName fatJarName
+    archiveFileName = fatJarName
 }
 
 // The gradle application plugin enables the distribution plugin

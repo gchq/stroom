@@ -1,7 +1,7 @@
 buildscript {
     repositories {
         mavenLocal()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath libs.mysql_connector_java
@@ -325,7 +325,7 @@ jar {
                 "Main-Class": "stroom.app.App"
         )
     }
-//    archiveName jarName
+//    archiveFileName jarName
     exclude '**/gwt-unitCache'
 }
 
@@ -363,7 +363,7 @@ shadowJar {
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
 
-    archiveName fatJarName
+    archiveFileName = fatJarName
     exclude '**/gwt-unitCache'
 }
 
@@ -382,7 +382,7 @@ task migrate(type: JavaExec) {
     dependsOn ':stroom-config:stroom-config-app:compileJava'
 
     classpath = sourceSets.main.runtimeClasspath
-    main = mainClassName
+    mainClass = mainClassName
     args 'migrate', '../local.yml'
 }
 
@@ -395,7 +395,7 @@ clean {
 // Generate the confi.yml files for the zip and docker distributions
 task generateConfigFiles(type: JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
-    main = "stroom.dist.GenerateDistributionConfig"
+    mainClass = "stroom.dist.GenerateDistributionConfig"
 }
 
 task downloadStroomContentForDocker(type: JavaExec) {
@@ -406,7 +406,7 @@ task downloadStroomContentForDocker(type: JavaExec) {
     // We need to set the working directory as the stroom root
     workingDir '../'
     classpath = sourceSets.test.runtimeClasspath
-    main = 'stroom.test.DownloadStroomContentApp'
+    mainClass = 'stroom.test.DownloadStroomContentApp'
 
     args = [contentPackDefinitionFile, contentPackDownloadDir, stroomDockerContentPacksDir]
 }
@@ -419,7 +419,7 @@ task downloadStroomContentForZipDist(type: JavaExec) {
     // We need to set the working directory as the stroom root
     workingDir '../'
     classpath = sourceSets.test.runtimeClasspath
-    main = 'stroom.test.DownloadStroomContentApp'
+    mainClass = 'stroom.test.DownloadStroomContentApp'
 
     args = [contentPackDefinitionFile, contentPackDownloadDir, stroomZipDistContentPacksDir]
 }
@@ -651,7 +651,7 @@ task generateConfigDefaultsYamlFile(type: JavaExec) {
     dependsOn ':stroom-config:stroom-config-app:compileTestJava'
 
     classpath = project(':stroom-config:stroom-config-app').sourceSets.test.runtimeClasspath
-    main = 'stroom.config.app.GenerateExpectedYaml'
+    mainClass = 'stroom.config.app.GenerateExpectedYaml'
     args = [configDefaultsFile, configSchemaFile]
 }
 
@@ -727,7 +727,7 @@ task setupSampleDataApplication(type: JavaExec) {
     // setupSampleData won't find 'samples' directories in other modules.
     workingDir '../'
     classpath = sourceSets.test.runtimeClasspath
-    main = 'stroom.test.SetupSampleData'
+    mainClass = 'stroom.test.SetupSampleData'
 
     args = ['local.yml']
 }

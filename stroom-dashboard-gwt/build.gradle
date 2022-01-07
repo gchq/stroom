@@ -120,7 +120,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         }
     }
 
-    main = gwtCompilerProps.mainClass
+    mainClass = gwtCompilerProps.mainClass
 
     classpath {
         gwtSourceDirs
@@ -161,7 +161,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         file(extraDir).mkdirs()
     }
 
-    main = 'com.google.gwt.dev.Compiler'
+    mainClass = 'com.google.gwt.dev.Compiler'
 
     classpath {
         gwtSourceDirs
@@ -221,7 +221,7 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
         """.stripIndent().trim()
     }
 
-    main = 'com.google.gwt.dev.DevMode'
+    mainClass = 'com.google.gwt.dev.DevMode'
 
     classpath {
         gwtSourceDirs
