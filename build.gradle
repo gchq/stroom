@@ -113,7 +113,7 @@ ext.versions = [
         elasticsearch     : '7.16.0',
         httpcore          : '4.4.12', // Transient dependency of Elasticsearch
         guice5            : '5.0.1',
-        gwt               : '2.8.2',
+        gwt               : '2.9.0',
         hikari            : '3.2.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
         jooq              : '3.14.7',
