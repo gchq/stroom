@@ -19,6 +19,7 @@
  * This code was copied (unchanged except for formatting and the 'throw' in unmap()) from
  * https://github.com/dain/leveldb/blob/master/leveldb/src/main/java/org/iq80/leveldb/util/ByteBufferSupport.java
  * Original license below.
+ * Original copyright: 2011 Dain Sundstrom dain@iq80.com
  */
 
 /*
@@ -52,7 +53,6 @@ import java.nio.MappedByteBuffer;
 /*
  * This code was copied (unchanged except for formatting and the 'throw' in unmap()) from
  * https://github.com/dain/leveldb/blob/master/leveldb/src/main/java/org/iq80/leveldb/util/ByteBufferSupport.java
- * Original license below.
  */
 public class ByteBufferSupport {
 
