@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -262,26 +263,8 @@ public class LmdbEnv implements AutoCloseable {
     }
 
     private <T> T getWithReadTxnUnderMaxReaderSemaphore(final Function<Txn<ByteBuffer>, T> work) {
-        final Runnable postAcquireAction = LOGGER.isDebugEnabled()
-                ? createWaitLoggingAction("activeReadTransactionsSemaphore")
-                : null;
         try {
-            activeReadTransactionsSemaphore.acquire();
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted", e);
-        }
-
-        if (postAcquireAction != null) {
-            postAcquireAction.run();
-        }
-
-        try {
-            LOGGER.trace(() ->
-                    LogUtil.message("activeReadTransactionsSemaphore permit acquired, remaining {}, queue length {}",
-                            activeReadTransactionsSemaphore.availablePermits(),
-                            activeReadTransactionsSemaphore.getQueueLength()));
+            acquireReadTxnPermit();
 
             try (final Txn<ByteBuffer> txn = env.txnRead()) {
                 LOGGER.trace("Performing work with read txn");
@@ -293,11 +276,45 @@ public class LmdbEnv implements AutoCloseable {
             }
         } finally {
             activeReadTransactionsSemaphore.release();
+
             LOGGER.trace(() ->
-                    LogUtil.message("activeReadTransactionsSemaphore permit released, remaining {}, queue length {}",
+                    LogUtil.message("activeReadTransactionsSemaphore permit released, " +
+                                    "remaining {}, queue length {}",
                             activeReadTransactionsSemaphore.availablePermits(),
                             activeReadTransactionsSemaphore.getQueueLength()));
         }
+    }
+
+    private void acquireReadTxnPermit() {
+        final Runnable postAcquireAction = LOGGER.isDebugEnabled()
+                ? createWaitLoggingAction("activeReadTransactionsSemaphore")
+                : null;
+        boolean havePermit = false;
+        try {
+            int cnt = 1;
+            final int timeoutSecs = 30;
+            while (!havePermit) {
+                havePermit = activeReadTransactionsSemaphore.tryAcquire(timeoutSecs, TimeUnit.MICROSECONDS);
+
+                if (!havePermit && LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Still waiting for a permit, waited approx {}s so far.", cnt * timeoutSecs);
+                    cnt++;
+                }
+            }
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted", e);
+        }
+
+        if (postAcquireAction != null) {
+            postAcquireAction.run();
+        }
+
+        LOGGER.trace(() ->
+                LogUtil.message("activeReadTransactionsSemaphore permit acquired, remaining {}, queue length {}",
+                        activeReadTransactionsSemaphore.availablePermits(),
+                        activeReadTransactionsSemaphore.getQueueLength()));
     }
 
     public <T> T getWithReadTxnUnderReadWriteLock(final Function<Txn<ByteBuffer>, T> work,
