@@ -98,6 +98,14 @@ public class LmdbEnv implements AutoCloseable {
         }
     }
 
+    /**
+     * @return The number of permits available for new read txns. For info purposes only,
+     * not for concurrency control.
+     */
+    public int getAvailableReadPermitCount() {
+        return activeReadTransactionsSemaphore.availablePermits();
+    }
+
     public Path getLocalDir() {
         return localDir;
     }
