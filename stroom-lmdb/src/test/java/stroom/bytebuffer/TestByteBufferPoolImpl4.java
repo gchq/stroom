@@ -7,7 +7,12 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 class TestByteBufferPoolImpl4 {
 
@@ -96,10 +101,167 @@ class TestByteBufferPoolImpl4 {
                 .isNotEqualTo(identityHashCode1);
     }
 
+
+    @Test
+    void testExceedPoolSize_createNew() {
+        final int capacity = 100;
+        final int poolSize = 10;
+        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig()
+                .withPooledByteBufferCounts(Map.of(
+                        1, poolSize,
+                        capacity, poolSize));
+        final ByteBufferPoolImpl4 byteBufferPool = new ByteBufferPoolImpl4(() -> byteBufferPoolConfig);
+
+        final List<PooledByteBuffer> pooledByteBuffers = IntStream.rangeClosed(1, poolSize + 5)
+                .boxed()
+                .map(i -> {
+                    return byteBufferPool.getPooledByteBuffer(capacity);
+
+                })
+                .collect(Collectors.toList());
+
+        // get more buffers than the pool allows
+        pooledByteBuffers.forEach(pooledByteBuffer -> {
+            final ByteBuffer buffer = pooledByteBuffer.getByteBuffer();
+            Assertions.assertThat(buffer.capacity())
+                    .isEqualTo(capacity);
+        });
+
+        LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());
+
+        Assertions.assertThat(byteBufferPool.getAvailableBufferCount(capacity))
+                .isEqualTo(0);
+        Assertions.assertThat(byteBufferPool.getPooledBufferCount(capacity))
+                .isEqualTo(poolSize);
+
+        pooledByteBuffers.forEach(PooledByteBuffer::release);
+
+        LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());
+
+        Assertions.assertThat(byteBufferPool.getAvailableBufferCount(capacity))
+                .isEqualTo(poolSize);
+        Assertions.assertThat(byteBufferPool.getPooledBufferCount(capacity))
+                .isEqualTo(poolSize);
+    }
+
+    @Test
+    void testExceedPoolSize_useBigger() {
+        final int capacity = 100;
+        final int poolSize = 10;
+        final int excessCount = 5;
+        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig()
+                .withPooledByteBufferCounts(Map.of(
+                        1, poolSize,
+                        capacity, poolSize,
+                        capacity * 10, poolSize));
+        final ByteBufferPoolImpl4 byteBufferPool = new ByteBufferPoolImpl4(() -> byteBufferPoolConfig);
+
+        final List<PooledByteBuffer> pooledByteBuffers = IntStream.rangeClosed(1, poolSize + excessCount)
+                .boxed()
+                .map(i -> {
+                    return byteBufferPool.getPooledByteBuffer(capacity);
+
+                })
+                .collect(Collectors.toList());
+
+        // get more buffers than the pool allows
+        for (int i = 0; i < pooledByteBuffers.size(); i++) {
+            final PooledByteBuffer pooledByteBuffer = pooledByteBuffers.get(i);
+            final ByteBuffer buffer = pooledByteBuffer.getByteBuffer();
+            if (i < poolSize) {
+                Assertions.assertThat(buffer.capacity())
+                        .isEqualTo(capacity);
+            } else {
+                // ran out of capacity buffers so got the bigger ones
+                Assertions.assertThat(buffer.capacity())
+                        .isEqualTo(capacity * 10);
+            }
+        }
+
+        LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());
+
+        Assertions.assertThat(byteBufferPool.getAvailableBufferCount(capacity))
+                .isEqualTo(0);
+        Assertions.assertThat(byteBufferPool.getPooledBufferCount(capacity))
+                .isEqualTo(poolSize);
+        Assertions.assertThat(byteBufferPool.getAvailableBufferCount(capacity * 10))
+                .isEqualTo(0);
+        Assertions.assertThat(byteBufferPool.getPooledBufferCount(capacity * 10))
+                .isEqualTo(excessCount);
+
+        pooledByteBuffers.forEach(PooledByteBuffer::release);
+
+        LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());
+
+        Assertions.assertThat(byteBufferPool.getAvailableBufferCount(capacity))
+                .isEqualTo(poolSize);
+        Assertions.assertThat(byteBufferPool.getPooledBufferCount(capacity))
+                .isEqualTo(poolSize);
+        // Pool only created excessCount of the bigger ones
+        Assertions.assertThat(byteBufferPool.getAvailableBufferCount(capacity * 10))
+                .isEqualTo(excessCount);
+        Assertions.assertThat(byteBufferPool.getPooledBufferCount(capacity * 10))
+                .isEqualTo(excessCount);
+    }
+
+    @Test
+    void testExceedPoolSize_block() throws InterruptedException {
+        final int capacity = 100;
+        final int poolSize = 10;
+        final int requiredCount = poolSize + 5;
+        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig()
+                .withPooledByteBufferCounts(Map.of(
+                        1, poolSize,
+                        capacity, poolSize))
+                .withBlockOnExhaustedPool(true);
+        final ByteBufferPoolImpl4 byteBufferPool = new ByteBufferPoolImpl4(() -> byteBufferPoolConfig);
+
+        final List<PooledByteBuffer> pooledByteBuffers = IntStream.rangeClosed(1, requiredCount)
+                .boxed()
+                .map(i -> {
+                    return byteBufferPool.getPooledByteBuffer(capacity);
+
+                })
+                .collect(Collectors.toList());
+
+        final AtomicInteger counter = new AtomicInteger();
+
+        final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+            // get more buffers than the pool allows, should block once it has poolSize
+            pooledByteBuffers.forEach(pooledByteBuffer -> {
+                final ByteBuffer buffer = pooledByteBuffer.getByteBuffer();
+                counter.incrementAndGet();
+                Assertions.assertThat(buffer.capacity())
+                        .isEqualTo(capacity);
+            });
+        });
+
+        Thread.sleep(500);
+
+        LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());
+
+        Assertions.assertThat(counter)
+                .hasValue(poolSize);
+
+        // Now release the first lot
+        for (int i = 0; i < poolSize; i++) {
+            pooledByteBuffers.get(i).release();
+        }
+
+        Thread.sleep(500);
+
+        // all buffers should now have been acquired
+        Assertions.assertThat(counter)
+                .hasValue(requiredCount);
+
+        Assertions.assertThat(future)
+                .isCompleted();
+    }
+
     private ByteBufferPool doTest(final ByteBufferPoolConfig byteBufferPoolConfig,
                                   final int expectedBufferCapacity,
                                   final int expectedPoolSize) {
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(byteBufferPoolConfig);
+        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(() -> byteBufferPoolConfig);
 
         PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(50);
 
