@@ -41,6 +41,7 @@ appConfig:
     - "Assigned"
     - "Closed"
   byteBufferPool:
+    blockOnExhaustedPool: false
     pooledByteBufferCounts:
       1: 50
       10: 50
