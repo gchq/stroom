@@ -299,7 +299,7 @@ public class LmdbDataStore implements DataStore {
 
                     // If we have enough data then we can stop transferring data and complete.
                     if (hasEnoughData.compareAndSet(false, true)) {
-                        queue.complete();
+                        completionState.signalComplete();
                     }
                 }
             }
@@ -486,8 +486,11 @@ public class LmdbDataStore implements DataStore {
                 }
 
             } catch (final RuntimeException | IOException e) {
-                LOGGER.error("Error putting " + queueItem + " (" + e.getMessage() + ")", e);
+                LOGGER.debug("Error putting " + queueItem + " (" + e.getMessage() + ")", e);
                 errorConsumer.add(new RuntimeException("Error putting " + queueItem + " (" + e.getMessage() + ")", e));
+
+                // Treat all errors as fatal so complete.
+                completionState.signalComplete();
             }
         });
     }
@@ -505,11 +508,10 @@ public class LmdbDataStore implements DataStore {
             }
             return didPutSucceed;
         } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             errorConsumer.add(e);
+            throw new RuntimeException(e.getMessage(), e);
         }
-
-        return false;
     }
 
     private Generator[] combine(final Generator[] existing, final Generator[] value) {
