@@ -132,4 +132,14 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
     public int hashCode() {
         return Objects.hash(super.hashCode(), namespaceURI, systemId, schemaGroup, user);
     }
+
+    @Override
+    public String toString() {
+        return "FindXMLSchemaCriteria{" +
+                "namespaceURI='" + namespaceURI + '\'' +
+                ", systemId='" + systemId + '\'' +
+                ", schemaGroup='" + schemaGroup + '\'' +
+                ", user='" + user + '\'' +
+                '}';
+    }
 }
