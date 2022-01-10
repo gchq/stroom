@@ -25,7 +25,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 public @interface IsSupersetOf {
 
-    String[] allowedValues();
+    String[] requiredValues();
 
     String message() default "list contains invalid values";
 

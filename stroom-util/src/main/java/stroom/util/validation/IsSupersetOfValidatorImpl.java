@@ -5,17 +5,17 @@ import stroom.util.shared.validation.IsSupersetOfValidator;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
 import javax.validation.ConstraintValidatorContext;
 
 public class IsSupersetOfValidatorImpl implements IsSupersetOfValidator {
 
-    private Collection<String> allowedValues;
+    private Set<String> requiredValues;
 
     @Override
     public void initialize(IsSupersetOf constraintAnnotation) {
-        allowedValues = Arrays.asList(constraintAnnotation.allowedValues());
+        requiredValues = new HashSet<>(Arrays.asList(constraintAnnotation.requiredValues()));
     }
 
     /**
@@ -36,14 +36,15 @@ public class IsSupersetOfValidatorImpl implements IsSupersetOfValidator {
 
         if (values != null && !values.isEmpty()) {
 
-            List<String> invalidValues = values.stream()
-                    .filter(value -> !allowedValues.contains(value))
-                    .collect(Collectors.toList());
+            final Set<String> missingValues = new HashSet<>(requiredValues);
+            missingValues.removeAll(values);
 
-            if (!invalidValues.isEmpty()) {
+            if (!missingValues.isEmpty()) {
                 // We want the exception details in the message so bin the default constraint
                 // violation and make a new one.
-                String msg = "List contains invalid values [" + String.join(",", invalidValues) + "]";
+                String msg = "Set contains missing values ["
+                        + String.join(",", missingValues)
+                        + "]";
                 context.disableDefaultConstraintViolation();
                 context
                         .buildConstraintViolationWithTemplate(msg)
