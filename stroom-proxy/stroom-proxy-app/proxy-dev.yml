@@ -4,6 +4,7 @@ server:
   applicationConnectors:
     - type: http
       port: ${STROOM_PROXY_APP_PORT:-8090}
+      useForwardedHeaders: true
   adminConnectors:
     - type: http
       port: ${STROOM_PROXY_ADMIN_PORT:-8091}
