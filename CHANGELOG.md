@@ -12,6 +12,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.172] - 2022-01-11
+
+* Issue **#2688** : Add `metaTypes` to Proxy's `proxyRequestConfig`. Change data receipt to validate types against this new config property.
+
+* Issue **#2688** : Change defaults for Strooms `metaTypes` config property. Change type of `metaTypes` from String to a Set of Strings. Change data receipt to validate against this configured set.
+
+* Issue **#2694** : Improve error handling when search result store has reached max capacity.
+
+* Issue **#2689** : Add logging.
+
+
 ## [v7.0-beta.171] - 2022-01-07
 
 * Issue **#2679** : Add unique index on `meta_processor.pipeline_uuid`.
@@ -4105,7 +4116,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.171...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.172...HEAD
+[v7.0-beta.172]: https://github.com/gchq/stroom/compare/v7.0-beta.171...v7.0-beta.172
 [v7.0-beta.171]: https://github.com/gchq/stroom/compare/v7.0-beta.170...v7.0-beta.171
 [v7.0-beta.170]: https://github.com/gchq/stroom/compare/v7.0-beta.169...v7.0-beta.170
 [v7.0-beta.169]: https://github.com/gchq/stroom/compare/v7.0-beta.168...v7.0-beta.169
