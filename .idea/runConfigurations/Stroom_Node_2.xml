@@ -5,7 +5,7 @@
     <option name="MAIN_CLASS_NAME" value="stroom.app.App" />
     <module name="stroom.stroom-app.main" />
     <option name="PROGRAM_PARAMETERS" value="server local2.yml" />
-    <option name="VM_PARAMETERS" value="-DgwtSuperDevMode=true -Xmx4g" />
+    <option name="VM_PARAMETERS" value="-DgwtSuperDevMode=true -Xmx4g --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

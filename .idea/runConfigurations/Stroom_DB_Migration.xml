@@ -6,6 +6,7 @@
     <module name="stroom.stroom-app.main" />
     <option name="PROGRAM_PARAMETERS" value="migrate ../local.yml" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/stroom-app" />
+    <option name="VM_PARAMETERS" value="--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED" />\
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
