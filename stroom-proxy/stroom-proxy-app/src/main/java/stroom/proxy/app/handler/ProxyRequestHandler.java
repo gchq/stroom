@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -39,16 +40,19 @@ public class ProxyRequestHandler implements RequestHandler {
     private final AttributeMapFilter attributeMapFilter;
     private final LogStream logStream;
     private final BufferFactory bufferFactory;
+    private final Provider<ProxyRequestConfig> proxyRequestConfigProvider;
 
     @Inject
     public ProxyRequestHandler(final MasterStreamHandlerFactory streamHandlerFactory,
                                final AttributeMapFilterFactory attributeMapFilterFactory,
                                final LogStream logStream,
-                               final BufferFactory bufferFactory) {
+                               final BufferFactory bufferFactory,
+                               final Provider<ProxyRequestConfig> proxyRequestConfigProvider) {
         this.streamHandlerFactory = streamHandlerFactory;
         this.logStream = logStream;
         this.bufferFactory = bufferFactory;
         attributeMapFilter = attributeMapFilterFactory.create();
+        this.proxyRequestConfigProvider = proxyRequestConfigProvider;
     }
 
     @Override
@@ -68,7 +72,9 @@ public class ProxyRequestHandler implements RequestHandler {
         final AttributeMap attributeMap = AttributeMapUtil.create(request);
         try {
             // Validate the supplied attributes.
-            AttributeMapValidator.validate(attributeMap);
+            AttributeMapValidator.validate(
+                    attributeMap,
+                    () -> proxyRequestConfigProvider.get().getMetaTypes());
 
             try (final ByteCountInputStream inputStream = new ByteCountInputStream(request.getInputStream())) {
                 // Test to see if we are going to accept this stream or drop the data.

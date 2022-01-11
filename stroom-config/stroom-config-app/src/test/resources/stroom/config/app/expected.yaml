@@ -158,7 +158,18 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
-      metaTypes: "Raw Events\nRaw Reference\nEvents\nReference\nRecords\nError"
+      metaTypes:
+      - "Context"
+      - "Raw Reference"
+      - "Events"
+      - "Raw Events"
+      - "Reference"
+      - "Error"
+      - "Test Events"
+      - "Test Reference"
+      - "Detections"
+      - "Meta Data"
+      - "Records"
       metaValue:
         addAsync: true
         deleteAge: "P30D"

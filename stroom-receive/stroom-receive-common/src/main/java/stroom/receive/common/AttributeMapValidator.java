@@ -1,17 +1,20 @@
 package stroom.receive.common;
 
-import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
 
 public class AttributeMapValidator {
+
     private AttributeMapValidator() {
     }
 
-    public static void validate(final AttributeMap attributeMap) {
+    public static void validate(final AttributeMap attributeMap,
+                                final Supplier<Set<String>> validTypeNamesSupplier) {
         final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
         if (feedName == null || feedName.trim().isEmpty()) {
             throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
@@ -21,7 +24,8 @@ public class AttributeMapValidator {
         final String typeName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.TYPE))
                 .map(String::trim)
                 .orElse("");
-        if (!typeName.isEmpty() && !StreamTypeNames.VALID_RECEIVE_TYPE_NAMES.contains(typeName)) {
+        final Set<String> validTypeNames = validTypeNamesSupplier.get();
+        if (!typeName.isEmpty() && !validTypeNames.contains(typeName)) {
             throw new StroomStreamException(StroomStatusCode.INVALID_TYPE, attributeMap);
         }
     }
