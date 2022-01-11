@@ -25,7 +25,6 @@ The table below includes licences for all Maven dependencies.
 | Roboto Fonts                              | n/a                                          | n/a              | AL 2.0        |           |               |
 | Roboto Mono Fonts                         | n/a                                          | n/a              | AL 2.0        |           |               |
 | antlr                                     | antlr                                        | 2.7.7            | BSD           |           |               |
-| aopalliance                               | aopalliance                                  | 1                | Public domain |           |               |
 | asm                                       | asm                                          | 3.1              | Custom BSD    |           |               |
 | cglib                                     | cglib-nodep                                  | 3.1              | APL 2.0       |           |               |
 | com.caucho                                | hessian                                      | 4.0.38           | APL 2.0       |           |               |

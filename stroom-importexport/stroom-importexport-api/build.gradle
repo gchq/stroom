@@ -10,5 +10,5 @@ dependencies {
     implementation libs.swagger_annotations
 
     testRuntimeOnly libs.jakarta_activation
-    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jaxb_impl
 }

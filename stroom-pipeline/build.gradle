@@ -47,11 +47,12 @@ dependencies {
     implementation libs.jackson_core
     implementation libs.jackson_databind
     implementation libs.jakarta_servlet_api
+    implementation libs.jakarta_validation_api
+    implementation libs.javax_annotation_api
     implementation libs.javax_inject
     implementation libs.jaxb_api
     implementation libs.jersey_client
     implementation libs.jetty_http
-    implementation libs.jsr173_api
     implementation libs.kryo
     implementation libs.lmdbjava
     implementation libs.okhttp
@@ -83,7 +84,7 @@ dependencies {
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation
-    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jaxb_impl
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine

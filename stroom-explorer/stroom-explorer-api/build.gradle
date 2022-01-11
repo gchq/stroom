@@ -9,5 +9,5 @@ dependencies {
     implementation libs.jaxb_api
     
     testRuntimeOnly libs.jakarta_activation
-    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jaxb_impl
 }

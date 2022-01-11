@@ -5,11 +5,8 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
 
-    implementation(libs.dropwizard_core) {
-        exclude(group: "org.glassfish.web", module: "javax.el")
-    }
-
     implementation libs.commons_lang
+    implementation libs.dropwizard_core
     implementation libs.dropwizard_jersey
     implementation libs.dropwizard_jetty
     implementation libs.dropwizard_lifecycle

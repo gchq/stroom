@@ -53,7 +53,7 @@ dependencies {
 
     testRuntimeOnly libs.jakarta_activation
     testRuntimeOnly libs.jakarta_el
-    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jaxb_impl
     testRuntimeOnly libs.junit_jupiter_engine
 
     // The following logging libs are needed when running junits outside dropwizard

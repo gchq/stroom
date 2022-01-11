@@ -16,7 +16,6 @@
 
 package stroom.processor.impl;
 
-
 import stroom.data.shared.StreamTypeNames;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaProperties;
@@ -37,6 +36,7 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.logging.Metrics;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
@@ -163,6 +163,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         processorConfig.setFillTaskQueue(true);
     }
 
+    @Disabled
     @Test
     void testPerformance() {
         Metrics.setEnabled(true);

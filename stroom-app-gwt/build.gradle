@@ -73,18 +73,18 @@ gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
 
 // Define a list of projects that contain the source code we want to compile with GWT.
 def projList = [
-    project(':stroom-app-gwt'),
-    project(':stroom-core-client'),
-    project(':stroom-core-client-widget'),
-    project(':stroom-core-shared'),
-    project(':stroom-dashboard:stroom-dashboard-client'),
-    project(':stroom-docref'),
-    project(':stroom-query:stroom-query-api'),
-    project(':stroom-query:stroom-query-common'),
-    project(':stroom-security:stroom-security-client'),
-    project(':stroom-security:stroom-security-client-api'),
-    project(':stroom-statistics:stroom-statistics-client'),
-    project(':stroom-util-shared')
+        project(':stroom-app-gwt'),
+        project(':stroom-core-client'),
+        project(':stroom-core-client-widget'),
+        project(':stroom-core-shared'),
+        project(':stroom-dashboard:stroom-dashboard-client'),
+        project(':stroom-docref'),
+        project(':stroom-query:stroom-query-api'),
+        project(':stroom-query:stroom-query-common'),
+        project(':stroom-security:stroom-security-client'),
+        project(':stroom-security:stroom-security-client-api'),
+        project(':stroom-statistics:stroom-statistics-client'),
+        project(':stroom-util-shared')
 ]
 
 // Add source from each of the defined projects.
@@ -96,7 +96,7 @@ projList.each { p ->
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {
     dependsOn 'gwtClean'
-    
+
     def module = 'stroom.app.App'
 
     doFirst {
@@ -128,8 +128,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         gwtSourceDirs
     }
 
-    args =
-        [
+    args = [
             '-logLevel', 'INFO',
             '-workDir', workDir,
             '-XfragmentCount', '5',
@@ -141,9 +140,12 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
             '-extra', extraDir,
             '-strict',
             module                               // Your GWT module
-        ]
+    ]
 
-    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    jvmArgs = [
+            "-Djava.io.tmpdir=${tmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
     minHeapSize = gwtCompilerProps.minHeap
     maxHeapSize = gwtCompilerProps.maxHeap
 }
@@ -169,8 +171,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         gwtSourceDirs
     }
 
-    args =
-        [
+    args = [
             '-logLevel', 'INFO',
             '-workDir', workDir,
             '-draftCompile',                        // Speeds up compile with 25%
@@ -184,9 +185,12 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
             '-extra', extraDir,
             '-strict',
             module                                  // Your GWT module
-        ]
+    ]
 
-    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    jvmArgs = [
+            "-Djava.io.tmpdir=${tmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
     minHeapSize = '1G'
     maxHeapSize = '4G'
 }
@@ -211,8 +215,8 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
         println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
 
-        def GREEN='\033[1;32m'
-        def NC='\033[0m'
+        def GREEN = '\033[1;32m'
+        def NC = '\033[0m'
 
         println """
         To run stroom in SuperDevMode:${GREEN}
@@ -229,8 +233,7 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
         gwtSourceDirs
     }
 
-    args =
-        [
+    args = [
             '-logLevel', 'INFO',
             '-workDir', workDir,
             '-failOnError',
@@ -240,9 +243,12 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
             '-strict',
             '-noserver',
             module                                  // Your GWT module
-        ]
+    ]
 
-    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    jvmArgs = [
+            "-Djava.io.tmpdir=${tmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
     minHeapSize = gwtCompilerProps.minHeap
     maxHeapSize = gwtCompilerProps.maxHeap
 }
@@ -261,8 +267,6 @@ task gwtClean {
         file(tmpDir).mkdirs()
     }
 }
-
-
 
 
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin
