@@ -17,7 +17,7 @@
 # This is our java build image for building stroom
 # It also contains plantuml for plant uml image generation
 
-FROM adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine
+FROM openjdk:17-alpine3.14
 
 # Work from the shared git repo dir
 WORKDIR /builder/shared
