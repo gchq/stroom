@@ -159,13 +159,9 @@ public class SuggestionsServiceImpl implements SuggestionsService {
     }
 
     private List<String> createStreamTypeList(final String userInput) {
-        // TODO this seems pretty inefficient as each call hits the db to get ALL feeds
-        //   then limits/filters in java.  Needs to work off a cached feed name list
-
         return QuickFilterPredicateFactory.filterStream(
-                userInput, metaService.getTypes().parallelStream())
+                userInput, metaService.getTypes().stream())
                 .limit(LIMIT)
                 .collect(Collectors.toList());
     }
-
 }

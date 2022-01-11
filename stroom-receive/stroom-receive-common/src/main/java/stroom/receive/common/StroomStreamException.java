@@ -71,7 +71,8 @@ public class StroomStreamException extends RuntimeException {
                 attributeMap,
                 builder,
                 StandardHeaderArguments.FEED,
-                StandardHeaderArguments.COMPRESSION);
+                StandardHeaderArguments.COMPRESSION,
+                StandardHeaderArguments.TYPE);
 
         if (args != null) {
             for (final Object object : args) {
