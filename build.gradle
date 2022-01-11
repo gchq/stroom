@@ -536,30 +536,39 @@ subprojects {
 //            modularity.inferModulePath = false
 ////            inputs.property("moduleName", moduleName)
             doFirst {
-                jvmArgs = [
-////                        '--module-path', classpath.asPath,
-////                        '--add-modules', 'ALL-MODULE-PATH',
-////                        '--add-modules', 'org.junit.jupiter.api',  // junit5 automatic module specific
-////                        '--add-modules', 'java.xml.bind', // jaxb specific
-////                        '--add-modules', 'org.jvnet.staxex',
-////                        '--add-modules', 'org.joda.time', // joda time specific
-////                        '--add-reads', "$moduleName=org.junit.jupiter.api", // allow junit to read your module
-////                        '--add-modules', 'joda.time',
-////                        '--add-modules', 'java.activation',
-////                        '--add-reads', "$moduleName=junit",
-                        '--add-opens', 'java.base/java.nio=ALL-UNNAMED', // needed for LMDB
-                        '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED',  // needed for LMDB
-////                        '--patch-module', "dropwizard.core=" + libs.dropwizard_core ,
-////                        '--patch-module', "dropwizard.validation=" + libs.dropwizard_validation ,
-//                        //'--patch-module', "java.xml=javax.xml.bind:jsr173_api:1.0" ,
-////                        '--patch-module', "java.activation=" + libs.jakarta_activation ,
-////                        '--patch-module', "java.annotation=" + libs.jakarta_annotation_api ,
-////                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.classesDirectory).asPath,
-////                        '--patch-module', "$moduleName=" + libs.dropwizard_validation,
-////                        '-verbose', '',
-//                        '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005', '',
-//                        '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005', '',
-                ]
+                // We have to alter the existing jvm args rather than set them so that we don't lose debug args added by
+                // IJ Idea.
+                def jvmArgsCopy = jvmArgs
+                jvmArgsCopy.add("--add-opens")
+                jvmArgsCopy.add("java.base/java.nio=ALL-UNNAMED")
+                jvmArgsCopy.add("--add-opens")
+                jvmArgsCopy.add("java.base/sun.nio.ch=ALL-UNNAMED")
+                jvmArgs = jvmArgsCopy
+
+//                jvmArgs = [
+//////                        '--module-path', classpath.asPath,
+//////                        '--add-modules', 'ALL-MODULE-PATH',
+//////                        '--add-modules', 'org.junit.jupiter.api',  // junit5 automatic module specific
+//////                        '--add-modules', 'java.xml.bind', // jaxb specific
+//////                        '--add-modules', 'org.jvnet.staxex',
+//////                        '--add-modules', 'org.joda.time', // joda time specific
+//////                        '--add-reads', "$moduleName=org.junit.jupiter.api", // allow junit to read your module
+//////                        '--add-modules', 'joda.time',
+//////                        '--add-modules', 'java.activation',
+//////                        '--add-reads', "$moduleName=junit",
+//                        '--add-opens', 'java.base/java.nio=ALL-UNNAMED', // needed for LMDB
+//                        '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED',  // needed for LMDB
+//////                        '--patch-module', "dropwizard.core=" + libs.dropwizard_core ,
+//////                        '--patch-module', "dropwizard.validation=" + libs.dropwizard_validation ,
+////                        //'--patch-module', "java.xml=javax.xml.bind:jsr173_api:1.0" ,
+//////                        '--patch-module', "java.activation=" + libs.jakarta_activation ,
+//////                        '--patch-module', "java.annotation=" + libs.jakarta_annotation_api ,
+//////                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.classesDirectory).asPath,
+//////                        '--patch-module', "$moduleName=" + libs.dropwizard_validation,
+//////                        '-verbose', '',
+////                        '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005', '',
+////                        '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005', '',
+//                ]
             }
         }
 //
