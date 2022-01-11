@@ -11,7 +11,6 @@ dependencies {
     compile libs.assertj_core // needed for DiffUtil
     compile libs.commons_codec
     compile libs.dropwizard_metrics_healthchecks
-    compile libs.dropwizard_validation
     compile libs.guava
     compile libs.guice5
     compile libs.jackson_annotations
