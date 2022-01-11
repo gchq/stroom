@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.pipeline.util;
 
 import stroom.pipeline.xml.event.Event;
 import stroom.pipeline.xml.event.simple.Characters;
