@@ -55,6 +55,7 @@ server:
   adminConnectors:
     - type: http
       port: 8081
+      useForwardedHeaders: true
   requestLog:
     appenders:
       # Log appender for the web server request logging
