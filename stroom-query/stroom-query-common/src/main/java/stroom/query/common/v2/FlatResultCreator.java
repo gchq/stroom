@@ -166,8 +166,8 @@ public class FlatResultCreator implements ResultCreator {
                         // already been constrained by the previous table mapping.
                         final List<TableSettings> mappings = resultRequest.getMappings();
                         final TableSettings tableSettings = mappings.get(mappings.size() - 1);
-                        // Create a set of max result sizes that are determined by the supplied max results or default to
-                        // integer max value.
+                        // Create a set of max result sizes that are determined by the supplied max results or default
+                        // to integer max value.
                         final Sizes maxResults = Sizes.create(tableSettings.getMaxResults(), Integer.MAX_VALUE);
 
                         final Map<Integer, List<Field>> groupFields = new HashMap<>();
