@@ -455,13 +455,14 @@ class TestSearchResultCreation {
         // Mark the collector as artificially complete.
         collector.complete();
 
-        final DataStore data = collector.getData("table-78LF4");
-        final Items dataItems = data.get();
-        final Item dataItem = dataItems.iterator().next();
-        final Val val = dataItem.getValue(2);
-        assertThat(val.toLong())
-                .isEqualTo(count);
-
+        final DataStore dataStore = collector.getData("table-78LF4");
+        dataStore.getData(data -> {
+            final Items dataItems = data.get();
+            final Item dataItem = dataItems.iterator().next();
+            final Val val = dataItem.getValue(2);
+            assertThat(val.toLong())
+                    .isEqualTo(count);
+        });
 
 //        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
 //        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);

@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class FlatResultCreator implements ResultCreator {
 
@@ -140,54 +141,57 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     @Override
-    public Result create(final DataStore data, final ResultRequest resultRequest) {
+    public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
         if (!errorConsumer.hasErrors()) {
             try {
                 // Map data.
-                DataStore mappedData = data;
+                DataStore mappedDataStore = dataStore;
                 for (final Mapper mapper : mappers) {
-                    mappedData = mapper.map(mappedData);
+                    mappedDataStore = mapper.map(mappedDataStore);
                 }
 
-                long totalResults = 0;
+                final List<List<Object>> results = new ArrayList<>();
+                final AtomicLong totalResults = new AtomicLong();
 
                 // Get top level items.
-                final Items items = mappedData.get();
-                final List<List<Object>> results = new ArrayList<>(items.size());
-                if (items.size() > 0) {
-                    final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
-                    final OpenGroups openGroups =
-                            OpenGroupsFactory.create(OpenGroupsConverter.convertSet(resultRequest.getOpenGroups()));
+                mappedDataStore.getData(data -> {
+                    final Items items = data.get();
+                    if (items.size() > 0) {
+                        final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
+                        final OpenGroups openGroups =
+                                OpenGroupsFactory.create(OpenGroupsConverter.convertSet(resultRequest.getOpenGroups()));
 
-                    // Extract the maxResults settings from the last TableSettings object in the chain.
-                    // Do not constrain the max results with the default max results as the result size will have
-                    // already been constrained by the previous table mapping.
-                    final List<TableSettings> mappings = resultRequest.getMappings();
-                    final TableSettings tableSettings = mappings.get(mappings.size() - 1);
-                    // Create a set of max result sizes that are determined by the supplied max results or default to
-                    // integer max value.
-                    final Sizes maxResults = Sizes.create(tableSettings.getMaxResults(), Integer.MAX_VALUE);
+                        // Extract the maxResults settings from the last TableSettings object in the chain.
+                        // Do not constrain the max results with the default max results as the result size will have
+                        // already been constrained by the previous table mapping.
+                        final List<TableSettings> mappings = resultRequest.getMappings();
+                        final TableSettings tableSettings = mappings.get(mappings.size() - 1);
+                        // Create a set of max result sizes that are determined by the supplied max results or default to
+                        // integer max value.
+                        final Sizes maxResults = Sizes.create(tableSettings.getMaxResults(), Integer.MAX_VALUE);
 
-                    final Map<Integer, List<Field>> groupFields = new HashMap<>();
-                    for (final Field field : fields) {
-                        if (field.getGroup() != null) {
-                            groupFields.computeIfAbsent(field.getGroup(), k ->
-                                            new ArrayList<>())
-                                    .add(field);
+                        final Map<Integer, List<Field>> groupFields = new HashMap<>();
+                        for (final Field field : fields) {
+                            if (field.getGroup() != null) {
+                                groupFields.computeIfAbsent(field.getGroup(), k ->
+                                                new ArrayList<>())
+                                        .add(field);
+                            }
                         }
-                    }
 
-                    totalResults = addResults(
-                            mappedData,
-                            rangeChecker,
-                            openGroups,
-                            items,
-                            results,
-                            0,
-                            0,
-                            maxResults,
-                            groupFields);
-                }
+                        addResults(
+                                data,
+                                rangeChecker,
+                                openGroups,
+                                items,
+                                results,
+                                0,
+                                totalResults,
+                                maxResults,
+                                groupFields);
+                    }
+                });
+
 
                 final List<Field> structure = new ArrayList<>();
                 structure.add(Field.builder().name(":ParentKey").build());
@@ -198,7 +202,7 @@ public class FlatResultCreator implements ResultCreator {
                 return FlatResult
                         .builder()
                         .componentId(resultRequest.getComponentId())
-                        .size(totalResults)
+                        .size(totalResults.get())
                         .errors(errorConsumer.getErrors())
                         .structure(structure)
                         .values(results)
@@ -214,21 +218,20 @@ public class FlatResultCreator implements ResultCreator {
                 errorConsumer.getErrors());
     }
 
-    private int addResults(final DataStore data,
-                           final RangeChecker rangeChecker,
-                           final OpenGroups openGroups,
-                           final Items items,
-                           final List<List<Object>> results,
-                           final int depth,
-                           final int parentCount,
-                           final Sizes maxResults,
-                           final Map<Integer, List<Field>> groupFields) {
-        int count = parentCount;
+    private void addResults(final Data data,
+                            final RangeChecker rangeChecker,
+                            final OpenGroups openGroups,
+                            final Items items,
+                            final List<List<Object>> results,
+                            final int depth,
+                            final AtomicLong count,
+                            final Sizes maxResults,
+                            final Map<Integer, List<Field>> groupFields) {
         int maxResultsAtThisDepth = maxResults.size(depth);
         int resultCountAtThisLevel = 0;
 
         for (final Item item : items) {
-            if (rangeChecker.check(count)) {
+            if (rangeChecker.check(count.get())) {
                 final List<Object> resultList = new ArrayList<>(fields.size() + 3);
 
                 if (item.getKey() != null) {
@@ -271,7 +274,7 @@ public class FlatResultCreator implements ResultCreator {
                         openGroups.isOpen(item.getKey())) {
                     final Items childItems = data.get(item.getKey());
                     if (childItems.size() > 0) {
-                        count = addResults(
+                        addResults(
                                 data,
                                 rangeChecker,
                                 openGroups,
@@ -286,14 +289,12 @@ public class FlatResultCreator implements ResultCreator {
             }
 
             // Increment the position.
-            count++;
+            count.incrementAndGet();
 
             if (resultCountAtThisLevel >= maxResultsAtThisDepth) {
                 break;
             }
         }
-
-        return count;
     }
 
     // TODO : Replace this with conversion at the item level.
@@ -370,35 +371,36 @@ public class FlatResultCreator implements ResultCreator {
                     errorConsumer);
         }
 
-        public DataStore map(final DataStore data) {
+        public DataStore map(final DataStore dataStore) {
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
-            final Items items = data.get();
+            dataStore.getData(data -> {
+                final Items items = data.get();
+                this.dataStore.clear();
+                if (items.size() > 0) {
+                    int itemCount = 0;
+                    for (final Item item : items) {
+                        final Val[] values = new Val[parentFieldIndices.length];
+                        for (int i = 0; i < parentFieldIndices.length; i++) {
+                            final int index = parentFieldIndices[i];
+                            if (index != -1) {
+                                // TODO : @66 Currently evaluating more values than will be needed.
+                                final Val val = item.getValue(index);
+                                values[i] = val;
+                            }
+                        }
+                        this.dataStore.add(values);
 
-            dataStore.clear();
-            if (items.size() > 0) {
-                int itemCount = 0;
-                for (final Item item : items) {
-                    final Val[] values = new Val[parentFieldIndices.length];
-                    for (int i = 0; i < parentFieldIndices.length; i++) {
-                        final int index = parentFieldIndices[i];
-                        if (index != -1) {
-                            // TODO : @66 Currently evaluating more values than will be needed.
-                            final Val val = item.getValue(index);
-                            values[i] = val;
+                        // Trim the data to the parent first level result size.
+                        itemCount++;
+                        if (itemCount >= maxItems) {
+                            break;
                         }
                     }
-                    dataStore.add(values);
-
-                    // Trim the data to the parent first level result size.
-                    itemCount++;
-                    if (itemCount >= maxItems) {
-                        break;
-                    }
                 }
-            }
+            });
 
-            return dataStore;
+            return this.dataStore;
         }
     }
 

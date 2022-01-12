@@ -309,8 +309,8 @@ public class SearchResponseCreator {
         final String componentId = resultRequest.getComponentId();
         Result result = null;
 
-        final DataStore data = store.getData(componentId);
-        if (data != null) {
+        final DataStore dataStore = store.getData(componentId);
+        if (dataStore != null) {
             try {
                 final ResultCreator resultCreator = getResultCreator(
                         searchRequest.getKey(),
@@ -318,7 +318,7 @@ public class SearchResponseCreator {
                         resultRequest,
                         searchRequest.getDateTimeLocale());
                 if (resultCreator != null) {
-                    result = resultCreator.create(data, resultRequest);
+                    result = resultCreator.create(dataStore, resultRequest);
                 }
             } catch (final RuntimeException e) {
                 result = new TableResult(componentId, null, null, null, 0,
