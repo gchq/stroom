@@ -2,6 +2,7 @@ package stroom.search.impl;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.query.api.v2.QueryKey;
 import stroom.search.extraction.Event;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.search.extraction.StreamEventMap;
@@ -12,6 +13,7 @@ import stroom.util.concurrent.CompleteException;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -112,7 +114,7 @@ class TestQueues {
     @SuppressWarnings("unchecked")
     void testStoredDataQueue() {
         final int threads = 10;
-        final StoredDataQueue queue = new StoredDataQueue(1000000);
+        final StoredDataQueue queue = new StoredDataQueue(new QueryKey(UUID.randomUUID().toString()), 1000000);
         final AtomicInteger produced = new AtomicInteger();
         final AtomicInteger consumed = new AtomicInteger();
         final Executor executor = Executors.newCachedThreadPool();

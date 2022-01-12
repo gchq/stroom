@@ -38,7 +38,6 @@ import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.SearchProgressLog;
 import stroom.util.shared.ResultPage;
 
 import java.util.ArrayList;
@@ -93,7 +92,6 @@ class AsyncSearchTaskHandler {
     }
 
     public void exec(final TaskContext parentContext, final AsyncSearchTask task) {
-        SearchProgressLog.clear();
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 

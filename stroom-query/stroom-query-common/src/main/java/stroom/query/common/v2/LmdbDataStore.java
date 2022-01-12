@@ -33,14 +33,14 @@ import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.logging.Metrics;
-import stroom.util.logging.SearchProgressLog;
-import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -94,7 +94,7 @@ public class LmdbDataStore implements DataStore {
     private final CountDownLatch complete = new CountDownLatch(1);
     private final CompletionState completionState = new CompletionStateImpl(this, complete);
     private final AtomicLong uniqueKey = new AtomicLong();
-    private final String queryKey;
+    private final QueryKey queryKey;
     private final String componentId;
     private final boolean producePayloads;
     private final ErrorConsumer errorConsumer;
@@ -105,7 +105,7 @@ public class LmdbDataStore implements DataStore {
 
     LmdbDataStore(final LmdbEnvFactory lmdbEnvFactory,
                   final ResultStoreConfig resultStoreConfig,
-                  final String queryKey,
+                  final QueryKey queryKey,
                   final String componentId,
                   final TableSettings tableSettings,
                   final FieldIndex fieldIndex,
@@ -127,7 +127,7 @@ public class LmdbDataStore implements DataStore {
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
-        payloadCreator = new LmdbPayloadCreator(this, compiledFields, resultStoreConfig);
+        payloadCreator = new LmdbPayloadCreator(queryKey, this, compiledFields, resultStoreConfig);
 
         rootParentRowKey = new LmdbKey.Builder()
                 .keyBytes(Key.root().getBytes())
@@ -167,7 +167,7 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public void add(final Val[] values) {
-        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_ADD);
+        SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_ADD);
         LOGGER.trace(() -> LogUtil.message("add() called for {} values", values.length));
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
@@ -284,7 +284,7 @@ public class LmdbDataStore implements DataStore {
 
     void put(final LmdbKV queueItem) {
         LOGGER.trace(() -> "put");
-        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_PUT);
+        SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_PUT);
 
         // Some searches can be terminated early if the user is not sorting or grouping.
         boolean allow = true;
@@ -332,7 +332,7 @@ public class LmdbDataStore implements DataStore {
                 try {
                     while (!transferState.isTerminated()) {
                         LOGGER.trace("Transferring");
-                        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_QUEUE_POLL);
+                        SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_QUEUE_POLL);
                         final LmdbKV lmdbKV = queue.poll(1, TimeUnit.SECONDS);
 
                         if (lmdbKV != null) {
@@ -406,7 +406,7 @@ public class LmdbDataStore implements DataStore {
     private void insert(final BatchingWriteTxn batchingWriteTxn,
                         final Dbi<ByteBuffer> dbi,
                         final LmdbKV queueItem) {
-        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_INSERT);
+        SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_INSERT);
         Metrics.measure("Insert", () -> {
             try {
                 LOGGER.trace(() -> "insert");
@@ -501,7 +501,7 @@ public class LmdbDataStore implements DataStore {
                         final ByteBuffer val,
                         final PutFlags... flags) {
         try {
-            SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_DBI_PUT);
+            SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_DBI_PUT);
             final boolean didPutSucceed = dbi.put(batchingWriteTxn.getTxn(), key, val, flags);
             if (didPutSucceed) {
                 batchingWriteTxn.commitIfRequired();
@@ -515,7 +515,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private Generator[] combine(final Generator[] existing, final Generator[] value) {
-        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_COMBINE);
+        SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_COMBINE);
         return Metrics.measure("Combine", () -> {
             // Combine the new item into the original item.
             for (int i = 0; i < existing.length; i++) {
@@ -554,7 +554,7 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public synchronized Items get(final Key parentKey) {
-        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_GET);
+        SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET);
         LOGGER.trace("get() called for parentKey: {}", parentKey);
 
         if (lmdbEnv.isClosed()) {
@@ -603,7 +603,7 @@ public class LmdbDataStore implements DataStore {
                                       final int trimmedSize,
                                       final boolean allowSort,
                                       final boolean trimTop) {
-        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
+        SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
         // If we don't have any children at the requested depth then return an empty list.
         if (compiledSorters.length <= depth) {
             return ItemArrayList.EMPTY;
@@ -688,7 +688,7 @@ public class LmdbDataStore implements DataStore {
     public synchronized void clear() {
         LOGGER.debug("clear called");
         if (shutdown.compareAndSet(false, true)) {
-            SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_CLEAR);
+            SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_CLEAR);
 
             // Let the transfer loop know it should stop ASAP.
             transferState.terminate();

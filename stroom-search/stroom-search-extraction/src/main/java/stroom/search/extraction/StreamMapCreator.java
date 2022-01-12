@@ -19,17 +19,22 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
-import stroom.util.logging.SearchProgressLog;
-import stroom.util.logging.SearchProgressLog.SearchPhase;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.SearchProgressLog;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 
 class StreamMapCreator {
 
+    private final QueryKey queryKey;
     private final int streamIdIndex;
     private final int eventIdIndex;
 
     private ExtractionException error;
 
-    StreamMapCreator(final FieldIndex fieldIndex) {
+    StreamMapCreator(final QueryKey queryKey,
+                     final FieldIndex fieldIndex) {
+        this.queryKey = queryKey;
+
         // First get the index in the stored data of the stream and event id fields.
         streamIdIndex = getFieldIndex(fieldIndex, IndexConstants.STREAM_ID);
         eventIdIndex = getFieldIndex(fieldIndex, IndexConstants.EVENT_ID);
@@ -64,7 +69,7 @@ class StreamMapCreator {
             }
 
             final Event event = new Event(longStreamId, longEventId, storedData);
-            SearchProgressLog.increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
+            SearchProgressLog.increment(queryKey, SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
             streamEventMap.put(event);
         }
     }

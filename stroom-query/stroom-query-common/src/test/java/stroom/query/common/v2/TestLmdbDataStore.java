@@ -25,6 +25,7 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
@@ -73,7 +74,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         return new LmdbDataStore(
                 lmdbEnvFactory,
                 resultStoreConfig,
-                UUID.randomUUID().toString(),
+                new QueryKey(UUID.randomUUID().toString()),
                 "0",
                 tableSettings,
                 fieldIndex,

@@ -17,13 +17,17 @@
 package stroom.search.extraction;
 
 import stroom.pipeline.filter.AbstractXMLFilter;
+import stroom.query.api.v2.QueryKey;
 
 public abstract class AbstractSearchResultOutputFilter extends AbstractXMLFilter {
 
+    QueryKey queryKey;
     ExtractionReceiver receiver;
     int count;
 
-    public void setup(final ExtractionReceiver receiver) {
+    public void setup(final QueryKey queryKey,
+                      final ExtractionReceiver receiver) {
+        this.queryKey = queryKey;
         this.receiver = receiver;
     }
 

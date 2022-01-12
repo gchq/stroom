@@ -103,7 +103,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final String queryKey = UUID.randomUUID().toString();
+        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
@@ -212,7 +212,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final String queryKey = UUID.randomUUID().toString();
+        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
@@ -226,7 +226,7 @@ class TestSearchResultCreation {
         // Reorder values if field mappings have changed.
         final int[] mappings = createMappings(consumer);
 
-        final String queryKey2 = UUID.randomUUID().toString();
+        final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
                 queryKey2,
                 coprocessorSettings,
@@ -285,7 +285,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final String queryKey = UUID.randomUUID().toString();
+        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
                 sizesProvider,
                 dataStoreFactory);
@@ -301,7 +301,7 @@ class TestSearchResultCreation {
         // Reorder values if field mappings have changed.
         final int[] mappings = createMappings(consumer1);
 
-        final String queryKey2 = UUID.randomUUID().toString();
+        final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
                 queryKey2,
                 coprocessorSettings,
@@ -378,7 +378,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final String queryKey = UUID.randomUUID().toString();
+        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
@@ -392,7 +392,7 @@ class TestSearchResultCreation {
         // Reorder values if field mappings have changed.
         final int[] mappings = createMappings(consumer);
 
-        final String queryKey2 = UUID.randomUUID().toString();
+        final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
                 queryKey2,
                 coprocessorSettings,

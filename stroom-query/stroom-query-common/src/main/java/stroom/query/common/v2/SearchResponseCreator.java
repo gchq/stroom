@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -312,7 +313,7 @@ public class SearchResponseCreator {
         if (data != null) {
             try {
                 final ResultCreator resultCreator = getResultCreator(
-                        searchRequest.getKey().getUuid(),
+                        searchRequest.getKey(),
                         componentId,
                         resultRequest,
                         searchRequest.getDateTimeLocale());
@@ -328,7 +329,7 @@ public class SearchResponseCreator {
         return result;
     }
 
-    private ResultCreator getResultCreator(final String queryKey,
+    private ResultCreator getResultCreator(final QueryKey queryKey,
                                            final String componentId,
                                            final ResultRequest resultRequest,
                                            final String dateTimeLocale) {

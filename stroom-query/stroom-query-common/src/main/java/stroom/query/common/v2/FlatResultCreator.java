@@ -22,6 +22,7 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableSettings;
@@ -50,7 +51,7 @@ public class FlatResultCreator implements ResultCreator {
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
     public FlatResultCreator(final DataStoreFactory dataStoreFactory,
-                             final String queryKey,
+                             final QueryKey queryKey,
                              final String componentId,
                              final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
@@ -326,7 +327,7 @@ public class FlatResultCreator implements ResultCreator {
         private final int maxItems;
 
         Mapper(final DataStoreFactory dataStoreFactory,
-               final String queryKey,
+               final QueryKey queryKey,
                final String componentId,
                final TableSettings parent,
                final TableSettings child,
