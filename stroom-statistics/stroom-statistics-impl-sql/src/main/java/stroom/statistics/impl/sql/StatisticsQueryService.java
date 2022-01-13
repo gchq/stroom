@@ -1,15 +1,7 @@
 package stroom.statistics.impl.sql;
 
-import stroom.datasource.api.v2.DataSource;
-import stroom.docref.DocRef;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
+import stroom.datasource.api.v2.DataSourceProvider;
 
-public interface StatisticsQueryService {
-    DataSource getDataSource(final DocRef docRef);
+public interface StatisticsQueryService extends DataSourceProvider {
 
-    SearchResponse search(final SearchRequest request);
-
-    Boolean destroy(final QueryKey queryKey);
 }

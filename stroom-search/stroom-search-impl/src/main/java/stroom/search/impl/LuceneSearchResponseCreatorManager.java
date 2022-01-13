@@ -4,6 +4,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
+import stroom.query.common.v2.SearchResponseCreatorCache.Key;
 import stroom.query.common.v2.SearchResponseCreatorFactory;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.common.v2.Store;
@@ -13,6 +14,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -65,6 +67,11 @@ public class LuceneSearchResponseCreatorManager implements SearchResponseCreator
     @Override
     public SearchResponseCreator get(final SearchResponseCreatorCache.Key key) {
         return cache.get(key);
+    }
+
+    @Override
+    public Optional<SearchResponseCreator> getOptional(final Key key) {
+        return cache.getOptional(key);
     }
 
     @Override

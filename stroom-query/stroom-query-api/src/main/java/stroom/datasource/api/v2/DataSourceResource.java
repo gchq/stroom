@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.impl.datasource;
+package stroom.datasource.api.v2;
 
-import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 
-public interface DataSourceProvider {
+public interface DataSourceResource {
 
     DataSource getDataSource(DocRef docRef);
 
     SearchResponse search(SearchRequest request);
 
-    Boolean destroy(QueryKey queryKey);
+    Boolean ping(QueryKey queryKey);
 
-    String getType();
+    Boolean destroy(QueryKey queryKey);
 }
