@@ -31,6 +31,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -298,13 +299,18 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public Items get() {
-                return items;
-            }
+            public void getData(final Consumer<Data> consumer) {
+                consumer.accept(new Data() {
+                    @Override
+                    public Items get() {
+                        return items;
+                    }
 
-            @Override
-            public Items get(final Key key) {
-                return null;
+                    @Override
+                    public Items get(final Key key) {
+                        return null;
+                    }
+                });
             }
 
             @Override

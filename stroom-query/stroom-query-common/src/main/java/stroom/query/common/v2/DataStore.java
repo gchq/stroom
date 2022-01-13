@@ -5,6 +5,8 @@ import stroom.dashboard.expression.v1.Val;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.util.function.Consumer;
+
 public interface DataStore {
 
     /**
@@ -15,19 +17,11 @@ public interface DataStore {
     void add(Val[] values);
 
     /**
-     * Get root items from the data store.
+     * Get data from the store
      *
-     * @return Root items.
+     * @param consumer Consumer for the data.
      */
-    Items get();
-
-    /**
-     * Get child items from the data store for the provided parent key.
-     *
-     * @param key The parent key to get child items for.
-     * @return The child items for the parent key.
-     */
-    Items get(final Key key);
+    void getData(Consumer<Data> consumer);
 
     /**
      * Clear the data store.

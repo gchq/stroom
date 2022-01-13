@@ -100,7 +100,7 @@ public class ElasticSearchStoreFactory implements StoreFactory {
 
         // Create a handler for search results.
         final Coprocessors coprocessors = coprocessorsFactory.create(
-                modifiedSearchRequest.getKey().getUuid(),
+                modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 modifiedSearchRequest.getQuery().getParams(),
                 false);

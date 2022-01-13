@@ -5,7 +5,10 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.ErrorConsumer;
+import stroom.query.common.v2.SearchProgressLog;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.elastic.ElasticIndexCache;
 import stroom.search.elastic.ElasticIndexService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -18,8 +21,6 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.SearchProgressLog;
-import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import org.elasticsearch.index.query.QueryBuilder;
 
@@ -56,7 +57,8 @@ public class ElasticSearchFactory {
         this.executor = executorProvider.get(THREAD_POOL);
     }
 
-    public CompletableFuture<Void> search(final Query query,
+    public CompletableFuture<Void> search(final QueryKey queryKey,
+                                          final Query query,
                                           final long now,
                                           final DateTimeSettings dateTimeSettings,
                                           final ExpressionOperator expression,
@@ -65,7 +67,7 @@ public class ElasticSearchFactory {
                                           final AtomicLong hitCount,
                                           final StoredDataQueue storedDataQueue,
                                           final ErrorConsumer errorConsumer) {
-        SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
+        SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
 
         // Reload the index.
         final ElasticIndexDoc index = elasticIndexCache.get(query.getDataSource());

@@ -19,19 +19,24 @@ package stroom.search.extraction;
 import stroom.alert.api.AlertDefinition;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.pipeline.filter.AbstractXMLFilter;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.QueryKey;
 
 import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractSearchResultOutputFilter extends AbstractXMLFilter {
 
+    QueryKey queryKey;
     List<AlertDefinition> alertDefinitions;
     Map<String, String> paramMapForAlerting;
     ExtractionReceiver receiver;
     FieldIndex fieldIndex;
     int count;
 
-    public void setup(final ExtractionReceiver receiver) {
+    public void setup(final QueryKey queryKey,
+                      final ExtractionReceiver receiver) {
+        this.queryKey = queryKey;
         this.receiver = receiver;
         this.fieldIndex = receiver.getFieldIndex();
     }

@@ -24,7 +24,10 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.ErrorConsumer;
+import stroom.query.common.v2.SearchProgressLog;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -34,8 +37,6 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.SearchProgressLog;
-import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
@@ -63,6 +64,8 @@ public class IndexShardSearchTaskHandler {
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
 
+    private QueryKey queryKey;
+
     @Inject
     IndexShardSearchTaskHandler(final IndexShardWriterCache indexShardWriterCache,
                                 final IndexShardService indexShardService,
@@ -77,6 +80,7 @@ public class IndexShardSearchTaskHandler {
     }
 
     public void searchShard(final TaskContext taskContext,
+                            final QueryKey queryKey,
                             final IndexShardQueryFactory queryFactory,
                             final String[] storedFieldNames,
                             final AtomicLong hitCount,
@@ -85,6 +89,7 @@ public class IndexShardSearchTaskHandler {
                             final long shardId,
                             final ValuesConsumer valuesConsumer,
                             final ErrorConsumer errorConsumer) {
+        this.queryKey = queryKey;
         IndexShardSearcher indexShardSearcher = null;
         try {
             if (!Thread.currentThread().isInterrupted()) {
@@ -144,7 +149,7 @@ public class IndexShardSearchTaskHandler {
                              final IndexShardSearcher indexShardSearcher,
                              final ValuesConsumer valuesConsumer,
                              final ErrorConsumer errorConsumer) {
-        SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_SEARCH_SHARD);
+        SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_SEARCH_SHARD);
 
         // Get the index shard that this searcher uses.
         final IndexShard indexShard = indexShardSearcher.getIndexShard();
@@ -160,7 +165,9 @@ public class IndexShardSearchTaskHandler {
             final DocIdQueue docIdQueue = new DocIdQueue(maxDocIdQueueSize);
 
             // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(parentContext,
+            final IndexShardHitCollector collector = new IndexShardHitCollector(
+                    parentContext,
+                    queryKey,
                     docIdQueue,
                     hitCount);
 
@@ -190,7 +197,8 @@ public class IndexShardSearchTaskHandler {
                         // Take the next item
                         final int docId = docIdQueue.take();
                         // If we have a doc id then retrieve the stored data for it.
-                        SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
+                        SearchProgressLog.increment(queryKey,
+                                SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
                         getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
                     }
                 } catch (final InterruptedException e) {
@@ -223,7 +231,7 @@ public class IndexShardSearchTaskHandler {
                                final int docId,
                                final ErrorConsumer errorConsumer) {
         try {
-            SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_GET_STORED_DATA);
+            SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_GET_STORED_DATA);
             final Val[] values = new Val[storedFieldNames.length];
             final Document document = searcher.doc(docId);
 

@@ -21,8 +21,12 @@ import stroom.annotation.api.AnnotationFields;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.SearchProgressLog;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.extraction.ExpressionFilter;
+import stroom.search.extraction.ExtractionDecorator;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.security.api.SecurityContext;
@@ -30,8 +34,6 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.SearchProgressLog;
-import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -52,6 +54,7 @@ class SolrClusterSearchTaskHandler {
     private final AtomicLong extractionCount = new AtomicLong();
 
     private TaskContext taskContext;
+    private QueryKey queryKey;
 
     @Inject
     SolrClusterSearchTaskHandler(final SolrSearchFactory solrSearchFactory,
@@ -65,18 +68,20 @@ class SolrClusterSearchTaskHandler {
     }
 
     public void search(final TaskContext taskContext,
+                       final QueryKey queryKey,
                        final Query query,
                        final long now,
                        final DateTimeSettings dateTimeSettings,
                        final Coprocessors coprocessors) {
-        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
+        SearchProgressLog.increment(queryKey, SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
         this.taskContext = taskContext;
+        this.queryKey = queryKey;
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
 
                 // Start searching.
-                doSearch(taskContext, now, dateTimeSettings, query, coprocessors);
+                doSearch(taskContext, now, dateTimeSettings, queryKey, query, coprocessors);
             }
         });
     }
@@ -84,16 +89,18 @@ class SolrClusterSearchTaskHandler {
     private void doSearch(final TaskContext taskContext,
                           final long now,
                           final DateTimeSettings dateTimeSettings,
+                          final QueryKey queryKey,
                           final Query query,
                           final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         // Start searching.
-        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_SEARCH);
+        SearchProgressLog.increment(queryKey, SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_SEARCH);
 
         try {
-            final StoredDataQueue storedDataQueue = extractionDecoratorFactory.createStoredDataQueue(
+            final ExtractionDecorator extractionDecorator = extractionDecoratorFactory.create(queryKey);
+            final StoredDataQueue storedDataQueue = extractionDecorator.createStoredDataQueue(
                     coprocessors,
                     query);
 
@@ -103,6 +110,7 @@ class SolrClusterSearchTaskHandler {
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
             final CompletableFuture<Void> indexShardSearchFuture = solrSearchFactory.search(
+                    queryKey,
                     query,
                     now,
                     dateTimeSettings,
@@ -114,11 +122,11 @@ class SolrClusterSearchTaskHandler {
                     coprocessors.getErrorConsumer());
 
             // Start mapping streams.
-            final CompletableFuture<Void> streamMappingFuture = extractionDecoratorFactory
+            final CompletableFuture<Void> streamMappingFuture = extractionDecorator
                     .startMapping(taskContext, coprocessors);
 
             // Start extracting data.
-            final CompletableFuture<Void> extractionFuture = extractionDecoratorFactory
+            final CompletableFuture<Void> extractionFuture = extractionDecorator
                     .startExtraction(taskContext, extractionCount, coprocessors.getErrorConsumer());
 
             // Create a countdown latch to keep updating status until we complete.

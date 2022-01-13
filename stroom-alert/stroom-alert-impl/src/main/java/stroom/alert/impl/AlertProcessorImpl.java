@@ -35,6 +35,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.extraction.ExtractionException;
@@ -239,6 +240,7 @@ public class AlertProcessorImpl implements AlertProcessor {
                     final PipelineData pipelineData = getPipelineData(pipeline);
                     handlerProvider.get().extract(
                             taskContext,
+                            new QueryKey("alert"),
                             currentStreamId,
                             eventIds,
                             pipeline,

@@ -100,7 +100,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
 
         // Create a handler for search results.
         final Coprocessors coprocessors = coprocessorsFactory.create(
-                modifiedSearchRequest.getKey().getUuid(),
+                modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 query.getParams(),
                 false);
