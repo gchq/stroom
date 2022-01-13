@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -308,16 +309,16 @@ public class SearchResponseCreator {
         final String componentId = resultRequest.getComponentId();
         Result result = null;
 
-        final DataStore data = store.getData(componentId);
-        if (data != null) {
+        final DataStore dataStore = store.getData(componentId);
+        if (dataStore != null) {
             try {
                 final ResultCreator resultCreator = getResultCreator(
-                        searchRequest.getKey().getUuid(),
+                        searchRequest.getKey(),
                         componentId,
                         resultRequest,
                         searchRequest.getDateTimeLocale());
                 if (resultCreator != null) {
-                    result = resultCreator.create(data, resultRequest);
+                    result = resultCreator.create(dataStore, resultRequest);
                 }
             } catch (final RuntimeException e) {
                 result = new TableResult(componentId, null, null, null, 0,
@@ -328,7 +329,7 @@ public class SearchResponseCreator {
         return result;
     }
 
-    private ResultCreator getResultCreator(final String queryKey,
+    private ResultCreator getResultCreator(final QueryKey queryKey,
                                            final String componentId,
                                            final ResultRequest resultRequest,
                                            final String dateTimeLocale) {

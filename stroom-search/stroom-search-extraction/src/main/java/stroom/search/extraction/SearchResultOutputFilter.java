@@ -24,8 +24,8 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.query.common.v2.SearchDebugUtil;
-import stroom.util.logging.SearchProgressLog;
-import stroom.util.logging.SearchProgressLog.SearchPhase;
+import stroom.query.common.v2.SearchProgressLog;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -46,7 +46,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             throws SAXException {
         final FieldIndex fieldIndex = receiver.getFieldMap();
         if (DATA.equals(localName) && values != null) {
-            SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_DATA);
+            SearchProgressLog.increment(queryKey, SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_DATA);
             String name = atts.getValue(NAME);
             String value = atts.getValue(VALUE);
             if (name != null && value != null) {
@@ -61,7 +61,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 }
             }
         } else if (RECORD.equals(localName)) {
-            SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_RECORD);
+            SearchProgressLog.increment(queryKey, SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_RECORD);
             values = new Val[fieldIndex.size()];
         }
         super.startElement(uri, localName, qName, atts);
@@ -70,7 +70,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
-            SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
+            SearchProgressLog.increment(queryKey, SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
             SearchDebugUtil.writeExtractionData(values);
             receiver.add(values);
             count++;

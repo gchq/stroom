@@ -3,6 +3,7 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
@@ -43,7 +44,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     }
 
     @Override
-    public DataStore create(final String queryKey,
+    public DataStore create(final QueryKey queryKey,
                             final String componentId,
                             final TableSettings tableSettings,
                             final FieldIndex fieldIndex,

@@ -86,7 +86,7 @@ public class EventSearchTaskHandler {
                     nowEpochMilli);
 
             final Coprocessors coprocessors = coprocessorsFactory.create(
-                    task.getKey().getUuid(),
+                    task.getKey(),
                     Collections.singletonList(settings),
                     modifiedQuery.getParams(),
                     false);

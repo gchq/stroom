@@ -1,12 +1,12 @@
 package stroom.query.common.v2;
 
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
-import stroom.util.logging.SearchProgressLog;
-import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
@@ -27,12 +27,15 @@ public class LmdbPayloadCreator {
     private final CompiledField[] compiledFields;
     private final int minPayloadSize;
     private final int maxPayloadSize;
+    private final QueryKey queryKey;
     private final LmdbDataStore lmdbDataStore;
     private final LmdbPayloadQueue currentPayload = new LmdbPayloadQueue(1);
 
-    LmdbPayloadCreator(final LmdbDataStore lmdbDataStore,
+    LmdbPayloadCreator(final QueryKey queryKey,
+                       final LmdbDataStore lmdbDataStore,
                        final CompiledField[] compiledFields,
                        final ResultStoreConfig resultStoreConfig) {
+        this.queryKey = queryKey;
         this.lmdbDataStore = lmdbDataStore;
         this.compiledFields = compiledFields;
         minPayloadSize = (int) resultStoreConfig.getMinPayloadSize().getBytes();
@@ -45,7 +48,7 @@ public class LmdbPayloadCreator {
      * @param input The input to read.
      */
     void readPayload(final Input input) {
-        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_READ_PAYLOAD);
+        SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_READ_PAYLOAD);
         Metrics.measure("readPayload", () -> {
             // Determine how many bytes the payload contains.
             final int length = input.readInt();
@@ -89,7 +92,7 @@ public class LmdbPayloadCreator {
      */
     void writePayload(final Output output) {
         try {
-            SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_WRITE_PAYLOAD);
+            SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_WRITE_PAYLOAD);
             Metrics.measure("writePayload", () -> {
                 try {
                     // Get the current payload.
@@ -153,7 +156,7 @@ public class LmdbPayloadCreator {
     private LmdbPayload createPayload(final BatchingWriteTxn batchingWriteTxn,
                                       final Dbi<ByteBuffer> dbi,
                                       final boolean complete) {
-        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_CREATE_PAYLOAD);
+        SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_CREATE_PAYLOAD);
         final Txn<ByteBuffer> writeTxn = batchingWriteTxn.getTxn();
 
         return Metrics.measure("createPayload", () -> {

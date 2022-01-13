@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
-public class MapDataStore implements DataStore {
+public class MapDataStore implements DataStore, Data {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapDataStore.class);
 
@@ -248,6 +248,11 @@ public class MapDataStore implements DataStore {
                 }
             });
         }
+    }
+
+    @Override
+    public void getData(final Consumer<Data> consumer) {
+        consumer.accept(this);
     }
 
     /**

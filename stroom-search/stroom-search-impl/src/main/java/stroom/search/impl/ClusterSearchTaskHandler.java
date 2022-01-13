@@ -21,7 +21,10 @@ import stroom.annotation.api.AnnotationFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.SearchProgressLog;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.extraction.ExpressionFilter;
+import stroom.search.extraction.ExtractionDecorator;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.search.impl.shard.IndexShardSearchFactory;
@@ -30,8 +33,6 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.SearchProgressLog;
-import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -67,7 +68,7 @@ class ClusterSearchTaskHandler {
     public void search(final TaskContext taskContext,
                        final ClusterSearchTask task,
                        final Coprocessors coprocessors) {
-        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
+        SearchProgressLog.increment(task.getKey(), SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
         this.taskContext = taskContext;
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
@@ -87,12 +88,11 @@ class ClusterSearchTaskHandler {
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         // Start searching.
-        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_SEARCH);
+        SearchProgressLog.increment(task.getKey(), SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_SEARCH);
 
         try {
-            final StoredDataQueue storedDataQueue = extractionDecoratorFactory.createStoredDataQueue(
-                    coprocessors,
-                    query);
+            final ExtractionDecorator extractionDecorator = extractionDecoratorFactory.create(task.getKey());
+            final StoredDataQueue storedDataQueue = extractionDecorator.createStoredDataQueue(coprocessors, query);
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = ExpressionFilter.builder()
@@ -109,11 +109,11 @@ class ClusterSearchTaskHandler {
                     coprocessors.getErrorConsumer());
 
             // Start mapping streams.
-            final CompletableFuture<Void> streamMappingFuture = extractionDecoratorFactory
+            final CompletableFuture<Void> streamMappingFuture = extractionDecorator
                     .startMapping(taskContext, coprocessors);
 
             // Start extracting data.
-            final CompletableFuture<Void> extractionFuture = extractionDecoratorFactory
+            final CompletableFuture<Void> extractionFuture = extractionDecorator
                     .startExtraction(taskContext, extractionCount, coprocessors.getErrorConsumer());
 
             // Create a countdown latch to keep updating status until we complete.
