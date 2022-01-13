@@ -4,18 +4,25 @@ import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.data.shared.StreamTypeNames;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.validation.IsSupersetOf;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.hibernate.validator.constraints.NotEmpty;
+
+import java.util.HashSet;
+import java.util.Set;
+import javax.validation.constraints.NotNull;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -26,7 +33,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
     private final CacheConfig metaFeedCache;
     private final CacheConfig metaProcessorCache;
     private final CacheConfig metaTypeCache;
-    private final String metaTypes;
+    private final Set<String> metaTypes;
 
     public MetaServiceConfig() {
         dbConfig = new MetaServiceDbConfig();
@@ -43,7 +50,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
-        metaTypes = "Raw Events\nRaw Reference\nEvents\nReference\nRecords\nError";
+        metaTypes = new HashSet<>(StreamTypeNames.ALL_TYPE_NAMES);
     }
 
     @SuppressWarnings("unused")
@@ -53,7 +60,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
                              @JsonProperty("metaFeedCache") final CacheConfig metaFeedCache,
                              @JsonProperty("metaProcessorCache") final CacheConfig metaProcessorCache,
                              @JsonProperty("metaTypeCache") final CacheConfig metaTypeCache,
-                             @JsonProperty("metaTypes") final String metaTypes) {
+                             @JsonProperty("metaTypes") final Set<String> metaTypes) {
         this.dbConfig = dbConfig;
         this.metaValueConfig = metaValueConfig;
         this.metaFeedCache = metaFeedCache;
@@ -86,8 +93,20 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
     }
 
     @RequiresRestart(RestartScope.SYSTEM)
-    @JsonPropertyDescription("List of accepted meta type names.")
-    public String getMetaTypes() {
+    @NotEmpty
+    @NotNull
+    @IsSupersetOf(requiredValues = {
+            StreamTypeNames.RAW_EVENTS,
+            StreamTypeNames.RAW_REFERENCE,
+            StreamTypeNames.EVENTS,
+            StreamTypeNames.REFERENCE,
+            StreamTypeNames.META,
+            StreamTypeNames.ERROR,
+            StreamTypeNames.CONTEXT,
+    }) // List should contain as a minimum all those types that the java code reference
+    @JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
+            "in the default value for this property but can contain additional names.")
+    public Set<String> getMetaTypes() {
         return metaTypes;
     }
 

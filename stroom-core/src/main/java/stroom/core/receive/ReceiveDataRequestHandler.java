@@ -19,6 +19,7 @@ package stroom.core.receive;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
@@ -57,16 +58,19 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final StreamTargetStreamHandlers streamTargetStreamHandlerProvider;
     private final TaskContextFactory taskContextFactory;
+    private final MetaService metaService;
 
     @Inject
     public ReceiveDataRequestHandler(final SecurityContext securityContext,
                                      final AttributeMapFilterFactory attributeMapFilterFactory,
                                      final StreamTargetStreamHandlers streamTargetStreamHandlerProvider,
-                                     final TaskContextFactory taskContextFactory) {
+                                     final TaskContextFactory taskContextFactory,
+                                     final MetaService metaService) {
         this.securityContext = securityContext;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.streamTargetStreamHandlerProvider = streamTargetStreamHandlerProvider;
         this.taskContextFactory = taskContextFactory;
+        this.metaService = metaService;
     }
 
     @Override
@@ -76,7 +80,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
 
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
             // Validate the supplied attributes.
-            AttributeMapValidator.validate(attributeMap);
+            AttributeMapValidator.validate(attributeMap, metaService::getTypes);
 
             final String feedName;
             if (attributeMapFilter.filter(attributeMap)) {

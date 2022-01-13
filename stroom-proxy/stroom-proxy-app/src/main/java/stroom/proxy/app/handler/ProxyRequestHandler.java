@@ -4,6 +4,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.proxy.app.ReceiveDataConfig;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.ProgressHandler;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -39,14 +41,17 @@ public class ProxyRequestHandler implements RequestHandler {
     private final ReceiveStreamHandlers receiveStreamHandlerProvider;
     private final AttributeMapFilter attributeMapFilter;
     private final LogStream logStream;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
 
     @Inject
     public ProxyRequestHandler(final ReceiveStreamHandlers receiveStreamHandlerProvider,
                                final AttributeMapFilterFactory attributeMapFilterFactory,
-                               final LogStream logStream) {
+                               final LogStream logStream,
+                               final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         this.receiveStreamHandlerProvider = receiveStreamHandlerProvider;
         this.logStream = logStream;
         attributeMapFilter = attributeMapFilterFactory.create();
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
     }
 
     @Override
@@ -66,7 +71,9 @@ public class ProxyRequestHandler implements RequestHandler {
         final AttributeMap attributeMap = AttributeMapUtil.create(request);
         try {
             // Validate the supplied attributes.
-            AttributeMapValidator.validate(attributeMap);
+            AttributeMapValidator.validate(
+                    attributeMap,
+                    () -> receiveDataConfigProvider.get().getMetaTypes());
 
             final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
             if (feedName == null || feedName.trim().isEmpty()) {

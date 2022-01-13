@@ -775,6 +775,7 @@ public class ConfigMapper {
                 type.equals(boolean.class) ||
                 type.equals(Character.class) ||
                 type.equals(char.class) ||
+                Set.class.isAssignableFrom(type) ||
                 List.class.isAssignableFrom(type) ||
                 Map.class.isAssignableFrom(type) ||
                 DocRef.class.isAssignableFrom(type) ||
@@ -905,6 +906,8 @@ public class ConfigMapper {
             if (isSupportedPropertyType(value.getClass())) {
                 if (value instanceof List) {
                     return listToString((List<?>) value, availableDelimiters);
+                } else if (value instanceof Set) {
+                    return setToString((Set<?>) value, availableDelimiters);
                 } else if (value instanceof Map) {
                     return mapToString((Map<?, ?>) value, availableDelimiters);
                 } else if (value instanceof DocRef) {
@@ -979,6 +982,10 @@ public class ConfigMapper {
                 // determine the type of the list items
                 final Class<?> itemType = getGenericsParam(genericType, 0);
                 return stringToList(prop, value, itemType);
+            } else if (Set.class.isAssignableFrom(type)) {
+                // determine the type of the list items
+                final Class<?> itemType = getGenericsParam(genericType, 0);
+                return stringToSet(prop, value, itemType);
             } else if (Map.class.isAssignableFrom(type)) {
                 // determine the types of the keys and values
                 final Class<?> keyType = getGenericsParam(genericType, 0);
@@ -1017,7 +1024,8 @@ public class ConfigMapper {
                 "Type [{}] is not supported for value [{}]", genericType, value));
     }
 
-    private static Object getDefaultValue(Class<?> clazz) {
+    private static Object getDefaultValue(Class<
+            ?> clazz) {
         if (clazz.equals(boolean.class)) {
             return DEFAULT_BOOLEAN;
         } else if (clazz.equals(byte.class)) {
@@ -1060,7 +1068,8 @@ public class ConfigMapper {
             return Boolean.FALSE;
         } else {
             throw new ConfigPropertyValidationException(
-                    LogUtil.message("Cannot convert [{}] into a boolean. Valid values are [true|false] ignoring case.",
+                    LogUtil.message(
+                            "Cannot convert [{}] into a boolean. Valid values are [true|false] ignoring case.",
                             str));
         }
     }
@@ -1084,6 +1093,27 @@ public class ConfigMapper {
         // we know what the delimiter is
         return delimiter + String.join(delimiter, strList);
     }
+
+    private static String setToString(final Set<?> set,
+                                      final List<String> availableDelimiters) {
+
+        if (set.isEmpty()) {
+            return "";
+        }
+        List<String> strList = set.stream()
+                .sorted() // ensure consistent serialisation
+                .map(ConfigMapper::convertToString)
+                .collect(Collectors.toList());
+
+        String allText = String.join("", strList);
+
+        String delimiter = getDelimiter(allText, availableDelimiters);
+
+        // prefix the delimited form with the delimiter so when we deserialise
+        // we know what the delimiter is
+        return delimiter + String.join(delimiter, strList);
+    }
+
 
     private static String mapToString(final Map<?, ?> map, final List<String> availableDelimiters) {
         if (map.isEmpty()) {
@@ -1134,6 +1164,17 @@ public class ConfigMapper {
 
     private static String enumToString(final Enum<?> enumInstance) {
         return enumInstance.name();
+    }
+
+    private static <T> Set<T> stringToSet(
+            final Prop prop,
+            final String serialisedForm,
+            final Class<T> type) {
+        if (serialisedForm == null || serialisedForm.isEmpty()) {
+            return Collections.emptySet();
+        } else {
+            return new HashSet<>(stringToList(prop, serialisedForm, type));
+        }
     }
 
     private static <T> List<T> stringToList(

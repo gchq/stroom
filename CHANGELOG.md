@@ -12,6 +12,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2688** : Add `metaTypes` to Proxy's `proxyRequestConfig`. Change data receipt to validate types against this new config property.
+
+* Issue **#2688** : Change defaults for Strooms `metaTypes` config property. Change type of `metaTypes` from String to a Set of Strings. Change data receipt to validate against this configured set.
+
+* Issue **#2694** : Improve error handling when search result store has reached max capacity.
+
+* Issue **#2689** : Add logging.
+
 * Issue **#2679** : Add unique index on `meta_processor.pipeline_uuid`.
 
 * Issue **#2596** : Disable the Ace editor settings menu (`ctrl-,`) as users should not have access to it and it does not work with modal dialogs.

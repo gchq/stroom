@@ -86,6 +86,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -190,7 +191,9 @@ class TestConfigMapper {
 
     @Test
     void testSerdeAllProperties() {
-        ConfigMapper configMapper = new ConfigMapper();
+
+        TestConfig testConfig = new TestConfig();
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -663,6 +666,11 @@ class TestConfigMapper {
     }
 
     @Test
+    void testValidateStringValue_set_good1() {
+        doValidateStringValueTest("stroom.stringSetProp", "|item1|item2|item3", true);
+    }
+
+    @Test
     void testValidateStringValue_map_good() {
         doValidateStringValueTest("stroom.stringLongMapProp", "@#key1#123@key2#456", true);
     }
@@ -858,6 +866,7 @@ class TestConfigMapper {
         private final String stringProp;
         private final List<String> stringListProp;
         private final List<Integer> intListProp;
+        private final Set<String> stringSetProp;
         private final Map<String, Long> stringLongMapProp;
         private final DocRef docRefProp;
         private final List<DocRef> docRefListProp;
@@ -877,6 +886,7 @@ class TestConfigMapper {
             stringProp = "initial value";
             stringListProp = List.of("item 1", "item 2", "item 3");
             intListProp = List.of(1, 2, 3);
+            stringSetProp = Set.of("A", "B", "C");
             stringLongMapProp = Map.of(
                     "k1", 1L,
                     "k2", 2L,
@@ -947,6 +957,7 @@ class TestConfigMapper {
                 @JsonProperty("stringProp") final String stringProp,
                 @JsonProperty("stringListProp") final List<String> stringListProp,
                 @JsonProperty("intListProp") final List<Integer> intListProp,
+                @JsonProperty("stringSetProp") final Set<String> stringSetProp,
                 @JsonProperty("stringLongMapProp") final Map<String, Long> stringLongMapProp,
                 @JsonProperty("docRefProp") final DocRef docRefProp,
                 @JsonProperty("docRefListProp") final List<DocRef> docRefListProp,
@@ -1006,6 +1017,7 @@ class TestConfigMapper {
             this.stringProp = stringProp;
             this.stringListProp = stringListProp;
             this.intListProp = intListProp;
+            this.stringSetProp = stringSetProp;
             this.stringLongMapProp = stringLongMapProp;
             this.docRefProp = docRefProp;
             this.docRefListProp = docRefListProp;
@@ -1038,6 +1050,10 @@ class TestConfigMapper {
 
         public List<Integer> getIntListProp() {
             return intListProp;
+        }
+
+        public Set<String> getStringSetProp() {
+            return stringSetProp;
         }
 
         public Map<String, Long> getStringLongMapProp() {

@@ -510,7 +510,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
     private void doFlush() {
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-            final Rest<Boolean> rest = restFactory.create();
+            final Rest<Long> rest = restFactory.create();
             rest
                     .onSuccess(result -> refresh())
                     .call(INDEX_RESOURCE)
@@ -525,7 +525,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
     private void doDelete() {
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-            final Rest<Boolean> rest = restFactory.create();
+            final Rest<Long> rest = restFactory.create();
             rest
                     .onSuccess(result -> refresh())
                     .call(INDEX_RESOURCE)

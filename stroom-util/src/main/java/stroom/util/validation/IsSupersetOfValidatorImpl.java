@@ -1,7 +1,7 @@
 package stroom.util.validation;
 
-import stroom.util.shared.validation.IsSubsetOf;
-import stroom.util.shared.validation.IsSubsetOfValidator;
+import stroom.util.shared.validation.IsSupersetOf;
+import stroom.util.shared.validation.IsSupersetOfValidator;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,13 +9,13 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.validation.ConstraintValidatorContext;
 
-public class IsSubsetOfValidatorImpl implements IsSubsetOfValidator {
+public class IsSupersetOfValidatorImpl implements IsSupersetOfValidator {
 
-    private Set<String> allowedValues;
+    private Set<String> requiredValues;
 
     @Override
-    public void initialize(IsSubsetOf constraintAnnotation) {
-        allowedValues = new HashSet<>(Arrays.asList(constraintAnnotation.allowedValues()));
+    public void initialize(IsSupersetOf constraintAnnotation) {
+        requiredValues = new HashSet<>(Arrays.asList(constraintAnnotation.requiredValues()));
     }
 
     /**
@@ -36,13 +36,15 @@ public class IsSubsetOfValidatorImpl implements IsSubsetOfValidator {
 
         if (values != null && !values.isEmpty()) {
 
-            Set<String> invalidValues = new HashSet<>(values);
-            invalidValues.removeAll(allowedValues);
+            final Set<String> missingValues = new HashSet<>(requiredValues);
+            missingValues.removeAll(values);
 
-            if (!invalidValues.isEmpty()) {
+            if (!missingValues.isEmpty()) {
                 // We want the exception details in the message so bin the default constraint
                 // violation and make a new one.
-                String msg = "List contains invalid values [" + String.join(",", invalidValues) + "]";
+                String msg = "Set contains missing values ["
+                        + String.join(",", missingValues)
+                        + "]";
                 context.disableDefaultConstraintViolation();
                 context
                         .buildConstraintViolationWithTemplate(msg)

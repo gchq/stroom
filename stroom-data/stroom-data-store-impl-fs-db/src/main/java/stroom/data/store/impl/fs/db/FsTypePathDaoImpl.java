@@ -17,6 +17,8 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsTypePath.FS_TYPE_PATH;
 
 /**
  * This class exists to map feed id's to file paths using old data from the DB.
+ * e.g. Legacy system may have "Test Events" linked to the /EVENTS/ path which differs
+ * from the default of "Test Events" => /TEST_EVENTS/
  */
 @Singleton
 class FsTypePathDaoImpl implements FsTypePathDao {
