@@ -21,7 +21,6 @@ import stroom.datasource.shared.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.meta.shared.MetaFields;
-import stroom.security.api.SecurityContext;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -31,13 +30,10 @@ import javax.inject.Provider;
 class DataSourceResourceImpl implements DataSourceResource {
 
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
-    private final SecurityContext securityContext;
 
     @Inject
-    DataSourceResourceImpl(final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
-                           final SecurityContext securityContext) {
+    DataSourceResourceImpl(final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider) {
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
-        this.securityContext = securityContext;
     }
 
     @Override
@@ -46,11 +42,9 @@ class DataSourceResourceImpl implements DataSourceResource {
             return MetaFields.getFields();
         }
 
-        // Elevate the users permissions for the duration of this task so they can read the index if
-        // they have 'use' permission.
-        return securityContext.useAsReadResult(
-                () -> dataSourceProviderRegistryProvider.get().getDataSourceProvider(dataSourceRef)
-                        .map(provider -> provider.getDataSource(dataSourceRef).getFields())
-                        .orElse(null));
+        return dataSourceProviderRegistryProvider.get()
+                .getDataSourceProvider(dataSourceRef)
+                .map(provider -> provider.getDataSource(dataSourceRef).getFields())
+                .orElse(null);
     }
 }
