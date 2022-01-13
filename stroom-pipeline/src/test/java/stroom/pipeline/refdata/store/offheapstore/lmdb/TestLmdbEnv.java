@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.BasicLmdbDb;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
@@ -10,6 +11,7 @@ import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.util.concurrent.HighWaterMarkTracker;
 import stroom.util.io.ByteSize;
+import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
@@ -34,6 +36,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
 /**
@@ -42,6 +45,15 @@ import java.util.stream.IntStream;
  * {@link LmdbEnv}
  */
 public class TestLmdbEnv {
+
+    // TODO 13/01/2022 AT: Move this to stroom.lmdb in line with the class it is testing
+    //  and move the following to stroom.lmdb.?
+    //  StringSerde
+    //  IntegerSerde
+    //  UnsignedLongSerde
+    //  UnsignedBytes
+    //  UnsignedBytesInstances
+    //  UnsignedLong
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestLmdbEnv.class);
 
@@ -61,9 +73,13 @@ public class TestLmdbEnv {
         final boolean doWritersBlockReaders = true;
         final int expectedNumReadersHighWaterMark = MAX_READERS;
 
-        buildEnvAndDb(doWritersBlockReaders);
-
-        doMultiThreadTest(doWritersBlockReaders, expectedNumReadersHighWaterMark, true);
+        doWithEnvAndDb(
+                doWritersBlockReaders,
+                () ->
+                        doMultiThreadTest(
+                                doWritersBlockReaders,
+                                expectedNumReadersHighWaterMark,
+                                true));
     }
 
     @Test
@@ -72,9 +88,13 @@ public class TestLmdbEnv {
         final boolean doWritersBlockReaders = true;
         final int expectedNumReadersHighWaterMark = MAX_READERS;
 
-        buildEnvAndDb(doWritersBlockReaders);
-
-        doMultiThreadTest(doWritersBlockReaders, expectedNumReadersHighWaterMark, false);
+        doWithEnvAndDb(
+                doWritersBlockReaders,
+                () ->
+                        doMultiThreadTest(
+                                doWritersBlockReaders,
+                                expectedNumReadersHighWaterMark,
+                                false));
     }
 
     @Test
@@ -83,9 +103,13 @@ public class TestLmdbEnv {
         final boolean doWritersBlockReaders = false;
         final int expectedNumReadersHighWaterMark = MAX_READERS;
 
-        buildEnvAndDb(doWritersBlockReaders);
-
-        doMultiThreadTest(doWritersBlockReaders, expectedNumReadersHighWaterMark, true);
+        doWithEnvAndDb(
+                doWritersBlockReaders,
+                () ->
+                        doMultiThreadTest(
+                                doWritersBlockReaders,
+                                expectedNumReadersHighWaterMark,
+                                false));
     }
 
     @Test
@@ -94,71 +118,169 @@ public class TestLmdbEnv {
         final boolean doWritersBlockReaders = false;
         final int expectedNumReadersHighWaterMark = MAX_READERS;
 
-        buildEnvAndDb(doWritersBlockReaders);
-
-        doMultiThreadTest(doWritersBlockReaders, expectedNumReadersHighWaterMark, false);
+        doWithEnvAndDb(
+                doWritersBlockReaders,
+                () ->
+                        doMultiThreadTest(
+                                doWritersBlockReaders,
+                                expectedNumReadersHighWaterMark,
+                                false));
     }
 
     @Test
     void testBatchingWriteTxnWrapper_withBatchSize() throws Exception {
-        buildEnvAndDb(true);
+        doWithEnvAndDb(
+                true,
+                () -> {
+                    try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
+                        for (int i = 0; i < 9; i++) {
+                            database.put(batchingWriteTxn.getTxn(), buildKey(i), buildValue(i), false);
+                            batchingWriteTxn.commitIfRequired();
+                        }
+                        // final commit
+                        batchingWriteTxn.commit();
+                    }
 
-        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
-            for (int i = 0; i < 9; i++) {
-                database.put(batchingWriteTxn.getTxn(), buildKey(i), buildValue(i), false);
-                batchingWriteTxn.commitIfRequired();
-            }
-            // final commit
-            batchingWriteTxn.commit();
-        }
-
-        Assertions.assertThat(database.getEntryCount())
-                .isEqualTo(9);
+                    Assertions.assertThat(database.getEntryCount())
+                            .isEqualTo(9);
+                });
     }
 
     @Test
     void testBatchingWriteTxnWrapper_withBatchSize_withAbort() throws Exception {
-        buildEnvAndDb(true);
+        doWithEnvAndDb(
+                true,
+                () -> {
+                    try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
+                        for (int i = 0; i < 9; i++) {
+                            database.put(batchingWriteTxn.getTxn(), buildKey(i), buildValue(i), false);
+                            batchingWriteTxn.commitIfRequired();
+                        }
 
-        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
-            for (int i = 0; i < 9; i++) {
-                database.put(batchingWriteTxn.getTxn(), buildKey(i), buildValue(i), false);
-                batchingWriteTxn.commitIfRequired();
-            }
+                        // abort the txn so no. 9 should be rolled back leaving 8
+                        batchingWriteTxn.abort();
+                    }
 
-            // abort the txn so no. 9 should be rolled back leaving 8
-            batchingWriteTxn.abort();
-        }
-
-        Assertions.assertThat(database.getEntryCount())
-                .isEqualTo(8);
+                    Assertions.assertThat(database.getEntryCount())
+                            .isEqualTo(8);
+                });
     }
 
     @Test
     void testBatchingWriteTxnWrapper_noWork() throws Exception {
-        buildEnvAndDb(true);
+        doWithEnvAndDb(
+                true,
+                () -> {
+                    try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
+                        // do nothing
+                    }
 
-        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
-            // do nothing
-        }
-
-        Assertions.assertThat(database.getEntryCount())
-                .isEqualTo(0);
+                    Assertions.assertThat(database.getEntryCount())
+                            .isEqualTo(0);
+                });
     }
 
     @Test
     void testBatchingWriteTxnWrapper_noWork_abort() throws Exception {
-        buildEnvAndDb(true);
+        doWithEnvAndDb(
+                true,
+                () -> {
+                    try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
+                        batchingWriteTxn.abort();
+                    }
 
-        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
-            batchingWriteTxn.abort();
-        }
+                    Assertions.assertThat(database.getEntryCount())
+                            .isEqualTo(0);
+                });
 
-        Assertions.assertThat(database.getEntryCount())
-                .isEqualTo(0);
     }
 
-    private void buildEnvAndDb(final boolean isReaderBlockedByWriter) throws IOException {
+    /**
+     * Have multiple threads open an lmdb env and write/read from the db.
+     * More of a manual test to check that many envs don't cause problems.
+     * Have tried it with 1000.
+     */
+    @Test
+    void testManyEnvs() throws IOException, InterruptedException {
+        final List<Path> dbDirs = new ArrayList<>();
+        final List<LmdbEnv> envs = new ArrayList<>();
+        final int cnt = 10;
+        final CountDownLatch startLatch = new CountDownLatch(cnt);
+        final CountDownLatch closeTxnLatch = new CountDownLatch(cnt);
+        final CountDownLatch completionLatch = new CountDownLatch(cnt);
+        for (int i = 0; i < cnt; i++) {
+
+            final Path dbDir = Files.createTempDirectory("stroom");
+            dbDirs.add(dbDir);
+
+            final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
+            final TempDirProvider tempDirProvider = () -> dbDir;
+
+            final LmdbEnv lmdbEnv = new LmdbEnvFactory(
+                    pathCreator,
+                    tempDirProvider,
+                    LmdbLibraryConfig::new)
+                    .builder(dbDir)
+                    .withMapSize(ByteSize.ofKibibytes(200))
+                    .withMaxDbCount(1)
+                    .setIsReaderBlockedByWriter(true)
+                    .addEnvFlag(EnvFlags.MDB_NOTLS)
+                    .build();
+            envs.add(lmdbEnv);
+
+            final BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
+                    lmdbEnv,
+                    new ByteBufferPoolFactory().getByteBufferPool(),
+                    new StringSerde(),
+                    new StringSerde(),
+                    "MyBasicLmdb");
+
+            CompletableFuture.runAsync(() -> {
+                lmdbEnv.doWithWriteTxn(writeTxn -> {
+
+                    LOGGER.debug("putting to env: {}", lmdbEnv.getLocalDir().toAbsolutePath());
+                    db.put(writeTxn, "hello", "world", false);
+                });
+
+                lmdbEnv.doWithReadTxn(readTxn -> {
+                    startLatch.countDown();
+                    try {
+                        LOGGER.debug("countDownLatch1: {}", startLatch.getCount());
+                        startLatch.await();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    final Optional<String> optVal = db.get("hello");
+                    Assertions.assertThat(optVal)
+                            .hasValue("world");
+
+                    closeTxnLatch.countDown();
+                    try {
+                        // Wait for all others to reach this point before closing the txn so we have
+                        // cnt txns open
+                        closeTxnLatch.await();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    completionLatch.countDown();
+                });
+            }, Executors.newFixedThreadPool(cnt));
+        }
+
+        LOGGER.debug("countDownLatch2: {}", completionLatch.getCount());
+        completionLatch.await();
+
+        for (int i = 0; i < cnt; i++) {
+            LOGGER.debug("Closing {}", envs.get(i).getLocalDir().toAbsolutePath());
+            envs.get(i).close();
+            FileUtil.deleteDir(dbDirs.get(i));
+        }
+    }
+
+    private void doWithEnvAndDb(final boolean isReaderBlockedByWriter,
+                                final Runnable work) throws IOException {
         LOGGER.info("MAX_READERS: {}", MAX_READERS);
 
         final Path dbDir = Files.createTempDirectory("stroom");
@@ -188,12 +310,59 @@ public class TestLmdbEnv {
                 new StringSerde(),
                 new StringSerde(),
                 "MyBasicLmdb");
+
+        try {
+            work.run();
+        } finally {
+            lmdbEnv.close();
+            FileUtil.deleteDir(dbDir);
+        }
+    }
+
+    private void doWithEnvAndDb(final boolean isReaderBlockedByWriter,
+                                final BiConsumer<LmdbEnv, AbstractLmdbDb<String, String>> work)
+            throws IOException {
+        LOGGER.info("MAX_READERS: {}", MAX_READERS);
+
+        final Path dbDir = Files.createTempDirectory("stroom");
+
+        final EnvFlags[] envFlags = new EnvFlags[]{EnvFlags.MDB_NOTLS};
+
+        LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}, envFlags {}",
+                DB_MAX_SIZE,
+                dbDir.toAbsolutePath(),
+                Arrays.toString(envFlags));
+
+        final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
+        final TempDirProvider tempDirProvider = () -> dbDir;
+
+        final LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
+                .builder(dbDir)
+                .withMapSize(DB_MAX_SIZE)
+                .withMaxDbCount(1)
+                .withMaxReaderCount(MAX_READERS)
+                .setIsReaderBlockedByWriter(isReaderBlockedByWriter)
+                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .build();
+
+        final BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
+                lmdbEnv,
+                new ByteBufferPoolFactory().getByteBufferPool(),
+                new StringSerde(),
+                new StringSerde(),
+                "MyBasicLmdb");
+
+        try {
+            work.accept(lmdbEnv, db);
+        } finally {
+            lmdbEnv.close();
+            FileUtil.deleteDir(dbDir);
+        }
     }
 
     private void doMultiThreadTest(final boolean isReaderBlockedByWriter,
                                    final int expectedNumReadersHighWaterMark,
-                                   final boolean doWrites)
-            throws IOException, InterruptedException {
+                                   final boolean doWrites) {
 
 
         final HighWaterMarkTracker readersHighWaterMarkTracker = new HighWaterMarkTracker();
@@ -261,45 +430,49 @@ public class TestLmdbEnv {
                 });
 
         // wait for all threads to be ready to work
-        threadsStartedLatch.await();
+        try {
+            threadsStartedLatch.await();
 
-        // Release all threads at once to hit LMDB
-        releaseThreadsLatch.countDown();
+            // Release all threads at once to hit LMDB
+            releaseThreadsLatch.countDown();
 
-        do {
-            LOGGER.info("numReaders: {}, threadsFinishedLatch: {}, threads: {}",
-                    lmdbEnv.info().numReaders,
-                    threadsFinishedLatch.getCount(),
-                    String.join(", ", threads));
+            do {
+                LOGGER.info("numReaders: {}, threadsFinishedLatch: {}, threads: {}",
+                        lmdbEnv.info().numReaders,
+                        threadsFinishedLatch.getCount(),
+                        String.join(", ", threads));
 
-        } while (!threadsFinishedLatch.await(50, TimeUnit.MILLISECONDS));
+            } while (!threadsFinishedLatch.await(50, TimeUnit.MILLISECONDS));
 
-        // Wait for all threads to finish
-        threadsFinishedLatch.await();
+            // Wait for all threads to finish
+            threadsFinishedLatch.await();
 
-        LOGGER.info("Exception count: {}", exceptions.size());
+            LOGGER.info("Exception count: {}", exceptions.size());
 
-        // We don't want any max readers exceptions
-        Assertions.assertThat(exceptions)
-                .isEmpty();
+            // We don't want any max readers exceptions
+            Assertions.assertThat(exceptions)
+                    .isEmpty();
 
-        // Can't really test for a min value on the readers to ensure they
-        // are working concurrently as this will be run by github actions
-        // which only has one core. Useful for manually checking locally though
+            // Can't really test for a min value on the readers to ensure they
+            // are working concurrently as this will be run by github actions
+            // which only has one core. Useful for manually checking locally though
 
-        LOGGER.info("numReaders: {}", lmdbEnv.info().numReaders);
-        // numreaders is a high water mark of max concurrent readers
-        Assertions.assertThat(lmdbEnv.info().numReaders)
-                .isLessThanOrEqualTo(expectedNumReadersHighWaterMark);
+            LOGGER.info("numReaders: {}", lmdbEnv.info().numReaders);
+            // numreaders is a high water mark of max concurrent readers
+            Assertions.assertThat(lmdbEnv.info().numReaders)
+                    .isLessThanOrEqualTo(expectedNumReadersHighWaterMark);
 
-        LOGGER.info("readersHighWaterMarkTracker: {}", readersHighWaterMarkTracker);
-        Assertions.assertThat(readersHighWaterMarkTracker.getHighWaterMark())
-                .isLessThanOrEqualTo(expectedNumReadersHighWaterMark);
+            LOGGER.info("readersHighWaterMarkTracker: {}", readersHighWaterMarkTracker);
+            Assertions.assertThat(readersHighWaterMarkTracker.getHighWaterMark())
+                    .isLessThanOrEqualTo(expectedNumReadersHighWaterMark);
 
-        if (doWrites) {
-            LOGGER.info("writersHighWaterMarkTracker: {}", writersHighWaterMarkTracker);
-            Assertions.assertThat(writersHighWaterMarkTracker.getHighWaterMark())
-                    .isEqualTo(1);
+            if (doWrites) {
+                LOGGER.info("writersHighWaterMarkTracker: {}", writersHighWaterMarkTracker);
+                Assertions.assertThat(writersHighWaterMarkTracker.getHighWaterMark())
+                        .isEqualTo(1);
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
