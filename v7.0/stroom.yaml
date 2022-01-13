@@ -3909,6 +3909,26 @@ paths:
       summary: Destroy a running query
       tags:
       - Searchable
+  /searchable/v2/ping:
+    post:
+      operationId: pingSearchableQuery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryKey'
+        description: QueryKey
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Keep a running query alive
+      tags:
+      - Searchable
   /searchable/v2/search:
     post:
       operationId: startSearchableQuery
@@ -4108,7 +4128,7 @@ paths:
       - Sql Statistics Query
   /sqlstatistics/v2/destroy:
     post:
-      operationId: destroySqlStatisticsSearch
+      operationId: destroySqlStatisticsQuery
       requestBody:
         content:
           application/json:
@@ -4126,9 +4146,29 @@ paths:
       summary: Destroy a running query
       tags:
       - Sql Statistics Query
+  /sqlstatistics/v2/ping:
+    post:
+      operationId: pingSqlStatisticsQuery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryKey'
+        description: QueryKey
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Keep a running query alive
+      tags:
+      - Sql Statistics Query
   /sqlstatistics/v2/search:
     post:
-      operationId: searchSqlStatistics
+      operationId: startSqlStatisticsQuery
       requestBody:
         content:
           application/json:
@@ -4543,7 +4583,7 @@ paths:
       - Stroom-Index Queries
   /stroom-index/v2/destroy:
     post:
-      operationId: destroyStroomIndex
+      operationId: destroyStroomIndexQuery
       requestBody:
         content:
           application/json:
@@ -4561,9 +4601,29 @@ paths:
       summary: Destroy a running query
       tags:
       - Stroom-Index Queries
+  /stroom-index/v2/ping:
+    post:
+      operationId: pingStroomIndexQuery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryKey'
+        description: QueryKey
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Keep a running query alive
+      tags:
+      - Stroom-Index Queries
   /stroom-index/v2/search:
     post:
-      operationId: searchStroomIndex
+      operationId: startStroomIndexQuery
       requestBody:
         content:
           application/json:
@@ -4604,7 +4664,7 @@ paths:
       - Solr Queries
   /stroom-solr-index/v2/destroy:
     post:
-      operationId: destroySolrIndexSearch
+      operationId: destroySolrIndexQuery
       requestBody:
         content:
           application/json:
@@ -4622,9 +4682,29 @@ paths:
       summary: Destroy a running query
       tags:
       - Solr Queries
+  /stroom-solr-index/v2/ping:
+    post:
+      operationId: pingSolrIndexQuery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryKey'
+        description: QueryKey
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Keep a running query alive
+      tags:
+      - Solr Queries
   /stroom-solr-index/v2/search:
     post:
-      operationId: searchSolrIndex
+      operationId: startSolrIndexQuery
       requestBody:
         content:
           application/json:
