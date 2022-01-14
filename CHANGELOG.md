@@ -12,6 +12,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.7] - 2022-01-14
+
+* Issue **#2640** : Support adding formatted dates to index name in ElasticIndexingFilter.
+
+* Issue **#2675** : Improve Elasticsearch scroll query performance
+
+* Issue **#2677** : Respect column formatting in Excel cell styles.
+
 * Issue **#2703** : Improve search trace log to identify multi query search issues.
 
 * Issue **#2705** : Attempt to fix SIDSEGV issue caused by too many LMDB readers.
@@ -691,6 +699,7 @@ Improve error handling during reference data initialisation.
 * Issue **#2180** : Fix NPE when Stream Appender has no stream type defined.
 
 * Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
+
 
 ## [v7.1-beta.1] - 2021-04-13
 
@@ -3982,7 +3991,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.7...HEAD
+[v7.1-beta.7]: https://github.com/gchq/stroom/compare/v7.1-beta.6...v7.1-beta.7
 [v7.1-beta.6]: https://github.com/gchq/stroom/compare/v7.1-beta.5...v7.1-beta.6
 [v7.1-beta.5]: https://github.com/gchq/stroom/compare/v7.1-beta.4...v7.1-beta.5
 [v7.1-beta.4]: https://github.com/gchq/stroom/compare/v7.1-beta.3...v7.1-beta.4
