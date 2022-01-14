@@ -149,8 +149,12 @@ public class ElasticSearchTaskHandler {
                     try {
                         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
                                 .query(query)
-                                .size(elasticIndex.getSearchScrollSize())
-                                .slice(new SliceBuilder(slice, elasticIndex.getSearchSlices()));
+                                .size(elasticIndex.getSearchScrollSize());
+
+                        // Number of slices needs to be > 1 else an exception is raised
+                        if (elasticIndex.getSearchSlices() > 1) {
+                            searchSourceBuilder.slice(new SliceBuilder(slice, elasticIndex.getSearchSlices()));
+                        }
 
                         searchRequest.source(searchSourceBuilder);
                         SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
