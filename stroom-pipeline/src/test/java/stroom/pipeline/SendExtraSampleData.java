@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.test;
+package stroom.pipeline;
 
 import stroom.util.io.StreamUtil;
 

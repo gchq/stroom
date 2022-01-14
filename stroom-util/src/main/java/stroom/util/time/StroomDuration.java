@@ -12,7 +12,6 @@ import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * Class to represent a duration. Internally it stores the duration as a {@link Duration} object.
@@ -29,7 +28,6 @@ import javax.annotation.Nullable;
  */
 public class StroomDuration implements Comparable<StroomDuration>, TemporalAmount {
 
-    @Nullable
     // Allows us to hold the original serialised form of the duration as a duration can have more
     // than one serialised form. Can be null.
     private final String valueAsStr;
@@ -38,7 +36,7 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
 
     public static final StroomDuration ZERO = new StroomDuration(Duration.ZERO);
 
-    private StroomDuration(@Nullable final String valueAsStr,
+    private StroomDuration(final String valueAsStr,
                            final Duration duration) {
         Objects.requireNonNull(duration);
         this.duration = duration;

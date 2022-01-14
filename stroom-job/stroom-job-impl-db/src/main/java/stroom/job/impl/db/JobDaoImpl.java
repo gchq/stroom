@@ -28,14 +28,17 @@ import stroom.util.shared.ResultPage;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
+import org.jooq.impl.DSL;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nonnull;
+import java.util.Set;
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 
+import static org.jooq.impl.DSL.select;
 import static stroom.job.impl.db.jooq.Tables.JOB;
 import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
 
@@ -66,12 +69,12 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
     }
 
     @Override
-    public Job create(@Nonnull final Job job) {
+    public Job create(@NotNull final Job job) {
         return genericDao.create(job);
     }
 
     @Override
-    public Job update(@Nonnull final Job job) {
+    public Job update(@NotNull final Job job) {
         return genericDao.update(job);
     }
 
@@ -112,5 +115,27 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
                         context.select(JOB_NODE.JOB_ID)
                                 .from(JOB_NODE)))
                 .execute());
+    }
+
+    @Override
+    public int setJobsEnabled(final String nodeName,
+                              final boolean enabled,
+                              final Set<String> includeJobs,
+                              final Set<String> excludeJobs) {
+        return JooqUtil.contextResult(jobDbConnProvider, context -> context
+                .update(JOB_NODE)
+                .set(JOB_NODE.ENABLED, enabled)
+                .where(JOB_NODE.NODE_NAME.eq(nodeName)
+                        .and(JOB_NODE.JOB_ID.in(
+                                select(JOB.ID).from(JOB)
+                                        .where(JOB.NAME.in(includeJobs)
+                                                .or(DSL.condition(includeJobs.size() == 0)))
+                        )).and(JOB_NODE.JOB_ID.notIn(
+                                select(JOB.ID).from(JOB)
+                                        .where(JOB.NAME.in(excludeJobs)
+                                                .and(DSL.condition(excludeJobs.size() > 0)))
+                        )))
+                .execute()
+        );
     }
 }

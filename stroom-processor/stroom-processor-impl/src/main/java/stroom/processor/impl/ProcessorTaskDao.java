@@ -45,6 +45,12 @@ public interface ProcessorTaskDao {
                         final boolean reachedLimit,
                         final Consumer<CreatedTasks> consumer);
 
+    ResultPage<ProcessorTask> changeTaskStatus(ExpressionCriteria criteria,
+                                               String nodeName,
+                                               TaskStatus status,
+                                               Long startTime,
+                                               Long endTime);
+
     ProcessorTask changeTaskStatus(ProcessorTask processorTask,
                                    String nodeName,
                                    TaskStatus status,

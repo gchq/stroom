@@ -1,11 +1,9 @@
 ext.moduleName = 'stroom.node.api'
 
 dependencies {
-//    compile project(':stroom-core-shared')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.jackson_annotations
-    compile libs.ws_rs_api
-//    compile project(':stroom-docref')
+    implementation libs.jackson_annotations
+    implementation libs.ws_rs_api
 }

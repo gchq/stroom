@@ -61,7 +61,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
+import stroom.util.logging.Metrics;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -144,7 +146,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      * Flag to indicate if we are filling
      */
     private final AtomicBoolean filling = new AtomicBoolean();
-    private final ConcurrentHashMap<Integer, Boolean> exhaustedFilterMap = new ConcurrentHashMap<>();
     private volatile int lastQueueSizeForStats = -1;
 
     /**
@@ -194,7 +195,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             LOGGER.info(() -> "Locking cluster to release owned tasks for node " + nodeInfo.getThisNodeName());
             clusterLockService.lock(LOCK_NAME, processorTaskDao::releaseOwnedTasks);
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
         } finally {
             createTasksLock.unlock();
             allowAsyncTaskCreation = true;
@@ -211,7 +212,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             allowTaskCreation = false;
             clearTaskStore();
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
         } finally {
             createTasksLock.unlock();
         }
@@ -223,7 +224,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      */
     @Override
     public ProcessorTaskList assignTasks(final String nodeName, final int count) {
-        LOGGER.debug("assignTasks() called for node {}, count {}", nodeName, count);
+        LOGGER.debug(() -> "assignTasks() called for node " + nodeName + ", count " + count);
 
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserId(),
@@ -273,29 +274,33 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 LOGGER.debug("assignTasks is disabled");
             }
 
-            // Have a go at kicking off a fill
+            // Have a go at kicking off a fill.
             fillTaskStore();
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
         }
 
         // Output some trace logging so we can see where tasks go.
         taskStatusTraceLog.assignTasks(ProcessorTaskManagerImpl.class, assignedStreamTasks, nodeName);
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Assigning " + assignedStreamTasks.size()
-                    + " tasks (" + count + " requested) to node " + nodeName);
-        }
+        final int taskCount = assignedStreamTasks.size();
+        LOGGER.debug(() -> "Assigning " +
+                taskCount
+                + " tasks (" +
+                count +
+                " requested) to node " +
+                nodeName);
         return new ProcessorTaskList(nodeName, assignedStreamTasks);
     }
 
     @Override
     public Boolean abandonTasks(final ProcessorTaskList processorTaskList) {
-        LOGGER.debug(() -> LogUtil.message("abandonTasks() called for {} tasks",
+        LOGGER.debug(() -> "abandonTasks() called for " +
                 Optional.ofNullable(processorTaskList)
                         .map(ProcessorTaskList::getList)
                         .map(List::size)
-                        .orElse(0)));
+                        .orElse(0) +
+                " tasks");
 
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserId(),
@@ -316,7 +321,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
     private void abandon(final ProcessorTask processorTask) {
         try {
-            LOGGER.warn("abandon() - {}", processorTask);
+            LOGGER.warn(() -> "abandon() - " + processorTask);
             processorTaskDao.changeTaskStatus(
                     processorTask,
                     null,
@@ -324,13 +329,13 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     null,
                     null);
         } catch (final RuntimeException e) {
-            LOGGER.error("abandon() - {}", processorTask, e);
+            LOGGER.error(() -> "abandon() - " + processorTask, e);
         }
     }
 
     private void release(final ProcessorTask streamTask) {
         try {
-            LOGGER.warn("release() - {}", streamTask);
+            LOGGER.warn(() -> "release() - " + streamTask);
             processorTaskDao.changeTaskStatus(
                     streamTask,
                     null,
@@ -338,7 +343,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     null,
                     null);
         } catch (final RuntimeException e) {
-            LOGGER.error("release() - {}", streamTask, e);
+            LOGGER.error(() -> "release() - " + streamTask, e);
         }
     }
 
@@ -379,7 +384,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 if (filling.compareAndSet(false, true)) {
                     // See if it has been long enough since we last filled.
                     if (isScheduled()) {
-                        LOGGER.debug("fillTaskStore() - Executing CreateStreamTasksTask");
+                        LOGGER.debug(() -> "fillTaskStore() - Executing CreateStreamTasksTask");
 
                         final Runnable runnable = taskContextFactory.context(
                                 "Fill Task Store",
@@ -401,7 +406,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     }
                 }
             } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
             }
         }
     }
@@ -417,9 +422,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // If we have past the window the last time we ran then yes.
         final long timeNowMs = System.currentTimeMillis();
         if (timeNowMs > nextPollMs.get()) {
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("isScheduled() - Yes as time has past (queueSize={})", getTaskQueueSize());
-            }
+            LOGGER.trace(() -> "isScheduled() - Yes as time has past (queueSize=" + getTaskQueueSize() + ")");
             return true;
         }
 
@@ -447,16 +450,14 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         createTasksLock.lock();
         try {
             if (allowTaskCreation) {
-
                 // We need an overarching cluster lock for all task creation
                 // Some of the task creation is async but we will wait for that
                 // to complete so all task creation is encapsulated by this lock
-                LOGGER.debug("Locking cluster to create tasks");
-                clusterLockService.lock(LOCK_NAME, () ->
-                        doCreateTasks(taskContext));
+                LOGGER.debug(() -> "Locking cluster to create tasks");
+                clusterLockService.lock(LOCK_NAME, () -> doCreateTasks(taskContext));
             }
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
         } finally {
             createTasksLock.unlock();
         }
@@ -467,14 +468,14 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // create tasks. This should always be the case in production but some
         // tests will call this directly while scheduled execution could also be
         // running.
-        LOGGER.debug("doCreateTasks()");
+        LOGGER.debug(() -> "doCreateTasks()");
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.debug("doCreateTasks() - Starting");
+        LOGGER.debug(() -> "doCreateTasks() - Starting");
         taskContext.info(() -> "Starting");
 
-        // Get an up to date list of all enabled stream processor filters.
-        LOGGER.trace("Getting enabled non deleted filters");
+        // Get an up-to-date list of all enabled stream processor filters.
+        LOGGER.trace(() -> "Getting enabled non deleted filters");
         taskContext.info(() -> "Getting enabled non deleted filters");
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ProcessorFields.ENABLED, Condition.EQUALS, true)
@@ -486,7 +487,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
         final List<ProcessorFilter> filters = processorFilterService
                 .find(findProcessorFilterCriteria).getValues();
-        LOGGER.trace("Found {} filters", filters.size());
+        LOGGER.trace(() -> "Found " + filters.size() + " filters");
         taskContext.info(() -> "Found " + filters.size() + " filters");
 
         // Sort the stream processor filters by priority.
@@ -505,9 +506,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // Also need to ensure each filter queue has no more than N in it.
         final ProcessorConfig processorConfig = processorConfigProvider.get();
         final int maxTasksToCreate = processorConfig.getQueueSize();
-        final int maxTasksPerFilterQueue = maxTasksToCreate;
         // If a queue is already half full then don't bother adding more
-        final int halfQueueSize = maxTasksPerFilterQueue / 2;
+        final int halfQueueSize = maxTasksToCreate / 2;
 
         final TaskCreationProgressTracker progressTracker = new TaskCreationProgressTracker(
                 maxTasksToCreate,
@@ -536,7 +536,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 }
             }
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
         }
 
         // Release items from the queue that no longer have an enabled filter
@@ -558,9 +558,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // We must be the master node so set a time in the future to run a
         // delete
         scheduleDelete();
-
-//        // Set the last stream details for the next call to this method.
-//        processorTaskManagerRecentStreamDetails = recentStreamInfo;
 
         // We may have async search tasks still being created so we need to wait for those
         // in case another node gets master status and tries to do task creation.
@@ -599,7 +596,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 // Set the current user to be the one who created the filter so that only streams that that user
                 // has access to are processed.
                 securityContext.asUser(securityContext.createIdentity(loadedFilter.getCreateUser()), () -> {
-                    LOGGER.debug("createTasksForFilter() - processorFilter {}", loadedFilter);
+                    LOGGER.debug(() -> "createTasksForFilter() - processorFilter " + loadedFilter);
 
                     // Only try and create tasks if the processor is enabled.
                     if (loadedFilter.isEnabled() && loadedFilter.getProcessor().isEnabled()) {
@@ -619,14 +616,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                     progressTracker);
                         }
 
-                        // If we allowing tasks to be created then go ahead and
-                        // create some.
+                        // If we are allowing tasks to be created then go ahead and create some.
                         if (processorConfig.isCreateTasks()) {
-
-                            final Boolean exhausted = exhaustedFilterMap.computeIfAbsent(
-                                    loadedFilter.getId(),
-                                    k -> Boolean.FALSE);
-
                             // Skip once we have done all that is required
                             // re-compute tasks to create after adding unowned tasks
                             final int requiredTasks = getTaskCountToCreate(queue, progressTracker);
@@ -643,13 +634,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                 // Get the tracker for this filter.
                                 ProcessorFilterTracker tracker = loadedFilter.getProcessorFilterTracker();
 
-                                // Here we do an optimisation and only bother
-                                // processing anything that we have had recent
-                                // stream data for if we were exhausted last time
-                                LOGGER.debug("createTasks() - Filter {} exhausted = {}",
-                                        loadedFilter.getId(),
-                                        exhausted);
-//                                if (!exhausted || recentStreamInfo.isApplicable(loadedFilter, findStreamCriteria)) {
+                                LOGGER.debug(() -> "createTasks() - Filter " + loadedFilter.getId());
                                 if (ProcessorFilterTracker.COMPLETE.equals(tracker.getStatus())) {
                                     // If the tracker is complete we need to
                                     // make sure the status is updated so we can
@@ -658,7 +643,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                     if (tracker.getLastPollTaskCount() != null && tracker.getLastPollTaskCount() > 0) {
                                         tracker.setLastPollMs(streamQueryTime);
                                         tracker.setLastPollTaskCount(0);
-                                        tracker = processorFilterTrackerDao.update(tracker);
+                                        processorFilterTrackerDao.update(tracker);
                                     }
 
                                 } else if (!isStreamStoreSearch) {
@@ -684,15 +669,11 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                             queue,
                                             tracker);
                                 }
-//                                }
                             }
                         } else {
-                            // We terminated early so assume this filter is not
-                            // exhausted
-                            LOGGER.debug(
-                                    "createTasks() - Filter {} no tasks needed at this time - assuming not exhausted",
-                                    loadedFilter.getId());
-                            exhaustedFilterMap.put(loadedFilter.getId(), Boolean.FALSE);
+                            LOGGER.debug(() -> "createTasks() - Filter " +
+                                    loadedFilter.getId() +
+                                    " no tasks needed at this time");
                         }
 
                         taskContext.info(() -> "Created " + progressTracker.getCreatedCount(loadedFilter)
@@ -723,8 +704,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     processorFilterTrackerDao.update(tracker);
                 });
             } catch (final RuntimeException e2) {
-                LOGGER.error(e.getMessage(), e);
-                LOGGER.error(e2.getMessage(), e2);
+                LOGGER.error(e::getMessage, e);
+                LOGGER.error(e::getMessage, e2);
             }
 
         } finally {
@@ -734,12 +715,11 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         }
     }
 
-    private int addUnownedTasks(final TaskContext taskContext,
-                                final String nodeName,
-                                final ProcessorFilter filter,
-                                final ProcessorTaskQueue queue,
-                                final TaskCreationProgressTracker progressTracker) {
-        int count = 0;
+    private void addUnownedTasks(final TaskContext taskContext,
+                                 final String nodeName,
+                                 final ProcessorFilter filter,
+                                 final ProcessorTaskQueue queue,
+                                 final TaskCreationProgressTracker progressTracker) {
         int tasksToCreate = getTaskCountToCreate(queue, progressTracker);
 
         try {
@@ -750,9 +730,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID, Condition.EQUALS, filter.getId())
                     .build();
             final ExpressionCriteria findProcessorTaskCriteria = new ExpressionCriteria(findProcessorTaskExpression);
-//            findProcessorTaskCriteria.obtainTaskStatusSet().add(TaskStatus.UNPROCESSED);
-//            findProcessorTaskCriteria.obtainNodeNameCriteria().setMatchNull(true);
-//            findProcessorTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());
             findProcessorTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
             final List<ProcessorTask> processorTasks = processorTaskDao.find(findProcessorTaskCriteria).getValues();
@@ -761,7 +738,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             taskStatusTraceLog.addUnownedTasks(ProcessorTaskManagerImpl.class, processorTasks);
 
             if (processorTasks.size() > 0) {
-                // Find unlocked meta data corresponding to this list of unowned tasks.
+                // Find unlocked meta corresponding to this list of unowned tasks.
                 final ExpressionOperator.Builder metaIdExpressionBuilder = ExpressionOperator.builder().op(Op.OR);
                 processorTasks.forEach(task -> metaIdExpressionBuilder.addTerm(MetaFields.ID,
                         Condition.EQUALS,
@@ -777,51 +754,49 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 final List<Meta> metaList = metaService.find(findMetaCriteria).getValues();
 
                 if (metaList.size() > 0) {
-                    // Change the ownership of tasks where we have unlocked meta data.
-                    final Map<Long, List<ProcessorTask>> metaIdToTaskMap = processorTasks.stream()
+                    // Add tasks to the queue for meta that is unlocked.
+                    Map<Long, List<ProcessorTask>> processorTaskByMetaId = processorTasks
+                            .stream()
                             .collect(Collectors.groupingBy(ProcessorTask::getMetaId));
-
-                    for (final Meta meta : metaList) {
-                        final List<ProcessorTask> processorTasksForStream = metaIdToTaskMap.get(meta.getId());
-
-                        for (final ProcessorTask processorTask : processorTasksForStream) {
-                            try {
-                                final ProcessorTask modified = processorTaskDao.changeTaskStatus(
-                                        processorTask,
-                                        nodeName,
-                                        TaskStatus.UNPROCESSED,
-                                        null,
-                                        null);
-
-                                if (modified != null) {
-                                    queue.add(modified);
-                                    count++;
-                                    final int finalCount = count;
-                                    taskContext.info(() -> LogUtil.message("Adding {}/{} non owned Tasks",
-                                            finalCount,
-                                            size));
-                                }
-
-                                if (Thread.currentThread().isInterrupted()) {
-                                    break;
-                                }
-                            } catch (final RuntimeException e) {
-                                LOGGER.error("doCreateTasks() - Failed to grab non owned task {}", processorTask, e);
-                            }
+                    final ExpressionOperator.Builder taskIdExpressionBuilder = ExpressionOperator.builder().op(Op.OR);
+                    metaList.forEach(meta -> {
+                        final List<ProcessorTask> processorTaskList = processorTaskByMetaId.get(meta.getId());
+                        if (processorTaskList != null) {
+                            processorTaskList.forEach(processorTask ->
+                                    taskIdExpressionBuilder.addTerm(ProcessorTaskFields.TASK_ID,
+                                            Condition.EQUALS,
+                                            processorTask.getId()));
                         }
+                    });
+                    final ExpressionCriteria updateProcessorTaskCriteria = new ExpressionCriteria(
+                            taskIdExpressionBuilder.build());
+                    updateProcessorTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
+
+                    // Modify matching processor tasks.
+                    final ResultPage<ProcessorTask> modifiedTasks = processorTaskDao.changeTaskStatus(
+                            updateProcessorTaskCriteria,
+                            nodeName,
+                            TaskStatus.UNPROCESSED,
+                            null,
+                            null);
+
+                    // Add modified tasks to the queue.
+                    if (modifiedTasks != null && modifiedTasks.size() > 0) {
+                        queue.addAll(modifiedTasks.getValues());
+
+                        taskContext.info(() -> LogUtil.message("Adding {}/{} non owned Tasks",
+                                modifiedTasks.size(),
+                                size));
+                        progressTracker.incrementTaskCreationCount(filter, modifiedTasks.size());
+                        LOGGER.debug(() -> "doCreateTasks() - Added " +
+                                modifiedTasks.size() +
+                                " tasks that are no longer locked");
                     }
                 }
             }
-
-            if (count > 0) {
-                progressTracker.incrementTaskCreationCount(filter, count);
-                LOGGER.debug("doCreateTasks() - Added {} tasks that are no longer locked", count);
-            }
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
         }
-
-        return count;
     }
 
     private void createTasksFromSearchQuery(final ProcessorFilter filter,
@@ -836,7 +811,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final EventRef minEvent = new EventRef(tracker.getMinMetaId(), tracker.getMinEventId());
         final EventRef maxEvent = new EventRef(Long.MAX_VALUE, 0L);
         long maxStreams = progressTracker.getTaskCountToCreate(filter);
-        LOGGER.debug("Creating search query tasks maxStreams: {}, filer: {}", maxStreams, filter);
+        LOGGER.debug(() -> "Creating search query tasks maxStreams: " +
+                progressTracker.getTaskCountToCreate(filter) +
+                ", filer: " +
+                filter);
         long maxEvents = 1000000;
         final long maxEventsPerStream = 1000;
 
@@ -902,17 +880,16 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final Consumer<EventRefs> eventRefsConsumer = contextConsumer(
                 taskContext,
                 "Creating event refs from search",
-                (taskContext2, eventRefs) -> {
-                    createTasksFromEventRefs(
-                            filter,
-                            streamQueryTime,
-                            nodeName,
-                            progressTracker,
-                            queue,
-                            maxMetaId,
-                            updatedTracker,
-                            eventRefs);
-                });
+                (taskContext2, eventRefs) ->
+                        createTasksFromEventRefs(
+                                filter,
+                                streamQueryTime,
+                                nodeName,
+                                progressTracker,
+                                queue,
+                                maxMetaId,
+                                updatedTracker,
+                                eventRefs));
 
         final CompletableFuture<EventRefs> future = eventSearch.search(
                 query,
@@ -924,7 +901,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 POLL_INTERVAL_MS,
                 eventRefsConsumer);
 
-        // record the future so we can wait for it later
+        // record the future so we can wait for it later.
         progressTracker.addFuture(future);
     }
 
@@ -954,11 +931,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             if (eventRefs == null) {
                 queue.setFilling(false);
             } else {
-                int resultSize;
-                boolean reachedLimit;
-                resultSize = eventRefs.size();
-                reachedLimit = eventRefs.isReachedLimit();
-                final boolean exhausted = resultSize == 0 || reachedLimit;
+                final boolean reachedLimit = eventRefs.isReachedLimit();
 
                 // Update the tracker status message.
                 ProcessorFilterTracker tracker = updatedTracker;
@@ -977,8 +950,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         maxMetaId,
                         reachedLimit,
                         createdTasks -> {
-                            // Transfer the newly created (and available) tasks to the
-                            // queue.
+                            // Transfer the newly created (and available) tasks to the queue.
                             final List<ProcessorTask> availableTaskList = createdTasks.getAvailableTaskList();
 
                             if (!availableTaskList.isEmpty()) {
@@ -986,17 +958,16 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                 progressTracker.incrementTaskCreationCount(filter, availableTaskList.size());
                             }
 
-                            LOGGER.debug("createTasks() - Created {} tasks for filter {}",
-                                    createdTasks.getTotalTasksCreated(),
+                            LOGGER.debug(() -> "createTasks() - Created " +
+                                    createdTasks.getTotalTasksCreated() +
+                                    " tasks for filter " +
                                     filter.toString());
-
-                            exhaustedFilterMap.put(filter.getId(), exhausted);
 
                             queue.setFilling(false);
                         });
             }
         } catch (Exception e) {
-            LOGGER.error("Error creating tasks for filter {}, {}", filter.getId(), e.getMessage(), e);
+            LOGGER.error(() -> "Error creating tasks for filter " + filter.getId() + ", " + e.getMessage(), e);
         }
     }
 
@@ -1012,51 +983,57 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         }
 
         final int requiredTasks = progressTracker.getTaskCountToCreate(filter);
-        LOGGER.debug("Creating tasks from criteria, requiredTasks: {}, filter: {}", requiredTasks, filter);
+        LOGGER.debug(() -> "Creating tasks from criteria, requiredTasks: " + requiredTasks + ", filter: " + filter);
 
         if (requiredTasks > 0) {
             // Update the tracker status message.
             tracker.setStatus("Creating...");
+            final ProcessorFilterTracker updatedTracker = Metrics.measure("update tracker",
+                    () -> processorFilterTrackerDao.update(tracker));
 
-            final ProcessorFilterTracker updatedTracker = processorFilterTrackerDao.update(tracker);
+            // This will contain locked and unlocked streams.
+            final Long maxMetaId = Metrics.measure("get max id", metaService::getMaxId);
 
-            // This will contain locked and unlocked streams
-            final Long maxMetaId = metaService.getMaxId();
-            final List<Meta> streamList = runSelectMetaQuery(
+            final List<Meta> streamList = Metrics.measure("runSelectMetaQuery", () -> runSelectMetaQuery(
                     queryData.getExpression(),
                     updatedTracker.getMinMetaId(),
                     filter.getMinMetaCreateTimeMs(),
                     filter.getMaxMetaCreateTimeMs(),
                     filter.getPipeline(),
                     filter.isReprocess(),
-                    requiredTasks);
+                    requiredTasks));
 
             // Just create regular stream processing tasks.
             final Map<Meta, InclusiveRanges> map = new HashMap<>();
-            for (final Meta meta : streamList) {
-                map.put(meta, null);
-            }
 
-            processorTaskDao.createNewTasks(
-                    filter,
-                    updatedTracker,
-                    streamQueryTime,
-                    map,
-                    nodeName,
-                    maxMetaId,
-                    false,
-                    createdTasks -> {
-                        // Transfer the newly created (and available) tasks to the queue.
-                        final List<ProcessorTask> availableTaskList = createdTasks.getAvailableTaskList();
-                        queue.addAll(availableTaskList);
-                        progressTracker.incrementTaskCreationCount(filter, availableTaskList.size());
+            Metrics.measure("map", () -> {
+                for (final Meta meta : streamList) {
+                    map.put(meta, null);
+                }
+            });
 
-                        LOGGER.debug("createTasks() - Created {} tasks (requiredTasks={}) for filter {}",
-                                createdTasks.getTotalTasksCreated(),
-                                requiredTasks,
-                                filter);
-                        exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
-                    });
+            Metrics.measure("createNewTasks", () ->
+                    processorTaskDao.createNewTasks(
+                            filter,
+                            updatedTracker,
+                            streamQueryTime,
+                            map,
+                            nodeName,
+                            maxMetaId,
+                            false,
+                            createdTasks -> {
+                                // Transfer the newly created (and available) tasks to the queue.
+                                final List<ProcessorTask> availableTaskList = createdTasks.getAvailableTaskList();
+                                queue.addAll(availableTaskList);
+                                progressTracker.incrementTaskCreationCount(filter, availableTaskList.size());
+
+                                LOGGER.debug(() -> "createTasks() - Created " +
+                                        createdTasks.getTotalTasksCreated() +
+                                        " tasks (requiredTasks=" +
+                                        requiredTasks +
+                                        ") for filter " +
+                                        filter);
+                            }));
         }
     }
 
@@ -1078,8 +1055,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             boolean trimmed = false;
             for (final EventRef ref : eventRefs) {
                 if (!trimmed) {
-                    // When the stream id changes add the current ranges to the
-                    // map.
+                    // When the stream id changes add the current ranges to the map.
                     if (currentMetaId != ref.getStreamId()) {
                         if (ranges != null) {
                             if (ranges.getRanges().size() > maxRangesPerStream) {
@@ -1097,7 +1073,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         ranges = new InclusiveRanges();
                     }
 
-                    ranges.addEvent(ref.getEventId());
+                    if (ranges != null) {
+                        ranges.addEvent(ref.getEventId());
+                    }
                 }
             }
 
@@ -1164,7 +1142,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
             return metaService.findReprocess(findMetaCriteria).getValues();
 
-
         } else {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
@@ -1202,7 +1179,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private void scheduleDelete() {
         if (nextDeleteMs.get() == 0) {
             nextDeleteMs.set(System.currentTimeMillis() + DELETE_INTERVAL_MS);
-            LOGGER.debug("scheduleDelete() - nextDeleteMs={}",
+            LOGGER.debug(() -> "scheduleDelete() - nextDeleteMs=" +
                     DateUtil.createNormalDateTimeString(nextDeleteMs.get()));
         }
     }
@@ -1211,8 +1188,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     public void writeQueueStatistics() {
         taskContext.info(() -> "Writing processor task queue statistics");
         try {
-            // Avoid writing loads of same value stats So write every min while
-            // it changes Under little load the queue size will be 0
+            // Avoid writing loads of same value stats So write every min while it changes Under little load the queue
+            // size will be 0
             final int queueSize = getTaskQueueSize();
             if (queueSize != lastQueueSizeForStats) {
                 try {
@@ -1227,12 +1204,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                 queueSize));
                     }
                 } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(e::getMessage, e);
                 }
                 lastQueueSizeForStats = queueSize;
             }
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
         }
     }
 

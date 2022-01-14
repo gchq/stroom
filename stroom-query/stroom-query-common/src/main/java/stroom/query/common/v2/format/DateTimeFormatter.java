@@ -27,7 +27,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
-import java.util.Date;
+import java.util.Locale;
 
 public class DateTimeFormatter implements Formatter {
 
@@ -78,7 +78,7 @@ public class DateTimeFormatter implements Formatter {
                 }
             }
 
-            format = java.time.format.DateTimeFormatter.ofPattern(pattern);
+            format = java.time.format.DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH);
         }
 
         return new DateTimeFormatter(format, zone);

@@ -1,34 +1,35 @@
 ext.moduleName = 'stroom.activity.impl.db'
 
 dependencies {
-    compile project(':stroom-activity:stroom-activity-api')
-    compile project(':stroom-activity:stroom-activity-impl')
-    compile project(':stroom-activity:stroom-activity-impl-db-jooq')
-    compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-db-util')
-    compile project(':stroom-util-shared')
-    
-//    compile libs.flyway_core
-    compile libs.guice5
-//    compile libs.hikari
-    compile libs.jackson_annotations
-    compile libs.jackson_databind
-    compile libs.javax_inject
-    compile libs.jooq
-    compile libs.slf4j_api
+    implementation project(':stroom-activity:stroom-activity-api')
+    implementation project(':stroom-activity:stroom-activity-impl')
+    implementation project(':stroom-activity:stroom-activity-impl-db-jooq')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.javax_inject
+    implementation libs.jooq
+    implementation libs.slf4j_api
 
     runtimeOnly libs.mysql_connector_java
 
-    testCompile project(':stroom-test-common')
-    testCompile project(':stroom-security:stroom-security-mock')
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-    testCompile libs.mockito_core
-    testCompile libs.mockito_junit_jupiter
-    
-    testRuntimeOnly libs.jaxb_runtime
-    testRuntimeOnly libs.javax_activation
+    testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-security:stroom-security-api')
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
+
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_impl
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine

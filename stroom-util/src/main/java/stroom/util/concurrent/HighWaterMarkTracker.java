@@ -2,14 +2,12 @@ package stroom.util.concurrent;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Used for tracking the high water mark of concurrent operations.
  * Threads should call increment before doing some concurrent operation
  * then decrement when they have finished.
  */
-@ThreadSafe
 public class HighWaterMarkTracker {
 
     private final AtomicInteger concurrentCount = new AtomicInteger();

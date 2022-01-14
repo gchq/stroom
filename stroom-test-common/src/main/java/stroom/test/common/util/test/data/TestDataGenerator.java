@@ -17,6 +17,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -249,7 +250,7 @@ public class TestDataGenerator {
             Preconditions.checkNotNull(startDateInc);
             Preconditions.checkNotNull(endDateExc);
             Preconditions.checkNotNull(formatStr);
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr);
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr, Locale.ENGLISH);
             return randomDateTimeField(name, startDateInc, endDateExc, dateTimeFormatter);
         } catch (final RuntimeException e) {
             throw new RuntimeException(String.format("Error building randomDateTimeField, %s, %s",
@@ -302,7 +303,7 @@ public class TestDataGenerator {
                                                 final Duration delta,
                                                 final String formatStr) {
         try {
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr);
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(formatStr, Locale.ENGLISH);
             return sequentialDateTimeField(name, startDateInc, delta, dateTimeFormatter);
         } catch (final RuntimeException e) {
             e.printStackTrace();

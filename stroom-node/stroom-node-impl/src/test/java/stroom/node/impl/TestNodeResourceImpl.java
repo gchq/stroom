@@ -345,7 +345,6 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
                 () -> nodeService,
                 () -> nodeInfo,
                 () -> clusterNodeManager,
-                AbstractMultiNodeResourceTest::webTargetFactory,
                 () -> documentEventLog);
     }
 

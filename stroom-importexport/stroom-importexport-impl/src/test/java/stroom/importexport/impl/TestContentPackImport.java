@@ -131,7 +131,7 @@ class TestContentPackImport {
 
         contentPackImport.startup();
 
-        Mockito.verifyZeroInteractions(importExportService);
+        Mockito.verifyNoInteractions(importExportService);
         assertThat(Files.exists(testPack1)).isTrue();
     }
 
@@ -141,7 +141,7 @@ class TestContentPackImport {
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
         ContentPackImport contentPackImport = getContentPackImport();
         contentPackImport.startup();
-        Mockito.verifyZeroInteractions(importExportService);
+        Mockito.verifyNoInteractions(importExportService);
     }
 
     @Test
@@ -153,7 +153,7 @@ class TestContentPackImport {
 
         ContentPackImport contentPackImport = getContentPackImport();
         contentPackImport.startup();
-        Mockito.verifyZeroInteractions(importExportService);
+        Mockito.verifyNoInteractions(importExportService);
     }
 
     @Test
@@ -166,7 +166,7 @@ class TestContentPackImport {
 
         ContentPackImport contentPackImport = getContentPackImport();
         contentPackImport.startup();
-        Mockito.verifyZeroInteractions(importExportService);
+        Mockito.verifyNoInteractions(importExportService);
     }
 
     @Test

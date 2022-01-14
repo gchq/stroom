@@ -1,17 +1,18 @@
 ext.moduleName = 'stroom.core.client.widget'
 
 dependencies {
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-util-shared')
 
-    compile project(':stroom-docref')
-    compile libs.gin
-    compile libs.guice3
-    compile libs.gwt_user
-    compile(libs.gwtp_mvp_client) {
+    implementation libs.gin
+    implementation libs.guice3
+    implementation libs.gwt_user
+    implementation(libs.gwtp_mvp_client) {
         exclude(module: 'persistence-api')
         exclude(module: 'gwtp-crawler-service')
     }
-    compile libs.javax_inject
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
 
 
 
@@ -19,16 +20,16 @@ dependencies {
 
 
 
-    testCompile libs.assertj_core
-//    testCompile libs.dropwizard_testing
-    testCompile libs.junit_jupiter_api
-//    testCompile libs.mockito_core
-//    testCompile libs.mockito_junit_jupiter
+    testImplementation libs.assertj_core
+//    testImplementation libs.dropwizard_testing
+    testImplementation libs.junit_jupiter_api
+//    testImplementation libs.mockito_core
+//    testImplementation libs.mockito_junit_jupiter
 
 
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.javax_activation
-    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_impl
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine

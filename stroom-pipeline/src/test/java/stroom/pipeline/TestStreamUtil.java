@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.service.resource;
+package stroom.pipeline;
 
 
 import stroom.pipeline.reader.BOMRemovalInputStream;

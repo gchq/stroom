@@ -9,8 +9,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.annotation.Nonnull;
 import javax.inject.Singleton;
+import javax.validation.constraints.NotNull;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
@@ -42,7 +42,7 @@ public class ProxyPathConfig extends PathConfig implements IsProxyConfig {
      * Will be created on boot in App
      */
     @Override
-    @Nonnull
+    @NotNull
     @ReadOnly
     @JsonPropertyDescription("This directory is used by stroom-proxy to write any temporary file to. " +
             "Should only be set per node in application YAML configuration file.")

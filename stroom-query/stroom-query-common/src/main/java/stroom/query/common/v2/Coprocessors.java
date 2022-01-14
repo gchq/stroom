@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 public class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
 
@@ -140,7 +140,7 @@ public class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public Iterator<Coprocessor> iterator() {
         return coprocessorMap.values().iterator();
     }

@@ -331,13 +331,4 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         // Ensure the node record for this node is in the DB
         securityContext.asProcessingUser(this::ensureNodeCreated);
     }
-
-    int setJobsEnabledForNode(final String nodeName,
-                              final boolean enabled,
-                              final Set<String> includeJobs,
-                              final Set<String> excludeJobs) {
-        return securityContext.secureResult(
-                PermissionNames.MANAGE_JOBS_PERMISSION,
-                () -> nodeDao.setJobsEnabled(nodeName, enabled, includeJobs, excludeJobs));
-    }
 }

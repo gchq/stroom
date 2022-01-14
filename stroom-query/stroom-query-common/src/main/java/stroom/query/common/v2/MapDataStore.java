@@ -44,7 +44,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 public class MapDataStore implements DataStore, Data {
 
@@ -289,7 +289,7 @@ public class MapDataStore implements DataStore, Data {
                 }
 
                 @Override
-                @Nonnull
+                @NotNull
                 public Iterator<Item> iterator() {
                     return Collections.emptyIterator();
                 }
@@ -474,7 +474,7 @@ public class MapDataStore implements DataStore, Data {
         }
 
         @Override
-        @Nonnull
+        @NotNull
         public Iterator<Item> iterator() {
             return copy().iterator();
         }

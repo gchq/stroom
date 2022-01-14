@@ -2568,6 +2568,34 @@ paths:
       summary: Lists jobs
       tags:
       - Jobs
+  /job/v1/setJobsEnabled/{nodeName}:
+    put:
+      operationId: setNodeJobsEnabled
+      parameters:
+      - in: path
+        name: nodeName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NodeSetJobsEnabledRequest'
+        description: Request parameters
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeSetJobsEnabledResponse'
+          description: default response
+      summary: Sets the enabled state of jobs for the selected node. If both `includeJobs`
+        and `excludeJobs` are unspecified or empty, this action will apply to ALL
+        jobs.
+      tags:
+      - Jobs
   /job/v1/{id}/enabled:
     put:
       operationId: setJobEnabled
@@ -3004,34 +3032,6 @@ paths:
                 type: boolean
           description: default response
       summary: Sets the priority of a node
-      tags:
-      - Nodes
-  /node/v1/setJobsEnabled/{nodeName}:
-    put:
-      operationId: setNodeJobsEnabled
-      parameters:
-      - in: path
-        name: nodeName
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NodeSetJobsEnabledRequest'
-        description: Request parameters
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NodeSetJobsEnabledResponse'
-          description: default response
-      summary: Sets the enabled state of jobs for the selected node. If both `includeJobs`
-        and `excludeJobs` are unspecified or empty, this action will apply to ALL
-        jobs.
       tags:
       - Nodes
   /oauth2/v1/noauth/.well-known/openid-configuration:
@@ -5957,7 +5957,7 @@ components:
           - ERROR
           - INTEGER
           - LONG
-          - NULL
+          - "NULL"
           - NUMBER
           - STRING
         defaultValue:
@@ -6056,7 +6056,7 @@ components:
         cascade:
           type: string
           enum:
-          - NO
+          - "NO"
           - CHANGES_ONLY
           - ALL
         changes:
@@ -7954,7 +7954,7 @@ components:
           - ERROR
           - INTEGER
           - LONG
-          - NULL
+          - "NULL"
           - NUMBER
           - STRING
     GetFeedStatusRequest:

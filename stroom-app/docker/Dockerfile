@@ -21,10 +21,9 @@
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.
-# Using 'openjdk' on apline is not fully supported so using AdoptOpenJdk
-# to ensure we have a known jdk version
+# Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine as stroom-base-stage
+FROM eclipse-temurin:17.0.1_12-jdk-alpine as stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck

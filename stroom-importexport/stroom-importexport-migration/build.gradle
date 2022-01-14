@@ -1,25 +1,25 @@
 ext.moduleName = 'stroom.importexport.migration'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-util')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 
 //
-    compile project(':stroom-docref')
-//    //compile libs.eventLogging
-////    compile libs.flyway_core
-//    //compile libs.guice5
-//    //compile libs.javax_inject
+    implementation project(':stroom-docref')
+//    //implementation libs.eventLogging
+////    implementation libs.flyway_core
+//    //implementation libs.guice5
+//    //implementation libs.javax_inject
 //
-    compile libs.jaxb_api
+    implementation libs.jaxb_api
 //
-    compile libs.slf4j_api
-//    testCompile libs.junit_jupiter_api
+    implementation libs.slf4j_api
+//    testImplementation libs.junit_jupiter_api
 //
 //    testRuntimeOnly libs.mysql_connector_java
-//    testRuntimeOnly libs.jaxb_runtime
-//    testRuntimeOnly libs.javax_activation
+//    testRuntimeOnly libs.jaxb_impl
+//    testRuntimeOnly libs.jakarta_activation
 //    testRuntimeOnly libs.junit_jupiter_engine
 }

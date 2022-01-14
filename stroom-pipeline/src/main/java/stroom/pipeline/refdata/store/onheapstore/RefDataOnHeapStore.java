@@ -34,7 +34,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A heap based implementation of the {@link RefDataStore}
@@ -44,7 +43,6 @@ import javax.annotation.concurrent.NotThreadSafe;
  * It also does not support purge operations as it is expected that the store will be created,
  * populated, used, then destroyed when no longer needed.
  */
-@NotThreadSafe
 public class RefDataOnHeapStore extends AbstractRefDataStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOnHeapStore.class);

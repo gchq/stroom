@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.pipeline.util;
 
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;

@@ -28,7 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.zip.GZIPInputStream;
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 /**
  * Class used to check a Block GZIP file.
@@ -235,12 +235,12 @@ class BlockGZIPFileVerifier {
         }
 
         @Override
-        public int read(@Nonnull final byte[] b) throws IOException {
+        public int read(@NotNull final byte[] b) throws IOException {
             return getRaFile().read(b);
         }
 
         @Override
-        public int read(@Nonnull final byte[] b, final int off, final int len) throws IOException {
+        public int read(@NotNull final byte[] b, final int off, final int len) throws IOException {
             return getRaFile().read(b, off, len);
         }
     }

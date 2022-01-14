@@ -1,39 +1,47 @@
 ext.moduleName = 'stroom.node.impl'
 
 dependencies {
-    compile project(':stroom-cluster:stroom-cluster-api')
-    compile project(':stroom-cluster:stroom-cluster-task-api')
-    compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-db-util')
-    compile project(':stroom-job:stroom-job-api')
-    compile project(':stroom-node:stroom-node-api')
-    compile project(':stroom-pipeline')
-    compile project(':stroom-proxy:stroom-proxy-remote-api')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-statistics:stroom-statistics-api')
-    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-cluster:stroom-cluster-api')
+    implementation project(':stroom-cluster:stroom-cluster-task-api')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-proxy:stroom-proxy-remote-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-statistics:stroom-statistics-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.eventLogging
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.jakarta_servlet_api
+    implementation libs.jakarta_validation_api
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.restygwt
+    implementation libs.slf4j_api
+    implementation libs.ws_rs_api
     
-    compile libs.guice5
-    compile libs.jackson_annotations
-    compile libs.jackson_databind
-    compile libs.javax_inject
-    compile libs.javax_servlet_api
-    compile libs.slf4j_api
-    compile project(':stroom-docref')
-    compile libs.validation_api
-    
-    testCompile project(':stroom-test-common')
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-    testCompile libs.mockito_core
-    testCompile libs.mockito_junit_jupiter
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.assertj_core
+    testImplementation libs.jersey_server
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
     
     // the following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jaxb_runtime
-    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_impl
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine

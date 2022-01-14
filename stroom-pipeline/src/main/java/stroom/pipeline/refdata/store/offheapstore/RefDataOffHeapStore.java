@@ -64,7 +64,6 @@ import stroom.util.time.TimeUtils;
 import com.google.common.util.concurrent.Striped;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.jetbrains.annotations.NotNull;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
@@ -101,6 +100,7 @@ import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import javax.validation.constraints.NotNull;
 
 /**
  * An Off Heap implementation of {@link RefDataStore} using LMDB.
@@ -903,7 +903,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 if (optMapUid.isPresent()) {
                     final UID mapUid = optMapUid.get();
                     final MapDefinition mapDefinition = mapDefinitionUIDStore.get(
-                            batchingWriteTxn.getTxn(), mapUid)
+                                    batchingWriteTxn.getTxn(), mapUid)
                             .orElseThrow(() ->
                                     new RuntimeException(LogUtil.message(
                                             "We should be a mapDefinition if we have a UID, uid: {}",
@@ -1260,7 +1260,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 mapDefinition,
                 mapDefinition2 ->
                         processingInfoDb.get(readTxn,
-                                mapDefinition.getRefStreamDefinition())
+                                        mapDefinition.getRefStreamDefinition())
                                 .orElse(null));
 
         final String value = getReferenceDataValue(readTxn, key, valueStoreKey);

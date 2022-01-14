@@ -1,28 +1,27 @@
 ext.moduleName = 'stroom.searchable.impl'
 
 dependencies {
-    compile project(':stroom-cache:stroom-cache-api')
-    compile project(':stroom-core-shared')
-//    compile project(':stroom-dictionary:stroom-dictionary-api')
-    compile project(':stroom-docref')
-    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-//    compile project(':stroom-explorer:stroom-collection-api')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-query:stroom-expression')
-    compile project(':stroom-query:stroom-query-api')
-    compile project(':stroom-query:stroom-query-common')
-    compile project(':stroom-search:stroom-searchable-api')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-util')
+    implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-search:stroom-searchable-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 
-    compile libs.dropwizard_metrics_annotation
-    compile libs.guava
-//    compile libs.guice5
-    compile libs.jackson_annotations
-    compile libs.javax_inject
-    compile libs.slf4j_api
-    compile libs.swagger_annotations
-    compile libs.ws_rs_api
+    implementation libs.dropwizard_metrics_annotation
+    implementation libs.guava
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.slf4j_api
+    implementation libs.swagger_annotations
+    implementation libs.ws_rs_api
 }

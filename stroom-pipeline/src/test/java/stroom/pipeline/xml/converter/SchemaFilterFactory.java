@@ -17,7 +17,6 @@
 
 package stroom.pipeline.xml.converter;
 
-import stroom.cache.MockSchemaPool;
 import stroom.content.ContentPack;
 import stroom.content.ContentPacks;
 import stroom.docref.DocRef;
@@ -26,6 +25,7 @@ import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.memory.MemoryPersistence;
 import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.cache.MockSchemaPool;
 import stroom.pipeline.cache.SchemaLoaderImpl;
 import stroom.pipeline.cache.SchemaPool;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;

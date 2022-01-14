@@ -4,40 +4,40 @@ import java.time.format.DateTimeFormatter
 ext.moduleName = 'stroom.util'
 
 dependencies {
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-util-shared')
 
-    compile project(':stroom-docref')
+    implementation libs.assertj_core // needed for DiffUtil
+    implementation libs.commons_codec
+    implementation libs.dropwizard_core
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.dropwizard_validation
+    implementation libs.guava
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.jackson_dataformat_yaml
+    implementation libs.jakarta_servlet_api
+    implementation libs.jakarta_validation_api
+    implementation libs.javassist
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.saxon_he
+    implementation libs.slf4j_api
+    implementation libs.ws_rs_api
 
-    compile libs.assertj_core // needed for DiffUtil
-    compile libs.commons_codec
-    compile libs.dropwizard_metrics_healthchecks
-    compile libs.guava
-    compile libs.guice5
-    compile libs.jackson_annotations
-    compile libs.jackson_core
-    compile libs.jackson_databind
-    compile libs.jackson_dataformat_yaml
-    compile libs.javassist
-    compile libs.javax_inject
-    compile libs.javax_servlet_api
-    compile libs.jaxb_api
-    compile libs.saxon_he
-    compile libs.slf4j_api
-//    compile libs.vavr
-    compile libs.validation_api
-    compile libs.ws_rs_api
-
-    testCompile project(':stroom-test-common')
-    testCompile libs.assertj_core
-    testCompile libs.classgraph
-    testCompile libs.commons_lang
-    testCompile libs.guice_extension
-    testCompile libs.junit_jupiter_api
-    testCompile libs.dropwizard_validation
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.assertj_core
+    testImplementation libs.classgraph
+    testImplementation libs.commons_lang
+    testImplementation libs.guice_extension
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.dropwizard_validation
 
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jaxb_runtime
-    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_impl
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine

@@ -9,6 +9,7 @@ server:
       trustStorePassword: "password"
       trustStoreType: JKS
       certAlias: server
+      useForwardedHeaders: true
       validateCerts: false
       validatePeers: false
   adminConnectors:

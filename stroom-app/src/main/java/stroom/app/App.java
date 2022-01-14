@@ -54,6 +54,7 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.validation.ValidationModule;
 import stroom.util.yaml.YamlUtil;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -66,7 +67,6 @@ import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -83,6 +83,7 @@ import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
 import javax.sql.DataSource;
 import javax.validation.ValidatorFactory;
+import javax.validation.constraints.NotNull;
 
 public class App extends Application<Config> {
 
@@ -147,6 +148,9 @@ public class App extends Application<Config> {
 
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
+        // Dropwizard 2.x no longer fails on unknown properties by default but we want it to.
+        bootstrap.getObjectMapper().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
         // This allows us to use env var templating and relative (to stroom home) paths in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(StroomYamlUtil.createConfigurationSourceProvider(
                 bootstrap.getConfigurationSourceProvider(), true));

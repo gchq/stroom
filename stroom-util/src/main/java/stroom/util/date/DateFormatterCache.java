@@ -22,7 +22,8 @@ public final class DateFormatterCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(DateFormatterCache.class);
 
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
-    private static final DateTimeFormatter DEFAULT_FORMATTER = DateTimeFormatter.ofPattern(DEFAULT_PATTERN);
+    private static final DateTimeFormatter DEFAULT_FORMATTER =
+            DateTimeFormatter.ofPattern(DEFAULT_PATTERN, Locale.ENGLISH);
     private static final String GMT_BST_GUESS = "GMT/BST";
     private static final ZoneId EUROPE_LONDON_TIME_ZONE = ZoneId.of("Europe/London");
 
@@ -80,7 +81,7 @@ public final class DateFormatterCache {
                 LOGGER.debug("Compiling formatter: " + k);
             }
             try {
-                return new CachedFormatterValue(DateTimeFormatter.ofPattern(k.pattern));
+                return new CachedFormatterValue(DateTimeFormatter.ofPattern(k.pattern, Locale.ENGLISH));
             } catch (final RuntimeException e) {
                 return new CachedFormatterValue(e);
             }

@@ -16,8 +16,9 @@
 
 # This is our java build image for building stroom
 # It also contains plantuml for plant uml image generation
-
-FROM adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine
+# Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
+# See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
+FROM eclipse-temurin:17.0.1_12-jdk-alpine
 
 # Work from the shared git repo dir
 WORKDIR /builder/shared

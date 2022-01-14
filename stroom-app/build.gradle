@@ -1,7 +1,7 @@
 buildscript {
     repositories {
         mavenLocal()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath libs.mysql_connector_java
@@ -64,176 +64,238 @@ apply plugin: "java"
 mainClassName = 'stroom.app.App'
 
 dependencies {
-    compile project(':stroom-activity:stroom-activity-impl-db')
-    compile project(':stroom-alert:stroom-alert-impl')
-    compile project(':stroom-annotation:stroom-annotation-impl-db')
-    compile project(':stroom-annotation:stroom-annotation-pipeline')
-    compile project(':stroom-cache:stroom-cache-impl')
-    compile project(':stroom-cluster:stroom-cluster-impl')
-    compile project(':stroom-cluster:stroom-cluster-lock-impl-db')
-    compile project(':stroom-cluster:stroom-cluster-task-impl')
-    compile project(':stroom-config:stroom-config-app')
-    compile project(':stroom-config:stroom-config-global-impl')
-    compile project(':stroom-config:stroom-config-global-impl-db')
-    compile project(':stroom-core')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-dashboard:stroom-dashboard-impl')
-    compile project(':stroom-dashboard:stroom-storedquery-impl-db')
-    compile project(':stroom-data:stroom-data-retention-impl')
-    compile project(':stroom-data:stroom-data-store-impl')
-    compile project(':stroom-data:stroom-data-store-impl-fs')
-    compile project(':stroom-data:stroom-data-store-impl-fs-db')
-    compile project(':stroom-data:stroom-data-zip')
-    compile project(':stroom-db-util')
-    compile project(':stroom-dictionary:stroom-dictionary-impl')
-    compile project(':stroom-dictionary:stroom-dictionary-mock')
-    compile project(':stroom-docstore:stroom-docstore-impl')
-    compile project(':stroom-docstore:stroom-docstore-impl-db')
-    compile project(':stroom-dropwizard-common')
-    compile project(':stroom-event-logging:stroom-event-logging-impl')
-    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-impl')
-    compile project(':stroom-explorer:stroom-explorer-impl')
-    compile project(':stroom-feed:stroom-feed-impl')
-    compile project(':stroom-importexport:stroom-importexport-impl')
-    compile project(':stroom-index:stroom-index-impl')
-    compile project(':stroom-index:stroom-index-impl-db')
-    compile project(':stroom-job:stroom-job-impl')
-    compile project(':stroom-job:stroom-job-impl-db')
-    compile project(':stroom-kafka:stroom-kafka-api')
-    compile project(':stroom-kafka:stroom-kafka-impl')
-    compile project(':stroom-legacy:stroom-legacy-db-migration')
-    compile project(':stroom-lifecycle:stroom-lifecycle-impl')
-    compile project(':stroom-meta:stroom-meta-impl-db')
-    compile project(':stroom-meta:stroom-meta-statistics-impl')
-    compile project(':stroom-node:stroom-node-impl-db')
-    compile project(':stroom-pipeline')
-    compile project(':stroom-processor:stroom-processor-impl-db')
-    compile project(':stroom-proxy:stroom-proxy-repo')
-    compile project(':stroom-proxy:stroom-proxy-repo-db-jooq')
-    compile project(':stroom-query:stroom-query-api')
-    compile project(':stroom-query:stroom-query-common')
-    compile project(':stroom-receive:stroom-receive-common')
-    compile project(':stroom-receive:stroom-receive-rules-impl')
-    compile project(':stroom-resource:stroom-resource-impl')
-    compile project(':stroom-search:stroom-search-extraction')
-    compile project(':stroom-search:stroom-search-elastic')
-    compile project(':stroom-search:stroom-search-solr')
-    compile project(':stroom-search:stroom-searchable-impl')
-    compile project(':stroom-security:stroom-security-identity')
-    compile project(':stroom-security:stroom-security-identity-db')
-    compile project(':stroom-security:stroom-security-impl-db')
-    compile project(':stroom-servicediscovery:stroom-servicediscovery-impl')
-    compile project(':stroom-statistics:stroom-statistics-impl')
-    compile project(':stroom-statistics:stroom-statistics-impl-hbase')
-    compile project(':stroom-statistics:stroom-statistics-impl-sql')
-    compile project(':stroom-task:stroom-task-impl')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-activity:stroom-activity-api')
+    implementation project(':stroom-activity:stroom-activity-impl')
+    implementation project(':stroom-activity:stroom-activity-impl-db')
+    implementation project(':stroom-activity:stroom-activity-impl-db-jooq')
+    implementation project(':stroom-alert:stroom-alert-impl')
+    implementation project(':stroom-annotation:stroom-annotation-api')
+    implementation project(':stroom-annotation:stroom-annotation-impl')
+    implementation project(':stroom-annotation:stroom-annotation-impl-db')
+    implementation project(':stroom-annotation:stroom-annotation-impl-db-jooq')
+    implementation project(':stroom-annotation:stroom-annotation-pipeline')
+    implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cache:stroom-cache-impl')
+    implementation project(':stroom-cluster:stroom-cluster-api')
+    implementation project(':stroom-cluster:stroom-cluster-impl')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-cluster:stroom-cluster-lock-impl-db')
+    implementation project(':stroom-cluster:stroom-cluster-lock-impl-db-jooq')
+    implementation project(':stroom-cluster:stroom-cluster-task-api')
+    implementation project(':stroom-cluster:stroom-cluster-task-impl')
+    implementation project(':stroom-config:stroom-config-app')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-config:stroom-config-global-impl')
+    implementation project(':stroom-config:stroom-config-global-impl-db')
+    implementation project(':stroom-config:stroom-config-global-impl-db-jooq')
+    implementation project(':stroom-core')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-dashboard:stroom-dashboard-impl')
+    implementation project(':stroom-dashboard:stroom-storedquery-api')
+    implementation project(':stroom-dashboard:stroom-storedquery-impl')
+    implementation project(':stroom-dashboard:stroom-storedquery-impl-db')
+    implementation project(':stroom-dashboard:stroom-storedquery-impl-db-jooq')
+    implementation project(':stroom-data:stroom-data-retention-api')
+    implementation project(':stroom-data:stroom-data-retention-impl')
+    implementation project(':stroom-data:stroom-data-store-api')
+    implementation project(':stroom-data:stroom-data-store-impl')
+    implementation project(':stroom-data:stroom-data-store-impl-fs')
+    implementation project(':stroom-data:stroom-data-store-impl-fs-db')
+    implementation project(':stroom-data:stroom-data-store-impl-fs-db-jooq')
+    implementation project(':stroom-data:stroom-data-store-util')
+    implementation project(':stroom-data:stroom-data-zip')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-dictionary:stroom-dictionary-impl')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-impl-db')
+    implementation project(':stroom-docstore:stroom-docstore-impl-fs')
+    implementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    implementation project(':stroom-dropwizard-common')
+//    implementation project(':stroom-elastic:stroom-elastic-impl')
+//    implementation project(':stroom-elastic:stroom-elastic-impl-http')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-impl')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-impl')
+    implementation project(':stroom-explorer:stroom-collection-api')
+    implementation project(':stroom-explorer:stroom-docrefinfo-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-explorer:stroom-explorer-impl')
+    implementation project(':stroom-explorer:stroom-explorer-impl-db')
+    implementation project(':stroom-explorer:stroom-explorer-impl-db-jooq')
+    implementation project(':stroom-feed:stroom-feed-api')
+    implementation project(':stroom-feed:stroom-feed-impl')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-importexport:stroom-importexport-impl')
+    implementation project(':stroom-index:stroom-index-impl')
+    implementation project(':stroom-index:stroom-index-impl-db')
+    implementation project(':stroom-index:stroom-index-impl-db-jooq')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-job:stroom-job-impl')
+    implementation project(':stroom-job:stroom-job-impl-db')
+    implementation project(':stroom-job:stroom-job-impl-db-jooq')
+    implementation project(':stroom-kafka:stroom-kafka-api')
+    implementation project(':stroom-kafka:stroom-kafka-impl')
+    implementation project(':stroom-legacy:stroom-legacy-db-migration')
+    implementation project(':stroom-legacy:stroom-legacy-impex_6_1')
+    implementation project(':stroom-legacy:stroom-legacy-model_6_1')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
+    implementation project(':stroom-lmdb')
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-meta:stroom-meta-impl')
+    implementation project(':stroom-meta:stroom-meta-impl-db')
+    implementation project(':stroom-meta:stroom-meta-impl-db-jooq')
+    implementation project(':stroom-meta:stroom-meta-statistics-api')
+    implementation project(':stroom-meta:stroom-meta-statistics-impl')
+    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-node:stroom-node-impl')
+    implementation project(':stroom-node:stroom-node-impl-db')
+    implementation project(':stroom-node:stroom-node-impl-db-jooq')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-processor:stroom-processor-api')
+    implementation project(':stroom-processor:stroom-processor-impl')
+    implementation project(':stroom-processor:stroom-processor-impl-db')
+    implementation project(':stroom-processor:stroom-processor-impl-db-jooq')
+    implementation project(':stroom-proxy:stroom-proxy-repo')
+    implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-receive:stroom-receive-common')
+    implementation project(':stroom-receive:stroom-receive-rules-impl')
+    implementation project(':stroom-resource:stroom-resource-api')
+    implementation project(':stroom-resource:stroom-resource-impl')
+    implementation project(':stroom-search:stroom-expression-matcher')
+    implementation project(':stroom-search:stroom-search-elastic')
+    implementation project(':stroom-search:stroom-search-extraction')
+    implementation project(':stroom-search:stroom-search-impl')
+    implementation project(':stroom-search:stroom-search-solr')
+    implementation project(':stroom-search:stroom-searchable-api')
+    implementation project(':stroom-search:stroom-searchable-impl')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-identity')
+    implementation project(':stroom-security:stroom-security-identity-db')
+    implementation project(':stroom-security:stroom-security-identity-db-jooq')
+    implementation project(':stroom-security:stroom-security-impl')
+    implementation project(':stroom-security:stroom-security-impl-db')
+    implementation project(':stroom-security:stroom-security-impl-db-jooq')
+    implementation project(':stroom-security:stroom-security-openid-api')
+    implementation project(':stroom-servicediscovery:stroom-servicediscovery-api')
+    implementation project(':stroom-servicediscovery:stroom-servicediscovery-impl')
+    implementation project(':stroom-statistics:stroom-statistics-api')
+    implementation project(':stroom-statistics:stroom-statistics-impl')
+    implementation project(':stroom-statistics:stroom-statistics-impl-hbase')
+    implementation project(':stroom-statistics:stroom-statistics-impl-sql')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-impl')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.dropwizard_client
-    compile(libs.dropwizard_assets) {
-        exclude(group: "org.glassfish.web", module: "javax.el")
-    }
-    compile(libs.dropwizard_core) {
-        exclude(group: "org.glassfish.web", module: "javax.el")
-    }
-    compile libs.dropwizard_configuration
-    compile libs.dropwizard_jersey
-    compile libs.dropwizard_jetty
-    compile libs.dropwizard_lifecycle
-    compile libs.dropwizard_metrics_annotation
-    compile libs.dropwizard_metrics_core
-    compile libs.dropwizard_metrics_healthchecks
-    compile libs.dropwizard_servlets
-    compile libs.dropwizard_validation
-    compile libs.flyway_core
-    compile libs.guava
-    compile libs.guice5
-    compile libs.javax_inject
-    compile libs.javax_servlet_api
-    compile libs.jaxb_api
-    compile libs.jcommander
-    compile libs.jersey_common
-    compile libs.jetty_server
-    compile libs.jetty_servlet
-    compile libs.jetty_servlets
-    compile libs.logback_classic
-    compile libs.slf4j_api
-    compile project(':stroom-docref')
-    compile libs.validation_api
-    compile libs.ws_rs_api
+    implementation libs.dropwizard_assets
+    implementation libs.dropwizard_client
+    implementation libs.dropwizard_configuration
+    implementation libs.dropwizard_core
+    implementation libs.dropwizard_jersey
+    implementation libs.dropwizard_jetty
+    implementation libs.dropwizard_lifecycle
+    implementation libs.dropwizard_metrics_annotation
+    implementation libs.dropwizard_metrics_core
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.dropwizard_servlets
+    implementation libs.dropwizard_validation
+    implementation libs.eventLogging
+    implementation libs.flyway_core
+    implementation libs.guava
+    implementation libs.guice5
+    implementation libs.jakarta_servlet_api
+    implementation libs.jakarta_validation_api
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.jcommander
+    implementation libs.jersey_common
+    implementation libs.jetty_server
+    implementation libs.jetty_servlet
+    implementation libs.jetty_servlets
+    implementation libs.jooq
+    implementation libs.jose4j
+    implementation libs.logback_classic
+    implementation libs.restygwt
+    implementation libs.slf4j_api
+    implementation project(':stroom-docref')
+    implementation libs.ws_rs_api
 
-    runtimeOnly libs.javax_el
-    runtimeOnly libs.javax_el_api
+    runtimeOnly libs.jakarta_el
 
-    testCompile project(':stroom-app')
     // Use default DB config.
+    testImplementation project(':stroom-activity:stroom-activity-api')
+    testImplementation project(':stroom-activity:stroom-activity-mock')
+    testImplementation project(':stroom-alert:stroom-alert-mock')
+    testImplementation project(':stroom-config:stroom-config-app')
+    testImplementation project(':stroom-config:stroom-config-global-impl')
+    testImplementation project(':stroom-core')
+    testImplementation project(':stroom-core-shared')
+    testImplementation project(':stroom-dashboard:stroom-dashboard-impl')
+    testImplementation project(':stroom-data:stroom-data-store-api')
+    testImplementation project(':stroom-data:stroom-data-store-impl-fs')
+    testImplementation project(':stroom-data:stroom-data-store-mock')
+    testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
+    testImplementation project(':stroom-docstore:stroom-docstore-api')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-event-logging:stroom-event-logging-api')
+    testImplementation project(':stroom-event-logging:stroom-event-logging-impl')
+    testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
+    testImplementation project(':stroom-explorer:stroom-collection-mock')
+    testImplementation project(':stroom-explorer:stroom-explorer-api')
+    testImplementation project(':stroom-explorer:stroom-explorer-impl')
+    testImplementation project(':stroom-explorer:stroom-explorer-impl-db')
+    testImplementation project(':stroom-headless')
+    testImplementation project(':stroom-importexport:stroom-importexport-api')
+    testImplementation project(':stroom-index:stroom-index-impl')
+    testImplementation project(':stroom-index:stroom-index-mock')
+    testImplementation project(':stroom-meta:stroom-meta-api')
+    testImplementation project(':stroom-meta:stroom-meta-mock')
+    testImplementation project(':stroom-node:stroom-node-mock')
+    testImplementation project(':stroom-pipeline')
+    testImplementation project(':stroom-processor:stroom-processor-mock')
+    testImplementation project(':stroom-receive:stroom-receive-rules-impl')
+    testImplementation project(':stroom-security:stroom-security-identity')
+    testImplementation project(':stroom-security:stroom-security-api')
+    testImplementation project(':stroom-security:stroom-security-impl')
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-statistics:stroom-statistics-api')
+    testImplementation project(':stroom-statistics:stroom-statistics-impl')
+    testImplementation project(':stroom-statistics:stroom-statistics-impl-hbase')
+    testImplementation project(':stroom-statistics:stroom-statistics-impl-sql')
+    testImplementation project(':stroom-statistics:stroom-statistics-mock')
+    testImplementation project(':stroom-task:stroom-task-api')
+    testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-util')
+    testImplementation project(':stroom-util-shared')
 
-    testCompile project(':stroom-activity:stroom-activity-api')
-    testCompile project(':stroom-activity:stroom-activity-mock')
-    testCompile project(':stroom-alert:stroom-alert-api')
-    testCompile project(':stroom-alert:stroom-alert-mock')
-    testCompile project(':stroom-config:stroom-config-app')
-    testCompile project(':stroom-config:stroom-config-global-impl')
-    testCompile project(':stroom-core')
-    testCompile project(':stroom-core-shared')
-    testCompile project(':stroom-dashboard:stroom-dashboard-impl')
-    testCompile project(':stroom-data:stroom-data-store-api')
-    testCompile project(':stroom-data:stroom-data-store-impl-fs')
-    testCompile project(':stroom-data:stroom-data-store-mock')
-    testCompile project(':stroom-docstore:stroom-docstore-api')
-    testCompile project(':stroom-docstore:stroom-docstore-impl')
-    testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
-    testCompile project(':stroom-event-logging:stroom-event-logging-api')
-    testCompile project(':stroom-event-logging:stroom-event-logging-impl')
-    testCompile project(':stroom-event-logging:stroom-event-logging-mock')
-    testCompile project(':stroom-explorer:stroom-collection-mock')
-    testCompile project(':stroom-explorer:stroom-explorer-api')
-    testCompile project(':stroom-explorer:stroom-explorer-impl')
-    testCompile project(':stroom-explorer:stroom-explorer-impl-db')
-    testCompile project(':stroom-headless')
-    testCompile project(':stroom-importexport:stroom-importexport-api')
-    testCompile project(':stroom-index:stroom-index-impl')
-    testCompile project(':stroom-index:stroom-index-mock')
-    testCompile project(':stroom-meta:stroom-meta-api')
-    testCompile project(':stroom-meta:stroom-meta-mock')
-    testCompile project(':stroom-node:stroom-node-mock')
-    testCompile project(':stroom-pipeline')
-    testCompile project(':stroom-processor:stroom-processor-mock')
-    testCompile project(':stroom-receive:stroom-receive-rules-impl')
-    testCompile project(':stroom-security:stroom-security-identity')
-    testCompile project(':stroom-security:stroom-security-api')
-    testCompile project(':stroom-security:stroom-security-impl')
-    testCompile project(':stroom-security:stroom-security-mock')
-    testCompile project(':stroom-statistics:stroom-statistics-api')
-    testCompile project(':stroom-statistics:stroom-statistics-impl')
-    testCompile project(':stroom-statistics:stroom-statistics-impl-hbase')
-    testCompile project(':stroom-statistics:stroom-statistics-impl-sql')
-    testCompile project(':stroom-statistics:stroom-statistics-mock')
-    testCompile project(':stroom-task:stroom-task-api')
-    testCompile project(':stroom-test-common')
-    testCompile project(':stroom-util')
-    testCompile project(':stroom-util-shared')
+    testImplementation libs.commons_io
+    testImplementation libs.classgraph
+    testImplementation libs.guice5
+    testImplementation libs.guice_extension
+    testImplementation libs.guice_grapher
+    testImplementation libs.hibernate_jpa
+    testImplementation libs.hikari
+    testImplementation libs.jinjava
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.lmdbjava
+    testImplementation libs.lucene_core
+    testImplementation libs.saxon_he
+    testImplementation libs.slf4j_api
+    testImplementation libs.stroomTestData
+    testImplementation libs.swagger_annotations
+    testImplementation libs.vavr
 
-    testCompile libs.commons_io
-    testCompile libs.classgraph
-    testCompile libs.guice5
-    testCompile libs.guice_extension
-    testCompile libs.guice_grapher
-    testCompile libs.hikari
-    testCompile libs.jinjava
-    testCompile libs.junit_jupiter_api
-    testCompile libs.lmdbjava
-    testCompile libs.lucene_core
-    testCompile libs.saxon_he
-    testCompile libs.slf4j_api
-    testCompile libs.stroomTestData
-    testCompile libs.vavr
-
-    testRuntimeOnly libs.javax_activation
-    testRuntimeOnly libs.javax_el
-    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jakarta_el
+    testRuntimeOnly libs.jaxb_impl
     testRuntimeOnly libs.junit_jupiter_engine
 
     // The following logging libs are needed when running junits outside dropwizard
@@ -243,11 +305,11 @@ dependencies {
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
 
-    testCompile libs.assertj_core
-    testCompile libs.dropwizard_client
-    testCompile libs.dropwizard_testing
-    testCompile libs.mockito_core
-    testCompile libs.mockito_junit_jupiter
+    testImplementation libs.assertj_core
+    testImplementation libs.dropwizard_client
+    testImplementation libs.dropwizard_testing
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 }
 
 jar {
@@ -258,7 +320,7 @@ jar {
                 "Main-Class": "stroom.app.App"
         )
     }
-//    archiveName jarName
+//    archiveFileName jarName
     exclude '**/gwt-unitCache'
 }
 
@@ -296,7 +358,7 @@ shadowJar {
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
 
-    archiveName fatJarName
+    archiveFileName = fatJarName
     exclude '**/gwt-unitCache'
 }
 
@@ -315,7 +377,7 @@ task migrate(type: JavaExec) {
     dependsOn ':stroom-config:stroom-config-app:compileJava'
 
     classpath = sourceSets.main.runtimeClasspath
-    main = mainClassName
+    mainClass = mainClassName
     args 'migrate', '../local.yml'
 }
 
@@ -328,7 +390,7 @@ clean {
 // Generate the confi.yml files for the zip and docker distributions
 task generateConfigFiles(type: JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
-    main = "stroom.dist.GenerateDistributionConfig"
+    mainClass = "stroom.dist.GenerateDistributionConfig"
 }
 
 task downloadStroomContentForDocker(type: JavaExec) {
@@ -339,7 +401,7 @@ task downloadStroomContentForDocker(type: JavaExec) {
     // We need to set the working directory as the stroom root
     workingDir '../'
     classpath = sourceSets.test.runtimeClasspath
-    main = 'stroom.test.DownloadStroomContentApp'
+    mainClass = 'stroom.test.DownloadStroomContentApp'
 
     args = [contentPackDefinitionFile, contentPackDownloadDir, stroomDockerContentPacksDir]
 }
@@ -352,7 +414,7 @@ task downloadStroomContentForZipDist(type: JavaExec) {
     // We need to set the working directory as the stroom root
     workingDir '../'
     classpath = sourceSets.test.runtimeClasspath
-    main = 'stroom.test.DownloadStroomContentApp'
+    mainClass = 'stroom.test.DownloadStroomContentApp'
 
     args = [contentPackDefinitionFile, contentPackDownloadDir, stroomZipDistContentPacksDir]
 }
@@ -584,7 +646,7 @@ task generateConfigDefaultsYamlFile(type: JavaExec) {
     dependsOn ':stroom-config:stroom-config-app:compileTestJava'
 
     classpath = project(':stroom-config:stroom-config-app').sourceSets.test.runtimeClasspath
-    main = 'stroom.config.app.GenerateExpectedYaml'
+    mainClass = 'stroom.config.app.GenerateExpectedYaml'
     args = [configDefaultsFile, configSchemaFile]
 }
 
@@ -660,7 +722,7 @@ task setupSampleDataApplication(type: JavaExec) {
     // setupSampleData won't find 'samples' directories in other modules.
     workingDir '../'
     classpath = sourceSets.test.runtimeClasspath
-    main = 'stroom.test.SetupSampleData'
+    mainClass = 'stroom.test.SetupSampleData'
 
     args = ['local.yml']
 }
