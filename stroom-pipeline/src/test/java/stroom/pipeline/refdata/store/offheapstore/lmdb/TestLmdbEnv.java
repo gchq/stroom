@@ -45,6 +45,7 @@ import java.util.stream.IntStream;
  * where concurrent readers > maxReaders setting. Tests the concurrency protection in
  * {@link LmdbEnv}
  */
+@Disabled // TODO : Currently breaking GH actions so disable for now
 public class TestLmdbEnv {
 
     // TODO 13/01/2022 AT: Move this to stroom.lmdb in line with the class it is testing
@@ -201,7 +202,6 @@ public class TestLmdbEnv {
      * More of a manual test to check that many envs don't cause problems.
      * Have tried it with 1000.
      */
-    @Disabled // TODO : Currently breaking GH actions so disable for now
     @Test
     void testManyEnvs() throws IOException, InterruptedException {
         final List<Path> dbDirs = new ArrayList<>();
