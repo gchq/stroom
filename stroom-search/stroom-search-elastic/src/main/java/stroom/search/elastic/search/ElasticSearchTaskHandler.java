@@ -141,10 +141,6 @@ public class ElasticSearchTaskHandler {
                                  final ElasticConnectionConfig connectionConfig) {
         elasticClientCache.context(connectionConfig, elasticClient -> {
             try {
-                final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(SCROLL_DURATION));
-                SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
-                        .scroll(scroll);
-
                 IntStream.range(0, elasticIndex.getSearchSlices()).parallel().forEach(slice -> {
                     try {
                         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
@@ -156,7 +152,11 @@ public class ElasticSearchTaskHandler {
                             searchSourceBuilder.slice(new SliceBuilder(slice, elasticIndex.getSearchSlices()));
                         }
 
-                        searchRequest.source(searchSourceBuilder);
+                        final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(SCROLL_DURATION));
+                        SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
+                                .source(searchSourceBuilder)
+                                .scroll(scroll);
+
                         SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
                         String scrollId = searchResponse.getScrollId();
 
