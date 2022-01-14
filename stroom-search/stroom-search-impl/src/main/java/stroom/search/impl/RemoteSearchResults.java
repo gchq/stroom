@@ -18,6 +18,9 @@ package stroom.search.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
+import stroom.search.impl.shard.IndexShardSearchConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.Optional;
 import javax.inject.Inject;
@@ -26,12 +29,15 @@ import javax.inject.Singleton;
 @Singleton
 class RemoteSearchResults {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteSearchResults.class);
+
     private final ICache<String, RemoteSearchResultFactory> cache;
 
     @Inject
-    RemoteSearchResults(final CacheManager cacheManager, final SearchConfig searchConfig) {
-        cache = cacheManager.create("Remote search results", searchConfig::getResultStoreCache, null, (k, v) ->
-                v.destroy());
+    RemoteSearchResults(final CacheManager cacheManager, final IndexShardSearchConfig searchConfig) {
+        cache = cacheManager.create("Remote search results",
+                searchConfig::getRemoteSearchResultCache, null, (k, v) ->
+                        v.destroy());
     }
 
     public Optional<RemoteSearchResultFactory> get(final String key) {
@@ -43,6 +49,7 @@ class RemoteSearchResults {
     }
 
     public void invalidate(final String key) {
+        LOGGER.trace(() -> "invalidate() " + key, new RuntimeException("invalidate"));
         cache.invalidate(key);
     }
 }

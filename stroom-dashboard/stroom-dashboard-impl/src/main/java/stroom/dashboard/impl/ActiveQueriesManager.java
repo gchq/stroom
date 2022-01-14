@@ -18,7 +18,6 @@ package stroom.dashboard.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
-import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.util.shared.Clearable;
@@ -31,22 +30,19 @@ class ActiveQueriesManager implements Clearable {
 
     private static final String CACHE_NAME = "Active Queries";
 
-    private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final SecurityContext securityContext;
     private final ICache<String, ActiveQueries> cache;
 
     @Inject
     ActiveQueriesManager(final CacheManager cacheManager,
-                         final DataSourceProviderRegistry dataSourceProviderRegistry,
                          final SecurityContext securityContext,
                          final DashboardConfig dashboardConfig) {
-        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.securityContext = securityContext;
         cache = cacheManager.create(CACHE_NAME, dashboardConfig::getActiveQueriesCache, this::create, this::destroy);
     }
 
     private ActiveQueries create(final String key) {
-        return new ActiveQueries(dataSourceProviderRegistry, securityContext);
+        return new ActiveQueries(key, securityContext);
     }
 
     private void destroy(final String key, final ActiveQueries value) {

@@ -16,14 +16,13 @@
 
 package stroom.dashboard.impl;
 
-import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.security.api.SecurityContext;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -32,16 +31,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class ActiveQueries {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ActiveQueries.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActiveQueries.class);
 
+    private final String key;
     private final ConcurrentHashMap<DashboardQueryKey, ActiveQuery> activeQueries = new ConcurrentHashMap<>();
-
-    private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final SecurityContext securityContext;
 
-    ActiveQueries(final DataSourceProviderRegistry dataSourceProviderRegistry,
+    ActiveQueries(final String key,
                   final SecurityContext securityContext) {
-        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
+        this.key = key;
         this.securityContext = securityContext;
     }
 
@@ -53,35 +51,10 @@ class ActiveQueries {
             final DashboardQueryKey queryKey = entry.getKey();
             final ActiveQuery activeQuery = entry.getValue();
             if (keys == null || !keys.contains(queryKey)) {
-                final Boolean success = securityContext.asProcessingUserResult(() ->
-                        dataSourceProviderRegistry.getDataSourceProvider(
-                                activeQuery.getDocRef())
-                                .map(provider -> provider.destroy(new QueryKey(queryKey.getUuid())))
-                                .orElseGet(() -> {
-                                    LOGGER.warn("Unable to destroy query with key {} as provider {} cannot be found",
-                                            queryKey.getUuid(),
-                                            activeQuery.getDocRef().getType());
-                                    return Boolean.TRUE;
-                                }));
-
+                final Boolean success = securityContext.asProcessingUserResult(activeQuery::destroy);
                 if (Boolean.TRUE.equals(success)) {
                     // Remove the collector from the available searches as it is no longer required by the UI.
                     iterator.remove();
-                }
-            } else {
-                final Boolean success = securityContext.asProcessingUserResult(() ->
-                        dataSourceProviderRegistry.getDataSourceProvider(
-                                        activeQuery.getDocRef())
-                                .map(provider -> provider.ping(new QueryKey(queryKey.getUuid())))
-                                .orElseGet(() -> {
-                                    LOGGER.warn("Unable to ping query with key {} as provider {} cannot be found",
-                                            queryKey.getUuid(),
-                                            activeQuery.getDocRef().getType());
-                                    return Boolean.TRUE;
-                                }));
-
-                if (Boolean.FALSE.equals(success)) {
-                    LOGGER.warn("Unable to ping query with key {}", queryKey.getUuid());
                 }
             }
         }
@@ -91,17 +64,26 @@ class ActiveQueries {
         return activeQueries.get(queryKey);
     }
 
-    ActiveQuery addNewQuery(final DashboardQueryKey queryKey, final DocRef docRef) {
-        final ActiveQuery activeQuery = new ActiveQuery(docRef);
-        final ActiveQuery existing = activeQueries.put(queryKey, activeQuery);
+    ActiveQuery addNewQuery(final DashboardQueryKey dashboardQueryKey,
+                            final DocRef docRef,
+                            final QueryKey queryKey,
+                            final DataSourceProvider dataSourceProvider) {
+        final ActiveQuery activeQuery = new ActiveQuery(dashboardQueryKey, queryKey, docRef, dataSourceProvider);
+        final ActiveQuery existing = activeQueries.put(dashboardQueryKey, activeQuery);
         if (existing != null) {
             throw new RuntimeException(
-                    "Existing active query found in active query map for '" + queryKey.toString() + "'");
+                    "Existing active query found in active query map for '" + dashboardQueryKey + "'");
         }
         return activeQuery;
     }
 
     void destroy() {
+        LOGGER.trace(() -> "destroy() - " + key, new RuntimeException("destroy"));
         destroyUnusedQueries(null);
+    }
+
+    @Override
+    public String toString() {
+        return key;
     }
 }

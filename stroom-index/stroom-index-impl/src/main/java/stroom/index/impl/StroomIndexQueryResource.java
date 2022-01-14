@@ -56,12 +56,12 @@ public interface StroomIndexQueryResource extends DataSourceResource, RestResour
     SearchResponse search(@Parameter(description = "SearchRequest", required = true) SearchRequest request);
 
     @POST
-    @Path("/ping")
+    @Path("/keepAlive")
     @Operation(
             summary = "Keep a running query alive",
-            operationId = "pingStroomIndexQuery")
+            operationId = "keepAliveStroomIndexQuery")
     @Override
-    Boolean ping(@Parameter(description = "QueryKey", required = true) QueryKey queryKey);
+    Boolean keepAlive(@Parameter(description = "QueryKey", required = true) QueryKey queryKey);
 
     @POST
     @Path("/destroy")

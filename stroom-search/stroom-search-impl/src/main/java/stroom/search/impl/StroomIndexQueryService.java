@@ -99,10 +99,11 @@ public class StroomIndexQueryService implements DataSourceProvider {
     }
 
     @Override
-    public Boolean ping(final QueryKey queryKey) {
+    public Boolean keepAlive(final QueryKey queryKey) {
+        LOGGER.trace(() -> "keepAlive() " + queryKey);
         return searchResponseCreatorManager
                 .getOptional(new SearchResponseCreatorCache.Key(queryKey))
-                .map(c -> Boolean.TRUE)
+                .map(SearchResponseCreator::keepAlive)
                 .orElse(Boolean.FALSE);
     }
 

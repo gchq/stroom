@@ -16,30 +16,50 @@
 
 package stroom.dashboard.impl;
 
+import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
 
 class ActiveQuery {
 
+    private final DashboardQueryKey dashboardQueryKey;
+    private final QueryKey queryKey;
     private final DocRef docRef;
+    private final DataSourceProvider dataSourceProvider;
     private final long creationTime;
 
-    ActiveQuery(final DocRef docRef) {
+    ActiveQuery(final DashboardQueryKey dashboardQueryKey,
+                final QueryKey queryKey,
+                final DocRef docRef,
+                final DataSourceProvider dataSourceProvider) {
+        this.dashboardQueryKey = dashboardQueryKey;
+        this.queryKey = queryKey;
         this.docRef = docRef;
+        this.dataSourceProvider = dataSourceProvider;
         this.creationTime = System.currentTimeMillis();
     }
 
-    DocRef getDocRef() {
-        return docRef;
+    public SearchResponse search(final SearchRequest request) {
+        return dataSourceProvider.search(request);
     }
 
-    long getCreationTime() {
-        return creationTime;
+    public boolean keepAlive() {
+        return dataSourceProvider.keepAlive(queryKey);
+    }
+
+    public boolean destroy() {
+        return dataSourceProvider.destroy(queryKey);
     }
 
     @Override
     public String toString() {
         return "ActiveQuery{" +
-                "docRef=" + docRef +
+                "dashboardQueryKey=" + dashboardQueryKey +
+                ", queryKey=" + queryKey +
+                ", docRef=" + docRef +
                 ", creationTime=" + creationTime +
                 '}';
     }
