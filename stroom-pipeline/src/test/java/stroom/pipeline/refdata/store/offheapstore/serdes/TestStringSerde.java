@@ -18,6 +18,8 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
+import stroom.lmdb.serde.StringSerde;
+
 import org.junit.jupiter.api.Test;
 
 class TestStringSerde extends AbstractSerdeTest<String, StringSerde> {
