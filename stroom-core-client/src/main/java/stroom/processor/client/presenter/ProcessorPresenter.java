@@ -288,7 +288,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) selectedProcessor;
                 ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", result -> {
                     if (result) {
-                        final Rest<ProcessorFilter> rest = restFactory.create();
+                        final Rest<Boolean> rest = restFactory.create();
                         rest
                                 .onSuccess(res -> processorListPresenter.refresh())
                                 .call(PROCESSOR_FILTER_RESOURCE)
