@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
-import javax.validation.constraints.NotNull;
 
 @BootStrapConfig
 @Singleton
@@ -45,7 +44,8 @@ public class StroomPathConfig extends PathConfig implements IsStroomConfig {
     @JsonPropertyDescription("By default, unless configured otherwise, all other configured paths " +
             "(except stroom.path.temp) will be relative to this directory. If this value is null then" +
             "Stroom will use either of the following to derive stroom.path.home: the directory of the Stroom " +
-            "application JAR file or ~/.stroom. Should only be set per node in application YAML configuration file")
+            "application JAR file or ~/.stroom. Should only be set per node in application YAML configuration file. " +
+            "It must be an absolute path and it does not support '~' or variable substitution like other paths.")
     public String getHome() {
         return super.getHome();
     }
@@ -54,11 +54,12 @@ public class StroomPathConfig extends PathConfig implements IsStroomConfig {
      * Will be created on boot in App
      */
     @Override
-    @NotNull
     @ReadOnly
     @RequiresRestart(RestartScope.SYSTEM)
     @JsonPropertyDescription("This directory is used by stroom to write any temporary file to. " +
-            "Should only be set per node in application YAML configuration file.")
+            "Should only be set per node in application YAML configuration file. " +
+            "If not set then Stroom will use <SYSTEM TEMP>/stroom." +
+            "It must be an absolute path and it does not support '~' or variable substitution like other paths.")
     public String getTemp() {
         return super.getTemp();
     }

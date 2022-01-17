@@ -3,8 +3,10 @@ package stroom.util.io;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -13,14 +15,10 @@ public class TempDirProviderImpl implements TempDirProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TempDirProviderImpl.class);
 
-    //    private static final String PROP_STROOM_TEMP = "stroom.temp";
-//    private static final String ENV_STROOM_TEMP = "STROOM_TEMP";
-    private static final String DEFAULT_TEMP_SUB_DIR = "temp";
-
     private final PathConfig pathConfig;
     private final HomeDirProvider homeDirProvider;
 
-    private Path tempDir;
+    private volatile Path tempDir;
 
     @Inject
     public TempDirProviderImpl(final PathConfig pathConfig,
@@ -35,27 +33,8 @@ public class TempDirProviderImpl implements TempDirProvider {
         if (tempDir == null) {
             Path path = null;
 
-//            String dir = System.getProperty(PROP_STROOM_TEMP);
-//            if (dir != null) {
-//                LOGGER.info("Using stroom.temp system property: {}", dir);
-//            } else {
-//                dir = System.getenv(ENV_STROOM_TEMP);
-//                if (dir != null) {
-//                    LOGGER.info("Using STROOM_TEMP environment variable: {}", dir);
-//                } else {
-//                    dir = pathConfig.getTemp();
-//                    if (dir != null) {
-//                        LOGGER.info("Using temp path configuration property: {}", dir);
-//                    } else {
-//                        dir = System.getProperty(PROP_JAVA_TEMP);
-//                        if (dir != null) {
-//                            LOGGER.info("Using default Java temp dir: {}", dir);
-//                        }
-//                    }
-//                }
-//            }
-
             String dir = pathConfig.getTemp();
+
             if (dir != null && !dir.isEmpty()) {
                 LOGGER.info("Using temp path configuration property: {}", dir);
                 dir = FileUtil.replaceHome(dir);
@@ -63,8 +42,15 @@ public class TempDirProviderImpl implements TempDirProvider {
             }
 
             if (path == null) {
+                path = getDefaultTempDir()
+                        .orElse(null);
+            }
+
+            if (path == null) {
                 path = homeDirProvider.get()
-                        .resolve(DEFAULT_TEMP_SUB_DIR);
+                        .resolve("temp");
+                LOGGER.info("Using stroom home sub directory for temp path {}",
+                        path.toAbsolutePath().normalize());
             }
 
             // If this isn't an absolute path then make it so relative to the home path.
@@ -78,6 +64,31 @@ public class TempDirProviderImpl implements TempDirProvider {
             tempDir = path;
         }
         return tempDir;
+    }
+
+    private Optional<Path> getDefaultTempDir() {
+        final String systemTempDirStr = System.getProperty("java.io.tmpdir");
+        if (systemTempDirStr == null) {
+            return Optional.empty();
+        } else {
+            final Path systemTempDir = Paths.get(systemTempDirStr);
+            if (Files.isDirectory(systemTempDir)) {
+                final String subDirName = pathConfig.getClass()
+                        .getSimpleName()
+                        .toLowerCase()
+                        .contains("proxy")
+                        ? "stroom-proxy"
+                        : "stroom";
+
+                final Path dir = Paths.get(systemTempDirStr).resolve(subDirName);
+                LOGGER.info("Using system temp path {}", dir.toAbsolutePath().normalize());
+                return Optional.of(dir);
+            } else {
+                LOGGER.debug("{} does not exist or is not a directory",
+                        systemTempDir.toAbsolutePath().normalize());
+                return Optional.empty();
+            }
+        }
     }
 
     public void setTempDir(final Path tempDir) {
