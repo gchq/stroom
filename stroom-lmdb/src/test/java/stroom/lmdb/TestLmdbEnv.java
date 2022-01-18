@@ -51,10 +51,7 @@ public class TestLmdbEnv {
     private static final int MAX_READERS = CORES;
 
     private static final ExecutorService executor = Executors.newCachedThreadPool();
-    //    private static final ByteBufferPool BYTE_BUFFER_POOL = new SimpleByteBufferPool();
     private static final ByteBufferPool BYTE_BUFFER_POOL = new ByteBufferPoolFactory().getByteBufferPool();
-
-    private static int count = 0;
 
     @AfterAll
     static void afterAll() {
