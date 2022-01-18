@@ -13,7 +13,7 @@ import stroom.util.io.TempDirProvider;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
 import org.lmdbjava.EnvFlags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,10 +29,8 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
@@ -53,6 +51,7 @@ public class TestLmdbEnv {
     private static final int MAX_READERS = CORES;
 
     private static final ExecutorService executor = Executors.newCachedThreadPool();
+    //    private static final ByteBufferPool BYTE_BUFFER_POOL = new SimpleByteBufferPool();
     private static final ByteBufferPool BYTE_BUFFER_POOL = new ByteBufferPoolFactory().getByteBufferPool();
 
     private static int count = 0;
@@ -63,18 +62,7 @@ public class TestLmdbEnv {
         BYTE_BUFFER_POOL.clear();
     }
 
-    private void sleep() {
-//        try {
-//            count++;
-//            if (count > 10000) {
-//                Thread.sleep(2000);
-//            }
-//        } catch (final InterruptedException e) {
-//            LOGGER.error(e.getMessage(), e);
-//        }
-    }
-
-    @RepeatedTest(100000)
+    @Test
     void testWritersBlockReaders_withWrites() throws IOException {
 
         final boolean doWritersBlockReaders = true;
@@ -88,11 +76,9 @@ public class TestLmdbEnv {
                                 doWritersBlockReaders,
                                 expectedNumReadersHighWaterMark,
                                 true));
-
-        sleep();
     }
 
-    @RepeatedTest(100000)
+    @Test
     void testWritersBlockReaders_withoutWrites() throws IOException {
 
         final boolean doWritersBlockReaders = true;
@@ -107,11 +93,9 @@ public class TestLmdbEnv {
                                 doWritersBlockReaders,
                                 expectedNumReadersHighWaterMark,
                                 false));
-
-        sleep();
     }
 
-    @RepeatedTest(100000)
+    @Test
     void testWritersDontBlockReaders_withWrites() throws IOException {
 
         final boolean doWritersBlockReaders = false;
@@ -126,11 +110,9 @@ public class TestLmdbEnv {
                                 doWritersBlockReaders,
                                 expectedNumReadersHighWaterMark,
                                 false));
-
-        sleep();
     }
 
-    @RepeatedTest(100000)
+    @Test
     void testWritersDontBlockReaders_withoutWrites() throws IOException {
 
         final boolean doWritersBlockReaders = false;
@@ -145,11 +127,9 @@ public class TestLmdbEnv {
                                 doWritersBlockReaders,
                                 expectedNumReadersHighWaterMark,
                                 false));
-
-        sleep();
     }
 
-    @RepeatedTest(100000)
+    @Test
     void testBatchingWriteTxnWrapper_withBatchSize() throws Exception {
         doWithEnvAndDb(
                 true,
@@ -166,11 +146,9 @@ public class TestLmdbEnv {
                     Assertions.assertThat(database.getEntryCount())
                             .isEqualTo(9);
                 });
-
-        sleep();
     }
 
-    @RepeatedTest(100000)
+    @Test
     void testBatchingWriteTxnWrapper_withBatchSize_withAbort() throws Exception {
         doWithEnvAndDb(
                 true,
@@ -188,11 +166,9 @@ public class TestLmdbEnv {
                     Assertions.assertThat(database.getEntryCount())
                             .isEqualTo(8);
                 });
-
-        sleep();
     }
 
-    @RepeatedTest(100000)
+    @Test
     void testBatchingWriteTxnWrapper_noWork() throws Exception {
         doWithEnvAndDb(
                 true,
@@ -204,11 +180,9 @@ public class TestLmdbEnv {
                     Assertions.assertThat(database.getEntryCount())
                             .isEqualTo(0);
                 });
-
-        sleep();
     }
 
-    @RepeatedTest(100000)
+    @Test
     void testBatchingWriteTxnWrapper_noWork_abort() throws Exception {
         doWithEnvAndDb(
                 true,
@@ -220,8 +194,6 @@ public class TestLmdbEnv {
                     Assertions.assertThat(database.getEntryCount())
                             .isEqualTo(0);
                 });
-
-        sleep();
     }
 
     /**
@@ -229,7 +201,7 @@ public class TestLmdbEnv {
      * More of a manual test to check that many envs don't cause problems.
      * Have tried it with 1000.
      */
-    @RepeatedTest(100000)
+    @Test
     void testManyEnvs() throws IOException, InterruptedException {
         final List<Path> dbDirs = new ArrayList<>();
         final List<LmdbEnv> envs = new ArrayList<>();
@@ -306,8 +278,6 @@ public class TestLmdbEnv {
             envs.get(i).close();
             FileUtil.deleteDir(dbDirs.get(i));
         }
-
-        sleep();
     }
 
     private void doWithEnvAndDb(final boolean isReaderBlockedByWriter,
@@ -371,7 +341,6 @@ public class TestLmdbEnv {
         final int threadCount = 50;
         LOGGER.info("threadCount: {}", threadCount);
 
-        final CountDownLatch threadsFinishedLatch = new CountDownLatch(threadCount);
         final CountDownLatch threadsStartedLatch = new CountDownLatch(threadCount);
         final CountDownLatch releaseThreadsLatch = new CountDownLatch(1);
         final Queue<String> threads = new ConcurrentLinkedQueue<>();
@@ -390,32 +359,29 @@ public class TestLmdbEnv {
             });
         });
 
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
         IntStream.rangeClosed(1, readerThreads)
                 .forEach(i -> {
-                    createReaderThread(
+                    futures.add(createReaderThread(
                             lmdbEnv,
                             database,
                             readersHighWaterMarkTracker,
-                            threadsFinishedLatch,
                             threadsStartedLatch,
                             releaseThreadsLatch,
-                            executor,
                             threads,
                             exceptions,
-                            i);
+                            i));
 
                     if (doWrites) {
-                        createWriterThread(
+                        futures.add(createWriterThread(
                                 lmdbEnv,
                                 database,
                                 writersHighWaterMarkTracker,
-                                threadsFinishedLatch,
                                 threadsStartedLatch,
                                 releaseThreadsLatch,
-                                executor,
                                 threads,
                                 exceptions,
-                                i);
+                                i));
                     }
                 });
 
@@ -426,16 +392,18 @@ public class TestLmdbEnv {
             // Release all threads at once to hit LMDB
             releaseThreadsLatch.countDown();
 
-            do {
-                LOGGER.info("numReaders: {}, threadsFinishedLatch: {}, threads: {}",
-                        lmdbEnv.info().numReaders,
-                        threadsFinishedLatch.getCount(),
-                        String.join(", ", threads));
+//            do {
+//                LOGGER.info("numReaders: {}, threadsFinishedLatch: {}, threads: {}",
+//                        lmdbEnv.info().numReaders,
+//                        threadsFinishedLatch.getCount(),
+//                        String.join(", ", threads));
+//
+//            } while (!threadsFinishedLatch.await(50, TimeUnit.MILLISECONDS));
+//
+//            // Wait for all threads to finish
+//            threadsFinishedLatch.await();
 
-            } while (!threadsFinishedLatch.await(50, TimeUnit.MILLISECONDS));
-
-            // Wait for all threads to finish
-            threadsFinishedLatch.await();
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             LOGGER.info("Exception count: {}", exceptions.size());
 
@@ -466,21 +434,19 @@ public class TestLmdbEnv {
         }
     }
 
-    private void createReaderThread(
+    private CompletableFuture<Void> createReaderThread(
             final LmdbEnv lmdbEnv,
             final AbstractLmdbDb<String, String> database,
             final HighWaterMarkTracker highWaterMarkTracker,
-            final CountDownLatch threadsFinishedLatch,
             final CountDownLatch threadsStartedLatch,
             final CountDownLatch releaseThreadsLatch,
-            final Executor executor,
             final Queue<String> threads,
             final List<Exception> exceptions,
             final int i) {
 
         LOGGER.trace("Creating reader thread {}", i);
 
-        CompletableFuture.runAsync(() -> {
+        return CompletableFuture.runAsync(() -> {
             LOGGER.trace("Init reader thread {}", i);
             threads.add(Thread.currentThread().getName());
             threadsStartedLatch.countDown();
@@ -508,20 +474,17 @@ public class TestLmdbEnv {
                     LOGGER.trace("Finished reader thread {}", i);
 
                     threads.remove(Thread.currentThread().getName());
-                    threadsFinishedLatch.countDown();
                 }
             });
         }, executor);
     }
 
-    private void createWriterThread(
+    private CompletableFuture<Void> createWriterThread(
             final LmdbEnv lmdbEnv,
             final AbstractLmdbDb<String, String> database,
             final HighWaterMarkTracker highWaterMarkTracker,
-            final CountDownLatch threadsFinishedLatch,
             final CountDownLatch threadsStartedLatch,
             final CountDownLatch releaseThreadsLatch,
-            final Executor executor,
             final Queue<String> threads,
             final List<Exception> exceptions,
             final int i) {
@@ -529,7 +492,7 @@ public class TestLmdbEnv {
         LOGGER.trace("Creating writer thread {}", i);
         final String key = buildKey(i);
 
-        CompletableFuture.runAsync(() -> {
+        return CompletableFuture.runAsync(() -> {
             LOGGER.trace("Init writer thread {}", i);
             threads.add(Thread.currentThread().getName());
             threadsStartedLatch.countDown();
@@ -560,7 +523,6 @@ public class TestLmdbEnv {
                     LOGGER.trace("Finished writer thread {}", i);
 
                     threads.remove(Thread.currentThread().getName());
-                    threadsFinishedLatch.countDown();
                 }
             });
         }, executor);
