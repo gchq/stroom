@@ -15,10 +15,9 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore;
+package stroom.lmdb.serde;
 
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.pipeline.refdata.store.offheapstore.serdes.UnsignedLongSerde;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;

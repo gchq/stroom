@@ -18,8 +18,9 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
-import stroom.pipeline.refdata.store.offheapstore.UnsignedBytesInstances;
-import stroom.pipeline.refdata.store.offheapstore.UnsignedLong;
+import stroom.lmdb.serde.UnsignedBytesInstances;
+import stroom.lmdb.serde.UnsignedLong;
+import stroom.lmdb.serde.UnsignedLongSerde;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;

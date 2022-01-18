@@ -1,6 +1,8 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.lmdb.serde.UnsignedBytes;
+import stroom.lmdb.serde.UnsignedBytesInstances;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
