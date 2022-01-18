@@ -124,7 +124,7 @@ public class ElasticIndexQueryResourceImpl implements ElasticIndexQueryResource,
     }
 
     @Override
-    public Boolean ping(final QueryKey queryKey) {
+    public Boolean keepAlive(final QueryKey queryKey) {
         return searchResponseCreatorManagerProvider.get()
                 .getOptional(new SearchResponseCreatorCache.Key(queryKey))
                 .map(c -> Boolean.TRUE)

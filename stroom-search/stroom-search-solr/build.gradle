@@ -10,6 +10,7 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
@@ -26,6 +27,7 @@ dependencies {
 
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice5
     implementation libs.http_client
