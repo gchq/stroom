@@ -16,8 +16,10 @@
 
 package stroom.searchable.impl;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.searchable.api.SearchableProvider;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -28,6 +30,10 @@ public class SearchableModule extends AbstractModule {
     protected void configure() {
         bind(SearchableProvider.class).to(SearchableProviderImpl.class);
         bind(ExplorerDecorator.class).to(SearchableProviderImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(SearchableService.class);
+
         RestResourcesBinder.create(binder())
                 .bind(SearchableResourceImpl.class);
     }

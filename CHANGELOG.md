@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.174] - 2022-01-13
+
+* Issue **#2708** : Keep search results fresh by constantly pinging result caches for all active searches.
+
+
 ## [v7.0-beta.173] - 2022-01-13
 
 * Issue **#2703** : Improve search trace log to identify multi query search issues.
@@ -4123,7 +4128,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.173...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.174...HEAD
+[v7.0-beta.174]: https://github.com/gchq/stroom/compare/v7.0-beta.173...v7.0-beta.174
 [v7.0-beta.173]: https://github.com/gchq/stroom/compare/v7.0-beta.172...v7.0-beta.173
 [v7.0-beta.172]: https://github.com/gchq/stroom/compare/v7.0-beta.171...v7.0-beta.172
 [v7.0-beta.171]: https://github.com/gchq/stroom/compare/v7.0-beta.170...v7.0-beta.171

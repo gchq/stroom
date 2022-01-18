@@ -17,6 +17,7 @@
 package stroom.dashboard.impl.datasource;
 
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -30,6 +31,7 @@ import stroom.util.shared.PermissionException;
 
 import io.dropwizard.jersey.errors.ErrorMessage;
 
+import java.util.function.Supplier;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
@@ -46,41 +48,51 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     private static final String DATA_SOURCE_ENDPOINT = "/dataSource";
     private static final String SEARCH_ENDPOINT = "/search";
+    private static final String PING_ENDPOINT = "/ping";
     private static final String DESTROY_ENDPOINT = "/destroy";
 
     private final SecurityContext securityContext;
-    private final String url;
+    private final Supplier<String> uriSupplier;
     private final Provider<Client> clientProvider;
 
     RemoteDataSourceProvider(final SecurityContext securityContext,
-                             final String url,
+                             final Supplier<String> uriSupplier,
                              final Provider<Client> clientProvider) {
         this.securityContext = securityContext;
-        this.url = url;
+        this.uriSupplier = uriSupplier;
         this.clientProvider = clientProvider;
-        LOGGER.trace("Creating RemoteDataSourceProvider for url {}", url);
     }
 
-    @Override
     public DataSource getDataSource(final DocRef docRef) {
-        LOGGER.trace("getDataSource() called for docRef {} on url {}", docRef, url);
+        LOGGER.trace("getDataSource() called for docRef {} on url {}", docRef, uriSupplier.get());
         //TODO this needs to be backed by a short life cache to avoid repeated trips over the net
         return post(docRef, docRef, DATA_SOURCE_ENDPOINT, DataSource.class);
     }
 
     @Override
     public SearchResponse search(final SearchRequest request) {
-        LOGGER.trace("search() called for request {} on url {}", request, url);
+        LOGGER.trace("search() called for request {} on url {}", request, uriSupplier.get());
         return post(request.getQuery().getDataSource(), request, SEARCH_ENDPOINT, SearchResponse.class);
+    }
+
+    @Override
+    public Boolean ping(final QueryKey queryKey) {
+        try {
+            LOGGER.trace("ping() called for queryKey {} on url {}", queryKey, uriSupplier.get());
+            return post(null, queryKey, PING_ENDPOINT, Boolean.class);
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to ping active query for queryKey {} on url {}", queryKey, uriSupplier.get(), e);
+        }
+        return Boolean.FALSE;
     }
 
     @Override
     public Boolean destroy(final QueryKey queryKey) {
         try {
-            LOGGER.trace("destroy() called for queryKey {} on url {}", queryKey, url);
+            LOGGER.trace("destroy() called for queryKey {} on url {}", queryKey, uriSupplier.get());
             return post(null, queryKey, DESTROY_ENDPOINT, Boolean.class);
         } catch (final RuntimeException e) {
-            LOGGER.debug("Unable to destroy active query for queryKey {} on url {}", queryKey, url, e);
+            LOGGER.debug("Unable to destroy active query for queryKey {} on url {}", queryKey, uriSupplier.get(), e);
         }
         return Boolean.FALSE;
     }
@@ -89,10 +101,11 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                        final Object request,
                        String path,
                        final Class<T> responseClass) {
+        final String uri = uriSupplier.get();
         try {
-            LOGGER.trace("Sending request {} to {}/{}", request, url, path);
+            LOGGER.trace("Sending request {} to {}/{}", request, uri, path);
             Client client = clientProvider.get();
-            WebTarget webTarget = client.target(url).path(path);
+            WebTarget webTarget = client.target(uri).path(path);
 
             final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
             ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, securityContext);
@@ -142,21 +155,20 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             }
 
         } catch (final RuntimeException e) {
-            LOGGER.debug("Error sending request {} to {}{}", request, url, path, e);
+            LOGGER.debug("Error sending request {} to {}{}", request, uri, path, e);
             throw e;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "RemoteDataSourceProvider{" +
+                "url='" + uriSupplier.get() + '\'' +
+                '}';
     }
 
     @Override
     public String getType() {
         return "remote";
     }
-
-    @Override
-    public String toString() {
-        return "RemoteDataSourceProvider{" +
-                "url='" + url + '\'' +
-                '}';
-    }
-
 }

@@ -1,6 +1,7 @@
 package stroom.search.impl;
 
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.StroomIndexQueryResource;
@@ -27,7 +28,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-public class StroomIndexQueryService {
+public class StroomIndexQueryService implements DataSourceProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomIndexQueryResource.class);
 
@@ -50,6 +51,7 @@ public class StroomIndexQueryService {
         this.executorProvider = executorProvider;
     }
 
+    @Override
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final Supplier<DataSource> supplier = taskContextFactory.contextResult("Getting Data Source",
@@ -67,6 +69,7 @@ public class StroomIndexQueryService {
         });
     }
 
+    @Override
     public SearchResponse search(final SearchRequest request) {
         final Supplier<SearchResponse> supplier = taskContextFactory.contextResult("Getting search results",
                 taskContext -> {
@@ -93,6 +96,14 @@ public class StroomIndexQueryService {
         } catch (final InterruptedException | ExecutionException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public Boolean ping(final QueryKey queryKey) {
+        return searchResponseCreatorManager
+                .getOptional(new SearchResponseCreatorCache.Key(queryKey))
+                .map(c -> Boolean.TRUE)
+                .orElse(Boolean.FALSE);
     }
 
     private String getResponseInfoForLogging(final SearchRequest request, final SearchResponse searchResponse) {
@@ -134,6 +145,7 @@ public class StroomIndexQueryService {
                 resultInfo);
     }
 
+    @Override
     public Boolean destroy(final QueryKey queryKey) {
         final Supplier<Boolean> supplier = taskContextFactory.contextResult("Destroy search",
                 taskContext -> {
@@ -148,5 +160,10 @@ public class StroomIndexQueryService {
         } catch (final InterruptedException | ExecutionException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public String getType() {
+        return IndexDoc.DOCUMENT_TYPE;
     }
 }
