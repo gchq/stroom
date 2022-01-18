@@ -1,8 +1,7 @@
 package stroom.search.solr;
 
-import stroom.datasource.api.v2.DataSource;
-import stroom.docref.DocRef;
+import stroom.datasource.api.v2.DataSourceProvider;
 
-public interface SolrIndexService {
-    DataSource getDataSource(final DocRef docRef);
+public interface SolrIndexService extends DataSourceProvider {
+
 }

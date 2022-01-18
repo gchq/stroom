@@ -21,7 +21,6 @@ import stroom.datasource.shared.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.meta.shared.MetaFields;
-import stroom.security.api.SecurityContext;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -43,6 +42,9 @@ class DataSourceResourceImpl implements DataSourceResource {
             return MetaFields.getFields();
         }
 
-        return dataSourceProviderRegistryProvider.get().getFieldsForDataSource(dataSourceRef);
+        return dataSourceProviderRegistryProvider.get()
+                .getDataSourceProvider(dataSourceRef)
+                .map(provider -> provider.getDataSource(dataSourceRef).getFields())
+                .orElse(null);
     }
 }

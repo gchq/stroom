@@ -1,6 +1,7 @@
 package stroom.searchable.impl;
 
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.OffsetRange;
@@ -29,7 +30,7 @@ import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 // Used by DI
-class SearchableService {
+class SearchableService implements DataSourceProvider {
 
     public static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableService.class);
@@ -47,7 +48,8 @@ class SearchableService {
         this.securityContext = securityContext;
     }
 
-    DataSource getDataSource(final DocRef docRef) {
+    @Override
+    public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             LOGGER.debug("getDataSource called for docRef {}", docRef);
             final Searchable searchable = searchableProvider.get(docRef);
@@ -58,6 +60,7 @@ class SearchableService {
         });
     }
 
+    @Override
     public SearchResponse search(final SearchRequest searchRequest) {
         return securityContext.useAsReadResult(() -> {
             LOGGER.debug("search called for searchRequest {}", searchRequest);
@@ -86,7 +89,16 @@ class SearchableService {
         });
     }
 
-    Boolean destroy(final QueryKey queryKey) {
+    @Override
+    public Boolean ping(final QueryKey queryKey) {
+        return searchResponseCreatorManager
+                .getOptional(new SearchResponseCreatorCache.Key(queryKey))
+                .map(c -> Boolean.TRUE)
+                .orElse(Boolean.FALSE);
+    }
+
+    @Override
+    public Boolean destroy(final QueryKey queryKey) {
         LOGGER.debug("destroy called for queryKey {}", queryKey);
         // remove the creator from the cache which will trigger the onRemove listener
         // which will call destroy on the store
@@ -130,5 +142,10 @@ class SearchableService {
                 results,
                 errors,
                 true);
+    }
+
+    @Override
+    public String getType() {
+        return "Searchable";
     }
 }

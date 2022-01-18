@@ -35,28 +35,29 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
+@Singleton
 @AutoLogged
 public class SqlStatisticsQueryResourceImpl implements SqlStatisticsQueryResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsQueryResourceImpl.class);
 
-    private final Provider<StatisticsQueryService> statisticsQueryServiceProvider;
+    private final Provider<StatisticsQueryService> serviceProvider;
 
     @Inject
-    public SqlStatisticsQueryResourceImpl(final Provider<StatisticsQueryService> statisticsQueryServiceProvider) {
-        this.statisticsQueryServiceProvider = statisticsQueryServiceProvider;
+    SqlStatisticsQueryResourceImpl(final Provider<StatisticsQueryService> statisticsQueryServiceProvider) {
+        this.serviceProvider = statisticsQueryServiceProvider;
     }
 
     @Timed
     @Override
     public DataSource getDataSource(final DocRef docRef) {
-
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(docRef);
             LOGGER.debug("/dataSource called with docRef:\n{}", json);
         }
-        return statisticsQueryServiceProvider.get().getDataSource(docRef);
+        return serviceProvider.get().getDataSource(docRef);
     }
 
     @Timed
@@ -66,8 +67,18 @@ public class SqlStatisticsQueryResourceImpl implements SqlStatisticsQueryResourc
             String json = JsonUtil.writeValueAsString(request);
             LOGGER.debug("/search called with searchRequest:\n{}", json);
         }
+        return serviceProvider.get().search(request);
+    }
 
-        return statisticsQueryServiceProvider.get().search(request);
+    @Timed
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public Boolean ping(final QueryKey queryKey) {
+        if (LOGGER.isDebugEnabled()) {
+            String json = JsonUtil.writeValueAsString(queryKey);
+            LOGGER.debug("/ping called with queryKey:\n{}", json);
+        }
+        return serviceProvider.get().ping(queryKey);
     }
 
     @Timed
@@ -78,7 +89,7 @@ public class SqlStatisticsQueryResourceImpl implements SqlStatisticsQueryResourc
             String json = JsonUtil.writeValueAsString(queryKey);
             LOGGER.debug("/destroy called with queryKey:\n{}", json);
         }
-        return statisticsQueryServiceProvider.get().destroy(queryKey);
+        return serviceProvider.get().destroy(queryKey);
     }
 
     static class TerminateDecorator implements EventActionDecorator<ProcessEventAction> {

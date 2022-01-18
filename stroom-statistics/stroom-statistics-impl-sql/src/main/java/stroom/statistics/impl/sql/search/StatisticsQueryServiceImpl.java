@@ -89,6 +89,14 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     }
 
     @Override
+    public Boolean ping(final QueryKey queryKey) {
+        return searchResponseCreatorManager
+                .getOptional(new SearchResponseCreatorCache.Key(queryKey))
+                .map(c -> Boolean.TRUE)
+                .orElse(Boolean.FALSE);
+    }
+
+    @Override
     public Boolean destroy(final QueryKey queryKey) {
         LOGGER.debug("destroy called for queryKey {}", queryKey);
         // remove the creator from the cache which will trigger the onRemove listener
@@ -134,5 +142,10 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 results,
                 errorMessages,
                 true);
+    }
+
+    @Override
+    public String getType() {
+        return StatisticStoreDoc.DOCUMENT_TYPE;
     }
 }

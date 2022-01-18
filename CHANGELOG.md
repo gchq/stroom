@@ -12,6 +12,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2708** : Keep search results fresh by constantly pinging result caches for all active searches.
+
+
 ## [v7.1-beta.8] - 2022-01-17
 
 * Issue **#2715** : Fix invalid rest return type.

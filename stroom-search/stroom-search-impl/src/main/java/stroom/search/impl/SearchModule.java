@@ -16,6 +16,7 @@
 
 package stroom.search.impl;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.EventSearch;
@@ -43,6 +44,9 @@ public class SearchModule extends AbstractModule {
         bind(RemoteSearchResource.class).to(RemoteSearchResourceImpl.class);
         bind(DataStoreFactory.class).to(LmdbDataStoreFactory.class);
         bind(SizesProvider.class).to(SizesProviderImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(StroomIndexQueryService.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(LuceneSearchResponseCreatorManager.class);
 

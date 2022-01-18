@@ -17,6 +17,7 @@
 package stroom.search.elastic.search;
 
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
@@ -28,6 +29,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.search.elastic.ElasticIndexService;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -41,7 +43,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @AutoLogged
-public class ElasticIndexQueryResourceImpl implements ElasticIndexQueryResource {
+public class ElasticIndexQueryResourceImpl implements ElasticIndexQueryResource, DataSourceProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexQueryResourceImpl.class);
 
@@ -121,11 +123,24 @@ public class ElasticIndexQueryResourceImpl implements ElasticIndexQueryResource 
                 resultInfo);
     }
 
+    @Override
+    public Boolean ping(final QueryKey queryKey) {
+        return searchResponseCreatorManagerProvider.get()
+                .getOptional(new SearchResponseCreatorCache.Key(queryKey))
+                .map(c -> Boolean.TRUE)
+                .orElse(Boolean.FALSE);
+    }
+
     @Timed
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public Boolean destroy(final QueryKey queryKey) {
         searchResponseCreatorManagerProvider.get().remove(new SearchResponseCreatorCache.Key(queryKey));
         return Boolean.TRUE;
+    }
+
+    @Override
+    public String getType() {
+        return ElasticIndexDoc.DOCUMENT_TYPE;
     }
 }

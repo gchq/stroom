@@ -16,18 +16,17 @@
 
 package stroom.dashboard.impl.datasource;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.servicediscovery.api.ExternalService;
 import stroom.servicediscovery.api.ServiceDiscoverer;
 
-import java.util.List;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
 
-public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourceProviderRegistry {
+class ServiceDiscoveryDataSourceProviderRegistry {
 
     private final SecurityContext securityContext;
     private final ServiceDiscoverer serviceDiscoverer;
@@ -60,7 +59,7 @@ public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourcePro
 //                .filter(ServiceInstance::isEnabled) //not available until curator 2.12
                 .flatMap(serviceInstance -> {
                     String address = serviceInstance.buildUriSpec();
-                    return Optional.of(new RemoteDataSourceProvider(securityContext, address, clientProvider));
+                    return Optional.of(new RemoteDataSourceProvider(securityContext, () -> address, clientProvider));
                 });
     }
 
@@ -73,20 +72,9 @@ public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourcePro
      * There may be no services that can handle the passed docRefType.
      * The service has no instances that are up and enabled.
      */
-    @Override
     public Optional<DataSourceProvider> getDataSourceProvider(final DocRef dataSourceRef) {
         return Optional.ofNullable(dataSourceRef)
                 .map(DocRef::getType)
                 .flatMap(this::getDataSourceProvider);
-    }
-
-    @Override
-    public List<AbstractField> getFieldsForDataSource(final DocRef dataSourceRef) {
-        // Elevate the users permissions for the duration of this task so they can read the index if
-        // they have 'use' permission.
-        return securityContext.useAsReadResult(
-                () -> getDataSourceProvider(dataSourceRef)
-                        .map(provider -> provider.getDataSource(dataSourceRef).getFields())
-                        .orElse(null));
     }
 }

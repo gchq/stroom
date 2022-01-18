@@ -68,6 +68,21 @@ class ActiveQueries {
                     // Remove the collector from the available searches as it is no longer required by the UI.
                     iterator.remove();
                 }
+            } else {
+                final Boolean success = securityContext.asProcessingUserResult(() ->
+                        dataSourceProviderRegistry.getDataSourceProvider(
+                                        activeQuery.getDocRef())
+                                .map(provider -> provider.ping(new QueryKey(queryKey.getUuid())))
+                                .orElseGet(() -> {
+                                    LOGGER.warn("Unable to ping query with key {} as provider {} cannot be found",
+                                            queryKey.getUuid(),
+                                            activeQuery.getDocRef().getType());
+                                    return Boolean.TRUE;
+                                }));
+
+                if (Boolean.FALSE.equals(success)) {
+                    LOGGER.warn("Unable to ping query with key {}", queryKey.getUuid());
+                }
             }
         }
     }

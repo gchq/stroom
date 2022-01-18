@@ -16,6 +16,7 @@
 
 package stroom.search.elastic;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -90,6 +91,9 @@ public class ElasticSearchModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(ElasticIndexResourceImpl.class)
                 .bind(ElasticIndexQueryResourceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(ElasticIndexQueryResourceImpl.class);
 
         // Server tasks
 
