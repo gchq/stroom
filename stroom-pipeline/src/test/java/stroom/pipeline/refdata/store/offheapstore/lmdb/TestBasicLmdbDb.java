@@ -29,7 +29,7 @@ import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.pipeline.refdata.store.offheapstore.serdes.IntegerSerde;
-import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
+import stroom.lmdb.serde.StringSerde;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

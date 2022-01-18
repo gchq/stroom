@@ -735,6 +735,7 @@ public class LmdbDataStore implements DataStore {
     @Override
     public synchronized void clear() {
         LOGGER.debug("clear called");
+        LOGGER.trace(() -> "clear()", new RuntimeException("clear"));
         if (shutdown.compareAndSet(false, true)) {
             SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_CLEAR);
 

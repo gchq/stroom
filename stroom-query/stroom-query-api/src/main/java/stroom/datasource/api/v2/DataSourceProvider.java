@@ -27,7 +27,7 @@ public interface DataSourceProvider {
 
     SearchResponse search(SearchRequest request);
 
-    Boolean ping(QueryKey queryKey);
+    Boolean keepAlive(QueryKey queryKey);
 
     Boolean destroy(QueryKey queryKey);
 

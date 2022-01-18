@@ -47,7 +47,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     private static final String DATA_SOURCE_ENDPOINT = "/dataSource";
     private static final String SEARCH_ENDPOINT = "/search";
-    private static final String PING_ENDPOINT = "/ping";
+    private static final String KEEP_ALIVE_ENDPOINT = "/keepAlive";
     private static final String DESTROY_ENDPOINT = "/destroy";
 
     private final SecurityContext securityContext;
@@ -75,10 +75,10 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
     }
 
     @Override
-    public Boolean ping(final QueryKey queryKey) {
+    public Boolean keepAlive(final QueryKey queryKey) {
         try {
-            LOGGER.trace("ping() called for queryKey {} on url {}", queryKey, uriSupplier.get());
-            return post(null, queryKey, PING_ENDPOINT, Boolean.class);
+            LOGGER.trace("keepAlive() called for queryKey {} on url {}", queryKey, uriSupplier.get());
+            return post(null, queryKey, KEEP_ALIVE_ENDPOINT, Boolean.class);
         } catch (final RuntimeException e) {
             LOGGER.debug("Unable to ping active query for queryKey {} on url {}", queryKey, uriSupplier.get(), e);
         }

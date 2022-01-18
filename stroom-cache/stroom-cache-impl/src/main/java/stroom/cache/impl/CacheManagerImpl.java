@@ -101,6 +101,7 @@ public class CacheManagerImpl implements CacheManager {
 
                 @Override
                 public void put(final K key, final V value) {
+                    LOGGER.trace(() -> "put() - " + key);
                     cache.put(key, value);
                 }
 
@@ -121,11 +122,13 @@ public class CacheManagerImpl implements CacheManager {
 
                 @Override
                 public void invalidate(final K key) {
+                    LOGGER.trace(() -> "invalidate() - " + key);
                     cache.invalidate(key);
                 }
 
                 @Override
                 public void remove(final K key) {
+                    LOGGER.trace(() -> "remove() - " + key);
                     cache.invalidate(key);
                     cache.cleanUp();
                 }

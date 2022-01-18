@@ -73,12 +73,12 @@ public class SqlStatisticsQueryResourceImpl implements SqlStatisticsQueryResourc
     @Timed
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public Boolean ping(final QueryKey queryKey) {
+    public Boolean keepAlive(final QueryKey queryKey) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(queryKey);
-            LOGGER.debug("/ping called with queryKey:\n{}", json);
+            LOGGER.debug("/keepAlive called with queryKey:\n{}", json);
         }
-        return serviceProvider.get().ping(queryKey);
+        return serviceProvider.get().keepAlive(queryKey);
     }
 
     @Timed
