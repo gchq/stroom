@@ -7706,14 +7706,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Searchable
-     * @name PingSearchableQuery
+     * @name KeepAliveSearchableQuery
      * @summary Keep a running query alive
-     * @request POST:/searchable/v2/ping
+     * @request POST:/searchable/v2/keepAlive
      * @secure
      */
-    pingSearchableQuery: (data: QueryKey, params: RequestParams = {}) =>
+    keepAliveSearchableQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
-        path: `/searchable/v2/ping`,
+        path: `/searchable/v2/keepAlive`,
         method: "POST",
         body: data,
         secure: true,
@@ -7931,14 +7931,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sql Statistics Query
-     * @name PingSqlStatisticsQuery
+     * @name KeepAliveSqlStatisticsQuery
      * @summary Keep a running query alive
-     * @request POST:/sqlstatistics/v2/ping
+     * @request POST:/sqlstatistics/v2/keepAlive
      * @secure
      */
-    pingSqlStatisticsQuery: (data: QueryKey, params: RequestParams = {}) =>
+    keepAliveSqlStatisticsQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
-        path: `/sqlstatistics/v2/ping`,
+        path: `/sqlstatistics/v2/keepAlive`,
         method: "POST",
         body: data,
         secure: true,
@@ -8408,14 +8408,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom-Index Queries
-     * @name PingStroomIndexQuery
+     * @name KeepAliveStroomIndexQuery
      * @summary Keep a running query alive
-     * @request POST:/stroom-index/v2/ping
+     * @request POST:/stroom-index/v2/keepAlive
      * @secure
      */
-    pingStroomIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
+    keepAliveStroomIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
-        path: `/stroom-index/v2/ping`,
+        path: `/stroom-index/v2/keepAlive`,
         method: "POST",
         body: data,
         secure: true,
@@ -8485,14 +8485,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Solr Queries
-     * @name PingSolrIndexQuery
+     * @name KeepAliveSolrIndexQuery
      * @summary Keep a running query alive
-     * @request POST:/stroom-solr-index/v2/ping
+     * @request POST:/stroom-solr-index/v2/keepAlive
      * @secure
      */
-    pingSolrIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
+    keepAliveSolrIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
-        path: `/stroom-solr-index/v2/ping`,
+        path: `/stroom-solr-index/v2/keepAlive`,
         method: "POST",
         body: data,
         secure: true,

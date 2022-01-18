@@ -464,7 +464,8 @@ class DashboardServiceImpl implements DashboardService {
                 params.add(new Param("currentUser()", securityContext.getUserId()));
                 search = search.copy().params(params).build();
                 updatedSearchRequest = updatedSearchRequest.copy().search(search).build();
-                final SearchRequest mappedRequest = searchRequestMapper.mapRequest(dashboardQueryKey, updatedSearchRequest);
+                final SearchRequest mappedRequest =
+                        searchRequestMapper.mapRequest(dashboardQueryKey, updatedSearchRequest);
 
                 synchronized (DashboardServiceImpl.class) {
                     // Make sure we have active queries for all current UI queries.
