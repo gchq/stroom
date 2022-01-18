@@ -5685,9 +5685,9 @@
         "tags" : [ "Searchable" ]
       }
     },
-    "/searchable/v2/ping" : {
+    "/searchable/v2/keepAlive" : {
       "post" : {
-        "operationId" : "pingSearchableQuery",
+        "operationId" : "keepAliveSearchableQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6030,9 +6030,9 @@
         "tags" : [ "Sql Statistics Query" ]
       }
     },
-    "/sqlstatistics/v2/ping" : {
+    "/sqlstatistics/v2/keepAlive" : {
       "post" : {
-        "operationId" : "pingSqlStatisticsQuery",
+        "operationId" : "keepAliveSqlStatisticsQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6706,9 +6706,9 @@
         "tags" : [ "Stroom-Index Queries" ]
       }
     },
-    "/stroom-index/v2/ping" : {
+    "/stroom-index/v2/keepAlive" : {
       "post" : {
-        "operationId" : "pingStroomIndexQuery",
+        "operationId" : "keepAliveStroomIndexQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6826,9 +6826,9 @@
         "tags" : [ "Solr Queries" ]
       }
     },
-    "/stroom-solr-index/v2/ping" : {
+    "/stroom-solr-index/v2/keepAlive" : {
       "post" : {
-        "operationId" : "pingSolrIndexQuery",
+        "operationId" : "keepAliveSolrIndexQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
