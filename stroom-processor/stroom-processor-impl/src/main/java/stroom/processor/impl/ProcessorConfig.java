@@ -40,7 +40,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         createTasks = true;
         deleteAge = StroomDuration.ofDays(1);
         fillTaskQueue = true;
-        queueSize = 1000;
+        queueSize = 1000000;
         databaseMultiInsertMaxBatchSize = 500;
 
         processorCache = CacheConfig.builder()
