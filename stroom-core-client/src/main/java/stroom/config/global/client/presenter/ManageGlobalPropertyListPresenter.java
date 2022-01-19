@@ -326,7 +326,8 @@ public class ManageGlobalPropertyListPresenter
                 DataGridUtil.htmlColumnBuilder(
                                 DataGridUtil.highlightedCellExtractor(
                                         ConfigPropertyRow::getEffectiveValueAsString,
-                                        (ConfigPropertyRow row) -> MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
+                                        (ConfigPropertyRow row) ->
+                                                MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
                                         ERROR_CSS_COLOUR))
                         .withSorting(GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName())
                         .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
@@ -339,7 +340,8 @@ public class ManageGlobalPropertyListPresenter
                 DataGridUtil.htmlColumnBuilder(
                                 DataGridUtil.highlightedCellExtractor(
                                         ConfigPropertyRow::getSourceAsString,
-                                        (ConfigPropertyRow row) -> MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
+                                        (ConfigPropertyRow row) ->
+                                                MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
                                         ERROR_CSS_COLOUR))
                         .withSorting(GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName())
                         .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())

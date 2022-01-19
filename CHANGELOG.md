@@ -12,6 +12,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2709** : Reduce the number of UI refreshes when receiving data from multiple nodes.
+
 * Issue **#2708** : Keep search results fresh by constantly pinging result caches for all active searches.
 
 
