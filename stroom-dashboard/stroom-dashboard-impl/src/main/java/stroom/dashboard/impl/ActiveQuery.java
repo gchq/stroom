@@ -22,8 +22,12 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 class ActiveQuery {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActiveQuery.class);
 
     private final DashboardQueryKey dashboardQueryKey;
     private final QueryKey queryKey;
@@ -35,6 +39,7 @@ class ActiveQuery {
                 final QueryKey queryKey,
                 final DocRef docRef,
                 final DataSourceProvider dataSourceProvider) {
+        LOGGER.trace(() -> "New ActiveQuery " + queryKey);
         this.dashboardQueryKey = dashboardQueryKey;
         this.queryKey = queryKey;
         this.docRef = docRef;

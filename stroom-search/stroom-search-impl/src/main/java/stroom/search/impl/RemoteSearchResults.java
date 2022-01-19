@@ -41,10 +41,12 @@ class RemoteSearchResults {
     }
 
     public Optional<RemoteSearchResultFactory> get(final String key) {
+        LOGGER.trace(() -> "get() " + key);
         return cache.getOptional(key);
     }
 
     public void put(final String key, final RemoteSearchResultFactory factory) {
+        LOGGER.trace(() -> "put() " + key);
         cache.put(key, factory);
     }
 

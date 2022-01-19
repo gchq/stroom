@@ -82,7 +82,14 @@ public class CacheManagerImpl implements CacheManager {
         }
         if (removalNotificationConsumer != null) {
             final RemovalListener<K, V> removalListener = (key, value, cause) -> {
-                LOGGER.debug(() -> "Removal notification for key " + key + ", value " + value + ", cause " + cause);
+                LOGGER.debug(() -> "Removal notification for cache '" +
+                        name +
+                        "' (key=" +
+                        key +
+                        ", value=" +
+                        value +
+                        ", cause=" +
+                        cause + ")");
                 removalNotificationConsumer.accept(key, value);
             };
             cacheBuilder.removalListener(removalListener);
@@ -96,6 +103,7 @@ public class CacheManagerImpl implements CacheManager {
             return new ICache<K, V>() {
                 @Override
                 public V get(final K key) {
+                    LOGGER.trace(() -> "get() - " + key);
                     return cache.get(key);
                 }
 
@@ -107,6 +115,7 @@ public class CacheManagerImpl implements CacheManager {
 
                 @Override
                 public Optional<V> getOptional(final K key) {
+                    LOGGER.trace(() -> "getOptional() - " + key);
                     return Optional.ofNullable(cache.getIfPresent(key));
                 }
 
@@ -135,6 +144,7 @@ public class CacheManagerImpl implements CacheManager {
 
                 @Override
                 public void evictExpiredElements() {
+                    LOGGER.trace(() -> "evictExpiredElements()");
                     cache.cleanUp();
                 }
 
@@ -145,6 +155,7 @@ public class CacheManagerImpl implements CacheManager {
 
                 @Override
                 public void clear() {
+                    LOGGER.trace(() -> "clear()");
                     CacheUtil.clear(cache);
                 }
             };
@@ -157,16 +168,19 @@ public class CacheManagerImpl implements CacheManager {
             return new ICache<K, V>() {
                 @Override
                 public V get(final K key) {
+                    LOGGER.trace(() -> "get() - " + key);
                     return cache.getIfPresent(key);
                 }
 
                 @Override
                 public void put(final K key, final V value) {
+                    LOGGER.trace(() -> "put() - " + key);
                     cache.put(key, value);
                 }
 
                 @Override
                 public Optional<V> getOptional(final K key) {
+                    LOGGER.trace(() -> "getOptional() - " + key);
                     return Optional.ofNullable(cache.getIfPresent(key));
                 }
 
@@ -182,17 +196,20 @@ public class CacheManagerImpl implements CacheManager {
 
                 @Override
                 public void invalidate(final K key) {
+                    LOGGER.trace(() -> "invalidate() - " + key);
                     cache.invalidate(key);
                 }
 
                 @Override
                 public void remove(final K key) {
+                    LOGGER.trace(() -> "remove() - " + key);
                     cache.invalidate(key);
                     cache.cleanUp();
                 }
 
                 @Override
                 public void evictExpiredElements() {
+                    LOGGER.trace(() -> "evictExpiredElements()");
                     cache.cleanUp();
                 }
 
@@ -203,6 +220,7 @@ public class CacheManagerImpl implements CacheManager {
 
                 @Override
                 public void clear() {
+                    LOGGER.trace(() -> "clear()");
                     CacheUtil.clear(cache);
                 }
             };
