@@ -373,6 +373,7 @@ class DashboardServiceImpl implements DashboardService {
 
     @Override
     public Set<DashboardSearchResponse> poll(final SearchBusPollRequest request) {
+        LOGGER.trace(() -> "poll() " + request);
         return securityContext.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the index if they have
             // 'use' permission.
@@ -438,6 +439,7 @@ class DashboardServiceImpl implements DashboardService {
 
     private DashboardSearchResponse processRequest(final ActiveQueries activeQueries,
                                                    final DashboardSearchRequest searchRequest) {
+        LOGGER.trace(() -> "processRequest() " + searchRequest);
         DashboardSearchResponse result = null;
 
         final DashboardQueryKey dashboardQueryKey = searchRequest.getDashboardQueryKey();

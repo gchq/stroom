@@ -46,6 +46,7 @@ import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -103,6 +104,7 @@ public class TaskManagerListPresenter
     private Column<TaskProgress, Expander> expanderColumn;
 
     private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
+    private DelayedUpdate delayedUpdate;
 
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
@@ -133,6 +135,10 @@ public class TaskManagerListPresenter
             @Override
             protected void exec(final Consumer<TaskProgressResponse> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
+                if (delayedUpdate == null) {
+                    delayedUpdate = new DelayedUpdate(() -> update(dataConsumer));
+                }
+                delayedUpdate.reset();
                 fetchNodes(dataConsumer, throwableConsumer);
             }
         };
@@ -371,19 +377,19 @@ public class TaskManagerListPresenter
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
                         errorMap.put(nodeName, response.getErrors());
-                        combineNodeTasks(dataConsumer);
+                        delayedUpdate.update();
                     })
                     .onFailure(throwable -> {
                         responseMap.remove(nodeName);
                         errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
-                        combineNodeTasks(dataConsumer);
+                        delayedUpdate.update();
                     })
                     .call(TASK_RESOURCE)
                     .find(nodeName, request);
         }
     }
 
-    private void combineNodeTasks(final Consumer<TaskProgressResponse> dataConsumer) {
+    private void update(final Consumer<TaskProgressResponse> dataConsumer) {
         // Combine data from all nodes.
         final ResultPage<TaskProgress> resultPage = TaskProgressUtil.combine(
                 criteria,
@@ -403,6 +409,7 @@ public class TaskManagerListPresenter
                 resultPage.getValues(),
                 null,
                 resultPage.getPageResponse());
+
         dataConsumer.accept(response);
         updateButtonStates();
     }
