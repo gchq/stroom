@@ -24,8 +24,6 @@ public class DataSourceModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(DataSourceProviderRegistry.class).to(DataSourceProviderRegistryImpl.class);
-
         RestResourcesBinder.create(binder())
                 .bind(DataSourceResourceImpl.class);
     }

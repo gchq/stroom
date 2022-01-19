@@ -39,7 +39,10 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.ErrorConsumer;
+import stroom.query.common.v2.SearchProgressLog;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
@@ -48,8 +51,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.logging.SearchProgressLog;
-import stroom.util.logging.SearchProgressLog.SearchPhase;
 import stroom.util.shared.StoredError;
 
 import java.io.IOException;
@@ -98,6 +99,7 @@ class ExtractionTaskHandler {
     }
 
     public Meta extract(final TaskContext taskContext,
+                        final QueryKey queryKey,
                         final long streamId,
                         final long[] eventIds,
                         final DocRef pipelineRef,
@@ -109,8 +111,8 @@ class ExtractionTaskHandler {
         // Open the stream source.
         try (final Source source = streamStore.openSource(streamId)) {
             if (source != null) {
-                SearchProgressLog.increment(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT);
-                SearchProgressLog.add(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT_EVENTS, eventIds.length);
+                SearchProgressLog.increment(queryKey, SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT);
+                SearchProgressLog.add(queryKey, SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT_EVENTS, eventIds.length);
 
                 taskContext.reset();
                 taskContext.info(() -> "" +
@@ -144,10 +146,10 @@ class ExtractionTaskHandler {
                 final AbstractSearchResultOutputFilter searchResultOutputFilter = getFilter(pipeline,
                         AbstractSearchResultOutputFilter.class);
 
-                searchResultOutputFilter.setup(receiver);
+                searchResultOutputFilter.setup(queryKey, receiver);
 
                 // Process the stream segments.
-                processData(source, eventIds, pipelineRef, pipeline, errorConsumer);
+                processData(queryKey, source, eventIds, pipelineRef, pipeline, errorConsumer);
 
                 // Ensure count is the same.
                 if (eventIds.length != searchResultOutputFilter.getCount()) {
@@ -173,7 +175,8 @@ class ExtractionTaskHandler {
      * Extract data from the segment list. Returns the total number of segments
      * that were successfully extracted.
      */
-    private void processData(final Source source,
+    private void processData(final QueryKey queryKey,
+                             final Source source,
                              final long[] eventIds,
                              final DocRef pipelineRef,
                              final Pipeline pipeline,
@@ -208,7 +211,7 @@ class ExtractionTaskHandler {
                 }
 
                 // Now try and extract the data.
-                extract(pipelineRef, pipeline, source, segmentInputStream, count);
+                extract(queryKey, pipelineRef, pipeline, source, segmentInputStream, count);
             }
         } catch (final TaskTerminatedException | ClosedByInterruptException e) {
             LOGGER.debug(e::getMessage, e);
@@ -224,13 +227,17 @@ class ExtractionTaskHandler {
     /**
      * We do this one by one
      */
-    private void extract(final DocRef pipelineRef, final Pipeline pipeline, final Source source,
-                         final SegmentInputStream segmentInputStream, final long count) {
+    private void extract(final QueryKey queryKey,
+                         final DocRef pipelineRef,
+                         final Pipeline pipeline,
+                         final Source source,
+                         final SegmentInputStream segmentInputStream,
+                         final long count) {
         if (source != null && segmentInputStream != null) {
             LOGGER.debug(() -> "Reading " + count + " segments from stream " + source.getMeta().getId());
 
-            SearchProgressLog.increment(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT2);
-            SearchProgressLog.add(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT2_EVENTS, count);
+            SearchProgressLog.increment(queryKey, SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT2);
+            SearchProgressLog.add(queryKey, SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT2_EVENTS, count);
 
             try {
                 // Here we need to reload the feed as this will get the related

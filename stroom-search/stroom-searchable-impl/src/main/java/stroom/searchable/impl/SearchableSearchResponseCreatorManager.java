@@ -13,6 +13,7 @@ import stroom.util.shared.Clearable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -56,6 +57,11 @@ class SearchableSearchResponseCreatorManager implements SearchResponseCreatorMan
     @Override
     public SearchResponseCreator get(final SearchResponseCreatorCache.Key key) {
         return cache.get(key);
+    }
+
+    @Override
+    public Optional<SearchResponseCreator> getOptional(final Key key) {
+        return cache.getOptional(key);
     }
 
     @Override

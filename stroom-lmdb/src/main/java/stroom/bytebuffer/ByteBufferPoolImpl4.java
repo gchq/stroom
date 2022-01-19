@@ -6,6 +6,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,7 +25,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 /**
@@ -74,7 +77,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     // In each of these collections, the index/offset is the log10 of the buffer size,
     // i.e. 1 => 0, 10 => 1, 100 => 2 etc.
 
-    private final ByteBufferPoolConfig byteBufferPoolConfig;
+    private final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider;
 
     // One queue for each size of buffer
     private final BlockingQueue<ByteBuffer>[] pooledBufferQueues;
@@ -94,12 +97,13 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     private final int maxOffset;
 
     @Inject
-    public ByteBufferPoolImpl4(final ByteBufferPoolConfig byteBufferPoolConfig) {
+    public ByteBufferPoolImpl4(final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider) {
 
         // Don't use a provider as all the props are RequiresRestart and we want system info to
         // report on config that matches what we init'd with.
-        this.byteBufferPoolConfig = byteBufferPoolConfig;
+        this.byteBufferPoolConfigProvider = byteBufferPoolConfigProvider;
 
+        final ByteBufferPoolConfig byteBufferPoolConfig = byteBufferPoolConfigProvider.get();
         final Map<Integer, Integer> pooledByteBufferCounts = byteBufferPoolConfig.getPooledByteBufferCounts();
 
         // Establish the largest configured buffer size
@@ -185,48 +189,82 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
 
     @Override
     public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
-        return new PooledByteBuffer(() -> getBuffer(minCapacity), this::release);
+        return new PooledByteBuffer(() -> getBufferByMinCapacity(minCapacity), this::release);
     }
 
     private ByteBuffer getUnPooledBuffer(final int minCapacity) {
+        LOGGER.warn("Using un-pooled buffer, size: {}", minCapacity);
+        // Too big a buffer to pool so just create one that will have to be destroyed and not put in the pool
         return ByteBuffer.allocateDirect(minCapacity);
     }
 
-    private ByteBuffer getBuffer(final int minCapacity) {
-        final int offset = getOffset(minCapacity);
+    private ByteBuffer getBufferByMinCapacity(final int minCapacity) {
+        final int originalOffset = getOffset(minCapacity);
+        int offset = originalOffset;
+        ByteBuffer buffer = null;
         if (isUnPooled(offset)) {
-            LOGGER.warn("Using un-pooled buffer, size: {}", minCapacity);
-            // Too big a buffer to pool so just create one
-            return getUnPooledBuffer(minCapacity);
+            buffer = getUnPooledBuffer(minCapacity);
         } else {
-            final BlockingQueue<ByteBuffer> byteBufferQueue = pooledBufferQueues[offset];
+            buffer = getBufferByOffset(offset);
 
-            ByteBuffer buffer = byteBufferQueue.poll();
             if (buffer == null) {
-                // Queue empty so if the pool hasn't reached them limit for this buffer size
-                // create a new one.
-                buffer = createNewBufferIfAllowed(offset);
-            }
-            if (buffer == null) {
-                try {
-                    // At max pooled buffers so we just have to block and wait for another thread to release
-                    // TODO @AT At this point instead of waiting we could try the next biggest buffer size,
-                    //  i.e. for offset+1. A bigger buffer would be fine but means potentially depriving
-                    //  other threads that need the bigger buffers.
-                    buffer = byteBufferQueue.take();
-                } catch (InterruptedException e) {
-                    LOGGER.debug("Thread interrupted waiting for a buffer from the pool", e);
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException("Thread interrupted while waiting for a buffer from the pool");
+                // No buffer at that size so try the next size up
+                // We could loop and try all bigger sizes but then we risk creating a huge buffer
+                // for a tiny requested capacity and having that huge buffer hang around in the pool.
+                offset = getNextOffset(offset);
+                if (offset == -1) {
+                    // Reached max offset
+                } else {
+                    LOGGER.debug("Trying new offset {} (originalOffset: {})", offset, originalOffset);
+                    buffer = getBufferByOffset(offset);
                 }
             }
+
+            if (buffer == null) {
+                // None in the pool and not allowed to create any more pool buffers so we either
+                // wait on the queue or just create an excess one that will have to be destroyed on release.
+                // Creation of an excess one is a last resort due to the cost of creation/destruction
+                if (byteBufferPoolConfigProvider.get().isBlockOnExhaustedPool()) {
+                    try {
+                        // At max pooled buffers so we just have to block and wait for another thread to release
+                        final BlockingQueue<ByteBuffer> byteBufferQueue = pooledBufferQueues[originalOffset];
+                        LOGGER.debug("Taking from queue, may block");
+                        buffer = byteBufferQueue.take();
+                    } catch (InterruptedException e) {
+                        LOGGER.debug("Thread interrupted waiting for a buffer from the pool", e);
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Thread interrupted while waiting for a buffer from the pool");
+                    }
+                } else {
+                    // Don't want to block so create a new one
+                    // Excess buffers will have to be unmapped rather than returned to the pool
+                    final int roundedCapacity = bufferSizes[originalOffset];
+                    LOGGER.debug("Creating new buffer beyond the pool limit (capacity: {})", roundedCapacity);
+                    buffer = ByteBuffer.allocateDirect(roundedCapacity);
+                }
+            }
+
             Objects.requireNonNull(
                     buffer,
                     "Something has gone wrong, we should not have a null buffer");
-            // Ensure the buffer is ready for use with limits/positions/marks cleared
+
             buffer.clear();
-            return buffer;
         }
+        return buffer;
+    }
+
+    @Nullable
+    private ByteBuffer getBufferByOffset(final int offset) {
+        final BlockingQueue<ByteBuffer> byteBufferQueue = pooledBufferQueues[offset];
+
+        ByteBuffer buffer = byteBufferQueue.poll();
+        if (buffer == null) {
+            // Queue empty so if the pool hasn't reached them limit for this buffer size
+            // create a new one.
+            buffer = createNewBufferIfAllowed(offset);
+        }
+
+        return buffer;
     }
 
     private boolean isUnPooled(final int offset) {
@@ -234,31 +272,51 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     }
 
     void release(final ByteBuffer buffer) {
-        final int offset = getOffset(buffer.capacity());
-        if (isUnPooled(offset)) {
-            // Too big a buffer to pool so do nothing so the JVM can de-reference it
-            // TODO @AT Not clear if we need to do anything to help the jvm free up the buffer.
-        } else {
-            // Use offer rather than put as that will fail if the thread is interrupted but
-            // we want the buffer back on the queue whatever happens, else the pool will be
-            // exhausted.
-            // As pooledBufferCounters controls the number of queued items we don't need to worry
-            // about offer failing.
-            final boolean didOfferSucceed = pooledBufferQueues[offset].offer(buffer);
+        if (buffer != null) {
+            final int offset = getOffset(buffer.capacity());
+            if (isUnPooled(offset)) {
+                // Not pooled so need to release the memory via the cleaner
+                unmapBuffer(buffer);
+            } else {
+                // Use offer rather than put as that will fail if the thread is interrupted but
+                // we want the buffer back on the queue whatever happens, else the pool will be
+                // exhausted.
+                // As pooledBufferCounters controls the number of queued items we don't need to worry
+                // about offer failing.
+                final boolean didOfferSucceed = pooledBufferQueues[offset].offer(buffer);
 
-            if (!didOfferSucceed) {
-                throw new RuntimeException(LogUtil.message("Unable to return buffer to the queue. " +
-                                "Should never get here. Queue size: {}, counter value: {}",
-                        pooledBufferQueues[offset].size(),
-                        pooledBufferCounters[offset].get()));
+                if (!didOfferSucceed) {
+                    // We must have created more buffers than there are under pool control so we just have
+                    // to unmap it
+                    LOGGER.debug(() -> LogUtil.message("Unable to return buffer to the queue so will destroy it " +
+                                    "(capacity: {}, queue size: {}, counter value: {}, configured limit: {}",
+                            buffer.capacity(),
+                            pooledBufferQueues[offset].size(),
+                            pooledBufferCounters[offset].get(),
+                            maxBufferCounts[offset]));
+                    unmapBuffer(buffer);
+                }
+            }
+        } else {
+            LOGGER.debug("buffer is null");
+        }
+    }
+
+    private void unmapBuffer(final ByteBuffer buffer) {
+        if (buffer.isDirect()) {
+            try {
+                LOGGER.debug("Unmapping buffer {}", buffer);
+                ByteBufferSupport.unmap((MappedByteBuffer) buffer);
+            } catch (Exception e) {
+                LOGGER.error("Error releasing direct byte buffer", e);
             }
         }
     }
 
     @Override
     public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
-        final ByteBuffer keyBuffer = getBuffer(minKeyCapacity);
-        final ByteBuffer valueBuffer = getBuffer(minValueCapacity);
+        final ByteBuffer keyBuffer = getBufferByMinCapacity(minKeyCapacity);
+        final ByteBuffer valueBuffer = getBufferByMinCapacity(minValueCapacity);
         return new PooledByteBufferPair(this::release, keyBuffer, valueBuffer);
     }
 
@@ -266,7 +324,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     public <T> T getWithBuffer(final int minCapacity, final Function<ByteBuffer, T> work) {
         ByteBuffer buffer = null;
         try {
-            buffer = getBuffer(minCapacity);
+            buffer = getBufferByMinCapacity(minCapacity);
             return work.apply(buffer);
         } finally {
             if (buffer != null) {
@@ -279,7 +337,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     public void doWithBuffer(final int minCapacity, final Consumer<ByteBuffer> work) {
         ByteBuffer buffer = null;
         try {
-            buffer = getBuffer(minCapacity);
+            buffer = getBufferByMinCapacity(minCapacity);
             work.accept(buffer);
         } finally {
             if (buffer != null) {
@@ -295,8 +353,8 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
         ByteBuffer keyBuffer = null;
         ByteBuffer valueBuffer = null;
         try {
-            keyBuffer = getBuffer(minKeyCapacity);
-            valueBuffer = getBuffer(minValueCapacity);
+            keyBuffer = getBufferByMinCapacity(minKeyCapacity);
+            valueBuffer = getBufferByMinCapacity(minValueCapacity);
             work.accept(keyBuffer, valueBuffer);
         } finally {
             if (keyBuffer != null) {
@@ -362,7 +420,8 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                             : 0;
                     final int bufferCapacity = bufferSizes[offset];
                     final int buffersOnLoan = buffersHighWaterMark - availableBuffersOnQueue;
-                    final int configuredMaximum = Optional.ofNullable(byteBufferPoolConfig.getPooledByteBufferCounts())
+                    final int configuredMaximum = Optional.ofNullable(
+                            byteBufferPoolConfigProvider.get().getPooledByteBufferCounts())
                             .map(map -> map.get(bufferCapacity))
                             .orElse(DEFAULT_MAX_BUFFERS_PER_QUEUE);
 
@@ -394,10 +453,12 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
         }
     }
 
+    @Nullable
     private ByteBuffer createNewBufferIfAllowed(final int offset) {
         final int maxBufferCount = maxBufferCounts[offset];
         final int warningThreshold = warningThresholds[offset];
         final AtomicInteger bufferCounter = pooledBufferCounters[offset];
+        final int roundedCapacity = bufferSizes[offset];
 
         ByteBuffer byteBuffer = null;
 
@@ -408,22 +469,22 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
             if (currBufferCount < maxBufferCount) {
                 final int newBufferCount = currBufferCount + 1;
 
-
                 if (bufferCounter.compareAndSet(currBufferCount, newBufferCount)) {
                     // Succeeded in incrementing the count so we can create one
-                    final int roundedCapacity = bufferSizes[offset];
+                    LOGGER.debug("Creating new pooled buffer (capacity: {})", roundedCapacity);
                     byteBuffer = ByteBuffer.allocateDirect(roundedCapacity);
 
                     if (newBufferCount == warningThreshold) {
                         LOGGER.warn("Hit {}% ({}) of the limit of {} for pooled buffers of size {}.",
-                                byteBufferPoolConfig.getWarningThresholdPercentage(),
+                                byteBufferPoolConfigProvider.get().getWarningThresholdPercentage(),
                                 warningThreshold,
                                 newBufferCount,
                                 bufferSizes[offset]);
                     } else if (newBufferCount == maxBufferCount) {
                         LOGGER.warn("Hit limit of {} for pooled buffers of size {}. " +
-                                        "Future calls to the pool will not create more buffers of this size. " +
-                                        "Consider changing the pool settings.",
+                                        "Future calls to the pool will create new buffers but excess buffers " +
+                                        "will have to be freed rather than returned to the pool. This may incur a " +
+                                        "performance overhead. Consider changing the pool settings.",
                                 newBufferCount,
                                 roundedCapacity);
                     }
@@ -433,7 +494,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                     // CAS failed so another thread beat us, go round again.
                 }
             } else {
-                // At max count so can't create any more
+                // At max count so can't add any more to the pool
                 break;
             }
         }
@@ -442,5 +503,31 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
 
     private int getOffset(final int minCapacity) {
         return (int) Math.ceil(Math.log10(minCapacity));
+    }
+
+    private int getNextOffset(final int offset) {
+        return offset >= pooledBufferCounters.length - 1
+                ? -1
+                : offset + 1;
+    }
+
+    /**
+     * For testing.
+     *
+     * @return Number of buffers known to the pool, i.e. in the pool or on loan.
+     */
+    int getPooledBufferCount(final int minCapacity) {
+        final int offset = getOffset(minCapacity);
+        return pooledBufferCounters[offset].get();
+    }
+
+    /**
+     * For testing.
+     *
+     * @return Number of buffers available in the pool now.
+     */
+    int getAvailableBufferCount(final int minCapacity) {
+        final int offset = getOffset(minCapacity);
+        return pooledBufferQueues[offset].size();
     }
 }

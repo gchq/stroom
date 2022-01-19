@@ -8,6 +8,8 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ErrorConsumer;
+import stroom.query.common.v2.SearchProgressLog;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.search.impl.ClusterSearchTask;
 import stroom.search.impl.SearchConfig;
@@ -23,8 +25,6 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.SearchProgressLog;
-import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
@@ -78,7 +78,7 @@ public class IndexShardSearchFactory {
                                           final AtomicLong hitCount,
                                           final StoredDataQueue storedDataQueue,
                                           final ErrorConsumer errorConsumer) {
-        SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
+        SearchProgressLog.increment(task.getKey(), SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
 
         // Reload the index.
         final IndexDoc index = indexStore.readDocument(task.getQuery().getDataSource());
@@ -127,6 +127,7 @@ public class IndexShardSearchFactory {
                                                 indexShardSearchTaskHandlerProvider.get();
                                         handler.searchShard(
                                                 taskContext,
+                                                task.getKey(),
                                                 queryFactory,
                                                 storedFieldNames,
                                                 hitCount,

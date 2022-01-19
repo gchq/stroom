@@ -12,6 +12,55 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.174] - 2022-01-13
+
+* Issue **#2708** : Keep search results fresh by constantly pinging result caches for all active searches.
+
+
+## [v7.0-beta.173] - 2022-01-13
+
+* Issue **#2703** : Improve search trace log to identify multi query search issues.
+
+* Issue **#2705** : Attempt to fix SIDSEGV issue caused by too many LMDB readers.
+
+
+## [v7.0-beta.172] - 2022-01-11
+
+* Issue **#2688** : Add `metaTypes` to Proxy's `proxyRequestConfig`. Change data receipt to validate types against this new config property.
+
+* Issue **#2688** : Change defaults for Strooms `metaTypes` config property. Change type of `metaTypes` from String to a Set of Strings. Change data receipt to validate against this configured set.
+
+* Issue **#2694** : Improve error handling when search result store has reached max capacity.
+
+* Issue **#2689** : Add logging.
+
+
+## [v7.0-beta.171] - 2022-01-07
+
+* Issue **#2679** : Add unique index on `meta_processor.pipeline_uuid`.
+
+* Issue **#2596** : Disable the Ace editor settings menu (`ctrl-,`) as users should not have access to it and it does not work with modal dialogs.
+
+* Issue **#2139** : Add DB migration scripts to the ZIP distribution.
+
+* Issue **#2685** : Fix issue where searchable stores are limited to 1 million rows.
+
+* Issue **#2696** : Change the byte buffer pool to not block by default and make that configurable.
+
+
+## [v7.0-beta.170] - 2021-12-24
+
+* Issue **#2666** : Fix handling of missing reference stream file.
+
+* Change error table to wrap error message text.
+
+* Issue **#2644** : Fix error handling when volume is full during proxy aggregation.
+
+* Issue **#2650** : Fix handling of negative numbers and negation in expression parser.
+
+* Issue **#2664** : Fix issue with search where a complete coprocessor was causing other coprocessor payloads to be read incorrectly.
+
+
 ## [v7.0-beta.169] - 2021-12-16
 
 * Issue **#2648** : Add error message to data viewer when ID is invalid.
@@ -4079,7 +4128,12 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.169...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.174...HEAD
+[v7.0-beta.174]: https://github.com/gchq/stroom/compare/v7.0-beta.173...v7.0-beta.174
+[v7.0-beta.173]: https://github.com/gchq/stroom/compare/v7.0-beta.172...v7.0-beta.173
+[v7.0-beta.172]: https://github.com/gchq/stroom/compare/v7.0-beta.171...v7.0-beta.172
+[v7.0-beta.171]: https://github.com/gchq/stroom/compare/v7.0-beta.170...v7.0-beta.171
+[v7.0-beta.170]: https://github.com/gchq/stroom/compare/v7.0-beta.169...v7.0-beta.170
 [v7.0-beta.169]: https://github.com/gchq/stroom/compare/v7.0-beta.168...v7.0-beta.169
 [v7.0-beta.168]: https://github.com/gchq/stroom/compare/v7.0-beta.167...v7.0-beta.168
 [v7.0-beta.167]: https://github.com/gchq/stroom/compare/v7.0-beta.166...v7.0-beta.167

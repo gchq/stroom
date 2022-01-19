@@ -18,6 +18,7 @@ public class ByteBufferPoolConfig extends AbstractConfig {
 
     private final int warningThresholdPercentage;
     private final Map<Integer, Integer> pooledByteBufferCounts;
+    private final boolean blockOnExhaustedPool;
 
     public ByteBufferPoolConfig() {
         warningThresholdPercentage = 90;
@@ -30,14 +31,17 @@ public class ByteBufferPoolConfig extends AbstractConfig {
                 10_000, 50,
                 100_000, 10,
                 1_000_000, 3));
+        blockOnExhaustedPool = false;
     }
 
     @JsonCreator
     public ByteBufferPoolConfig(
             @JsonProperty("warningThresholdPercentage") final int warningThresholdPercentage,
-            @JsonProperty("pooledByteBufferCounts") final Map<Integer, Integer> pooledByteBufferCounts) {
+            @JsonProperty("pooledByteBufferCounts") final Map<Integer, Integer> pooledByteBufferCounts,
+            @JsonProperty("blockOnExhaustedPool") final boolean blockOnExhaustedPool) {
         this.warningThresholdPercentage = warningThresholdPercentage;
         this.pooledByteBufferCounts = pooledByteBufferCounts;
+        this.blockOnExhaustedPool = blockOnExhaustedPool;
     }
 
     @Max(100)
@@ -60,8 +64,19 @@ public class ByteBufferPoolConfig extends AbstractConfig {
         return pooledByteBufferCounts;
     }
 
+    @JsonPropertyDescription("Whether the thread should be blocked when requesting a buffer from the pool and the " +
+            "limit for that buffer size has been reached. If false new buffers will be created and excess buffers " +
+            "will have to be destroyed when no longer needed which may have a performance/memory penalty.")
+    public boolean isBlockOnExhaustedPool() {
+        return blockOnExhaustedPool;
+    }
+
     public ByteBufferPoolConfig withPooledByteBufferCounts(final Map<Integer, Integer> pooledByteBufferCounts) {
-        return new ByteBufferPoolConfig(warningThresholdPercentage, pooledByteBufferCounts);
+        return new ByteBufferPoolConfig(warningThresholdPercentage, pooledByteBufferCounts, blockOnExhaustedPool);
+    }
+
+    public ByteBufferPoolConfig withBlockOnExhaustedPool(final boolean blockOnExhaustedPool) {
+        return new ByteBufferPoolConfig(warningThresholdPercentage, pooledByteBufferCounts, blockOnExhaustedPool);
     }
 
     @Override
@@ -69,6 +84,7 @@ public class ByteBufferPoolConfig extends AbstractConfig {
         return "ByteBufferPoolConfig{" +
                 "warningThresholdPercentage=" + warningThresholdPercentage +
                 ", pooledByteBufferCounts=" + pooledByteBufferCounts +
+                ", blockOnExhaustedPool=" + blockOnExhaustedPool +
                 '}';
     }
 }

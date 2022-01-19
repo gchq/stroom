@@ -32,6 +32,18 @@ proxyConfig:
     maxStreamSize: "1.0G"
     readCron: null
   proxyRequestConfig:
+    metaTypes:
+    - "Context"
+    - "Raw Reference"
+    - "Events"
+    - "Raw Events"
+    - "Reference"
+    - "Error"
+    - "Test Events"
+    - "Test Reference"
+    - "Detections"
+    - "Meta Data"
+    - "Records"
     receiptPolicyUuid: null
   restClient:
     chunkedEncodingEnabled: true

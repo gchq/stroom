@@ -78,10 +78,10 @@ END $$
 
 -- --------------------------------------------------
 
-DROP PROCEDURE IF EXISTS meta_create_non_unique $$
+DROP PROCEDURE IF EXISTS meta_create_non_unique_index_v1$$
 
 -- DO NOT change this without reading the header!
-CREATE PROCEDURE meta_create_non_unique (
+CREATE PROCEDURE meta_create_non_unique_index_v1 (
     p_table_name varchar(64),
     p_index_name varchar(64),
     p_index_columns varchar(64)

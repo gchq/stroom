@@ -122,7 +122,7 @@ public class ClusterSearchResultCollector implements Store {
 
     @Override
     public void destroy() {
-        LOGGER.trace(() -> "destroy()");
+        LOGGER.trace(() -> "destroy()", new RuntimeException("destroy"));
         complete = true;
         if (asyncSearchTaskHandler != null) {
             asyncSearchTaskHandler.terminateTasks(task, taskContext.getTaskId());

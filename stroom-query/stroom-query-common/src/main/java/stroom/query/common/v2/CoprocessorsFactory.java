@@ -4,6 +4,7 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.Param;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
@@ -59,13 +60,13 @@ public class CoprocessorsFactory {
     public Coprocessors create(final SearchRequest searchRequest) {
         final List<CoprocessorSettings> coprocessorSettingsList = createSettings(searchRequest);
         return create(
-                searchRequest.getKey().getUuid(),
+                searchRequest.getKey(),
                 coprocessorSettingsList,
                 searchRequest.getQuery().getParams(),
                 false);
     }
 
-    public Coprocessors create(final String queryKey,
+    public Coprocessors create(final QueryKey queryKey,
                                final List<CoprocessorSettings> coprocessorSettingsList,
                                final List<Param> params,
                                final boolean producePayloads) {
@@ -128,7 +129,7 @@ public class CoprocessorsFactory {
                 errorConsumer);
     }
 
-    private Coprocessor create(final String queryKey,
+    private Coprocessor create(final QueryKey queryKey,
                                final CoprocessorSettings settings,
                                final FieldIndex fieldIndex,
                                final Map<String, String> paramMap,
@@ -154,7 +155,7 @@ public class CoprocessorsFactory {
         return null;
     }
 
-    private DataStore create(final String queryKey,
+    private DataStore create(final QueryKey queryKey,
                              final String componentId,
                              final TableSettings tableSettings,
                              final FieldIndex fieldIndex,

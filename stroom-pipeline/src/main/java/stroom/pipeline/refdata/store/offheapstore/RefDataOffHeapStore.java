@@ -1323,6 +1323,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .addDetail("Purge cut off",
                             TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
                     .addDetail("Max readers", referenceDataConfig.getLmdbConfig().getMaxReaders())
+                    .addDetail("Available read permits", lmdbEnvironment.getAvailableReadPermitCount())
                     .addDetail("Read-ahead enabled", referenceDataConfig.getLmdbConfig().isReadAheadEnabled())
                     .addDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
                     .addDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1()

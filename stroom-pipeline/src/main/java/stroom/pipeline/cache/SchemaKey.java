@@ -75,4 +75,13 @@ public class SchemaKey implements Serializable {
 
         return builder.isEquals();
     }
+
+    @Override
+    public String toString() {
+        return "SchemaKey{" +
+                "schemaLanguage='" + schemaLanguage + '\'' +
+                ", data='" + data + '\'' +
+                ", findXMLSchemaCriteria=" + findXMLSchemaCriteria +
+                '}';
+    }
 }

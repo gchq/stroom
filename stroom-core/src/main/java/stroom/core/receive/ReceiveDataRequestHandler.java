@@ -87,7 +87,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
 
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
             // Validate the supplied attributes.
-            AttributeMapValidator.validate(attributeMap);
+            AttributeMapValidator.validate(attributeMap, metaService::getTypes);
 
             final String feedName;
             if (attributeMapFilter.filter(attributeMap)) {

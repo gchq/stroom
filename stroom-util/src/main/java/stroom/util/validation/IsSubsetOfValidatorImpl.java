@@ -4,17 +4,18 @@ import stroom.util.shared.validation.IsSubsetOf;
 import stroom.util.shared.validation.IsSubsetOfValidator;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import javax.validation.ConstraintValidatorContext;
 
 public class IsSubsetOfValidatorImpl implements IsSubsetOfValidator {
 
-    private List<String> allowedValues;
+    private Set<String> allowedValues;
 
     @Override
     public void initialize(IsSubsetOf constraintAnnotation) {
-        allowedValues = Arrays.asList(constraintAnnotation.allowedValues());
+        allowedValues = new HashSet<>(Arrays.asList(constraintAnnotation.allowedValues()));
     }
 
     /**
@@ -29,15 +30,14 @@ public class IsSubsetOfValidatorImpl implements IsSubsetOfValidator {
      * @return {@code false} if {@code value} does not pass the constraint
      */
     @Override
-    public boolean isValid(final List<String> values,
+    public boolean isValid(final Collection<String> values,
                            final ConstraintValidatorContext context) {
         boolean result = true;
 
         if (values != null && !values.isEmpty()) {
 
-            List<String> invalidValues = values.stream()
-                    .filter(value -> !allowedValues.contains(value))
-                    .collect(Collectors.toList());
+            Set<String> invalidValues = new HashSet<>(values);
+            invalidValues.removeAll(allowedValues);
 
             if (!invalidValues.isEmpty()) {
                 // We want the exception details in the message so bin the default constraint

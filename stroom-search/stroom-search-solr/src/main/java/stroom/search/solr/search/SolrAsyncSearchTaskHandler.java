@@ -74,6 +74,7 @@ public class SolrAsyncSearchTaskHandler {
                         // Start searching.
                         clusterSearchTaskHandler.search(
                                 parentContext,
+                                task.getKey(),
                                 query,
                                 task.getNow(),
                                 task.getDateTimeLocale(),

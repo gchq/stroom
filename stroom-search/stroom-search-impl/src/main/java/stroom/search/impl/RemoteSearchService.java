@@ -9,7 +9,6 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.SearchProgressLog;
 import stroom.util.string.ExceptionStringUtil;
 
 import com.esotericsoftware.kryo.KryoException;
@@ -58,7 +57,6 @@ public class RemoteSearchService {
 
     public Boolean start(final ClusterSearchTask clusterSearchTask) {
         LOGGER.debug(() -> "startSearch " + clusterSearchTask);
-        SearchProgressLog.clear();
         final RemoteSearchResultFactory remoteSearchResultFactory
                 = new RemoteSearchResultFactory(taskManager, securityContext);
         remoteSearchResults.put(clusterSearchTask.getKey().getUuid(), remoteSearchResultFactory);
@@ -74,7 +72,7 @@ public class RemoteSearchService {
                 }
 
                 coprocessors = coprocessorsFactory.create(
-                        clusterSearchTask.getKey().getUuid(),
+                        clusterSearchTask.getKey(),
                         clusterSearchTask.getSettings(),
                         query.getParams(),
                         true);

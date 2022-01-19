@@ -17,9 +17,12 @@
 
 package stroom.bytebuffer;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -38,6 +41,8 @@ import javax.annotation.concurrent.NotThreadSafe;
  */
 @NotThreadSafe
 public class PooledByteBuffer implements AutoCloseable {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PooledByteBuffer.class);
 
     private ByteBuffer byteBuffer;
     private Supplier<ByteBuffer> byteBufferSupplier;
@@ -85,7 +90,17 @@ public class PooledByteBuffer implements AutoCloseable {
      * references to it. Identical behaviour to calling {@link PooledByteBuffer#close()}.
      */
     public void release() {
-        if (releaseFunc != null && byteBuffer != null) {
+        if (releaseFunc == null) {
+            if (byteBuffer != null && byteBuffer.isDirect()) {
+                try {
+                    ByteBufferSupport.unmap((MappedByteBuffer) byteBuffer);
+                } catch (Exception e) {
+                    LOGGER.error("Error releasing direct byte buffer", e);
+                }
+            }
+            byteBuffer = null;
+            byteBufferSupplier = null;
+        } else if (byteBuffer != null) {
             releaseFunc.accept(byteBuffer);
             byteBuffer = null;
             byteBufferSupplier = null;

@@ -26,6 +26,7 @@ dependencies {
     compile libs.slf4j_api
     compile libs.swagger_annotations
     compile libs.ws_rs_api
+    compile libs.dropwizard_validation
 
     runtimeOnly libs.mysql_connector_java
     

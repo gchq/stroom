@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-
 @JsonPropertyOrder(alphabetic = true)
 public class IndexShardSearchConfig extends AbstractConfig {
 
@@ -18,6 +17,7 @@ public class IndexShardSearchConfig extends AbstractConfig {
     private final int maxDocIdQueueSize;
     private final int maxThreadsPerTask;
     private final CacheConfig searchResultCache;
+    private final CacheConfig remoteSearchResultCache;
     private final CacheConfig indexShardSearcherCache;
 
     public IndexShardSearchConfig() {
@@ -25,6 +25,10 @@ public class IndexShardSearchConfig extends AbstractConfig {
         maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
         searchResultCache = CacheConfig.builder()
                 .maximumSize(10_000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+        remoteSearchResultCache = CacheConfig.builder()
+                .maximumSize(100L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         indexShardSearcherCache = CacheConfig.builder()
@@ -37,10 +41,12 @@ public class IndexShardSearchConfig extends AbstractConfig {
     public IndexShardSearchConfig(@JsonProperty("maxDocIdQueueSize") final int maxDocIdQueueSize,
                                   @JsonProperty("maxThreadsPerTask") final int maxThreadsPerTask,
                                   @JsonProperty("searchResultCache") final CacheConfig searchResultCache,
+                                  @JsonProperty("remoteSearchResultCache") final CacheConfig remoteSearchResultCache,
                                   @JsonProperty("indexShardSearcherCache") final CacheConfig indexShardSearcherCache) {
         this.maxDocIdQueueSize = maxDocIdQueueSize;
         this.maxThreadsPerTask = maxThreadsPerTask;
         this.searchResultCache = searchResultCache;
+        this.remoteSearchResultCache = remoteSearchResultCache;
         this.indexShardSearcherCache = indexShardSearcherCache;
     }
 
@@ -59,6 +65,10 @@ public class IndexShardSearchConfig extends AbstractConfig {
         return searchResultCache;
     }
 
+    public CacheConfig getRemoteSearchResultCache() {
+        return remoteSearchResultCache;
+    }
+
     public CacheConfig getIndexShardSearcherCache() {
         return indexShardSearcherCache;
     }
@@ -69,6 +79,7 @@ public class IndexShardSearchConfig extends AbstractConfig {
                 "maxDocIdQueueSize=" + maxDocIdQueueSize +
                 ", maxThreadsPerTask=" + maxThreadsPerTask +
                 ", searchResultCache=" + searchResultCache +
+                ", remoteSearchResultCache=" + remoteSearchResultCache +
                 ", indexShardSearcherCache=" + indexShardSearcherCache +
                 '}';
     }

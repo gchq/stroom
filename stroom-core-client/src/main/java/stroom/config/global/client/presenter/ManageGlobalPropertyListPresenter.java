@@ -28,6 +28,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.svg.client.SvgPreset;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.PageRequest;
 import stroom.widget.button.client.ButtonView;
 
@@ -84,22 +85,14 @@ public class ManageGlobalPropertyListPresenter
     // propName => (sources)
     private Map<String, Set<String>> propertyToUniqueSourcesMap = new HashMap<>();
 
-    private final Timer refreshAllNodesTimer = new Timer() {
-        @Override
-        public void run() {
-            refreshPropertiesForAllNodes();
-        }
-    };
+    private final DelayedUpdate refreshAllNodesTimer = new DelayedUpdate(REFRESH_ALL_NODES_TIMER_DELAY_MS,
+            this::refreshPropertiesForAllNodes);
 
     // This is node that responded to the top level request
     private String lastNodeName;
 
-    private final Timer updateChildMapsTimer = new Timer() {
-        @Override
-        public void run() {
-            updatePropertyKeyedMaps();
-        }
-    };
+    private final DelayedUpdate updateChildMapsTimer = new DelayedUpdate(UPDATE_MAPS_TIMER_DELAY_MS,
+            this::updatePropertyKeyedMaps);
 
     private final NameFilterTimer nameFilterTimer = new NameFilterTimer();
 
@@ -127,6 +120,9 @@ public class ManageGlobalPropertyListPresenter
 
         criteria.setPageRequest(new PageRequest(range.getStart(), range.getLength()));
 
+        refreshAllNodesTimer.reset();
+        updateChildMapsTimer.reset();
+
         final Rest<ListConfigResponse> rest = restFactory.create();
         rest
                 .onSuccess(listConfigResponse -> {
@@ -153,9 +149,7 @@ public class ManageGlobalPropertyListPresenter
 
                     // now we have the props from one node, go off and get all the values/sources
                     // from all the nodes. Use a timer to delay it a bit
-                    if (!refreshAllNodesTimer.isRunning()) {
-                        refreshAllNodesTimer.schedule(REFRESH_ALL_NODES_TIMER_DELAY_MS);
-                    }
+                    refreshAllNodesTimer.update();
                 })
                 .onFailure(throwable -> {
                     // TODO
@@ -165,6 +159,8 @@ public class ManageGlobalPropertyListPresenter
     }
 
     private void refreshPropertiesForAllNodes() {
+        updateChildMapsTimer.reset();
+
         // Only care about enabled nodes
         unreachableNodes.clear();
         // No point hitting the node that we hit at the top level again as we already have its data
@@ -195,21 +191,19 @@ public class ManageGlobalPropertyListPresenter
                     nodeToClusterEffectiveValuesMap.keySet().forEach(
                             propName -> {
                                 nodeToClusterEffectiveValuesMap.computeIfAbsent(
-                                        propName,
-                                        k -> new HashMap<>())
+                                                propName,
+                                                k -> new HashMap<>())
                                         .remove(nodeName);
 
                                 nodeToClusterSourcesMap.computeIfAbsent(
-                                        propName,
-                                        k -> new HashMap<>())
+                                                propName,
+                                                k -> new HashMap<>())
                                         .remove(nodeName);
                             });
 
                     // kick off the delayed action to update the maps keyed on prop name,
                     // unless another node has already kicked it off
-                    if (!updateChildMapsTimer.isRunning()) {
-                        updateChildMapsTimer.schedule(UPDATE_MAPS_TIMER_DELAY_MS);
-                    }
+                    updateChildMapsTimer.update();
                 })
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .listByNode(nodeName, criteria);
@@ -231,9 +225,7 @@ public class ManageGlobalPropertyListPresenter
 
             // kick off the delayed action to update the maps keyed on prop name,
             // unless another node has already kicked it off
-            if (!updateChildMapsTimer.isRunning()) {
-                updateChildMapsTimer.schedule(UPDATE_MAPS_TIMER_DELAY_MS);
-            }
+            updateChildMapsTimer.update();
         });
     }
 
@@ -243,13 +235,13 @@ public class ManageGlobalPropertyListPresenter
                                      final String source) {
 
         nodeToClusterEffectiveValuesMap.computeIfAbsent(
-                propName,
-                k -> new HashMap<>())
+                        propName,
+                        k -> new HashMap<>())
                 .put(nodeName, effectiveValue);
 
         nodeToClusterSourcesMap.computeIfAbsent(
-                propName,
-                k -> new HashMap<>())
+                        propName,
+                        k -> new HashMap<>())
                 .put(nodeName, source);
     }
 
@@ -332,10 +324,10 @@ public class ManageGlobalPropertyListPresenter
         // Effective Value
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(
-                        DataGridUtil.highlightedCellExtractor(
-                                ConfigPropertyRow::getEffectiveValueAsString,
-                                (ConfigPropertyRow row) -> MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
-                                ERROR_CSS_COLOUR))
+                                DataGridUtil.highlightedCellExtractor(
+                                        ConfigPropertyRow::getEffectiveValueAsString,
+                                        (ConfigPropertyRow row) -> MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
+                                        ERROR_CSS_COLOUR))
                         .withSorting(GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName())
                         .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
                         .build(),
@@ -345,10 +337,10 @@ public class ManageGlobalPropertyListPresenter
         // Source
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(
-                        DataGridUtil.highlightedCellExtractor(
-                                ConfigPropertyRow::getSourceAsString,
-                                (ConfigPropertyRow row) -> MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
-                                ERROR_CSS_COLOUR))
+                                DataGridUtil.highlightedCellExtractor(
+                                        ConfigPropertyRow::getSourceAsString,
+                                        (ConfigPropertyRow row) -> MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
+                                        ERROR_CSS_COLOUR))
                         .withSorting(GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName())
                         .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
                         .build(),

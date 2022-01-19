@@ -41,6 +41,7 @@ appConfig:
     - "Assigned"
     - "Closed"
   byteBufferPool:
+    blockOnExhaustedPool: false
     pooledByteBufferCounts:
       1: 50
       10: 50
@@ -157,7 +158,18 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
-      metaTypes: "Raw Events\nRaw Reference\nEvents\nReference\nRecords\nError"
+      metaTypes:
+      - "Context"
+      - "Raw Reference"
+      - "Events"
+      - "Raw Events"
+      - "Reference"
+      - "Error"
+      - "Test Events"
+      - "Test Reference"
+      - "Detections"
+      - "Meta Data"
+      - "Records"
       metaValue:
         addAsync: true
         deleteAge: "P30D"
@@ -516,10 +528,6 @@ appConfig:
       maxThreadsPerTask: 5
     maxBooleanClauseCount: 1024
     maxStoredDataQueueSize: 1000
-    remoteSearchResultCache:
-      expireAfterAccess: "PT1M"
-      expireAfterWrite: null
-      maximumSize: 100
     resultStore:
       lmdb:
         localDir: "search_results"
@@ -533,10 +541,6 @@ appConfig:
       minValueSize: "1K"
       offHeapResults: true
       valueQueueSize: 1000000
-    resultStoreCache:
-      expireAfterAccess: "PT1M"
-      expireAfterWrite: null
-      maximumSize: 100
     shard:
       indexShardSearcherCache:
         expireAfterAccess: "PT1M"
@@ -544,6 +548,10 @@ appConfig:
         maximumSize: 2
       maxDocIdQueueSize: 1000000
       maxThreadsPerTask: 5
+      remoteSearchResultCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 100
       searchResultCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
