@@ -23,7 +23,9 @@ import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.shared.Meta;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -33,11 +35,12 @@ import org.jooq.BatchBindStep;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -57,21 +60,28 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     private final MetaKeyDao metaKeyService;
     private final Provider<MetaValueConfig> metaValueConfigProvider;
     private final ClusterLockService clusterLockService;
+    private final TaskContextFactory taskContextFactory;
     private final TaskContext taskContext;
-
-    private volatile List<Row> queue = new ArrayList<>();
+    private final ExecutorProvider executorProvider;
+    private final AtomicBoolean flushing = new AtomicBoolean();
+    private final ArrayBlockingQueue<Row> queue;
 
     @Inject
     MetaValueDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                      final MetaKeyDao metaKeyService,
                      final Provider<MetaValueConfig> metaValueConfigProvider,
                      final ClusterLockService clusterLockService,
-                     final TaskContext taskContext) {
+                     final TaskContextFactory taskContextFactory,
+                     final TaskContext taskContext,
+                     final ExecutorProvider executorProvider) {
         this.metaDbConnProvider = metaDbConnProvider;
         this.metaKeyService = metaKeyService;
         this.metaValueConfigProvider = metaValueConfigProvider;
         this.clusterLockService = clusterLockService;
+        this.taskContextFactory = taskContextFactory;
         this.taskContext = taskContext;
+        this.executorProvider = executorProvider;
+        this.queue = new ArrayBlockingQueue<>(metaValueConfigProvider.get().getFlushBatchSize());
     }
 
     @Override
@@ -95,55 +105,72 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 .filter(Optional::isPresent)
                 .map(Optional::get);
 
-        final List<Row> records = stream.collect(Collectors.toList());
-        if (metaValueConfigProvider.get().isAddAsync()) {
-            final Optional<List<Row>> optional = add(records, metaValueConfigProvider.get()
-                    .getFlushBatchSize());
-            optional.ifPresent(this::insertRecords);
-        } else {
-            insertRecords(records);
-        }
-    }
-
-    private synchronized Optional<List<Row>> add(final List<Row> records, final int batchSize) {
-        List<Row> readyForFlush = null;
-        queue.addAll(records);
-        if (queue.size() >= batchSize) {
-            // Switch out the current queue.
-            readyForFlush = queue;
-            queue = new ArrayList<>();
-        }
-        // Return the old queue for flushing if it was switched.
-        return Optional.ofNullable(readyForFlush);
+//        if (metaValueConfigProvider.get().isAddAsync()) {
+//            startFlushing();
+//            stream.forEach(row -> {
+//                try {
+//                    queue.put(row);
+//                } catch (final InterruptedException e) {
+//                    LOGGER.debug(e.getMessage(), e);
+//                    Thread.currentThread().interrupt();
+//                }
+//            });
+//        } else {
+        insertRecords(stream.collect(Collectors.toList()));
+//        }
     }
 
     @Override
     public void flush() {
-        taskContext.info(() -> "Flushing meta values to the DB");
-        final Optional<List<Row>> optional = add(Collections.emptyList(), 1);
-        optional.ifPresent(this::insertRecords);
+        // Ignore
+    }
+
+    private void startFlushing() {
+        if (flushing.compareAndSet(false, true)) {
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    final List<Row> rows = new ArrayList<>();
+                    final Row row = queue.take();
+                    rows.add(row);
+                    queue.drainTo(rows);
+
+                    taskContextFactory.context("Flush Data Attributes To DB", taskContext -> {
+                        taskContext.info(() -> "Flushing " + rows.size() + " meta values to the DB");
+                        insertRecords(rows);
+                    }).run();
+                }
+            } catch (final InterruptedException e) {
+                LOGGER.debug(e.getMessage(), e);
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private void insertRecords(final List<Row> rows) {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.debug(() -> "Processing batch of " + rows.size());
+        if (rows.size() > 0) {
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            LOGGER.debug(() -> "Processing batch of " + rows.size());
 
-        JooqUtil.context(metaDbConnProvider, context -> {
-            BatchBindStep batchBindStep = context
-                    .batch(context
-                            .insertInto(META_VAL,
-                                    META_VAL.CREATE_TIME,
-                                    META_VAL.META_ID,
-                                    META_VAL.META_KEY_ID,
-                                    META_VAL.VAL)
-                            .values(null, null, null, (Long) null));
-            for (final Row row : rows) {
-                batchBindStep = batchBindStep.bind(row.getCreateMs(), row.getMetaId(), row.getKeyId(), row.getValue());
-            }
-            batchBindStep.execute();
-        });
+            JooqUtil.context(metaDbConnProvider, context -> {
+                BatchBindStep batchBindStep = context
+                        .batch(context
+                                .insertInto(META_VAL,
+                                        META_VAL.CREATE_TIME,
+                                        META_VAL.META_ID,
+                                        META_VAL.META_KEY_ID,
+                                        META_VAL.VAL)
+                                .values(null, null, null, (Long) null));
+                for (final Row row : rows) {
+                    batchBindStep = batchBindStep.bind(row.getCreateMs(),
+                            row.getMetaId(),
+                            row.getKeyId(),
+                            row.getValue());
+                }
+                batchBindStep.execute();
+            });
 
-        LOGGER.debug(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
+            LOGGER.debug(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
+        }
     }
 
     @Override
@@ -234,14 +261,14 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 .collect(Collectors.toList());
 
         JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(
-                        META_VAL.META_ID,
-                        META_VAL.META_KEY_ID,
-                        META_VAL.VAL
-                )
-                .from(META_VAL)
-                .where(META_VAL.META_ID.in(idList))
-                .fetch())
+                        .select(
+                                META_VAL.META_ID,
+                                META_VAL.META_KEY_ID,
+                                META_VAL.VAL
+                        )
+                        .from(META_VAL)
+                        .where(META_VAL.META_ID.in(idList))
+                        .fetch())
                 .forEach(r -> {
                     final int keyId = r.get(META_VAL.META_KEY_ID);
                     metaKeyService.getNameForId(keyId).ifPresent(name -> {

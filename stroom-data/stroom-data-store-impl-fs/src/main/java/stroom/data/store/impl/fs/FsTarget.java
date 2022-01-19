@@ -38,6 +38,7 @@ import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -259,6 +260,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
             throw new IllegalStateException("Attempt to unlock data that is already unlocked");
         }
 
+        long addAttributesStart = System.currentTimeMillis();
         // Write the meta data
         if (!attributeMap.isEmpty()) {
             try {
@@ -267,9 +269,18 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                 LOGGER.error(() -> "unlock() - Failed to persist attributes in new transaction... will ignore");
             }
         }
+        long addAttributes = System.currentTimeMillis() - addAttributesStart;
 
+        long updateMetaStart = System.currentTimeMillis();
         LOGGER.debug(() -> "unlock() " + meta);
         this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
+        long updateMeta = System.currentTimeMillis() - updateMetaStart;
+
+        if (addAttributes > 1000 || updateMeta > 1000) {
+            LOGGER.warn("unlock" +
+                    " addAttributes=" + Duration.ofMillis(addAttributes).toString() +
+                    " updateMeta=" + Duration.ofMillis(updateMeta).toString());
+        }
     }
 
     public void delete() {

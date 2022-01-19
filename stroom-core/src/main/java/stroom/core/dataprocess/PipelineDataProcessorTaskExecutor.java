@@ -86,6 +86,7 @@ import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.Metrics;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
@@ -96,6 +97,7 @@ import org.slf4j.MarkerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -209,6 +211,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         // Record when processing began so we know how long it took
         // afterwards.
         startTime = System.currentTimeMillis();
+        totalTimeStart = System.currentTimeMillis();
 
         // Setup the error handler and receiver.
         errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
@@ -234,7 +237,9 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                 errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
                 errorWriterProxy.setErrorWriter(errorWriter);
 
+                final long processingTimeStart = System.currentTimeMillis();
                 process(taskContext);
+                processingTime = System.currentTimeMillis() - processingTimeStart;
 
             } catch (final Exception e) {
                 outputError(e);
@@ -247,8 +252,10 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
         } finally {
+            final long duplicateCheckTimeStart = System.currentTimeMillis();
             // Delete duplicate output.
             deleteDuplicateOutput(meta, processor);
+            duplicatgeCheckTime = System.currentTimeMillis() - duplicateCheckTimeStart;
         }
 
         // Produce processing result.
@@ -261,85 +268,116 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                 markerCounts.put(sev, statistics.getRecords(sev));
             }
         }
+
+
+        totalTime = System.currentTimeMillis() - totalTimeStart;
+
+
+        if (totalTime - processingTime > 2000) {
+            final String total = Duration.ofMillis(totalTime).toString();
+            final String processing = Duration.ofMillis(processingTime).toString();
+            final String duplicate = Duration.ofMillis(duplicatgeCheckTime).toString();
+            LOGGER.warn(() -> "Taking longer than 2 seconds to do post process work: total=" +
+                    total +
+                    ", processing=" +
+                    processing +
+                    ", duplicate=" +
+                    duplicate);
+        }
+
         return new ProcessorResultImpl(read, written, markerCounts);
     }
 
     private void process(final TaskContext taskContext) {
-        String feedName = null;
-        PipelineDoc pipelineDoc = null;
+        Metrics.measure("process", () -> {
+            String feedName = null;
+            PipelineDoc pipelineDoc = null;
 
-        try {
-            final Meta meta = streamSource.getMeta();
+            try {
+                final Meta meta = streamSource.getMeta();
 
-            // Update the meta data for all output streams to use.
-            metaData.put("Source Stream", String.valueOf(meta.getId()));
-            metaData.put("Processing Node", nodeInfo.getThisNodeName());
+                // Update the meta data for all output streams to use.
+                metaData.put("Source Stream", String.valueOf(meta.getId()));
+                metaData.put("Processing Node", nodeInfo.getThisNodeName());
 
-            // Set the search id to be the id of the stream processor filter.
-            // Only do this where the task has specific data ranges that need extracting as this is only the case
-            // with a batch search.
-            if (processorFilter != null && processorTask.getData() != null && processorTask.getData().length() > 0) {
-                searchIdHolder.setSearchId(Long.toString(processorFilter.getId()));
+                // Set the search id to be the id of the stream processor filter.
+                // Only do this where the task has specific data ranges that need extracting as this is only the case
+                // with a batch search.
+                if (processorFilter != null &&
+                        processorTask.getData() != null &&
+                        processorTask.getData().length() > 0) {
+                    searchIdHolder.setSearchId(Long.toString(processorFilter.getId()));
+                }
+
+                // Load the feed.
+                feedName = meta.getFeedName();
+                feedHolder.setFeedName(feedName);
+
+                // Setup the meta data holder.
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
+
+                // Set the pipeline so it can be used by a filter if needed.
+                pipelineDoc = Metrics.measure("read pipeline", () -> {
+                    return pipelineStore.readDocument(
+                            new DocRef(PipelineDoc.DOCUMENT_TYPE, streamProcessor.getPipelineUuid()));
+                });
+                pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
+
+                // Create some processing info.
+                final String info = "" +
+                        " pipeline=" +
+                        pipelineDoc.getName() +
+                        ", feed=" +
+                        feedName +
+                        ", meta_id=" +
+                        meta.getId() +
+                        ", created=" +
+                        DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
+                        ", processor_filter_id=" +
+                        processorFilter.getId() +
+                        ", task_id=" +
+                        processorTask.getId();
+
+                // Create processing start message.
+                final String processingInfo = PROCESSING + info;
+
+                // Log that we are starting to process.
+                taskContext.info(() -> processingInfo);
+                LOGGER.info(() -> processingInfo);
+
+                // Hold the source and feed so the pipeline filters can get them.
+                streamProcessorHolder.setStreamProcessor(streamProcessor, processorTask);
+
+                // Process the streams.
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
+                final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
+
+                Metrics.measure("processNestedStreams", () -> {
+                    processNestedStreams(pipeline, meta, streamSource, taskContext);
+                });
+
+                final String finishedInfo = FINISHED +
+                        info +
+                        ", finished in  " +
+                        ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
+
+                // Log that we have finished processing.
+                taskContext.info(() -> finishedInfo);
+                LOGGER.info(() -> finishedInfo);
+
+            } catch (final RuntimeException e) {
+                outputError(e);
+
+            } finally {
+                // TODO : REINSTATE STATS
+//                final String fn = feedName;
+//                final PipelineDoc pd = pipelineDoc;
+//                Metrics.measure("recordStats", () -> {
+//                    // Record some statistics about processing.
+//                    recordStats(fn, pd);
+//                });
             }
-
-            // Load the feed.
-            feedName = meta.getFeedName();
-            feedHolder.setFeedName(feedName);
-
-            // Setup the meta data holder.
-            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
-
-            // Set the pipeline so it can be used by a filter if needed.
-            pipelineDoc = pipelineStore.readDocument(
-                    new DocRef(PipelineDoc.DOCUMENT_TYPE, streamProcessor.getPipelineUuid()));
-            pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
-
-            // Create some processing info.
-            final String info = "" +
-                    " pipeline=" +
-                    pipelineDoc.getName() +
-                    ", feed=" +
-                    feedName +
-                    ", meta_id=" +
-                    meta.getId() +
-                    ", created=" +
-                    DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
-                    ", processor_filter_id=" +
-                    processorFilter.getId() +
-                    ", task_id=" +
-                    processorTask.getId();
-
-            // Create processing start message.
-            final String processingInfo = PROCESSING + info;
-
-            // Log that we are starting to process.
-            taskContext.info(() -> processingInfo);
-            LOGGER.info(() -> processingInfo);
-
-            // Hold the source and feed so the pipeline filters can get them.
-            streamProcessorHolder.setStreamProcessor(streamProcessor, processorTask);
-
-            // Process the streams.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
-            processNestedStreams(pipeline, meta, streamSource, taskContext);
-
-            final String finishedInfo = FINISHED +
-                    info +
-                    ", finished in  " +
-                    ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
-
-            // Log that we have finished processing.
-            taskContext.info(() -> finishedInfo);
-            LOGGER.info(() -> finishedInfo);
-
-        } catch (final RuntimeException e) {
-            outputError(e);
-
-        } finally {
-            // Record some statistics about processing.
-            recordStats(feedName, pipelineDoc);
-        }
+        });
     }
 
     private void recordStats(final String feedName, final PipelineDoc pipelineDoc) {
@@ -658,9 +696,21 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                 processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.next().get()) {
                     @Override
                     public void close() throws IOException {
+                        long totalTime = 0;
+                        long flushTime = 0;
+                        long closeTime = 0;
+                        long infoCloseTime = 0;
+                        long statsTime = 0;
+
+                        final long totalTimeStart = System.currentTimeMillis();
+
                         try {
+                            final long flushTimeStart = System.currentTimeMillis();
                             super.flush();
+                            flushTime = System.currentTimeMillis() - flushTimeStart;
+                            final long closeTimeStart = System.currentTimeMillis();
                             super.close();
+                            closeTime = System.currentTimeMillis() - closeTimeStart;
 
                         } finally {
                             // Only do something if an output stream was used.
@@ -669,6 +719,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                 final AttributeMap attributeMap = metaData.getAttributes();
                                 processInfoStreamTarget.getAttributes().putAll(attributeMap);
 
+                                final long statsTimeStart = System.currentTimeMillis();
                                 try {
                                     // Write statistics meta data.
                                     // Get current process statistics
@@ -678,14 +729,28 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e::getMessage, e);
                                 }
+                                statsTime = System.currentTimeMillis() - statsTimeStart;
 
                                 // Close the stream target.
                                 try {
+                                    final long infoCloseTimeStart = System.currentTimeMillis();
                                     processInfoStreamTarget.close();
+                                    infoCloseTime = System.currentTimeMillis() - infoCloseTimeStart;
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e::getMessage, e);
                                 }
                             }
+                        }
+
+                        totalTime = System.currentTimeMillis() - totalTimeStart;
+
+                        if (totalTime > 2000) {
+                            LOGGER.warn("ProcessInfoOutputStreamProvider" +
+                                    " totalTime=" + Duration.ofMillis(totalTime).toString() +
+                                    " flushTime=" + Duration.ofMillis(flushTime).toString() +
+                                    " closeTime=" + Duration.ofMillis(closeTime).toString() +
+                                    " infoCloseTime=" + Duration.ofMillis(infoCloseTime).toString() +
+                                    " statsTime=" + Duration.ofMillis(statsTime).toString());
                         }
                     }
                 };

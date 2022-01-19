@@ -36,6 +36,7 @@ import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.Metrics;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -76,99 +77,117 @@ public class DataProcessorTaskHandler {
     }
 
     public ProcessorResult exec(final ProcessorTask task) {
+        Metrics.setEnabled(true);
+        Metrics.startPeriodicReport(10000);
+
         // Perform processing as the processing user.
-        return securityContext.asProcessingUserResult(() -> {
-            // Execute with a task context.
-            return taskContextFactory.contextResult(
-                    "Data Processor",
-                    TerminateHandlerFactory.NOOP_FACTORY,
-                    taskContext -> exec(taskContext, task)).get();
-        });
+        return securityContext.asProcessingUserResult(() ->
+                Metrics.measure("Data processor", () -> {
+                    // Execute with a task context.
+                    return taskContextFactory.contextResult(
+                            "Data Processor",
+                            TerminateHandlerFactory.NOOP_FACTORY,
+                            taskContext -> exec(taskContext, task)).get();
+                }));
     }
 
     private ProcessorResult exec(final TaskContext taskContext, final ProcessorTask task) {
-        ProcessorTask processorTask = task;
+        LOGGER.trace(() -> "Executing processor task: " + task.getId());
 
-        boolean complete = false;
-        ProcessorResult processorResult = new ProcessorResultImpl(0, 0, Collections.emptyMap());
-        final long startTime = System.currentTimeMillis();
+        return Metrics.measure("exec", () -> {
+            final long startTime = System.currentTimeMillis();
+            ProcessorResult processorResult = new ProcessorResultImpl(0, 0, Collections.emptyMap());
+            boolean complete = false;
+            ProcessorTask processorTask = task;
 
-        // Have to do the if as processorTask is not final so can't use a lambda
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("Executing processor task: {}", processorTask.getId());
-        }
+            // Open the stream source.
+            try (Source source = streamStore.openSource(processorTask.getMetaId())) {
+                if (source != null) {
+                    final Meta meta = source.getMeta();
 
-        // Open the stream source.
-        try (Source source = streamStore.openSource(processorTask.getMetaId())) {
-            if (source != null) {
-                final Meta meta = source.getMeta();
-
-                Processor destStreamProcessor = null;
-                ProcessorFilter destProcessorFilter = null;
-                if (processorTask.getProcessorFilter() != null) {
-                    destProcessorFilter = processorFilterCache.get(processorTask.getProcessorFilter().getId()).orElse(
-                            null);
-                    if (destProcessorFilter != null) {
-                        destStreamProcessor = processorCache
-                                .get(destProcessorFilter.getProcessor().getId()).orElse(null);
+                    Processor destStreamProcessor = null;
+                    ProcessorFilter destProcessorFilter = null;
+                    if (processorTask.getProcessorFilter() != null) {
+                        destProcessorFilter = processorFilterCache.get(processorTask.getProcessorFilter().getId())
+                                .orElse(null);
+                        if (destProcessorFilter != null) {
+                            destStreamProcessor = processorCache
+                                    .get(destProcessorFilter.getProcessor().getId()).orElse(null);
+                        }
                     }
-                }
-                if (destProcessorFilter == null || destStreamProcessor == null) {
-                    throw new RuntimeException("No dest processor has been loaded.");
-                }
-
-                log(taskContext, meta, destStreamProcessor);
-
-                // Don't process any streams that we have already created
-                if (meta.getProcessorUuid() != null && meta.getProcessorUuid().equals(destStreamProcessor.getUuid())) {
-                    complete = true;
-                    // Have to do the if as processorTask is not final so can't use a lambda
-                    if (LOGGER.isWarnEnabled()) {
-                        LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}",
-                                meta, destStreamProcessor);
+                    if (destProcessorFilter == null || destStreamProcessor == null) {
+                        throw new RuntimeException("No dest processor has been loaded.");
                     }
 
-                } else {
-                    // Change the task status.... and save
-                    processorTask = processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(),
-                            TaskStatus.PROCESSING, startTime, null);
-                    // Avoid having to do another fetch
-                    processorTask.setProcessorFilter(destProcessorFilter);
+                    log(taskContext, meta, destStreamProcessor);
 
-                    final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(new TaskType(
-                            destStreamProcessor.getTaskType()));
-                    final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
-
-                    try {
-                        processorResult = dataProcessorTaskExecutor
-                                .exec(taskContext, destStreamProcessor, destProcessorFilter, processorTask, source);
-                        // Only record completion for this task if it was not
-                        // terminated.
-                        if (!taskContext.isTerminated()) {
-                            complete = true;
+                    // Don't process any streams that we have already created
+                    if (meta.getProcessorUuid() != null &&
+                            meta.getProcessorUuid().equals(destStreamProcessor.getUuid())) {
+                        complete = true;
+                        // Have to do the if as processorTask is not final so can't use a lambda
+                        if (LOGGER.isWarnEnabled()) {
+                            LOGGER.warn(
+                                    "Skipping data that we seem to have created (avoid processing forever) {} {}",
+                                    meta,
+                                    destStreamProcessor);
                         }
 
-                    } catch (final RuntimeException e) {
-                        LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
+                    } else {
+                        // Change the task status.... and save
+                        processorTask = processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(),
+                                TaskStatus.PROCESSING, startTime, null);
+                        // Avoid having to do another fetch
+                        processorTask.setProcessorFilter(destProcessorFilter);
+
+                        final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(new TaskType(
+                                destStreamProcessor.getTaskType()));
+                        final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
+
+                        try {
+                            processorResult = dataProcessorTaskExecutor
+                                    .exec(taskContext,
+                                            destStreamProcessor,
+                                            destProcessorFilter,
+                                            processorTask,
+                                            source);
+                            // Only record completion for this task if it was not
+                            // terminated.
+                            if (!taskContext.isTerminated()) {
+                                complete = true;
+                            }
+
+                        } catch (final RuntimeException e) {
+                            LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
+                        }
                     }
                 }
+            } catch (final IOException | RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            } finally {
+                if (complete) {
+                    final ProcessorTask pt = processorTask;
+                    Metrics.measure("changeTaskStatus", () -> {
+                        processorTaskDao.changeTaskStatus(pt,
+                                nodeInfo.getThisNodeName(),
+                                TaskStatus.COMPLETE,
+                                startTime,
+                                System.currentTimeMillis());
+                    });
+                } else {
+                    final ProcessorTask pt = processorTask;
+                    Metrics.measure("changeTaskStatus", () -> {
+                        processorTaskDao.changeTaskStatus(pt,
+                                nodeInfo.getThisNodeName(),
+                                TaskStatus.FAILED,
+                                startTime,
+                                System.currentTimeMillis());
+                    });
+                }
             }
-        } catch (final IOException | RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-        } finally {
-            if (complete) {
-                processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
-                        startTime, System.currentTimeMillis());
-            } else {
-                processorTaskDao.changeTaskStatus(processorTask,
-                        nodeInfo.getThisNodeName(),
-                        TaskStatus.FAILED,
-                        startTime,
-                        System.currentTimeMillis());
-            }
-        }
 
-        return processorResult;
+            return processorResult;
+        });
     }
 
     private void log(final TaskContext taskContext, final Meta meta, final Processor destStreamProcessor) {
