@@ -6232,6 +6232,36 @@
         "tags" : [ "Searchable" ]
       }
     },
+    "/searchable/v2/keepAlive" : {
+      "post" : {
+        "operationId" : "keepAliveSearchableQuery",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "QueryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Keep a running query alive",
+        "tags" : [ "Searchable" ]
+      }
+    },
     "/searchable/v2/search" : {
       "post" : {
         "operationId" : "startSearchableQuery",
@@ -6519,7 +6549,7 @@
     },
     "/sqlstatistics/v2/destroy" : {
       "post" : {
-        "operationId" : "destroySqlStatisticsSearch",
+        "operationId" : "destroySqlStatisticsQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6547,9 +6577,39 @@
         "tags" : [ "Sql Statistics Query" ]
       }
     },
+    "/sqlstatistics/v2/keepAlive" : {
+      "post" : {
+        "operationId" : "keepAliveSqlStatisticsQuery",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "QueryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Keep a running query alive",
+        "tags" : [ "Sql Statistics Query" ]
+      }
+    },
     "/sqlstatistics/v2/search" : {
       "post" : {
-        "operationId" : "searchSqlStatistics",
+        "operationId" : "startSqlStatisticsQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7255,7 +7315,7 @@
     },
     "/stroom-index/v2/destroy" : {
       "post" : {
-        "operationId" : "destroyStroomIndex",
+        "operationId" : "destroyStroomIndexQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7283,9 +7343,39 @@
         "tags" : [ "Stroom-Index Queries" ]
       }
     },
+    "/stroom-index/v2/keepAlive" : {
+      "post" : {
+        "operationId" : "keepAliveStroomIndexQuery",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "QueryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Keep a running query alive",
+        "tags" : [ "Stroom-Index Queries" ]
+      }
+    },
     "/stroom-index/v2/search" : {
       "post" : {
-        "operationId" : "searchStroomIndex",
+        "operationId" : "startStroomIndexQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7345,7 +7435,7 @@
     },
     "/stroom-solr-index/v2/destroy" : {
       "post" : {
-        "operationId" : "destroySolrIndexSearch",
+        "operationId" : "destroySolrIndexQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7373,9 +7463,39 @@
         "tags" : [ "Solr Queries" ]
       }
     },
+    "/stroom-solr-index/v2/keepAlive" : {
+      "post" : {
+        "operationId" : "keepAliveSolrIndexQuery",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "QueryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Keep a running query alive",
+        "tags" : [ "Solr Queries" ]
+      }
+    },
     "/stroom-solr-index/v2/search" : {
       "post" : {
-        "operationId" : "searchSolrIndex",
+        "operationId" : "startSolrIndexQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
