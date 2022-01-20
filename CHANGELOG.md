@@ -12,6 +12,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.9] - 2022-01-20
+
+* Make temp prop nullable and change default to TEMP/stroom(-proxy)?.
+
 * Issue **#2709** : Reduce the number of UI refreshes when receiving data from multiple nodes.
 
 * Issue **#2708** : Keep search results fresh by constantly pinging result caches for all active searches.
@@ -4001,7 +4005,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.9...HEAD
+[v7.1-beta.9]: https://github.com/gchq/stroom/compare/v7.1-beta.8...v7.1-beta.9
 [v7.1-beta.8]: https://github.com/gchq/stroom/compare/v7.1-beta.7...v7.1-beta.8
 [v7.1-beta.7]: https://github.com/gchq/stroom/compare/v7.1-beta.6...v7.1-beta.7
 [v7.1-beta.6]: https://github.com/gchq/stroom/compare/v7.1-beta.5...v7.1-beta.6
