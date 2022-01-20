@@ -30,6 +30,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xml.converter.json.JSONParser;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
+import stroom.search.elastic.search.ElasticSearchConfig;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.util.logging.LambdaLogger;
@@ -74,6 +75,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
+    private final ElasticSearchConfig elasticSearchConfig;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
 
@@ -102,11 +104,13 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     ElasticIndexingFilter(
             final LocationFactoryProxy locationFactory,
             final ErrorReceiverProxy errorReceiverProxy,
+            final ElasticSearchConfig elasticSearchConfig,
             final ElasticClientCache elasticClientCache,
             final ElasticClusterStore elasticClusterStore
     ) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
+        this.elasticSearchConfig = elasticSearchConfig;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
 
@@ -199,7 +203,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             switch (localName) {
                 case JSONParser.XML_ELEMENT_MAP:
                     try {
-                        currentDepth++;
+                        incrementDepth();
                         inMap = true;
                         writeFieldName();
                         jsonGenerator.writeStartObject();
@@ -209,7 +213,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     break;
                 case JSONParser.XML_ELEMENT_ARRAY:
                     try {
-                        currentDepth++;
+                        incrementDepth();
                         writeFieldName();
                         jsonGenerator.writeStartArray();
                     } catch (IOException e) {
@@ -223,6 +227,16 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         valueBuffer.setLength(0);
 
         super.startElement(uri, localName, qName, attributes);
+    }
+
+    private void incrementDepth() {
+        final int maxDepth = elasticSearchConfig.getMaxNestedElementDepth();
+
+        currentDepth++;
+
+        if (currentDepth > maxDepth) {
+            fatalError("Maximum nested element depth of " + maxDepth + " exceeded", new RuntimeException());
+        }
     }
 
     @Override
