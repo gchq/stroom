@@ -31,6 +31,7 @@ import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
+import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -75,6 +76,7 @@ public class UserTaskManagerPresenter
     private final FindTaskProgressCriteria criteria;
 
     private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
+    private final DelayedUpdate delayedUpdate = new DelayedUpdate(this::update);
 
     @Inject
     public UserTaskManagerPresenter(final EventBus eventBus,
@@ -122,6 +124,7 @@ public class UserTaskManagerPresenter
     }
 
     private void refreshTaskStatus() {
+        delayedUpdate.reset();
         // Stop this refreshing more than once before the call returns.
         nodeManager.listAllNodes(
                 this::refresh,
@@ -138,12 +141,12 @@ public class UserTaskManagerPresenter
                 rest
                         .onSuccess(response -> {
                             responseMap.put(nodeName, response.getValues());
-                            update();
+                            delayedUpdate.update();
                             refreshing.remove(nodeName);
                         })
                         .onFailure(throwable -> {
                             responseMap.remove(nodeName);
-                            update();
+                            delayedUpdate.update();
                             refreshing.remove(nodeName);
                         })
                         .call(TASK_RESOURCE)

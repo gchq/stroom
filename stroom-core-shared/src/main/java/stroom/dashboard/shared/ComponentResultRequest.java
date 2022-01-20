@@ -58,4 +58,12 @@ public abstract class ComponentResultRequest {
     public Fetch getFetch() {
         return fetch;
     }
+
+    @Override
+    public String toString() {
+        return "ComponentResultRequest{" +
+                "componentId='" + componentId + '\'' +
+                ", fetch=" + fetch +
+                '}';
+    }
 }

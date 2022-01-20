@@ -18,6 +18,8 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.lmdb.serde.UnsignedBytes;
+import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

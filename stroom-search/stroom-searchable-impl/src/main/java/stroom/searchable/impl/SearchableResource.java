@@ -17,6 +17,7 @@
 package stroom.searchable.impl;
 
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -38,7 +39,7 @@ import javax.ws.rs.core.MediaType;
 @Path("/searchable" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface SearchableResource extends RestResource {
+public interface SearchableResource extends DataSourceResource, RestResource {
 
     @POST
     @Path("/dataSource")
@@ -52,8 +53,15 @@ public interface SearchableResource extends RestResource {
     @Operation(
             summary = "Submit a search request",
             operationId = "startSearchableQuery")
-    SearchResponse search(
-            @Parameter(description = "SearchRequest", required = true) SearchRequest request);
+    SearchResponse search(@Parameter(description = "SearchRequest", required = true) SearchRequest request);
+
+    @POST
+    @Path("/keepAlive")
+    @Operation(
+            summary = "Keep a running query alive",
+            operationId = "keepAliveSearchableQuery")
+    @Override
+    Boolean keepAlive(@Parameter(description = "QueryKey", required = true) QueryKey queryKey);
 
     @POST
     @Path("/destroy")

@@ -21,8 +21,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,8 +31,7 @@ import javax.inject.Inject;
 public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
     public static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
-    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsQueryServiceImpl.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticCacheImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticCacheImpl.class);
     private final StatisticsDataSourceProvider statisticsDataSourceProvider;
     private final StatisticStoreCache statisticStoreCache;
     private final SearchResponseCreatorManager searchResponseCreatorManager;
@@ -55,7 +52,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     @Override
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
-            LOGGER.debug("getDataSource called for docRef {}", docRef);
+            LOGGER.debug(() -> "getDataSource called for docRef " + docRef);
             return statisticsDataSourceProvider.getDataSource(docRef);
         });
     }
@@ -63,7 +60,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     @Override
     public SearchResponse search(final SearchRequest searchRequest) {
         return securityContext.useAsReadResult(() -> {
-            LOGGER.debug("search called for searchRequest {}", searchRequest);
+            LOGGER.debug(() -> "search called for searchRequest " + searchRequest);
 
             final DocRef docRef = Preconditions.checkNotNull(
                     Preconditions.checkNotNull(
@@ -89,8 +86,17 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     }
 
     @Override
+    public Boolean keepAlive(final QueryKey queryKey) {
+        LOGGER.trace(() -> "keepAlive() " + queryKey);
+        return searchResponseCreatorManager
+                .getOptional(new SearchResponseCreatorCache.Key(queryKey))
+                .map(SearchResponseCreator::keepAlive)
+                .orElse(Boolean.FALSE);
+    }
+
+    @Override
     public Boolean destroy(final QueryKey queryKey) {
-        LOGGER.debug("destroy called for queryKey {}", queryKey);
+        LOGGER.debug(() -> "destroy called for queryKey " + queryKey);
         // remove the creator from the cache which will trigger the onRemove listener
         // which will call destroy on the store
         searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
@@ -134,5 +140,10 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 results,
                 errorMessages,
                 true);
+    }
+
+    @Override
+    public String getType() {
+        return StatisticStoreDoc.DOCUMENT_TYPE;
     }
 }
