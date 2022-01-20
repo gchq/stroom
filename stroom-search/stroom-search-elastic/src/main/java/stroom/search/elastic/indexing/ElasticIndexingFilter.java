@@ -19,7 +19,6 @@ package stroom.search.elastic.indexing;
 import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
@@ -28,6 +27,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.xml.converter.json.JSONParser;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -36,29 +36,32 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.xcontent.XContentType;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.InvalidParameterException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.MissingFormatArgumentException;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 
 /**
- * Takes index XML and sends documents to Elasticsearch for indexing
+ * Accepts `json` schema XML and sends documents to Elasticsearch as batches for indexing
  */
 @ConfigurableElement(type = "ElasticIndexingFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET,
@@ -67,11 +70,8 @@ import javax.inject.Inject;
 }, icon = ElementIcons.ELASTIC_INDEX)
 class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexingFilter.class);
-
-    private static final String RECORD_ELEMENT_NAME = "record";
-    private static final String DATA_ELEMENT_NAME = "data";
-    private static final String NAME_ATTRIBUTE = "name";
-    private static final String VALUE_ATTRIBUTE = "value";
+    private static final JsonFactory JSON_FACTORY = new JsonFactory();
+    private static final int INITIAL_JSON_STREAM_SIZE_BYTES = 1024;
 
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -86,19 +86,17 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private String indexNameDateFormat;
     private String indexNameDateFieldName = "@timestamp";
 
-    private Collection<Map<String, Object>> currentDocuments = new ArrayList<>();
-    private Map<String, Object> document = new HashMap<>();
-    private List<String> currentStringArray;
-    private String currentArrayString;
-    private List<Map<String, Object>> currentObjectArray;
-    private Map<String, Object> currentArrayObject;
-    private boolean isBuildingArrayObject = false;
-    private Map<String, Object> currentObject;
-    private boolean isBuildingObject = false;
-    private String currentPropertyName;
+    private final List<IndexRequest> indexRequests;
+    private final ByteArrayOutputStream currentDocument;
+    private final StringBuilder valueBuffer = new StringBuilder();
+    private String currentDocFieldName = null;
+    private int currentDocPropertyCount = 0;
+    private boolean inOuterArray = false;
+    private boolean inMap = false;
+    private int currentDepth = 0;
+    private String currentDocTimestamp = null;
+    private JsonGenerator jsonGenerator;
 
-    private int fieldsIndexed;
-    private long docsIndexed;
 
     private Locator locator;
 
@@ -113,6 +111,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         this.errorReceiverProxy = errorReceiverProxy;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
+
+        indexRequests = new ArrayList<>();
+        currentDocument = new ByteArrayOutputStream(INITIAL_JSON_STREAM_SIZE_BYTES);
     }
 
     /**
@@ -122,13 +123,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     public void startProcessing() {
         try {
             if (clusterRef == null) {
-                log(Severity.FATAL_ERROR, "Elasticsearch cluster ref has not been set", null);
-                throw new LoggedException("Elasticsearch cluster ref has not been set");
+                fatalError("Elasticsearch cluster ref has not been set", new NotFoundException());
             }
 
             if (indexBaseName == null || indexBaseName.isEmpty()) {
-                log(Severity.FATAL_ERROR, "Index name has not been set", null);
-                throw new LoggedException("Index name has not been set");
+                fatalError("Index name has not been set", new InvalidParameterException());
             }
 
             final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(clusterRef);
@@ -146,23 +145,25 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                                 connectionConfig.getConnectionUrls() + "'");
                     }
                 } catch (final IOException | RuntimeException e) {
-                    log(Severity.FATAL_ERROR, e.getMessage(), e);
-                    // Terminate processing as this is a fatal error.
-                    throw new LoggedException(e.getMessage(), e);
+                    fatalError(e.getMessage(), e);
                 }
             });
 
-        } finally {
+            jsonGenerator = JSON_FACTORY.createGenerator(currentDocument);
+
+            // Begin processing
             super.startProcessing();
+
+        } catch (IOException e) {
+            fatalError("Failed to initialise JsonGenerator", e);
         }
     }
 
     @Override
     public void endProcessing() {
         try {
-            // Send last docs.
-            addDocuments(currentDocuments);
-            currentDocuments = null;
+            // Send any remaining documents
+            indexDocuments();
         } finally {
             super.endProcessing();
         }
@@ -183,204 +184,239 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     public void startElement(final String uri, final String localName, final String qName, final Attributes attributes)
             throws SAXException {
 
-        if (DATA_ELEMENT_NAME.equals(localName) && document != null) {
-            String name = attributes.getValue(NAME_ATTRIBUTE);
-            String value = attributes.getValue(VALUE_ATTRIBUTE);
-
-            if (name == null) {
-                if (value == null) {
-                    // Start of an array object
-                    currentArrayObject = new HashMap<>();
-                    currentObjectArray.add(currentArrayObject);
-                } else {
-                    // Node with no name, but a value. Treat this as a string array item.
-                    if (currentStringArray != null) {
-                        if (currentArrayObject != null) {
-                            throw new SAXException("Cannot mix strings and objects in arrays");
-                        }
-
-                        currentArrayString = value;
-                        currentStringArray.add(value);
-                    }
-                }
+        if (!inOuterArray && currentDepth == 0) {
+            if (localName.equals(JSONParser.XML_ELEMENT_ARRAY)) {
+                // Starting a new root JSON document array. Any `map` elements from here will be added individually
+                // as documents for indexing
+                inOuterArray = true;
+                indexRequests.clear();
             } else {
-                if (value == null) {
-                    // Node with a name and no value. Treat this as the start of an array.
-                    // Could be either a string or object array.
-                    if (currentStringArray != null && currentStringArray.size() > 0 ||
-                        currentObjectArray != null && currentObjectArray.size() > 0
-                    ) {
-                        throw new SAXException("Cannot nest an array within another array");
-                    }
-
-                    currentStringArray = new ArrayList<>();
-                    currentObjectArray = new ArrayList<>();
-                    currentObject = new HashMap<>();
-                    currentPropertyName = name;
-                } else {
-                    if (currentArrayObject != null) {
-                        // An array object has been started, so treat this key/value pair as a property of that object
-                        isBuildingArrayObject = true;
-                        currentArrayObject.put(name, value);
-                    } else if (currentObject != null) {
-                        // An object has been started, so apply this key/value pair to the object
-                        isBuildingObject = true;
-                        currentObject.put(name, value);
-                    } else {
-                        // This is a simple property, not part of an array
-                        if (name.length() > 0 && value.length() > 0) {
-                            addFieldToDocument(name, value);
-                        }
-                    }
-                }
+                // Terminate processing as this is a fatal error
+                fatalError("Expected an array at start of document, got '" + localName + "' instead",
+                        new IllegalArgumentException());
             }
-        } else if (RECORD_ELEMENT_NAME.equals(localName)) {
-            // Create a document to store fields in.
-            document = new HashMap<>();
+        } else {
+            currentDocFieldName = attributes.getValue(JSONParser.XML_ATTRIBUTE_KEY);
+
+            switch (localName) {
+                case JSONParser.XML_ELEMENT_MAP:
+                    try {
+                        writeFieldName();
+                        jsonGenerator.writeStartObject();
+                        currentDepth++;
+                        inMap = true;
+                    } catch (IOException e) {
+                        fatalError("Invalid start of object", e);
+                    }
+                    break;
+                case JSONParser.XML_ELEMENT_ARRAY:
+                    try {
+                        writeFieldName();
+                        jsonGenerator.writeStartArray();
+                        currentDepth++;
+                    } catch (IOException e) {
+                        fatalError("Invalid start of array", e);
+                    }
+                    break;
+            }
         }
+
+        // Starting a new value, so clear the existing one
+        valueBuffer.setLength(0);
 
         super.startElement(uri, localName, qName, attributes);
     }
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        if (DATA_ELEMENT_NAME.equals(localName)) {
-            if (isBuildingArrayObject) {
-                // An array object is currently being built and is not yet completed
-                isBuildingArrayObject = false;
-            } else if (isBuildingObject) {
-                isBuildingObject = false;
-            } else if (currentArrayObject != null) {
-                // An array object has ended
-                currentArrayObject = null;
-            } else if (currentArrayString != null) {
-                // An array string has ended
-                currentArrayString = null;
-            } else {
-                if (currentObjectArray != null) {
-                    // We're at the end of an object array, so commit it to the document
-                    if (currentObjectArray.size() > 0) {
-                        addFieldToDocument(currentPropertyName, currentObjectArray);
-                    }
-                    currentObjectArray = null;
-                    currentArrayObject = null;
-                }
-                if (currentStringArray != null) {
-                    // End of a string array
-                    if (currentStringArray.size() > 0) {
-                        addFieldToDocument(currentPropertyName, currentStringArray);
-                    }
-                    currentStringArray = null;
-                }
-                if (currentObject != null) {
-                    // End of plain object
-                    if (currentObject.size() > 0) {
-                        addFieldToDocument(currentPropertyName, currentObject);
-                    }
-                    currentObject = null;
-                }
+        final String value;
+
+        if (inOuterArray && currentDepth == 0) {
+            if (!localName.equals(JSONParser.XML_ELEMENT_ARRAY)) {
+                fatalError("Expected an end array to close the document, got '" + localName + "' instead",
+                        new IllegalArgumentException());
             }
-        } else if (RECORD_ELEMENT_NAME.equals(localName)) {
-            processDocument();
-            document = null;
-            currentStringArray = null;
-            currentArrayString = null;
-            currentObjectArray = null;
-            currentArrayObject = null;
-            currentObject = null;
-            isBuildingArrayObject = false;
-            isBuildingObject = false;
-
-            // Reset the count of how many fields we have indexed for the
-            // current event.
-            fieldsIndexed = 0;
-
-            if (errorReceiverProxy.getErrorReceiver() != null &&
-                errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics
-            ) {
-                ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(-1);
+        } else {
+            switch (localName) {
+                case JSONParser.XML_ELEMENT_MAP:
+                    try {
+                        jsonGenerator.writeEndObject();
+                        currentDepth--;
+                        inMap = false;
+                        if (currentDepth == 0) {
+                            processDocument();
+                        }
+                    } catch (IOException e) {
+                        fatalError("Invalid end of object", e);
+                    }
+                    break;
+                case JSONParser.XML_ELEMENT_ARRAY:
+                    try {
+                        jsonGenerator.writeEndArray();
+                        currentDepth--;
+                    } catch (IOException e) {
+                        fatalError("Invalid end of array", e);
+                    }
+                    break;
+                case JSONParser.XML_ELEMENT_STRING:
+                    value = valueBuffer.toString();
+                    try {
+                        if (value.length() > 0 && (writeFieldName() || !inMap)) {
+                            jsonGenerator.writeString(value);
+                            currentDocPropertyCount++;
+                        }
+                        if (currentDocFieldName != null && currentDocFieldName.equals(indexNameDateFieldName)) {
+                            // This is the timestamp field, so store its value for formatting the full index name
+                            currentDocTimestamp = value;
+                        }
+                    } catch (IOException e) {
+                        fatalError("Invalid string value", e);
+                    }
+                    break;
+                case JSONParser.XML_ELEMENT_BOOLEAN:
+                    value = valueBuffer.toString();
+                    try {
+                        if (value.length() > 0 && (writeFieldName() || !inMap)) {
+                            jsonGenerator.writeBoolean(Boolean.parseBoolean(value));
+                            currentDocPropertyCount++;
+                        }
+                    } catch (IOException e) {
+                        fatalError("Invalid boolean value", e);
+                    }
+                    break;
+                case JSONParser.XML_ELEMENT_NULL:
+                    try {
+                        if (writeFieldName() && !inMap) {
+                            jsonGenerator.writeNull();
+                            currentDocPropertyCount++;
+                        }
+                    } catch (IOException e) {
+                        fatalError("Invalid null value", e);
+                    }
+                    break;
+                case JSONParser.XML_ELEMENT_NUMBER:
+                    value = valueBuffer.toString();
+                    try {
+                        if (value.length() > 0 && (writeFieldName() || !inMap)) {
+                            jsonGenerator.writeNumber(value);
+                            currentDocPropertyCount++;
+                        }
+                    } catch (IOException e) {
+                        fatalError("Invalid number value", e);
+                    }
+                    break;
             }
         }
+
+        valueBuffer.setLength(0);
+        currentDocFieldName = null;
 
         super.endElement(uri, localName, qName);
     }
 
-    private void processDocument() {
-        // Write the document if we have dropped out of the record element and have indexed some fields
-        if (fieldsIndexed > 0) {
-            docsIndexed++;
-            currentDocuments.add(document);
-            document = new HashMap<>();
+    /**
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
+     * @see #ignorableWhitespace
+     * @see org.xml.sax.Locator
+     * @see stroom.pipeline.filter.AbstractXMLFilter#characters(char[],
+     * int, int)
+     */
+    @Override
+    public void characters(final char[] ch, final int start, final int length) throws SAXException {
+        valueBuffer.append(ch, start, length);
+        super.characters(ch, start, length);
+    }
 
-            if (currentDocuments.size() >= batchSize) {
-                addDocuments(currentDocuments);
-                currentDocuments = new ArrayList<>();
-            }
+    private boolean writeFieldName() throws IOException {
+        if (currentDocFieldName != null) {
+            jsonGenerator.writeFieldName(currentDocFieldName);
+            return true;
+        } else {
+            return false;
         }
+    }
+
+    /**
+     * Queues the document for indexing
+     */
+    private void processDocument() {
+        try {
+            if (currentDocPropertyCount > 0) {
+                jsonGenerator.flush();
+
+                final IndexRequest indexRequest = new IndexRequest(formatIndexName())
+                        .opType(OpType.CREATE)
+                        .source(currentDocument.toByteArray(), XContentType.JSON);
+
+                // If an ingest pipeline name is specified, execute it when ingesting the document
+                if (ingestPipelineName != null && !ingestPipelineName.isEmpty()) {
+                    indexRequest.setPipeline(ingestPipelineName);
+                }
+
+                indexRequests.add(indexRequest);
+
+                if (indexRequests.size() >= batchSize) {
+                    indexDocuments();
+                }
+            }
+        } catch (IOException e) {
+            fatalError("Failed to flush JSON to stream", e);
+        } catch (Exception e) {
+            fatalError(e.getMessage(), e);
+        }
+
+        clearDocument();
+    }
+
+    private void clearDocument() {
+        // Discard the document
+        currentDocument.reset();
+        currentDocTimestamp = null;
+
+        // Reset the count of how many fields we have indexed for the current event
+        currentDocPropertyCount = 0;
     }
 
     /**
      * Index the current batch of documents
      */
-    private void addDocuments(final Collection<Map<String, Object>> documents) {
-        if (docsIndexed > 0) {
+    private void indexDocuments() {
+        if (indexRequests.size() > 0) {
             final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(clusterRef);
 
             elasticClientCache.context(elasticCluster.getConnection(), elasticClient -> {
                 try {
-                    if (documents.size() > 0) {
-                        // Create a new bulk indexing request, containing the current batch of documents
-                        BulkRequest bulkRequest = new BulkRequest();
+                    // Create a new bulk indexing request, containing the current batch of documents
+                    BulkRequest bulkRequest = new BulkRequest();
 
-                        // For each document, create an indexing request and append to the bulk request
-                        bulkRequest.add(
-                                documents.stream()
-                                        .map(document -> {
-                                            String indexName = this.indexBaseName;
+                    // For each document, create an indexing request and append to the bulk request
+                    for (IndexRequest indexRequest : indexRequests) {
+                        bulkRequest.add(indexRequest);
+                    }
 
-                                            // If a date format has specified, append the formatted timestamp field
-                                            // value to the index base name
-                                            if (indexNameDateFormat != null && !indexNameDateFormat.isEmpty()) {
-                                                indexName = formatIndexName(document);
-                                            }
+                    if (refreshAfterEachBatch) {
+                        // Refresh upon completion of the batch index request
+                        bulkRequest.setRefreshPolicy(RefreshPolicy.IMMEDIATE);
+                    } else {
+                        // Only refresh after all batches have been indexed
+                        bulkRequest.setRefreshPolicy(RefreshPolicy.NONE);
+                    }
 
-                                            final IndexRequest indexRequest = new IndexRequest(indexName)
-                                                    .opType(OpType.CREATE)
-                                                    .source(document);
-
-                                            // If an ingest pipeline name is specified, execute it when ingesting
-                                            // the document
-                                            if (ingestPipelineName != null && !ingestPipelineName.isEmpty()) {
-                                                indexRequest.setPipeline(ingestPipelineName);
-                                            }
-
-                                            return indexRequest;
-                                        })
-                                        .collect(Collectors.toList())
-                        );
-
-                        if (refreshAfterEachBatch) {
-                            // Refresh upon completion of the batch index request
-                            bulkRequest.setRefreshPolicy(RefreshPolicy.IMMEDIATE);
-                        } else {
-                            // Only refresh after all batches have been indexed
-                            bulkRequest.setRefreshPolicy(RefreshPolicy.NONE);
-                        }
-
-                        BulkResponse response = elasticClient.bulk(bulkRequest, RequestOptions.DEFAULT);
-                        if (response.hasFailures()) {
-                            throw new IOException("Bulk index request failed: " + response.buildFailureMessage());
-                        } else {
-                            LOGGER.info(() -> "Indexed " + documents.size() + " items to Elasticsearch cluster '" +
-                                    elasticCluster.getName() + "' in " + response.getTook().getSecondsFrac() +
-                                    " seconds");
-                        }
+                    BulkResponse response = elasticClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+                    if (response.hasFailures()) {
+                        throw new IOException("Bulk index request failed: " + response.buildFailureMessage());
+                    } else {
+                        LOGGER.info(() -> "Indexed " + indexRequests.size() + " documents to Elasticsearch cluster '" +
+                                elasticCluster.getName() + "' in " + response.getTook().getSecondsFrac() +
+                                " seconds");
                     }
                 } catch (final RuntimeException | IOException e) {
-                    log(Severity.FATAL_ERROR, e.getMessage(), e);
-
-                    // Terminate processing as this is a fatal error.
-                    throw new LoggedException(e.getMessage(), e);
+                    fatalError(e.getMessage(), e);
+                } finally {
+                    indexRequests.clear();
                 }
             });
         }
@@ -388,43 +424,26 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     /**
      * Where an index name date pattern is specified, formats the value of the document timestamp field
-     * using the date pattern
-     * @param document Document to be indexed
+     * using the date pattern. Otherwise the index base name is returned.
      * @return Index base name appended with the formatted document timestamp
      */
-    private String formatIndexName(final Map<String, Object> document) {
-        try {
-            final ZonedDateTime timestamp = ZonedDateTime.parse((String) document.get(indexNameDateFieldName));
-            final DateTimeFormatter pattern = DateTimeFormatter.ofPattern(indexNameDateFormat);
-
-            return indexBaseName + pattern.format(timestamp);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(String.format("Invalid index name date format: %s", indexNameDateFormat));
-        } catch (Exception e) {
-            throw new RuntimeException(String.format("Field %s not found in document, which is " +
-                    "required as property `indexNameDateFormat` has been set", indexNameDateFieldName));
-        }
-    }
-
-    /**
-     * Adds a field and value to the document, where an existing mapping is not defined.
-     * If Elasticsearch index dynamic properties are defined, a field mapping will be created if the field name matches
-     * the defined pattern. Regardless, the field will be added to the document's `_source`.
-     */
-    private void addFieldToDocument(final String fieldName, final Object value) {
-        if (!document.containsKey(fieldName)) {
-            LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
-                    indexBaseName +
-                " name=" +
-                fieldName +
-                " value=" +
-                value
-            );
-
-            document.put(fieldName, value);
-            fieldsIndexed++;
+    private String formatIndexName() {
+        // If a date format has specified, append the formatted timestamp field
+        // value to the index base name
+        if (currentDocTimestamp == null || indexNameDateFormat == null || indexNameDateFormat.isEmpty()) {
+            return indexBaseName;
         } else {
-            LOGGER.warn(() -> "Field '" + fieldName + "' already exists in document");
+            try {
+                final ZonedDateTime timestamp = ZonedDateTime.parse(currentDocTimestamp);
+                final DateTimeFormatter pattern = DateTimeFormatter.ofPattern(indexNameDateFormat);
+
+                return indexBaseName + pattern.format(timestamp);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException(String.format("Invalid index name date format: %s", indexNameDateFormat));
+            } catch (Exception e) {
+                throw new NotFoundException(String.format("Field %s not found in document, which is " +
+                        "required as property `indexNameDateFormat` has been set", indexNameDateFieldName));
+            }
         }
     }
 
@@ -492,5 +511,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     private void log(final Severity severity, final String message, final Exception e) {
         errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
+    }
+
+    private void fatalError(final String message, final Exception e) throws LoggedException {
+        // Terminate processing as this is a fatal error
+        log(Severity.FATAL_ERROR, message, e);
+        throw new LoggedException(message, e);
     }
 }
