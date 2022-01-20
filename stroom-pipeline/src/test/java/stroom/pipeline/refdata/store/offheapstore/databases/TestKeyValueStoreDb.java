@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestKeyValueStoreDb extends AbstractLmdbDbTest {
+class TestKeyValueStoreDb extends AbstractStoreDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestKeyValueStoreDb.class);
 

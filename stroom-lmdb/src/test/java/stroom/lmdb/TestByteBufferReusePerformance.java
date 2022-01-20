@@ -15,13 +15,11 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore.databases;
+package stroom.lmdb;
 
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
-import stroom.bytebuffer.PooledByteBufferPair;
-import stroom.lmdb.BasicLmdbDb;
-import stroom.lmdb.Serde;
+import stroom.bytebuffer.ByteBufferSupport;
 import stroom.lmdb.serde.StringSerde;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
@@ -29,11 +27,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.RepeatedTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -49,9 +48,10 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     private static final LambdaLogger LAMBDA_LOGGER =
             LambdaLoggerFactory.getLogger(TestByteBufferReusePerformance.class);
 
-    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(100);
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(500);
     private static final int VALUE_BUFFER_SIZE = 1_000;
-    private final int recCount = 1_000_000;
+    private static final int REC_COUNT = 2_000_000;
+    private static final int TEST_REPEAT_COUNT = 3;
     private final Serde<String> stringSerde = new StringSerde();
     private BasicLmdbDb<String, String> basicLmdbDb;
 
@@ -74,49 +74,56 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     }
 
 
-    @Test
+    @RepeatedTest(TEST_REPEAT_COUNT)
     void testNoReuse() {
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
-            try (final PooledByteBufferPair pooledByteBufferPair = basicLmdbDb.getPooledBufferPair()) {
-                lmdbEnv.doWithWriteTxn(writeTxn -> {
-                    for (int i = 0; i < recCount; i++) {
-                        stringSerde.serialize(pooledByteBufferPair.getKeyBuffer(), "key" + i);
-                        stringSerde.serialize(pooledByteBufferPair.getValueBuffer(), "value" + i);
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                for (int i = 0; i < REC_COUNT; i++) {
+                    // Allocate new buffers each time
+                    final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(lmdbEnv.getMaxKeySize());
+                    final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(VALUE_BUFFER_SIZE);
 
-                        basicLmdbDb.put(
-                                writeTxn,
-                                pooledByteBufferPair.getKeyBuffer(),
-                                pooledByteBufferPair.getValueBuffer(),
-                                false);
-                    }
-                });
-            }
+                    stringSerde.serialize(keyBuffer, "key" + i);
+                    stringSerde.serialize(valueBuffer, "value" + i);
+
+                    basicLmdbDb.put(
+                            writeTxn,
+                            keyBuffer,
+                            valueBuffer,
+                            false);
+                    // Destroy the buffers
+                    ByteBufferSupport.unmap((MappedByteBuffer) keyBuffer);
+                    ByteBufferSupport.unmap((MappedByteBuffer) valueBuffer);
+                }
+            });
 
         }, "testNoReuse-put");
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
-            try (final PooledByteBufferPair pooledByteBufferPair = basicLmdbDb.getPooledBufferPair()) {
-                for (int i = 0; i < recCount; i++) {
-                    stringSerde.serialize(pooledByteBufferPair.getKeyBuffer(), "key" + i);
+            for (int i = 0; i < REC_COUNT; i++) {
+                // Allocate new buffers each time
+                final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(lmdbEnv.getMaxKeySize());
 
-                    lmdbEnv.doWithReadTxn(txn -> {
-                        Optional<ByteBuffer> optValue = basicLmdbDb.getAsBytes(
-                                txn,
-                                pooledByteBufferPair.getKeyBuffer());
+                stringSerde.serialize(keyBuffer, "key" + i);
+
+                lmdbEnv.doWithReadTxn(txn -> {
+                    Optional<ByteBuffer> optValue = basicLmdbDb.getAsBytes(
+                            txn,
+                            keyBuffer);
 //                        assertThat(optValue).isPresent();
-                    });
-                }
+                });
+                // Destroy the buffer
+                ByteBufferSupport.unmap((MappedByteBuffer) keyBuffer);
             }
-
         }, "testNoReuse-get");
 
         LOGGER.debug("Finished");
     }
 
-    @Test
+    @RepeatedTest(TEST_REPEAT_COUNT)
     void testReuse() {
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
@@ -125,7 +132,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
             final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(VALUE_BUFFER_SIZE);
 
             lmdbEnv.doWithWriteTxn(writeTxn -> {
-                for (int i = 0; i < recCount; i++) {
+                for (int i = 0; i < REC_COUNT; i++) {
                     stringSerde.serialize(keyBuffer, "key" + i);
                     stringSerde.serialize(valueBuffer, "value" + i);
 
@@ -140,7 +147,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
             final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(lmdbEnv.getMaxKeySize());
-            for (int i = 0; i < recCount; i++) {
+            for (int i = 0; i < REC_COUNT; i++) {
                 stringSerde.serialize(keyBuffer, "key" + i);
 
                 final int j = i;
@@ -159,7 +166,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 
     }
 
-    @Test
+    @RepeatedTest(TEST_REPEAT_COUNT)
     void testPooled() {
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
@@ -172,7 +179,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
             valuePool.add(ByteBuffer.allocateDirect(VALUE_BUFFER_SIZE));
 
             lmdbEnv.doWithWriteTxn(writeTxn -> {
-                for (int i = 0; i < recCount; i++) {
+                for (int i = 0; i < REC_COUNT; i++) {
                     ByteBuffer keyBuffer = null;
                     ByteBuffer valueBuffer = null;
                     try {
@@ -205,7 +212,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 
             keyPool.add(ByteBuffer.allocateDirect(lmdbEnv.getMaxKeySize()));
 
-            for (int i = 0; i < recCount; i++) {
+            for (int i = 0; i < REC_COUNT; i++) {
                 final int j = i;
 
                 lmdbEnv.doWithReadTxn(txn -> {
@@ -234,7 +241,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 
     }
 
-    @Test
+    @RepeatedTest(TEST_REPEAT_COUNT)
     void testPooledOneTxn() {
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
@@ -247,7 +254,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
             valuePool.add(ByteBuffer.allocateDirect(VALUE_BUFFER_SIZE));
 
             lmdbEnv.doWithWriteTxn(writeTxn -> {
-                for (int i = 0; i < recCount; i++) {
+                for (int i = 0; i < REC_COUNT; i++) {
                     ByteBuffer keyBuffer = null;
                     ByteBuffer valueBuffer = null;
                     try {
@@ -281,7 +288,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
             keyPool.add(ByteBuffer.allocateDirect(lmdbEnv.getMaxKeySize()));
 
             lmdbEnv.doWithReadTxn(txn -> {
-                for (int i = 0; i < recCount; i++) {
+                for (int i = 0; i < REC_COUNT; i++) {
                     final int j = i;
 
                     ByteBuffer keyBuffer = null;
@@ -309,20 +316,20 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 
     }
 
-    @Test
+    @RepeatedTest(TEST_REPEAT_COUNT)
     void testHashMap() {
 
         Map<String, String> map = new HashMap<>();
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
-            for (int i = 0; i < recCount; i++) {
+            for (int i = 0; i < REC_COUNT; i++) {
                 map.put("key" + i, "value" + i);
             }
 
         }, "HashMap-put");
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
-            for (int i = 0; i < recCount; i++) {
+            for (int i = 0; i < REC_COUNT; i++) {
                 String val = map.get("key" + i);
             }
 

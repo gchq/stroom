@@ -35,22 +35,35 @@ public interface ByteBufferPool extends Clearable, HasSystemInfo {
      * Performs work using a pooled buffer with capacity >= minCapacity. The pooled buffer is returned
      * to the pool on completion of work. The buffer should not be used/mutated after completion of work.
      */
-    <T> T getWithBuffer(int minCapacity, Function<ByteBuffer, T> work);
+    default <T> T getWithBuffer(int minCapacity, Function<ByteBuffer, T> work) {
+        try (final PooledByteBuffer pooledKeyByteBuffer = getPooledByteBuffer(minCapacity)) {
+            return work.apply(pooledKeyByteBuffer.getByteBuffer());
+        }
+    }
 
     /**
      * Performs work using a pooled buffer with capacity >= minCapacity. The pooled buffer is returned
      * to the pool on completion of work. The buffer should not be used/mutated after completion of work.
      */
-    void doWithBuffer(int minCapacity, Consumer<ByteBuffer> work);
+    default void doWithBuffer(int minCapacity, Consumer<ByteBuffer> work) {
+        try (final PooledByteBuffer pooledKeyByteBuffer = getPooledByteBuffer(minCapacity)) {
+            work.accept(pooledKeyByteBuffer.getByteBuffer());
+        }
+    }
 
     /**
      * Performs work using a pair of pooled buffers with capacity >= minKeyCapacity and minValueCapacity respectively.
      * The pooled buffer is returned to the pool on completion of work. The buffers should not be
      * used/mutated after completion of work.
      */
-    void doWithBufferPair(final int minKeyCapacity,
-                          final int minValueCapacity,
-                          final BiConsumer<ByteBuffer, ByteBuffer> work);
+    default void doWithBufferPair(final int minKeyCapacity,
+                                  final int minValueCapacity,
+                                  final BiConsumer<ByteBuffer, ByteBuffer> work) {
+        try (final PooledByteBuffer pooledKeyByteBuffer = getPooledByteBuffer(minKeyCapacity);
+                final PooledByteBuffer pooledValueBuffer = getPooledByteBuffer(minValueCapacity)) {
+            work.accept(pooledKeyByteBuffer.getByteBuffer(), pooledValueBuffer.getByteBuffer());
+        }
+    }
 
     /**
      * @return The number of buffers currently available in the pool and not on loan.
@@ -61,7 +74,9 @@ public interface ByteBufferPool extends Clearable, HasSystemInfo {
      * Clears all buffers currently held in the pool. Does not affect buffers currently on loan.
      */
     @Override
-    void clear();
+    default void clear() {
+
+    }
 
     @Override
     SystemInfoResult getSystemInfo();

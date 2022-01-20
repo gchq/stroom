@@ -33,7 +33,6 @@ import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
@@ -41,7 +40,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.task.mock.MockTaskModule;
-import stroom.util.io.ByteSize;
+import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
@@ -64,7 +63,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -90,7 +92,7 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
+class TestRefDataOffHeapStore extends StroomUnitTest {
 
     public static final String FIXED_PIPELINE_UUID = UUID.randomUUID().toString();
     public static final String FIXED_PIPELINE_VERSION = UUID.randomUUID().toString();
@@ -117,6 +119,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private Injector injector;
     private RefDataStore refDataStore;
+    private Path dbDir = null;
 
 //    void setDbMaxSizeProperty() {
 //        setDbMaxSizeProperty(ByteSize.ofMebibytes(5_000));
@@ -126,18 +129,14 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 //        referenceDataConfig.setMaxStoreSize(size);
 //    }
 
-    @Override
-    protected ByteSize getMaxSizeBytes() {
-        return ByteSize.ofGibibytes(10);
-    }
-
     @BeforeEach
-    void setup() {
-        LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
+    void setup() throws IOException {
+        dbDir = Files.createTempDirectory("stroom");
+        LOGGER.debug("Creating LMDB environment in dbDir {}", dbDir.toAbsolutePath().toString());
 
         referenceDataConfig = new ReferenceDataConfig()
                 .withLmdbConfig(new ReferenceDataLmdbConfig()
-                        .withLocalDir(getDbDir().toAbsolutePath().toString()))
+                        .withLocalDir(dbDir.toAbsolutePath().toString()))
                 .withMaxPutsBeforeCommit(500_000);
 
         injector = Guice.createInjector(

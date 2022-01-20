@@ -55,7 +55,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestRangeStoreDb extends AbstractLmdbDbTest {
+class TestRangeStoreDb extends AbstractStoreDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRangeStoreDb.class);
     final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 1);

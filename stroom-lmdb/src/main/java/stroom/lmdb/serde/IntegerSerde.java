@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore.serdes;
+package stroom.lmdb.serde;
 
 import stroom.lmdb.Serde;
 

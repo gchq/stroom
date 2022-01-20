@@ -28,7 +28,7 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.XxHashValueStoreHashAlgorithm;
-import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
+import stroom.pipeline.refdata.store.offheapstore.databases.AbstractStoreDbTest;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestValueStore extends AbstractLmdbDbTest {
+class TestValueStore extends AbstractStoreDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestValueStore.class);
     private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();

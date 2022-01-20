@@ -17,6 +17,8 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.lmdb.serde.IntegerSerde;
+
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;

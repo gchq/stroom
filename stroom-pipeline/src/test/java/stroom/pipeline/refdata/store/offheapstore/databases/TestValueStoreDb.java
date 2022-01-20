@@ -16,8 +16,6 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerd
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,7 +36,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestValueStoreDb extends AbstractLmdbDbTest {
+class TestValueStoreDb extends AbstractStoreDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestValueStoreDb.class);
 
