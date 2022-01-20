@@ -20,6 +20,7 @@ package stroom.lmdb;
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferSupport;
+import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.StringSerde;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;

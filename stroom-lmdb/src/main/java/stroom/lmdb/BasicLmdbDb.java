@@ -18,6 +18,7 @@
 package stroom.lmdb;
 
 import stroom.bytebuffer.ByteBufferPool;
+import stroom.lmdb.serde.Serde;
 
 import org.lmdbjava.DbiFlags;
 

@@ -17,8 +17,6 @@
 
 package stroom.lmdb.serde;
 
-import stroom.lmdb.Serde;
-
 import java.nio.ByteBuffer;
 
 public class IntegerSerde implements Serde<Integer> {

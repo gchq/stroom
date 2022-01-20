@@ -1,7 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.lmdb.Serde;
+import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
