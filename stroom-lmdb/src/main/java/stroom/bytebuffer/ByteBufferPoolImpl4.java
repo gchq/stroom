@@ -7,6 +7,7 @@ import stroom.util.sysinfo.SystemInfoResult;
 
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -382,14 +383,26 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
             final BlockingQueue<ByteBuffer> pooledBufferQueue = pooledBufferQueues[offset];
 
             if (pooledBufferQueue != null) {
-                final List<ByteBuffer> drainedBuffers = new ArrayList<>();
+                // The queue of buffers is the source of truth so clear that out
+                final Queue<ByteBuffer> drainedBuffers = new ArrayDeque<>(pooledBufferQueue.size());
                 pooledBufferQueue.drainTo(drainedBuffers);
 
                 // As well as removing the buffers we need to reduce the counters to allow new buffers to
-                // be created again if needs be
+                // be created again if needs be. It doesn't matter that this happens sometime later than
+                // the draining of the queue.
                 pooledBufferCounters[offset].addAndGet(-1 * drainedBuffers.size());
                 int size = bufferSizes[offset];
                 msgs.add(size + ":" + drainedBuffers.size());
+
+                // Destroy all the cleared buffers
+                while (true) {
+                    final ByteBuffer byteBuffer = drainedBuffers.poll();
+                    if (byteBuffer == null) {
+                        break;
+                    } else {
+                        unmapBuffer(byteBuffer);
+                    }
+                }
             }
         }
 
