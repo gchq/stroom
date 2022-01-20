@@ -56,7 +56,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.MissingFormatArgumentException;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 
@@ -96,7 +95,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private int currentDepth = 0;
     private String currentDocTimestamp = null;
     private JsonGenerator jsonGenerator;
-
 
     private Locator locator;
 
@@ -151,11 +149,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
             jsonGenerator = JSON_FACTORY.createGenerator(currentDocument);
 
-            // Begin processing
-            super.startProcessing();
-
         } catch (IOException e) {
             fatalError("Failed to initialise JsonGenerator", e);
+        } finally {
+            super.startProcessing();
         }
     }
 
@@ -185,35 +182,36 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             throws SAXException {
 
         if (!inOuterArray && currentDepth == 0) {
+            // We are now inside the outer `array` element
             if (localName.equals(JSONParser.XML_ELEMENT_ARRAY)) {
-                // Starting a new root JSON document array. Any `map` elements from here will be added individually
-                // as documents for indexing
+                // Starting a new root JSON document array. Any `map` elements from here will be added as documents
+                // for indexing
                 inOuterArray = true;
-                indexRequests.clear();
             } else {
                 // Terminate processing as this is a fatal error
                 fatalError("Expected an array at start of document, got '" + localName + "' instead",
                         new IllegalArgumentException());
             }
         } else {
+            // Get the name of the JSON property
             currentDocFieldName = attributes.getValue(JSONParser.XML_ATTRIBUTE_KEY);
 
             switch (localName) {
                 case JSONParser.XML_ELEMENT_MAP:
                     try {
-                        writeFieldName();
-                        jsonGenerator.writeStartObject();
                         currentDepth++;
                         inMap = true;
+                        writeFieldName();
+                        jsonGenerator.writeStartObject();
                     } catch (IOException e) {
                         fatalError("Invalid start of object", e);
                     }
                     break;
                 case JSONParser.XML_ELEMENT_ARRAY:
                     try {
+                        currentDepth++;
                         writeFieldName();
                         jsonGenerator.writeStartArray();
-                        currentDepth++;
                     } catch (IOException e) {
                         fatalError("Invalid start of array", e);
                     }
@@ -232,7 +230,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         final String value;
 
         if (inOuterArray && currentDepth == 0) {
-            if (!localName.equals(JSONParser.XML_ELEMENT_ARRAY)) {
+            // We are at the end of the outer `array` element
+            if (localName.equals(JSONParser.XML_ELEMENT_ARRAY)) {
+                // Consider this to be the end of the stream part
+                inOuterArray = false;
+            } else {
                 fatalError("Expected an end array to close the document, got '" + localName + "' instead",
                         new IllegalArgumentException());
             }
@@ -240,10 +242,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             switch (localName) {
                 case JSONParser.XML_ELEMENT_MAP:
                     try {
-                        jsonGenerator.writeEndObject();
                         currentDepth--;
                         inMap = false;
+                        jsonGenerator.writeEndObject();
                         if (currentDepth == 0) {
+                            // We have closed out an outer `map`, so queue the document for indexing
                             processDocument();
                         }
                     } catch (IOException e) {
@@ -252,8 +255,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     break;
                 case JSONParser.XML_ELEMENT_ARRAY:
                     try {
-                        jsonGenerator.writeEndArray();
                         currentDepth--;
+                        jsonGenerator.writeEndArray();
                     } catch (IOException e) {
                         fatalError("Invalid end of array", e);
                     }
@@ -340,7 +343,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * Queues the document for indexing
+     * Queue a JSON document for indexing
      */
     private void processDocument() {
         try {
@@ -357,10 +360,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 }
 
                 indexRequests.add(indexRequest);
+            }
 
-                if (indexRequests.size() >= batchSize) {
-                    indexDocuments();
-                }
+            if (indexRequests.size() >= batchSize) {
+                indexDocuments();
             }
         } catch (IOException e) {
             fatalError("Failed to flush JSON to stream", e);
