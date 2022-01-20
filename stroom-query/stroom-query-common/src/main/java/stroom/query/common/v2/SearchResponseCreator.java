@@ -103,10 +103,16 @@ public class SearchResponseCreator {
                 false);
     }
 
+    public boolean keepAlive() {
+        LOGGER.trace(() -> "keepAlive()", new RuntimeException("keepAlive"));
+        return true;
+    }
+
     /**
      * Stop searching and destroy any stored data.
      */
     public void destroy() {
+        LOGGER.trace(() -> "destroy()", new RuntimeException("destroy"));
         store.destroy();
     }
 

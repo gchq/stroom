@@ -7706,6 +7706,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Searchable
+     * @name KeepAliveSearchableQuery
+     * @summary Keep a running query alive
+     * @request POST:/searchable/v2/keepAlive
+     * @secure
+     */
+    keepAliveSearchableQuery: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/searchable/v2/keepAlive`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Searchable
      * @name StartSearchableQuery
      * @summary Submit a search request
      * @request POST:/searchable/v2/search
@@ -7893,12 +7912,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sql Statistics Query
-     * @name DestroySqlStatisticsSearch
+     * @name DestroySqlStatisticsQuery
      * @summary Destroy a running query
      * @request POST:/sqlstatistics/v2/destroy
      * @secure
      */
-    destroySqlStatisticsSearch: (data: QueryKey, params: RequestParams = {}) =>
+    destroySqlStatisticsQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/sqlstatistics/v2/destroy`,
         method: "POST",
@@ -7912,12 +7931,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sql Statistics Query
-     * @name SearchSqlStatistics
+     * @name KeepAliveSqlStatisticsQuery
+     * @summary Keep a running query alive
+     * @request POST:/sqlstatistics/v2/keepAlive
+     * @secure
+     */
+    keepAliveSqlStatisticsQuery: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/sqlstatistics/v2/keepAlive`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Sql Statistics Query
+     * @name StartSqlStatisticsQuery
      * @summary Submit a search request
      * @request POST:/sqlstatistics/v2/search
      * @secure
      */
-    searchSqlStatistics: (data: SearchRequest, params: RequestParams = {}) =>
+    startSqlStatisticsQuery: (data: SearchRequest, params: RequestParams = {}) =>
       this.request<any, SearchResponse>({
         path: `/sqlstatistics/v2/search`,
         method: "POST",
@@ -8351,12 +8389,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom-Index Queries
-     * @name DestroyStroomIndex
+     * @name DestroyStroomIndexQuery
      * @summary Destroy a running query
      * @request POST:/stroom-index/v2/destroy
      * @secure
      */
-    destroyStroomIndex: (data: QueryKey, params: RequestParams = {}) =>
+    destroyStroomIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/stroom-index/v2/destroy`,
         method: "POST",
@@ -8370,12 +8408,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom-Index Queries
-     * @name SearchStroomIndex
+     * @name KeepAliveStroomIndexQuery
+     * @summary Keep a running query alive
+     * @request POST:/stroom-index/v2/keepAlive
+     * @secure
+     */
+    keepAliveStroomIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/stroom-index/v2/keepAlive`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Stroom-Index Queries
+     * @name StartStroomIndexQuery
      * @summary Submit a search request
      * @request POST:/stroom-index/v2/search
      * @secure
      */
-    searchStroomIndex: (data: SearchRequest, params: RequestParams = {}) =>
+    startStroomIndexQuery: (data: SearchRequest, params: RequestParams = {}) =>
       this.request<any, SearchResponse>({
         path: `/stroom-index/v2/search`,
         method: "POST",
@@ -8409,12 +8466,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Solr Queries
-     * @name DestroySolrIndexSearch
+     * @name DestroySolrIndexQuery
      * @summary Destroy a running query
      * @request POST:/stroom-solr-index/v2/destroy
      * @secure
      */
-    destroySolrIndexSearch: (data: QueryKey, params: RequestParams = {}) =>
+    destroySolrIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/stroom-solr-index/v2/destroy`,
         method: "POST",
@@ -8428,12 +8485,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Solr Queries
-     * @name SearchSolrIndex
+     * @name KeepAliveSolrIndexQuery
+     * @summary Keep a running query alive
+     * @request POST:/stroom-solr-index/v2/keepAlive
+     * @secure
+     */
+    keepAliveSolrIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/stroom-solr-index/v2/keepAlive`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Solr Queries
+     * @name StartSolrIndexQuery
      * @summary Submit a search request
      * @request POST:/stroom-solr-index/v2/search
      * @secure
      */
-    searchSolrIndex: (data: SearchRequest, params: RequestParams = {}) =>
+    startSolrIndexQuery: (data: SearchRequest, params: RequestParams = {}) =>
       this.request<any, SearchResponse>({
         path: `/stroom-solr-index/v2/search`,
         method: "POST",

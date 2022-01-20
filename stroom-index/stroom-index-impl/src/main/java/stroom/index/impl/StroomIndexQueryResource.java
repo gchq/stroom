@@ -17,6 +17,7 @@
 package stroom.index.impl;
 
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -38,7 +39,7 @@ import javax.ws.rs.core.MediaType;
 @Path("/stroom-index" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface StroomIndexQueryResource extends RestResource {
+public interface StroomIndexQueryResource extends DataSourceResource, RestResource {
 
     @POST
     @Path("/dataSource")
@@ -51,13 +52,21 @@ public interface StroomIndexQueryResource extends RestResource {
     @Path("/search")
     @Operation(
             summary = "Submit a search request",
-            operationId = "searchStroomIndex")
+            operationId = "startStroomIndexQuery")
     SearchResponse search(@Parameter(description = "SearchRequest", required = true) SearchRequest request);
+
+    @POST
+    @Path("/keepAlive")
+    @Operation(
+            summary = "Keep a running query alive",
+            operationId = "keepAliveStroomIndexQuery")
+    @Override
+    Boolean keepAlive(@Parameter(description = "QueryKey", required = true) QueryKey queryKey);
 
     @POST
     @Path("/destroy")
     @Operation(
             summary = "Destroy a running query",
-            operationId = "destroyStroomIndex")
+            operationId = "destroyStroomIndexQuery")
     Boolean destroy(@Parameter(description = "QueryKey", required = true) QueryKey queryKey);
 }

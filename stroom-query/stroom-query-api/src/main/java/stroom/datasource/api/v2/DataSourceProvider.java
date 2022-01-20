@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.impl.datasource;
+package stroom.datasource.api.v2;
 
-import stroom.util.guice.RestResourcesBinder;
+import stroom.docref.DocRef;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
 
-import com.google.inject.AbstractModule;
+public interface DataSourceProvider {
 
-public class DataSourceModule extends AbstractModule {
+    DataSource getDataSource(DocRef docRef);
 
-    @Override
-    protected void configure() {
-        RestResourcesBinder.create(binder())
-                .bind(DataSourceResourceImpl.class);
-    }
+    SearchResponse search(SearchRequest request);
+
+    Boolean keepAlive(QueryKey queryKey);
+
+    Boolean destroy(QueryKey queryKey);
+
+    String getType();
 }

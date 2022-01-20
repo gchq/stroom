@@ -58,7 +58,7 @@ public interface ByteBufferPool extends Clearable, HasSystemInfo {
     int getCurrentPoolSize();
 
     /**
-     * Clears all buffers currently held in the pool. Does not effect buffers currently on loan.
+     * Clears all buffers currently held in the pool. Does not affect buffers currently on loan.
      */
     @Override
     void clear();

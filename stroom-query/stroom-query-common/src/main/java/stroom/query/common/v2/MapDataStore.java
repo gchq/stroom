@@ -304,6 +304,7 @@ public class MapDataStore implements DataStore, Data {
      */
     @Override
     public void clear() {
+        LOGGER.trace(() -> "clear()", new RuntimeException("clear"));
         totalResultCount.set(0);
         childMap.clear();
     }

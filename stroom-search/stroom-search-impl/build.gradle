@@ -10,6 +10,7 @@ dependencies {
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docref')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
@@ -29,6 +30,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.dropwizard_metrics_annotation
+    implementation libs.eventLogging
     implementation libs.guice5
     implementation libs.jackson_annotations
     implementation libs.jaxb_api

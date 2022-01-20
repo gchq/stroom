@@ -3,10 +3,8 @@ package stroom.search.impl;
 import stroom.query.common.v2.ResultStoreConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
-import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
-import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -31,9 +29,6 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
     private final IndexShardSearchConfig shardConfig;
     private final ResultStoreConfig resultStoreConfig;
 
-    private final CacheConfig resultStoreCache;
-    private final CacheConfig remoteSearchResultCache;
-
     public SearchConfig() {
         maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
         maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
@@ -41,15 +36,6 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
         extractionConfig = new ExtractionConfig();
         shardConfig = new IndexShardSearchConfig();
         resultStoreConfig = new ResultStoreConfig();
-
-        resultStoreCache = CacheConfig.builder()
-                .maximumSize(100L)
-                .expireAfterAccess(StroomDuration.ofMinutes(1))
-                .build();
-        remoteSearchResultCache = CacheConfig.builder()
-                .maximumSize(100L)
-                .expireAfterAccess(StroomDuration.ofMinutes(1))
-                .build();
     }
 
     @JsonCreator
@@ -58,17 +44,13 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
                         @JsonProperty("storeSize") final String storeSize,
                         @JsonProperty("extraction") final ExtractionConfig extractionConfig,
                         @JsonProperty("shard") final IndexShardSearchConfig shardConfig,
-                        @JsonProperty("resultStore") final ResultStoreConfig resultStoreConfig,
-                        @JsonProperty("resultStoreCache") final CacheConfig resultStoreCache,
-                        @JsonProperty("remoteSearchResultCache") final CacheConfig remoteSearchResultCache) {
+                        @JsonProperty("resultStore") final ResultStoreConfig resultStoreConfig) {
         this.maxStoredDataQueueSize = maxStoredDataQueueSize;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.storeSize = storeSize;
         this.extractionConfig = extractionConfig;
         this.shardConfig = shardConfig;
         this.resultStoreConfig = resultStoreConfig;
-        this.resultStoreCache = resultStoreCache;
-        this.remoteSearchResultCache = remoteSearchResultCache;
     }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
@@ -95,15 +77,6 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty("shard")
     public IndexShardSearchConfig getShardConfig() {
         return shardConfig;
-    }
-
-    public CacheConfig getResultStoreCache() {
-        return resultStoreCache;
-    }
-
-    @JsonProperty("remoteSearchResultCache")
-    public CacheConfig getRemoteSearchResultCache() {
-        return remoteSearchResultCache;
     }
 
     @JsonProperty("resultStore")
