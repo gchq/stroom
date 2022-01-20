@@ -30,7 +30,6 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xml.converter.json.JSONParser;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
-import stroom.search.elastic.search.ElasticSearchConfig;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.util.logging.LambdaLogger;
@@ -75,7 +74,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final ElasticSearchConfig elasticSearchConfig;
+    private final ElasticIndexingConfig elasticIndexingConfig;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
 
@@ -104,13 +103,13 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     ElasticIndexingFilter(
             final LocationFactoryProxy locationFactory,
             final ErrorReceiverProxy errorReceiverProxy,
-            final ElasticSearchConfig elasticSearchConfig,
+            final ElasticIndexingConfig elasticIndexingConfig,
             final ElasticClientCache elasticClientCache,
             final ElasticClusterStore elasticClusterStore
     ) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.elasticSearchConfig = elasticSearchConfig;
+        this.elasticIndexingConfig = elasticIndexingConfig;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
 
@@ -230,7 +229,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     private void incrementDepth() {
-        final int maxDepth = elasticSearchConfig.getMaxNestedElementDepth();
+        final int maxDepth = elasticIndexingConfig.getMaxNestedElementDepth();
 
         currentDepth++;
 

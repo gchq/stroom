@@ -1,5 +1,6 @@
 package stroom.search.elastic;
 
+import stroom.search.elastic.indexing.ElasticIndexingConfig;
 import stroom.search.elastic.search.ElasticSearchConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
@@ -13,11 +14,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
 
+    private final ElasticIndexingConfig elasticIndexingConfig;
     private final ElasticSearchConfig elasticSearchConfig;
     private final CacheConfig indexClientCache;
     private final CacheConfig indexCache;
 
     public ElasticConfig() {
+        elasticIndexingConfig = new ElasticIndexingConfig();
         elasticSearchConfig = new ElasticSearchConfig();
         indexClientCache = CacheConfig.builder()
                 .maximumSize(100L)
@@ -31,12 +34,19 @@ public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ElasticConfig(@JsonProperty("search") final ElasticSearchConfig elasticSearchConfig,
+    public ElasticConfig(@JsonProperty("indexing") final ElasticIndexingConfig elasticIndexingConfig,
+                         @JsonProperty("search") final ElasticSearchConfig elasticSearchConfig,
                          @JsonProperty("indexClientCache") final CacheConfig indexClientCache,
                          @JsonProperty("indexCache") final CacheConfig indexCache) {
+        this.elasticIndexingConfig = elasticIndexingConfig;
         this.elasticSearchConfig = elasticSearchConfig;
         this.indexClientCache = indexClientCache;
         this.indexCache = indexCache;
+    }
+
+    @JsonProperty("indexing")
+    public ElasticIndexingConfig getElasticIndexingConfig() {
+        return elasticIndexingConfig;
     }
 
     @JsonProperty("search")
@@ -55,7 +65,8 @@ public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ElasticConfig{" +
-                "elasticSearchConfig=" + elasticSearchConfig +
+                "elasticIndexingConfig=" + elasticIndexingConfig +
+                ", elasticSearchConfig=" + elasticSearchConfig +
                 ", indexClientCache=" + indexClientCache +
                 ", indexCache=" + indexCache +
                 '}';
