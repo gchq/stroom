@@ -92,7 +92,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private String currentDocFieldName = null;
     private int currentDocPropertyCount = 0;
     private boolean inOuterArray = false;
-    private boolean inMap = false;
     private int currentDepth = 0;
     private String currentDocTimestamp = null;
     private JsonGenerator jsonGenerator;
@@ -203,7 +202,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_MAP:
                     try {
                         incrementDepth();
-                        inMap = true;
                         writeFieldName();
                         jsonGenerator.writeStartObject();
                     } catch (IOException e) {
@@ -256,7 +254,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_MAP:
                     try {
                         currentDepth--;
-                        inMap = false;
                         jsonGenerator.writeEndObject();
                         if (currentDepth == 0) {
                             // We have closed out an outer `map`, so queue the document for indexing
@@ -277,7 +274,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_STRING:
                     value = valueBuffer.toString();
                     try {
-                        if (value.length() > 0 && (writeFieldName() || !inMap)) {
+                        writeFieldName();
+                        if (value.length() > 0) {
                             jsonGenerator.writeString(value);
                             currentDocPropertyCount++;
                         }
@@ -292,7 +290,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_BOOLEAN:
                     value = valueBuffer.toString();
                     try {
-                        if (value.length() > 0 && (writeFieldName() || !inMap)) {
+                        writeFieldName();
+                        if (value.length() > 0) {
                             jsonGenerator.writeBoolean(Boolean.parseBoolean(value));
                             currentDocPropertyCount++;
                         }
@@ -302,7 +301,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     break;
                 case JSONParser.XML_ELEMENT_NULL:
                     try {
-                        if (writeFieldName() && !inMap) {
+                        writeFieldName();
+                        if (writeFieldName()) {
                             jsonGenerator.writeNull();
                             currentDocPropertyCount++;
                         }
@@ -313,7 +313,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_NUMBER:
                     value = valueBuffer.toString();
                     try {
-                        if (value.length() > 0 && (writeFieldName() || !inMap)) {
+                        writeFieldName();
+                        if (value.length() > 0) {
                             jsonGenerator.writeNumber(value);
                             currentDocPropertyCount++;
                         }
