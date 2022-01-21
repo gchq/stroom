@@ -99,7 +99,7 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     }
 
     @UiHandler("reprocess")
-    public void onChange(final ValueChangeEvent<TickBoxState> event) {
+    public void onChange(final ValueChangeEvent<Boolean> event) {
         setMaxMetaCreateTimeMs(System.currentTimeMillis());
     }
 
