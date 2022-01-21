@@ -19,16 +19,14 @@ package stroom.query.common.v2;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class CompletionStateImpl implements CompletionState {
 
     private final AtomicBoolean complete = new AtomicBoolean();
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
-    private final AtomicLong completionCount = new AtomicLong();
 
     @Override
-    public void complete() {
+    public void signalComplete() {
         complete.set(true);
         countDownLatch.countDown();
     }
@@ -49,17 +47,10 @@ public class CompletionStateImpl implements CompletionState {
     }
 
     @Override
-    public void accept(final Long value) {
-        completionCount.set(value);
-        complete();
-    }
-
-    @Override
     public String toString() {
         return "CompletionStateImpl{" +
                 "complete=" + complete +
                 ", countDownLatch=" + countDownLatch +
-                ", completionCount=" + completionCount +
                 '}';
     }
 }

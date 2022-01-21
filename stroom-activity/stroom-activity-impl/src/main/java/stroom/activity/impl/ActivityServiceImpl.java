@@ -29,7 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.ResultPage;
+import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.google.common.base.Strings;
@@ -109,7 +109,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public ResultPage<Activity> find(final String filter) {
+    public QuickFilterResultPage<Activity> find(final String filter) {
 
         return securityContext.secureResult(() -> {
             // We have to deser all the activities to be able to search them but hopefully
@@ -117,6 +117,7 @@ public class ActivityServiceImpl implements ActivityService {
             final List<Activity> allActivities = getAllUserActivities();
 
             final List<Activity> filteredActivities;
+            final String fullyQualifiedInput;
             if (!Strings.isNullOrEmpty(filter)) {
 
                 final List<FilterFieldDefinition> fieldDefinitions = buildFieldDefinitions(allActivities);
@@ -126,11 +127,17 @@ public class ActivityServiceImpl implements ActivityService {
                 filteredActivities = QuickFilterPredicateFactory.filterStream(
                         filter, fieldMappers, allActivities.stream())
                         .collect(Collectors.toList());
+
+                fullyQualifiedInput = QuickFilterPredicateFactory.fullyQualifyInput(filter, fieldMappers);
             } else {
                 filteredActivities = allActivities;
+                fullyQualifiedInput = filter;
             }
 
-            return ResultPage.createCriterialBasedList(filteredActivities, new FindActivityCriteria());
+            return QuickFilterResultPage.createCriterialBasedList(
+                    filteredActivities,
+                    new FindActivityCriteria(),
+                    fullyQualifiedInput);
         });
     }
 

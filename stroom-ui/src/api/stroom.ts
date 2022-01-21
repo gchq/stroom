@@ -12,6 +12,8 @@
 export interface AbstractFetchDataResult {
   availableChildStreamTypes?: string[];
   classification?: string;
+  displayMode?: "TEXT" | "HEX" | "MARKER";
+  errors?: string[];
   feedName?: string;
 
   /** The offset and length of a range of data in a sub-set of a query result set */
@@ -87,6 +89,7 @@ export interface Account {
 export interface AccountResultPage {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
+  qualifiedFilterInput?: string;
   values?: Account[];
 }
 
@@ -212,6 +215,7 @@ export interface ApiKey {
 export interface ApiKeyResultPage {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
+  qualifiedFilterInput?: string;
   values?: ApiKey[];
 }
 
@@ -488,21 +492,19 @@ export interface CreateProcessFilterRequest {
   autoPriority?: boolean;
   enabled?: boolean;
 
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
+
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
 
   /** @format int32 */
   priority?: number;
   queryData?: QueryData;
-}
-
-export interface CreateReprocessFilterRequest {
-  autoPriority?: boolean;
-  enabled?: boolean;
-
-  /** @format int32 */
-  priority?: number;
-  queryData?: QueryData;
+  reprocess?: boolean;
 }
 
 export interface CriteriaFieldSort {
@@ -582,7 +584,7 @@ export interface DashboardSearchRequest {
 
 export interface DashboardSearchResponse {
   complete?: boolean;
-  errors?: string;
+  errors?: string[];
   highlights?: string[];
   queryKey?: DashboardQueryKey;
   results?: Result[];
@@ -882,6 +884,12 @@ export interface ElasticIndexDoc {
 
   /** A logical addOperator term in a query expression tree */
   retentionExpression?: ExpressionOperator;
+
+  /** @format int32 */
+  searchScrollSize?: number;
+
+  /** @format int32 */
+  searchSlices?: number;
   type?: string;
 
   /** @format int64 */
@@ -916,6 +924,14 @@ export interface EntityEvent {
 export interface Entry {
   key?: string;
   value?: string;
+}
+
+export interface EntryCounts {
+  /** @format int64 */
+  keyValueCount?: number;
+
+  /** @format int64 */
+  rangeValueCount?: number;
 }
 
 export type EventCoprocessorSettings = CoprocessorSettings & {
@@ -1112,8 +1128,8 @@ export interface FetchAllDocumentPermissionsRequest {
 }
 
 export interface FetchDataRequest {
+  displayMode?: "TEXT" | "HEX" | "MARKER";
   expandedSeverities?: ("INFO" | "WARN" | "ERROR" | "FATAL")[];
-  markerMode?: boolean;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
@@ -1133,6 +1149,7 @@ export type FetchDataResult = AbstractFetchDataResult & {
 
 export interface FetchExplorerNodeResult {
   openedItems?: string[];
+  qualifiedFilterInput?: string;
   rootNodes?: ExplorerNode[];
   temporaryOpenedItems?: string[];
 }
@@ -1227,7 +1244,7 @@ export interface FilterFieldDefinition {
 
 export interface FilterUsersRequest {
   quickFilterInput?: string;
-  users?: User[];
+  users?: SimpleUser[];
 }
 
 export interface FindDBTableCriteria {
@@ -1427,6 +1444,7 @@ export interface GetFeedStatusResponse {
     | "200 - 0 - OK"
     | "406 - 100 - Feed must be specified"
     | "406 - 101 - Feed is not defined"
+    | "406 - 102 - Data type is invalid"
     | "406 - 110 - Feed is not set to receive data"
     | "406 - 120 - Unexpected data type"
     | "406 - 200 - Unknown compression"
@@ -1738,8 +1756,11 @@ export interface Limits {
  * List of config properties
  */
 export interface ListConfigResponse {
+  nodeName?: string;
+
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
+  qualifiedFilterInput?: string;
   values?: ConfigProperty[];
 }
 
@@ -1794,6 +1815,12 @@ export interface Meta {
   /** @format int64 */
   parentMetaId?: number;
   pipelineUuid?: string;
+
+  /** @format int32 */
+  processorFilterId?: number;
+
+  /** @format int64 */
+  processorTaskId?: number;
   processorUuid?: string;
   status?: "UNLOCKED" | "LOCKED" | "DELETED";
 
@@ -2090,6 +2117,15 @@ export interface ProcessConfig {
   defaultTimeLimit?: number;
 }
 
+export interface ProcessingInfoResponse {
+  createTime?: string;
+  effectiveTime?: string;
+  lastAccessedTime?: string;
+  maps?: Record<string, EntryCounts>;
+  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
+  refStreamDefinition?: RefStreamDefinition;
+}
+
 export interface Processor {
   /** @format int64 */
   createTimeMs?: number;
@@ -2122,6 +2158,12 @@ export interface ProcessorFilter {
 
   /** @format int32 */
   id?: number;
+
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
   pipelineName?: string;
   pipelineUuid?: string;
 
@@ -2375,7 +2417,7 @@ export interface RefDataProcessingInfo {
 
   /** @format int64 */
   lastAccessedTimeEpochMs?: number;
-  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE";
+  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
 }
 
 export interface RefStoreEntry {
@@ -2406,6 +2448,7 @@ export interface ReferenceLoader {
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   referenceFeed: DocRef;
+  streamType?: string;
 }
 
 export type RemovePermissionEvent = PermissionChangeEvent & {
@@ -2443,7 +2486,7 @@ export interface Result {
   componentId: string;
 
   /** If an error has occurred producing this result set then this will have details of the error */
-  error?: string;
+  errors?: string[];
   type: string;
 }
 
@@ -2837,6 +2880,11 @@ export interface SharedStepData {
   sourceLocation?: SourceLocation;
 }
 
+export interface SimpleUser {
+  name?: string;
+  uuid?: string;
+}
+
 export interface Size {
   /** @format int32 */
   height?: number;
@@ -2976,6 +3024,12 @@ export interface SourceConfig {
    * @min 0
    */
   maxCharactersToCompleteLine?: number;
+
+  /**
+   * @format int32
+   * @min 1
+   */
+  maxHexDumpLines?: number;
 }
 
 export interface SourceLocation {
@@ -3250,6 +3304,8 @@ export interface TaskProgress {
 }
 
 export interface TaskProgressResponse {
+  errors?: string[];
+
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: TaskProgress[];
@@ -3257,7 +3313,6 @@ export interface TaskProgressResponse {
 
 export interface TerminateTaskProgressRequest {
   criteria?: FindTaskCriteria;
-  kill?: boolean;
 }
 
 export type TextComponentSettings = ComponentSettings & {
@@ -3410,7 +3465,6 @@ export interface User {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
-  enabled?: boolean;
   group?: boolean;
 
   /** @format int32 */
@@ -6118,6 +6172,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Jobs
+     * @name SetNodeJobsEnabled
+     * @summary Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` are unspecified or empty, this action will apply to ALL jobs.
+     * @request PUT:/job/v1/setJobsEnabled/{nodeName}
+     * @secure
+     */
+    setNodeJobsEnabled: (nodeName: string, data: NodeSetJobsEnabledRequest, params: RequestParams = {}) =>
+      this.request<any, NodeSetJobsEnabledResponse>({
+        path: `/job/v1/setJobsEnabled/${nodeName}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Jobs
      * @name SetJobEnabled
      * @summary Sets the enabled status of the job
      * @request PUT:/job/v1/{id}/enabled
@@ -6500,25 +6573,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         type: ContentType.Json,
         ...params,
       }),
-
-    /**
-     * No description
-     *
-     * @tags Nodes
-     * @name SetNodeJobsEnabled
-     * @summary Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` are unspecified or empty, this action will apply to ALL jobs.
-     * @request PUT:/node/v1/setJobsEnabled/{nodeName}
-     * @secure
-     */
-    setNodeJobsEnabled: (nodeName: string, data: NodeSetJobsEnabledRequest, params: RequestParams = {}) =>
-      this.request<any, NodeSetJobsEnabledResponse>({
-        path: `/node/v1/setJobsEnabled/${nodeName}`,
-        method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
   };
   oauth2 = {
     /**
@@ -6779,7 +6833,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     filterUsers: (data: FilterUsersRequest, params: RequestParams = {}) =>
-      this.request<any, User[]>({
+      this.request<any, SimpleUser[]>({
         path: `/permission/doc/v1/filterUsers`,
         method: "POST",
         body: data,
@@ -7011,6 +7065,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processors
+     * @name FetchProcessor
+     * @summary Fetch a processor
+     * @request GET:/processor/v1/{id}
+     * @secure
+     */
+    fetchProcessor: (id: number, params: RequestParams = {}) =>
+      this.request<any, Processor>({
+        path: `/processor/v1/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Processors
      * @name SetProcessorEnabled
      * @summary Sets the enabled/disabled state for a processor
      * @request PUT:/processor/v1/{id}/enabled
@@ -7074,7 +7145,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/processorFilter/v1/reprocess
      * @secure
      */
-    reprocessData: (data: CreateReprocessFilterRequest, params: RequestParams = {}) =>
+    reprocessData: (data: CreateProcessFilterRequest, params: RequestParams = {}) =>
       this.request<any, ReprocessDataInfo[]>({
         path: `/processorFilter/v1/reprocess`,
         method: "POST",
@@ -7254,6 +7325,24 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
   };
   refData = {
     /**
+     * No description
+     *
+     * @tags Reference Data
+     * @name ClearBufferPool
+     * @summary Clear all buffers currently available in the buffer pool to reclaim memory. Performed on the named node or all nodes if null.
+     * @request DELETE:/refData/v1/clearBufferPool
+     * @secure
+     */
+    clearBufferPool: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/refData/v1/clearBufferPool`,
+        method: "DELETE",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
      * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.
      *
      * @tags Reference Data
@@ -7262,7 +7351,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/refData/v1/entries
      * @secure
      */
-    getReferenceStoreEntries: (query?: { limit?: number }, params: RequestParams = {}) =>
+    getReferenceStoreEntries: (
+      query?: { limit?: number; refStreamId?: number; mapName?: string },
+      params: RequestParams = {},
+    ) =>
       this.request<any, RefStoreEntry[]>({
         path: `/refData/v1/entries`,
         method: "GET",
@@ -7276,7 +7368,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Reference Data
      * @name LookupReferenceData
-     * @summary Perform a reference data lookup using the supplied lookup request.
+     * @summary Perform a reference data lookup using the supplied lookup request. Reference data will be loaded if required using the supplied reference pipeline. Performed on this node only.
      * @request POST:/refData/v1/lookup
      * @secure
      */
@@ -7294,15 +7386,55 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Reference Data
-     * @name PurgeReferenceData
-     * @summary Explicitly delete all entries that are older than purgeAge.
-     * @request DELETE:/refData/v1/purge/{purgeAge}
+     * @name PurgeReferenceDataByAge
+     * @summary Explicitly delete all entries that are older than purgeAge. Performed on the named node, or all nodes if null.
+     * @request DELETE:/refData/v1/purgeByAge/{purgeAge}
      * @secure
      */
-    purgeReferenceData: (purgeAge: string, params: RequestParams = {}) =>
+    purgeReferenceDataByAge: (purgeAge: string, query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
-        path: `/refData/v1/purge/${purgeAge}`,
+        path: `/refData/v1/purgeByAge/${purgeAge}`,
         method: "DELETE",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Reference Data
+     * @name PurgeReferenceDataByStream
+     * @summary Delete all entries for a reference stream. Performed on the named node or all nodes if null.
+     * @request DELETE:/refData/v1/purgeByStream/{refStreamId}
+     * @secure
+     */
+    purgeReferenceDataByStream: (refStreamId: number, query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/refData/v1/purgeByStream/${refStreamId}`,
+        method: "DELETE",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries. Performed on this node only.
+     *
+     * @tags Reference Data
+     * @name GetReferenceStreamProcessingInfoEntries
+     * @summary List processing info entries for all ref streams
+     * @request GET:/refData/v1/refStreamInfo
+     * @secure
+     */
+    getReferenceStreamProcessingInfoEntries: (
+      query?: { limit?: number; refStreamId?: number; mapName?: string },
+      params: RequestParams = {},
+    ) =>
+      this.request<any, ProcessingInfoResponse[]>({
+        path: `/refData/v1/refStreamInfo`,
+        method: "GET",
+        query: query,
         secure: true,
         ...params,
       }),
@@ -7574,6 +7706,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Searchable
+     * @name KeepAliveSearchableQuery
+     * @summary Keep a running query alive
+     * @request POST:/searchable/v2/keepAlive
+     * @secure
+     */
+    keepAliveSearchableQuery: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/searchable/v2/keepAlive`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Searchable
      * @name StartSearchableQuery
      * @summary Submit a search request
      * @request POST:/searchable/v2/search
@@ -7761,12 +7912,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sql Statistics Query
-     * @name DestroySqlStatisticsSearch
+     * @name DestroySqlStatisticsQuery
      * @summary Destroy a running query
      * @request POST:/sqlstatistics/v2/destroy
      * @secure
      */
-    destroySqlStatisticsSearch: (data: QueryKey, params: RequestParams = {}) =>
+    destroySqlStatisticsQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/sqlstatistics/v2/destroy`,
         method: "POST",
@@ -7780,12 +7931,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Sql Statistics Query
-     * @name SearchSqlStatistics
+     * @name KeepAliveSqlStatisticsQuery
+     * @summary Keep a running query alive
+     * @request POST:/sqlstatistics/v2/keepAlive
+     * @secure
+     */
+    keepAliveSqlStatisticsQuery: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/sqlstatistics/v2/keepAlive`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Sql Statistics Query
+     * @name StartSqlStatisticsQuery
      * @summary Submit a search request
      * @request POST:/sqlstatistics/v2/search
      * @secure
      */
-    searchSqlStatistics: (data: SearchRequest, params: RequestParams = {}) =>
+    startSqlStatisticsQuery: (data: SearchRequest, params: RequestParams = {}) =>
       this.request<any, SearchResponse>({
         path: `/sqlstatistics/v2/search`,
         method: "POST",
@@ -8219,12 +8389,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom-Index Queries
-     * @name DestroyStroomIndex
+     * @name DestroyStroomIndexQuery
      * @summary Destroy a running query
      * @request POST:/stroom-index/v2/destroy
      * @secure
      */
-    destroyStroomIndex: (data: QueryKey, params: RequestParams = {}) =>
+    destroyStroomIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/stroom-index/v2/destroy`,
         method: "POST",
@@ -8238,12 +8408,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom-Index Queries
-     * @name SearchStroomIndex
+     * @name KeepAliveStroomIndexQuery
+     * @summary Keep a running query alive
+     * @request POST:/stroom-index/v2/keepAlive
+     * @secure
+     */
+    keepAliveStroomIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/stroom-index/v2/keepAlive`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Stroom-Index Queries
+     * @name StartStroomIndexQuery
      * @summary Submit a search request
      * @request POST:/stroom-index/v2/search
      * @secure
      */
-    searchStroomIndex: (data: SearchRequest, params: RequestParams = {}) =>
+    startStroomIndexQuery: (data: SearchRequest, params: RequestParams = {}) =>
       this.request<any, SearchResponse>({
         path: `/stroom-index/v2/search`,
         method: "POST",
@@ -8277,12 +8466,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Solr Queries
-     * @name DestroySolrIndexSearch
+     * @name DestroySolrIndexQuery
      * @summary Destroy a running query
      * @request POST:/stroom-solr-index/v2/destroy
      * @secure
      */
-    destroySolrIndexSearch: (data: QueryKey, params: RequestParams = {}) =>
+    destroySolrIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/stroom-solr-index/v2/destroy`,
         method: "POST",
@@ -8296,12 +8485,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Solr Queries
-     * @name SearchSolrIndex
+     * @name KeepAliveSolrIndexQuery
+     * @summary Keep a running query alive
+     * @request POST:/stroom-solr-index/v2/keepAlive
+     * @secure
+     */
+    keepAliveSolrIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/stroom-solr-index/v2/keepAlive`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Solr Queries
+     * @name StartSolrIndexQuery
      * @summary Submit a search request
      * @request POST:/stroom-solr-index/v2/search
      * @secure
      */
-    searchSolrIndex: (data: SearchRequest, params: RequestParams = {}) =>
+    startSolrIndexQuery: (data: SearchRequest, params: RequestParams = {}) =>
       this.request<any, SearchResponse>({
         path: `/stroom-solr-index/v2/search`,
         method: "POST",
@@ -8583,24 +8791,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Authorisation
-     * @name SetUserStatus
-     * @summary Enables/disables the Stroom user with the supplied username
-     * @request PUT:/users/v1/{userName}/status
-     * @secure
-     */
-    setUserStatus: (userName: string, query?: { enabled?: boolean }, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/users/v1/${userName}/status`,
-        method: "PUT",
-        query: query,
-        secure: true,
         ...params,
       }),
 

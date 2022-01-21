@@ -18,10 +18,11 @@ public class FsVolumeStateDaoImpl implements FsVolumeStateDao {
 
     @Inject
     FsVolumeStateDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider) {
-        genericDao = new GenericDao<>(FS_VOLUME_STATE,
+        genericDao = new GenericDao<>(
+                fsDataStoreDbConnProvider,
+                FS_VOLUME_STATE,
                 FS_VOLUME_STATE.ID,
-                FsVolumeState.class,
-                fsDataStoreDbConnProvider);
+                FsVolumeState.class);
     }
 
     @Override
@@ -30,8 +31,13 @@ public class FsVolumeStateDaoImpl implements FsVolumeStateDao {
     }
 
     @Override
-    public FsVolumeState update(final FsVolumeState job) {
-        return genericDao.update(job);
+    public FsVolumeState update(final FsVolumeState volumeState) {
+        return genericDao.update(volumeState);
+    }
+
+    @Override
+    public FsVolumeState updateWithoutOptimisticLocking(final FsVolumeState volumeState) {
+        return genericDao.updateWithoutOptimisticLocking(volumeState);
     }
 
     @Override

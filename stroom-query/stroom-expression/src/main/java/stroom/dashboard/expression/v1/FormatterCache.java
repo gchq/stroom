@@ -9,6 +9,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 final class FormatterCache {
@@ -75,7 +76,7 @@ final class FormatterCache {
                 LOGGER.debug("Compiling formatter: " + k);
             }
             try {
-                return new CachedFormatter(DateTimeFormatter.ofPattern(k));
+                return new CachedFormatter(DateTimeFormatter.ofPattern(k, Locale.ENGLISH));
             } catch (final RuntimeException e) {
                 return new CachedFormatter(e);
             }

@@ -83,25 +83,23 @@ public class PermissionsListPresenter
 
                 if (currentUser != null) {
                     final String userUuid = currentUser.getUuid();
-                    final Set<String> permissions = documentPermissions.getPermissions().get(userUuid);
-                    if (permissions != null) {
-                        if (permissions.contains(permission)) {
-                            tickBoxState = TickBoxState.TICK;
+                    final Set<String> permissions = documentPermissions.getPermissionsForUser(userUuid);
+                    if (permissions.contains(permission)) {
+                        tickBoxState = TickBoxState.TICK;
 
-                        } else {
-                            // If the user has a higher level of permission that is inferred by this level
-                            // then indicate that with a half tick.
-                            String higherPermission = DocumentPermissionNames.getHigherPermission(permission);
-                            boolean inferred = false;
+                    } else {
+                        // If the user has a higher level of permission that is inferred by this level
+                        // then indicate that with a half tick.
+                        String higherPermission = DocumentPermissionNames.getHigherPermission(permission);
+                        boolean inferred = false;
 
-                            while (higherPermission != null && !inferred) {
-                                inferred = permissions.contains(higherPermission);
-                                higherPermission = DocumentPermissionNames.getHigherPermission(higherPermission);
-                            }
+                        while (higherPermission != null && !inferred) {
+                            inferred = permissions.contains(higherPermission);
+                            higherPermission = DocumentPermissionNames.getHigherPermission(higherPermission);
+                        }
 
-                            if (inferred) {
-                                tickBoxState = TickBoxState.HALF_TICK;
-                            }
+                        if (inferred) {
+                            tickBoxState = TickBoxState.HALF_TICK;
                         }
                     }
                 }
@@ -129,7 +127,7 @@ public class PermissionsListPresenter
         changes.getAdd().computeIfAbsent(userUuid, k -> new HashSet<>()).add(permission);
 
         // Add to the model.
-        documentPermissions.getPermissions().computeIfAbsent(userUuid, k -> new HashSet<>()).add(permission);
+        documentPermissions.addPermission(userUuid, permission);
     }
 
     public void removePermission(final String userUuid, final String permission) {
@@ -137,10 +135,7 @@ public class PermissionsListPresenter
         changes.getRemove().computeIfAbsent(userUuid, k -> new HashSet<>()).add(permission);
 
         // Remove from the model.
-        final Set<String> permissions = documentPermissions.getPermissions().get(userUuid);
-        if (permissions != null) {
-            permissions.remove(permission);
-        }
+        documentPermissions.removePermission(userUuid, permission);
     }
 
     public void toggle(final String userUuid, final String permission) {

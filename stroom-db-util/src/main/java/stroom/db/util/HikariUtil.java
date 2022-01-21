@@ -1,10 +1,12 @@
 package stroom.db.util;
 
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.config.common.DbConfig;
 import stroom.util.time.StroomDuration;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.health.HealthCheckRegistry;
 import com.zaxxer.hikari.HikariConfig;
 
 import java.util.function.Consumer;
@@ -17,7 +19,14 @@ public class HikariUtil {
         // Utility class.
     }
 
-    public static HikariConfig createConfig(final DbConfig dbConfig) {
+    public static HikariConfig createConfig(final AbstractDbConfig dbConfig) {
+        return createConfig(dbConfig, null, null, null);
+    }
+
+    public static HikariConfig createConfig(final AbstractDbConfig dbConfig,
+                                            final String poolName,
+                                            final MetricRegistry metricRegistry,
+                                            final HealthCheckRegistry healthCheckRegistry) {
         final ConnectionConfig connectionConfig = dbConfig.getConnectionConfig();
         final ConnectionPoolConfig connectionPoolConfig = dbConfig.getConnectionPoolConfig();
 
@@ -26,12 +35,33 @@ public class HikariUtil {
         // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
         DbUtil.waitForConnection(connectionConfig);
 
-        return create(connectionConfig, connectionPoolConfig);
+        return create(
+                connectionConfig,
+                connectionPoolConfig,
+                poolName,
+                metricRegistry,
+                healthCheckRegistry);
     }
 
     private static HikariConfig create(final ConnectionConfig connectionConfig,
-                                       final ConnectionPoolConfig connectionPoolConfig) {
+                                       final ConnectionPoolConfig connectionPoolConfig,
+                                       final String poolName,
+                                       final MetricRegistry metricRegistry,
+                                       final HealthCheckRegistry healthCheckRegistry) {
         final HikariConfig config = new HikariConfig();
+
+        // So we can tell which pool is which in the metrics when >1 db config is specified
+        if (poolName != null && !poolName.isBlank()) {
+            config.setPoolName(poolName);
+        }
+
+        // Attach hikari to our DropWiz metric registry so we can get metrics on the pool
+        if (metricRegistry != null) {
+            config.setMetricRegistry(metricRegistry);
+        }
+        if (healthCheckRegistry != null) {
+            config.setHealthCheckRegistry(healthCheckRegistry);
+        }
 
         // Pool properties
         copyAndMapProp(connectionPoolConfig::getConnectionTimeout,
@@ -41,6 +71,10 @@ public class HikariUtil {
         copyAndMapProp(connectionPoolConfig::getMaxLifetime, config::setMaxLifetime, StroomDuration::toMillis);
         copyAndMapProp(connectionPoolConfig::getMinimumIdle, config::setMinimumIdle, Integer::intValue);
         copyAndMapProp(connectionPoolConfig::getMaxPoolSize, config::setMaximumPoolSize, Integer::intValue);
+        copyAndMapProp(
+                connectionPoolConfig::getLeakDetectionThreshold,
+                config::setLeakDetectionThreshold,
+                StroomDuration::toMillis);
 
         copyAndMapProp(connectionConfig::getUrl, config::setJdbcUrl, Function.identity());
         copyAndMapProp(connectionConfig::getUser, config::setUsername, Function.identity());

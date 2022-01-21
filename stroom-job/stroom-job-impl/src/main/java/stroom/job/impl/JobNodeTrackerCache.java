@@ -77,9 +77,8 @@ class JobNodeTrackerCache {
                 refreshLock.unlock();
             }
         } else {
-            // If we have trackers then let one lucky thread see if they need to
-            // be
-            // refreshed, others will get the old copy in the meantime.
+            // If we have trackers then let one lucky thread see if they need to be refreshed, others will get the old
+            // copy in the meantime.
             if (refreshLock.tryLock()) {
                 try {
                     // Check to see if trackers need to be refreshed.

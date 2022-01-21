@@ -17,7 +17,6 @@
 
 package stroom.search.elastic.search;
 
-import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
@@ -47,11 +46,11 @@ import javax.inject.Provider;
 
 @SuppressWarnings("unused")
 public class ElasticSearchStoreFactory implements StoreFactory {
+
     public static final String ENTITY_TYPE = ElasticIndexDoc.DOCUMENT_TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchStoreFactory.class);
 
     private final ElasticIndexCache elasticIndexCache;
-    private final WordListProvider wordListProvider;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider;
@@ -63,17 +62,14 @@ public class ElasticSearchStoreFactory implements StoreFactory {
     @Inject
     public ElasticSearchStoreFactory(
             final ElasticIndexCache elasticIndexCache,
-            final WordListProvider wordListProvider,
             final Executor executor,
             final TaskContextFactory taskContextFactory,
             final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
             final ElasticSearchConfig searchConfig,
             final UiConfig clientConfig,
             final SecurityContext securityContext,
-            final CoprocessorsFactory coprocessorsFactory
-    ) {
+            final CoprocessorsFactory coprocessorsFactory) {
         this.elasticIndexCache = elasticIndexCache;
-        this.wordListProvider = wordListProvider;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.elasticAsyncSearchTaskHandlerProvider = elasticAsyncSearchTaskHandlerProvider;
@@ -104,9 +100,10 @@ public class ElasticSearchStoreFactory implements StoreFactory {
 
         // Create a handler for search results.
         final Coprocessors coprocessors = coprocessorsFactory.create(
-                modifiedSearchRequest.getKey().getUuid(),
+                modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
-                modifiedSearchRequest.getQuery().getParams());
+                modifiedSearchRequest.getQuery().getParams(),
+                false);
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";

@@ -50,7 +50,7 @@ public class DashboardSearchResponse {
      * Any errors that have been generated during searching.
      */
     @JsonProperty
-    private final String errors;
+    private final List<String> errors;
 
     /**
      * Complete means that all index shards have been searched across the
@@ -65,7 +65,7 @@ public class DashboardSearchResponse {
     @JsonCreator
     public DashboardSearchResponse(@JsonProperty("queryKey") final DashboardQueryKey queryKey,
                                    @JsonProperty("highlights") final Set<String> highlights,
-                                   @JsonProperty("errors") final String errors,
+                                   @JsonProperty("errors") final List<String> errors,
                                    @JsonProperty("complete") final boolean complete,
                                    @JsonProperty("results") final List<Result> results) {
         this.queryKey = queryKey;
@@ -83,7 +83,7 @@ public class DashboardSearchResponse {
         return highlights;
     }
 
-    public String getErrors() {
+    public List<String> getErrors() {
         return errors;
     }
 

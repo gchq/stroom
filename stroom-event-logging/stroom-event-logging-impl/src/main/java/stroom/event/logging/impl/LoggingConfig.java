@@ -1,18 +1,17 @@
 /*
  * Copyright 2020 Crown Copyright
  *
- *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * Licensed under the Apache License, Version 2.0 (the "License");
- * See the License for the specific language governing permissions and
+ *
  * Unless required by applicable law or agreed to in writing, software
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * You may obtain a copy of the License at
  * distributed under the License is distributed on an "AS IS" BASIS,
- * import stroom.util.shared.IsStroomConfig;
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  * limitations under the License.
- * you may not use this file except in compliance with the License.
  */
 
 package stroom.event.logging.impl;
@@ -22,27 +21,47 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
-
-
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class LoggingConfig extends AbstractConfig implements IsStroomConfig {
 
-    private boolean logEveryRestCallEnabled = false;
+    private final boolean logEveryRestCallEnabled;
 
-    private boolean omitRecordDetailsLoggingEnabled = true;
+    private final boolean omitRecordDetailsLoggingEnabled;
 
-    private int maxListElements = 5;
+    private final int maxListElements;
 
-    private int maxDataElementStringLength = 500;
+    private final int maxDataElementStringLength;
 
-    private CacheConfig deviceCache = CacheConfig.builder()
-            .maximumSize(1000L)
-            .expireAfterWrite(StroomDuration.ofMinutes(60))
-            .build();
+    private final CacheConfig deviceCache;
+
+    public LoggingConfig() {
+        logEveryRestCallEnabled = false;
+        omitRecordDetailsLoggingEnabled = true;
+        maxListElements = 5;
+        maxDataElementStringLength = 500;
+        deviceCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterWrite(StroomDuration.ofMinutes(60))
+                .build();
+    }
+
+    @JsonCreator
+    public LoggingConfig(@JsonProperty("logEveryRestCallEnabled") final boolean logEveryRestCallEnabled,
+                         @JsonProperty("omitRecordDetailsLoggingEnabled") final boolean omitRecordDetailsLoggingEnabled,
+                         @JsonProperty("maxListElements") final int maxListElements,
+                         @JsonProperty("maxDataElementStringLength") final int maxDataElementStringLength,
+                         @JsonProperty("deviceCache") final CacheConfig deviceCache) {
+        this.logEveryRestCallEnabled = logEveryRestCallEnabled;
+        this.omitRecordDetailsLoggingEnabled = omitRecordDetailsLoggingEnabled;
+        this.maxListElements = maxListElements;
+        this.maxDataElementStringLength = maxDataElementStringLength;
+        this.deviceCache = deviceCache;
+    }
 
     @JsonProperty("omitRecordDetailsLoggingEnabled")
     @JsonPropertyDescription("Suppress standard database record fields " +
@@ -51,18 +70,10 @@ public class LoggingConfig extends AbstractConfig implements IsStroomConfig {
         return omitRecordDetailsLoggingEnabled;
     }
 
-    public void setOmitRecordDetailsLoggingEnabled(final boolean omitRecordHistoryEnabled) {
-        this.omitRecordDetailsLoggingEnabled = omitRecordHistoryEnabled;
-    }
-
     @JsonProperty("maxListElements")
     @JsonPropertyDescription("Maximum number of elements in event log before truncation.")
     public int getMaxListElements() {
         return maxListElements;
-    }
-
-    public void setMaxListElements(final int maxListElements) {
-        this.maxListElements = maxListElements;
     }
 
     @JsonProperty("maxDataElementStringLength")
@@ -71,28 +82,16 @@ public class LoggingConfig extends AbstractConfig implements IsStroomConfig {
         return maxDataElementStringLength;
     }
 
-    public void setMaxDataElementStringLength(final int maxDataElementStringLength) {
-        this.maxDataElementStringLength = maxDataElementStringLength;
-    }
-
     @JsonProperty("logEveryRestCallEnabled")
     @JsonPropertyDescription("Ensure that every RESTful service calls is logged, not only user initiated ones.")
     public boolean isLogEveryRestCallEnabled() {
         return logEveryRestCallEnabled;
     }
 
-    public void setLogEveryRestCallEnabled(final boolean logEveryRestCallEnabled) {
-        this.logEveryRestCallEnabled = logEveryRestCallEnabled;
-    }
-
     @JsonProperty
     @JsonPropertyDescription("The cache configuration for remembering device objects for IP addresses.")
     public CacheConfig getDeviceCache() {
         return deviceCache;
-    }
-
-    public void setDeviceCache(final CacheConfig deviceCache) {
-        this.deviceCache = deviceCache;
     }
 
     @Override

@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.v2.DateTimeSettings;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -28,15 +29,18 @@ import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
+import stroom.util.string.ExceptionStringUtil;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class SearchResponseCreator {
 
@@ -77,12 +81,21 @@ public class SearchResponseCreator {
     }
 
     /**
-     * @param errorMessages List of errors to add to the {@link SearchResponse}
+     * @param throwable List of errors to add to the {@link SearchResponse}
      * @return An empty {@link SearchResponse} with the passed error messages
      */
-    public static SearchResponse createErrorResponse(final List<String> errorMessages) {
-        Objects.requireNonNull(errorMessages);
-        final List<String> errors = new ArrayList<>(errorMessages);
+    private static SearchResponse createErrorResponse(final Store store, final Throwable throwable) {
+        Objects.requireNonNull(store);
+        Objects.requireNonNull(throwable);
+
+        final List<String> errors = new ArrayList<>();
+
+        LOGGER.debug(throwable::getMessage, throwable);
+        errors.add(ExceptionStringUtil.getMessage(throwable));
+
+        if (store.getErrors() != null) {
+            errors.addAll(store.getErrors());
+        }
         return new SearchResponse(
                 null,
                 null,
@@ -90,20 +103,16 @@ public class SearchResponseCreator {
                 false);
     }
 
-    private static SearchResponse createErrorResponse(final Store store, List<String> errorMessages) {
-        Objects.requireNonNull(store);
-        Objects.requireNonNull(errorMessages);
-        final List<String> errors = new ArrayList<>(errorMessages);
-        if (store.getErrors() != null) {
-            errors.addAll(store.getErrors());
-        }
-        return createErrorResponse(errors);
+    public boolean keepAlive() {
+        LOGGER.trace(() -> "keepAlive()", new RuntimeException("keepAlive"));
+        return true;
     }
 
     /**
      * Stop searching and destroy any stored data.
      */
     public void destroy() {
+        LOGGER.trace(() -> "destroy()", new RuntimeException("destroy"));
         store.destroy();
     }
 
@@ -143,14 +152,17 @@ public class SearchResponseCreator {
                     // Search didn't complete non-incremental search in time so return a timed out error response
                     return createErrorResponse(
                             store,
-                            Collections.singletonList("The search timed out after " + effectiveTimeout));
+                            new RuntimeException("The search timed out after " + effectiveTimeout));
                 }
 
             } catch (InterruptedException e) {
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
                 Thread.currentThread().interrupt();
-                LOGGER.debug(() -> "Thread " + Thread.currentThread().getName() + " interrupted", e);
+
                 return createErrorResponse(
-                        store, Collections.singletonList("Thread was interrupted before the search could complete"));
+                        store,
+                        new RuntimeException("Thread was interrupted before the search could complete"));
             }
         }
 
@@ -172,13 +184,17 @@ public class SearchResponseCreator {
                     store.isComplete());
 
             List<Result> results = res;
+
             if (results.size() == 0) {
                 results = null;
             }
+
+            final List<String> errors = buildCompoundErrorList(store, results);
+
             final SearchResponse searchResponse = new SearchResponse(
                     store.getHighlights(),
                     results,
-                    store.getErrors(),
+                    errors,
                     complete);
 
             if (complete) {
@@ -191,11 +207,31 @@ public class SearchResponseCreator {
         } catch (final RuntimeException e) {
             LOGGER.error(() -> "Error getting search results for query " + searchRequest.getKey().toString(), e);
 
-            return createErrorResponse(store, Collections.singletonList(
-                    "Error getting search results: [" +
+            return createErrorResponse(store,
+                    new RuntimeException("Error getting search results: [" +
                             e.getMessage() +
-                            "], see service's logs for details"));
+                            "], see service's logs for details", e));
         }
+    }
+
+    private List<String> buildCompoundErrorList(final Store store, final List<Result> results) {
+        final List<String> errors = new ArrayList<>();
+
+        if (store.getErrors() != null) {
+            errors.addAll(store.getErrors());
+        }
+
+        if (results != null) {
+            errors.addAll(results.stream()
+                    .map(Result::getErrors)
+                    .filter(Objects::nonNull)
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList()));
+        }
+
+        return errors.isEmpty()
+                ? null
+                : errors;
     }
 
     private Duration getEffectiveTimeout(final SearchRequest searchRequest) {
@@ -232,7 +268,7 @@ public class SearchResponseCreator {
                     if (fetch == null || Fetch.ALL.equals(fetch)) {
                         // If the fetch option has not been set or is set to ALL we deliver the full result.
                         results.add(result);
-                        LOGGER.info(() -> "Delivering " + result + " for " + componentId);
+                        LOGGER.debug(() -> "Delivering " + result + " for " + componentId);
 
                     } else if (Fetch.CHANGES.equals(fetch)) {
                         // Cache the new result and get the previous one.
@@ -266,7 +302,7 @@ public class SearchResponseCreator {
                             // Either we haven't returned a result before or this result
                             // is different from the one delivered previously so deliver it to the client.
                             results.add(result);
-                            LOGGER.info(() -> "Delivering " + result + " for " + componentId);
+                            LOGGER.debug(() -> "Delivering " + result + " for " + componentId);
                         }
                     }
                 }
@@ -280,26 +316,27 @@ public class SearchResponseCreator {
         final String componentId = resultRequest.getComponentId();
         Result result = null;
 
-        final DataStore data = store.getData(componentId);
-        if (data != null) {
+        final DataStore dataStore = store.getData(componentId);
+        if (dataStore != null) {
             try {
                 final ResultCreator resultCreator = getResultCreator(
-                        searchRequest.getKey().getUuid(),
+                        searchRequest.getKey(),
                         componentId,
                         resultRequest,
                         searchRequest.getDateTimeSettings());
                 if (resultCreator != null) {
-                    result = resultCreator.create(data, resultRequest);
+                    result = resultCreator.create(dataStore, resultRequest);
                 }
             } catch (final RuntimeException e) {
-                result = new TableResult(componentId, null, null, null, 0, e.getMessage());
+                result = new TableResult(componentId, null, null, null, 0,
+                        Collections.singletonList(ExceptionStringUtil.getMessage(e)));
             }
         }
 
         return result;
     }
 
-    private ResultCreator getResultCreator(final String queryKey,
+    private ResultCreator getResultCreator(final QueryKey queryKey,
                                            final String componentId,
                                            final ResultRequest resultRequest,
                                            final DateTimeSettings dateTimeSettings) {

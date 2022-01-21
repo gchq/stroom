@@ -77,7 +77,6 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
         return result;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
         if (this == obj) {
@@ -92,7 +91,9 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
         final StatisticField other = (StatisticField) obj;
         if (fieldName == null) {
             return other.fieldName == null;
-        } else return fieldName.equals(other.fieldName);
+        } else {
+            return fieldName.equals(other.fieldName);
+        }
     }
 
     @Override

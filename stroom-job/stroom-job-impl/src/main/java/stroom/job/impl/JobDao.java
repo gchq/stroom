@@ -4,6 +4,7 @@ import stroom.job.shared.Job;
 import stroom.util.shared.ResultPage;
 
 import java.util.Optional;
+import java.util.Set;
 
 public interface JobDao {
 
@@ -18,4 +19,6 @@ public interface JobDao {
     ResultPage<Job> find(FindJobCriteria findJobCriteria);
 
     int deleteOrphans();
+
+    int setJobsEnabled(String nodeName, boolean enabled, final Set<String> includeJobs, final Set<String> excludeJobs);
 }

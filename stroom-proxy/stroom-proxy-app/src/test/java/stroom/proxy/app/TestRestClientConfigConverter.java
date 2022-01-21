@@ -27,15 +27,15 @@ class TestRestClientConfigConverter {
     void test() {
         final RestClientConfigConverter restClientConfigConverter = new RestClientConfigConverter(pathCreator);
 
-        final RestClientConfig restClientConfig = new RestClientConfig();
-
-        restClientConfig.setMaxThreads(999);
-        restClientConfig.setConnectionTimeout(StroomDuration.ofMinutes(33));
-
-        final HttpClientTlsConfig httpClientTlsConfig = new HttpClientTlsConfig();
-        httpClientTlsConfig.setCertAlias("bongo");
-
-        restClientConfig.setTlsConfiguration(httpClientTlsConfig);
+        final RestClientConfig restClientConfig = RestClientConfig
+                .builder()
+                .withUserAgent("foobar")
+                .withMaxThreads(999)
+                .withConnectionTimeout(StroomDuration.ofMinutes(33))
+                .withTlsConfiguration(HttpClientTlsConfig.builder()
+                        .withCertAlias("bongo")
+                        .build())
+                .build();
 
         final JerseyClientConfiguration jerseyClientConfiguration = restClientConfigConverter.convert(
                 restClientConfig);

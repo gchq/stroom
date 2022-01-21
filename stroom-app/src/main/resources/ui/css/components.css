@@ -735,6 +735,10 @@
     padding-top: 1px;
 }
 
+.dataViewImpl-buttonPanel {
+    float: left;
+}
+
 .dataViewImpl-navigatorContainer {
     float: left;
 }
@@ -754,13 +758,8 @@
 
 .dataViewImpl-sourceLinkLabel {
     margin: 0;
-    cursor: pointer;
     padding-left: 0.75em;
     padding-right: 0.75em;
-}
-
-.dataViewImpl-sourceLinkLabel:hover {
-    text-decoration: underline;
 }
 
 .classificationLabel {
@@ -1241,6 +1240,7 @@
     position: absolute;
     background-color: #1e88e5;
     height: 4px;
+    min-width: 3px;
 }
 
 .moveDocumentViewImpl-label {
@@ -1426,6 +1426,7 @@
 }
 
 .preferencesViewImpl-buttons {
+	margin-top: 20px;
 }
 
 .preferencesViewImpl-buttons button {

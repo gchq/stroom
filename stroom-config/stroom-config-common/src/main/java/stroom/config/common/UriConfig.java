@@ -3,15 +3,20 @@ package stroom.config.common;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NotInjectableConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
 
+@NotInjectableConfig
+@JsonPropertyOrder(alphabetic = true)
 public abstract class UriConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final String PROP_NAME_SCHEME = "scheme";
@@ -19,32 +24,40 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
     private static final String PROP_NAME_PORT = "port";
     private static final String PROP_NAME_PATH_PREFIX = "pathPrefix";
 
-    private String scheme;
-    private String hostname;
-    private Integer port;
-    private String pathPrefix;
+    private final String scheme;
+    private final String hostname;
+    private final Integer port;
+    private final String pathPrefix;
 
     public UriConfig() {
+        scheme = null;
+        hostname = null;
+        port = null;
+        pathPrefix = null;
     }
 
-    public UriConfig(final String scheme, final String hostname, final Integer port) {
+    @JsonCreator
+    public UriConfig(@JsonProperty("scheme") final String scheme,
+                     @JsonProperty("hostname") final String hostname,
+                     @JsonProperty("port") final Integer port,
+                     @JsonProperty("pathPrefix") final String pathPrefix) {
         this.scheme = scheme;
         this.hostname = hostname;
         this.port = port;
+        this.pathPrefix = pathPrefix;
+    }
+
+    public UriConfig(final String scheme, final String hostname, final Integer port) {
+        this(scheme, hostname, port, null);
     }
 
     public UriConfig(final String scheme, final String hostname) {
-        this.scheme = scheme;
-        this.hostname = hostname;
+        this(scheme, hostname, null, null);
     }
 
     @Pattern(regexp = "^https?$")
     public String getScheme() {
         return scheme;
-    }
-
-    public void setScheme(final String scheme) {
-        this.scheme = scheme;
     }
 
     @ReadOnly
@@ -53,19 +66,11 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
         return hostname;
     }
 
-    public void setHostname(final String hostname) {
-        this.hostname = hostname;
-    }
-
     @Min(0)
     @Max(65535)
     @JsonProperty(PROP_NAME_PORT)
     public Integer getPort() {
         return port;
-    }
-
-    public void setPort(final Integer port) {
-        this.port = port;
     }
 
     @JsonProperty(PROP_NAME_PATH_PREFIX)
@@ -76,9 +81,6 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
         return pathPrefix;
     }
 
-    public void setPathPrefix(final String pathPrefix) {
-        this.pathPrefix = pathPrefix;
-    }
 
     @Override
     public String toString() {
@@ -92,7 +94,7 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
         }
 
         if (port != null) {
-            sb.append(":").append(port.toString());
+            sb.append(":").append(port);
         }
 
         if (pathPrefix != null && !pathPrefix.isBlank()) {
@@ -107,7 +109,6 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
         return sb.toString();
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

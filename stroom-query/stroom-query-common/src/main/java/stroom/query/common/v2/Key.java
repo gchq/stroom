@@ -3,6 +3,7 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.util.io.ByteSizeUnit;
+import stroom.util.logging.Metrics;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -12,7 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 public class Key implements Iterable<KeyPart> {
 
@@ -118,7 +119,6 @@ public class Key implements Iterable<KeyPart> {
         return null;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -152,7 +152,7 @@ public class Key implements Iterable<KeyPart> {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public Iterator<KeyPart> iterator() {
         final List<KeyPart> keyParts = getKeyParts();
         return keyParts.iterator();

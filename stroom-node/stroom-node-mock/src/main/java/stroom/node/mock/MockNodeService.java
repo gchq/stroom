@@ -22,6 +22,7 @@ import stroom.node.api.NodeService;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.inject.Singleton;
@@ -69,7 +70,8 @@ public class MockNodeService implements NodeService {
                                             final Supplier<String> fullPathSupplier,
                                             final Supplier<T_RESP> localSupplier,
                                             final Function<Builder, Response> responseBuilderFunc,
-                                            final Function<Response, T_RESP> responseMapper) {
+                                            final Function<Response, T_RESP> responseMapper,
+                                            final Map<String, Object> queryParams) {
         return localSupplier.get();
     }
 
@@ -77,7 +79,8 @@ public class MockNodeService implements NodeService {
     public void remoteRestCall(final String nodeName,
                                final Supplier<String> fullPathSupplier,
                                final Runnable localRunnable,
-                               final Function<Builder, Response> responseBuilderFunc) {
+                               final Function<Builder, Response> responseBuilderFunc,
+                               final Map<String, Object> queryParams) {
         localRunnable.run();
     }
 }

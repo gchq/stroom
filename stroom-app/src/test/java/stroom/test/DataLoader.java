@@ -47,6 +47,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Optional;
 
 public class DataLoader {
@@ -59,7 +60,8 @@ public class DataLoader {
     private final FeedProperties feedProperties;
     private final StreamTargetStreamHandlers streamTargetStreamHandlers;
 
-    public static final DateTimeFormatter EFFECTIVE_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    public static final DateTimeFormatter EFFECTIVE_DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss", Locale.ENGLISH);
 
     public DataLoader(final FeedProperties feedProperties,
                       final StreamTargetStreamHandlers streamTargetStreamHandlers) {

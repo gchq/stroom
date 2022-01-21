@@ -4,11 +4,14 @@
 package stroom.proxy.repo.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.proxy.repo.db.jooq.DefaultSchema;
+import stroom.proxy.repo.db.jooq.Indexes;
+import stroom.proxy.repo.db.jooq.Keys;
+import stroom.proxy.repo.db.jooq.tables.records.SourceRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Row8;
@@ -21,9 +24,8 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.proxy.repo.db.jooq.DefaultSchema;
-import stroom.proxy.repo.db.jooq.Keys;
-import stroom.proxy.repo.db.jooq.tables.records.SourceRecord;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -83,9 +85,9 @@ public class Source extends TableImpl<SourceRecord> {
     public final TableField<SourceRecord, Boolean> FORWARDED = createField(DSL.name("forwarded"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
 
     /**
-     * The column <code>source.forward_error</code>.
+     * The column <code>source.new_position</code>.
      */
-    public final TableField<SourceRecord, Boolean> FORWARD_ERROR = createField(DSL.name("forward_error"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
+    public final TableField<SourceRecord, Long> NEW_POSITION = createField(DSL.name("new_position"), SQLDataType.BIGINT, this, "");
 
     private Source(Name alias, Table<SourceRecord> aliased) {
         this(alias, aliased, null);
@@ -126,13 +128,18 @@ public class Source extends TableImpl<SourceRecord> {
     }
 
     @Override
+    public List<Index> getIndexes() {
+        return Arrays.<Index>asList(Indexes.NEW_POSITION_SOURCE_INDEX, Indexes.SOURCE_PATH_INDEX);
+    }
+
+    @Override
     public UniqueKey<SourceRecord> getPrimaryKey() {
         return Keys.PK_SOURCE;
     }
 
     @Override
     public List<UniqueKey<SourceRecord>> getKeys() {
-        return Arrays.<UniqueKey<SourceRecord>>asList(Keys.PK_SOURCE, Keys.SQLITE_AUTOINDEX_SOURCE_2);
+        return Arrays.<UniqueKey<SourceRecord>>asList(Keys.PK_SOURCE);
     }
 
     @Override
@@ -166,7 +173,7 @@ public class Source extends TableImpl<SourceRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Long, String, String, String, Long, Boolean, Boolean, Boolean> fieldsRow() {
+    public Row8<Long, String, String, String, Long, Boolean, Boolean, Long> fieldsRow() {
         return (Row8) super.fieldsRow();
     }
 }

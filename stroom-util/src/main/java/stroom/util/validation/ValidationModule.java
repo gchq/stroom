@@ -1,12 +1,13 @@
 package stroom.util.validation;
 
 import stroom.util.io.HomeDirProvider;
-import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.validation.IsSubsetOfValidator;
+import stroom.util.shared.validation.IsSupersetOfValidator;
 import stroom.util.shared.validation.ValidDirectoryPathValidator;
 import stroom.util.shared.validation.ValidFilePathValidator;
 import stroom.util.shared.validation.ValidRegexValidator;
@@ -27,7 +28,7 @@ public class ValidationModule extends AbstractModule {
     protected void configure() {
         super.configure();
 
-        requireBinding(PathCreator.class);
+        requireBinding(SimplePathCreator.class);
         requireBinding(HomeDirProvider.class);
         requireBinding(TempDirProvider.class);
 
@@ -37,6 +38,7 @@ public class ValidationModule extends AbstractModule {
         bind(ValidRegexValidator.class).to(ValidRegexValidatorImpl.class);
         bind(ValidSimpleCronValidator.class).to(ValidSimpleSimpleCronValidatorImpl.class);
         bind(IsSubsetOfValidator.class).to(IsSubsetOfValidatorImpl.class);
+        bind(IsSupersetOfValidator.class).to(IsSupersetOfValidatorImpl.class);
         bind(ValidFilePathValidator.class).to(ValidFilePathValidatorImpl.class);
         bind(ValidDirectoryPathValidator.class).to(ValidDirectoryPathValidatorImpl.class);
     }

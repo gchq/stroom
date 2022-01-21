@@ -25,8 +25,11 @@ import com.google.common.util.concurrent.Striped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public abstract class AbstractRefDataStore implements RefDataStore {
 
@@ -49,28 +52,61 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                                             long effectiveTimeMs);
 
 
+    @Override
     public boolean doWithLoaderUnlessComplete(final RefStreamDefinition refStreamDefinition,
                                               final long effectiveTimeMs,
                                               final Consumer<RefDataLoader> work) {
 
-        boolean result = false;
+        final boolean result;
         try (RefDataLoader refDataLoader = loader(refStreamDefinition, effectiveTimeMs)) {
-            // we now hold the lock for this RefStreamDefinition so test the completion state
+            // we now hold the lock for this RefStreamDefinition so re-test the completion state
 
-            if (isDataLoaded(refStreamDefinition)) {
-                LOGGER.debug("Data is already loaded for {}, so doing nothing", refStreamDefinition);
-            } else {
-                try {
-                    work.accept(refDataLoader);
-                } catch (Exception e) {
-                    throw new RuntimeException(LogUtil.message(
-                            "Error performing action with refDataLoader for {}", refStreamDefinition), e);
-                }
+            final Optional<ProcessingState> optLoadState = getLoadState(refStreamDefinition);
+
+            final boolean isRefLoadRequired = optLoadState
+                    .filter(loadState ->
+                            loadState.equals(ProcessingState.COMPLETE))
+                    .isEmpty();
+            LOGGER.debug("optLoadState {}, isRefLoadRequired {}", optLoadState, isRefLoadRequired);
+
+            if (optLoadState.isPresent() && optLoadState.get().equals(ProcessingState.FAILED)) {
+                // A previous load of this ref stream failed so no point trying again.
+                LOGGER.error("Reference Data is in a failed state for {}", refStreamDefinition);
+                throw new RuntimeException(LogUtil.message(
+                        "Reference Data is in a failed state from a previous load, aborting this load. {}",
+                        refStreamDefinition.asUiFriendlyString()));
+            } else if (optLoadState.isPresent() && optLoadState.get().equals(ProcessingState.COMPLETE)) {
+                // If we get here then the data was not loaded when we checked before getting the lock
+                // so we waited for the lock and in the mean time another stream did the load
+                // so we can drop out.
+                LOGGER.info("Reference Data is already loaded for {}, so doing nothing", refStreamDefinition);
+                result = false;
+            } else if (optLoadState.isEmpty()
+                    || optLoadState.get().equals(ProcessingState.TERMINATED)
+                    || optLoadState.get().equals(ProcessingState.PURGE_FAILED)) {
+                // Ref stream not in the store or a previous load was terminated part way through so
+                // do the load (again)
+                LOGGER.debug("Performing work with loader for {}", refStreamDefinition);
+                work.accept(refDataLoader);
+
                 result = true;
+            } else {
+                throw new RuntimeException(LogUtil.message(
+                        "Unexpected processing state {} for {}",
+                        optLoadState,
+                        refStreamDefinition.asUiFriendlyString()));
             }
         } catch (Exception e) {
+            String msg = e.getMessage();
+            // May get suppressed exceptions from the try-with-resources
+            if (e.getSuppressed() != null && e.getSuppressed().length > 0) {
+                msg += Arrays.stream(e.getSuppressed())
+                        .map(Throwable::getMessage)
+                        .collect(Collectors.joining(" "));
+            }
             throw new RuntimeException(LogUtil.message(
-                    "Error closing refDataLoader for {}", refStreamDefinition), e);
+                    "Error using reference loader for {}: {}",
+                    refStreamDefinition.asUiFriendlyString(), msg), e);
         }
         return result;
     }
@@ -90,7 +126,7 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                         Thread.currentThread().interrupt();
                         throw new RuntimeException(LogUtil.message(
                                 "Thread interrupted while trying to acquire lock for refStreamDefinition {}",
-                                refStreamDefinition));
+                                refStreamDefinition.asUiFriendlyString()));
                     }
                 },
                 () -> LogUtil.message("Acquiring lock for {}", refStreamDefinition));

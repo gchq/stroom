@@ -32,24 +32,25 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.validation.ValidationModule;
+import stroom.util.yaml.YamlUtil;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import io.dropwizard.Application;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -63,7 +64,7 @@ import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(App.class);
 
     @Inject
     private HealthChecks healthChecks;
@@ -105,12 +106,15 @@ public class App extends Application<Config> {
     }
 
     public static void main(final String[] args) throws Exception {
-        final Path yamlConfigFile = ProxyYamlUtil.getYamlFileFromArgs(args);
+        final Path yamlConfigFile = YamlUtil.getYamlFileFromArgs(args);
         new App(yamlConfigFile).run(args);
     }
 
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
+        // Dropwizard 2.x no longer fails on unknown properties by default but we want it to.
+        bootstrap.getObjectMapper().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
         // This allows us to use env var templating and relative (to proxy home) paths in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(ProxyYamlUtil.createConfigurationSourceProvider(
                 bootstrap.getConfigurationSourceProvider(), true));
@@ -232,17 +236,23 @@ public class App extends Application<Config> {
             LOGGER.info("Parsing config file to establish home and temp");
             final ProxyConfig proxyConfig = ProxyYamlUtil.readProxyConfig(configFile);
 
-            final Module pathConfigModule = new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(PathConfig.class).toInstance(proxyConfig.getPathConfig());
-                }
-            };
+            LOGGER.debug(() -> "proxyPathConfig " + proxyConfig.getPathConfig());
+
+            // Allow for someone having pathConfig set to null in the yaml, e.g. just
+            //   pathConfig:
+            final PathConfig effectivePathConfig = Objects.requireNonNullElse(
+                    proxyConfig.getPathConfig(),
+                    new ProxyPathConfig());
 
             return Guice.createInjector(
                     new ValidationModule(),
                     new DirProvidersModule(),
-                    pathConfigModule);
+                    new AbstractModule() {
+                        @Override
+                        protected void configure() {
+                            bind(PathConfig.class).toInstance(effectivePathConfig);
+                        }
+                    });
 
         } catch (IOException e) {
             throw new RuntimeException("Error parsing config file " + configFile.toAbsolutePath().normalize());
@@ -273,7 +283,7 @@ public class App extends Application<Config> {
         if (result.hasErrors() && proxyConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom Proxy. To run Stroom Proxy with " +
                             "invalid configuration, set {} to false, however this is not advised!",
-                    proxyConfig.getFullPath(ProxyConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
+                    proxyConfig.getFullPathStr(ProxyConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
     }

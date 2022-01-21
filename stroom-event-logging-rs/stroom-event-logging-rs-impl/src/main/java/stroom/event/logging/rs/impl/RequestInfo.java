@@ -30,11 +30,14 @@ import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.ResultPage;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.MultivaluedMap;
@@ -286,21 +289,18 @@ class RequestInfo {
         }
     }
 
-    public static class WithParameters implements HasName {
+    public static class WithParameters extends Properties implements HasName {
 
-        private String name;
+//        private Properties allParameters = new Properties();
 
-        public WithParameters(MultivaluedMap<String, String> origParms) {
-            Set<Entry<String, String>> parms = createParms(origParms);
+        public WithParameters(MultivaluedMap<String, String> origParams) {
+            Set<Entry<String, String>> params = createParms(origParams);
 
-            name = parms.stream()
-                    .map(e ->
-                            e.getKey() + " = " + e.getValue())
-                    .collect(Collectors.joining(", "));
+            params.stream().forEach((entry) -> this.put(entry.getKey(), entry.getValue()));
         }
 
-        private Set<Entry<String, String>> createParms(MultivaluedMap<String, String> origParms) {
-            return origParms.keySet().stream().map(k -> {
+        private Set<Entry<String, String>> createParms(MultivaluedMap<String, String> origParams) {
+            return origParams.keySet().stream().map(k -> {
                 return new Entry<String, String>() {
                     @Override
                     public String getKey() {
@@ -309,7 +309,7 @@ class RequestInfo {
 
                     @Override
                     public String getValue() {
-                        return origParms.get(k).stream().collect(Collectors.joining(", "));
+                        return origParams.get(k).stream().collect(Collectors.joining(", "));
                     }
 
                     @Override
@@ -320,23 +320,22 @@ class RequestInfo {
             }).collect(Collectors.toSet());
         }
 
-        public void addParams(MultivaluedMap<String, String> origParms) {
-            if (origParms == null || origParms.size() == 0) {
+        public void addParams(MultivaluedMap<String, String> origParams) {
+            if (origParams == null || origParams.size() == 0) {
                 return;
             }
+            Set<Entry<String, String>> parms = createParms(origParams);
 
-            name = name.length() > 0
-                    ? name + ", "
-                    : "" +
-                            createParms(origParms).stream()
-                                    .map(e ->
-                                            e.getKey() + " = " + e.getValue())
-                                    .collect(Collectors.joining(", "));
+            parms.stream().forEach((entry) -> this.put(entry.getKey(), entry.getValue()));
         }
 
         @Override
+        @JsonIgnore
         public String getName() {
-            return name;
+            return this.entrySet().stream()
+                    .map(e ->
+                            e.getKey() + " = " + e.getValue())
+                    .collect(Collectors.joining(", "));
         }
     }
 }

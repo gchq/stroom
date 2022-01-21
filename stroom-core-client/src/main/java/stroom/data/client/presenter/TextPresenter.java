@@ -89,6 +89,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
         editorPresenter.setText(text);
     }
 
+    public void setErrorText(final String title, final String errorText) {
+        editorPresenter.setErrorText(title, errorText);
+    }
+
     public Action getFormatAction() {
         return editorPresenter.getFormatAction();
     }
@@ -115,6 +119,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
 
     public Option getShowActiveLineOption() {
         return editorPresenter.getHighlightActiveLineOption();
+    }
+
+    public Option getViewAsHexOption() {
+        return editorPresenter.getViewAsHexOption();
     }
 
     public Option getUseVimBindingsOption() {

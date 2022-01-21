@@ -1,6 +1,6 @@
 package stroom.meta.impl;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
@@ -33,15 +33,13 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -54,14 +52,13 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class MetaServiceImpl implements MetaService, Searchable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaServiceImpl.class);
 
     private static final DocRef META_STORE_PSEUDO_DOC_REF = new DocRef("Searchable", "Meta Store", "Meta Store");
     private static final List<String> FEED_FIELDS = List.of(MetaFields.FIELD_FEED);
@@ -71,7 +68,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final MetaFeedDao metaFeedDao;
     private final MetaValueDao metaValueDao;
     private final MetaRetentionTrackerDao metaRetentionTrackerDao;
-    private final MetaServiceConfig metaServiceConfig;
+    private final Provider<MetaServiceConfig> metaServiceConfigProvider;
     private final DocRefInfoService docRefInfoService;
     private final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider;
     private final Optional<MetaSecurityFilter> metaSecurityFilter;
@@ -80,15 +77,12 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final UserQueryRegistry userQueryRegistry;
     private final TaskManager taskManager;
 
-    private volatile String metaTypes;
-    private volatile Set<String> metaTypeSet = Collections.emptySet();
-
     @Inject
     MetaServiceImpl(final MetaDao metaDao,
                     final MetaFeedDao metaFeedDao,
                     final MetaValueDao metaValueDao,
                     final MetaRetentionTrackerDao metaRetentionTrackerDao,
-                    final MetaServiceConfig metaServiceConfig,
+                    final Provider<MetaServiceConfig> metaServiceConfigProvider,
                     final DocRefInfoService docRefInfoService,
                     final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
                     final Optional<MetaSecurityFilter> metaSecurityFilter,
@@ -100,7 +94,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         this.metaFeedDao = metaFeedDao;
         this.metaValueDao = metaValueDao;
         this.metaRetentionTrackerDao = metaRetentionTrackerDao;
-        this.metaServiceConfig = metaServiceConfig;
+        this.metaServiceConfigProvider = metaServiceConfigProvider;
         this.docRefInfoService = docRefInfoService;
         this.decoratorProvider = decoratorProvider;
         this.metaSecurityFilter = metaSecurityFilter;
@@ -144,7 +138,12 @@ public class MetaServiceImpl implements MetaService, Searchable {
         Objects.requireNonNull(meta, "Null data");
 
         final long now = System.currentTimeMillis();
-        final int result = updateStatus(meta.getId(), currentStatus, newStatus, now, DocumentPermissionNames.UPDATE);
+        final int result = updateStatus(
+                meta.getId(),
+                currentStatus,
+                newStatus,
+                now,
+                DocumentPermissionNames.UPDATE);
         if (result > 0) {
             return meta
                     .copy()
@@ -152,7 +151,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     .statusMs(now)
                     .build();
         } else {
-            final Meta existingMeta = getMeta(meta.getId());
+            final Meta existingMeta = getMeta(meta.getId(), true);
             if (existingMeta == null) {
                 throw new RuntimeException("Meta with id=" + meta.getId() + " does not exist");
             }
@@ -177,6 +176,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final ExpressionOperator expression = getIdExpression(id, true);
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, permission, FEED_FIELDS);
         final FindMetaCriteria criteria = new FindMetaCriteria(secureExpression);
+
         return metaDao.updateStatus(criteria, currentStatus, newStatus, statusTime);
     }
 
@@ -194,7 +194,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     FEED_FIELDS);
             criteria.setExpression(expression);
 
-            return metaDao.updateStatus(criteria, currentStatus, newStatus, System.currentTimeMillis());
+            return metaDao.updateStatus(
+                    criteria,
+                    currentStatus,
+                    newStatus,
+                    System.currentTimeMillis());
         });
     }
 
@@ -205,7 +209,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public int delete(final long id) {
-        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDelete(id, true));
+        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () ->
+                doLogicalDelete(id, true));
     }
 
     @Override
@@ -243,7 +248,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
         // Ensure the user has permission to delete this data.
         final long now = System.currentTimeMillis();
-        return updateStatus(id, null, Status.DELETED, now, DocumentPermissionNames.DELETE);
+
+        return updateStatus(
+                id,
+                null,
+                Status.DELETED,
+                now,
+                DocumentPermissionNames.DELETE);
     }
 
     @Override
@@ -259,85 +270,74 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
-        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
-                DocumentPermissionNames.READ,
-                FEED_FIELDS);
-        criteria.setExpression(expression);
-        metaDao.search(criteria, fields, consumer);
+                       final ValuesConsumer consumer) {
+
+        LOGGER.logDurationIfTraceEnabled(() -> {
+            final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
+                    DocumentPermissionNames.READ,
+                    FEED_FIELDS);
+            criteria.setExpression(expression);
+            metaDao.search(criteria, fields, consumer);
+        }, "Searching meta");
     }
 
     @Override
     public ResultPage<Meta> find(final FindMetaCriteria criteria) {
-        final boolean fetchRelationships = criteria.isFetchRelationships();
-        final PageRequest pageRequest = criteria.getPageRequest();
-        if (fetchRelationships) {
-            criteria.setPageRequest(null);
-        }
+        return LOGGER.logDurationIfTraceEnabled(
+                () -> {
+                    final boolean fetchRelationships = criteria.isFetchRelationships();
+                    final PageRequest pageRequest = criteria.getPageRequest();
+                    if (fetchRelationships) {
+                        criteria.setPageRequest(null);
+                    }
 
-//        final IdSet idSet = criteria.getSelectedIdSet();
-//        // If for some reason we have been asked to match nothing then return nothing.
-//        if (idSet != null && idSet.getMatchNull() != null && idSet.getMatchNull()) {
-//            return ResultPage.createPageResultList(Collections.emptyList(), criteria.getPageRequest(), null);
-//        }
+                    final ResultPage<Meta> resultPage = secureFind(criteria);
 
-        ResultPage<Meta> resultPage = secureFind(criteria);
+                    // Only return back children or parents?
+                    if (fetchRelationships) {
+                        final List<Meta> workingList = resultPage.getValues();
 
-//        final Condition condition = createCondition(criteria, DocumentPermissionNames.READ);
-//
-//        int offset = 0;
-//        int numberOfRows = 1000000;
-//
-//        if (pageRequest != null) {
-//            offset = pageRequest.getOffset();
-//            numberOfRows = pageRequest.getLength();
-//        }
-//
-//        List<Meta> results = find(condition, offset, numberOfRows);
+                        List<Meta> results = new ArrayList<>();
 
-        // Only return back children or parents?
-        if (fetchRelationships) {
-            final List<Meta> workingList = resultPage.getValues();
+                        for (final Meta stream : workingList) {
+                            Meta parent = stream;
+                            Meta lastParent = parent;
 
-            List<Meta> results = new ArrayList<>();
+                            // Walk up to the root of the tree
+                            while (parent.getParentMetaId() != null && (parent = findParent(parent)) != null) {
+                                lastParent = parent;
+                            }
 
-            for (final Meta stream : workingList) {
-                Meta parent = stream;
-                Meta lastParent = parent;
+                            // Add the match
+                            results.add(lastParent);
 
-                // Walk up to the root of the tree
-                while (parent.getParentMetaId() != null && (parent = findParent(parent)) != null) {
-                    lastParent = parent;
-                }
+                            // Add the children
+                            ResultPage<Meta> children = findChildren(criteria, Collections.singletonList(lastParent));
+                            while (children.size() > 0) {
+                                results.addAll(children.getValues());
+                                children = findChildren(criteria, children.getValues());
+                            }
+                        }
 
-                // Add the match
-                results.add(lastParent);
-
-                // Add the children
-                ResultPage<Meta> children = findChildren(criteria, Collections.singletonList(lastParent));
-                while (children.size() > 0) {
-                    results.addAll(children.getValues());
-                    children = findChildren(criteria, children.getValues());
-                }
-            }
-
-            final long maxSize = results.size();
-            if (pageRequest != null && pageRequest.getOffset() != null) {
-                // Move by an offset?
-                if (pageRequest.getOffset() > 0) {
-                    results = results.subList(pageRequest.getOffset(), results.size());
-                }
-            }
-            if (pageRequest != null && pageRequest.getLength() != null) {
-                if (results.size() > pageRequest.getLength()) {
-                    results = results.subList(0, pageRequest.getLength() + 1);
-                }
-            }
-            criteria.setPageRequest(pageRequest);
-            return ResultPage.createCriterialBasedList(results, criteria, maxSize);
-        } else {
-            return resultPage;
-        }
+                        final long maxSize = results.size();
+                        if (pageRequest != null && pageRequest.getOffset() != null) {
+                            // Move by an offset?
+                            if (pageRequest.getOffset() > 0) {
+                                results = results.subList(pageRequest.getOffset(), results.size());
+                            }
+                        }
+                        if (pageRequest != null && pageRequest.getLength() != null) {
+                            if (results.size() > pageRequest.getLength()) {
+                                results = results.subList(0, pageRequest.getLength() + 1);
+                            }
+                        }
+                        criteria.setPageRequest(pageRequest);
+                        return ResultPage.createCriterialBasedList(results, criteria, maxSize);
+                    } else {
+                        return resultPage;
+                    }
+                },
+                "Finding meta");
     }
 
     private ResultPage<Meta> secureFind(final FindMetaCriteria criteria) {
@@ -460,22 +460,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
         return metaDao.getLatestIdByEffectiveDate(new FindMetaCriteria(secureExpression));
     }
 
-//    @Override
-//    public Long getMaxDataIdWithCreationBeforePeriod(final Long timestampMs) {
-//        if (timestampMs == null)
-//            return null;
-//        final ExpressionOperator expression = ExpressionOperator.builder()
-//                .addTerm(MetaFields.CREATE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO,
-//                DateUtil.createNormalDateTimeString(timestampMs))
-//                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-//                .build();
-//
-//        final ExpressionOperator secureExpression = addPermissionConstraints(
-//        expression, DocumentPermissionNames.READ);
-//        return metaDao.getMaxId(new FindMetaCriteria(secureExpression)).orElseThrow(() ->
-//        new NullPointerException("No current id exists"));
-//    }
-
     @Override
     public Set<String> getFeeds() {
         return new HashSet<>(metaFeedDao.list());
@@ -483,23 +467,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public Set<String> getTypes() {
-        final String mt = metaServiceConfig.getMetaTypes();
-
-        if (!Objects.equals(metaTypes, mt)) {
-            if (mt != null) {
-                metaTypeSet = Arrays
-                        .stream(mt.split("\n"))
-                        .map(String::trim)
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.toSet());
-            } else {
-                metaTypeSet = Collections.emptySet();
-            }
-
-            metaTypes = mt;
-        }
-
-        return metaTypeSet;
+        return metaServiceConfigProvider.get().getMetaTypes();
     }
 
     @Override
@@ -510,48 +478,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public ResultPage<MetaRow> findRows(final FindMetaCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
-            // Cache Call
-
-
-//            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-//            findMetaCriteria.copyFrom(criteria);
-//            findMetaCriteria.setSort(MetaFields.CREATE_TIME.getName(), true, false);
-
-//            findDataCriteria.setFetchSet(new HashSet<>());
-
-            // Share the page criteria
             final ResultPage<Meta> resultPage = find(criteria);
             final List<MetaRow> result = decorate(resultPage.getValues());
-//            if (resultPage.size() > 0) {
-//                // We need to decorate data with retention rules as a processing user.
-//                final List<StreamDataRow> result = securityContext.asProcessingUserResult(() -> {
-//                    // Create a data retention rule decorator for adding data retention
-//                    information to returned data attribute maps.
-//                    List<DataRetentionRule> rules = Collections.emptyList();
-//
-//                    final DataRetentionService dataRetentionService = dataRetentionServiceProvider.get();
-//                    if (dataRetentionService != null) {
-//                        final DataRetentionPolicy dataRetentionPolicy = dataRetentionService.load();
-//                        if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
-//                            rules = dataRetentionPolicy.getRules();
-//                        }
-//                        final AttributeMapRetentionRuleDecorator ruleDecorator =
-//                        new AttributeMapRetentionRuleDecorator(dictionaryStore, rules);
-
-            // Query the database for the attribute values
-//                        if (criteria.isUseCache()) {
-
-
-//                        } else {
-//                            LOGGER.info("Loading attribute map from filesystem");
-//                            loadAttributeMapFromFileSystem(criteria, result, result, ruleDecorator);
-//                        }
-//                    }
-//                });
-
-
-//            }
-
             return new ResultPage<>(result, ResultPage.createPageResponse(result, resultPage.getPageResponse()));
         });
     }
@@ -560,13 +488,18 @@ public class MetaServiceImpl implements MetaService, Searchable {
     public ResultPage<MetaRow> findDecoratedRows(final FindMetaCriteria criteria) {
         try {
             final ResultPage<MetaRow> list = findRows(criteria);
-            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
-            list.getValues().forEach(metaRow ->
-                    decorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
+
+            LOGGER.logDurationIfTraceEnabled(
+                    () -> {
+                        final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
+                        list.getValues().forEach(metaRow ->
+                                decorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
+                    },
+                    "Adding data retention rules");
 
             return list;
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw e;
         }
     }
@@ -580,8 +513,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
         if (rows.size() > 0) {
             Meta row = rows.getFirst();
-            addChildren(row, anyStatus, result);
-            addParents(row, anyStatus, result);
+            LOGGER.logDurationIfTraceEnabled(
+                    () -> addChildren(row, anyStatus, result),
+                    "Adding children");
+
+            LOGGER.logDurationIfTraceEnabled(
+                    () -> addParents(row, anyStatus, result),
+                    "Adding parents");
         }
 
         result.sort(Comparator.comparing(Meta::getId));
@@ -598,18 +536,24 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private List<MetaRow> decorate(final List<Meta> metaList) {
-        if (metaList == null || metaList.size() == 0) {
-            return Collections.emptyList();
-        }
+        return LOGGER.logDurationIfTraceEnabled(
+                () -> {
+                    if (metaList == null || metaList.size() == 0) {
+                        return Collections.emptyList();
+                    }
 
-        LOGGER.debug("Loading attribute map from DB");
-        final Map<Long, Map<String, String>> attributeMap = metaValueDao.getAttributes(metaList);
-        final List<MetaRow> metaRowList = new ArrayList<>(metaList.size());
-        for (final Meta meta : metaList) {
-            final Map<String, String> attributes = attributeMap.getOrDefault(meta.getId(), new HashMap<>());
-            metaRowList.add(new MetaRow(meta, getPipelineName(meta), attributes));
-        }
-        return metaRowList;
+                    LOGGER.debug("Loading attribute map from DB");
+                    final Map<Long, Map<String, String>> attributeMap = metaValueDao.getAttributes(metaList);
+                    final List<MetaRow> metaRowList = new ArrayList<>(metaList.size());
+                    for (final Meta meta : metaList) {
+                        final Map<String, String> attributes = attributeMap.getOrDefault(
+                                meta.getId(),
+                                new HashMap<>());
+                        metaRowList.add(new MetaRow(meta, getPipelineName(meta), attributes));
+                    }
+                    return metaRowList;
+                },
+                "Decorating meta");
     }
 
     @Override
@@ -719,8 +663,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public Optional<DataRetentionTracker> getRetentionTracker() {
-        return metaRetentionTrackerDao.getTracker();
+    public List<DataRetentionTracker> getRetentionTrackers() {
+        return metaRetentionTrackerDao.getTrackers();
+    }
+
+    @Override
+    public void deleteTrackers(final String rulesVersion) {
+        metaRetentionTrackerDao.deleteTrackers(rulesVersion);
     }
 
     @Override

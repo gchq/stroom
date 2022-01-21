@@ -1,37 +1,40 @@
 ext.moduleName = 'stroom.data.retention.impl'
 
 dependencies {
-    compile project(':stroom-cluster:stroom-cluster-lock-api')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-data:stroom-data-retention-api')
-//    compile project(':stroom-dictionary:stroom-dictionary-api')
-    compile project(':stroom-docstore:stroom-docstore-api')
-    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    compile project(':stroom-job:stroom-job-api')
-    compile project(':stroom-meta:stroom-meta-api')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
-
-    compile project(':stroom-docref')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-data:stroom-data-retention-api')
+//    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
     
-    compile libs.guice5
-//    compile libs.jackson_annotations
-//    compile libs.jaxb_api
-    compile libs.slf4j_api
+    implementation libs.guice5
+    implementation libs.jaxb_api
+    implementation libs.restygwt
+    implementation libs.slf4j_api
+    implementation libs.swagger_annotations
+    implementation libs.vavr
 
-    testCompile project(':stroom-cluster:stroom-cluster-lock-mock')
+    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-    testCompile libs.mockito_core
-    testCompile libs.mockito_junit_jupiter
-    testCompile libs.vavr
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
     
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.javax_activation
-    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_impl
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine

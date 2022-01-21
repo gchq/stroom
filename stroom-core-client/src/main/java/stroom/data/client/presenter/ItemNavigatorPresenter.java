@@ -29,8 +29,10 @@ public class ItemNavigatorPresenter extends MyPresenterWidget<ItemNavigatorView>
 
     public void setDisplay(final HasItems display) {
         this.display = display;
-        getView().setDisplay(display);
-        refreshNavigator();
+        if (display != null && getView() != null) {
+            getView().setDisplay(display);
+            refreshNavigator();
+        }
     }
 
 

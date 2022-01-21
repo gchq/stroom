@@ -22,26 +22,21 @@ import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Provider;
 
 public class ElasticSearchResultCollector implements Store {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchResultCollector.class);
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchResultCollector.class);
     private static final String TASK_NAME = "ElasticSearchTask";
 
-    private final Set<String> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider;
@@ -55,8 +50,7 @@ public class ElasticSearchResultCollector implements Store {
             final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
             final ElasticAsyncSearchTask task,
             final Coprocessors coprocessors,
-            final Sizes maxResultSizes
-    ) {
+            final Sizes maxResultSizes) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.elasticAsyncSearchTaskHandlerProvider = elasticAsyncSearchTaskHandlerProvider;
@@ -71,8 +65,7 @@ public class ElasticSearchResultCollector implements Store {
             final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
             final ElasticAsyncSearchTask task,
             final Coprocessors coprocessors,
-            final Sizes maxResultSizes
-    ) {
+            final Sizes maxResultSizes) {
         return new ElasticSearchResultCollector(
                 executor,
                 taskContextFactory,
@@ -88,7 +81,7 @@ public class ElasticSearchResultCollector implements Store {
             // Don't begin execution if we have been asked to complete already.
             if (!coprocessors.getCompletionState().isComplete()) {
                 final ElasticAsyncSearchTaskHandler searchHandler = elasticAsyncSearchTaskHandlerProvider.get();
-                searchHandler.exec(taskContext, task, coprocessors, this);
+                searchHandler.search(taskContext, task, coprocessors, this);
             }
         });
         CompletableFuture
@@ -103,12 +96,12 @@ public class ElasticSearchResultCollector implements Store {
                         // as they may be terminated before we even try to execute them.
                         if (!(t instanceof TaskTerminatedException)) {
                             LOGGER.error(t.getMessage(), t);
-                            coprocessors.getErrorConsumer().accept(t);
-                            coprocessors.getCompletionState().complete();
+                            coprocessors.getErrorConsumer().add(t);
+                            coprocessors.getCompletionState().signalComplete();
                             throw new RuntimeException(t.getMessage(), t);
                         }
 
-                        coprocessors.getCompletionState().complete();
+                        coprocessors.getCompletionState().signalComplete();
                     }
                 });
     }
@@ -118,8 +111,8 @@ public class ElasticSearchResultCollector implements Store {
         coprocessors.clear();
     }
 
-    public void complete() {
-        coprocessors.getCompletionState().complete();
+    public void signalComplete() {
+        coprocessors.getCompletionState().signalComplete();
     }
 
     @Override
@@ -139,16 +132,7 @@ public class ElasticSearchResultCollector implements Store {
 
     @Override
     public List<String> getErrors() {
-        if (errors.size() == 0) {
-            return null;
-        }
-
-        final List<String> err = new ArrayList<>();
-        for (final String error : errors) {
-            err.add("\t" + error);
-        }
-
-        return err;
+        return coprocessors.getErrorConsumer().getErrors();
     }
 
     @Override

@@ -23,6 +23,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -199,6 +201,15 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
     }
 
     @Override
+    public long count(final String childStreamType) throws IOException {
+        final InternalSource childSource = getChild(childStreamType);
+        Objects.requireNonNull(childSource, () ->
+                LogUtil.message("No source found for childStreamType {}", childStreamType));
+
+        return childSource.count();
+    }
+
+    @Override
     public SegmentInputStreamProvider getSegmentInputStreamProvider(final String streamTypeName) {
         return inputStreamMap.computeIfAbsent(streamTypeName, k -> {
             final InternalSource source = getChild(k);
@@ -269,7 +280,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
                 inputStream = fileSystemStreamPathHelper.getInputStream(streamType, getFile());
             } catch (final ClosedByInterruptException ioEx) {
                 // Sometimes we deliberately interrupt reading so don't log the error here.
-                throw new RuntimeException(ioEx);
+                throw new UncheckedIOException(ioEx);
 
             } catch (final IOException ioEx) {
                 // Don't log this as an error if we expect this stream to have been deleted or be locked.
@@ -277,7 +288,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
                     LOGGER.error("getInputStream", ioEx);
                 }
 
-                throw new RuntimeException(ioEx);
+                throw new UncheckedIOException(ioEx);
             }
         }
         return inputStream;

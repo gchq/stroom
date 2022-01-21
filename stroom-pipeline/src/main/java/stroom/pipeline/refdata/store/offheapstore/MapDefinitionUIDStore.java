@@ -2,7 +2,7 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
-import stroom.lmdb.LmdbUtils;
+import stroom.lmdb.LmdbEnv;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
@@ -12,15 +12,19 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
-import io.vavr.Tuple2;
-import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class provides a front door for all interactions with the {@link MapUidForwardDb} and
@@ -37,15 +41,20 @@ public class MapDefinitionUIDStore {
 
     private final MapUidForwardDb mapUidForwardDb;
     private final MapUidReverseDb mapUidReverseDb;
-    private final Env<ByteBuffer> lmdbEnv;
+    private final LmdbEnv lmdbEnv;
 
-    // TODO may want a background process that scans the reverse table to look for gaps
-    // in the UID sequence and add the missing ones to another table which can be used
-    // for allocating next UIDs before falling back to getting the next highest. If we don't
-    // we could end up running out of UIDs in the LONG term. If that happened you could just delete
-    // the files off the DB and start again.
+    // TODO may want some way of reusing UIDs after they have been purged. Simplest solution would be to
+    //  have a new table to hold a pool of UIDs for reuse.  This would be populated during the purge of the
+    //  map def. Any neq requests for a UID would look in this table first (under write lock), if found use it,
+    //  if not create a new as we do now. If we don't
+    //  we could end up running out of UIDs in the LONG term. If that happened you could just delete
+    //  the files off the DB and start again. With a 4 byte UID we have approx 4 billion UIDs available
+    //  and we use a new one for each strm/map combo.  Even at 1000 new strm/maps per day that is still 4million
+    //  days!
+    //  However if we had UID reuse we could reduce the size of the UID to 3 or even 2 bytes, with the limiting
+    //  factor being the retention period of the data.
 
-    MapDefinitionUIDStore(final Env<ByteBuffer> lmdbEnv,
+    MapDefinitionUIDStore(final LmdbEnv lmdbEnv,
                           final MapUidForwardDb mapUidForwardDb,
                           final MapUidReverseDb mapUidReverseDb) {
         this.lmdbEnv = lmdbEnv;
@@ -55,7 +64,7 @@ public class MapDefinitionUIDStore {
 
     Optional<UID> getUid(final MapDefinition mapDefinition, final ByteBuffer uidByteBuffer) {
         // The returned UID is outside the txn so must be a clone of the found one
-        return LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
+        return lmdbEnv.getWithReadTxn(txn ->
                 getUid(txn, mapDefinition)
                         .flatMap(uid ->
                                 Optional.of(uid.cloneToBuffer(uidByteBuffer))));
@@ -118,11 +127,11 @@ public class MapDefinitionUIDStore {
         return entryCountForward;
     }
 
-    Optional<UID> getNextMapDefinition(final Txn<ByteBuffer> writeTxn,
+    Optional<UID> getNextMapDefinition(final Txn<ByteBuffer> readTxn,
                                        final RefStreamDefinition refStreamDefinition,
                                        final Supplier<ByteBuffer> uidBufferSupplier) {
 
-        return mapUidForwardDb.getNextMapDefinition(writeTxn, refStreamDefinition, uidBufferSupplier);
+        return mapUidForwardDb.getNextMapDefinition(readTxn, refStreamDefinition, uidBufferSupplier);
     }
 
     void deletePair(final Txn<ByteBuffer> writeTxn,
@@ -142,7 +151,7 @@ public class MapDefinitionUIDStore {
     }
 
     void forEach(final Txn<ByteBuffer> txn,
-                 final Consumer<Tuple2<MapDefinition, UID>> entryConsumer) {
+                 final Consumer<Entry<MapDefinition, UID>> entryConsumer) {
 
         mapUidForwardDb.forEachEntry(txn, KeyRange.all(), entryConsumer);
     }
@@ -195,5 +204,24 @@ public class MapDefinitionUIDStore {
 
     public PooledByteBuffer getMapDefinitionPooledByteBuffer() {
         return mapUidForwardDb.getPooledKeyBuffer();
+    }
+
+    public <T> T streamEntries(final Txn<ByteBuffer> txn,
+                               final KeyRange<MapDefinition> keyRange,
+                               final Function<Stream<Entry<MapDefinition, UID>>, T> streamFunction) {
+        return mapUidForwardDb.streamEntries(txn, keyRange, streamFunction);
+    }
+
+    public Set<String> getMapNames(final Txn<ByteBuffer> readTxn,
+                                   final RefStreamDefinition refStreamDefinition) {
+        return mapUidForwardDb.getMapDefinitions(readTxn, refStreamDefinition)
+                .stream()
+                .map(MapDefinition::getMapName)
+                .collect(Collectors.toSet());
+    }
+
+    public List<MapDefinition> getMapDefinitions(final Txn<ByteBuffer> readTxn,
+                                                 final RefStreamDefinition refStreamDefinition) {
+        return mapUidForwardDb.getMapDefinitions(readTxn, refStreamDefinition);
     }
 }

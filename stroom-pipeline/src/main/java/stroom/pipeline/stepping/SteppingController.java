@@ -102,10 +102,6 @@ public class SteppingController {
         locationHolder.reset();
     }
 
-    public TaskContext getTaskContext() {
-        return taskContext;
-    }
-
     public void setTaskContext(final TaskContext taskContext) {
         this.taskContext = taskContext;
     }
@@ -137,21 +133,19 @@ public class SteppingController {
         // Get the current stream number.
         final long currentStreamIndex = metaHolder.getPartIndex();
 
-        if (Thread.currentThread().isInterrupted()) {
+        if (taskContext.isTerminated()) {
             return true;
         }
 
         // Update the progress monitor.
-        if (getTaskContext() != null) {
-            getTaskContext().info(() ->
-                    "Stepping {" +
-                            streamInfo +
-                            "} [" +
-                            (currentStreamIndex + 1) +
-                            ":" +
-                            (currentRecordIndex + 1) +
-                            "]");
-        }
+        taskContext.info(() ->
+                "Stepping {" +
+                        streamInfo +
+                        "} [" +
+                        (currentStreamIndex + 1) +
+                        ":" +
+                        (currentRecordIndex + 1) +
+                        "]");
 
         LOGGER.debug("endRecord() stream index {} record index {}", currentStreamIndex, currentRecordIndex);
 
@@ -237,13 +231,15 @@ public class SteppingController {
                     .withHighlight(textRange)
                     .build();
 
-            LOGGER.debug(() -> LogUtil.message("creating stepData {}:{}:{} from foundLocation {}:{}:{}",
+            LOGGER.debug(() -> LogUtil.message("creating stepData {}:{}:{} " +
+                            "from foundLocation {}:{}:{} with textRange: {}",
                     sourceLocation.getMetaId(),
                     sourceLocation.getPartIndex(),
                     sourceLocation.getRecordIndex(),
                     foundLocation.getMetaId(),
                     foundLocation.getPartIndex(),
-                    foundLocation.getRecordIndex()));
+                    foundLocation.getRecordIndex(),
+                    textRange));
         } else {
             sourceLocation = null;
         }

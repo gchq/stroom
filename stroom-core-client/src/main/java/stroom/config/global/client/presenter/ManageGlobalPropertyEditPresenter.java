@@ -28,9 +28,10 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.client.DelayedUpdate;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -85,6 +86,11 @@ public final class ManageGlobalPropertyEditPresenter
     private final ButtonView effectiveValueWarningsButton;
     private final ButtonView effectiveValueInfoButton;
     private final ButtonView dataTypeHelpButton;
+
+    private final DelayedUpdate delayedUpdate = new DelayedUpdate(50, () -> {
+        updateWarningState();
+        refreshValuesOnChange();
+    });
 
     @Inject
     public ManageGlobalPropertyEditPresenter(
@@ -303,8 +309,7 @@ public final class ManageGlobalPropertyEditPresenter
                     nodeToYamlOverrideMap.remove(nodeName);
 
 //                    updateEffectiveValueForNode(nodeName, ERROR_VALUE);
-                    updateWarningState();
-                    refreshValuesOnChange();
+                    delayedUpdate.update();
                 })
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .getYamlValueByNodeAndName(configProperty.getName().toString(), nodeName);
@@ -314,8 +319,7 @@ public final class ManageGlobalPropertyEditPresenter
                                             final OverrideValue<String> yamlOverride) {
         nodeToYamlOverrideMap.put(nodeName, yamlOverride);
         updateEffectiveValueForNode(nodeName, yamlOverride);
-        updateWarningState();
-        refreshValuesOnChange();
+        delayedUpdate.update();
     }
 
     private void show(final ConfigProperty configProperty,

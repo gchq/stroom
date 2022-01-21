@@ -27,9 +27,9 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.ResultPage;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -46,11 +47,11 @@ class ContentServiceImpl implements ContentService {
     private final ResourceStore resourceStore;
     private final DependencyService dependencyService;
     private final SecurityContext securityContext;
-    private final ExportConfig exportConfig;
+    private final Provider<ExportConfig> exportConfigProvider;
 
     @Inject
     ContentServiceImpl(final ImportExportService importExportService,
-                       final ExportConfig exportConfig,
+                       final Provider<ExportConfig> exportConfigProvider,
                        final ResourceStore resourceStore,
                        final DependencyService dependencyService,
                        final SecurityContext securityContext) {
@@ -58,9 +59,10 @@ class ContentServiceImpl implements ContentService {
         this.resourceStore = resourceStore;
         this.dependencyService = dependencyService;
         this.securityContext = securityContext;
-        this.exportConfig = exportConfig;
+        this.exportConfigProvider = exportConfigProvider;
     }
 
+    @Override
     public ResourceKey performImport(final ResourceKey resourceKey, final List<ImportState> confirmList) {
         return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
             // Import file.
@@ -115,7 +117,8 @@ class ContentServiceImpl implements ContentService {
         });
     }
 
-    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
+    @Override
+    public QuickFilterResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
         return securityContext.secureResult(() -> dependencyService.getDependencies(criteria));
     }
 
@@ -125,7 +128,7 @@ class ContentServiceImpl implements ContentService {
             throw new PermissionException(securityContext.getUserId(),
                     "You do not have permission to export all config");
         }
-        if  (!exportConfig.isEnabled()) {
+        if (!exportConfigProvider.get().isEnabled()) {
             throw new PermissionException(securityContext.getUserId(), "Export is not enabled");
         }
 

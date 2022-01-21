@@ -4,8 +4,8 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
-import stroom.util.validation.ValidationModule;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
@@ -18,6 +18,7 @@ public class GlobalConfigModule extends AbstractModule {
 
     @Override
     protected void configure() {
+
         bind(AppConfigMonitor.class).asEagerSingleton();
 
         HasHealthCheckBinder.create(binder())
@@ -31,7 +32,8 @@ public class GlobalConfigModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(UserUserPreferencesResourceImpl.class);
 
-        install(new ValidationModule());
+        HasSystemInfoBinder.create(binder())
+                .bind(AppConfigSystemInfo.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PropertyCacheReload.class, builder -> builder
@@ -40,7 +42,6 @@ public class GlobalConfigModule extends AbstractModule {
                         .schedule(PERIODIC, "1m"));
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

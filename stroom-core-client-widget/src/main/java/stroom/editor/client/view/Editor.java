@@ -61,6 +61,8 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean scrollMarginDirty;
     private boolean useWrapMode;
     private boolean useWrapModeDirty;
+    private boolean showIndentGuides;
+    private boolean showIndentGuidesDirty;
     private boolean showInvisibles = false;
     private boolean showInvisiblesDirty;
     private boolean useVimBindings = false;
@@ -85,11 +87,22 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                 if (!started) {
                     // Can only be started once attached
                     editor.startEditor(theme.getName());
+
+                    // TODO 04/01/2022 AT: This should be made configurable for dev use but can wait till v7.1
+                    //  as lots of the UI code has changed between 7.0 and 7.1.
+                    //  It does not work with modal dialogs as GWT's PopupPanel will intercept all mouse/key
+                    //  events that are not in the dialog, thus stopping you interacting with or closing the
+                    //  settings menu.
+                    // For list of commands see
+                    // https://github.com/ajaxorg/ace/blob/master/lib/ace/commands/default_commands.js
+                    editor.removeCommandByName("showSettingsMenu");
+
                     editor.setShowPrintMargin(false);
                     editor.setUseSoftTabs(true);
                     editor.setTabSize(2);
                     started = true;
                 }
+                //
                 updateAnnotations();
                 updateChangeHandler();
                 updateFirstLineNumber();
@@ -109,6 +122,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                 updateUseSnippets();
                 updateUseVimBindings();
                 updateUseWrapMode();
+                updateShowIndentGuides();
             }
         });
 
@@ -359,6 +373,19 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         if (editor.isAttached() && useWrapModeDirty) {
             editor.setUseWrapMode(useWrapMode);
             useWrapModeDirty = false;
+        }
+    }
+
+    public void setShowIndentGuides(final boolean showIndentGuides) {
+        showIndentGuidesDirty = true;
+        this.showIndentGuides = showIndentGuides;
+        updateShowIndentGuides();
+    }
+
+    private void updateShowIndentGuides() {
+        if (editor.isAttached() && showIndentGuidesDirty) {
+            editor.setShowIndentGuides(showIndentGuides);
+            showIndentGuidesDirty = false;
         }
     }
 

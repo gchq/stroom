@@ -18,7 +18,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 /**
  * Provides mechanisms for filtering data based on a quick filter terms, e.g.
@@ -92,6 +91,39 @@ public class QuickFilterPredicateFactory {
         }
 
         return predicate;
+    }
+
+    public static String fullyQualifyInput(final String userInput,
+                                           final FilterFieldMappers<?> fieldMappers) {
+        if (userInput == null) {
+            LOGGER.trace("Null input");
+            return null;
+        } else if (userInput.isBlank()) {
+            LOGGER.trace("Blank input");
+            return "";
+        } else {
+            final List<MatchToken> matchTokens = extractMatchTokens(userInput, fieldMappers);
+            return matchTokens.stream()
+                    .map(matchToken -> {
+                        if (matchToken.isQualified()) {
+                            return matchToken.qualifier + ":" + matchToken.matchInput;
+                        } else {
+                            final String expandedTerms = fieldMappers.getDefaultFieldMappers()
+                                    .stream()
+                                    .map(filterFieldMapper ->
+                                            filterFieldMapper.getFieldDefinition().getFilterQualifier()
+                                                    + ":" + matchToken.matchInput)
+                                    .collect(Collectors.joining(" OR "));
+                            if (fieldMappers.getDefaultFieldMappers().size() > 1) {
+
+                                return "(" + expandedTerms + ")";
+                            } else {
+                                return expandedTerms;
+                            }
+                        }
+                    })
+                    .collect(Collectors.joining(" AND "));
+        }
     }
 
     /**
@@ -600,7 +632,7 @@ public class QuickFilterPredicateFactory {
         private final String qualifier;
         private final String matchInput;
 
-        private MatchToken(@Nullable final String qualifier, final String input) {
+        private MatchToken(final String qualifier, final String input) {
             this.qualifier = qualifier;
             this.matchInput = Objects.requireNonNull(input);
         }
@@ -628,7 +660,6 @@ public class QuickFilterPredicateFactory {
                     : "") + "]:[" + matchInput + "]";
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {

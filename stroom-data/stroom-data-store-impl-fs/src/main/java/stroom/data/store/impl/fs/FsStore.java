@@ -31,9 +31,8 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -45,18 +44,13 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
- * <p>
  * A file system stream store.
- * </p>
- * <p>
- * <p>
- * Stores streams in the stream store indexed by some meta data.
- * </p>
+ * Stores streams in the stream store indexed by some metadata.
  */
 @Singleton
 class FsStore implements Store, AttributeMapFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FsStore.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsStore.class);
 
     private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
@@ -76,7 +70,7 @@ class FsStore implements Store, AttributeMapFactory {
 
     @Override
     public Target openTarget(final MetaProperties metaProperties) {
-        LOGGER.debug("openTarget() " + metaProperties);
+        LOGGER.debug(() -> "openTarget() " + metaProperties);
 
         final FsVolume volume = volumeService.getVolume();
         if (volume == null) {
@@ -110,7 +104,7 @@ class FsStore implements Store, AttributeMapFactory {
     @Override
     public Target openExistingTarget(final Meta meta) throws DataException {
         Objects.requireNonNull(meta, "Null meta");
-        LOGGER.debug("openExistingTarget() " + meta);
+        LOGGER.debug(() -> "openExistingTarget() " + meta);
 
         // Lock the object
         final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
@@ -129,79 +123,13 @@ class FsStore implements Store, AttributeMapFactory {
         return target;
     }
 
-//    @Override
-//    public void closeStreamTarget(final Target streamTarget) {
-//        final FileSystemStreamTarget fileSystemStreamTarget = (FileSystemStreamTarget) streamTarget;
-//
-//        // If we get error on closing the stream we must return it to the caller
-//        IOException streamCloseException = null;
-//
-//        try {
-//            // Close the stream target.
-//            streamTarget.close();
-//        } catch (final IOException e) {
-//            LOGGER.error("closeStreamTarget() - Error on closing stream {}", streamTarget, e);
-//            streamCloseException = e;
-//        }
-//
-//        updateAttribute(fileSystemStreamTarget, MetaFieldNames.RAW_SIZE,
-//                String.valueOf(((FileSystemStreamTarget) streamTarget).getStreamSize()));
-//
-//        updateAttribute(fileSystemStreamTarget, MetaFieldNames.FILE_SIZE,
-//                String.valueOf(((FileSystemStreamTarget) streamTarget).getTotalFileSize()));
-//
-//        try {
-//            boolean doneManifest = false;
-//
-//            // Are we appending?
-//            if (fileSystemStreamTarget.isAppend()) {
-//                final Set<Path> childFile = fileSystemStreamPathHelper.getChildPathSet(
-//                        ((FileSystemStreamTarget) streamTarget).getFiles(false), InternalStreamTypeNames.MANIFEST);
-//
-//                // Does the manifest exist ... overwrite it
-//                if (FileSystemUtil.isAllFile(childFile)) {
-//                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(
-//                    InternalStreamTypeNames.MANIFEST, childFile)) {
-//                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
-//                    }
-//                    doneManifest = true;
-//                }
-//            }
-//
-//            if (!doneManifest) {
-//                // No manifest done yet ... output one if the parent dir's exist
-//                if (FileSystemUtil.isAllParentDirectoryExist(
-//                ((FileSystemStreamTarget) streamTarget).getFiles(false))) {
-//                    try (final OutputStream outputStream = fileSystemStreamTarget.add(
-//                    InternalStreamTypeNames.MANIFEST).getOutputStream()) {
-//                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
-//                    }
-//                } else {
-//                    LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
-//                }
-//
-//            }
-//        } catch (final IOException e) {
-//            LOGGER.error("closeStreamTarget() - Error on writing Manifest {}", streamTarget, e);
-//        }
-//
-//        if (streamCloseException == null) {
-//            // Unlock will update the meta data so set it back on the stream
-//            // target so the client has the up to date copy
-//            ((FileSystemStreamTarget) streamTarget).setMetaData(
-//                    unLock(streamTarget.getMeta(), fileSystemStreamTarget.getAttributes()));
-//        } else {
-//            throw new UncheckedIOException(streamCloseException);
-//        }
-//    }
-
     @Override
     public Target deleteTarget(final Target target) {
         // Make sure the stream is closed.
         try {
             ((FsTarget) target).delete();
         } catch (final RuntimeException e) {
-            LOGGER.error("Unable to delete stream target! {}", e.getMessage(), e);
+            LOGGER.error(() -> "Unable to delete stream target! " + e.getMessage(), e);
         }
         return target;
     }
@@ -213,8 +141,7 @@ class FsStore implements Store, AttributeMapFactory {
      *
      * @param streamId the id of the stream to open.
      * @return The stream source if the stream can be found.
-     * @throws DataException in case of a IO error or stream volume not visible or non
-     *                       existent.
+     * @throws DataException in case of a IO error or stream volume not visible or nonexistent.
      */
     @Override
     public Source openSource(final long streamId) throws DataException {
@@ -238,95 +165,30 @@ class FsStore implements Store, AttributeMapFactory {
      */
     @Override
     public Source openSource(final long streamId, final boolean anyStatus) throws DataException {
-        Source streamSource = null;
+        try {
+            LOGGER.debug(() -> "openSource() " + streamId);
 
-        final Meta meta = metaService.getMeta(streamId, anyStatus);
-        if (meta != null) {
-            LOGGER.debug("openSource() {}", meta.getId());
+            final Meta meta = metaService.getMeta(streamId, anyStatus);
+            if (meta == null) {
+                if (anyStatus) {
+                    throw new DataException("Unable to find meta data for id=" + streamId + " with any status");
+                } else {
+                    throw new DataException("Unable to find meta data for id=" + streamId + " with valid status");
+                }
+            }
 
             final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
             if (dataVolume == null) {
-                final String message = "Unable to find any volume for " + meta;
-                LOGGER.warn(message);
-                throw new DataException(message);
+                throw new DataException("Unable to find any volume for " + meta);
             }
-//            final Node node = nodeInfo.getThisNode();
-//            final DataVolume streamVolume = dataVolumeService.pickBestVolume(
-//            volumeSet, node.getId(), node.getRack().getId());
-//            if (streamVolume == null) {
-//                final String message = "Unable to access any volume for " + meta
-//                        + " perhaps the data is on a private volume";
-//                LOGGER.warn(message);
-//                throw new DataException(message);
-//            }
+
             final Path volumePath = Paths.get(dataVolume.getVolumePath());
-            streamSource = FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
+            return FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
+        } catch (final DataException e) {
+            LOGGER.debug(e::getMessage, e);
+            throw e;
         }
-
-        return streamSource;
     }
-
-//    @Override
-//    public void closeStreamSource(final Source streamSource) {
-//        try {
-//            // Close the stream source.
-//            streamSource.close();
-//        } catch (final IOException e) {
-//            LOGGER.error("Unable to close stream source!", e.getMessage(), e);
-//        }
-//    }
-//
-//    @Override
-//    public AttributeMap getStoredMeta(final Meta meta) {
-//        final Set<DataVolume> volumeSet = dataVolumeService.findDataVolume(meta.getId());
-//        if (volumeSet != null && volumeSet.size() > 0) {
-//            final DataVolume streamVolume = volumeSet.iterator().next();
-//            final Path manifest = fileSystemStreamPathHelper.getChildPath(
-//            meta, streamVolume, InternalStreamTypeNames.MANIFEST);
-//
-//            if (Files.isRegularFile(manifest)) {
-//                final AttributeMap attributeMap = new AttributeMap();
-//                try {
-//                    AttributeMapUtil.read(Files.newInputStream(manifest), true, attributeMap);
-//                } catch (final IOException ioException) {
-//                    LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
-//                }
-//
-////                for (final String name : attributeMap.keySet()) {
-////                    final StreamAttributeKey key = keyMap.get(name);
-////                    final String value = attributeMap.get(name);
-////                    if (key == null) {
-////                        streamAttributeMap.addAttribute(name, value);
-////                    } else {
-////                        streamAttributeMap.addAttribute(key, value);
-////                    }
-////                }
-//
-//                try {
-//                    final Path rootFile = fileSystemStreamPathHelper.getRootPath(streamVolume.getVolumePath(),
-//                            meta, meta.getTypeName());
-//
-//                    final List<Path> allFiles = fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile);
-//                    attributeMap.put("Files", allFiles.stream()
-//                    .map(FileUtil::getCanonicalPath)
-//                    .collect(Collectors.joining(",")));
-//
-//
-//                    //                streamAttributeMap.setFileNameList(new ArrayList<>());
-//                    //                streamAttributeMap.getFileNameList().add(FileUtil.getCanonicalPath(rootFile));
-//                    //                for (final Path file : allFiles) {
-//                    //                    streamAttributeMap.getFileNameList().add(FileUtil.getCanonicalPath(file));
-//                    //                }
-//                } catch (final RuntimeException e) {
-//                    LOGGER.error("loadAttributeMapFromFileSystem() ", e);
-//                }
-//
-//                return attributeMap;
-//            }
-//        }
-//
-//        return null;
-//    }
 
     private void syncAttributes(final Meta meta, final FsTarget target) {
         updateAttribute(target, MetaFields.ID, String.valueOf(meta.getId()));
@@ -360,22 +222,4 @@ class FsStore implements Store, AttributeMapFactory {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
-
-    //    private Meta unLock(final Meta meta, final AttributeMap attributeMap) {
-//        if (Status.UNLOCKED.equals(meta.getStatus())) {
-//            throw new IllegalStateException("Attempt to unlock data that is already unlocked");
-//        }
-//
-//        // Write the child meta data
-//        if (!attributeMap.isEmpty()) {
-//            try {
-//                metaService.addAttributes(meta, attributeMap);
-//            } catch (final RuntimeException e) {
-//                LOGGER.error("unLock() - Failed to persist attributes in new transaction... will ignore");
-//            }
-//        }
-//
-//        LOGGER.debug("unlock() " + meta);
-//        return metaService.updateStatus(meta, Status.UNLOCKED, Status.LOCKED);
-//    }
 }

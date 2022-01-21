@@ -17,6 +17,7 @@
 package stroom.meta.statistics.impl;
 
 import stroom.meta.statistics.api.MetaStatistics;
+import stroom.security.api.SecurityContext;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 
@@ -36,9 +37,12 @@ public class MetaStatisticsModule extends AbstractModule {
 
     @Provides
     public MetaStatisticsImpl metaStatistics(
-            final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
+            final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
+            final SecurityContext securityContext) {
 
-        final MetaStatisticsImpl metaDataStatistic = new MetaStatisticsImpl(internalStatisticsReceiverProvider);
+        final MetaStatisticsImpl metaDataStatistic = new MetaStatisticsImpl(
+                internalStatisticsReceiverProvider,
+                securityContext);
         metaDataStatistic.setTemplates(Arrays.asList(
                 new MetaStatisticsTemplate(
                         InternalStatisticKey.METADATA_STREAMS_RECEIVED,

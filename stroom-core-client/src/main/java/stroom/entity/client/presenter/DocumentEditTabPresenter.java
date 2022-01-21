@@ -175,24 +175,20 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     @Override
     public void onReadOnly(final boolean readOnly) {
         super.onReadOnly(readOnly);
-        saveButton.setEnabled(isDirty() && !readOnly);
+        saveButton.setEnabled(isDirty());
         saveAsButton.setEnabled(true);
-
         if (readOnly) {
             saveButton.setTitle("Save is not available as this document is read only");
         }
     }
 
     @Override
-    public void onDirty(final boolean dirty) {
-        if (!isReadOnly()) {
-            // Only fire tab refresh if the tab has changed.
-            if (lastLabel == null || !lastLabel.equals(getLabel())) {
-                lastLabel = getLabel();
-                RefreshContentTabEvent.fire(this, this);
-            }
-
-            saveButton.setEnabled(dirty);
+    public void onDirtyChange() {
+        // Only fire tab refresh if the tab has changed.
+        if (lastLabel == null || !lastLabel.equals(getLabel())) {
+            lastLabel = getLabel();
+            RefreshContentTabEvent.fire(this, this);
         }
+        saveButton.setEnabled(isDirty());
     }
 }

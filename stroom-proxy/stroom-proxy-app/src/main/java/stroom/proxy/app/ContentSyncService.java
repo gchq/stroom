@@ -29,6 +29,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -38,12 +39,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+@Singleton
 public class ContentSyncService implements Managed, HasHealthCheck {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentSyncService.class);
 
-    private final ProxyConfig proxyConfig;
-    private final ContentSyncConfig contentSyncConfig;
+    private final Provider<ProxyConfig> proxyConfigProvider;
+    private final Provider<ContentSyncConfig> contentSyncConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final Set<ImportExportActionHandler> importExportActionHandlers;
     private final Provider<Client> clientProvider;
@@ -51,21 +53,22 @@ public class ContentSyncService implements Managed, HasHealthCheck {
     private volatile ScheduledExecutorService scheduledExecutorService;
 
     @Inject
-    public ContentSyncService(final ProxyConfig proxyConfig,
-                              final ContentSyncConfig contentSyncConfig,
+    public ContentSyncService(final Provider<ProxyConfig> proxyConfigProvider,
+                              final Provider<ContentSyncConfig> contentSyncConfigProvider,
                               final DefaultOpenIdCredentials defaultOpenIdCredentials,
                               final Set<ImportExportActionHandler> importExportActionHandlers,
                               final Provider<Client> clientProvider) {
-        this.contentSyncConfig = contentSyncConfig;
+        this.contentSyncConfigProvider = contentSyncConfigProvider;
         this.importExportActionHandlers = importExportActionHandlers;
         this.clientProvider = clientProvider;
-        this.proxyConfig = proxyConfig;
-        contentSyncConfig.validateConfiguration();
+        this.proxyConfigProvider = proxyConfigProvider;
+        contentSyncConfigProvider.get().validateConfiguration();
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
     }
 
     @Override
     public synchronized void start() {
+        final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
         if (contentSyncConfig.isContentSyncEnabled()) {
             if (scheduledExecutorService == null) {
                 scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -80,7 +83,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
 
     @Override
     public synchronized void stop() {
-        if (contentSyncConfig.isContentSyncEnabled()) {
+        if (contentSyncConfigProvider.get().isContentSyncEnabled()) {
             if (scheduledExecutorService != null) {
                 scheduledExecutorService.shutdown();
                 scheduledExecutorService = null;
@@ -91,6 +94,8 @@ public class ContentSyncService implements Managed, HasHealthCheck {
     private void sync() {
         final Map<String, ImportExportActionHandler> typeToHandlerMap = importExportActionHandlers.stream()
                 .collect(Collectors.toMap(ImportExportActionHandler::getType, Function.identity()));
+
+        final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
 
         if (contentSyncConfig.getUpstreamUrl() != null) {
             contentSyncConfig.getUpstreamUrl().forEach((type, url) -> {
@@ -153,6 +158,9 @@ public class ContentSyncService implements Managed, HasHealthCheck {
 
     private String getApiKey() {
 
+        final ProxyConfig proxyConfig = proxyConfigProvider.get();
+        final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
+
         // Allows us to use hard-coded open id creds / token to authenticate with stroom
         // out of the box. ONLY for use in test/demo environments.
         if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(contentSyncConfig.getApiKey())) {
@@ -170,6 +178,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
         final AtomicBoolean allHealthy = new AtomicBoolean(true);
         final Map<String, Object> postResults = new ConcurrentHashMap<>();
         final String path = "/list";
+        final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
 
         // parallelStream so we can hit multiple URLs concurrently
         if (contentSyncConfig.isContentSyncEnabled()) {

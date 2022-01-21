@@ -4,9 +4,11 @@ server:
   applicationConnectors:
     - type: http
       port: ${STROOM_APP_PORT:-8080}
+      useForwardedHeaders: true
   adminConnectors:
     - type: http
       port: ${STROOM_ADMIN_PORT:-8081}
+      useForwardedHeaders: true
 
   requestLog:
     appenders:
@@ -47,6 +49,21 @@ logging:
         timeZone: UTC
         logFormat: "%msg%n"
 
+#    "search_progress_trace":
+#      level: TRACE
+#      additive: false
+#      appenders:
+#        - type: file
+#          currentLogFilename: logs/search/search_progress_trace.csv
+#          threshold: ALL
+#          queueSize: 250
+#          discardingThreshold: 0
+#          archive: false
+#          archivedLogFilenamePattern: logs/search/search_progress_trace-%d{yyyy-MM-dd'T'HH:mm}.csv
+#          archivedFileCount: 0
+#          timeZone: UTC
+#          logFormat: "%msg%n"
+
   appenders:
   - type: console
     logFormat: "%highlight(%-5level) %d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC} %yellow(%thread) %cyan(%-30logger{25}) %msg %n"
@@ -72,6 +89,7 @@ appConfig:
     enabled: true
   job:
     enabled: true
+    enableJobsOnBootstrap: true
     executionInterval: "10s"
   node:
     name: node1a

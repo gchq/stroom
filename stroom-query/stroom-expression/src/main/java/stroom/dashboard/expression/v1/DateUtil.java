@@ -26,11 +26,12 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.Locale;
 
 public final class DateUtil {
 
     static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
-    static final DateTimeFormatter DEFAULT_FORMATTER = DateTimeFormatter.ofPattern(DEFAULT_PATTERN);
+    static final DateTimeFormatter DEFAULT_FORMATTER = DateTimeFormatter.ofPattern(DEFAULT_PATTERN, Locale.ENGLISH);
     private static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
 
     private DateUtil() {
@@ -93,6 +94,15 @@ public final class DateUtil {
         }
 
         return dateTime.toInstant().toEpochMilli();
+    }
+
+    public static LocalDateTime parseLocal(final String value, final DateTimeFormatter formatter, final ZoneId zoneId) {
+        final ZonedDateTime dateTime = parseInternal(value, formatter, zoneId);
+        if (dateTime == null) {
+            throw new IllegalArgumentException("Unable to parse date: \"" + value + '"');
+        }
+
+        return dateTime.toLocalDateTime();
     }
 
     public static String format(final Long value, final DateTimeFormatter formatter, final ZoneId zoneId) {

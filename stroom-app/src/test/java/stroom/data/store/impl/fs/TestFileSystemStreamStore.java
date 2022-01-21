@@ -29,7 +29,6 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
-import stroom.index.impl.selection.VolumeConfig;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -84,17 +83,13 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private static final String FEED3 = "FEED3";
 
     @Inject
-    private MetaValueConfig metaValueConfig;
-    @Inject
-    private VolumeConfig volumeConfig;
-    @Inject
     private Store streamStore;
     @Inject
     private MetaService metaService;
     @Inject
     private DataVolumeService dataVolumeService;
     @Inject
-    private FsPathHelper fileSystemStreamPathHelper;
+    private FsPathHelper pathHelper;
     @Inject
     private FeedStore feedService;
     @Inject
@@ -112,7 +107,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         feed3 = setupFeed("FEED3");
 
         // Make sure stream attributes get flushed straight away.
-        metaValueConfig.setAddAsync(false);
+        setConfigValueMapper(MetaValueConfig.class, metaValueConfig -> metaValueConfig.withAddAsync(false));
 
         final Optional<ExplorerNode> system = explorerNodeService.getRoot();
         final DocRef root = system.get().getDocRef();
@@ -129,7 +124,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @AfterEach
     void unsetProperties() {
-        metaValueConfig.setAddAsync(true);
+        clearConfigValueMapper();
+//        metaValueConfig.setAddAsync(true);
     }
 
     /**
@@ -393,12 +389,12 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         boolean foundOne = false;
         for (final Meta result : list) {
-            assertThat(fileSystemStreamPathHelper.getRootPath(Paths.get(""),
+            assertThat(pathHelper.getRootPath(Paths.get(""),
                     result,
                     StreamTypeNames.RAW_EVENTS)).isNotNull();
-            assertThat(fileSystemStreamPathHelper.getBaseName(result)).isNotNull();
-            if (fileSystemStreamPathHelper.getBaseName(result)
-                    .equals(fileSystemStreamPathHelper.getBaseName(exactMetaData))) {
+            assertThat(pathHelper.getBaseName(result)).isNotNull();
+            if (pathHelper.getBaseName(result)
+                    .equals(pathHelper.getBaseName(exactMetaData))) {
                 foundOne = true;
             }
         }
@@ -533,19 +529,6 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testDelete8() throws IOException {
         doTestDeleteTarget(DeleteTestStyle.OPEN_TOUCHED_CLOSED);
     }
-
-    // TODO : FIX PIPELINE FILTERING
-//    @Test
-//    public void testDeletePipleineFilters() throws IOException {
-//        final ExpressionOperator expression = ExpressionOperator.builder()
-//                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "Test")
-////                .addTerm(StreamDataSource., Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
-//                .build();
-//
-//        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-//        findStreamCriteria.setExpression(expression);
-//        streamStore.updateStatus(findStreamCriteria);
-//    }
 
     @Test
     void testFileSystem() throws IOException {
@@ -755,7 +738,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
         final Path volumePath = Paths.get(dataVolume.getVolumePath());
-        final Path rootFile = fileSystemStreamPathHelper.getRootPath(volumePath, meta, StreamTypeNames.RAW_EVENTS);
+        final Path rootFile = pathHelper.getRootPath(volumePath, meta, StreamTypeNames.RAW_EVENTS);
 
         assertThat(Files.isRegularFile(rootFile)).isTrue();
 
@@ -764,7 +747,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             assertThat(streamSource.getAttributes().get(testString1)).isEqualTo(testString2);
         }
 
-        final Path manifestFile = fileSystemStreamPathHelper.getChildPath(rootFile, InternalStreamTypeNames.MANIFEST);
+        final Path manifestFile = pathHelper.getChildPath(rootFile, InternalStreamTypeNames.MANIFEST);
 
         assertThat(Files.isRegularFile(manifestFile)).isTrue();
 

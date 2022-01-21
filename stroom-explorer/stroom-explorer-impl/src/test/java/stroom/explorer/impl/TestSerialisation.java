@@ -77,7 +77,8 @@ public class TestSerialisation {
         final FetchExplorerNodeResult result1 = new FetchExplorerNodeResult(
                 List.of(parent),
                 List.of(parent.getUuid()),
-                Set.of(parent.getUuid()));
+                Set.of(parent.getUuid()),
+                null);
 
         final ObjectMapper objectMapper = JsonUtil.getMapper();
         final String string1 = objectMapper.writeValueAsString(result1);

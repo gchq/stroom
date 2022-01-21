@@ -1,29 +1,34 @@
 ext.moduleName = 'stroom.security.identity.db'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-db-util')
-    compile project(':stroom-security:stroom-security-identity')
-    compile project(':stroom-security:stroom-security-identity-db-jooq')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-security:stroom-security-identity')
+    implementation project(':stroom-security:stroom-security-identity-db-jooq')
+    implementation project(':stroom-security:stroom-security-openid-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.flyway_core
-    compile libs.guice5
-    compile libs.hikari
-    compile libs.jackson_annotations
-    compile libs.javax_inject
-    compile libs.jooq
-    compile libs.slf4j_api
+    implementation libs.bcrypt
+    implementation libs.flyway_core
+    implementation libs.guice5
+    implementation libs.hikari
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jooq
+    implementation libs.jose4j
+    implementation libs.slf4j_api
+    implementation libs.ws_rs_api
 
     runtimeOnly libs.mysql_connector_java
 
-    testCompile project(':stroom-test-common')
-    testCompile libs.junit_jupiter_api
-    testCompile libs.junit_jupiter_engine
-    testCompile libs.assertj_core
-    testCompile libs.wiremock
-    testCompile libs.mockito_core
-    testCompile libs.dropwizard_testing
-    testCompile libs.unirest
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_engine
+    testImplementation libs.assertj_core
+    testImplementation libs.wiremock
+    testImplementation libs.mockito_core
+    testImplementation libs.dropwizard_testing
+    testImplementation libs.unirest
 }

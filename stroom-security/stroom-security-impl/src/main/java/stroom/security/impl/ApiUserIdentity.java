@@ -50,7 +50,6 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJws {
         return sessionId;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

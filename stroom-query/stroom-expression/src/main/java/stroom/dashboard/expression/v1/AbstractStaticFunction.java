@@ -65,6 +65,11 @@ abstract class AbstractStaticFunction implements Function, Appendable {
         return false;
     }
 
+    @Override
+    public boolean isChildSelector() {
+        return false;
+    }
+
     private static final class Gen extends AbstractNoChildGenerator {
         private static final long serialVersionUID = -7551073465232523106L;
 

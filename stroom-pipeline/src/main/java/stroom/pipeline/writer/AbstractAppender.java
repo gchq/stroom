@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public abstract class AbstractAppender extends AbstractDestinationProvider implements Destination {
+
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private OutputStream outputStream;
@@ -59,6 +60,14 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     @Override
     public void returnDestination(final Destination destination) throws IOException {
+        // We assume that the parent will write an entire segment when it borrows a destination so add a segment marker
+        // here after a segment is written.
+
+        // Writing a segment marker here ensures there is always a marker written before the footer regardless or
+        // whether a footer is actually written. We do this because we always make an allowance for a footer for data
+        // display purposes.
+        insertSegmentMarker();
+
         if (splitRecords) {
             if (getCurrentOutputSize() > 0) {
                 closeCurrentOutputStream();
@@ -107,9 +116,20 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
                 // Write the header.
                 write(header);
             }
+
+            // Insert a segment marker before we write the next record regardless of whether the header has actually
+            // been written. This is because we always make an allowance for the existence of a header in a segmented
+            // stream when viewing data.
+            insertSegmentMarker();
         }
 
         return outputStream;
+    }
+
+    /**
+     * Method to allow subclasses to insert segment markers between records.
+     */
+    void insertSegmentMarker() throws IOException {
     }
 
     private void writeFooter() throws IOException {

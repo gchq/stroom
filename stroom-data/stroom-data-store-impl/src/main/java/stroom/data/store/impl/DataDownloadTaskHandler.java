@@ -192,7 +192,7 @@ public class DataDownloadTaskHandler {
         long id = startId;
 
         // Export Source
-        try (final Source source = streamStore.openSource(metaId)) {
+        try (final Source source = streamStore.openSource(metaId, true)) {
             id++;
 
             final long count = source.count();

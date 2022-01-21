@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 
 import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 
@@ -38,12 +38,12 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
     @Inject
     StoredQueryDaoImpl(final StoredQueryDbConnProvider storedQueryDbConnProvider) {
-        genericDao = new GenericDao<>(QUERY, QUERY.ID, StoredQuery.class, storedQueryDbConnProvider);
+        genericDao = new GenericDao<>(storedQueryDbConnProvider, QUERY, QUERY.ID, StoredQuery.class);
         this.storedQueryDbConnProvider = storedQueryDbConnProvider;
     }
 
     @Override
-    public StoredQuery create(@Nonnull final StoredQuery storedQuery) {
+    public StoredQuery create(@NotNull final StoredQuery storedQuery) {
         StoredQuerySerialiser.serialise(storedQuery);
         StoredQuery result = genericDao.create(storedQuery);
         StoredQuerySerialiser.deserialise(result);
@@ -51,7 +51,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     }
 
     @Override
-    public StoredQuery update(@Nonnull final StoredQuery storedQuery) {
+    public StoredQuery update(@NotNull final StoredQuery storedQuery) {
         StoredQuerySerialiser.serialise(storedQuery);
         StoredQuery result = genericDao.update(storedQuery);
         StoredQuerySerialiser.deserialise(result);
@@ -79,14 +79,14 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                     Optional.ofNullable(criteria.getFavourite()).map(QUERY.FAVOURITE::eq));
 
             final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-
+            final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+            final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
             return context
                     .select()
                     .from(QUERY)
                     .where(conditions)
                     .orderBy(orderFields)
-                    .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                    .offset(JooqUtil.getOffset(criteria.getPageRequest()))
+                    .limit(offset, limit)
                     .fetch()
                     .into(StoredQuery.class);
         });

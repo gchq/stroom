@@ -32,7 +32,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class RefStreamDefinition {
 
-    private static final int DEFAULT_PART_INDEX = 0;
+    public static final int DEFAULT_PART_INDEX = 0;
 
     // TODO consider getting rid of DocRef and just storing the uuid
     @JsonProperty
@@ -42,7 +42,7 @@ public class RefStreamDefinition {
     @JsonProperty
     private final long streamId;
     @JsonProperty
-    private final long partIndex;
+    private final long partIndex; // zero based
     @JsonIgnore
     private final int hashCode;
 
@@ -91,8 +91,19 @@ public class RefStreamDefinition {
         return streamId;
     }
 
+    /**
+     * Zero based part in the stream.
+     */
     public long getPartIndex() {
         return partIndex;
+    }
+
+    /**
+     * One based part in the stream.
+     */
+    @JsonIgnore
+    public long getPartNumber() {
+        return partIndex + 1;
     }
 
     @Override
@@ -105,11 +116,24 @@ public class RefStreamDefinition {
                 '}';
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
+    public String asUiFriendlyString() {
+        // make partIndex one based
+        return "reference stream: " + streamId +
+                ":" + (partIndex + 1) +
+                " pipeline: " +
+                (pipelineDocRef.getName() != null
+                        ? pipelineDocRef.getName()
+                        : pipelineDocRef.getUuid());
+    }
+
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final RefStreamDefinition that = (RefStreamDefinition) o;
         return Objects.equals(pipelineVersion, that.pipelineVersion) &&
                 streamId == that.streamId &&

@@ -110,7 +110,6 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
         return schemaGroup == null || schemaGroup.equals(doc.getSchemaGroup());
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -132,5 +131,15 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), namespaceURI, systemId, schemaGroup, user);
+    }
+
+    @Override
+    public String toString() {
+        return "FindXMLSchemaCriteria{" +
+                "namespaceURI='" + namespaceURI + '\'' +
+                ", systemId='" + systemId + '\'' +
+                ", schemaGroup='" + schemaGroup + '\'' +
+                ", user='" + user + '\'' +
+                '}';
     }
 }

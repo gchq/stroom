@@ -16,6 +16,8 @@
 # limitations under the License.
 # **********************************************************************
 
+# Version: v0.3.0
+# Date: 2021-11-04T10:17:38+00:00
 
 # This script is for tagging a git repository for the purpose of driving a
 # separate release process from that tagged commit. It also updates the 
@@ -77,17 +79,13 @@
 # The format of the headings in compare links are critical to the parsing of
 # the file.
 
-# CHANGELOG for tag_release.sh
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# v1.0 2019-10-04 Check if determined version has been tagged
-# v1.1 2019-10-04 Refactor to use tag_release_config.env
-# v1.2 2021-05-05 Add changelog updating
-
-set -euo pipefail
+set -eo pipefail
 
 # File containing the configuration values for this script
 TAG_RELEASE_CONFIG_FILENAME='tag_release_config.env'
+
+# The name of the script to use to log change entries
+LOG_CHANGE_SCRIPT_NAME="log_change.sh"
 
 # Configure the following for your github repository
 # ----------------------------------------------------------
@@ -109,12 +107,17 @@ TAG_EXAMPLE='v6.0-beta.19'
 PREVIOUS_TAG_EXAMPLE="${TAG_EXAMPLE//9/8}"
 # The location of the change log relative to the repo root
 CHANGELOG_FILENAME='CHANGELOG.md'
+# The path to the directory containing the unreleased changes
+# relative to the repo root
+UNRELEASED_CHANGES_REL_DIR='unreleased_changes'
 # The namespace/usser on github, i.e. github.com/<namespace>, should be set in tag_release_config.env
 GITHUB_NAMESPACE=
 # The name of the git repository on github, should be set in tag_release_config.env
 GITHUB_REPO=
 # The name of the git remote repo that the branch is tracking against.
 GIT_REMOTE_NAME='origin'
+# The name of the branch to compare unreleased changes to
+UNRELEASED_CHANGES_COMPARE_BRANCH='master'
 # ----------------------------------------------------------
 
 setup_echo_colours() {
@@ -146,6 +149,15 @@ error_exit() {
   exit 1
 }
 
+validation_exit() {
+  error "$@"
+  if [ "${IS_DEBUG_ENABLED:-false}" = true ]; then
+    echo -e "${RED}IN DEBUG MODE - won't exit${NC}"
+  else
+    exit 1
+  fi
+}
+
 debug() {
   # To run with debug logging do;
   # IS_DEBUG_ENABLED=true ./tag_release.sh
@@ -153,8 +165,8 @@ debug() {
     echo -e "${DGREY}DEBUG: $*${NC}"
   fi
 }
-info() {
 
+info() {
   echo -e "${GREEN}$*${NC}"
 }
 
@@ -178,10 +190,20 @@ do_tagging() {
   echo
   info "Creating annotated tag [${BLUE}${version}${GREEN}]" \
     "for the current commit"
-  echo -e "${commit_msg}" | git tag -a --file - "${version}"
+
+  if [ "${IS_DEBUG_ENABLED:-false}" = true ]; then
+    echo -e "${RED}IN DEBUG MODE - won't tag git${NC}"
+  else
+    echo -e "${commit_msg}" | git tag -a --file - "${version}"
+  fi
 
   info "Pushing the new tag [${BLUE}${version}${GREEN}] to origin"
-  git push origin "${version}"
+
+  if [ "${IS_DEBUG_ENABLED:-false}" = true ]; then
+    echo -e "${RED}IN DEBUG MODE - won't push tag${NC}"
+  else
+    git push origin "${version}"
+  fi
 
   info "Done"
   echo
@@ -198,8 +220,13 @@ do_release() {
   local commit_msg
   # delete all lines up to and including the desired version header
   # then output all lines until quitting when you hit the next 
-  # version header
-  commit_msg="$(sed "1,/^\s*##\s*\[${version}\]/d;/## \[/Q" "${changelog_file}")"
+  # version header ('## [' or '[')
+  commit_msg="$( \
+    sed  \
+      --regexp-extended \
+      "1,/^\s*##\s*\[${version}\]/d;/^(## )?\[/Q"  \
+      "${changelog_file}" \
+    )"
 
   # Add the release version as the top line of the commit msg, followed by
   # two new lines
@@ -228,6 +255,34 @@ do_release() {
   fi
 }
 
+init_changelog_file() {
+  debug "init_changelog_file() called"
+
+  if [ ! -f "${changelog_file}" ]; then
+    info "Creating skeleton ${BLUE}${CHANGELOG_FILENAME}${GREEN} file"
+
+    {
+      echo -e "# Change Log"
+      echo -e "All notable changes to this project will be documented in this file."
+      echo -e
+      echo -e "The format is based on [Keep a Changelog](http://keepachangelog.com/) "
+      echo -e "and this project adheres to [Semantic Versioning](http://semver.org/)."
+      echo -e
+      echo -e
+      echo -e "## [Unreleased]"
+      echo -e 
+      echo -e "~~~"
+      echo -e "DO NOT ADD CHANGES HERE - Add them using ${LOG_CHANGE_SCRIPT_NAME}, view them with './${LOG_CHANGE_SCRIPT_NAME} list'"
+      echo -e "~~~"
+      echo -e
+      echo -e
+    } > "${changelog_file}"
+
+    info "You should now add, commit and push the new CHANGELOG file."
+    exit 0
+  fi
+}
+
 validate_version_string() {
   if [[ ! "${version}" =~ ${RELEASE_VERSION_REGEX} ]]; then
       local msgs=("Version [${BLUE}${version}${GREEN}] does not match the release"
@@ -243,14 +298,8 @@ validate_version_string() {
   fi
 }
 
-validate_changelog_exists() {
-  if [ ! -f "${changelog_file}" ]; then
-    error_exit "The file ${BLUE}${changelog_file}${GREEN} does not exist in the" \
-      "current directory.${NC}"
-  fi
-}
-
 validate_unreleased_heading_in_changelog() {
+  debug "validate_unreleased_heading_in_changelog() called"
   if ! grep -q "${UNRELEASED_HEADING_REGEX}" "${changelog_file}"; then
     error_exit "The changelog is missing the" \
       "following heading.\n${YELLOW}## [Unreleased]${NC}"
@@ -258,6 +307,7 @@ validate_unreleased_heading_in_changelog() {
 }
 
 validate_in_git_repo() {
+  debug "validate_in_git_repo() called"
   if ! git rev-parse --show-toplevel > /dev/null 2>&1; then
     error_exit "You are not in a git repository. This script should be run from" \
       "the root of a repository.${NC}"
@@ -265,6 +315,7 @@ validate_in_git_repo() {
 }
 
 validate_for_duplicate_tag() {
+  debug "validate_for_duplicate_tag() called"
   if git tag | grep -q "^${version}$"; then
     local msgs=("This repository has already been tagged with"
       "[${BLUE}${version}${GREEN}].${NC}")
@@ -280,6 +331,7 @@ validate_for_duplicate_tag() {
 }
 
 validate_version_in_changelog() {
+  debug "validate_version_in_changelog() called"
   if ! grep -q "^\s*##\s*\[${version}\]" "${changelog_file}"; then
     error_exit "Version [${BLUE}${version}${GREEN}] is not in the file" \
       "${BLUE}${CHANGELOG_FILENAME}${GREEN}.${NC}"
@@ -287,14 +339,16 @@ validate_version_in_changelog() {
 }
 
 validate_release_date() {
+  debug "validate_release_date() called"
   if ! grep -q "^\s*##\s*\[${version}\] - ${curr_date}" "${changelog_file}"; then
-    error_exit "Cannot find a heading with today's date" \
+    validation_exit "Cannot find a heading with today's date" \
       "[${BLUE}## [${version}] - ${curr_date}${GREEN}] in" \
       "${BLUE}${CHANGELOG_FILENAME}${GREEN}.${NC}"
   fi
 }
 
 validate_compare_link_exists() {
+  debug "validate_compare_link_exists() called"
   if ! grep -q "^\[${version}\]:" "${changelog_file}"; then
     error "Version [${BLUE}${version}${GREEN}] does not have a link entry at" \
       "the bottom of the ${BLUE}${CHANGELOG_FILENAME}${GREEN}.${NC}"
@@ -306,9 +360,14 @@ validate_compare_link_exists() {
 }
 
 validate_for_uncommitted_work() {
+  debug "validate_for_uncommitted_work() called"
   if [ "$(git status --porcelain 2>/dev/null | wc -l)" -ne 0 ]; then
-    error_exit "There are uncommitted changes or untracked files." \
-      "Commit them before running this script.${NC}"
+    
+    validation_exit "There are uncommitted changes or untracked files." \
+      "\nCommit them before running this script or if the changes are from a failed" \
+      "\nrun of this script then consider running" \
+      "\n${BLUE}git checkout -f HEAD" \
+      "\n${GREEN}to restore your local repo.${NC}"
   fi
 }
 
@@ -387,17 +446,32 @@ determine_version_to_release() {
 commit_changelog() {
   local next_release_version="$1"; shift
 
-  local changed_file_count
-  changed_file_count="$(git status --porcelain | wc -l)"
+  # Expecting the git status output to look something like:
 
-  if [ "${changed_file_count}" -gt 1 ]; then
+  # M CHANGELOG.md
+  # D unreleased_changes/20211018_163800_451__0.md
+  # D unreleased_changes/20211018_163803_736__0.md
+
+  # so ignore all the ones we expect and see if there is anything else changed
+
+  local changed_files
+  changed_files="$( \
+    git status \
+      --porcelain \
+    | grep \
+      --invert-match \
+      --regexp "M ${CHANGELOG_FILENAME}" \
+      --regexp "D ${UNRELEASED_CHANGES_REL_DIR}/.*\.md" \
+    || true
+  )"
+
+  if [[ -n "${changed_files}" ]]; then
     echo 
-    error "Expecting only ${BLUE}${CHANGELOG_FILENAME}${GREEN} to have" \
-      "changed in git status.\nThe following uncommitted changes exist:"
+    error "Unexpected local changes in git status:"
 
     echo 
     echo -e "${DGREY}------------------------------------------------------------------------${NC}"
-    git status --porcelain 
+    echo -e "${DGREY}${changed_files}${NC}"
     echo -e "${DGREY}------------------------------------------------------------------------${NC}"
     exit 1
   fi
@@ -424,9 +498,11 @@ commit_changelog() {
 
   info "Adding ${BLUE}${CHANGELOG_FILENAME}${GREEN} to the git index."
   git add "${changelog_file}"
+  info "Adding deleted change entry files to the git index."
+  git add "./${UNRELEASED_CHANGES_REL_DIR}/*.md"
 
   info "Committing the staged changes"
-  git commit -m "Update CHANGELOG for release ${next_release_version}"
+  git commit -m "Update change log for release ${next_release_version}"
 
   info "Pushing the changelog changes to the remote repository"
   git push
@@ -442,12 +518,63 @@ modify_changelog() {
   local new_heading
   new_heading="## [${next_release_version}] - ${curr_date}"
 
-  # Add the new release heading after the [Unreleased] heading
-  # plus some new lines \\\n\n seems to provide two new lines
+  # Remove the fenced block comment about not adding entries directly
   sed \
-    -i'' \
-    "/${UNRELEASED_HEADING_REGEX}/a \\\n\n${new_heading}" \
+    --in-place'' \
+    --regexp-extended \
+    --silent \
+    '/^[~]{3}/,/^[~]{3}/!p' \
     "${changelog_file}"
+
+  if [ "${IS_DEBUG_ENABLED:-false}" = true ]; then
+    debug "Catting change log"
+    debug "-------------------------------"
+    cat "${changelog_file}"
+    debug "-------------------------------"
+  fi
+
+  # Add the new release heading after the [Unreleased] heading
+  # along with the unreleased change entries
+  # plus some new lines \\\n\n seems to provide two new lines
+  #sed \
+    #--in-place'' \
+    #"/${UNRELEASED_HEADING_REGEX}/ a \\\n\n${new_heading}" \
+    #"${changelog_file}"
+
+  local change_text_temp_file
+  change_text_temp_file=$(mktemp --suffix=_tag_release)
+
+  # Write our unreleased change entries and the new heading to a temp file
+  # with a blank line above
+  {
+    echo -e 
+    echo -e "~~~"
+    echo -e "DO NOT ADD CHANGES HERE - ADD THEM USING ${LOG_CHANGE_SCRIPT_NAME}"
+    echo -e "~~~"
+    echo -e
+    echo -e
+    echo -e "${new_heading}"
+    echo -e
+    echo -e "${unreleased_changes_text}"
+  } > "${change_text_temp_file}"
+
+  if [ "${IS_DEBUG_ENABLED:-false}" = true ]; then
+    debug "Catting temp file ${change_text_temp_file}"
+    debug "-------------------------------"
+    cat "${change_text_temp_file}"
+    debug "-------------------------------"
+  fi
+
+  # Now add contents of the temp file below the existing Unreleased heading
+  sed \
+    --regexp-extended \
+    --in-place'' \
+    "/${UNRELEASED_HEADING_REGEX}/ r ${change_text_temp_file}" \
+    "${changelog_file}"
+
+  rm \
+    --force \
+    "${change_text_temp_file}"
 
   local compare_regex="^(\[Unreleased\]: https:\/\/github\.com\/${GITHUB_NAMESPACE}\/${GITHUB_REPO}\/compare\/)(.*)\.{3}(.*)$"
 
@@ -456,29 +583,62 @@ modify_changelog() {
     # Change the from version in the [Unreleased] link
     debug "Modifying unreleased link"
     sed \
-      -E \
-      -i'' \
+      --regexp-extended \
+      --in-place'' \
       "s/${compare_regex}/\1${next_release_version}...\3/" \
       "${changelog_file}"
   else
     # No link so add one to the end
     debug "Appending unreleased link"
-    echo -e "\n[Unreleased]: ${GITHUB_URL_BASE}/compare/${next_release_version}...master" \
+    echo -e "\n[Unreleased]: ${GITHUB_URL_BASE}/compare/${next_release_version}...${UNRELEASED_CHANGES_COMPARE_BRANCH}" \
       >> "${changelog_file}"
   fi
 
+  local new_link_line
   if [ -n "${prev_release_version}" ]; then
     # We have a prev release to compare to so add in the compare link for 
     # prev release to next release
     new_link_line="[${next_release_version}]: ${GITHUB_URL_BASE}/compare/${prev_release_version}...${next_release_version}"
-    debug "Appending compare link"
-    sed \
-      -i'' \
-      "/${UNRELEASED_LINK_REGEX}/a ${new_link_line}" \
-      "${changelog_file}"
+  else
+    new_link_line="[${next_release_version}]: ${GITHUB_URL_BASE}/compare/${next_release_version}...${next_release_version}"
   fi
 
+  debug "Appending compare link"
+  sed \
+    --regexp-extended \
+    --in-place'' \
+    "/${UNRELEASED_LINK_REGEX}/a ${new_link_line}" \
+    "${changelog_file}"
+
+  tidy_blank_lines "${changelog_file}"
+
+  info "Deleting change entry files in ${BLUE}${unreleased_changes_dir}${NC}"
+  rm \
+    --force \
+    "${unreleased_changes_dir}"/*.md
+
   commit_changelog "${next_release_version}"
+}
+
+tidy_blank_lines() {
+  local changelog_file="$1"; shift
+  
+  # Treats the whole file as one big line which is a bit sub-prime
+  # for a big changelog, but not a massive issue.
+  # 1st expr - tidy up any instances of 3 or more blank lines replacing them
+  # with 2 blank lines
+  # 2nd expr - ensure all headings are preceeded with 2 blank lines
+  # 3rd expr - ensure all version headings are followed by 1 blank line
+  # 4th expr - ensure all change lines are preceeded with 1 blank line
+  sed \
+    --regexp-extended \
+    --in-place'' \
+    --null-data \
+    --expression 's/\n{4,}/\n\n\n/g' \
+    --expression 's/\n*(## )/\n\n\n\1/g' \
+    --expression 's/(\n## \[[^]]+\] - [0-9\-]{10})\n*/\1\n\n/g' \
+    --expression 's/\n*(\n\* )/\n\1/g' \
+    "${changelog_file}"
 }
 
 prompt_user_for_version() {
@@ -489,6 +649,7 @@ prompt_user_for_version() {
   local is_valid_version_str=false
   while [[ "${is_valid_version_str}" = false ]]; do
     read \
+      -r \
       -e \
       -p "$(echo -e "${GREEN}Enter the tag/version for this release:${NC}")"$'\n' \
       -i "${suggested_version}" version
@@ -504,14 +665,23 @@ prepare_changelog_for_release() {
   local next_release_version=""
   local next_release_version_guess=""
 
-  info "There are unrelased changes in the changelog:\n"
+  if [[ -n "${unreleased_changes_text}" ]]; then
+    info "These are the unreleased change file entries that will be added to the change log:" \
+      "\n${DGREY}------------------------------------------------------------------------" \
+      "\n${YELLOW}${unreleased_changes_text}" \
+      "\n${DGREY}------------------------------------------------------------------------${NC}"
+  fi
 
-  for line in "${unreleased_changes[@]}"; do
-    echo -e "  ${YELLOW}${line}${NC}"
-  done
+  if [[ "${#unreleased_changes[@]}" -gt 0 ]]; then
+    info "These are the unreleased changes already in the change log:"
+    info "${DGREY}------------------------------------------------------------------------"
+    for change_text in "${unreleased_changes[@]}"; do
+      info "${YELLOW}${change_text}${NC}"
+    done
+    info "${DGREY}------------------------------------------------------------------------"
+  fi
 
-  info "\nThe changelog needs to be modified for a new release" \
-    "version."
+  info "\nThe change log will be modified for the new release version."
 
   if [ -n "${prev_release_version}" ]; then
     info "\nThe last release tag/version was:" \
@@ -523,12 +693,14 @@ prepare_changelog_for_release() {
       local next_patch_part=$((prev_patch_part + 1))
 
       next_release_version_guess="$( echo "${prev_release_version}" \
-        | sed -E "s/\.[0-9]+$/\.${next_patch_part}/" )"
+        | sed \
+          --regexp-extended \
+          "s/\.[0-9]+$/\.${next_patch_part}/" \
+      )"
 
       debug "next_release_version_guess: ${next_release_version_guess}"
     fi
   fi
-
 
   if [ -n "${requested_version}" ]; then
     # User gave us the version via the arg so no need to prompt
@@ -560,7 +732,7 @@ parse_changelog() {
       && -z "${most_recent_release_version}" \
       && "${line}" =~ ${ISSUE_LINE_REGEX} ]]; then
       #debug "line: ${line}"
-      are_unreleased_issues=true
+      are_unreleased_issues_in_changelog=true
       unreleased_changes+=( "${line}" )
     fi
 
@@ -578,14 +750,14 @@ parse_changelog() {
 
   done < "${changelog_file}"
 
-  debug "are_unreleased_issues: ${are_unreleased_issues}"
+  debug "are_unreleased_issues_in_changelog: ${are_unreleased_issues_in_changelog}"
   debug "most_recent_release_version: ${most_recent_release_version}"
   debug "seen_unreleased_heading: ${seen_unreleased_heading}"
 }
 
 create_config_file() {
   info "Config file ${BLUE}${tag_release_config_file}${GREEN} does not" \
-    "exist so it will be created"
+    "exist so it will be created."
 
   # 'EOF' quoted to avoid any expansion/substitution
   cat <<'EOF' > "${tag_release_config_file}"
@@ -594,9 +766,11 @@ create_config_file() {
 
 # shellcheck disable=2034
 {
-  # The namespace/usser on github, i.e. github.com/<namespace>
+  # The namespace/user on github, i.e. github.com/<namespace>
+  # This should be the upstream namespace, not a fork.
   GITHUB_NAMESPACE='gchq'
   # The name of the git repository on github
+  # This should be the upstream repo, not a fork.
   GITHUB_REPO='stroom-test-data'
 
   # Git tags should match this regex to be a release tag
@@ -614,6 +788,13 @@ create_config_file() {
   # The location of the change log relative to the repo root
   #CHANGELOG_FILENAME='CHANGELOG.md'
 
+  # The path to the directory containing the unreleased changes
+  # relative to the repo root
+  #UNRELEASED_CHANGES_REL_DIR='unreleased_changes'
+
+  # The name of the branch to compare unreleased changes to
+  #UNRELEASED_CHANGES_COMPARE_BRANCH='master'
+
   # If you want to run any validation that is specific to this repo then uncomment
   # this function and implement some validation
   #apply_custom_validation() {
@@ -628,10 +809,10 @@ EOF
   # 'origin https://github.com/gchq/stroom.git (fetch)' => 'gchq stroom'
   # read the space delimited values into an array so we can split them
   local namespace_and_repo=()
-  namespace_and_repo=(
-    $(git remote -v \
-      | grep "(fetch)" \
-      | sed -r 's#.*[/:]([^/]+)/(.*)\.git \(fetch\)#\1 \2#'))
+  IFS=" " read -r -a namespace_and_repo <<< "$( \
+    git remote -v \
+      | grep "^origin.*(fetch)$" \
+      | sed -r 's#.*[/:]([^/]+)/(.*)\.git \(fetch\)#\1 \2#')"
 
   debug "namespace_and_repo: ${namespace_and_repo[*]}"
 
@@ -640,7 +821,7 @@ EOF
 
   if [[ "${#namespace_and_repo[@]}" -ne 2 ]]; then
     warn "Unable to parse git namespace and repo from the remote URL." \
-      "\nYou will have to see them manually in ${BLUE}${tag_release_config_file}"
+      "\nYou will have to set them manually in ${BLUE}${tag_release_config_file}"
   else
     git_namespace="${namespace_and_repo[0]}"
     git_repo="${namespace_and_repo[1]}"
@@ -662,7 +843,30 @@ EOF
   fi
 
   info "Confirm the values in the generated config file are appropriate, then" \
-    "commit them to git and then finally re-run this script."
+    "commit it to git."
+}
+
+scan_change_files() {
+  debug "Scanning ${unreleased_changes_dir}"
+
+  for change_file in "${unreleased_changes_dir}/"*_*__*.md; do
+    if [[ -f "${change_file}" ]]; then
+      debug "change_file: ${change_file}"
+      are_unreleased_issues_in_files=true
+
+      local change_line
+      change_line="$(head -n1 "${change_file}")"
+
+      unreleased_changes_text+="${change_line}\n\n"
+    fi
+  done
+
+  if [[ "${are_unreleased_issues_in_files}" = true ]]; then
+    # Remove the last line which will be empty
+    unreleased_changes_text="$(echo -e "${unreleased_changes_text}" | head -n-1)"
+
+    debug "unreleased_changes_text:\n${unreleased_changes_text}"
+  fi
 }
 
 main() {
@@ -670,12 +874,14 @@ main() {
 
   local repo_root
   repo_root="$(git rev-parse --show-toplevel)"
+  debug "repo_root: ${repo_root}"
   # Switch to the repo root so all git commands are run from there
   pushd "${repo_root}" > /dev/null
 
   local tag_release_config_file="${repo_root}/${TAG_RELEASE_CONFIG_FILENAME}"
   if [[ -f "${tag_release_config_file}" ]]; then
     # Source any repo specific config
+    # shellcheck disable=SC1090
     source "${tag_release_config_file}"
   else
     create_config_file
@@ -689,6 +895,7 @@ main() {
   COMPARE_URL_EXAMPLE="${GITHUB_URL_BASE}/compare/${PREVIOUS_TAG_EXAMPLE}...${TAG_EXAMPLE}"
 
   local changelog_file="${repo_root}/${CHANGELOG_FILENAME}"
+  local unreleased_changes_dir="${repo_root}/${UNRELEASED_CHANGES_REL_DIR}"
 
   if [ ! -f "${tag_release_config_file}" ]; then
     error_exit "Can't find file ${BLUE}${tag_release_config_file}${NC}"
@@ -708,35 +915,47 @@ main() {
   info "Fetching tags"
   git fetch --tags
 
-  # Initial validation before we start modifying the changelog
-  validate_changelog_exists
-  validate_unreleased_heading_in_changelog
-  validate_for_uncommitted_work
-  validate_local_vs_remote
-  validate_in_git_repo
-
   local most_recent_release_version=""
   local requested_version=""
   local version=""
   local unreleased_changes=()
-  local are_unreleased_issues=false
+  local are_unreleased_issues_in_changelog=false
+  local are_unreleased_issues_in_files=false
+  local unreleased_changes_text=""
   local curr_date
   curr_date="$(date +%Y-%m-%d)"
+
+  init_changelog_file
+
+  # Initial validation before we start modifying the changelog
+  validate_unreleased_heading_in_changelog
+  validate_in_git_repo
+  validate_for_uncommitted_work
+  validate_local_vs_remote
 
   if [ $# -gt 0 ]; then
     # version passed as argument
     requested_version="$1"
   fi
 
+  scan_change_files
+
   parse_changelog
 
-  if [[ "${are_unreleased_issues}" = true ]]; then
+  if [[ "${are_unreleased_issues_in_changelog}" = true ]] \
+    || [[ "${are_unreleased_issues_in_files}" = true ]]; then
+
+    # TODO should really validate all change entry lines to make sure they
+    # follow the regex pattern used in log_change.sh.
+
     # Changelog contains changes that are unreleased so need to
     # set up the new release heading in it.
     prepare_changelog_for_release "${most_recent_release_version}"
   else
-    info "There are no unreleased changes in the changelog so" \
-      "assuming the changelog has been prepared for a release."
+    # No 'unreleased' changes according to the changelog so it may be in a
+    # ready state for a release, i.e. tag_release was aborted mid way
+    # previously
+
     if [[ -n "${requested_version}" ]]; then
       version="${requested_version}"
     else

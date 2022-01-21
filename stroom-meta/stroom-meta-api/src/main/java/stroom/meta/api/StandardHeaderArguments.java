@@ -50,6 +50,9 @@ public interface StandardHeaderArguments {
     String FEED = "Feed";
     String TYPE = "Type";
 
+    // Typically added in by nginx
+    String X_FORWARDED_FOR = "X-Forwarded-For";
+
     Set<String> HEADER_CLONE_EXCLUDE_SET = Set.of(
             "accept",
             "connection",

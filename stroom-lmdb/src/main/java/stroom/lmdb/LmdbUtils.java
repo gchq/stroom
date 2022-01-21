@@ -23,25 +23,19 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.google.common.collect.ImmutableMap;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.Env;
-import org.lmdbjava.EnvInfo;
 import org.lmdbjava.KeyRange;
-import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.xml.bind.DatatypeConverter;
 
 /**
@@ -55,130 +49,127 @@ public class LmdbUtils {
         // only static util methods
     }
 
-    /**
-     * Do work inside a read txn, returning a result of the work
-     */
-    public static <T> T getWithReadTxn(final Env<ByteBuffer> env,
-                                       final Function<Txn<ByteBuffer>, T> work) {
-        try (final Txn<ByteBuffer> txn = env.txnRead()) {
-            return work.apply(txn);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(LogUtil.message("Error performing work in read transaction: {}",
-                    e.getMessage()), e);
-        }
-    }
+//    /**
+//     * Do work inside a read txn, returning a result of the work
+//     */
+//    public static <T> T getWithReadTxn(final Environment env,
+//                                       final Function<Txn<ByteBuffer>, T> work) {
+//        try (final Txn<ByteBuffer> txn = env.txnRead()) {
+//            return work.apply(txn);
+//        } catch (RuntimeException e) {
+//            throw new RuntimeException(LogUtil.message("Error performing work in read transaction: {}",
+//                    e.getMessage()), e);
+//        }
+//    }
 
     /**
      * Do work inside a read txn using a keyBuffer as supplied by the the byteBufferPool
      */
-    public static <T> T getWithReadTxn(final Env<ByteBuffer> env,
+    @SuppressWarnings("checkstyle:Indentation")
+    public static <T> T getWithReadTxn(final LmdbEnv env,
                                        final ByteBufferPool byteBufferPool,
                                        final int requiredBufferCapacity,
                                        final BiFunction<Txn<ByteBuffer>, ByteBuffer, T> work) {
-        try (final Txn<ByteBuffer> txn = env.txnRead()) {
-            return byteBufferPool.getWithBuffer(requiredBufferCapacity, keyBuffer ->
-                    work.apply(txn, keyBuffer));
-        } catch (RuntimeException e) {
-            throw new RuntimeException(LogUtil.message("Error performing work in read transaction: {}",
-                    e.getMessage()), e);
-        }
+        return env.getWithReadTxn(txn ->
+                byteBufferPool.getWithBuffer(requiredBufferCapacity, keyBuffer ->
+                        work.apply(txn, keyBuffer)));
     }
 
-    /**
-     * Do work inside a read txn then commit
-     */
-    public static void doWithReadTxn(final Env<ByteBuffer> env, Consumer<Txn<ByteBuffer>> work) {
-        try (final Txn<ByteBuffer> txn = env.txnRead()) {
-            work.accept(txn);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(LogUtil.message("Error performing work in read transaction: {}",
-                    e.getMessage()), e);
-        }
-    }
+//    /**
+//     * Do work inside a read txn then commit
+//     */
+//    public static void doWithReadTxn(final Environment env, Consumer<Txn<ByteBuffer>> work) {
+//        env.do
+//        try (final Txn<ByteBuffer> txn = env.txnRead()) {
+//            work.accept(txn);
+//        } catch (RuntimeException e) {
+//            throw new RuntimeException(LogUtil.message("Error performing work in read transaction: {}",
+//                    e.getMessage()), e);
+//        }
+//    }
 
-    /**
-     * Do work inside a write txn then commit, return a result of the work
-     */
-    public static <T> T getWithWriteTxn(final Env<ByteBuffer> env, Function<Txn<ByteBuffer>, T> work) {
-        try (final Txn<ByteBuffer> txn = env.txnWrite()) {
-            T result = work.apply(txn);
-            txn.commit();
-            return result;
-        } catch (RuntimeException e) {
-            throw new RuntimeException(LogUtil.message("Error performing work in write transaction: {}",
-                    e.getMessage()), e);
-        }
-    }
+//    /**
+//     * Do work inside a write txn then commit, return a result of the work
+//     */
+//    public static <T> T getWithWriteTxn(final Environment env, Function<Txn<ByteBuffer>, T> work) {
+//        try (final Txn<ByteBuffer> txn = env.txnWrite()) {
+//            T result = work.apply(txn);
+//            txn.commit();
+//            return result;
+//        } catch (RuntimeException e) {
+//            throw new RuntimeException(LogUtil.message("Error performing work in write transaction: {}",
+//                    e.getMessage()), e);
+//        }
+//    }
 
-    /**
-     * Do work inside a write txn then commit. work should be as short lived as possible
-     * to avoid tying up the single write txn for too long
-     */
-    public static void doWithWriteTxn(final Env<ByteBuffer> env, Consumer<Txn<ByteBuffer>> work) {
-        try (final Txn<ByteBuffer> txn = env.txnWrite()) {
-            work.accept(txn);
-            txn.commit();
-        } catch (RuntimeException e) {
-            throw new RuntimeException(LogUtil.message("Error performing work in write transaction: {}",
-                    e.getMessage()), e);
-        }
-    }
+//    /**
+//     * Do work inside a write txn then commit. work should be as short lived as possible
+//     * to avoid tying up the single write txn for too long
+//     */
+//    public static void doWithWriteTxn(final Environment env, Consumer<Txn<ByteBuffer>> work) {
+//        try (final Txn<ByteBuffer> txn = env.txnWrite()) {
+//            work.accept(txn);
+//            txn.commit();
+//        } catch (RuntimeException e) {
+//            throw new RuntimeException(LogUtil.message("Error performing work in write transaction: {}",
+//                    e.getMessage()), e);
+//        }
+//    }
 
-    public static Map<String, String> getDbInfo(final Env<ByteBuffer> env, Dbi<ByteBuffer> db) {
-        return LmdbUtils.getWithReadTxn(env, txn -> {
-            Stat stat = db.stat(txn);
-            return convertStatToMap(stat);
-        });
-    }
+//    public static Map<String, String> getDbInfo(final Environment env,
+//                                                final Dbi<ByteBuffer> db) {
+//        return env.getWithReadTxn(txn -> {
+//            final Stat stat = db.stat(txn);
+//            return convertStatToMap(stat);
+//        });
+//    }
 
-    public static Map<String, String> getEnvInfo(final Env<ByteBuffer> env) {
-        return LmdbUtils.getWithReadTxn(env, txn -> {
-            Map<String, String> statMap = convertStatToMap(env.stat());
-            Map<String, String> envInfo = convertEnvInfoToMap(env.info());
+//    public static Map<String, String> getEnvInfo(final Environment env) {
+//        return env.getWithReadTxn(txn -> {
+//            Map<String, String> statMap = convertStatToMap(env.stat());
+//            Map<String, String> envInfo = convertEnvInfoToMap(env.info());
+//
+//            String dbNames = String.join(",", env.getDbiNames());
+//
+//            return ImmutableMap.<String, String>builder()
+//                    .putAll(statMap)
+//                    .putAll(envInfo)
+//                    .put("maxKeySize", Integer.toString(env.getMaxKeySize()))
+//                    .put("dbNames", dbNames)
+//                    .build();
+//        });
+//    }
+//
+//    public static ImmutableMap<String, String> convertStatToMap(final Stat stat) {
+//        return ImmutableMap.<String, String>builder()
+//                .put("pageSize", Integer.toString(stat.pageSize))
+//                .put("branchPages", Long.toString(stat.branchPages))
+//                .put("depth", Integer.toString(stat.depth))
+//                .put("entries", Long.toString(stat.entries))
+//                .put("leafPages", Long.toString(stat.leafPages))
+//                .put("overFlowPages", Long.toString(stat.overflowPages))
+//                .build();
+//    }
+//
+//    public static ImmutableMap<String, String> convertEnvInfoToMap(final EnvInfo envInfo) {
+//        return ImmutableMap.<String, String>builder()
+//                .put("maxReaders", Integer.toString(envInfo.maxReaders))
+//                .put("numReaders", Integer.toString(envInfo.numReaders))
+//                .put("lastPageNumber", Long.toString(envInfo.lastPageNumber))
+//                .put("lastTransactionId", Long.toString(envInfo.lastTransactionId))
+//                .put("mapAddress", Long.toString(envInfo.mapAddress))
+//                .put("mapSize", Long.toString(envInfo.mapSize))
+//                .build();
+//    }
 
-            String dbNames = env.getDbiNames().stream()
-                    .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
-                    .collect(Collectors.joining(","));
-
-            return ImmutableMap.<String, String>builder()
-                    .putAll(statMap)
-                    .putAll(envInfo)
-                    .put("maxKeySize", Integer.toString(env.getMaxKeySize()))
-                    .put("dbNames", dbNames)
-                    .build();
-        });
-    }
-
-    public static ImmutableMap<String, String> convertStatToMap(final Stat stat) {
-        return ImmutableMap.<String, String>builder()
-                .put("pageSize", Integer.toString(stat.pageSize))
-                .put("branchPages", Long.toString(stat.branchPages))
-                .put("depth", Integer.toString(stat.depth))
-                .put("entries", Long.toString(stat.entries))
-                .put("leafPages", Long.toString(stat.leafPages))
-                .put("overFlowPages", Long.toString(stat.overflowPages))
-                .build();
-    }
-
-    public static ImmutableMap<String, String> convertEnvInfoToMap(final EnvInfo envInfo) {
-        return ImmutableMap.<String, String>builder()
-                .put("maxReaders", Integer.toString(envInfo.maxReaders))
-                .put("numReaders", Integer.toString(envInfo.numReaders))
-                .put("lastPageNumber", Long.toString(envInfo.lastPageNumber))
-                .put("lastTransactionId", Long.toString(envInfo.lastTransactionId))
-                .put("mapAddress", Long.toString(envInfo.mapAddress))
-                .put("mapSize", Long.toString(envInfo.mapSize))
-                .build();
-    }
-
-    public static long getEntryCount(final Env<ByteBuffer> env, final Txn<ByteBuffer> txn, final Dbi<ByteBuffer> dbi) {
+    public static long getEntryCount(final LmdbEnv env, final Txn<ByteBuffer> txn, final Dbi<ByteBuffer> dbi) {
 
         return dbi.stat(txn).entries;
     }
 
-    public static long getEntryCount(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
+    public static long getEntryCount(final LmdbEnv env, final Dbi<ByteBuffer> dbi) {
 
-        return LmdbUtils.getWithReadTxn(env, txn ->
+        return env.getWithReadTxn(txn ->
                 getEntryCount(env, txn, dbi));
     }
 
@@ -257,7 +248,7 @@ public class LmdbUtils {
         return byteBuffer;
     }
 
-    public static void logDatabaseContents(final Env<ByteBuffer> env,
+    public static void logDatabaseContents(final LmdbEnv env,
                                            final Dbi<ByteBuffer> dbi,
                                            final Txn<ByteBuffer> txn,
                                            final Function<ByteBuffer, String> keyToStringFunc,
@@ -289,13 +280,13 @@ public class LmdbUtils {
      * is configured with reverse keys). The keyToStringFunc and valueToStringFunc functions are
      * used to convert the keys/values into string form for output to the logger.
      */
-    public static void logDatabaseContents(final Env<ByteBuffer> env,
+    public static void logDatabaseContents(final LmdbEnv env,
                                            final Dbi<ByteBuffer> dbi,
                                            final Function<ByteBuffer, String> keyToStringFunc,
                                            final Function<ByteBuffer, String> valueToStringFunc,
                                            final Consumer<String> logEntryConsumer) {
 
-        doWithReadTxn(env, txn ->
+        env.doWithReadTxn(txn ->
                 logDatabaseContents(env, dbi, txn, keyToStringFunc, valueToStringFunc, logEntryConsumer));
     }
 
@@ -306,7 +297,7 @@ public class LmdbUtils {
      * is configured with reverse keys). The keys/values are output as hex representations of the
      * byte values.
      */
-    public static void logRawDatabaseContents(final Env<ByteBuffer> env,
+    public static void logRawDatabaseContents(final LmdbEnv env,
                                               final Dbi<ByteBuffer> dbi,
                                               final Consumer<String> logEntryConsumer) {
         logDatabaseContents(env,
@@ -316,7 +307,7 @@ public class LmdbUtils {
                 logEntryConsumer);
     }
 
-    public static void logRawDatabaseContents(final Env<ByteBuffer> env,
+    public static void logRawDatabaseContents(final LmdbEnv env,
                                               final Dbi<ByteBuffer> dbi,
                                               final Txn<ByteBuffer> txn,
                                               final Consumer<String> logEntryConsumer) {
@@ -331,7 +322,7 @@ public class LmdbUtils {
     /**
      * Only intended for use in tests as the DB could be massive and thus produce a LOT of logging
      */
-    public static void logContentsInRange(final Env<ByteBuffer> env,
+    public static void logContentsInRange(final LmdbEnv env,
                                           final Dbi<ByteBuffer> dbi,
                                           final Txn<ByteBuffer> txn,
                                           final KeyRange<ByteBuffer> keyRange,
@@ -356,18 +347,18 @@ public class LmdbUtils {
         logEntryConsumer.accept(stringBuilder.toString());
     }
 
-    public static void logContentsInRange(final Env<ByteBuffer> env,
+    public static void logContentsInRange(final LmdbEnv env,
                                           final Dbi<ByteBuffer> dbi,
                                           final KeyRange<ByteBuffer> keyRange,
                                           final Function<ByteBuffer, String> keyToStringFunc,
                                           final Function<ByteBuffer, String> valueToStringFunc,
                                           final Consumer<String> logEntryConsumer) {
-        doWithReadTxn(env, txn ->
+        env.doWithReadTxn(txn ->
                 logContentsInRange(env, dbi, txn, keyRange, keyToStringFunc, valueToStringFunc, logEntryConsumer)
         );
     }
 
-    public static void logRawContentsInRange(final Env<ByteBuffer> env,
+    public static void logRawContentsInRange(final LmdbEnv env,
                                              final Dbi<ByteBuffer> dbi,
                                              final Txn<ByteBuffer> txn,
                                              final KeyRange<ByteBuffer> keyRange,
@@ -376,11 +367,11 @@ public class LmdbUtils {
                 ByteBufferUtils::byteBufferToHex, logEntryConsumer);
     }
 
-    public static void logRawContentsInRange(final Env<ByteBuffer> env,
+    public static void logRawContentsInRange(final LmdbEnv env,
                                              final Dbi<ByteBuffer> dbi,
                                              final KeyRange<ByteBuffer> keyRange,
                                              final Consumer<String> logEntryConsumer) {
-        doWithReadTxn(env, txn ->
+        env.doWithReadTxn(txn ->
                 logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex,
                         ByteBufferUtils::byteBufferToHex, logEntryConsumer)
         );

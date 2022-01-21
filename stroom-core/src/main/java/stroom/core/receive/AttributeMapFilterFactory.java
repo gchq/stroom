@@ -25,12 +25,13 @@ import stroom.receive.rules.shared.ReceiveDataRules;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
 public class AttributeMapFilterFactory {
 
-    private final ReceiveDataConfig receiveDataConfig;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory;
     private final FeedStatusAttributeMapFilter feedStatusAttributeMapFilter;
 
@@ -39,17 +40,17 @@ public class AttributeMapFilterFactory {
 
     @Inject
     public AttributeMapFilterFactory(
-            final ReceiveDataConfig receiveDataConfig,
+            final Provider<ReceiveDataConfig> receiveDataConfigProvider,
             final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory,
             final FeedStatusAttributeMapFilter feedStatusAttributeMapFilter) {
 
-        this.receiveDataConfig = receiveDataConfig;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.dataReceiptPolicyAttributeMapFilterFactory = dataReceiptPolicyAttributeMapFilterFactory;
         this.feedStatusAttributeMapFilter = feedStatusAttributeMapFilter;
     }
 
     public AttributeMapFilter create() {
-        final String receiptPolicyUuid = receiveDataConfig.getReceiptPolicyUuid();
+        final String receiptPolicyUuid = receiveDataConfigProvider.get().getReceiptPolicyUuid();
         final String last = lastPolicyUuid.get();
         if (attributeMapFilter == null || !Objects.equals(last, receiptPolicyUuid)) {
             lastPolicyUuid.compareAndSet(last, receiptPolicyUuid);

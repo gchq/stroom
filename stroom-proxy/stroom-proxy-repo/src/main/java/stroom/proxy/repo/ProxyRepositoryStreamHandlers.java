@@ -2,7 +2,6 @@ package stroom.proxy.repo;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
@@ -28,7 +27,7 @@ public class ProxyRepositoryStreamHandlers implements StreamHandlers {
                        final AttributeMap attributeMap,
                        final Consumer<StreamHandler> consumer) {
         if (feedName.isEmpty()) {
-            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
         }
         AttributeMapUtil.addFeedAndType(attributeMap, feedName, typeName);
 

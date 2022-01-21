@@ -38,6 +38,7 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomPipelineTestFileUtil;
@@ -81,6 +82,8 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     private PipelineDataCache pipelineDataCache;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
+    @Inject
+    private TaskContext taskContext;
 
     @Test
     void testAll() {
@@ -177,7 +180,7 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                 // Create the parser.
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
                 final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
+                final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext);
 
                 // Add a SAX event filter.
                 final TestSAXEventFilter testSAXEventFilter = new TestSAXEventFilter();

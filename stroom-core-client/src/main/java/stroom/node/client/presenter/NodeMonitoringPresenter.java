@@ -139,7 +139,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                 return row.getNode().getName();
             }
         };
-        dataGrid.addResizableColumn(nameColumn, "Name", 100);
+        dataGrid.addResizableColumn(nameColumn, "Name", 200);
 
         // Host Name.
         final Column<NodeStatusResult, String> hostNameColumn = new Column<NodeStatusResult, String>(new TextCell()) {

@@ -184,7 +184,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     public void read(final ComponentConfig componentData) {
         super.read(componentData);
 
-        final List<Component> list = getComponents().getComponentsByType(TablePresenter.TYPE.getId());
+        final List<Component> list = getComponents().getSortedComponentsByType(TablePresenter.TYPE.getId());
         getView().setTableList(list);
 
         final VisComponentSettings settings = (VisComponentSettings) componentData.getSettings();

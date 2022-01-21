@@ -51,9 +51,11 @@ server:
   applicationConnectors:
     - type: http
       port: 8080
+      useForwardedHeaders: true
   adminConnectors:
     - type: http
       port: 8081
+      useForwardedHeaders: true
   requestLog:
     appenders:
       # Log appender for the web server request logging
@@ -153,6 +155,11 @@ appConfig:
     enabled: {{ false | envVar('STROOM_CONTENT_PACK_IMPORT_ENABLED') }}
   {% endif %}
 
+  {% if distribution == "docker" %}
+  job:
+    enableJobsOnBootstrap: {{ false | envVar('STROOM_ENABLE_JOBS_ON_BOOTSTRAP') }}
+  {% endif %}
+
   node:
     # The name for the node, should be unique to each node in the cluster
     name: "node1a"
@@ -168,11 +175,12 @@ appConfig:
 
   path:
     # By default all files read or written to by stroom will be in directories relative to
-    # the home location. This should be set to an absolute path that differs from the location of
-    # the installed software as it has a different lifecycle.
+    # the home location. This must be set to an absolute path and also to one that differs
+    # from the location of the installed software as it has a different lifecycle.
     home: "{{ stroomHome }}"
   publicUri:
     # The public FQDN for stroom, as typed into the browser, typically the public address of nginx
+    # or the load balancer in front of multiple nginx instances.
     # If not set stroom will try to determine it
 
     {% if distribution == "docker" %}

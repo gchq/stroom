@@ -2,6 +2,7 @@ package stroom.pipeline.refdata.store.onheapstore;
 
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.ProcessingInfoResponse;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
@@ -24,12 +25,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
-import javax.annotation.concurrent.NotThreadSafe;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A heap based implementation of the {@link RefDataStore}
@@ -39,7 +43,6 @@ import javax.annotation.concurrent.NotThreadSafe;
  * It also does not support purge operations as it is expected that the store will be created,
  * populated, used, then destroyed when no longer needed.
  */
-@NotThreadSafe
 public class RefDataOnHeapStore extends AbstractRefDataStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOnHeapStore.class);
@@ -73,13 +76,11 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     }
 
     @Override
-    public boolean isDataLoaded(final RefStreamDefinition refStreamDefinition) {
-        final boolean isDataLoaded = Optional.ofNullable(processingInfoMap.get(refStreamDefinition))
-                .filter(processingInfo ->
-                        processingInfo.getProcessingState().equals(ProcessingState.COMPLETE))
-                .isPresent();
-        LOGGER.trace("isDataLoaded({}) returning {}", refStreamDefinition, isDataLoaded);
-        return isDataLoaded;
+    public Optional<ProcessingState> getLoadState(final RefStreamDefinition refStreamDefinition) {
+        Optional<ProcessingState> optProcessingState = Optional.ofNullable(processingInfoMap.get(refStreamDefinition))
+                .map(RefDataProcessingInfo::getProcessingState);
+        LOGGER.trace("isDataLoaded({}) returning {}", refStreamDefinition, optProcessingState);
+        return optProcessingState;
     }
 
     @Override
@@ -131,6 +132,16 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         final Optional<RefDataValue> result2 = result;
         LAMBDA_LOGGER.trace(() -> LogUtil.message("getValue({}, {}) returning {}", mapDefinition, key, result2));
         return result;
+    }
+
+    @Override
+    public Set<String> getMapNames(final RefStreamDefinition refStreamDefinition) {
+        Objects.requireNonNull(refStreamDefinition);
+        return mapDefinitions.stream()
+                .filter(mapDefinition ->
+                        mapDefinition.getRefStreamDefinition().equals(refStreamDefinition))
+                .map(MapDefinition::getMapName)
+                .collect(Collectors.toSet());
     }
 
     private Optional<RefDataValue> getValueByRange(final NavigableMap<Range<Long>, RefDataValue> rangeSubMap,
@@ -200,6 +211,22 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     }
 
     @Override
+    public <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public List<ProcessingInfoResponse> listProcessingInfo(final int limit,
+                                                           final Predicate<ProcessingInfoResponse> filter) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public List<ProcessingInfoResponse> listProcessingInfo(final int limit) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
     public long getKeyValueEntryCount() {
         return keyValueMap.size();
     }
@@ -225,6 +252,12 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
 
     @Override
     public void purgeOldData(final StroomDuration purgeAge) {
+        throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store " +
+                "as the data is transient");
+    }
+
+    @Override
+    public void purge(final long refStreamId, final long partIndex) {
         throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store " +
                 "as the data is transient");
     }

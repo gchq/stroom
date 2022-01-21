@@ -28,6 +28,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
+import stroom.util.shared.StoredError;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
@@ -234,7 +235,8 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                         trace ||
                                 (!ignoreWarnings && lazyMessage.getSeverity().greaterThanOrEqual(Severity.WARNING)))
                 .forEach(lazyMessage -> {
-                    sb.append("\n > ");
+                    sb.append("\n");
+                    sb.append(StoredError.MESSAGE_CAUSE_DELIMITER);
                     sb.append(lazyMessage.getSeverity().getDisplayValue());
                     sb.append(": ");
                     sb.append(lazyMessage.getMessage().get());

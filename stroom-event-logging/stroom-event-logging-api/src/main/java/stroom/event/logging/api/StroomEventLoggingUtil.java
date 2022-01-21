@@ -1,13 +1,13 @@
 package stroom.event.logging.api;
 
 import stroom.docref.DocRef;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.Selection;
 
@@ -15,8 +15,6 @@ import event.logging.AdvancedQuery;
 import event.logging.AdvancedQueryItem;
 import event.logging.And;
 import event.logging.CopyMoveOutcome;
-import event.logging.Criteria;
-import event.logging.Data;
 import event.logging.MultiObject;
 import event.logging.Not;
 import event.logging.Or;
@@ -24,6 +22,7 @@ import event.logging.OtherObject;
 import event.logging.Query;
 import event.logging.Query.Builder;
 import event.logging.ResultPage;
+import event.logging.SearchEventAction;
 import event.logging.SimpleQuery;
 import event.logging.Term;
 import event.logging.TermCondition;
@@ -32,6 +31,7 @@ import event.logging.util.EventLoggingUtil;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class StroomEventLoggingUtil {
@@ -41,8 +41,8 @@ public class StroomEventLoggingUtil {
 
     public static <T extends RestResource> String buildTypeId(final T restResource, final String method) {
         return String.join(".",
-                restResource.getClass().getSimpleName(),
-                method);
+                Objects.requireNonNull(restResource.getClass().getSimpleName()),
+                Objects.requireNonNull(method));
     }
 
     public static OtherObject createOtherObject(final DocRef docRef) {
@@ -138,9 +138,18 @@ public class StroomEventLoggingUtil {
 
         if (advancedQueryItem != null) {
             queryBuilder.withAdvanced(AdvancedQuery.builder()
-                    .withQueryItems()
+                    .withQueryItems(advancedQueryItem)
                     .build());
         }
+    }
+
+    public static <T> SearchEventAction createSearchEventAction(final QuickFilterResultPage<T> resultPage,
+                                                                final Supplier<Query> querySupplier) {
+        return SearchEventAction.builder()
+                .withQuery(querySupplier.get())
+                .withResultPage(StroomEventLoggingUtil.createResultPage(resultPage))
+                .withTotalResults(BigInteger.valueOf(resultPage.size()))
+                .build();
     }
 
     private static AdvancedQueryItem convertItem(final ExpressionItem expressionItem) {

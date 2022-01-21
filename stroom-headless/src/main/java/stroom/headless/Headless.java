@@ -23,6 +23,7 @@ import stroom.docstore.impl.fs.FSPersistenceConfig;
 import stroom.importexport.impl.ImportExportService;
 import stroom.pipeline.filter.SafeXMLFilter;
 import stroom.proxy.repo.ProxyRepoFileNames;
+import stroom.task.api.SimpleTaskContext;
 import stroom.task.impl.ExternalShutdownController;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.AbstractFileVisitor;
@@ -286,7 +287,8 @@ public class Headless extends AbstractCommandLineTool {
                         IgnoreCloseInputStream.wrap(dataStream),
                         IgnoreCloseInputStream.wrap(metaStream),
                         IgnoreCloseInputStream.wrap(contextStream),
-                        headlessFilter);
+                        headlessFilter,
+                        new SimpleTaskContext());
             }
 
             // Close the zip file.

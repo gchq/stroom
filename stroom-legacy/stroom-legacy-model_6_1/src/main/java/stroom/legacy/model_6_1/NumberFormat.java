@@ -32,6 +32,7 @@ import javax.xml.bind.annotation.XmlType;
 @Schema(description = "The definition of a format to apply to numeric data")
 @Deprecated
 public final class NumberFormat implements Serializable {
+
     private static final long serialVersionUID = 9145624653060319801L;
 
     @XmlElement
@@ -66,11 +67,14 @@ public final class NumberFormat implements Serializable {
         return useSeparator != null && useSeparator;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final NumberFormat that = (NumberFormat) o;
         return Objects.equals(decimalPlaces, that.decimalPlaces) &&
                 Objects.equals(useSeparator, that.useSeparator);
@@ -93,6 +97,7 @@ public final class NumberFormat implements Serializable {
      * Builder for constructing a {@link NumberFormat}
      */
     public static class Builder {
+
         private Integer decimalPlaces;
         private Boolean useSeparator;
 
@@ -106,7 +111,6 @@ public final class NumberFormat implements Serializable {
 
         /**
          * @param value Number of decimal places to apply to the number format
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder decimalPlaces(final Integer value) {
@@ -116,7 +120,6 @@ public final class NumberFormat implements Serializable {
 
         /**
          * @param value Whether to use a thousands separator or not.
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder useSeparator(final Boolean value) {

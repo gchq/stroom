@@ -65,6 +65,7 @@ import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.MainProxy;
 import stroom.main.client.presenter.MainPresenter.MainView;
 import stroom.main.client.view.MainViewImpl;
+import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
@@ -132,12 +133,15 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenterWidget(EntityTreePresenter.class, EntityTreeView.class, EntityTreeViewImpl.class);
         bindPresenterWidget(EntityCheckTreePresenter.class, EntityCheckTreeView.class, EntityCheckTreeViewImpl.class);
 
+        // Menu
+        bind(Menu.class).asEagerSingleton();
         bind(MenuItems.class).in(Singleton.class);
+        bindPresenterWidget(MenuPresenter.class, MenuView.class, MenuViewImpl.class);
+
 
         // Widgets
         // bindPresenterWidget(CurveTabPresenter.class, CurveTabView.class,
         // CurveTabLayoutViewImpl.class);
-        bindPresenterWidget(MenuPresenter.class, MenuView.class, MenuViewImpl.class);
         // bindSharedView(CellTreeView.class, CellTreeViewImpl.class);
         // bind(LinkTabPanelPresenter.class);
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);

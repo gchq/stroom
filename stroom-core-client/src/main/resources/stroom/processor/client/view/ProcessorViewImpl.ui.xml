@@ -7,9 +7,19 @@
                                     addStyleNames="max stroom-border-bottom"/>
         </g:north>
         <g:center>
-            <g:MaxScrollPanel addStyleNames="max stroom-border-top">
-                <g:SimplePanel ui:field="details"/>
-            </g:MaxScrollPanel>
+            <g:MySplitLayoutPanel vSplits="0.5" width="100%" height="100%"
+                                  addStyleNames="max stroom-border-top">
+                <g:north size="200">
+                    <g:MaxScrollPanel addStyleNames="max stroom-border-bottom">
+                        <g:SimplePanel ui:field="info"/>
+                    </g:MaxScrollPanel>
+                </g:north>
+                <g:center>
+                    <g:MaxScrollPanel addStyleNames="max stroom-border-top">
+                        <g:SimplePanel ui:field="details"/>
+                    </g:MaxScrollPanel>
+                </g:center>
+            </g:MySplitLayoutPanel>
         </g:center>
     </g:MySplitLayoutPanel>
 </ui:UiBinder>

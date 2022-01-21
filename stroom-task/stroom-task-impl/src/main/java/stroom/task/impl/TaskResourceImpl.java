@@ -32,10 +32,11 @@ import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
-import event.logging.EventAction;
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
 
+import java.util.Collections;
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.Entity;
@@ -63,29 +64,36 @@ class TaskResourceImpl implements TaskResource {
         return find(nodeName, new FindTaskProgressRequest(new FindTaskProgressCriteria()));
     }
 
+    @AutoLogged(OperationType.UNLOGGED) // Called for each node so too noisy to log and of limited benefit
     @Override
     public TaskProgressResponse find(final String nodeName, final FindTaskProgressRequest request) {
-        return nodeServiceProvider.get()
-                .remoteRestResult(
-                        nodeName,
-                        TaskProgressResponse.class,
-                        () -> ResourcePaths.buildAuthenticatedApiPath(
-                                TaskResource.BASE_PATH,
-                                TaskResource.FIND_PATH_PART,
-                                nodeName),
-                        () -> {
-                            final ResultPage<TaskProgress> resultPage = taskManagerProvider.get()
-                                    .find(request.getCriteria());
-                            return new TaskProgressResponse(
-                                    resultPage.getValues(),
-                                    resultPage.getPageResponse());
-                        },
-                        builder ->
-                                builder.post(Entity.json(request)));
+        try {
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            TaskProgressResponse.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    TaskResource.BASE_PATH,
+                                    TaskResource.FIND_PATH_PART,
+                                    nodeName),
+                            () -> {
+                                final ResultPage<TaskProgress> resultPage = taskManagerProvider.get()
+                                        .find(request.getCriteria());
+                                return new TaskProgressResponse(
+                                        resultPage.getValues(),
+                                        Collections.emptyList(),
+                                        resultPage.getPageResponse());
+                            },
+                            builder ->
+                                    builder.post(Entity.json(request)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            return new TaskProgressResponse(Collections.emptyList(), List.of(e.getMessage()), null);
+        }
     }
 
+    @AutoLogged(OperationType.UNLOGGED) // Called for each node so too noisy to log and of limited benefit
     @Override
-    @AutoLogged(OperationType.SEARCH)
     public TaskProgressResponse userTasks(final String nodeName) {
         try {
             final String sessionId = sessionIdProvider.get().get();
@@ -116,8 +124,7 @@ class TaskResourceImpl implements TaskResource {
                                 nodeName),
                         () ->
                                 taskManagerProvider.get().terminate(
-                                        request.getCriteria(),
-                                        request.isKill()),
+                                        request.getCriteria()),
                         builder ->
                                 builder.post(Entity.json(request)));
 

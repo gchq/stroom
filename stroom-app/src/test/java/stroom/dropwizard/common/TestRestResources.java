@@ -337,7 +337,7 @@ class TestRestResources {
                                                         "'" +
                                                         " exists in " +
                                                         existingOperation)
-                                        .isEqualTo(resourceClass.getName() + "::" +  methodSignature.getName());
+                                        .isEqualTo(resourceClass.getName() + "::" + methodSignature.getName());
                             }
 
                             // Only need to set response when Response is used
@@ -422,11 +422,12 @@ class TestRestResources {
 
                     if (method.getReturnType().equals(Void.TYPE)) {
                         softAssertions.assertThat(effectiveLoggingType)
-                            .withFailMessage(() -> "Method " + method.getName() +
-                                    "(...) returns void, so autologger can't operate on it. " +
-                                    "Either change the return type or manually log an annotate" +
-                                    " with @AutoLogged(MANUALLY_LOGGED).")
-                                .isEqualTo(OperationType.MANUALLY_LOGGED);
+                                .withFailMessage(() -> "Method " + method.getName() +
+                                        "(...) returns void, so autologger can't operate on it. " +
+                                        "Either change the return type, manually log and annotate" +
+                                        " with @AutoLogged(MANUALLY_LOGGED), or " +
+                                        "annotate with @AutoLogged(UNLOGGED).")
+                                .isIn(OperationType.MANUALLY_LOGGED, OperationType.UNLOGGED);
                     }
                 });
 
@@ -434,7 +435,7 @@ class TestRestResources {
     }
 
     private void assertFetchDeclared(final Class<? extends RestResource> resourceClass,
-                  final SoftAssertions softAssertions) {
+                                     final SoftAssertions softAssertions) {
         boolean fetchMethodPresent = Arrays.stream(resourceClass.getMethods())
                 .filter(m -> m.getName().equals("fetch") && m.getParameterCount() == 1).findFirst().isPresent();
         boolean updateOrDeleteMethodPresent = Arrays.stream(resourceClass.getMethods())
@@ -472,7 +473,7 @@ class TestRestResources {
     }
 
     private void assertNoSecurityContext(final Class<? extends RestResource> resourceClass,
-                                 final SoftAssertions softAssertions) {
+                                         final SoftAssertions softAssertions) {
         List<Field> securityContextFields = Arrays.stream(resourceClass.getDeclaredFields())
                 .filter(field -> {
                     if (SecurityContext.class.isAssignableFrom(field.getType())) {

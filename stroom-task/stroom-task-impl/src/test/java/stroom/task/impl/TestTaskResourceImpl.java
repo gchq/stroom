@@ -201,8 +201,7 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         String subPath = ResourcePaths.buildPath(TaskResource.TERMINATE_PATH_PART, "node1");
 
         TerminateTaskProgressRequest terminateTaskProgressRequest = new TerminateTaskProgressRequest(
-                new FindTaskCriteria(),
-                true);
+                new FindTaskCriteria());
 
         doPostTest(
                 subPath,
@@ -227,8 +226,7 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         String subPath = ResourcePaths.buildPath(TaskResource.TERMINATE_PATH_PART, "node2");
 
         TerminateTaskProgressRequest terminateTaskProgressRequest = new TerminateTaskProgressRequest(
-                new FindTaskCriteria(),
-                true);
+                new FindTaskCriteria());
 
         doPostTest(
                 subPath,

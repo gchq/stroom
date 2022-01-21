@@ -27,6 +27,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
+import stroom.pipeline.shared.FetchDataRequest.DisplayMode;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.shared.Count;
@@ -41,6 +42,7 @@ import event.logging.ImportEventAction;
 import event.logging.MultiObject;
 import event.logging.ViewEventAction;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
@@ -74,17 +76,18 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                 .build();
 
         final ResourceGeneration resourceGeneration = stroomEventLoggingServiceProvider.get()
-                .loggedResult(
-                        StroomEventLoggingUtil.buildTypeId(this, "download"),
-                        "Downloading stream data",
-                        exportEventAction,
-                        () -> {
-                            try {
-                                return dataServiceProvider.get().download(criteria);
-                            } catch (final RuntimeException e) {
-                                throw EntityServiceExceptionUtil.create(e);
-                            }
-                        });
+                .loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "download"))
+                .withDescription("Downloading stream data")
+                .withDefaultEventAction(exportEventAction)
+                .withSimpleLoggedResult(() -> {
+                    try {
+                        return dataServiceProvider.get().download(criteria);
+                    } catch (final RuntimeException e) {
+                        throw EntityServiceExceptionUtil.create(e);
+                    }
+                })
+                .getResultAndLog();
 
         return resourceGeneration;
     }
@@ -95,19 +98,20 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
 
         final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
-        final ResourceKey resourceKey = stroomEventLoggingService.loggedResult(
-                StroomEventLoggingUtil.buildTypeId(this, "upload"),
-                "Uploading stream data",
-                ImportEventAction.builder()
+        final ResourceKey resourceKey = stroomEventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "upload"))
+                .withDescription("Uploading stream data")
+                .withDefaultEventAction(ImportEventAction.builder()
                         .withSource(stroomEventLoggingService.convertToMulti(request))
-                        .build(),
-                () -> {
+                        .build())
+                .withSimpleLoggedResult(() -> {
                     try {
                         return dataServiceProvider.get().upload(request);
                     } catch (final RuntimeException e) {
                         throw EntityServiceExceptionUtil.create(e);
                     }
-                });
+                })
+                .getResultAndLog();
 
         return resourceKey;
     }
@@ -127,19 +131,17 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public AbstractFetchDataResult fetch(final FetchDataRequest request) {
-
         final String idStr = request.getSourceLocation() != null
                 ? request.getSourceLocation().getIdentifierString()
                 : "?";
-
         final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
-        return stroomEventLoggingService.loggedResult(
-                StroomEventLoggingUtil.buildTypeId(this, "fetch"),
-                "Viewing stream " + idStr,
-                ViewEventAction.builder()
-                        .build(),
-                eventAction -> {
+        return stroomEventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "fetch"))
+                .withDescription("Viewing stream " + idStr)
+                .withDefaultEventAction(ViewEventAction.builder()
+                        .build())
+                .withComplexLoggedResult(eventAction -> {
                     ComplexLoggedOutcome<AbstractFetchDataResult, ViewEventAction> outcome;
                     try {
                         // Do the fetch
@@ -163,10 +165,9 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                                 vde.getMessage());
                     }
                     return outcome;
-                },
-                null);
+                })
+                .getResultAndLog();
     }
-
 
     @AutoLogged(OperationType.UNLOGGED) // Not an explicit user action
     @Override
@@ -189,9 +190,11 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                 Count.of(0L, true),
                 0L,
                 null,
-                viewDataException.getMessage(),
+                null,
                 false,
-                null);
+                null,
+                DisplayMode.TEXT,
+                Collections.singletonList(viewDataException.getMessage()));
     }
 
     @Override

@@ -35,11 +35,9 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class Components implements HasHandlers, HasChangeDataHandlers<Components>, Iterable<Component> {
 
@@ -47,7 +45,7 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
     private final ComponentRegistry componentRegistry;
 
     private final Map<String, Component> idMap = new HashMap<>();
-    private final Map<String, Set<Component>> typeMap = new HashMap<>();
+    private final Map<String, List<Component>> typeMap = new HashMap<>();
 
     private final Provider<UnknownComponentPresenter> unknownComponentProvider;
 
@@ -74,13 +72,7 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
             component.setComponents(this);
             idMap.put(id, component);
 
-            Set<Component> set = typeMap.get(type);
-            if (set == null) {
-                set = new HashSet<>();
-                typeMap.put(type, set);
-            }
-            set.add(component);
-
+            typeMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
             ChangeDataEvent.fire(this, this);
         }
 
@@ -93,10 +85,10 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
         final Component component = idMap.remove(id);
         if (component != null) {
             final String type = component.getType().getId();
-            final Set<Component> set = typeMap.get(type);
-            if (set != null) {
-                set.remove(component);
-                if (set.size() == 0) {
+            final List<Component> list = typeMap.get(type);
+            if (list != null) {
+                list.remove(component);
+                if (list.size() == 0) {
                     typeMap.remove(type);
                 }
             }
@@ -124,32 +116,35 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
         return idMap.get(id);
     }
 
-    public List<Component> getComponentsByType(final String type) {
-        List<Component> list = new ArrayList<>(0);
-        final Set<Component> set = typeMap.get(type);
-        if (set != null) {
-            list = new ArrayList<>(set);
+    public List<Component> getSortedComponentsByType(final String type) {
+        List<Component> list = typeMap.get(type);
+        if (list != null) {
+            list = new ArrayList<>(list);
             list.sort((o1, o2) -> o1.getDisplayValue().compareTo(o2.getDisplayValue()));
+            return list;
         }
-        return list;
+        return new ArrayList<>(0);
     }
 
-    public String validateOrGetFirstComponentId(final String id, final String typeId) {
-        String newId = id;
+    public String validateOrGetLastComponentId(final String id, final String typeId) {
+        String newId = null;
+
+        if (id != null) {
+            // See if we can find this component.
+            final Component component = get(id);
+            // If we have found the component check that it is the right type.
+            if (component != null && typeId.equals(component.getType().getId())) {
+                // Set the id as this is a valid component.
+                newId = id;
+            }
+        }
 
         if (newId == null) {
-            final List<Component> list = getComponentsByType(typeId);
-            if (list.size() > 0) {
-                newId = list.get(0).getId();
-            }
-        } else {
-            // See if we can find this component.
-            final Component component = get(newId);
-            if (component == null || !typeId.equals(component.getType().getId())) {
-                final List<Component> list = getComponentsByType(typeId);
-                if (list.size() > 0) {
-                    newId = list.get(0).getId();
-                }
+            // If we didn't find the component or it has an invalid type then just choose the last component of the
+            // required type if we can find one.
+            final List<Component> list = typeMap.get(typeId);
+            if (list != null && list.size() > 0) {
+                newId = list.get(list.size() - 1).getId();
             }
         }
 

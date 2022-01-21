@@ -66,4 +66,9 @@ public class Expression implements Function {
     public boolean hasAggregate() {
         return hasAggregate;
     }
+
+    @Override
+    public boolean isChildSelector() {
+        return function.isChildSelector();
+    }
 }

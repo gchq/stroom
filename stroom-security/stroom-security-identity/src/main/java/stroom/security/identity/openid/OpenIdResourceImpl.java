@@ -26,6 +26,7 @@ import event.logging.AuthenticateOutcomeReason;
 import event.logging.Data;
 import event.logging.OtherObject;
 import event.logging.ViewEventAction;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.slf4j.Logger;
@@ -35,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
@@ -173,16 +173,16 @@ class OpenIdResourceImpl implements OpenIdResource {
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public Map<String, List<Map<String, Object>>> certs(final HttpServletRequest httpServletRequest) {
 
-        return stroomEventLoggingServiceProvider.get().loggedResult(
-                "getCerts",
-                "Read a token by the token ID.",
-                ViewEventAction.builder()
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId("getCerts")
+                .withDescription("Read a token by the token ID.")
+                .withDefaultEventAction(ViewEventAction.builder()
                         .addObject(OtherObject.builder()
                                 .withType("PublicKey")
                                 .withName("Public Key")
                                 .build())
-                        .build(),
-                () -> {
+                        .build())
+                .withSimpleLoggedResult(() -> {
                     // Do the work
                     final List<PublicJsonWebKey> list = publicJsonWebKeyProviderProvider.get().list();
                     final List<Map<String, Object>> maps = list.stream()
@@ -190,11 +190,11 @@ class OpenIdResourceImpl implements OpenIdResource {
                                     jwk.toParams(JsonWebKey.OutputControlLevel.PUBLIC_ONLY))
                             .collect(Collectors.toList());
 
-                    Map<String, List<Map<String, Object>>> keys = new HashMap<>();
+                    final Map<String, List<Map<String, Object>>> keys = new HashMap<>();
                     keys.put("keys", maps);
 
                     return keys;
-                });
+                }).getResultAndLog();
     }
 
     @Timed

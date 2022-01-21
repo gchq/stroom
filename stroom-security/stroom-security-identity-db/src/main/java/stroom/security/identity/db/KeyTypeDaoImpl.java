@@ -37,10 +37,10 @@ class KeyTypeDaoImpl implements KeyTypeDao {
 
     private Optional<Integer> get(final String type) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .select(TokenType.TOKEN_TYPE.ID)
-                .from(TokenType.TOKEN_TYPE)
-                .where(TokenType.TOKEN_TYPE.TYPE.eq(type))
-                .fetchOptional()
-                .map(r -> r.getValue(TokenType.TOKEN_TYPE.ID)));
+                        .select(TokenType.TOKEN_TYPE.ID)
+                        .from(TokenType.TOKEN_TYPE)
+                        .where(TokenType.TOKEN_TYPE.TYPE.eq(type))
+                        .fetchOptional())
+                .map(r -> r.getValue(TokenType.TOKEN_TYPE.ID));
     }
 }

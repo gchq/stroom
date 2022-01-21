@@ -1,27 +1,23 @@
 ext.moduleName = 'stroom.meta.api'
 
 dependencies {
-    compile project(':stroom-data:stroom-data-retention-api')
-//    compile project(':stroom-dictionary:stroom-dictionary-api')
-//    compile project(':stroom-docstore:stroom-docstore-api')
-//    compile project(':stroom-explorer:stroom-collection-api')
-    compile project(':stroom-query:stroom-query-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
-    
-//    compile project(':stroom-docref')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-data:stroom-data-retention-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.javax_servlet_api
-//    compile libs.jackson_annotations
-//    compile libs.jaxb_api
-    compile libs.slf4j_api
+    implementation libs.jackson_annotations
+    implementation libs.jakarta_servlet_api
+    implementation libs.jaxb_api
+    implementation libs.slf4j_api
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jaxb_runtime
-    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_impl
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine

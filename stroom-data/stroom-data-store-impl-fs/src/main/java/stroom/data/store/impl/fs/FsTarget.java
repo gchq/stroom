@@ -28,9 +28,8 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
 import stroom.util.io.SeekableOutputStream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +46,7 @@ import java.util.Map;
  */
 final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FsTarget.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsTarget.class);
 
     private final MetaService metaService;
     private final FsPathHelper fileSystemStreamPathHelper;
@@ -144,7 +143,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
             try (final InputStream inputStream = Files.newInputStream(manifestFile)) {
                 AttributeMapUtil.read(inputStream, attributeMap);
             } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
             }
         }
     }
@@ -177,12 +176,12 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                         AttributeMapUtil.write(getAttributes(), outputStream);
                     }
                 } else {
-                    LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
+                    LOGGER.warn(() -> "closeStreamTarget() - Closing target file with no directory present");
                 }
 
             }
         } catch (final IOException e) {
-            LOGGER.error("closeStreamTarget() - Error on writing Manifest {}", this, e);
+            LOGGER.error(() -> "closeStreamTarget() - Error on writing Manifest " + this, e);
         }
     }
 
@@ -199,9 +198,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
             } else {
                 file = fileSystemStreamPathHelper.getChildPath(parent.getFile(), streamType);
             }
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("getFile() " + FileUtil.getCanonicalPath(file));
-            }
+            LOGGER.debug(() -> "getFile() " + FileUtil.getCanonicalPath(file));
         }
         return file;
     }
@@ -229,10 +226,10 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                     childMap.clear();
                 } catch (final ClosedByInterruptException e) {
                     // WE expect these exceptions if a user is trying to terminate.
-                    LOGGER.debug("closeStreamTarget() - Error on closing stream {}", this, e);
+                    LOGGER.debug(() -> "closeStreamTarget() - Error on closing stream " + this, e);
                     streamCloseException = e;
                 } catch (final IOException e) {
-                    LOGGER.error("closeStreamTarget() - Error on closing stream {}", this, e);
+                    LOGGER.error(() -> "closeStreamTarget() - Error on closing stream " + this, e);
                     streamCloseException = e;
                 }
 
@@ -267,11 +264,11 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
             try {
                 metaService.addAttributes(meta, attributeMap);
             } catch (final RuntimeException e) {
-                LOGGER.error("unlock() - Failed to persist attributes in new transaction... will ignore");
+                LOGGER.error(() -> "unlock() - Failed to persist attributes in new transaction... will ignore");
             }
         }
 
-        LOGGER.debug("unlock() " + meta);
+        LOGGER.debug(() -> "unlock() " + meta);
         this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
     }
 
@@ -295,10 +292,10 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                 childMap.forEach((k, v) -> v.close());
                 childMap.clear();
             } catch (final IOException e) {
-                LOGGER.error("closeStreamTarget() - Error on closing stream {}", this, e);
+                LOGGER.error(() -> "closeStreamTarget() - Error on closing stream " + this, e);
             }
 
-            // Only write meta for the root target.
+            // Only delete the root target.
             if (parent == null) {
                 // Mark the target meta as deleted.
                 this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);
@@ -329,7 +326,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                 total += Files.size(file);
             }
         } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
         }
         return total;
     }
@@ -404,16 +401,16 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
 
                 // If the file already exists then delete it.
                 if (Files.exists(file)) {
-                    LOGGER.warn("About to overwrite file: " + FileUtil.getCanonicalPath(file));
+                    LOGGER.warn(() -> "About to overwrite file: " + FileUtil.getCanonicalPath(file));
                     if (!FileSystemUtil.deleteAnyPath(file)) {
-                        LOGGER.error("getOutputStream() - Unable to delete existing files for new stream target");
+                        LOGGER.error(() -> "getOutputStream() - Unable to delete existing files for new stream target");
                         throw new DataException("Unable to delete existing files for new stream target " + file);
                     }
                 }
 
                 outputStream = fileSystemStreamPathHelper.getOutputStream(streamType, file);
             } catch (final IOException ioEx) {
-                LOGGER.error("getOutputStream() - " + ioEx.getMessage());
+                LOGGER.error(() -> "getOutputStream() - " + ioEx.getMessage());
                 // No reason to get a IO on opening the out stream .... fail in
                 // a heap
                 throw new DataException(ioEx);

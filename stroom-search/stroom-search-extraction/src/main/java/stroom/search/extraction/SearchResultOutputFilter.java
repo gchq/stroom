@@ -36,6 +36,8 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.SearchDebugUtil;
+import stroom.query.common.v2.SearchProgressLog;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.shared.Severity;
@@ -107,8 +109,8 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        //Hold values for later use
         if (DATA.equals(localName) && values != null) {
+            SearchProgressLog.increment(queryKey, SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_DATA);
             String name = atts.getValue(NAME);
             String value = atts.getValue(VALUE);
             if (name != null && value != null) {
@@ -120,14 +122,15 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 }
 
                 if (name.length() > 0 && value.length() > 0) {
-                    final Integer pos = fieldIndexes.getPos(name);
+                    final Integer pos = fieldIndex.getPos(name);
                     if (pos != null) {
                         values[pos] = ValString.create(value);
                     }
                 }
             }
         } else if (RECORD.equals(localName)) {
-            values = new Val[fieldIndexes.size()];
+            SearchProgressLog.increment(queryKey, SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_RECORD);
+            values = new Val[fieldIndex.size()];
             recordAtts = atts;
             indexVals.clear();
         } else if (isConfiguredForAlerting() && !DATA.equals(localName)) {
@@ -156,9 +159,9 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 }
             } else {
                 //Standard (typically dashboard populating) search extraction, pass onto consumers (e.g. dashboards)
+                SearchProgressLog.increment(queryKey, SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
                 SearchDebugUtil.writeExtractionData(values);
-
-                consumer.accept(values);
+                receiver.add(values);
                 count++;
                 values = null;
             }
@@ -263,7 +266,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 .build();
 
         final List<stroom.query.api.v2.Field> fields = tableSettings.getFields();
-        final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndexes,
+        final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex,
                 paramMapForAlerting);
 
         final CompiledFieldValue[] output = new CompiledFieldValue[compiledFields.length];

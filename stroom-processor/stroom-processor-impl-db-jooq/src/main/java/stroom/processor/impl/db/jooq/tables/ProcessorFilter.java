@@ -4,10 +4,10 @@
 package stroom.processor.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
-
-import javax.annotation.processing.Generated;
+import stroom.processor.impl.db.jooq.Indexes;
+import stroom.processor.impl.db.jooq.Keys;
+import stroom.processor.impl.db.jooq.Stroom;
+import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -15,7 +15,7 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row14;
+import org.jooq.Row16;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -23,10 +23,9 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
 
-import stroom.processor.impl.db.jooq.Indexes;
-import stroom.processor.impl.db.jooq.Keys;
-import stroom.processor.impl.db.jooq.Stroom;
-import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
+import java.util.Arrays;
+import java.util.List;
+import javax.annotation.processing.Generated;
 
 
 /**
@@ -42,7 +41,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
 
-    private static final long serialVersionUID = -753718749;
+    private static final long serialVersionUID = -461430865;
 
     /**
      * The reference instance of <code>stroom.processor_filter</code>
@@ -126,6 +125,16 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      * The column <code>stroom.processor_filter.deleted</code>.
      */
     public final TableField<ProcessorFilterRecord, Boolean> DELETED = createField(DSL.name("deleted"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
+
+    /**
+     * The column <code>stroom.processor_filter.min_meta_create_time_ms</code>.
+     */
+    public final TableField<ProcessorFilterRecord, Long> MIN_META_CREATE_TIME_MS = createField(DSL.name("min_meta_create_time_ms"), org.jooq.impl.SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.processor_filter.max_meta_create_time_ms</code>.
+     */
+    public final TableField<ProcessorFilterRecord, Long> MAX_META_CREATE_TIME_MS = createField(DSL.name("max_meta_create_time_ms"), org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
      * Create a <code>stroom.processor_filter</code> table reference
@@ -230,11 +239,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row14 type methods
+    // Row16 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row14<Integer, Integer, Long, String, Long, String, String, Integer, Integer, String, Integer, Boolean, Boolean, Boolean> fieldsRow() {
-        return (Row14) super.fieldsRow();
+    public Row16<Integer, Integer, Long, String, Long, String, String, Integer, Integer, String, Integer, Boolean, Boolean, Boolean, Long, Long> fieldsRow() {
+        return (Row16) super.fieldsRow();
     }
 }

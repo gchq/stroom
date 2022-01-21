@@ -16,54 +16,183 @@
 
 package stroom.pipeline;
 
-
-import stroom.data.store.api.InputStreamProvider;
-import stroom.data.store.api.Source;
-import stroom.data.store.api.Store;
-import stroom.meta.api.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.util.io.ByteCountInputStream;
-import stroom.util.io.StreamUtil;
-
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import javax.inject.Inject;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 class TestStreamAppender extends AbstractAppenderTest {
-
-    @Inject
-    private MetaService dataMetaService;
-    @Inject
-    private Store streamStore;
 
     @Test
     void testXML() throws Exception {
         test("TestStreamAppender", "XML");
-        validateOutput("TestStreamAppender/TestStreamAppender_XML.out", "XML");
-    }
-
-    @Test
-    void testXMLRolling() throws Exception {
-        test("TestStreamAppender", "XML_Rolling");
-
-        final List<Meta> list = dataMetaService.find(new FindMetaCriteria()).getValues();
-        final long id = list.get(0).getId();
-        try (final Source streamSource = streamStore.openSource(id)) {
-            try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
-                final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStreamProvider.get());
-                StreamUtil.streamToString(byteCountInputStream);
-                assertThat(byteCountInputStream.getCount()).isEqualTo(1198);
-            }
-        }
+        checkSegments(1, 141, new long[]{143}, new long[]{130618});
+        validateOutput("TestStreamAppender", "XML");
     }
 
     @Test
     void testText() throws Exception {
         test("TestStreamAppender", "Text");
-        validateOutput("TestStreamAppender/TestStreamAppender_Text.out", "Text");
+        checkSegments(1, 141, new long[]{143}, new long[]{15428});
+        validateOutput("TestStreamAppender", "Text");
+    }
+
+    @Test
+    void testXMLRolling() throws Exception {
+        test("TestStreamAppender", "XML_Rolling");
+        checkSegments(71,
+                141,
+                new long[]{
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        4,
+                        3},
+                new long[]{
+                        2121,
+                        2121,
+                        2121,
+                        2121,
+                        2122,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2123,
+                        2124,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        2125,
+                        1200});
+        validateOutput("TestStreamAppender", "XML_Rolling");
+    }
+
+    @Test
+    void testTextRolling() throws Exception {
+        test("TestStreamAppender", "Text_Rolling");
+        checkSegments(8,
+                141,
+                new long[]{21, 21, 21, 21, 21, 21, 21, 10},
+                new long[]{2062, 2071, 2071, 2074, 2090, 2090, 2090, 880});
+        validateOutput("TestStreamAppender", "Text_Rolling");
     }
 }

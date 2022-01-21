@@ -31,6 +31,10 @@
   	-webkit-user-select: text;
   	-moz-user-select: text;
   	user-select: text;
+    white-space: break-spaces;
+    overflow: auto;
+    max-width: 90%;
+    max-height: 90%;
 }
 
 .editor .ace_gutter-cell.stroom_info {
@@ -61,4 +65,25 @@
     background-image: url(../images/fatal-dark.svg);
     background-size: 14px 14px;
     background-position-x: 3px;
+}
+
+.editor-error {
+    position: relative;
+	background-color: #fdd835;
+	padding: 10px;
+	margin: auto;
+	width: 80%;
+	margin-top: 20px;
+	border: 2px solid black;
+	border-radius: 10px;
+}
+
+.editor-error p:first-of-type {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.editor-error p:not(:first-child) {
+    font-size: 12px;
+    font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
 }

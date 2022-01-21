@@ -1,47 +1,43 @@
 ext.moduleName = 'stroom.processor.impl.db'
 
 dependencies {
-    // Stroom modules
-    compile project(':stroom-cluster:stroom-cluster-lock-api')
-//    compile project(':stroom-config:stroom-config-common')
-//    compile project(':stroom-core-shared')
-//    compile project(':stroom-data:stroom-data-store-api')
-    compile project(':stroom-db-util')
-//    compile project(':stroom-docstore:stroom-docstore-api')
-//    compile project(':stroom-explorer:stroom-explorer-api')
-//    compile project(':stroom-importexport:stroom-importexport-api')
-//    compile project(':stroom-meta:stroom-meta-api')
-//    compile project(':stroom-node:stroom-node-api')
-    compile project(':stroom-processor:stroom-processor-impl')
-    compile project(':stroom-processor:stroom-processor-impl-db-jooq')
-    compile project(':stroom-query:stroom-query-api')
-    compile project(':stroom-query:stroom-query-common')
-//    compile project(':stroom-statistics:stroom-statistics-api')
-//    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-explorer:stroom-docrefinfo-api')
+    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-processor:stroom-processor-api')
+    implementation project(':stroom-processor:stroom-processor-impl')
+    implementation project(':stroom-processor:stroom-processor-impl-db-jooq')
+    implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    // Stroom external bintray libs
-    compile project(':stroom-docref')
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.flyway_core
+    implementation libs.guice5
+    implementation libs.hikari
+    implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.javax_inject
+    implementation libs.jooq
+    implementation libs.slf4j_api
 
-    // 3rd party libs
-    compile libs.dropwizard_metrics_healthchecks
-    compile libs.flyway_core
-    compile libs.guice5
-    compile libs.hikari
-    compile libs.jackson_databind
-    compile libs.javax_inject
-    compile libs.jooq
-    compile libs.slf4j_api
-
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
 
     runtimeOnly libs.mysql_connector_java
 
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.javax_activation
-    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_impl
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine

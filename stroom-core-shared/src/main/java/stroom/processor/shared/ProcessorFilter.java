@@ -99,6 +99,10 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     private boolean enabled;
     @JsonProperty
     private boolean deleted;
+    @JsonProperty
+    private Long minMetaCreateTimeMs;
+    @JsonProperty
+    private Long maxMetaCreateTimeMs;
 
     public ProcessorFilter() {
         priority = 10;
@@ -122,7 +126,9 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                            @JsonProperty("deleted") final boolean deleted,
                            @JsonProperty("processorUuid") final String processorUuid,
                            @JsonProperty("pipelineUuid") final String pipelineUuid,
-                           @JsonProperty("pipelineName") final String pipelineName) {
+                           @JsonProperty("pipelineName") final String pipelineName,
+                           @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
+                           @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -145,6 +151,8 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.deleted = deleted;
         this.processorUuid = processorUuid;
         this.pipelineName = pipelineName;
+        this.minMetaCreateTimeMs = minMetaCreateTimeMs;
+        this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
     }
 
     @Override
@@ -317,6 +325,22 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.deleted = deleted;
     }
 
+    public Long getMinMetaCreateTimeMs() {
+        return minMetaCreateTimeMs;
+    }
+
+    public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
+        this.minMetaCreateTimeMs = minMetaCreateTimeMs;
+    }
+
+    public Long getMaxMetaCreateTimeMs() {
+        return maxMetaCreateTimeMs;
+    }
+
+    public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
+        this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
+    }
+
     @Override
     public String toString() {
         return "ProcessorFilter{" +
@@ -335,10 +359,11 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                 ", reprocess=" + reprocess +
                 ", enabled=" + enabled +
                 ", deleted=" + deleted +
+                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
+                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                 '}';
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

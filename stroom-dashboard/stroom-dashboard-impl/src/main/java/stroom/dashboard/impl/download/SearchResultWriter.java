@@ -53,10 +53,14 @@ public class SearchResultWriter {
 
     private void writeHeadings(final List<Field> fields, final Target target) throws IOException {
         target.startLine();
+
+        int fieldIndex = 0;
         for (final Field field : fields) {
             if (field.isVisible()) {
-                target.writeHeading(field, field.getName());
+                target.writeHeading(fieldIndex, field, field.getName());
             }
+
+            fieldIndex++;
         }
         target.endLine();
     }
@@ -90,7 +94,7 @@ public class SearchResultWriter {
 
         void endLine() throws IOException;
 
-        void writeHeading(Field field, String heading) throws IOException;
+        void writeHeading(int fieldIndex, Field field, String heading) throws IOException;
 
         void writeValue(Field field, String value) throws IOException;
     }

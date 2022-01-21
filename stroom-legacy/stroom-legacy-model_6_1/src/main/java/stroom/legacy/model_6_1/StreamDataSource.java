@@ -69,7 +69,6 @@ public class StreamDataSource {
         FIELDS.add(DataSourceUtil.createDateField(STATUS_TIME));
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
 
-
         // Single Items
         EXTENDED_FIELDS.add(DataSourceUtil.createNumField(DURATION));
         EXTENDED_FIELDS.add(DataSourceUtil.createStringField(NODE));

@@ -32,7 +32,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
 import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 
@@ -48,7 +48,7 @@ public class ElasticIndexRetentionExecutor {
 
     private static final String TASK_NAME = "Elastic Index Retention Executor";
     private static final String LOCK_NAME = "ElasticIndexRetentionExecutor";
-    private static final int DELETE_REQUEST_TIMEOUT_MILLIS = 10000;
+    private static final int DELETE_REQUEST_TIMEOUT_MILLIS = 60000;
 
     private final ElasticClusterStore elasticClusterStore;
     private final ElasticIndexStore elasticIndexStore;

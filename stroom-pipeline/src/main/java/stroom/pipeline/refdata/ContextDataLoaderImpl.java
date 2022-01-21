@@ -22,6 +22,7 @@ import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 
 import java.io.InputStream;
 import java.util.function.Consumer;
@@ -31,12 +32,15 @@ import javax.inject.Provider;
 public class ContextDataLoaderImpl implements ContextDataLoader {
 
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final Provider<ContextDataLoadTaskHandler> taskHandlerProvider;
 
     @Inject
     ContextDataLoaderImpl(final TaskContextFactory taskContextFactory,
+                          final TaskContext taskContext,
                           final Provider<ContextDataLoadTaskHandler> taskHandlerProvider) {
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.taskHandlerProvider = taskHandlerProvider;
     }
 
@@ -56,13 +60,14 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
                                 feedName,
                                 contextPipeline,
                                 refStreamDefinition,
-                                refDataStore);
+                                refDataStore,
+                                taskContext);
 
-        final Runnable runnable = taskContextFactory.context(
-                taskContextFactory.currentContext(),
+        final Runnable runnable = taskContextFactory.childContext(
+                taskContext,
                 "Load Context Data",
+                TerminateHandlerFactory.NOOP_FACTORY,
                 consumer);
-
         runnable.run();
     }
 }

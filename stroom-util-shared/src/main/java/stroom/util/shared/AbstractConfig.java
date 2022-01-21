@@ -1,6 +1,7 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
@@ -8,6 +9,8 @@ import java.util.Objects;
  * Super class for all stroom config pojos. Can be decorated with property path
  * information, e.g. stroom.path.home
  */
+@NotInjectableConfig
+@JsonPropertyOrder(alphabetic = true)
 public abstract class AbstractConfig implements HasPropertyPath {
 
     // Held in part form to reduce memory overhead as some parts will be used
@@ -15,14 +18,28 @@ public abstract class AbstractConfig implements HasPropertyPath {
     @JsonIgnore
     private PropertyPath basePropertyPath = PropertyPath.blank();
 
+    @Override
+    @JsonIgnore
+    public PropertyPath getBasePath() {
+        Objects.requireNonNull(basePropertyPath);
+        return basePropertyPath;
+    }
+
     /**
      * @return The base property path, e.g. "stroom.node" for this config object
      */
     @Override
     @JsonIgnore
-    public String getBasePath() {
+    public String getBasePathStr() {
+        return getBasePath().toString();
+    }
+
+    @Override
+    @JsonIgnore
+    public PropertyPath getFullPath(final String propertyName) {
         Objects.requireNonNull(basePropertyPath);
-        return basePropertyPath.toString();
+        Objects.requireNonNull(propertyName);
+        return basePropertyPath.merge(propertyName);
     }
 
     /**
@@ -30,10 +47,9 @@ public abstract class AbstractConfig implements HasPropertyPath {
      * object
      */
     @Override
-    public String getFullPath(final String propertyName) {
-        Objects.requireNonNull(basePropertyPath);
-        Objects.requireNonNull(propertyName);
-        return basePropertyPath.merge(propertyName).toString();
+    @JsonIgnore
+    public String getFullPathStr(final String propertyName) {
+        return getFullPath(propertyName).toString();
     }
 
     @Override

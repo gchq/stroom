@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -61,7 +62,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     private final StatisticStoreStore statisticStoreStore;
     private final CacheManager cacheManager;
     private final SecurityContext securityContext;
-    private final SQLStatisticsConfig sqlStatisticsConfig;
+    private final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider;
 
     // The values are held as optionals so that if there is no doc for a name then
     // the cache loader won't keep hitting the db for each get on that name.
@@ -72,11 +73,11 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     StatisticsDataSourceCacheImpl(final StatisticStoreStore statisticStoreStore,
                                   final CacheManager cacheManager,
                                   final SecurityContext securityContext,
-                                  final SQLStatisticsConfig sqlStatisticsConfig) {
+                                  final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider) {
         this.statisticStoreStore = statisticStoreStore;
         this.cacheManager = cacheManager;
         this.securityContext = securityContext;
-        this.sqlStatisticsConfig = sqlStatisticsConfig;
+        this.sqlStatisticsConfigProvider = sqlStatisticsConfigProvider;
     }
 
     private ICache<String, Optional<StatisticStoreDoc>> getCacheByName() {
@@ -142,7 +143,10 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     }
 
     private <K, V> ICache<K, V> createCache(final String name, final Function<K, V> cacheLoader) {
-        return cacheManager.create(name, sqlStatisticsConfig::getDataSourceCache, cacheLoader);
+        return cacheManager.create(
+                name,
+                () -> sqlStatisticsConfigProvider.get().getDataSourceCache(),
+                cacheLoader);
     }
 
     private boolean permissionFilter(final StatisticStoreDoc entity) {

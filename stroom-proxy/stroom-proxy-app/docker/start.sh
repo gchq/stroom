@@ -19,6 +19,11 @@ main() {
 
   local java_opts="${JAVA_OPTS:- -Xms50m -Xmx2g}"
 
+  # Open some packages to the classpath.
+  java_opts="${java_opts} --add-opens java.base/java.nio=ALL-UNNAMED"
+  java_opts="${java_opts} --add-opens java.base/sun.nio.ch=ALL-UNNAMED"
+  java_opts="${java_opts} --add-opens java.base/java.lang=ALL-UNNAMED"
+
   echo "Starting stroom-proxy"
   echo "Config file: [${config_file}]"
   echo "JAVA_OPTS:   [${java_opts}]"

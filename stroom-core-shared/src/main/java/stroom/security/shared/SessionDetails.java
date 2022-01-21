@@ -26,15 +26,15 @@ import java.util.Objects;
 public class SessionDetails {
 
     @JsonProperty
-    private String userName;
+    private final String userName;
     @JsonProperty
-    private long createMs;
+    private final long createMs;
     @JsonProperty
-    private long lastAccessedMs;
+    private final long lastAccessedMs;
     @JsonProperty
-    private String lastAccessedAgent;
+    private final String lastAccessedAgent;
     @JsonProperty
-    private String nodeName;
+    private final String nodeName;
 
     @JsonCreator
     public SessionDetails(@JsonProperty("userName") final String userName,
@@ -69,11 +69,14 @@ public class SessionDetails {
         return lastAccessedAgent;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final SessionDetails that = (SessionDetails) o;
         return createMs == that.createMs &&
                 lastAccessedMs == that.lastAccessedMs &&

@@ -142,7 +142,9 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     @Override
     public void filter(final ContainerRequestContext context) throws IOException {
-        ContainerResourceInfo containerResourceInfo = new ContainerResourceInfo(resourceContext, resourceInfo, context);
+        ContainerResourceInfo containerResourceInfo =
+                new ContainerResourceInfo(resourceContext, resourceInfo, context,
+                        loggingConfigProvider.get().isLogEveryRestCallEnabled());
 
         if (containerResourceInfo.shouldLog(loggingConfigProvider.get())) {
             if (context.hasEntity()) {

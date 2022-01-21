@@ -17,7 +17,7 @@
 package stroom.pipeline.destination;
 
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.errorhandler.TerminatedException;
+import stroom.task.api.TaskContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -37,19 +38,18 @@ public class RollingDestinations {
 
     private static final ConcurrentHashMap<Object, RollingDestination> currentDestinations = new ConcurrentHashMap<>();
 
-    private final AppenderConfig appenderConfig;
+    private final Provider<AppenderConfig> appenderConfigProvider;
+    private final TaskContext taskContext;
 
     @Inject
-    public RollingDestinations(final AppenderConfig appenderConfig) {
-        this.appenderConfig = appenderConfig;
+    public RollingDestinations(final Provider<AppenderConfig> appenderConfigProvider,
+                               final TaskContext taskContext) {
+        this.appenderConfigProvider = appenderConfigProvider;
+        this.taskContext = taskContext;
     }
 
     public RollingDestination borrow(final Object key,
                                      final RollingDestinationFactory destinationFactory) throws IOException {
-        if (Thread.currentThread().isInterrupted()) {
-            throw new TerminatedException();
-        }
-
         // Get a destination for this key. Try and get an existing one or create
         // a new one if required.
         RollingDestination destination = null;
@@ -67,7 +67,7 @@ public class RollingDestinations {
         // Try and get an existing destination for the key or create one if necessary.
         final RollingDestination destination = currentDestinations.computeIfAbsent(key, k -> {
             try {
-                final int maxActiveDestinations = appenderConfig.getMaxActiveDestinations();
+                final int maxActiveDestinations = appenderConfigProvider.get().getMaxActiveDestinations();
 
                 // Try and cope with too many active destinations.
                 if (currentDestinations.size() > maxActiveDestinations) {
@@ -141,6 +141,7 @@ public class RollingDestinations {
     }
 
     public void roll() {
+        taskContext.info(() -> "Rolling all destinations");
         rollAll(false);
     }
 

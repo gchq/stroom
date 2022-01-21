@@ -57,7 +57,7 @@ public interface AccountResource extends RestResource, FetchWithIntegerId<Accoun
     @GET
     @Path("/")
     @NotNull
-    AccountResultPage list(@Context @NotNull HttpServletRequest httpServletRequest);
+    AccountResultPage list();
 
     @Operation(
             summary = "Search for an account by email.",
@@ -77,6 +77,7 @@ public interface AccountResource extends RestResource, FetchWithIntegerId<Accoun
             @Context @NotNull HttpServletRequest httpServletRequest,
             @Parameter(description = "account", required = true) @NotNull CreateAccountRequest request);
 
+    @Override
     @Operation(
             summary = "Get an account by ID.",
             operationId = "fetchAccount")

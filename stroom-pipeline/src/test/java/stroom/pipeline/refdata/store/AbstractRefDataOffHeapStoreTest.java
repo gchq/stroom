@@ -33,12 +33,14 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 
 public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRefDataOffHeapStoreTest.class);
     private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(5);
     protected RefDataStore refDataStore;
     protected Injector injector;
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
+
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
 
     @Override
@@ -50,7 +52,9 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
     void setup() {
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
-        referenceDataConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
+        referenceDataConfig = new ReferenceDataConfig()
+                .withLmdbConfig(referenceDataConfig.getLmdbConfig()
+                        .withLocalDir(getDbDir().toAbsolutePath().toString()));
 
         setDbMaxSizeProperty();
 
@@ -72,11 +76,13 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
     }
 
     protected void setDbMaxSizeProperty(final ByteSize sizeInBytes) {
-        referenceDataConfig.setMaxStoreSize(sizeInBytes);
+        referenceDataConfig = new ReferenceDataConfig()
+                .withLmdbConfig(referenceDataConfig.getLmdbConfig()
+                        .withMaxStoreSize(sizeInBytes));
     }
 
     protected void setPurgeAgeProperty(final StroomDuration purgeAge) {
-        referenceDataConfig.setPurgeAge(purgeAge);
+        referenceDataConfig = referenceDataConfig.withPurgeAge(purgeAge);
     }
 
     protected void setDbMaxSizeProperty() {

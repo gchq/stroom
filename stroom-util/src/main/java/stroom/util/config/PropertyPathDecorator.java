@@ -23,7 +23,7 @@ public class PropertyPathDecorator {
     public static void decoratePaths(final HasPropertyPath config,
                                      final PropertyPath propertyPath) {
 
-        LOGGER.debug("Decorating {} with path {}",
+        LOGGER.trace("Decorating {} with path {}",
                 config.getClass().getSimpleName(),
                 propertyPath);
         // Set the path of this config object

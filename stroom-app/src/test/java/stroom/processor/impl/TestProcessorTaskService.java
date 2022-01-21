@@ -32,6 +32,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.Test;
 
@@ -69,7 +70,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         createTasks();
 
         final ProcessorTask ps1 = processorTaskService.find(
-                new ExpressionCriteria(ProcessorTaskExpressionUtil.createWithStream(file1)))
+                        new ExpressionCriteria(ProcessorTaskExpressionUtil.createWithStream(file1)))
                 .getFirst();
         assertThat(ps1).isNotNull();
         processorTaskDao.changeTaskStatus(ps1,
@@ -95,6 +96,82 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
                 .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, file1.getCreateMs() + 10000)
                 .build();
         criteria.setExpression(expressionOperator2);
+        //setCreatePeriod(new Period(file1.getCreateMs() - 10000, file1.getCreateMs() + 10000));
+        assertThat(processorTaskService.find(criteria).size()).isEqualTo(1);
+
+        final ExpressionOperator expressionOperator3 = ExpressionOperator.builder()
+                .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
+                        Condition.GREATER_THAN_OR_EQUAL_TO,
+                        Instant.ofEpochMilli(file1.getCreateMs() - 10000)
+                                .atZone(ZoneOffset.UTC).plusYears(100)
+                                .toInstant()
+                                .toEpochMilli())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
+                        Condition.LESS_THAN,
+                        Instant.ofEpochMilli(file1.getCreateMs() + 10000)
+                                .atZone(ZoneOffset.UTC)
+                                .plusYears(100)
+                                .toInstant()
+                                .toEpochMilli())
+                .build();
+        criteria.setExpression(expressionOperator3);
+//        criteria.setCreatePeriod(
+//                new Period(Instant.ofEpochMilli(criteria.getCreatePeriod().getFrom())
+//                .atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli(),
+//                        Instant.ofEpochMilli(criteria.getCreatePeriod().getTo())
+//                        .atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
+        assertThat(processorTaskService.find(criteria).size()).isEqualTo(0);
+
+        assertThat(metaService.getMeta(file1.getId())).isNotNull();
+        assertThat(metaService.getMeta(file2.getId())).isNotNull();
+
+        criteria = new ExpressionCriteria();
+        assertThat(processorTaskService.findSummary(criteria)).isNotNull();
+    }
+
+    @Test
+    void testBulkSaveAndGetAll() {
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
+        final Meta file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final Meta file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
+        final Meta file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+
+        commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
+
+        assertThat(metaService.delete(file3.getId())).as("checking we can delete stand alone files").isEqualTo(1);
+
+        // Create all required tasks.
+        createTasks();
+
+        final ProcessorTask ps1 = processorTaskService.find(
+                        new ExpressionCriteria(ProcessorTaskExpressionUtil.createWithStream(file1)))
+                .getFirst();
+        assertThat(ps1).isNotNull();
+
+        final ExpressionOperator updateExpressionOperator = ExpressionOperator.builder()
+                .addTerm(ProcessorTaskFields.TASK_ID, Condition.EQUALS, ps1.getId())
+                .build();
+        final ExpressionCriteria updateCriteria = new ExpressionCriteria(updateExpressionOperator);
+        final ResultPage<ProcessorTask> updatedTasks = processorTaskDao.changeTaskStatus(updateCriteria,
+                ps1.getNodeName(),
+                TaskStatus.COMPLETE,
+                ps1.getStartTimeMs(),
+                ps1.getEndTimeMs());
+
+        assertThat(updatedTasks.size()).isEqualTo(1);
+        assertThat(updatedTasks.getFirst().getId()).isEqualTo(ps1.getId());
+        assertThat(updatedTasks.getFirst().getStatus()).isEqualTo(TaskStatus.COMPLETE);
+
+        // Check the date filter works
+        final ExpressionOperator expressionOperator2 = ExpressionOperator.builder()
+                .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
+                        Condition.GREATER_THAN_OR_EQUAL_TO,
+                        file1.getCreateMs() - 10000)
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, file1.getCreateMs() + 10000)
+                .build();
+        ExpressionCriteria criteria = new ExpressionCriteria(expressionOperator2);
         //setCreatePeriod(new Period(file1.getCreateMs() - 10000, file1.getCreateMs() + 10000));
         assertThat(processorTaskService.find(criteria).size()).isEqualTo(1);
 

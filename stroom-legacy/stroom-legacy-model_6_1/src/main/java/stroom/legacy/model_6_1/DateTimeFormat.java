@@ -35,11 +35,12 @@ import javax.xml.bind.annotation.XmlType;
 @Schema(description = "The string formatting to apply to a date value")
 @Deprecated
 public final class DateTimeFormat implements Serializable {
+
     private static final long serialVersionUID = 9145624653060319801L;
 
     @XmlElement
     @Schema(description = "A date time formatting pattern string conforming to the specification of " +
-                    "java.time.format.DateTimeFormatter",
+            "java.time.format.DateTimeFormatter",
             required = true)
     private String pattern;
 
@@ -54,8 +55,8 @@ public final class DateTimeFormat implements Serializable {
     }
 
     /**
-     * @param pattern A date time formatting pattern string conforming to the specification of
-     * {@link java.time.format.DateTimeFormatter}
+     * @param pattern  A date time formatting pattern string conforming to the specification of
+     *                 {@link java.time.format.DateTimeFormatter}
      * @param timeZone The time zone to use when formatting the date time value
      */
     public DateTimeFormat(final String pattern, final TimeZone timeZone) {
@@ -77,11 +78,14 @@ public final class DateTimeFormat implements Serializable {
         return timeZone;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DateTimeFormat that = (DateTimeFormat) o;
         return Objects.equals(pattern, that.pattern) &&
                 Objects.equals(timeZone, that.timeZone);
@@ -104,6 +108,7 @@ public final class DateTimeFormat implements Serializable {
      * Builder for constructing a {@link DateTimeFormat dateTimeFormat}
      */
     public static class Builder {
+
         private String pattern;
 
         private TimeZone timeZone;
@@ -120,16 +125,15 @@ public final class DateTimeFormat implements Serializable {
 
         /**
          * @param value The format pattern string, conforming to {@link java.time.format.DateTimeFormatter}
-         *
          * @return this builder, enabling method chaining
          */
         public Builder pattern(final String value) {
             this.pattern = value;
             return this;
         }
+
         /**
          * @param value Set the {@link TimeZone timeZone} to use when formatting the date
-         *
          * @return this builder, enabling method chaining
          */
         public Builder timeZone(final TimeZone value) {

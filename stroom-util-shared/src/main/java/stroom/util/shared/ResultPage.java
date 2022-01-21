@@ -141,23 +141,21 @@ public class ResultPage<T> implements Serializable {
      */
     public static <T> ResultPage<T> createCriterialBasedList(final List<T> realList,
                                                              final BaseCriteria baseCriteria) {
-        return createPageResultList(realList, baseCriteria.getPageRequest(), null);
+        return new ResultPage<>(realList, createPageResponse(realList, baseCriteria.getPageRequest(), null));
     }
 
     /**
      * Used for filter queries (maybe bounded).
      */
     public static <T> ResultPage<T> createCriterialBasedList(final List<T> realList,
-                                                             final BaseCriteria baseCriteria, final Long totalSize) {
-        return createPageResultList(realList, baseCriteria.getPageRequest(), totalSize);
+                                                             final BaseCriteria baseCriteria,
+                                                             final Long totalSize) {
+        return new ResultPage<>(realList, createPageResponse(realList, baseCriteria.getPageRequest(), totalSize));
     }
 
-    /**
-     * Used for filter queries (maybe bounded).
-     */
-    private static <T> ResultPage<T> createPageResultList(final List<T> realList,
-                                                          final PageRequest pageRequest,
-                                                          final Long totalSize) {
+    protected static <T> PageResponse createPageResponse(final List<T> realList,
+                                                         final PageRequest pageRequest,
+                                                         final Long totalSize) {
         final boolean limited = pageRequest != null && pageRequest.getLength() != null;
         boolean moreToFollow = false;
         Long calulatedTotalSize = totalSize;
@@ -179,8 +177,9 @@ public class ResultPage<T> implements Serializable {
                     // get to process more that 1 + that limit. If this fails it
                     // will be a coding error
                     // or not applying the limit.
-                    throw new IllegalStateException("For some reason we returned more rows that we were limited to. " +
-                            "Did you apply the restriction criteria?");
+                    throw new IllegalStateException(
+                            "For some reason we returned more rows that we were limited to. " +
+                                    "Did you apply the restriction criteria?");
                 }
 
                 // All our queries are + 1 to we need to remove the last element
@@ -193,8 +192,11 @@ public class ResultPage<T> implements Serializable {
             }
         }
 
-        final PageResponse pageResponse = new PageResponse(offset, realList.size(), calulatedTotalSize, !moreToFollow);
-        return new ResultPage<>(realList, pageResponse);
+        return new PageResponse(
+                offset,
+                realList.size(),
+                calulatedTotalSize,
+                !moreToFollow);
     }
 
     private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(
@@ -278,8 +280,9 @@ public class ResultPage<T> implements Serializable {
         return createCollector(pageRequest, ResultPage::new);
     }
 
-    public static <T, R extends ResultPage<T>> BinaryOperator<R> reducer(final Function<List<T>, R> resultPageFactory,
-                                                                         final Class<T> itemType) {
+    public static <T, R extends ResultPage<T>> BinaryOperator<R> reducer(
+            final Function<List<T>, R> resultPageFactory,
+            final Class<T> itemType) {
         return (final R resultPage1, final R resultPage2) -> {
             final List<T> combinedList = new ArrayList<>();
             combinedList.addAll(resultPage1.getValues());
@@ -342,7 +345,6 @@ public class ResultPage<T> implements Serializable {
         values.forEach(action);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

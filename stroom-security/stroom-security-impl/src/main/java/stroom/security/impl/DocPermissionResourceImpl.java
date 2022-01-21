@@ -17,7 +17,11 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsRequest;
 import stroom.security.shared.FilterUsersRequest;
+import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.SimpleUser;
 import stroom.security.shared.User;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PermissionException;
@@ -49,6 +53,9 @@ import javax.inject.Provider;
 class DocPermissionResourceImpl implements DocPermissionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocPermissionResourceImpl.class);
+
+    private static final FilterFieldMappers<SimpleUser> SIMPLE_USERS_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, SimpleUser::getName));
 
     private final Provider<UserService> userServiceProvider;
     private final Provider<DocumentPermissionServiceImpl> documentPermissionServiceProvider;
@@ -157,8 +164,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     }
 
     @Override
-    @AutoLogged(value = OperationType.SEARCH, verb = "Filtering users")
-    public List<User> filterUsers(final FilterUsersRequest filterUsersRequest) {
+    @AutoLogged(OperationType.UNLOGGED) // Limited benefit in logging the filtering of a list of user names
+    public List<SimpleUser> filterUsers(final FilterUsersRequest filterUsersRequest) {
         if (filterUsersRequest.getUsers() == null) {
             return null;
         } else {
@@ -166,7 +173,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             // consistently across the app.
             return QuickFilterPredicateFactory.filterStream(
                     filterUsersRequest.getQuickFilterInput(),
-                    UserDao.FILTER_FIELD_MAPPERS,
+                    SIMPLE_USERS_FILTER_FIELD_MAPPERS,
                     filterUsersRequest.getUsers().stream())
                     .collect(Collectors.toList());
         }
@@ -463,9 +470,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     }
 
     private PermissionAttribute mapChangeItemToPermission(final String perm) {
-        if (DocumentPermissionNames.CREATE.equals(perm)) {
-            return PermissionAttribute.AUTHOR;
-        } else if (DocumentPermissionNames.DELETE.equals(perm)) {
+        if (DocumentPermissionNames.DELETE.equals(perm)) {
             return PermissionAttribute.WRITE;
         } else if (DocumentPermissionNames.OWNER.equals(perm)) {
             return PermissionAttribute.OWNER;
@@ -475,6 +480,9 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             return PermissionAttribute.WRITE;
         } else if (DocumentPermissionNames.USE.equals(perm)) {
             return PermissionAttribute.EXECUTE;
+        } else if (perm != null && perm.startsWith(DocumentPermissionNames.CREATE)) {
+            // Create perms are used on folders only and the perm is of the form 'Create - Feed'
+            return PermissionAttribute.AUTHOR;
         } else {
             LOGGER.error("Unrecognised permission assigned " + perm);
             return null;

@@ -20,7 +20,6 @@ import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.ParamFactory;
-import stroom.dashboard.impl.datasource.DataSourceProvider;
 import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
@@ -41,9 +40,11 @@ import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dashboard.shared.VisResultRequest;
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
@@ -61,13 +62,13 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.string.ExceptionStringUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -94,7 +95,7 @@ import javax.servlet.http.HttpServletRequest;
 @AutoLogged
 class DashboardServiceImpl implements DashboardService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardResourceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DashboardResourceImpl.class);
 
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
@@ -320,7 +321,8 @@ class DashboardServiceImpl implements DashboardService {
                 final List<Field> fields = tableResultRequest.getTableSettings().getFields();
                 final List<Row> rows = tableResult.getRows();
 
-                download(fields, rows, file, request.getFileType(), request.isSample(), request.getPercent());
+                download(fields, rows, file, request.getFileType(), request.isSample(), request.getPercent(),
+                        searchRequest.getDateTimeSettings());
 
                 searchEventLog.downloadResults(search.getDataSourceRef(),
                         search.getExpression(),
@@ -337,8 +339,13 @@ class DashboardServiceImpl implements DashboardService {
         });
     }
 
-    private void download(final List<Field> fields, final List<Row> rows, final Path file,
-                          final DownloadSearchResultFileType fileType, final boolean sample, final int percent) {
+    private void download(final List<Field> fields,
+                          final List<Row> rows,
+                          final Path file,
+                          final DownloadSearchResultFileType fileType,
+                          final boolean sample,
+                          final int percent,
+                          final DateTimeSettings dateTimeSettings) {
         try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
             SearchResultWriter.Target target = null;
 
@@ -351,7 +358,7 @@ class DashboardServiceImpl implements DashboardService {
                     target = new DelimitedTarget(outputStream, "\t");
                     break;
                 case EXCEL:
-                    target = new ExcelTarget(outputStream);
+                    target = new ExcelTarget(outputStream, dateTimeSettings);
                     break;
             }
 
@@ -366,6 +373,7 @@ class DashboardServiceImpl implements DashboardService {
 
     @Override
     public Set<DashboardSearchResponse> poll(final SearchBusPollRequest request) {
+        LOGGER.trace(() -> "poll() " + request);
         return securityContext.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the index if they have
             // 'use' permission.
@@ -387,16 +395,11 @@ class DashboardServiceImpl implements DashboardService {
                         request.getApplicationInstanceId());
                 final Set<DashboardSearchResponse> searchResults = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-//            // Fix query keys so they have session and user info.
-//            for (final Entry<DashboardQueryKey, SearchRequest> entry : request.getSearchActionMap().entrySet()) {
-//                final QueryKey queryKey = entry.getValues().getQueryKey();
-//                queryKey.setSessionId(request.getSessionId());
-//                queryKey.setUserId(request.getUserId());
-//            }
-
                 // Kill off any queries that are no longer required by the UI.
-                final Set<DashboardQueryKey> keys = request.getSearchRequests().stream()
-                        .map(DashboardSearchRequest::getDashboardQueryKey).collect(Collectors.toSet());
+                final Set<DashboardQueryKey> keys = request.getSearchRequests()
+                        .stream()
+                        .map(DashboardSearchRequest::getDashboardQueryKey)
+                        .collect(Collectors.toSet());
                 activeQueries.destroyUnusedQueries(keys);
 
                 // Get query results for every active query.
@@ -404,17 +407,14 @@ class DashboardServiceImpl implements DashboardService {
                 final Executor executor = executorProvider.get();
                 final CountDownLatch countDownLatch = new CountDownLatch(request.getSearchRequests().size());
                 for (final DashboardSearchRequest searchRequest : request.getSearchRequests()) {
-                    Runnable runnable = taskContextFactory.context("Search", taskContext -> {
+                    Runnable runnable = taskContextFactory.context("Dashboard Search Poll", taskContext -> {
                         try {
+                            taskContext.info(() -> "Polling for new search results");
                             httpServletRequestHolder.set(httpServletRequest);
-                            final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
-                            if (searchRequest.getSearch() != null) {
-                                final DashboardSearchResponse searchResponse = processRequest(activeQueries,
-                                        queryKey,
-                                        searchRequest);
-                                if (searchResponse != null) {
-                                    searchResults.add(searchResponse);
-                                }
+                            final DashboardSearchResponse searchResponse =
+                                    processRequest(activeQueries, searchRequest);
+                            if (searchResponse != null) {
+                                searchResults.add(searchResponse);
                             }
                         } finally {
                             countDownLatch.countDown();
@@ -438,80 +438,100 @@ class DashboardServiceImpl implements DashboardService {
     }
 
     private DashboardSearchResponse processRequest(final ActiveQueries activeQueries,
-                                                   final DashboardQueryKey queryKey,
                                                    final DashboardSearchRequest searchRequest) {
-        DashboardSearchResponse result;
+        LOGGER.trace(() -> "processRequest() " + searchRequest);
+        DashboardSearchResponse result = null;
 
+        final DashboardQueryKey dashboardQueryKey = searchRequest.getDashboardQueryKey();
         boolean newSearch = false;
         DashboardSearchRequest updatedSearchRequest = searchRequest;
         Search search = updatedSearchRequest.getSearch();
+        ActiveQuery activeQuery;
 
-        try {
-            synchronized (DashboardResourceImpl.class) {
-                // Make sure we have active queries for all current UI queries.
-                // Note: This also ensures that the active query cache is kept alive
-                // for all open UI components.
-                final ActiveQuery activeQuery = activeQueries.getExistingQuery(queryKey);
-
-                // If the query doesn't have an active query for this query key then
-                // this is new.
-                if (activeQuery == null) {
-                    newSearch = true;
-
-                    // Store the new active query for this query.
-                    activeQueries.addNewQuery(queryKey, search.getDataSourceRef());
-
-                    // Add this search to the history so the user can get back to this
-                    // search again.
-                    storeSearchHistory(queryKey, search);
+        // Just hit the data source provider to keep results alive.
+        if (search == null) {
+            activeQuery = activeQueries.getExistingQuery(dashboardQueryKey);
+            if (activeQuery != null) {
+                activeQuery.keepAlive();
+            }
+        } else {
+            try {
+                // Add a param for `currentUser()`
+                List<Param> params = search.getParams();
+                if (params != null) {
+                    params = new ArrayList<>(params);
+                } else {
+                    params = new ArrayList<>();
                 }
+                params.add(new Param("currentUser()", securityContext.getUserId()));
+                search = search.copy().params(params).build();
+                updatedSearchRequest = updatedSearchRequest.copy().search(search).build();
+                final SearchRequest mappedRequest =
+                        searchRequestMapper.mapRequest(dashboardQueryKey, updatedSearchRequest);
+
+                synchronized (DashboardServiceImpl.class) {
+                    // Make sure we have active queries for all current UI queries.
+                    // Note: This also ensures that the active query cache is kept alive
+                    // for all open UI components.
+                    activeQuery = activeQueries.getExistingQuery(dashboardQueryKey);
+
+                    // If the query doesn't have an active query for this query key then
+                    // this is new.
+                    if (activeQuery == null) {
+                        LOGGER.debug(() -> "New query " + dashboardQueryKey);
+                        newSearch = true;
+
+                        final DocRef dataSourceRef = search.getDataSourceRef();
+                        if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
+                            throw new RuntimeException("No search data source has been specified");
+                        }
+
+                        // Get the data source provider for this query.
+                        final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
+                                .getDataSourceProvider(dataSourceRef)
+                                .orElseThrow(() ->
+                                        new RuntimeException(
+                                                "No search provider found for '" +
+                                                        dataSourceRef.getType() +
+                                                        "' data source"));
+
+                        // Store the new active query for this query.
+                        activeQuery = activeQueries.addNewQuery(
+                                dashboardQueryKey,
+                                dataSourceRef,
+                                mappedRequest.getKey(),
+                                dataSourceProvider);
+
+                        // Add this search to the history so the user can get back to this
+                        // search again.
+                        storeSearchHistory(dashboardQueryKey, search);
+                    }
+                }
+
+                // Perform the search or update results.
+                SearchResponse searchResponse = activeQuery.search(mappedRequest);
+                result = new SearchResponseMapper().mapResponse(dashboardQueryKey, searchResponse);
+
+                if (newSearch) {
+                    // Log this search request for the current user.
+                    searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
+                }
+
+            } catch (final RuntimeException e) {
+                final Search finalSearch = search;
+                LOGGER.debug(() -> "Error processing search " + finalSearch, e);
+
+                if (newSearch) {
+                    searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+                }
+
+                result = new DashboardSearchResponse(
+                        dashboardQueryKey,
+                        null,
+                        Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        true,
+                        null);
             }
-
-            // Perform the search or update results.
-            final DocRef dataSourceRef = search.getDataSourceRef();
-            if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
-                throw new RuntimeException("No search data source has been specified");
-            }
-
-            // Get the data source provider for this query.
-            final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
-                    .getDataSourceProvider(dataSourceRef)
-                    .orElseThrow(() ->
-                            new RuntimeException(
-                                    "No search provider found for '" + dataSourceRef.getType() + "' data source"));
-
-            // Add a param for `currentUser()`
-            List<Param> params = search.getParams();
-            if (params != null) {
-                params = new ArrayList<>(params);
-            } else {
-                params = new ArrayList<>();
-            }
-            params.add(new Param("currentUser()", securityContext.getUserId()));
-            search = search.copy().params(params).build();
-            updatedSearchRequest = updatedSearchRequest.copy().search(search).build();
-
-            SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, updatedSearchRequest);
-            SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
-            result = new SearchResponseMapper().mapResponse(queryKey, searchResponse);
-
-            if (newSearch) {
-                // Log this search request for the current user.
-                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
-            }
-
-        } catch (final RuntimeException e) {
-            LOGGER.debug("Error processing search {}", search, e);
-
-            if (newSearch) {
-                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
-            }
-
-            final String errors = e.getMessage() != null
-                    ? e.getMessage()
-                    : e.getClass().getName();
-
-            result = new DashboardSearchResponse(queryKey, null, errors, true, null);
         }
 
         return result;
@@ -534,7 +554,7 @@ class DashboardServiceImpl implements DashboardService {
                 queryService.create(storedQuery);
 
             } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
             }
         }
     }

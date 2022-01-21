@@ -26,19 +26,18 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 
 class TestFullTranslationTaskAndStepping extends TranslationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
-    private static boolean doneSetup;
-
     @BeforeEach
     void setup() {
-        if (!doneSetup) {
-            testTranslationTask(false, false);
-            doneSetup = true;
-        }
+        // Import all the schemas/pipes/xslts/etc.
+        importConfig();
+        // Some of the tests rely on ref data lookups so ensure all ref data is loaded first
+        loadAllRefData();
     }
 
     @Override
@@ -63,7 +62,7 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
 
     @Test
     void testFileToLocationReference() throws IOException {
-        testStepping("FILENO_TO_LOCATION-REFERENCE");
+        testStepping("FILENO_TO_LOCATION-REFERENCE", true);
     }
 
     @Test
@@ -101,14 +100,22 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
         testStepping("ZIP_TEST-DATA_SPLITTER-EVENTS");
     }
 
-    private void testStepping(final String feedName) throws IOException {
+    private void testStepping(final String feedName) {
+        testStepping(feedName, false);
+    }
+
+    private void testStepping(final String feedName, final boolean isReference) {
         final Path outDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(
                 "TestFullTranslationTaskAndStepping");
 
-        final long time = System.currentTimeMillis();
-        testSteppingTask(feedName, outDir);
-        final long steppingTime = System.currentTimeMillis() - time;
+        // Load the data, but not ref data as we have already loaded that
+        if (!isReference) {
+            testTranslationTask(feedName, false, false);
+        }
 
-        LOGGER.info(feedName + " TRANSLATION STEPPING TOOK: " + Duration.ofMillis(steppingTime).toString());
+        final Instant startTime = Instant.now();
+        testSteppingTask(feedName, outDir);
+
+        LOGGER.info(feedName + " translation stepping took: " + Duration.between(startTime, Instant.now()));
     }
 }

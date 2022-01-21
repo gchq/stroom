@@ -24,7 +24,6 @@ import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.MetaFields;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -38,7 +37,6 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
     public MetaListPresenter(final EventBus eventBus,
                              final PagerView view,
                              final RestFactory restFactory,
-                             final TooltipPresenter tooltipPresenter,
                              final LocationManager locationManager,
                              final DateTimeFormatter dateTimeFormatter,
                              final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
@@ -47,7 +45,6 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
         super(eventBus,
                 view,
                 restFactory,
-                tooltipPresenter,
                 locationManager,
                 dateTimeFormatter,
                 selectionSummaryPresenterProvider,

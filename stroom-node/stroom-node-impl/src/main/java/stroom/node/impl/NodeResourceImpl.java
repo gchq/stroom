@@ -19,6 +19,7 @@ package stroom.node.impl;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.FindNodeCriteria;
@@ -28,17 +29,12 @@ import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
-import stroom.node.shared.NodeSetJobsEnabledRequest;
-import stroom.node.shared.NodeSetJobsEnabledResponse;
 import stroom.node.shared.NodeStatusResult;
-import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
 import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.List;
@@ -52,7 +48,6 @@ import javax.ws.rs.client.SyncInvoker;
 
 @AutoLogged
 class NodeResourceImpl implements NodeResource {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final Provider<NodeServiceImpl> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
@@ -63,7 +58,6 @@ class NodeResourceImpl implements NodeResource {
     NodeResourceImpl(final Provider<NodeServiceImpl> nodeServiceProvider,
                      final Provider<NodeInfo> nodeInfoProvider,
                      final Provider<ClusterNodeManager> clusterNodeManagerProvider,
-                     final Provider<WebTargetFactory> webTargetFactoryProvider,
                      final Provider<DocumentEventLog> documentEventLogProvider) {
         this.nodeServiceProvider = nodeServiceProvider;
         this.nodeInfoProvider = nodeInfoProvider;
@@ -72,6 +66,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public List<String> listAllNodes() {
         FetchNodeStatusResponse response = find();
         if (response != null && response.getValues() != null) {
@@ -85,6 +80,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public List<String> listEnabledNodes() {
         return find().getValues()
                 .stream()
@@ -95,6 +91,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public FetchNodeStatusResponse find() {
         FetchNodeStatusResponse response = null;
 
@@ -105,6 +102,7 @@ class NodeResourceImpl implements NodeResource {
                         .build())
                 .build();
 
+        final String typeId = StroomEventLoggingUtil.buildTypeId(this, "find");
         try {
             final List<Node> nodes = nodeServiceProvider.get()
                     .find(new FindNodeCriteria())
@@ -121,14 +119,14 @@ class NodeResourceImpl implements NodeResource {
             response = new FetchNodeStatusResponse(resultList);
 
             documentEventLogProvider.get().search(
-                    "List Nodes",
+                    typeId,
                     query,
                     Node.class.getSimpleName(),
                     response.getPageResponse(),
                     null);
         } catch (final RuntimeException e) {
             documentEventLogProvider.get().search(
-                    "List Nodes",
+                    typeId,
                     query,
                     Node.class.getSimpleName(),
                     null,
@@ -140,7 +138,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
-    @AutoLogged(OperationType.VIEW)
+    @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public ClusterNodeInfo info(final String nodeName) {
         ClusterNodeInfo clusterNodeInfo = null;
 
@@ -170,12 +168,7 @@ class NodeResourceImpl implements NodeResource {
             }
 
             clusterNodeInfo.setPing(System.currentTimeMillis() - now);
-
-            documentEventLogProvider.get().view(clusterNodeInfo, null);
-
         } catch (Exception e) {
-            documentEventLogProvider.get().view(clusterNodeInfo, e);
-
             clusterNodeInfo = new ClusterNodeInfo();
             clusterNodeInfo.setNodeName(nodeName);
             clusterNodeInfo.setEndpointUrl(null);
@@ -186,7 +179,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
-    @AutoLogged(value = OperationType.PROCESS, verb = "Pinging other node")
+    @AutoLogged(OperationType.UNLOGGED) // Not a user action
     public Long ping(final String nodeName) {
         final long now = System.currentTimeMillis();
 
@@ -246,22 +239,5 @@ class NodeResourceImpl implements NodeResource {
             documentEventLog.update(before, after, e);
             throw e;
         }
-    }
-
-    @Override
-    public NodeSetJobsEnabledResponse setJobsEnabled(final String nodeName, final NodeSetJobsEnabledRequest params) {
-        final NodeServiceImpl nodeService = nodeServiceProvider.get();
-        final int recordsUpdated = nodeService.setJobsEnabledForNode(
-                nodeName,
-                params.isEnabled(),
-                params.getIncludeJobs(),
-                params.getExcludeJobs());
-
-        if (recordsUpdated > 0) {
-            String enabledState = params.isEnabled() ? "Enabled" : "Disabled";
-            LOGGER.info(enabledState + " " + recordsUpdated + " tasks for node " + nodeName);
-        }
-
-        return new NodeSetJobsEnabledResponse(recordsUpdated);
     }
 }

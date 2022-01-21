@@ -105,8 +105,6 @@ public class QueryComponentSettings implements ComponentSettings {
                 '}';
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
-
     public static Builder builder() {
         return new Builder();
     }

@@ -51,7 +51,7 @@ main(){
       # Hard coded token that works with the hard coded default open id creds
       # for use in dev only. Expires on 2030-08-18T13:53:50.000Z
       echo -e "${GREEN}Using hard coded token, export ${BLUE}\${TOKEN}${GREEN} to override.${NC}"
-      local api_token="eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlYzdhOTgzLTMxN2QtNDZjZS1hZTkzLWNlNDJiYzIxN2U1MiJ9.eyJleHAiOjE5MTMyODgwMzAsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIiwiYXVkIjoiOEFrN2xUakpBbDdLYm8yWVYxR25mdzV6MW9kOXlpY3hqMEFsU2RkTC5jbGllbnQtaWQuYXBwcy5zdHJvb20taWRwIn0.vapYiXb-OAmyB95er0_pi6wVkU_Cx5Lf-3gATAm-QAMlGUAMlg0Ee_kvo9FZ-yCskFTOFfg8Yd_jDrc7-lyJJsrt2lbScTXHHB5QH6ZMdEJkA5osUzvAyQ5E9CqAcJz_MxTUpSNqpfl1vBaDA1ikFHxwIgc7G82_v2GkmCGwEv05zMWtVtva0eiSoSGW5SSidbO1Eohm8rL0toPflQWIgeHm1s92C7y9ntan0rmyl27m0fZYdQkcpnXWNlbK_rhAz7FhNhlWCCh-2mPIbIu2mibVAoO2weL0ihvmCbDCOLDAiI4nuLiJwXSg0D0SJ25ZJpABbnaSfZjNhUhcyf-pMA"
+      local api_token='eyJhbGciOiJSUzI1NiIsImtpZCI6IjhhM2I1OGNhLTk2ZTctNGFhNC05ZjA3LTQ0MDBhYWVkMTQ3MSJ9.eyJleHAiOjE2Njg3NzczNjcsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIiwiYXVkIjoiTlhDbXJyTGpQR2VBMVN4NWNEZkF6OUV2ODdXaTNucHRUbzZSdzVmTC5jbGllbnQtaWQuYXBwcy5zdHJvb20taWRwIn0.YhhRQKF29CQm7IWHP2sh-i70qBicuWKJLhH5UmSRxeyHJ2T38RmHVEcIjC9tv71-gJR4z3bY9tRq_r6cf5hG2G9DKVfPoVZTN-MhK-pU5eD3VbVc2HBEm0Xk02LL7vKRS2mKLolaI-DC_5TuYclZ-CGKmmqhh8Bb5evqAXnknccILAGsl3xDFzsKdfuX5iZ5wjizxvgyMjvLCfaM6P-Ut5kUWYHmxpdNextE3p35Kajw_iEbHvZ3_CobX09l5QQo2R7Hgzk3lIFrGxUqQ7jyC_DmmxRlcT-pyJApl7_TFlFJm153R_9gDXIwphI1mg1vsAojkWncCl8ODY227t3-Lw'
     fi
 
     http_auth_args="Authorization:Bearer ${api_token}"
@@ -81,8 +81,8 @@ main(){
     echo -e "${GREEN}Querying system info ${BLUE}${sys_info_name}${GREEN}" \
       "at\n${BLUE}${info_url}${NC}"
 
-    http --body "${info_url}" "${http_auth_args}" |
-      jq '.details'
+    http --body "${info_url}" "${http_auth_args}" \
+      | jq '.details'
 }
 
 main "$@"

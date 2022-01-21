@@ -37,6 +37,7 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xml.converter.ParserFactory;
@@ -63,6 +64,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
     private final DocFinder<TextConverterDoc> docHelper;
+    private final Provider<LocationHolder> locationHolderProvider;
 
     private String injectedCode;
     private boolean usePool = true;
@@ -78,12 +80,14 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
                              final TextConverterStore textConverterStore,
                              final PathCreator pathCreator,
                              final Provider<FeedHolder> feedHolder,
-                             final Provider<PipelineHolder> pipelineHolder) {
+                             final Provider<PipelineHolder> pipelineHolder,
+                             final Provider<LocationHolder> locationHolderProvider) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
+        this.locationHolderProvider = locationHolderProvider;
 
         this.docHelper = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
     }
@@ -115,13 +119,20 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         final StoredErrorReceiver storedErrorReceiver = storedParserFactory.getErrorReceiver();
         final ParserFactory parserFactory = storedParserFactory.getParserFactory();
 
+        final XMLReader parser;
         if (storedErrorReceiver.getTotalErrors() == 0 && parserFactory != null) {
-            return parserFactory.getParser();
+            parser = parserFactory.getParser();
+
+            // Fragment xml needs to be handled differently as the parser sees the
+            // xml with the wrapper around it but the source does not include it.
+            if (parser instanceof stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParser) {
+                locationHolderProvider.get().setFragmentXml(true);
+            }
         } else {
             storedErrorReceiver.replay(new ErrorReceiverIdDecorator(getElementId(), getErrorReceiverProxy()));
+            parser = null;
         }
-
-        return null;
+        return parser;
     }
 
     @Override

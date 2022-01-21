@@ -72,10 +72,17 @@ public class HTTPAppender extends AbstractAppender {
     private long count;
 
     private boolean useJvmSslConfig = true;
-    private final SSLConfig sslConfig = new SSLConfig();
+    //    private final SSLConfig sslConfig = new SSLConfig();
+    private final SSLConfig.Builder sslConfigBuilder = SSLConfig.builder();
 
     private String requestMethod = "POST";
     private String contentType = "application/json";
+
+    private boolean httpHeadersIncludeStreamMetaData = true;
+    private String httpHeadersUserDefinedHeader1;
+    private String httpHeadersUserDefinedHeader2;
+    private String httpHeadersUserDefinedHeader3;
+
 
     @Inject
     HTTPAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -98,21 +105,49 @@ public class HTTPAppender extends AbstractAppender {
         super.returnDestination(destination);
     }
 
+    private void addAttributeIfHeaderDefined(final AttributeMap attributeMap, final String headerText) {
+        if (headerText == null || headerText.length() < 3) {
+            return;
+        }
+        if (!headerText.contains(":")) {
+            throw new IllegalArgumentException("Additional Headers must be specified as 'Name: Value', but '"
+                    + headerText + "' supplied.");
+        }
+
+        int delimiterPos = headerText.indexOf(':');
+        attributeMap.put(headerText.substring(0, delimiterPos), headerText.substring(delimiterPos + 1));
+    }
+
     @Override
     protected OutputStream createOutputStream() throws IOException {
         try {
             OutputStream outputStream;
-            final AttributeMap attributeMap = metaDataHolder.getMetaData();
 
-            LOGGER.info(() -> "createOutputStream() - " + forwardUrl + " Sending request " + attributeMap);
-            startTimeMs = System.currentTimeMillis();
-            attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+            final AttributeMap sendHeader;
+            if (httpHeadersIncludeStreamMetaData) {
+                final AttributeMap attributeMap = metaDataHolder.getMetaData();
+
+
+                startTimeMs = System.currentTimeMillis();
+                attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+
+                sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
+            } else {
+                sendHeader = new AttributeMap();
+            }
+
+            addAttributeIfHeaderDefined(sendHeader, httpHeadersUserDefinedHeader1);
+            addAttributeIfHeaderDefined(sendHeader, httpHeadersUserDefinedHeader2);
+            addAttributeIfHeaderDefined(sendHeader, httpHeadersUserDefinedHeader3);
+
+            LOGGER.info(() -> "createOutputStream() - " + forwardUrl + " Sending request " + sendHeader);
 
             URL url = new URL(forwardUrl);
             connection = (HttpURLConnection) url.openConnection();
 
             if (connection instanceof HttpsURLConnection) {
                 final HttpsURLConnection httpsURLConnection = (HttpsURLConnection) connection;
+                final SSLConfig sslConfig = sslConfigBuilder.build();
                 if (!useJvmSslConfig) {
                     LOGGER.info(() -> "Configuring SSLSocketFactory for destination " + forwardUrl);
                     final SSLSocketFactory sslSocketFactory = SSLUtil.createSslSocketFactory(
@@ -142,7 +177,7 @@ public class HTTPAppender extends AbstractAppender {
                         StandardHeaderArguments.COMPRESSION_ZIP);
             }
 
-            AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
+
             for (Entry<String, String> entry : sendHeader.entrySet()) {
                 connection.addRequestProperty(entry.getKey(), entry.getValue());
             }
@@ -345,53 +380,53 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(description = "The key store file path on the server",
             displayPriority = 12)
     public void setKeyStorePath(final String keyStorePath) {
-        sslConfig.setKeyStorePath(keyStorePath);
+        sslConfigBuilder.withKeyStorePath(keyStorePath);
     }
 
     @PipelineProperty(description = "The key store type",
             defaultValue = "JKS",
             displayPriority = 13)
     public void setKeyStoreType(final String keyStoreType) {
-        sslConfig.setKeyStoreType(keyStoreType);
+        sslConfigBuilder.withKeyStoreType(keyStoreType);
     }
 
     @PipelineProperty(description = "The key store password",
             displayPriority = 14)
     public void setKeyStorePassword(final String keyStorePassword) {
-        sslConfig.setKeyStorePassword(keyStorePassword);
+        sslConfigBuilder.withKeyStorePassword(keyStorePassword);
     }
 
     @PipelineProperty(description = "The trust store file path on the server",
             displayPriority = 15)
     public void setTrustStorePath(final String trustStorePath) {
-        sslConfig.setTrustStorePath(trustStorePath);
+        sslConfigBuilder.withTrustStorePath(trustStorePath);
     }
 
     @PipelineProperty(description = "The trust store type",
             defaultValue = "JKS",
             displayPriority = 16)
     public void setTrustStoreType(final String trustStoreType) {
-        sslConfig.setTrustStoreType(trustStoreType);
+        sslConfigBuilder.withTrustStoreType(trustStoreType);
     }
 
     @PipelineProperty(description = "The trust store password",
             displayPriority = 17)
     public void setTrustStorePassword(final String trustStorePassword) {
-        sslConfig.setTrustStorePassword(trustStorePassword);
+        sslConfigBuilder.withTrustStorePassword(trustStorePassword);
     }
 
     @PipelineProperty(description = "Verify host names",
             defaultValue = "true",
             displayPriority = 18)
     public void setHostnameVerificationEnabled(final boolean hostnameVerificationEnabled) {
-        sslConfig.setHostnameVerificationEnabled(hostnameVerificationEnabled);
+        sslConfigBuilder.withHostnameVerificationEnabled(hostnameVerificationEnabled);
     }
 
     @PipelineProperty(description = "The SSL protocol to use",
             defaultValue = "TLSv1.2",
             displayPriority = 19)
     public void setSslProtocol(final String sslProtocol) {
-        sslConfig.setSslProtocol(sslProtocol);
+        sslConfigBuilder.withSslProtocol(sslProtocol);
     }
 
     @PipelineProperty(description = "The request method, e.g. POST",
@@ -406,5 +441,30 @@ public class HTTPAppender extends AbstractAppender {
             displayPriority = 21)
     public void setContentType(String contentType) {
         this.contentType = contentType;
+    }
+
+    @PipelineProperty(description = "Provide stream metadata as HTTP headers",
+            defaultValue = "true",
+            displayPriority = 22)
+    public void setHttpHeadersIncludeStreamMetaData(final boolean newValue) {
+        this.httpHeadersIncludeStreamMetaData = newValue;
+    }
+
+    @PipelineProperty(description = "Additional HTTP Header 1, format is 'HeaderName: HeaderValue'",
+            displayPriority = 23)
+    public void setHttpHeadersUserDefinedHeader1(final String headerText) {
+        this.httpHeadersUserDefinedHeader1 = headerText;
+    }
+
+    @PipelineProperty(description = "Additional HTTP Header 2, format is 'HeaderName: HeaderValue'",
+            displayPriority = 24)
+    public void setHttpHeadersUserDefinedHeader2(final String headerText) {
+        this.httpHeadersUserDefinedHeader2 = headerText;
+    }
+
+    @PipelineProperty(description = "Additional HTTP Header 3, format is 'HeaderName: HeaderValue'",
+            displayPriority = 25)
+    public void setHttpHeadersUserDefinedHeader3(final String headerText) {
+        this.httpHeadersUserDefinedHeader3 = headerText;
     }
 }

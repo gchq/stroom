@@ -20,6 +20,7 @@ package stroom.pipeline.parser;
 import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
+import stroom.pipeline.cache.DSChooser;
 import stroom.pipeline.cache.ParserFactoryPool;
 import stroom.pipeline.cache.PoolItem;
 import stroom.pipeline.cache.StoredParserFactory;
@@ -40,10 +41,12 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
+import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParser;
 import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -89,6 +92,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
     private final DocFinder<TextConverterDoc> docHelper;
+    private final Provider<LocationHolder> locationHolderProvider;
 
     private String type;
     private boolean fixInvalidChars = false;
@@ -106,34 +110,47 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
                           final TextConverterStore textConverterStore,
                           final PathCreator pathCreator,
                           final Provider<FeedHolder> feedHolder,
-                          final Provider<PipelineHolder> pipelineHolder) {
+                          final Provider<PipelineHolder> pipelineHolder,
+                          final Provider<LocationHolder> locationHolderProvider) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
+        this.locationHolderProvider = locationHolderProvider;
 
         this.docHelper = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
     }
 
     @Override
     protected XMLReader createReader() throws SAXException {
-        XMLReader xmlReader;
+        XMLReader xmlReader = switch (getMode()) {
+            case XML -> createXMLReader();
+            case XML_FRAGMENT, DATA_SPLITTER -> createTextConverter();
+            case JSON -> createJSONReader();
+            case UNKNOWN -> throw new ProcessException("Unknown parser type '" + type + "'");
+            default -> throw new ProcessException("Unexpected combined parser mode: " + getMode());
+        };
 
+        return xmlReader;
+    }
+
+    public Mode getMode() {
+        final Mode mode;
         if (type != null && type.trim().length() > 0) {
             // TODO : Create a parser type registry that the UI selects from to
             // reduce the danger of incorrect names.
             if (type.equalsIgnoreCase("XML")
                     || type.equalsIgnoreCase(TextConverterDoc.TextConverterType.NONE.getDisplayValue())) {
-                xmlReader = createXMLReader();
+                mode = Mode.XML;
             } else if (type.equalsIgnoreCase("JSON")) {
-                xmlReader = createJSONReader();
+                mode = Mode.JSON;
             } else if (type.equalsIgnoreCase(TextConverterDoc.TextConverterType.DATA_SPLITTER.getDisplayValue())) {
-                xmlReader = createTextConverter();
+                mode = Mode.DATA_SPLITTER;
             } else if (type.equalsIgnoreCase(TextConverterDoc.TextConverterType.XML_FRAGMENT.getDisplayValue())) {
-                xmlReader = createTextConverter();
+                mode = Mode.XML_FRAGMENT;
             } else {
-                throw new ProcessException("Unknown parser type '" + type + "'");
+                mode = Mode.UNKNOWN;
             }
         } else {
             // To support legacy usage that did not provide a value for parser
@@ -141,14 +158,24 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
             // text converter.
             if (textConverterRef == null) {
                 // Make an XML reader that produces SAX events.
-                xmlReader = createXMLReader();
+                mode = Mode.XML;
             } else {
-                xmlReader = createTextConverter();
+                // TODO: We need to use the cached TextConverter service ideally but
+                //  before we do it needs to be aware cluster wide when TextConverter has
+                //  been updated.
+                final TextConverterDoc textConverterDoc = loadTextConverterDoc();
+                mode = switch (textConverterDoc.getConverterType()) {
+                    case XML_FRAGMENT -> Mode.XML_FRAGMENT;
+                    case DATA_SPLITTER -> Mode.DATA_SPLITTER;
+                    default -> textConverterDoc.getData().contains(DSChooser.DATA_SPLITTER_2_ELEMENT)
+                            ? Mode.DATA_SPLITTER
+                            : Mode.XML_FRAGMENT;
+                };
             }
         }
-
-        return xmlReader;
+        return mode;
     }
+
 
     private XMLReader createXMLReader() throws SAXException {
         SAXParser parser;
@@ -169,8 +196,8 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         // being cached and therefore holding onto stale TextConverter.
 
         // TODO: We need to use the cached TextConverter service ideally but
-        // before we do it needs to be aware cluster wide when TextConverter has
-        // been updated.
+        //  before we do it needs to be aware cluster wide when TextConverter has
+        //  been updated.
         final TextConverterDoc tc = loadTextConverterDoc();
 
         // If we are in stepping mode and have made code changes then we want to
@@ -186,13 +213,20 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         final StoredErrorReceiver storedErrorReceiver = storedParserFactory.getErrorReceiver();
         final ParserFactory parserFactory = storedParserFactory.getParserFactory();
 
+        final XMLReader parser;
         if (storedErrorReceiver.getTotalErrors() == 0 && parserFactory != null) {
-            return parserFactory.getParser();
+            parser = parserFactory.getParser();
+
+            // Fragment xml needs to be handled differently as the parser sees the
+            // xml with the wrapper around it but the source does not include it.
+            if (parser instanceof XMLFragmentParser) {
+                locationHolderProvider.get().setFragmentXml(true);
+            }
         } else {
             storedErrorReceiver.replay(new ErrorReceiverIdDecorator(getElementId(), getErrorReceiverProxy()));
+            parser = null;
         }
-
-        return null;
+        return parser;
     }
 
     @Override
@@ -341,5 +375,13 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
                 pipelineName,
                 errorConsumer,
                 suppressDocumentNotFoundWarnings);
+    }
+
+    public enum Mode {
+        UNKNOWN,
+        XML,
+        JSON,
+        XML_FRAGMENT,
+        DATA_SPLITTER
     }
 }

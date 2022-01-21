@@ -108,4 +108,13 @@ class JobService {
         job.setAdvanced(jobAdvancedSet.contains(job.getName()));
         return job;
     }
+
+    int setJobsEnabledForNode(final String nodeName,
+                              final boolean enabled,
+                              final Set<String> includeJobs,
+                              final Set<String> excludeJobs) {
+        return securityContext.secureResult(
+                PermissionNames.MANAGE_JOBS_PERMISSION,
+                () -> jobDao.setJobsEnabled(nodeName, enabled, includeJobs, excludeJobs));
+    }
 }

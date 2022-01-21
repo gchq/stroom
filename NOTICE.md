@@ -25,7 +25,6 @@ The table below includes licences for all Maven dependencies.
 | Roboto Fonts                              | n/a                                          | n/a              | AL 2.0        |           |               |
 | Roboto Mono Fonts                         | n/a                                          | n/a              | AL 2.0        |           |               |
 | antlr                                     | antlr                                        | 2.7.7            | BSD           |           |               |
-| aopalliance                               | aopalliance                                  | 1                | Public domain |           |               |
 | asm                                       | asm                                          | 3.1              | Custom BSD    |           |               |
 | cglib                                     | cglib-nodep                                  | 3.1              | APL 2.0       |           |               |
 | com.caucho                                | hessian                                      | 4.0.38           | APL 2.0       |           |               |
@@ -57,8 +56,6 @@ The table below includes licences for all Maven dependencies.
 | com.jamesmurty.utils                      | java-xmlbuilder                              | 0.4              | APL 2.0       |           |               |
 | com.jcraft                                | jsch                                         | 0.1.42           | Custom BSD    |           |               |
 | com.lmax                                  | disruptor                                    | 3.3.0            | APL 2.0       |           |               |
-| com.mchange                               | c3p0                                         | 0.9.5.2          | EPL 1.0       |           |               |
-| com.mchange                               | mchange-commons-java                         | 0.2.9            | EPL 1.0       |           |               |
 | com.sun.jersey                            | jersey-client                                | 1.9              | CDDL1.0       |           |               |
 | com.sun.jersey                            | jersey-core                                  | 1.9              | CDDL1.0       |           |               |
 | com.sun.jersey                            | jersey-json                                  | 1.9              | CDDL1.0       |           |               |

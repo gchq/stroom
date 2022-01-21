@@ -31,6 +31,7 @@ import stroom.node.client.NodeManager;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DelayedUpdate;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -69,6 +70,8 @@ public class IndexVolumeGroupEditPresenter
     private boolean opening;
     private boolean open;
 
+    private final DelayedUpdate delayedUpdate;
+
     @Inject
     public IndexVolumeGroupEditPresenter(final EventBus eventBus,
                                          final IndexVolumeGroupEditView view,
@@ -89,6 +92,7 @@ public class IndexVolumeGroupEditPresenter
         rescanButton.setTitle("Rescan Volumes");
 
         view.setListView(volumeStatusListPresenter.getView());
+        delayedUpdate = new DelayedUpdate(volumeStatusListPresenter::refresh);
     }
 
     @Override
@@ -104,10 +108,11 @@ public class IndexVolumeGroupEditPresenter
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
             final Rest<Boolean> rest = restFactory.create();
+            delayedUpdate.reset();
             nodeManager.listAllNodes(nodeNames ->
                             nodeNames.forEach(nodeName ->
                                     rest
-                                            .onSuccess(response -> volumeStatusListPresenter.refresh())
+                                            .onSuccess(response -> delayedUpdate.update())
                                             .onFailure(throwable -> {
                                             })
                                             .call(INDEX_VOLUME_RESOURCE)

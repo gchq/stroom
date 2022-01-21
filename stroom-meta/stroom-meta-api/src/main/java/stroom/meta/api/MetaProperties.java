@@ -9,6 +9,8 @@ public class MetaProperties {
     private final String feedName;
     private final String processorUuid;
     private final String pipelineUuid;
+    private final Integer processorFilterId;
+    private final Long processorTaskId;
     private final Long createMs;
     private final Long effectiveMs;
     private final Long statusMs;
@@ -18,6 +20,8 @@ public class MetaProperties {
                           final String feedName,
                           final String processorUuid,
                           final String pipelineUuid,
+                          final Integer processorFilterId,
+                          final Long processorTaskId,
                           final Long createMs,
                           final Long effectiveMs,
                           final Long statusMs) {
@@ -25,6 +29,8 @@ public class MetaProperties {
         this.typeName = typeName;
         this.feedName = feedName;
         this.processorUuid = processorUuid;
+        this.processorFilterId = processorFilterId;
+        this.processorTaskId = processorTaskId;
         this.pipelineUuid = pipelineUuid;
         this.createMs = createMs;
         this.effectiveMs = effectiveMs;
@@ -49,6 +55,14 @@ public class MetaProperties {
 
     public String getPipelineUuid() {
         return pipelineUuid;
+    }
+
+    public Integer getProcessorFilterId() {
+        return processorFilterId;
+    }
+
+    public Long getProcessorTaskId() {
+        return processorTaskId;
     }
 
     public Long getCreateMs() {
@@ -78,6 +92,8 @@ public class MetaProperties {
         private String feedName;
         private String processorUuid;
         private String pipelineUuid;
+        private Integer processorFilterId;
+        private Long processorTaskId;
         private Long createMs;
         private Long effectiveMs;
         private Long statusMs;
@@ -86,14 +102,16 @@ public class MetaProperties {
         }
 
         private Builder(final MetaProperties metaProperties) {
-            parentId = metaProperties.parentId;
-            typeName = metaProperties.typeName;
-            feedName = metaProperties.feedName;
-            processorUuid = metaProperties.processorUuid;
-            pipelineUuid = metaProperties.pipelineUuid;
-            createMs = metaProperties.createMs;
-            effectiveMs = metaProperties.effectiveMs;
-            statusMs = metaProperties.statusMs;
+            this.parentId = metaProperties.parentId;
+            this.typeName = metaProperties.typeName;
+            this.feedName = metaProperties.feedName;
+            this.processorUuid = metaProperties.processorUuid;
+            this.pipelineUuid = metaProperties.pipelineUuid;
+            this.processorFilterId = metaProperties.processorFilterId;
+            this.processorTaskId = metaProperties.processorTaskId;
+            this.createMs = metaProperties.createMs;
+            this.effectiveMs = metaProperties.effectiveMs;
+            this.statusMs = metaProperties.statusMs;
         }
 
         /**
@@ -146,6 +164,16 @@ public class MetaProperties {
             return this;
         }
 
+        public Builder processorFilterId(final Integer processorFilterId) {
+            this.processorFilterId = processorFilterId;
+            return this;
+        }
+
+        public Builder processorTaskId(final Long processorTaskId) {
+            this.processorTaskId = processorTaskId;
+            return this;
+        }
+
         public Builder createMs(final Long createMs) {
             this.createMs = createMs;
             return this;
@@ -173,6 +201,8 @@ public class MetaProperties {
                     feedName,
                     processorUuid,
                     pipelineUuid,
+                    processorFilterId,
+                    processorTaskId,
                     timeMs,
                     effectiveMs != null
                             ? effectiveMs

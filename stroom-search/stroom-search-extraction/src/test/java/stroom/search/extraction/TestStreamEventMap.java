@@ -1,42 +1,42 @@
 package stroom.search.extraction;
 
+import stroom.search.extraction.StreamEventMap.EventSet;
+import stroom.util.concurrent.CompleteException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled
-public class TestStreamEventMap {
+class TestStreamEventMap {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStreamEventMap.class);
     private static final int TOTAL_EVENTS = 1000000;
 
     @Test
     void test() {
         final StreamEventMap streamEventMap = new StreamEventMap(100000);
-        final CountDownLatch complete = new CountDownLatch(1);
         final List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         // Start a producer.
         CompletableFuture<Void> producer = CompletableFuture.runAsync(() -> {
-//            try {
-            for (int i = 0; i < TOTAL_EVENTS; i++) {
-//                    Thread.sleep(1);
-                int streamId = (int) (Math.random() * 10);
-                streamEventMap.add(new Event(streamId, i, null));
+            try {
+                for (int i = 0; i < TOTAL_EVENTS; i++) {
+                    int streamId = (int) (Math.random() * 10);
+                    streamEventMap.put(new Event(streamId, i, null));
+                }
+                streamEventMap.complete();
+            } catch (final InterruptedException e) {
+                // Ignore.
             }
-            complete.countDown();
-//            } catch (final InterruptedException e) {
-//                // Ignore.
-//            }
         });
         futures.add(producer);
 
@@ -45,24 +45,19 @@ public class TestStreamEventMap {
         for (int i = 0; i < 5; i++) {
             CompletableFuture<Void> consumer = CompletableFuture.runAsync(() -> {
                 try {
-                    boolean done = false;
-                    while (!done) {
-                        final boolean state = complete.await(100, TimeUnit.MILLISECONDS);
-
-                        final Optional<Map.Entry<Long, List<Event>>> optional = streamEventMap.get();
-                        if (optional.isPresent()) {
-                            optional.ifPresent(entry -> {
-                                final long streamId = entry.getKey();
-                                final List<Event> events = entry.getValue();
-                                total.addAndGet(events.size());
-                                System.out.println(total.get() + " - " + streamId + ":" + events.size());
-                            });
-                        } else if (state) {
-                            done = true;
+                    while (true) {
+                        final EventSet eventSet = streamEventMap.take();
+                        if (eventSet != null) {
+                            total.addAndGet(eventSet.size());
                         }
                     }
                 } catch (final InterruptedException e) {
-                    // Ignore.
+                    LOGGER.trace(e::getMessage, e);
+                    // Keep interrupting this thread.
+                    Thread.currentThread().interrupt();
+                } catch (final CompleteException e) {
+                    LOGGER.debug(() -> "Complete");
+                    LOGGER.trace(e::getMessage, e);
                 }
             });
             futures.add(consumer);

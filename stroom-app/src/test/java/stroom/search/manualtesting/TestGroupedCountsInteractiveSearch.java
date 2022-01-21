@@ -157,8 +157,6 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
             assertThat(totalCount).isEqualTo(STREAM_ROW_COUNT * STREAM_COUNT);
         };
 
-        setProperties();
-
         AbstractSearchTest.testInteractive(
                 expressionBuilder,
                 expectedResultCount,
@@ -171,12 +169,6 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
 
         LOGGER.info("Completed search");
     }
-
-    private void setProperties() {
-        indexShardSearchConfig.setMaxThreads(5);
-        extractionConfig.setMaxThreads(5);
-    }
-
 
     private TableSettings createTableSettings(Boolean extractValues) {
 

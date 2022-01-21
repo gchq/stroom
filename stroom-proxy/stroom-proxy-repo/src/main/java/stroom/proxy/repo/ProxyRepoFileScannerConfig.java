@@ -4,29 +4,34 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.time.Duration;
-import javax.inject.Singleton;
 
-@Singleton
-@JsonPropertyOrder({
-        "scanningEnabled",
-        "scanFrequency"
-})
+@JsonPropertyOrder(alphabetic = true)
 public class ProxyRepoFileScannerConfig extends AbstractConfig implements IsProxyConfig {
 
-    private boolean scanningEnabled;
-    private StroomDuration scanFrequency = StroomDuration.of(Duration.ofSeconds(10));
+    private final boolean scanningEnabled;
+    private final StroomDuration scanFrequency;
+
+    public ProxyRepoFileScannerConfig() {
+        scanningEnabled = false;
+        scanFrequency = StroomDuration.of(Duration.ofSeconds(10));
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public ProxyRepoFileScannerConfig(@JsonProperty("scanningEnabled") final boolean scanningEnabled,
+                                      @JsonProperty("scanFrequency") final StroomDuration scanFrequency) {
+        this.scanningEnabled = scanningEnabled;
+        this.scanFrequency = scanFrequency;
+    }
 
     @JsonProperty
     public boolean isScanningEnabled() {
         return scanningEnabled;
-    }
-
-    public void setScanningEnabled(final boolean scanningEnabled) {
-        this.scanningEnabled = scanningEnabled;
     }
 
     @JsonProperty
@@ -34,7 +39,11 @@ public class ProxyRepoFileScannerConfig extends AbstractConfig implements IsProx
         return scanFrequency;
     }
 
-    public void setScanFrequency(final StroomDuration scanFrequency) {
-        this.scanFrequency = scanFrequency;
+    public ProxyRepoFileScannerConfig withScanningEnabled(final boolean scanningEnabled) {
+        return new ProxyRepoFileScannerConfig(scanningEnabled, scanFrequency);
+    }
+
+    public ProxyRepoFileScannerConfig withScanFrequency(final StroomDuration scanFrequency) {
+        return new ProxyRepoFileScannerConfig(scanningEnabled, scanFrequency);
     }
 }

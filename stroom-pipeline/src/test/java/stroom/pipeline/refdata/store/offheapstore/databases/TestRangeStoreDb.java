@@ -19,11 +19,12 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.lmdb.LmdbUtils;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
+import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde.CompareResult;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.util.shared.Range;
 
@@ -91,7 +92,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
         rangeStoreDb.logDatabaseContents();
 
         // now try and get some keys
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
             for (int i = 0; i < uids.size(); i++) {
                 LOGGER.debug("Iteration {}, testing with UID {}", i, uids.get(i));
 
@@ -102,7 +103,9 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
                 getAndAssert(txn, uids.get(i), 300, (i * 10) + 5); // on range end
 
                 getAndAssertNotFound(txn, uids.get(i), 0); // not in a range
+                getAndAssertNotFound(txn, uids.get(i), 21); // not in a range
                 getAndAssertNotFound(txn, uids.get(i), 50); // not in a range
+                getAndAssertNotFound(txn, uids.get(i), 100); // not in a range
                 getAndAssertNotFound(txn, uids.get(i), 301); // not in a range
             }
         });
@@ -111,7 +114,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     @Test
     void testContainsMapDefinition() {
 
-        final List<UID> uids = Arrays.asList(uid1, uid2, uid3);
+        final List<UID> uids = Arrays.asList(uid2, uid3);
         final UID uid4 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 4);
 
         // Load some non-contiguous ranges for different mapDefinitionUids
@@ -128,17 +131,41 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
         rangeStoreDb.logRawDatabaseContents();
         rangeStoreDb.logDatabaseContents();
 
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
             boolean result;
             for (int i = 0; i < uids.size(); i++) {
                 result = rangeStoreDb.containsMapDefinition(txn, uids.get(i));
                 assertThat(result).isTrue();
             }
 
+            // no entries exist for uid1
+            result = rangeStoreDb.containsMapDefinition(txn, uid1);
+            assertThat(result).isFalse();
+
             // no entries exist for uid4
             result = rangeStoreDb.containsMapDefinition(txn, uid4);
             assertThat(result).isFalse();
         });
+    }
+
+    @Test
+    void testIsKeyInRange() {
+        final RangeStoreKey rangeStoreKey = new RangeStoreKey(uid1, Range.of(10L, 20L));
+        final ByteBuffer keyBuffer = ByteBuffer.allocate(Long.BYTES * 2 + UID.UID_ARRAY_LENGTH);
+        rangeStoreDb.serializeKey(keyBuffer, rangeStoreKey);
+
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 9))
+                .isEqualTo(CompareResult.BELOW_RANGE);
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 10))
+                .isEqualTo(CompareResult.IN_RANGE);
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 15L))
+                .isEqualTo(CompareResult.IN_RANGE);
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 19))
+                .isEqualTo(CompareResult.IN_RANGE);
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 20))
+                .isEqualTo(CompareResult.ABOVE_RANGE);
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid2, 15L))
+                .isEqualTo(CompareResult.MAP_UID_MISMATCH);
     }
 
     private void getAndAssert(Txn<ByteBuffer> txn, UID uid, long key, int expectedValue) {
@@ -178,7 +205,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
         rangeStoreDb.logRawDatabaseContents();
         rangeStoreDb.logDatabaseContents();
 
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
             Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, uid2, 5);
             assertThat(optValueStoreKey).isNotEmpty();
             assertThat(optValueStoreKey.get()).isEqualTo(val(11));
@@ -186,7 +213,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    void forEachEntry() {
+    void forEachEntry() throws Exception {
 
         final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1);
         final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 2, 0, 0, 2);
@@ -202,7 +229,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
         final ValueStoreKey valueStoreKey22 = new ValueStoreKey(22, (short) 22);
         final ValueStoreKey valueStoreKey31 = new ValueStoreKey(31, (short) 31);
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             rangeStoreDb.put(writeTxn, rangeStoreKey11, valueStoreKey11, false);
             rangeStoreDb.put(writeTxn, rangeStoreKey21, valueStoreKey21, false);
             rangeStoreDb.put(writeTxn, rangeStoreKey22, valueStoreKey22, false);
@@ -216,16 +243,56 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
         doForEachTest(uid3, 1);
     }
 
-    private void doForEachTest(final UID uid, final int expectedEntryCount) {
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+    @Test
+    void testGetEntryCount() {
+
+        final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1);
+        final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 2, 0, 0, 2);
+        final UID uid3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 3, 0, 0, 3);
+
+        final RangeStoreKey rangeStoreKey11 = new RangeStoreKey(uid1, Range.of(10L, 20L));
+        final RangeStoreKey rangeStoreKey21 = new RangeStoreKey(uid2, Range.of(20L, 25L));
+        final RangeStoreKey rangeStoreKey22 = new RangeStoreKey(uid2, Range.of(20L, 30L));
+        final RangeStoreKey rangeStoreKey31 = new RangeStoreKey(uid3, Range.of(30L, 40L));
+
+        final ValueStoreKey valueStoreKey11 = new ValueStoreKey(11, (short) 11);
+        final ValueStoreKey valueStoreKey21 = new ValueStoreKey(21, (short) 21);
+        final ValueStoreKey valueStoreKey22 = new ValueStoreKey(22, (short) 22);
+        final ValueStoreKey valueStoreKey31 = new ValueStoreKey(31, (short) 31);
+
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            rangeStoreDb.put(writeTxn, rangeStoreKey11, valueStoreKey11, false);
+            rangeStoreDb.put(writeTxn, rangeStoreKey21, valueStoreKey21, false);
+            rangeStoreDb.put(writeTxn, rangeStoreKey22, valueStoreKey22, false);
+            rangeStoreDb.put(writeTxn, rangeStoreKey31, valueStoreKey31, false);
+
+            assertThat(rangeStoreDb.getEntryCount(writeTxn)).isEqualTo(4);
+        });
+
+        rangeStoreDb.logRawDatabaseContents();
+
+        lmdbEnv.doWithReadTxn(readTxn -> {
+            final long entryCount = rangeStoreDb.getEntryCount(uid2, readTxn);
+            assertThat(entryCount).isEqualTo(2);
+        });
+
+    }
+
+    private void doForEachTest(final UID uid, final int expectedEntryCount) throws Exception {
+        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
             AtomicInteger cnt = new AtomicInteger(0);
-            rangeStoreDb.deleteMapEntries(writeTxn, uid, (txn, keyBuf, valBuf) -> {
-                cnt.incrementAndGet();
-                LOGGER.info("{} {}", ByteBufferUtils.byteBufferInfo(keyBuf), ByteBufferUtils.byteBufferInfo(valBuf));
-            });
+            rangeStoreDb.deleteMapEntries(
+                    batchingWriteTxn,
+                    uid,
+                    (writeTxn2, keyBuf, valBuf) -> {
+                        cnt.incrementAndGet();
+                        LOGGER.info("{} {}",
+                                ByteBufferUtils.byteBufferInfo(keyBuf),
+                                ByteBufferUtils.byteBufferInfo(valBuf));
+                    });
 
             assertThat(cnt).hasValue(expectedEntryCount);
-        });
+        }
     }
 
 //

@@ -21,10 +21,9 @@
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.
-# Using 'openjdk' on apline is not fully supported so using AdoptOpenJdk
-# to ensure we have a known jdk version
+# Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine as stroom-base-stage
+FROM eclipse-temurin:17.0.1_12-jdk-alpine as stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
@@ -81,6 +80,9 @@ VOLUME /stroom/reference_data/
 # Create Docker volume for Stroom's off-heap search result data
 VOLUME /stroom/search_results/
 
+# Create Docker volume for Stroom's LMDB system library binary
+VOLUME /stroom/lmdb_library/
+
 # Create Docker volume for Stroom's volumes dir
 VOLUME /stroom/volumes/
 
@@ -106,6 +108,7 @@ RUN \
     mkdir -p /stroom/config && \
     mkdir -p /stroom/config_fallback && \
     mkdir -p /stroom/content_pack_import && \
+    mkdir -p /stroom/lmdb_library && \
     mkdir -p /stroom/logs/access && \
     mkdir -p /stroom/logs/app && \
     mkdir -p /stroom/logs/migration && \
@@ -116,6 +119,8 @@ RUN \
     mkdir -p /stroom/search_results && \
     mkdir -p /stroom/volumes && \
     chown -R stroom:stroom /stroom
+
+# IMPORTANT - if you add/change a dir above you need to do the same in entrypoint.sh
 
 # Those that are most likely to have changed get copied last to speed up build
 

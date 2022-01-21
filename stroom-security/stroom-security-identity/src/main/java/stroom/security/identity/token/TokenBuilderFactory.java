@@ -22,27 +22,29 @@ import stroom.security.identity.config.IdentityConfig;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
 public class TokenBuilderFactory {
 
-    private final IdentityConfig config;
+    private final Provider<IdentityConfig> configProvider;
     private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
 
     @Inject
-    public TokenBuilderFactory(final IdentityConfig config,
+    public TokenBuilderFactory(final Provider<IdentityConfig> configProvider,
                                final PublicJsonWebKeyProvider publicJsonWebKeyProvider) {
-        this.config = config;
+        this.configProvider = configProvider;
         this.publicJsonWebKeyProvider = publicJsonWebKeyProvider;
     }
 
     public TokenBuilder builder() {
         final TokenBuilder tokenBuilder = new TokenBuilder();
+        final IdentityConfig identityConfig = configProvider.get();
         tokenBuilder
-                .issuer(config.getTokenConfig().getJwsIssuer())
+                .issuer(identityConfig.getTokenConfig().getJwsIssuer())
                 .privateVerificationKey(publicJsonWebKeyProvider.getFirst())
-                .algorithm(config.getTokenConfig().getAlgorithm());
+                .algorithm(identityConfig.getTokenConfig().getAlgorithm());
         return tokenBuilder;
     }
 }

@@ -91,22 +91,22 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
     @Override
     public Integer getMinId() {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                context
-                        .select(DSL.min(META_KEY.ID))
-                        .from(META_KEY)
-                        .fetchOptional()
-                        .map(Record1::value1))
+                        context
+                                .select(DSL.min(META_KEY.ID))
+                                .from(META_KEY)
+                                .fetchOptional())
+                .map(Record1::value1)
                 .orElse(1);
     }
 
     @Override
     public Integer getMaxId() {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                context
-                        .select(DSL.max(META_KEY.ID))
-                        .from(META_KEY)
-                        .fetchOptional()
-                        .map(Record1::value1))
+                        context
+                                .select(DSL.max(META_KEY.ID))
+                                .from(META_KEY)
+                                .fetchOptional())
+                .map(Record1::value1)
                 .orElse(MetaFields.getExtendedFields().size());
     }
 
@@ -127,16 +127,16 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
     }
 
     private void fillCache() {
-        JooqUtil.context(metaDbConnProvider, context -> context
-                .select(META_KEY.ID, META_KEY.NAME)
-                .from(META_KEY)
-                .fetch()
+        JooqUtil.contextResult(metaDbConnProvider, context -> context
+                        .select(META_KEY.ID, META_KEY.NAME)
+                        .from(META_KEY)
+                        .fetch())
                 .forEach(r -> {
                     final Integer id = r.get(META_KEY.ID);
                     final String name = r.get(META_KEY.NAME);
                     idToNameCache.put(id, name);
                     nameToIdCache.put(name, id);
-                }));
+                });
     }
 
     private void create(final String name, final MetaType type) {

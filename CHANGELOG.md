@@ -7,6 +7,452 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+~~~
+DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
+~~~
+
+
+## [v7.1-beta.9] - 2022-01-20
+
+* Make temp prop nullable and change default to TEMP/stroom(-proxy)?.
+
+* Issue **#2709** : Reduce the number of UI refreshes when receiving data from multiple nodes.
+
+* Issue **#2708** : Keep search results fresh by constantly pinging result caches for all active searches.
+
+
+## [v7.1-beta.8] - 2022-01-17
+
+* Issue **#2715** : Fix invalid rest return type.
+
+
+## [v7.1-beta.7] - 2022-01-14
+
+* Issue **#2640** : Support adding formatted dates to index name in ElasticIndexingFilter.
+
+* Issue **#2675** : Improve Elasticsearch scroll query performance
+
+* Issue **#2677** : Respect column formatting in Excel cell styles.
+
+* Issue **#2703** : Improve search trace log to identify multi query search issues.
+
+* Issue **#2705** : Attempt to fix SIDSEGV issue caused by too many LMDB readers.
+
+* Issue **#2688** : Add `metaTypes` to Proxy's `proxyRequestConfig`. Change data receipt to validate types against this new config property.
+
+* Issue **#2688** : Change defaults for Strooms `metaTypes` config property. Change type of `metaTypes` from String to a Set of Strings. Change data receipt to validate against this configured set.
+
+* Issue **#2694** : Improve error handling when search result store has reached max capacity.
+
+* Issue **#2689** : Add logging.
+
+* Issue **#2679** : Add unique index on `meta_processor.pipeline_uuid`.
+
+* Issue **#2596** : Disable the Ace editor settings menu (`ctrl-,`) as users should not have access to it and it does not work with modal dialogs.
+
+* Issue **#2139** : Add DB migration scripts to the ZIP distribution.
+
+* Issue **#2685** : Fix issue where searchable stores are limited to 1 million rows.
+
+* Issue **#2696** : Change the byte buffer pool to not block by default and make that configurable.
+
+* Issue **#2666** : Fix handling of missing reference stream file.
+
+* Change error table to wrap error message text.
+
+* Issue **#2644** : Fix error handling when volume is full during proxy aggregation.
+
+* Issue **#2650** : Fix handling of negative numbers and negation in expression parser.
+
+* Issue **#2664** : Fix issue with search where a complete coprocessor was causing other coprocessor payloads to be read incorrectly.
+
+* Issue **#2648** : Add error message to data viewer when ID is invalid.
+
+* Issue **#2657** : Change classes to use provided config to stop the system using stale config values.
+
+* Issue **#2603** : Suppress expected buffer underflow exception.
+
+* Make directly injected NotInjectable config throw an exception to prevent it happening.
+
+* Issue **#2652** : Add delay to stream event map creation so extraction opens fewer streams.
+
+* Issue **#2639** : Fix error message when invalid property values are used.
+
+* Issue **#2578** : Fix how application config is (re)loaded so that it copes with null or sparse branches.
+
+* Issue **#2361** : Fix create_account command so it allows creation of accounts with no password.
+
+* Issue **#2627** : Add processor filter and processor task id to meta.
+
+* Issue **#2628** : Add processor filter and processor task id to info log.
+
+* Issue **#2647** : Fix `Unrecognised permission assigned` error in logs.
+
+* Issue **#2629** : Change the way duplicate output is handled by deleting previous output from complete tasks at the end of processing.
+
+* Issue **#2603** : Add debug to diagnose buffer underflow.
+
+* Issue **#2637** : Fix hanging searches.
+
+* Issue **#2631** : Add debug to diagnose UI issue.
+
+* Issue **#2633** : Fix shutdown.
+
+* Issue **#2632** : Suppress warnings.
+
+* Issue **#2603** : Improve error handling.
+
+* Issue **#2635** : Improve search completion code.
+
+* Issue **#2625** : Disable test temporarily to fix build.
+
+* Issue **#2630** : Fix NPE and improve logging.
+
+* Issue **#2625** : Disable test temporarily to fix build.
+
+* Issue **#2615** : Fix meta status change triggered by check superseded.
+
+* Issue **#2614** : Fix NPE.
+
+* Issue **#2621** : Improve search performance.
+
+* Issue **#2617** : Fix pipeline data equality for pipeline structure cache to be useful.
+
+* Issue **#2619** : Improve meta DAO performance.
+
+* Issue **#2611** : Fix java lang error.
+
+* Issue **#2608** : Fix segments for rolled streams created using the `StreamAppender`.
+
+* Issue **#2604** : Add code to diagnose unexpected event counts in search extraction.
+
+* Issue **#2605** : Create sub tasks for all search processes.
+
+* Issue **#2606** : Improve error handling during search.
+
+* Issue **#2472** : Fix the way the in memory config is updated by the file monitor. Improve the logging when config properties are changed on a node.
+
+* Issue **#2595** : Improve search performance and fix issues.
+
+* Issue **#2471** : Changes to ensure SQLite DB connection is only used by one process at a time.
+
+* Issue **#2471** : Changes to help diagnose proxy aggregation issues.
+
+* Issue **#2582** : Remove unnecessary legacy migration for processor filter.
+
+* Issue **#2577** : Fix issue with expression terms changing conditions incorrectly.
+
+* Issue **#2585** : Fix proxy aggregation task nesting.
+
+* Issue **#2574** : Improve processor filter creation to allow min and max create times.
+
+* Issue **#2579** : Fix processor filter creation from stream multi selection.
+
+* Issue **#2580** : Fix completion of processor filters by allowing the user to specify an end time.
+
+* Issue **#2576** : Fix scrolling of processor filter info pane.
+
+* Uplift event-logging library to `5.0-beta.27_schema-v4.0-beta.3` to fix missing failure outcomes on logged events.
+
+* Issue **#2557** : Optimise meta queries to ensure join order is as expected.
+
+* Issue **#2538** : Change logging of quick filter searches to log the fully qualified filter input.
+
+* Issue **#2565** : Stop orphan file finder reporting dirs that contain child dirs as empty.
+
+* Issue **#2563** : Fix bad expression logic.
+
+* Issue **#2562** : Fix NPE in the UI related to uninitialised processor filter trackers.
+
+* Stop logging audit events for most NodeResource call as they are not direct user actions.
+
+* Issue **#2553** : Prevent get and clear methods in LMDB data store from running at the same time. Add check for the LMDB env being closed to prevent JVM crash.
+
+* Issue **#2555** : Remove checkbox from dead tasks in the server tasks screen to stop users trying to delete them.
+
+* Issue **#2564** : Improve search performance.
+
+* Issue **#2582** : Fix DB migration for `processor_filter`.
+
+* Issue **#2542** : Improve autologged searches "raw" JSON.
+
+* Issue **#2534** : Implement ProcessorResource.fetch to fix event log.
+
+* Issue **#2533** : Fix corrupt event format for logout due to NPE.
+
+* Issue **#2530** : Fix issue of explorer tree not refreshing on copy, move and delete when auth is disabled.
+
+* Add wait time debug logging around LMDB locks.
+
+* Increase maxReaders default to 150 for reference data.
+
+* Issue **#2548** : Clear contents of `stroom.search.resultStore.lmdb.localDir` on boot.
+
+* Issue **#2549** : Remove `maxDbs` from `lmdb` config. Remove `readerBlockedByWriter` from `resultStore.lmdb` config.
+
+* Issue **#2544** : Add additional constraints to processor filter instead of using tracker state
+
+* No changes. Previous build failed due to networking issues.
+
+* Issue **#2540** : No longer error when interrupting shard flush process
+
+* Issue **#2541** : Stop finished queries from deleting LMDB envs for all queries.
+
+* Issue **#2535** : Added validation to data type names.
+
+* Issue **#2530** : Fixed explorer refresh on copy and move
+
+* Revert accidental whitespace change to V07_00_00_007__meta_retention_tracker.sql
+
+* Issue **#2519** : Added validation for processor filter expressions and more info about filters to the UI.
+
+* Issue **#2501** : Change reference data store to use consistent approach to last access time truncation.
+
+* Issue **#2424** : Change security filter to 404 any unexpected URIs.
+
+* Issue **#2493** : Fix missing part nav controls when data can't be decoded.
+
+* Issue **#2497** : Added summary to orphan file finder. Fixed issue with `OrphanFileFinder` incorrectly identifying some dirs as being empty.
+
+* Issue **#2500** : Add a primary key to the `meta_retention_tracker` table for MySQL Group Replication.
+
+* Change meta retention tracking to track at the time period level so a killed job preserves the position of the periods already processed.
+
+* Issue **#2513** : Fixed stepping to unique values.
+
+* Issue **#2496** : Fixed issue where data browser was showing duplicate streams.
+
+* Issue **#2511** : Fixed stepping error handling.
+
+* Issue **#2512** : Fixed stepping error handling.
+
+* Issue **#2478** : Create a single place in config for the LMDB library path and extraction dir. Delete old LMDB library binaries on boot.
+
+* Change `/api/refData/v1/purgeByAge/{purgeAge}`, `/api/refData/v1/purgeByStream/{refStreamId}` and `/api/refData/v1/clearBufferPool` to act on all nodes unless the `nodeName` query param is provided.
+
+* Issue **#2483** : Change reference data purge to delete entries in batchs to avoid large transactions that result in errors.
+
+* Issue **#2502** : Fix `Cannot read properties` error when switching streams after deleting one.
+
+* Issue **#2449** : Reduce the number of REST calls that property filtering in the UI makes.
+
+* Issue **#2523** : Uplift standard-pipelines to v0.4
+
+* Issue **#2527** : Fix stepping source hightlight for first record of fragment XML data.
+
+* Issue **#2526** : Fix incorrect input pane in stepper for cooked xml
+
+* Issue **#2531** : Fix incorrect value in Retention column in data browser and on Info tab when `Feed is` conditions are used.
+
+* Issue **#2532** : Change logged event for Manage Accounts quick filter use.
+
+* Fix performance issue with ref data range lookups.
+
+* Change default value for `stroom.pipeline.referenceData.readerBlockedByWriter` to true.
+
+* Fix locking for `stroom.pipeline.referenceData.readerBlockedByWriter`.
+
+* Issue **#2494** : Changed logging to help diagnose problem.
+
+* Issue **#2429** : The server tasks screen now handles errors that occur when trying to contact unreachable nodes.
+
+* Issue **#2492** : Fixed issue getting filter priorities in processor task data store.
+
+* Issue **#2489** : Change to wrap long error messages in stepping display.
+
+* Issue **#2487** : Fixed issue flushing and deleting index shards.
+
+* Issue **#2442** : Removed enabled/disabled states for permission users and user groups as these are now controlled by account authentication. 
+
+* Issue **#2431** : Fixed issue with item selection in account and token list pages.
+
+* Issue **#2484** : Fix failing ref lookups when one loader has range data.
+
+* Issue **#2485** : Autologger: UNLOGGED calls always being logged.
+
+* Issue **#2395** : Fixed timezone issue in API key display.
+
+* Issue **#2452** : New pipeline references now default to `Reference` data type.
+
+* Issue **#2414** : The processing tasks data source now exposes start, end and status times plus filter priorities.
+
+* Issue **#2441** : Improve logging and prevent autologger warning for `MetaResourcImpl`
+
+* Issue **#2440** : Prevent autologger warning for `ExplorerResourceImpl`
+
+* Issue **#2465** : `SaveAs` is now working for non admin users.
+
+* Issue **#2460** : Processing filters now reliably process feeds where wildcards are used to match feed names.
+
+* Issue **#2475** : Orphan file and meta finder now show the correct task progress.
+
+* Issue **#2474** : Fixed orphan file finder.
+
+* Issue **#2467** : Fix viewing of streams that can't be decoded. Errors now displayed in large banner rather than as text in the editor.
+
+* Add a view as hex option to the Data Preview panes.
+
+* Add option to show/hide the editor indent guides.
+
+* Remove white space on editor context menu.
+
+* Change data viewing 'progress' bar to have a minimum width of 3px to make it more visible.
+
+* Issue **#2469** : Made `SafeXmlFilter` available for use in the application.
+
+* Issue **#2403** : Fix guice bind errors in stroom and proxy when the `path` config branch is empty or set to null.
+
+* Issue **#2462** : Made changes to stop DB connections being used within the context of other open connections.
+
+* Uplift LMDBJava to 0.8.2 to fix LMDBJava cursor comparator bug.
+
+* Issue **#2464** : Add `leakDetectionThreshold` to the hikari pool config.
+
+* Issue **#2463** : Integrate the hikari connection pool with drop wizard's health checks and metrics.
+
+* Add debug logging to AuthenticationStateSessionUtil
+
+* Issue **#2448** : Change data receipt ERROR log messages to WARN. Also improve log message content for success and failure.
+
+* Issue **#2412** : You are now able to view locked streams or deleted data if it is still accessible.
+
+* Issue **#2413** : Removed duplication of data retention fields in info pane.
+
+* Issue **#2443** : Internal meta statistics are now added with processing user permissions.
+
+* Issue **#2455** : Improved error handling when streams not found.
+
+* Issue **#2399** : Now changing expression fields keeps the same condition if it is still applicable to the new field.
+
+* Issue **#2426** : Fixed user selection problem for document permissions.
+
+* Issue **#2436** : Fixed small UI issue whereby a user or group was not immediately removed from document permissions when the remove button was clicked.
+
+* Issue **#2416** : Added logging to identify cause of slow meta listing.
+
+* Improve termination handling in reference data purge.
+
+* Improve the data in the `/api/refData/v1/refStreamInfo` api method.
+
+* Add API method to clear the byte buffer pool.
+
+* Improve the output of the system info api call for the byte buffer pool.
+
+* Issue **#2439** : Change log level for an error in the byte buffer pool.
+
+* Issue **#2444** : Fix release of buffers to the pool that was causing ref data searches to hang.
+
+* Issue **#2433, #2434** : Fixed shutdown task order.
+
+* Issue **#2430** : Removed file system clean task and replaced with orphan finding jobs for files and meta.
+
+* Issue **#2432** : Volume state is now updated without optimistic locking.
+
+* Issue **#2382** : Improved charset resolution.
+
+* Issue **#2447** : Correctly offset displayed date/time values by the configured user timezone.
+
+* Issue **#2457** : Display a tooltip when hovering the mouse over a grid column cell.
+
+* Issue **#2382** : Improve error message for invalid feed encodings.
+
+* Issue **#2387** : Fix reference data load/lookup failure handling.
+
+* Issue **#2422** : Change ref lookups to only do a lookup against a ref feeds that are known to contian the map being looked up against.
+
+* Issue **#2411** : Remove 10,000 limit on dashboard search of ref store.
+
+* Issue **#2389** : Add an API method for purging a single reference data stream.
+
+* Issue **#2379** : Change ref data lookups to truncate last access time to hourly.
+
+* Uplift Dropwizard from 1.3.14 to 1.3.29.
+
+* Issue **#2424** : Stop session creation for rest calls. Remove unused SessionMap class.
+
+* Change debug summary logging in Data Delete job to info level.
+
+* Issue **#2402** : Improved logging for error caused by invalid meta filter values.
+
+* Issue **#2404** : Added debug to help diagnose issue.
+
+* Issue **#2423** : Added error logging and configuration to handle buffer overflows when dealing with large search result values.
+
+* Issue **#2410** : Fixes for dashboard child selectors like `first()` and `last()`.
+
+* Issue **#2417** : Bad regex filter value no longer logged unnecessarily.
+
+* Issue **#2418** : LMDB environment is now only closed when the search results are no longer needed.
+
+* Issue **#2419** : Conditional formatting errors are now returned to the UI.
+
+* Issue **#2405, #2407** : Errors caused by a thread interrupt when viewing a stream are no longer logged.
+
+* Issue **#2406** : Volume status update is now performed synchronously.
+
+* Issue **#2401, #2408, #2409** : Processing tasks no longer terminate by interrupting threads so error streams can now be written correctly.
+
+* Issue **#2398** : Fix to clear interrupt state for threads used by terminated tasks.
+
+* Issue **#2396** : Add `stroom:pointIsInsideXYPolygon` XSLT function.
+
+* Allow HTTP request headers to be customized in HTTPAppender.
+
+* Issue **#2392** : Fix for token type to only allow `api`.
+
+
+## [v7.1-beta.6] - 2021-09-01
+
+* Issue **#2277** : Add processing filter clone function.
+
+* Issue **#2390** : Fix NPE thrown during proxy aggregation.
+
+
+## [v7.1-beta.5] - 2021-08-31
+
+* Issue **#2380** : Fix _Attribute Value Data Retention_ job blocking shutdown.
+
+* Issue **#2379** : Change reference data store LMDB to use MDB_NOTLS flag to not tie readers to threads as we typically use thread pools.
+
+* Fix problem with ref data prefix mapping code increasing loop iterations on each element/record.
+
+* Add better logging of ref streams waiting for a lock to load.
+
+* Stop ref streams that are already loaded from calling start/stop processing.
+
+* Add method to ref data store API to list ref stream processing info.
+
+* Improve the ref data store API to allow filtering of the ref entries.
+
+* Change default number of ref loader lock stripes from 100 to 2048 and add it to config.
+
+* Issue **#2371** : Change search LMDB to use MDB_NOTLS flag to not tie readers to threads.
+
+* Issue **#2371** : Fix max readers error not being shown on dashboard.
+
+* Issue **#2370** : Added processor node info to output meta data.
+
+* Issue **#2349** : New dashboard tables will now link to the most recently added query by default.
+
+* Issue **#2351** : Improved error popup text for server responses.
+
+* Issue **#2368** : Fixed server task nesting.
+
+* Issue **#2369** : Fix missing SQL join when reprocessing all streams matching a filter.
+
+* Issue **#2369** : Fix error when searching meta store from a dashboard with a meta key in the query.
+
+* Change explorer root node creation to happen under cluster lock.
+
+
+## [v7.1-beta.4] - 2021-08-23
+
+* Add `enableJobsOnBootstrap` to the docker distribution config.yml to allow it to be overridden in test stacks.
+
+* Fix broken help links on jobs screen.
+
+* Issue **#2367** : Fix for job node creation.
+
 * Issue **#2365** : Fix to reduce memory used by `BlockGZIPInput`.
 
 * Issue **#2366** : Fix NPE caused by visualisations that do not define maxValues.
@@ -267,6 +713,7 @@ Improve error handling during reference data initialisation.
 * Issue **#2180** : Fix NPE when Stream Appender has no stream type defined.
 
 * Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
+
 
 ## [v7.1-beta.1] - 2021-04-13
 
@@ -1150,8 +1597,6 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1701** : Fix crash when alternative pipeline is selected/used for processing.
 
-## [v7.0-beta.40] - 2020-07-27
-
 * Issue **#1756** : Fix for IdEnrichmentFilter where is attempts to change attribute values that already exist.
 
 * Issue **#1741** : Fix for search hanging issue.
@@ -1768,6 +2213,7 @@ Improve error handling during reference data initialisation.
 * Issue **#1297** : The UI now supplies API tokens to the backend for resource calls.
 
 * Issue **#1296** : Fixed NPE in StreamMapCreator caused when a stream can not be found.
+
 
 ## [v7.0-beta.7] - 2019-10-23
 
@@ -2771,6 +3217,7 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 * Issue **#675** : Fixed issue with datafeed requests authenticating incorrectly
 
 * Issue **#666** : Fixed the duplicate dictionary issue in processing filter migrations, made querying more efficient too
+
 * Database migration fixes and tools
 
 * Issue **#668** : Fixed the issue that prevented editing of stroom volumes
@@ -3558,7 +4005,13 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.9...HEAD
+[v7.1-beta.9]: https://github.com/gchq/stroom/compare/v7.1-beta.8...v7.1-beta.9
+[v7.1-beta.8]: https://github.com/gchq/stroom/compare/v7.1-beta.7...v7.1-beta.8
+[v7.1-beta.7]: https://github.com/gchq/stroom/compare/v7.1-beta.6...v7.1-beta.7
+[v7.1-beta.6]: https://github.com/gchq/stroom/compare/v7.1-beta.5...v7.1-beta.6
+[v7.1-beta.5]: https://github.com/gchq/stroom/compare/v7.1-beta.4...v7.1-beta.5
+[v7.1-beta.4]: https://github.com/gchq/stroom/compare/v7.1-beta.3...v7.1-beta.4
 [v7.1-beta.3]: https://github.com/gchq/stroom/compare/v7.1-beta.2..v7.1-beta.3
 [v7.1-beta.2]: https://github.com/gchq/stroom/compare/v7.1-beta.1...v7.1-beta.2
 [v7.1-beta.1]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.1-beta.1

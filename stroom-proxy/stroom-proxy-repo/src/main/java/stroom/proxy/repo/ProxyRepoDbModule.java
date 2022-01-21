@@ -1,7 +1,8 @@
 package stroom.proxy.repo;
 
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
-import stroom.config.common.DbConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.AbstractDataSourceProviderModule;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
@@ -15,6 +16,8 @@ import com.google.inject.Provides;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
@@ -35,17 +38,17 @@ public class ProxyRepoDbModule extends AbstractModule {
     @Singleton
     public ProxyRepoDbConnProvider getConnectionProvider(
             final RepoDbDirProvider repoDbDirProvider,
-            final DataSourceFactory dataSourceFactory) {
+            final DataSourceFactory dataSourceFactory,
+            final RepoDbConfig repoDbConfig) {
         LOGGER.debug(() -> "Getting connection provider for " + MODULE);
 
-        final DbConfig config = getDbConfig(repoDbDirProvider);
-        final DataSource dataSource = dataSourceFactory.create(() -> config);
+        final AbstractDbConfig config = getDbConfig(repoDbDirProvider);
+        final DataSource dataSource = dataSourceFactory.create(config, MODULE, true);
         FlywayUtil.migrate(dataSource, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
-        return new DataSourceImpl(dataSource);
+        return new DataSourceImpl(dataSource, repoDbConfig);
     }
 
-    private DbConfig getDbConfig(final RepoDbDirProvider repoDbDirProvider) {
-        final DbConfig dbConfig = new DbConfig();
+    private AbstractDbConfig getDbConfig(final RepoDbDirProvider repoDbDirProvider) {
         final Path dbDir = repoDbDirProvider.get();
 
         FileUtil.mkdirs(dbDir);
@@ -56,20 +59,50 @@ public class ProxyRepoDbModule extends AbstractModule {
         final Path path = dbDir.resolve("proxy-repo.db");
         final String fullPath = FileUtil.getCanonicalPath(path);
 
-        final ConnectionConfig connectionConfig = new ConnectionConfig();
-        connectionConfig.setClassName("org.sqlite.JDBC");
-        connectionConfig.setUrl("jdbc:sqlite:" + fullPath);
-//            connectionConfig.setUser("sa");
-//            connectionConfig.setPassword("sa");
+        final ConnectionConfig connectionConfig = ConnectionConfig.builder()
+                .jdbcDriverClassName("org.sqlite.JDBC")
+                .url("jdbc:sqlite:" + fullPath)
+                .build();
 
-        dbConfig.setConnectionConfig(connectionConfig);
-        return dbConfig;
+        return new MyProxyRepoDbConfig(connectionConfig);
+    }
+
+    private static class MyProxyRepoDbConfig extends AbstractDbConfig {
+
+        public MyProxyRepoDbConfig(final ConnectionConfig connectionConfig) {
+            super(connectionConfig, new ConnectionPoolConfig());
+        }
     }
 
     public static class DataSourceImpl extends DataSourceProxy implements ProxyRepoDbConnProvider {
 
-        private DataSourceImpl(final DataSource dataSource) {
+        private final RepoDbConfig repoDbConfig;
+
+        private DataSourceImpl(final DataSource dataSource,
+                               final RepoDbConfig repoDbConfig) {
             super(dataSource);
+            this.repoDbConfig = repoDbConfig;
+
+            for (final String pragma : repoDbConfig.getGlobalPragma()) {
+                try (final Connection connection = super.getConnection()) {
+                    pragma(connection, pragma);
+                } catch (final SQLException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            }
+        }
+
+        @Override
+        public Connection getConnection() throws SQLException {
+            final Connection connection = super.getConnection();
+            for (final String pragma : repoDbConfig.getConnectionPragma()) {
+                pragma(connection, pragma);
+            }
+            return connection;
+        }
+
+        public void pragma(final Connection connection, final String pragma) throws SQLException {
+            connection.prepareStatement(pragma).execute();
         }
     }
 }

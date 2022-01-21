@@ -20,112 +20,118 @@ package stroom.search.solr.search;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
-import stroom.search.solr.CachedSolrIndex;
-import stroom.search.solr.SolrIndexCache;
-import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 
 public class SolrAsyncSearchTaskHandler {
 
-    private final SolrIndexCache solrIndexCache;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrAsyncSearchTaskHandler.class);
+
     private final SecurityContext securityContext;
+    private final ExecutorProvider executorProvider;
     private final SolrClusterSearchTaskHandler clusterSearchTaskHandler;
     private final TaskManager taskManager;
     private final ClusterTaskTerminator clusterTaskTerminator;
 
     @Inject
-    SolrAsyncSearchTaskHandler(final SolrIndexCache solrIndexCache,
-                               final SecurityContext securityContext,
+    SolrAsyncSearchTaskHandler(final SecurityContext securityContext,
+                               final ExecutorProvider executorProvider,
                                final SolrClusterSearchTaskHandler clusterSearchTaskHandler,
                                final TaskManager taskManager,
                                final ClusterTaskTerminator clusterTaskTerminator) {
-        this.solrIndexCache = solrIndexCache;
         this.securityContext = securityContext;
+        this.executorProvider = executorProvider;
         this.clusterSearchTaskHandler = clusterSearchTaskHandler;
         this.taskManager = taskManager;
         this.clusterTaskTerminator = clusterTaskTerminator;
     }
 
-    public void exec(final TaskContext taskContext,
+    public void search(final TaskContext parentContext,
                      final SolrAsyncSearchTask task,
                      final Coprocessors coprocessors,
                      final SolrSearchResultCollector resultCollector) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
+
+                // Create an async call that will terminate the whole task if the coprocessors decide they have enough
+                // data.
+                CompletableFuture.runAsync(() -> awaitCompletionAndTerminate(resultCollector, parentContext, task),
+                        executorProvider.get());
+
                 try {
-                    taskContext.info(() -> task.getSearchName() + " - initialising");
+                    parentContext.info(task::getSearchName);
                     final Query query = task.getQuery();
 
-                    // Reload the index.
-                    final CachedSolrIndex index = solrIndexCache.get(query.getDataSource());
+                    if (coprocessors != null && coprocessors.size() > 0) {
+                        // Start searching.
+                        clusterSearchTaskHandler.search(
+                                parentContext,
+                                task.getKey(),
+                                query,
+                                task.getNow(),
+                                task.getDateTimeSettings(),
+                                coprocessors);
 
-                    // Get an array of stored index fields that will be used for
-                    // getting stored data.
-                    // TODO : Specify stored fields based on the fields that all
-                    // coprocessors will require. Also
-                    // batch search only needs stream and event id stored fields.
-                    final String[] storedFields = getStoredFields(index);
-                    // Get the stored fields that search is hoping to use.
-                    if (storedFields.length == 0) {
-                        throw new SearchException("No stored fields have been requested");
+                        // Await completion.
+                        parentContext.info(() -> task.getSearchName() + " - searching");
                     }
 
-                    clusterSearchTaskHandler.exec(taskContext,
-                            index,
-                            query,
-                            task.getNow(),
-                            task.getDateTimeSettings(),
-                            coprocessors);
-
-                    // Await completion.
-                    taskContext.info(() -> task.getSearchName() + " - searching");
-                    resultCollector.awaitCompletion();
-
                 } catch (final RuntimeException e) {
-                    coprocessors.getErrorConsumer().accept(e);
-                } catch (final InterruptedException e) {
-                    coprocessors.getErrorConsumer().accept(e);
+                    LOGGER.debug(e::getMessage, e);
+                    coprocessors.getErrorConsumer().add(e);
 
-                    // Continue to interrupt this thread.
-                    Thread.currentThread().interrupt();
                 } finally {
-                    taskContext.info(() -> task.getSearchName() + " - complete");
-
-                    // Make sure we try and terminate any child tasks on worker
-                    // nodes if we need to.
-                    terminateTasks(task, taskContext.getTaskId());
+                    parentContext.info(() -> task.getSearchName() + " - complete");
+                    LOGGER.debug(() -> task.getSearchName() + " - complete");
 
                     // Ensure search is complete even if we had errors.
-                    resultCollector.complete();
+                    resultCollector.signalComplete();
+
+                    // Await final completion and terminate all tasks.
+                    awaitCompletionAndTerminate(resultCollector, parentContext, task);
 
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
-                    taskContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
+                    parentContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
                 }
             }
         }));
     }
 
-    private void terminateTasks(final SolrAsyncSearchTask task, final TaskId taskId) {
-        // Terminate this task.
-        taskManager.terminate(taskId);
-
-        // We have to wrap the cluster termination task in another task or
-        // ClusterDispatchAsyncImpl
-        // will not execute it if the parent task is terminated.
-        clusterTaskTerminator.terminate(task.getSearchName(), taskId, "SolrAsyncSearchTask");
+    private void awaitCompletionAndTerminate(final SolrSearchResultCollector resultCollector,
+                                             final TaskContext parentContext,
+                                             final SolrAsyncSearchTask task) {
+        // Wait for the result collector to complete.
+        try {
+            resultCollector.awaitCompletion();
+        } catch (final InterruptedException e) {
+            LOGGER.trace(e.getMessage(), e);
+            // Keep interrupting this thread.
+            Thread.currentThread().interrupt();
+        } finally {
+            // Make sure we try and terminate any child tasks on worker
+            // nodes if we need to.
+            terminateTasks(task, parentContext.getTaskId());
+        }
     }
 
-    private String[] getStoredFields(final CachedSolrIndex index) {
-        return index.getFields()
-                .stream()
-                .filter(SolrIndexField::isStored)
-                .map(SolrIndexField::getFieldName)
-                .toArray(String[]::new);
+    public void terminateTasks(final SolrAsyncSearchTask task, final TaskId taskId) {
+        securityContext.asProcessingUser(() -> {
+            // Terminate this task.
+            taskManager.terminate(taskId);
+
+            // We have to wrap the cluster termination task in another task or
+            // ClusterDispatchAsyncImpl
+            // will not execute it if the parent task is terminated.
+            clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
+        });
     }
 }

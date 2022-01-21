@@ -22,6 +22,8 @@ import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
@@ -31,6 +33,8 @@ import javax.inject.Singleton;
 @EntityEventHandler(type = XmlSchemaDoc.DOCUMENT_TYPE)
 class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
         implements SchemaPool, EntityEvent.Handler {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SchemaPoolImpl.class);
 
     private final SchemaLoader schemaLoader;
     private final SecurityContext securityContext;
@@ -59,6 +63,7 @@ class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
 
     @Override
     protected StoredSchema internalCreateValue(final SchemaKey key) {
+        LOGGER.trace(() -> "internalCreateValue " + key);
         return securityContext.asProcessingUserResult(() ->
                 schemaLoader.load(key.getSchemaLanguage(), key.getData(), key.getFindXMLSchemaCriteria()));
     }

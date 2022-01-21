@@ -27,6 +27,7 @@ import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStore;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.task.api.TaskContext;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.TimeUtils;
@@ -52,6 +53,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -69,8 +71,9 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
     private final StatisticStoreValidator statisticsDataSourceValidator;
     private final StatisticStoreCache statisticsDataSourceCache;
     private final SQLStatisticCache statisticCache;
-    private final SQLStatisticsConfig config;
+    private final Provider<SQLStatisticsConfig> configProvider;
     private final SecurityContext securityContext;
+    private final TaskContext taskContext;
 
     /**
      * SQL for testing querying the stat/tag names
@@ -99,14 +102,15 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
     SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
                            final StatisticStoreCache statisticsDataSourceCache,
                            final SQLStatisticCache statisticCache,
-                           final SQLStatisticsConfig config,
-                           final SecurityContext securityContext) {
-
+                           final Provider<SQLStatisticsConfig> configProvider,
+                           final SecurityContext securityContext,
+                           final TaskContext taskContext) {
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
-        this.config = config;
+        this.configProvider = configProvider;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
         this.securityContext = securityContext;
+        this.taskContext = taskContext;
 
         initPool(getObjectPoolConfig());
     }
@@ -117,20 +121,21 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                            final StatisticStoreValidator statisticsDataSourceValidator,
                            final StatisticStoreCache statisticsDataSourceCache,
                            final SQLStatisticCache statisticCache,
-                           final SQLStatisticsConfig config,
-                           final SecurityContext securityContext) {
+                           final Provider<SQLStatisticsConfig> configProvider,
+                           final SecurityContext securityContext,
+                           final TaskContext taskContext) {
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
         this.aggregatorSizeThreshold = aggregatorSizeThreshold;
         this.poolAgeMsThreshold = poolAgeMsThreshold;
         this.poolSize = poolSize;
-        this.config = config;
+        this.configProvider = configProvider;
         this.securityContext = securityContext;
+        this.taskContext = taskContext;
 
         initPool(getObjectPoolConfig());
     }
-
 
     // TODO could go futher up the chain so is store agnostic
     public static RolledUpStatisticEvent generateTagRollUps(final StatisticEvent event,
@@ -216,6 +221,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
     }
 
     public void evict() {
+        taskContext.info(() -> "Evicting expired objects");
         LOGGER.debug("evict");
         try {
             objectPool.evict();
@@ -234,7 +240,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
      */
     private Predicate<StatisticEvent> getInsideProcessingThresholdPredicate() {
         return Optional
-                .ofNullable(config.getMaxProcessingAge())
+                .ofNullable(configProvider.get().getMaxProcessingAge())
                 .map(TimeUtils::durationToThreshold)
                 .map(threshold ->
                         (Predicate<StatisticEvent>) statisticEvent ->
@@ -464,6 +470,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
         return statisticsDataSourceCache.getStatisticsDataSource(statisticName);
     }
 
+    @Override
     public List<AbstractField> getSupportedFields(final List<AbstractField> indexFields) {
         final Set<String> blackList = getIndexFieldBlackList();
 

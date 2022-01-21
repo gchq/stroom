@@ -17,14 +17,16 @@
 
 package stroom.bytebuffer;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A lazy wrapper for a {@link ByteBuffer} obtained from a {@link ByteBufferPool} that can be used
@@ -36,8 +38,9 @@ import javax.annotation.concurrent.NotThreadSafe;
  * The wrapper is empty on creation and when getByteBuffer is called, it will be populated
  * with a {@link ByteBuffer} from the pool. Depending on the implementation of the pool this may block.
  */
-@NotThreadSafe
 public class PooledByteBuffer implements AutoCloseable {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PooledByteBuffer.class);
 
     private ByteBuffer byteBuffer;
     private Supplier<ByteBuffer> byteBufferSupplier;
@@ -85,7 +88,17 @@ public class PooledByteBuffer implements AutoCloseable {
      * references to it. Identical behaviour to calling {@link PooledByteBuffer#close()}.
      */
     public void release() {
-        if (releaseFunc != null && byteBuffer != null) {
+        if (releaseFunc == null) {
+            if (byteBuffer != null && byteBuffer.isDirect()) {
+                try {
+                    ByteBufferSupport.unmap((MappedByteBuffer) byteBuffer);
+                } catch (Exception e) {
+                    LOGGER.error("Error releasing direct byte buffer", e);
+                }
+            }
+            byteBuffer = null;
+            byteBufferSupplier = null;
+        } else if (byteBuffer != null) {
             releaseFunc.accept(byteBuffer);
             byteBuffer = null;
             byteBufferSupplier = null;
@@ -122,7 +135,6 @@ public class PooledByteBuffer implements AutoCloseable {
                 '}';
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

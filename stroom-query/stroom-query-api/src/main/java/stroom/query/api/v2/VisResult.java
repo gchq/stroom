@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
+
 @JsonPropertyOrder({"componentId", "jsonData", "dataPoints", "error"})
 @JsonInclude(Include.NON_NULL)
 public class VisResult extends Result {
@@ -35,8 +37,8 @@ public class VisResult extends Result {
     public VisResult(@JsonProperty("componentId") final String componentId,
                      @JsonProperty("jsonData") final String jsonData,
                      @JsonProperty("dataPoints") final long dataPoints,
-                     @JsonProperty("error") final String error) {
-        super(componentId, error);
+                     @JsonProperty("errors") final List<String> errors) {
+        super(componentId, errors);
         this.jsonData = jsonData;
         this.dataPoints = dataPoints;
     }

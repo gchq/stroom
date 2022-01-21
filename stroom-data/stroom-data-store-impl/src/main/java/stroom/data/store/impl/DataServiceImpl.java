@@ -47,6 +47,7 @@ import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -106,8 +107,8 @@ class DataServiceImpl implements DataService {
                     final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                     final PipelineDataCache pipelineDataCache,
                     final PipelineScopeRunnable pipelineScopeRunnable,
-                    final SourceConfig sourceConfig
-
+                    final SourceConfig sourceConfig,
+                    final TaskContextFactory taskContextFactory
     ) {
         this.resourceStore = resourceStore;
         this.dataUploadTaskHandlerProvider = dataUploadTaskHandler;
@@ -130,7 +131,8 @@ class DataServiceImpl implements DataService {
                 pipelineDataCache,
                 securityContext,
                 pipelineScopeRunnable,
-                sourceConfig);
+                sourceConfig,
+                taskContextFactory);
     }
 
     @Override
@@ -205,10 +207,7 @@ class DataServiceImpl implements DataService {
         final ResultPage<MetaRow> metaRows = metaService.findDecoratedRows(
                 new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id)));
         final MetaRow metaRow = metaRows.getFirst();
-
-//        final Meta meta = metaService.getMeta(id, true);
         final List<DataInfoSection> sections = new ArrayList<>();
-//
         if (metaRow == null) {
             final List<DataInfoSection.Entry> entries = new ArrayList<>(1);
             entries.add(new DataInfoSection.Entry("Deleted Stream Id", String.valueOf(id)));
@@ -231,7 +230,12 @@ class DataServiceImpl implements DataService {
                     .collect(Collectors.toList());
             sortedKeys.forEach(key -> {
                 final String value = attributeMap.get(key);
-                if (value != null) {
+                if (value != null &&
+                        // We are going to add retention entries separately.
+                        !DataRetentionFields.RETENTION_AGE.equals(key) &&
+                        !DataRetentionFields.RETENTION_UNTIL.equals(key) &&
+                        !DataRetentionFields.RETENTION_RULE.equals(key)) {
+
                     if (MetaFields.DURATION.getName().equals(key)) {
                         entries.add(new DataInfoSection.Entry(key, convertDuration(value)));
                     } else if (key.toLowerCase().contains("time")) {
@@ -252,7 +256,6 @@ class DataServiceImpl implements DataService {
 
             sections.add(new DataInfoSection("Files", Collections.singletonList(new Entry("", files))));
         }
-
         return sections;
     }
 
@@ -265,8 +268,8 @@ class DataServiceImpl implements DataService {
 
             return securityContext.secureResult(permissionName, () ->
                     dataFetcher.getData(request));
-        } catch (Exception e) {
-            LOGGER.error(LogUtil.message("Error fetching data {}", request), e);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(LogUtil.message("Error fetching data {}", request), e);
             throw e;
         }
     }
@@ -349,7 +352,7 @@ class DataServiceImpl implements DataService {
         entries.add(new DataInfoSection.Entry("Stream Id", String.valueOf(meta.getId())));
         entries.add(new DataInfoSection.Entry("Status", meta.getStatus().getDisplayValue()));
         entries.add(new DataInfoSection.Entry("Status Ms", getDateTimeString(meta.getStatusMs())));
-        entries.add(new DataInfoSection.Entry("Parent Data Id", String.valueOf(meta.getParentMetaId())));
+        entries.add(new DataInfoSection.Entry("Parent Stream Id", String.valueOf(meta.getParentMetaId())));
         entries.add(new DataInfoSection.Entry("Created", getDateTimeString(meta.getCreateMs())));
         entries.add(new DataInfoSection.Entry("Effective", getDateTimeString(meta.getEffectiveMs())));
         entries.add(new DataInfoSection.Entry("Stream Type", meta.getTypeName()));
@@ -365,10 +368,19 @@ class DataServiceImpl implements DataService {
                     pipelineName));
             entries.add(new DataInfoSection.Entry("Processor Pipeline", pipeline));
         }
+        if (meta.getProcessorFilterId() != null) {
+            entries.add(new DataInfoSection.Entry("Processor Filter Id", String.valueOf(meta.getProcessorFilterId())));
+        }
+        if (meta.getProcessorTaskId() != null) {
+            entries.add(new DataInfoSection.Entry("Processor Task Id", String.valueOf(meta.getProcessorTaskId())));
+        }
         return entries;
     }
 
-    private String getDateTimeString(final long ms) {
+    private String getDateTimeString(final Long ms) {
+        if (ms == null) {
+            return "";
+        }
         return DateUtil.createNormalDateTimeString(ms) + " (" + ms + ")";
     }
 
@@ -376,10 +388,6 @@ class DataServiceImpl implements DataService {
         final List<DataInfoSection.Entry> entries = new ArrayList<>();
 
         if (attributeMap != null && !attributeMap.isEmpty()) {
-//            // Add additional data retention information.
-//            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
-//            decorator.addMatchingRetentionRuleInfo(meta, attributeMap);
-
             entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_AGE,
                     attributeMap.get(DataRetentionFields.RETENTION_AGE)));
             entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL,

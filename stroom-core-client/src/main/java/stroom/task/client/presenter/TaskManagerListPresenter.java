@@ -16,7 +16,7 @@
 
 package stroom.task.client.presenter;
 
-import stroom.alert.client.event.ConfirmEvent;
+import stroom.alert.client.event.AlertEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -46,6 +46,7 @@ import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -54,6 +55,7 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Timer;
@@ -62,6 +64,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -70,6 +73,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TaskManagerListPresenter
         extends MyPresenterWidget<PagerView>
@@ -81,21 +85,24 @@ public class TaskManagerListPresenter
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
     private final FindTaskProgressRequest request = new FindTaskProgressRequest(criteria);
     private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
-    private final Set<TaskProgress> requestedTerminateTaskProgress = new HashSet<>();
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
     private final NodeManager nodeManager;
     private final NameFilterTimer timer = new NameFilterTimer();
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
+    private final Map<String, List<String>> errorMap = new HashMap<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
     private final MyDataGrid<TaskProgress> dataGrid;
 
     private final ButtonView expandAllButton;
     private final ButtonView collapseAllButton;
+    private final ButtonView warningsButton;
 
+    private String currentWarnings;
     private Column<TaskProgress, Expander> expanderColumn;
 
     private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
+    private DelayedUpdate delayedUpdate;
 
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
@@ -119,6 +126,8 @@ public class TaskManagerListPresenter
 
         expandAllButton = getView().addButton(SvgPresets.EXPAND_DOWN.with("Expand All", false));
         collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_UP.with("Collapse All", false));
+        warningsButton = getView().addButton(SvgPresets.ALERT.title("Show Warnings"));
+        warningsButton.setVisible(false);
 
         updateButtonStates();
 
@@ -128,6 +137,10 @@ public class TaskManagerListPresenter
             @Override
             protected void exec(final Consumer<TaskProgressResponse> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
+                if (delayedUpdate == null) {
+                    delayedUpdate = new DelayedUpdate(() -> update(dataConsumer));
+                }
+                delayedUpdate.reset();
                 fetchNodes(dataConsumer, throwableConsumer);
             }
         };
@@ -146,18 +159,40 @@ public class TaskManagerListPresenter
                 dataProvider.refresh();
             }
         });
+    }
 
-        expandAllButton.addClickHandler(event -> {
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(expandAllButton.addClickHandler(event -> {
             treeAction.expandAll();
             dataProvider.refresh();
             updateButtonStates();
-        });
+        }));
 
-        collapseAllButton.addClickHandler(event -> {
+        registerHandler(collapseAllButton.addClickHandler(event -> {
             treeAction.collapseAll();
             dataProvider.refresh();
             updateButtonStates();
-        });
+        }));
+
+        registerHandler(warningsButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                showWarnings();
+            }
+        }));
+    }
+
+    private void showWarnings() {
+        if (currentWarnings != null && !currentWarnings.isEmpty()) {
+            AlertEvent.fireWarn(this, "The following warnings have been created while fetching tasks:",
+                    currentWarnings, null);
+        }
+    }
+
+    public void setErrors(final String errors) {
+        currentWarnings = errors;
+        warningsButton.setVisible(currentWarnings != null && !currentWarnings.isEmpty());
     }
 
     private void updateButtonStates() {
@@ -174,8 +209,14 @@ public class TaskManagerListPresenter
         final Column<TaskProgress, TickBoxState> column = new Column<TaskProgress, TickBoxState>(
                 TickBoxCell.create(false, false)) {
             @Override
-            public TickBoxState getValue(final TaskProgress object) {
-                return TickBoxState.fromBoolean(selectedTaskProgress.contains(object));
+            public TickBoxState getValue(final TaskProgress taskProgress) {
+                if (TaskProgressUtil.DEAD_TASK_NAME.equals(taskProgress.getTaskName())) {
+                    // Dead tasks cannot be deleted so don't show a checkbox
+                    // They are only there to show that an orphaned child task was a child of something
+                    return null;
+                } else {
+                    return TickBoxState.fromBoolean(selectedTaskProgress.contains(taskProgress));
+                }
             }
         };
 
@@ -318,12 +359,11 @@ public class TaskManagerListPresenter
     public void fetchNodes(final Consumer<TaskProgressResponse> dataConsumer,
                            final Consumer<Throwable> throwableConsumer) {
         nodeManager.listAllNodes(
-                nodeNames -> fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames),
+                nodeNames -> fetchTasksForNodes(dataConsumer, nodeNames),
                 throwableConsumer);
     }
 
     private void fetchTasksForNodes(final Consumer<TaskProgressResponse> dataConsumer,
-                                    final Consumer<Throwable> throwableConsumer,
                                     final List<String> nodeNames) {
         responseMap.clear();
         for (final String nodeName : nodeNames) {
@@ -331,20 +371,20 @@ public class TaskManagerListPresenter
             rest
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
-//                        GWT.log("combining results for node " + nodeName);
-                        combineNodeTasks(dataConsumer, throwableConsumer);
+                        errorMap.put(nodeName, response.getErrors());
+                        delayedUpdate.update();
                     })
                     .onFailure(throwable -> {
                         responseMap.remove(nodeName);
-                        combineNodeTasks(dataConsumer, throwableConsumer);
+                        errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
+                        delayedUpdate.update();
                     })
                     .call(TASK_RESOURCE)
                     .find(nodeName, request);
         }
     }
 
-    private void combineNodeTasks(final Consumer<TaskProgressResponse> dataConsumer,
-                                  final Consumer<Throwable> throwableConsumer) {
+    private void update(final Consumer<TaskProgressResponse> dataConsumer) {
         // Combine data from all nodes.
         final ResultPage<TaskProgress> resultPage = TaskProgressUtil.combine(
                 criteria,
@@ -353,11 +393,18 @@ public class TaskManagerListPresenter
 
         final HashSet<TaskProgress> currentTaskSet = new HashSet<TaskProgress>(resultPage.getValues());
         selectedTaskProgress.retainAll(currentTaskSet);
-        requestedTerminateTaskProgress.retainAll(currentTaskSet);
+
+        final String allErrors = errorMap.entrySet()
+                .stream()
+                .flatMap(r -> r.getValue().stream().map(message -> r.getKey() + ": " + message))
+                .collect(Collectors.joining("\n"));
+        setErrors(allErrors);
 
         final TaskProgressResponse response = new TaskProgressResponse(
                 resultPage.getValues(),
+                null,
                 resultPage.getPageResponse());
+
         dataConsumer.accept(response);
         updateButtonStates();
     }
@@ -378,29 +425,15 @@ public class TaskManagerListPresenter
     private void endSelectedTask() {
         final Set<TaskProgress> cloneSelectedTaskProgress = new HashSet<>(selectedTaskProgress);
         for (final TaskProgress taskProgress : cloneSelectedTaskProgress) {
-            final boolean kill = requestedTerminateTaskProgress.contains(taskProgress);
-            if (kill) {
-                ConfirmEvent.fireWarn(this, "Task " + taskProgress.getTaskName() + " has not finished ... will kill",
-                        result -> {
-                            if (result) {
-                                doTerminate(taskProgress, true);
-                            }
-                        });
-
-            } else {
-                doTerminate(taskProgress, kill);
-            }
-
+            doTerminate(taskProgress);
         }
         refresh();
     }
 
-    private void doTerminate(final TaskProgress taskProgress, final boolean kill) {
+    private void doTerminate(final TaskProgress taskProgress) {
         final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
         findTaskCriteria.addId(taskProgress.getId());
-        final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria, kill);
-
-        requestedTerminateTaskProgress.add(taskProgress);
+        final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
         restFactory.create()
                 .call(TASK_RESOURCE)
                 .terminate(taskProgress.getNodeName(), request);

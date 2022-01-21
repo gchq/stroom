@@ -35,7 +35,6 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.pipeline.shared.PipelineDoc;
@@ -46,7 +45,6 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterExpressionUtil;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
-import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
@@ -57,8 +55,6 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeRow;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
-import stroom.widget.tooltip.client.presenter.TooltipUtil.TableBuilder2;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -66,6 +62,7 @@ import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.NumberCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -83,6 +80,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorRequest request;
     private final DateTimeFormatter dateTimeFormatter;
+    private final ProcessorInfoBuilder processorInfoBuilder;
     private boolean doneDataDisplay = false;
     private Column<ProcessorListRow, Expander> expanderColumn;
     private ProcessorListRow nextSelection;
@@ -100,7 +98,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                   final PagerView view,
                                   final TooltipPresenter tooltipPresenter,
                                   final RestFactory restFactory,
-                                  final DateTimeFormatter dateTimeFormatter) {
+                                  final DateTimeFormatter dateTimeFormatter,
+                                  final ProcessorInfoBuilder processorInfoBuilder) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
@@ -109,6 +108,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
         this.tooltipPresenter = tooltipPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
+        this.processorInfoBuilder = processorInfoBuilder;
 
         request = new FetchProcessorRequest();
         dataProvider = new RestDataProvider<ProcessorListRow, ProcessorListRowResultPage>(eventBus) {
@@ -208,48 +208,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         final InfoColumn<ProcessorListRow> infoColumn = new InfoColumn<ProcessorListRow>() {
             @Override
             protected void showInfo(final ProcessorListRow row, final int x, final int y) {
-                final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addTwoColTable(tableBuilder -> {
-                            if (row instanceof ProcessorRow) {
-                                final ProcessorRow processorRow = (ProcessorRow) row;
-                                final Processor processor = processorRow.getProcessor();
-                                tableBuilder.addHeaderRow("Stream Processor");
-                                tableBuilder.addRow("Id", String.valueOf(processor.getId()));
-                                tableBuilder.addRow("Created By", processor.getCreateUser());
-                                addRowDateString(tableBuilder, "Created On", processor.getCreateTimeMs());
-                                tableBuilder.addRow("Updated By", processor.getUpdateUser());
-                                addRowDateString(tableBuilder, "Updated On", processor.getUpdateTimeMs());
-                                tableBuilder.addRow("Pipeline",
-                                        DocRefUtil.createSimpleDocRefString(processor.getPipeline()));
-
-                            } else if (row instanceof ProcessorFilterRow) {
-                                final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                                final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
-                                final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
-                                tableBuilder.addHeaderRow("Stream Processor Filter");
-                                tableBuilder.addRow("Id", filter.getId());
-                                tableBuilder.addRow("Created By", filter.getCreateUser());
-                                addRowDateString(tableBuilder, "Created On", filter.getCreateTimeMs());
-                                tableBuilder.addRow("Updated By", filter.getUpdateUser());
-                                addRowDateString(tableBuilder, "Updated On", filter.getUpdateTimeMs());
-                                tableBuilder.addRow("Pipeline",
-                                        DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
-                                addRowDateString(tableBuilder, "Min Stream Create Ms", tracker.getMinMetaCreateMs());
-                                addRowDateString(tableBuilder, "Max Stream Create Ms", tracker.getMaxMetaCreateMs());
-                                addRowDateString(tableBuilder, "Stream Create Ms", tracker.getMetaCreateMs());
-                                tableBuilder.addRow("Stream Create %", tracker.getTrackerStreamCreatePercentage());
-                                addRowDateString(tableBuilder, "Last Poll", tracker.getLastPollMs());
-                                tableBuilder.addRow("Last Poll Age", tracker.getLastPollAge());
-                                tableBuilder.addRow("Last Poll Task Count", tracker.getLastPollTaskCount());
-                                tableBuilder.addRow("Min Stream Id", tracker.getMinMetaId());
-                                tableBuilder.addRow("Min Event Id", tracker.getMinEventId());
-                                tableBuilder.addRow("Streams", tracker.getMetaCount());
-                                tableBuilder.addRow("Events", tracker.getEventCount());
-                                tableBuilder.addRow("Status", tracker.getStatus());
-                            }
-                            return tableBuilder.build();
-                        });
-                tooltipPresenter.show(builder.build(), x, y);
+                final SafeHtml safeHtml = processorInfoBuilder.get(row);
+                tooltipPresenter.show(safeHtml, x, y);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
@@ -572,11 +532,5 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
     void setNextSelection(final ProcessorListRow nextSelection) {
         this.nextSelection = nextSelection;
-    }
-
-    private void addRowDateString(final TableBuilder2 builder, final String label, final Long ms) {
-        if (ms != null) {
-            builder.addRow(label, dateTimeFormatter.format(ms) + " (" + ms + ")");
-        }
     }
 }

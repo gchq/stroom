@@ -5,22 +5,40 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidationSeverity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class AuthenticationConfig extends AbstractConfig implements IsStroomConfig {
+
     public static final String PROP_NAME_AUTHENTICATION_REQUIRED = "authenticationRequired";
     public static final String PROP_NAME_OPENID = "openId";
     public static final String PROP_NAME_PREVENT_LOGIN = "preventLogin";
-    public static final String PROP_NAME_USER_NAME_PATTERN = "userNamePattern";
 
-    private boolean authenticationRequired = true;
-    private OpenIdConfig openIdConfig = new OpenIdConfig();
-    private boolean preventLogin;
+    private final boolean authenticationRequired;
+    private final OpenIdConfig openIdConfig;
+    private final boolean preventLogin;
+
+    public AuthenticationConfig() {
+        authenticationRequired = true;
+        openIdConfig = new OpenIdConfig();
+        preventLogin = false;
+    }
+
+    @JsonCreator
+    public AuthenticationConfig(
+            @JsonProperty(PROP_NAME_AUTHENTICATION_REQUIRED) final boolean authenticationRequired,
+            @JsonProperty(PROP_NAME_OPENID) final OpenIdConfig openIdConfig,
+            @JsonProperty(PROP_NAME_PREVENT_LOGIN) final boolean preventLogin) {
+
+        this.authenticationRequired = authenticationRequired;
+        this.openIdConfig = openIdConfig;
+        this.preventLogin = preventLogin;
+    }
 
     @ReadOnly
     @JsonProperty(PROP_NAME_AUTHENTICATION_REQUIRED)
@@ -33,18 +51,9 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
         return authenticationRequired;
     }
 
-    public void setAuthenticationRequired(final boolean authenticationRequired) {
-        this.authenticationRequired = authenticationRequired;
-    }
-
     @JsonProperty(PROP_NAME_OPENID)
     public OpenIdConfig getOpenIdConfig() {
         return openIdConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setOpenIdConfig(final OpenIdConfig openIdConfig) {
-        this.openIdConfig = openIdConfig;
     }
 
     @JsonPropertyDescription("Prevent new logins to the system. This is useful if the system is scheduled to " +
@@ -52,11 +61,6 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
     @JsonProperty(PROP_NAME_PREVENT_LOGIN)
     public boolean isPreventLogin() {
         return preventLogin;
-    }
-
-    @SuppressWarnings("unused")
-    public void setPreventLogin(final boolean preventLogin) {
-        this.preventLogin = preventLogin;
     }
 
     @Override

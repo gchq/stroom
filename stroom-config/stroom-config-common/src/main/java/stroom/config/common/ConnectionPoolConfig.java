@@ -1,34 +1,38 @@
 /*
  * Copyright 2018 Crown Copyright
  *
- *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * Licensed under the Apache License, Version 2.0 (the "License");
- * See the License for the specific language governing permissions and
+ *
  * Unless required by applicable law or agreed to in writing, software
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * You may obtain a copy of the License at
  * distributed under the License is distributed on an "AS IS" BASIS,
- * import stroom.util.shared.IsStroomConfig;
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  * limitations under the License.
- * you may not use this file except in compliance with the License.
  */
 
 package stroom.config.common;
 
+import stroom.util.config.PropertyUtil;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 import javax.validation.constraints.Min;
 
 @NotInjectableConfig
+@JsonPropertyOrder(alphabetic = true)
 public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String COMMON_CONN_POOL_DESC = "See " +
@@ -39,17 +43,126 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
             "https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration for further " +
             "details on configuring the MySQL JDBC driver properties.";
 
+    private static final ConnectionPoolConfig DEFAULTS = new ConnectionPoolConfig();
+
     // JDBC driver level props
-    private boolean cachePrepStmts = false;
-    private int prepStmtCacheSize = 25;
-    private int prepStmtCacheSqlLimit = 256;
+    private final boolean cachePrepStmts;
+    // TODO 30/11/2021 AT: Make final
+    private int prepStmtCacheSize;
+    private final int prepStmtCacheSqlLimit;
 
     // Hikari pool props
-    private StroomDuration connectionTimeout = StroomDuration.ofSeconds(30);
-    private StroomDuration idleTimeout = StroomDuration.ofMinutes(10);
-    private StroomDuration maxLifetime = StroomDuration.ofMinutes(30);
-    private int minimumIdle = 10;
-    private int maxPoolSize = 30;
+    private final StroomDuration connectionTimeout;
+    private final StroomDuration idleTimeout;
+    private final StroomDuration maxLifetime;
+    private final StroomDuration leakDetectionThreshold;
+    private final int minimumIdle;
+    private final int maxPoolSize;
+
+    public ConnectionPoolConfig() {
+        // JDBC driver level props
+        cachePrepStmts = false;
+        prepStmtCacheSize = 25;
+        prepStmtCacheSqlLimit = 256;
+
+        // Hikari pool props
+        connectionTimeout = StroomDuration.ofSeconds(30);
+        idleTimeout = StroomDuration.ofMinutes(10);
+        maxLifetime = StroomDuration.ofMinutes(30);
+        leakDetectionThreshold = StroomDuration.ZERO;
+        minimumIdle = 10;
+        maxPoolSize = 30;
+    }
+
+    @JsonCreator
+    public ConnectionPoolConfig(@JsonProperty("cachePrepStmts") final boolean cachePrepStmts,
+                                @JsonProperty("prepStmtCacheSize") final int prepStmtCacheSize,
+                                @JsonProperty("prepStmtCacheSqlLimit") final int prepStmtCacheSqlLimit,
+                                @JsonProperty("connectionTimeout") final StroomDuration connectionTimeout,
+                                @JsonProperty("idleTimeout") final StroomDuration idleTimeout,
+                                @JsonProperty("maxLifetime") final StroomDuration maxLifetime,
+                                @JsonProperty("leakDetectionThreshold") final StroomDuration leakDetectionThreshold,
+                                @JsonProperty("minimumIdle") final int minimumIdle,
+                                @JsonProperty("maxPoolSize") final int maxPoolSize) {
+        this.cachePrepStmts = cachePrepStmts;
+        this.prepStmtCacheSize = prepStmtCacheSize;
+        this.prepStmtCacheSqlLimit = prepStmtCacheSqlLimit;
+        this.connectionTimeout = connectionTimeout;
+        this.idleTimeout = idleTimeout;
+        this.maxLifetime = maxLifetime;
+        this.leakDetectionThreshold = leakDetectionThreshold;
+        this.minimumIdle = minimumIdle;
+        this.maxPoolSize = maxPoolSize;
+    }
+
+    /**
+     * Merges the non-null values of other into this. If other is null return this.
+     */
+    public ConnectionPoolConfig merge(final ConnectionPoolConfig other,
+                                      final boolean copyNulls,
+                                      final boolean copyDefaults) {
+
+        if (other == null) {
+            return this;
+        } else {
+            return new ConnectionPoolConfig(
+                    PropertyUtil.mergeValues(
+                            other.cachePrepStmts,
+                            cachePrepStmts,
+                            DEFAULTS.cachePrepStmts,
+                            copyNulls,
+                            copyDefaults),
+                    PropertyUtil.mergeValues(
+                            other.prepStmtCacheSize,
+                            prepStmtCacheSize,
+                            DEFAULTS.prepStmtCacheSize,
+                            copyNulls,
+                            copyDefaults),
+                    PropertyUtil.mergeValues(
+                            other.prepStmtCacheSqlLimit,
+                            prepStmtCacheSqlLimit,
+                            DEFAULTS.prepStmtCacheSqlLimit,
+                            copyNulls,
+                            copyDefaults),
+                    PropertyUtil.mergeValues(
+                            other.connectionTimeout,
+                            connectionTimeout,
+                            DEFAULTS.connectionTimeout,
+                            copyNulls,
+                            copyDefaults),
+                    PropertyUtil.mergeValues(
+                            other.idleTimeout,
+                            idleTimeout,
+                            DEFAULTS.idleTimeout,
+                            copyNulls,
+                            copyDefaults),
+                    PropertyUtil.mergeValues(
+                            other.maxLifetime,
+                            maxLifetime,
+                            DEFAULTS.maxLifetime,
+                            copyNulls,
+                            copyDefaults),
+                    PropertyUtil.mergeValues(
+                            other.leakDetectionThreshold,
+                            leakDetectionThreshold,
+                            DEFAULTS.leakDetectionThreshold,
+                            copyNulls,
+                            copyDefaults),
+                    PropertyUtil.mergeValues(
+                            other.minimumIdle,
+                            minimumIdle,
+                            DEFAULTS.minimumIdle,
+                            copyNulls,
+                            copyDefaults),
+                    PropertyUtil.mergeValues(
+                            other.maxPoolSize,
+                            maxPoolSize,
+                            DEFAULTS.maxPoolSize,
+                            copyNulls,
+                            copyDefaults));
+        }
+    }
+
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
@@ -58,11 +171,6 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
                     COMMON_JDBC_DESC)
     public boolean getCachePrepStmts() {
         return cachePrepStmts;
-    }
-
-    @SuppressWarnings("unused")
-    public void setCachePrepStmts(final boolean cachePrepStmts) {
-        this.cachePrepStmts = cachePrepStmts;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -75,6 +183,7 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
         return prepStmtCacheSize;
     }
 
+    @Deprecated(forRemoval = true)
     public void setPrepStmtCacheSize(final int prepStmtCacheSize) {
         this.prepStmtCacheSize = prepStmtCacheSize;
     }
@@ -89,22 +198,12 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
         return prepStmtCacheSqlLimit;
     }
 
-    @SuppressWarnings("unused")
-    public void setPrepStmtCacheSqlLimit(final int prepStmtCacheSqlLimit) {
-        this.prepStmtCacheSqlLimit = prepStmtCacheSqlLimit;
-    }
-
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
             "The maximum amount of time that a client will wait for a connection from the pool. " +
                     COMMON_CONN_POOL_DESC)
     public StroomDuration getConnectionTimeout() {
         return connectionTimeout;
-    }
-
-    @SuppressWarnings("unused")
-    public void setConnectionTimeout(final StroomDuration connectionTimeout) {
-        this.connectionTimeout = connectionTimeout;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -116,22 +215,12 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
         return idleTimeout;
     }
 
-    @SuppressWarnings("unused")
-    public void setIdleTimeout(final StroomDuration idleTimeout) {
-        this.idleTimeout = idleTimeout;
-    }
-
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
             "The maximum lifetime of a connection in the pool. " +
                     COMMON_CONN_POOL_DESC)
     public StroomDuration getMaxLifetime() {
         return maxLifetime;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMaxLifetime(final StroomDuration maxLifetime) {
-        this.maxLifetime = maxLifetime;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -143,11 +232,6 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
         return minimumIdle;
     }
 
-    @SuppressWarnings("unused")
-    public void setMinimumIdle(final int minimumIdle) {
-        this.minimumIdle = minimumIdle;
-    }
-
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
             "The maximum size that the pool is allowed to reach, including both idle and in-use connections. " +
@@ -157,12 +241,16 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
         return maxPoolSize;
     }
 
-    @SuppressWarnings("unused")
-    public void setMaxPoolSize(final int maxPoolSize) {
-        this.maxPoolSize = maxPoolSize;
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonPropertyDescription(
+            "The amount of time that a connection can be out of the pool before a message is logged indicating " +
+                    "a possible connection leak. A value of 0 means leak detection is disabled. Lowest acceptable " +
+                    "value for enabling leak detection is 2 seconds." +
+                    COMMON_CONN_POOL_DESC)
+    public StroomDuration getLeakDetectionThreshold() {
+        return leakDetectionThreshold;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -172,12 +260,15 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
             return false;
         }
         final ConnectionPoolConfig that = (ConnectionPoolConfig) o;
-        return cachePrepStmts == that.cachePrepStmts &&
-                prepStmtCacheSize == that.prepStmtCacheSize &&
-                prepStmtCacheSqlLimit == that.prepStmtCacheSqlLimit &&
-                Objects.equals(idleTimeout, that.idleTimeout) &&
-                Objects.equals(maxLifetime, that.maxLifetime) &&
-                Objects.equals(maxPoolSize, that.maxPoolSize);
+        return cachePrepStmts == that.cachePrepStmts
+                && prepStmtCacheSize == that.prepStmtCacheSize
+                && prepStmtCacheSqlLimit == that.prepStmtCacheSqlLimit
+                && minimumIdle == that.minimumIdle
+                && maxPoolSize == that.maxPoolSize
+                && Objects.equals(connectionTimeout, that.connectionTimeout)
+                && Objects.equals(idleTimeout, that.idleTimeout)
+                && Objects.equals(maxLifetime, that.maxLifetime)
+                && Objects.equals(leakDetectionThreshold, that.leakDetectionThreshold);
     }
 
     @Override
@@ -185,11 +276,13 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
         return Objects.hash(cachePrepStmts,
                 prepStmtCacheSize,
                 prepStmtCacheSqlLimit,
+                connectionTimeout,
                 idleTimeout,
                 maxLifetime,
+                leakDetectionThreshold,
+                minimumIdle,
                 maxPoolSize);
     }
-
 
     @Override
     public String toString() {
@@ -200,6 +293,7 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
                 ", connectionTimeout=" + connectionTimeout +
                 ", idleTimeout=" + idleTimeout +
                 ", maxLifetime=" + maxLifetime +
+                ", leakDetectionThreshold=" + leakDetectionThreshold +
                 ", minimumIdle=" + minimumIdle +
                 ", maxPoolSize=" + maxPoolSize +
                 '}';

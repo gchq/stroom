@@ -130,11 +130,11 @@ class TestEffectiveStreamPool extends StroomUnitTest {
         final InnerStreamMetaService mockStore = new InnerStreamMetaService();
 
         try (CacheManager cacheManager = new CacheManagerImpl()) {
-            final ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
-            referenceDataConfig.setEffectiveStreamCache(CacheConfig.builder()
-                    .maximumSize(1000L)
-                    .expireAfterWrite(StroomDuration.ofMillis(100))
-                    .build());
+            final ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig()
+                    .withEffectiveStreamCache(CacheConfig.builder()
+                            .maximumSize(1000L)
+                            .expireAfterWrite(StroomDuration.ofMillis(100))
+                            .build());
 
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
                     cacheManager,

@@ -72,6 +72,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -110,17 +111,17 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private final ObjectMapper objectMapper;
 
-    private final LoggingConfig loggingConfig;
+    private final Provider<LoggingConfig> loggingConfigProvider;
 
     @Inject
-    StroomEventLoggingServiceImpl(final LoggingConfig loggingConfig,
+    StroomEventLoggingServiceImpl(final Provider<LoggingConfig> loggingConfigProvider,
                                   final SecurityContext securityContext,
                                   final Provider<HttpServletRequest> httpServletRequestProvider,
                                   final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap,
                                   final CurrentActivity currentActivity,
                                   final Provider<BuildInfo> buildInfoProvider,
                                   final DeviceCache deviceCache) {
-        this.loggingConfig = loggingConfig;
+        this.loggingConfigProvider = loggingConfigProvider;
         this.securityContext = securityContext;
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.objectInfoProviderMap = objectInfoProviderMap;
@@ -499,12 +500,28 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      * @param obj POJO from which to extract properties
      * @return List of {@link Data} items representing properties of the supplied POJO
      */
+    @Override
     public List<Data> getDataItems(Object obj) {
-        if (obj == null || loggingConfig.getMaxDataElementStringLength() == 0) {
+        if (obj == null || loggingConfigProvider.get().getMaxDataElementStringLength() == 0) {
             return null;
         }
+
+        if (obj instanceof Properties) {
+            return getDataItemsFromProperties((Properties) obj);
+        }
+
+        return getDataItemsFromJavaBean(obj);
+    }
+
+    private List<Data> getDataItemsFromProperties(Properties properties) {
+        return properties.entrySet().stream().map(entry ->
+                convertValToData(entry.getKey().toString(), entry.getValue())).collect(Collectors.toList());
+    }
+
+    private List<Data> getDataItemsFromJavaBean(Object bean) {
+
         // Construct a Jackson JavaType for the class
-        final JavaType javaType = objectMapper.getTypeFactory().constructType(obj.getClass());
+        final JavaType javaType = objectMapper.getTypeFactory().constructType(bean.getClass());
 
         // Introspect the given type
         final BeanDescription beanDescription = objectMapper.getSerializationConfig().introspect(javaType);
@@ -518,8 +535,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 .findPropertyIgnorals(beanDescription.getClassInfo())
                 .getIgnored()); // Filter properties removing the class level ignored ones
 
-        if (loggingConfig.isOmitRecordDetailsLoggingEnabled()) {
-            final Set<String> standardInterfaceProperties = ignorePropertiesFromStandardInterfaces(obj);
+        if (loggingConfigProvider.get().isOmitRecordDetailsLoggingEnabled()) {
+            final Set<String> standardInterfaceProperties = ignorePropertiesFromStandardInterfaces(bean);
             ignoredProperties.addAll(standardInterfaceProperties);
         }
 
@@ -529,53 +546,60 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
         return availableProperties.stream().map(
                 beanPropDef -> {
-                    final Data.Builder<?> builder = Data.builder().withName(beanPropDef.getName());
-                    final Object valObj = extractPropVal(beanPropDef, obj);
-                    if (valObj != null) {
-                        if (valObj instanceof Collection<?>) {
-                            Collection<?> collection = (Collection<?>) valObj;
-
-                            if (loggingConfig.getMaxListElements() >= 0
-                                    && collection.size() > loggingConfig.getMaxListElements()) {
-                                final String collectionValue = collection.stream()
-                                        .limit(loggingConfig.getMaxListElements())
-                                        .map(Objects::toString)
-                                        .collect(Collectors.joining(", "));
-                                builder.withValue(collectionValue + "...(" + collection.size() +
-                                        " elements in total).");
-                            } else {
-                                final String collectionValue = collection.stream()
-                                        .map(Objects::toString)
-                                        .collect(Collectors.joining(", "));
-                                builder.withValue(collectionValue);
-                            }
-                        } else if (HasName.class.isAssignableFrom(valObj.getClass())) {
-                            builder.withValue(((HasName) valObj).getName());
-                        } else if (isLeafPropertyType(valObj.getClass())) {
-                            final String value;
-                            if (shouldRedact(beanPropDef.getName().toLowerCase(), valObj.getClass())) {
-                                value = "********";
-                            } else {
-                                if (loggingConfig.getMaxDataElementStringLength() > 0) {
-                                    final String stringVal = valObj.toString();
-                                    if (stringVal.length() > loggingConfig.getMaxDataElementStringLength()) {
-                                        value = stringVal.substring(0,
-                                                loggingConfig.getMaxDataElementStringLength() - 1)
-                                                + "...";
-                                    } else {
-                                        value = stringVal;
-                                    }
-                                } else {
-                                    value = valObj.toString();
-                                }
-                            }
-                            builder.withValue(value);
-                        } else {
-                            getDataItems(valObj).forEach(builder::addData);
-                        }
-                    }
-                    return builder.build();
+                    final Object valObj = extractPropVal(beanPropDef, bean);
+                    return convertValToData(beanPropDef.getName(), valObj);
                 }).collect(Collectors.toList());
+    }
+
+    private Data convertValToData(String name, Object valObj) {
+        final Data.Builder<?> builder = Data.builder().withName(name);
+
+        if (valObj != null) {
+            final LoggingConfig loggingConfig = loggingConfigProvider.get();
+            if (valObj instanceof Collection<?>) {
+                Collection<?> collection = (Collection<?>) valObj;
+
+                if (loggingConfig.getMaxListElements() >= 0
+                        && collection.size() > loggingConfig.getMaxListElements()) {
+                    final String collectionValue = collection.stream()
+                            .limit(loggingConfig.getMaxListElements())
+                            .map(Objects::toString)
+                            .collect(Collectors.joining(", "));
+                    builder.withValue(collectionValue + "...(" + collection.size() +
+                            " elements in total).");
+                } else {
+                    final String collectionValue = collection.stream()
+                            .map(Objects::toString)
+                            .collect(Collectors.joining(", "));
+                    builder.withValue(collectionValue);
+                }
+            } else if (HasName.class.isAssignableFrom(valObj.getClass())) {
+                builder.withValue(((HasName) valObj).getName());
+            } else if (isLeafPropertyType(valObj.getClass())) {
+                final String value;
+                if (shouldRedact(name.toLowerCase(), valObj.getClass())) {
+                    value = "********";
+                } else {
+                    if (loggingConfig.getMaxDataElementStringLength() > 0) {
+                        final String stringVal = valObj.toString();
+                        if (stringVal.length() > loggingConfig.getMaxDataElementStringLength()) {
+                            value = stringVal.substring(0,
+                                    loggingConfig.getMaxDataElementStringLength() - 1)
+                                    + "...";
+                        } else {
+                            value = stringVal;
+                        }
+                    } else {
+                        value = valObj.toString();
+                    }
+                }
+                builder.withValue(value);
+            } else {
+                getDataItems(valObj).forEach(builder::addData);
+            }
+        }
+        return builder.build();
+
     }
 
     private static Set<String> ignorePropertiesFromStandardInterfaces(final Object obj) {

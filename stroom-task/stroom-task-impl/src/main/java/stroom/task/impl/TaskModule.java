@@ -19,7 +19,6 @@ package stroom.task.impl;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskResource;
 import stroom.util.RunnableWrapper;
@@ -40,7 +39,6 @@ public class TaskModule extends AbstractModule {
 
         bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
         bind(Executor.class).toProvider(ExecutorProviderImpl.class);
-        bind(TaskContextFactory.class).to(TaskContextFactoryImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskResource.class).to(TaskResourceImpl.class);
 
@@ -55,11 +53,10 @@ public class TaskModule extends AbstractModule {
 
         // Make sure the first thing to start and the last thing to stop is the task manager.
         LifecycleBinder.create(binder())
-                .bindStartupTaskTo(TaskManagerStartup.class, Integer.MAX_VALUE)
-                .bindShutdownTaskTo(TaskManagerShutdown.class, Integer.MAX_VALUE);
+                .bindStartupTaskTo(TaskManagerStartup.class, 10)
+                .bindShutdownTaskTo(TaskManagerShutdown.class, 8);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

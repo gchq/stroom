@@ -24,10 +24,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class RefDataProcessingInfo {
+
+    public static final TemporalUnit PROCESSING_INFO_TRUNCATION_UNIT = ChronoUnit.HOURS;
+    private static final long PROCESSING_INFO_TRUNCATION_UNIT_MS = ChronoUnit.HOURS.getDuration().toMillis();
 
     @JsonProperty
     private final long createTimeEpochMs;
@@ -44,7 +49,9 @@ public class RefDataProcessingInfo {
                                  @JsonProperty("effectiveTimeEpochMs") final long effectiveTimeEpochMs,
                                  @JsonProperty("processingState") final ProcessingState processingState) {
         this.createTimeEpochMs = createTimeEpochMs;
-        this.lastAccessedTimeEpochMs = lastAccessedTimeEpochMs;
+        // To make it clear that we only update the last access time at intervals to avoid
+        // frequent writes, truncate the value.
+        this.lastAccessedTimeEpochMs = truncateLastAccessTime(lastAccessedTimeEpochMs);
         this.effectiveTimeEpochMs = effectiveTimeEpochMs;
         this.processingState = processingState;
     }
@@ -54,7 +61,7 @@ public class RefDataProcessingInfo {
 
         long newLastAccessedTime;
         if (touchLastAccessedTime) {
-            newLastAccessedTime = System.currentTimeMillis();
+            newLastAccessedTime = truncateLastAccessTime(System.currentTimeMillis());
         } else {
             newLastAccessedTime = lastAccessedTimeEpochMs;
         }
@@ -68,7 +75,7 @@ public class RefDataProcessingInfo {
     public RefDataProcessingInfo updateLastAccessedTime() {
         return new RefDataProcessingInfo(
                 createTimeEpochMs,
-                System.currentTimeMillis(),
+                truncateLastAccessTime(System.currentTimeMillis()),
                 effectiveTimeEpochMs,
                 processingState);
     }
@@ -77,6 +84,10 @@ public class RefDataProcessingInfo {
         return createTimeEpochMs;
     }
 
+    /**
+     * @return The time an entry for the associated ref stream definition was accessed,
+     * truncated to the nearest PROCESSING_INFO_TRUNCATION_UNIT.
+     */
     public long getLastAccessedTimeEpochMs() {
         return lastAccessedTimeEpochMs;
     }
@@ -104,7 +115,15 @@ public class RefDataProcessingInfo {
         return Instant.ofEpochMilli(effectiveTimeEpochMs);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
+    public static Instant truncateLastAccessTime(final Instant instant) {
+        return instant.truncatedTo(PROCESSING_INFO_TRUNCATION_UNIT);
+    }
+
+    public static long truncateLastAccessTime(final long timeMs) {
+        final long buckets = timeMs / PROCESSING_INFO_TRUNCATION_UNIT_MS;
+        return buckets * PROCESSING_INFO_TRUNCATION_UNIT_MS;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

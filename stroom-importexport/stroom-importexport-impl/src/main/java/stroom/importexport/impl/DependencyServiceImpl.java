@@ -12,6 +12,7 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResultPage;
 
 import org.slf4j.Logger;
@@ -94,7 +95,7 @@ public class DependencyServiceImpl implements DependencyService {
     }
 
     @Override
-    public ResultPage<Dependency> getDependencies(final DependencyCriteria criteria) {
+    public QuickFilterResultPage<Dependency> getDependencies(final DependencyCriteria criteria) {
         return taskContextFactory.contextResult(
                 "Get Dependencies",
                 taskContext -> {
@@ -108,8 +109,8 @@ public class DependencyServiceImpl implements DependencyService {
                 .get();
     }
 
-    private ResultPage<Dependency> getDependencies(final DependencyCriteria criteria,
-                                                   final TaskContext parentTaskContext) {
+    private QuickFilterResultPage<Dependency> getDependencies(final DependencyCriteria criteria,
+                                                              final TaskContext parentTaskContext) {
         // Build a map of deps (parent to children)
         final Map<DocRef, Set<DocRef>> allDependencies = buildDependencyMap(parentTaskContext);
 
@@ -124,11 +125,15 @@ public class DependencyServiceImpl implements DependencyService {
                 Arrays.stream(ALL_PSEUDO_DOCREFS).collect(Collectors.toSet()),
                 optSortListComparator);
 
-        return ResultPage.createPageLimitedList(
+        final ResultPage<Dependency> resultPage = ResultPage.createPageLimitedList(
                 flatDependencies,
                 Optional.ofNullable(criteria)
                         .map(DependencyCriteria::getPageRequest)
                         .orElse(new PageRequest()));
+
+        return new QuickFilterResultPage<>(
+                resultPage,
+                QuickFilterPredicateFactory.fullyQualifyInput(criteria.getPartialName(), FIELD_MAPPERS));
     }
 
 
@@ -167,7 +172,7 @@ public class DependencyServiceImpl implements DependencyService {
                 .values()
                 .parallelStream()
                 .map(handler ->
-                        taskContextFactory.contextResult(
+                        taskContextFactory.childContextResult(
                                 parentTaskContext,
                                 "Get " + handler.getType() + " dependencies",
                                 taskContext -> {

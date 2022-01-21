@@ -21,7 +21,7 @@ public final class MetaExpressionUtil {
 
     public static ExpressionOperator createDataIdSetExpression(final Set<Long> idSet) {
         final String delimitedList = idSet.stream().map(String::valueOf).collect(Collectors.joining(","));
-        return ExpressionOperator.builder().op(Op.OR)
+        return ExpressionOperator.builder().op(Op.AND)
                 .addTerm(MetaFields.ID.getName(), Condition.IN, delimitedList)
                 .build();
     }
@@ -57,25 +57,6 @@ public final class MetaExpressionUtil {
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
-
-//    public static ExpressionOperator createFoldersExpression(final DocRef... folders) {
-//        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
-//
-//        if (folders != null) {
-//            if (folders.length == 1) {
-//                builder.addTerm(MetaFields.FEED, Condition.IN_FOLDER, folders[0]);
-//            } else {
-//                final ExpressionOperator.Builder or = ExpressionOperator.builder().op(Op.OR);
-//                for (final DocRef folder : folders) {
-//                    or.addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder);
-//                }
-//                builder.addOperator(or.build());
-//            }
-//        }
-//
-//        builder.addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
-//        return builder.build();
-//    }
 
     public static ExpressionOperator createFeedExpression(final DocRef feedRef) {
         return ExpressionOperator.builder()

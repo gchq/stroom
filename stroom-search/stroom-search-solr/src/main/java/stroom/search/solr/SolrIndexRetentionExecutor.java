@@ -27,7 +27,6 @@ import stroom.search.solr.search.SolrSearchConfig;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -40,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -47,7 +47,6 @@ public class SolrIndexRetentionExecutor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexRetentionExecutor.class);
 
-    private static final String TASK_NAME = "Solr Index Retention Executor";
     private static final String LOCK_NAME = "SolrIndexRetentionExecutor";
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
@@ -56,8 +55,8 @@ public class SolrIndexRetentionExecutor {
     private final SolrIndexClientCache solrIndexClientCache;
     private final WordListProvider dictionaryStore;
     private final ClusterLockService clusterLockService;
-    private final SolrSearchConfig searchConfig;
-    private final TaskContextFactory taskContextFactory;
+    private final Provider<SolrSearchConfig> searchConfigProvider;
+    private final TaskContext taskContext;
 
     @Inject
     public SolrIndexRetentionExecutor(final SolrIndexStore solrIndexStore,
@@ -65,34 +64,28 @@ public class SolrIndexRetentionExecutor {
                                       final SolrIndexClientCache solrIndexClientCache,
                                       final WordListProvider dictionaryStore,
                                       final ClusterLockService clusterLockService,
-                                      final SolrSearchConfig searchConfig,
-                                      final TaskContextFactory taskContextFactory) {
+                                      final Provider<SolrSearchConfig> searchConfigProvider,
+                                      final TaskContext taskContext) {
         this.solrIndexStore = solrIndexStore;
         this.solrIndexCache = solrIndexCache;
         this.solrIndexClientCache = solrIndexClientCache;
         this.dictionaryStore = dictionaryStore;
         this.clusterLockService = clusterLockService;
-        this.searchConfig = searchConfig;
-        this.taskContextFactory = taskContextFactory;
+        this.searchConfigProvider = searchConfigProvider;
+        this.taskContext = taskContext;
     }
 
     public void exec() {
-        taskContextFactory.context(TASK_NAME, this::exec)
-                .run();
-    }
-
-    private void exec(final TaskContext taskContext) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        info(taskContext, () -> "Start");
+        info(() -> "Start");
         clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
                 if (!Thread.currentThread().isInterrupted()) {
                     final List<DocRef> docRefs = solrIndexStore.list();
                     if (docRefs != null) {
-                        docRefs.forEach(docRef ->
-                                performRetention(taskContext, docRef));
+                        docRefs.forEach(this::performRetention);
                     }
-                    info(taskContext, () -> "Finished in " + logExecutionTime);
+                    info(() -> "Finished in " + logExecutionTime);
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
@@ -100,7 +93,7 @@ public class SolrIndexRetentionExecutor {
         });
     }
 
-    private void performRetention(final TaskContext taskContext, final DocRef docRef) {
+    private void performRetention(final DocRef docRef) {
         if (!Thread.currentThread().isInterrupted()) {
             try {
                 final CachedSolrIndex cachedSolrIndex = solrIndexCache.get(docRef);
@@ -114,7 +107,7 @@ public class SolrIndexRetentionExecutor {
                                 new SearchExpressionQueryBuilder(
                                         dictionaryStore,
                                         indexFieldsMap,
-                                        searchConfig.getMaxBooleanClauseCount(),
+                                        searchConfigProvider.get().getMaxBooleanClauseCount(),
                                         null,
                                         System.currentTimeMillis());
                         final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(
@@ -123,7 +116,7 @@ public class SolrIndexRetentionExecutor {
                         final String queryString = query.toString();
                         solrIndexClientCache.context(solrIndexDoc.getSolrConnectionConfig(), solrClient -> {
                             try {
-                                info(taskContext, () ->
+                                info(() ->
                                         "Deleting data from '" + solrIndexDoc.getName()
                                                 + "' matching query '" + queryString + "'");
                                 solrClient.deleteByQuery(
@@ -142,7 +135,7 @@ public class SolrIndexRetentionExecutor {
         }
     }
 
-    private void info(final TaskContext taskContext, final Supplier<String> message) {
+    private void info(final Supplier<String> message) {
         taskContext.info(message);
         LOGGER.info(message);
     }

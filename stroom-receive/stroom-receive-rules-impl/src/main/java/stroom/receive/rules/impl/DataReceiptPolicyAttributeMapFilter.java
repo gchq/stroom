@@ -40,7 +40,7 @@ class DataReceiptPolicyAttributeMapFilter implements AttributeMapFilter {
         final RuleAction action = dataReceiptPolicyChecker.check(attributeMap);
 
         if (RuleAction.REJECT.equals(action)) {
-            throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA);
+            throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA, attributeMap);
         }
 
         return RuleAction.RECEIVE.equals(action);

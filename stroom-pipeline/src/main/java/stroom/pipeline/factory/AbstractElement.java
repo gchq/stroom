@@ -16,7 +16,11 @@
 
 package stroom.pipeline.factory;
 
+import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.Terminator;
+
 public abstract class AbstractElement implements Element {
+
     private Terminator terminator = Terminator.DEFAULT;
     private String elementId;
 
@@ -46,8 +50,8 @@ public abstract class AbstractElement implements Element {
         this.elementId = elementId;
     }
 
-    protected void terminationCheck() {
-        terminator.check();
+    protected void checkTermination() throws TaskTerminatedException {
+        terminator.checkTermination();
     }
 
     @Override

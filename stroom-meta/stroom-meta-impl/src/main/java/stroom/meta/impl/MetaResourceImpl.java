@@ -16,6 +16,8 @@
 
 package stroom.meta.impl;
 
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.meta.api.MetaService;
@@ -24,7 +26,10 @@ import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.UpdateStatusRequest;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResultPage;
+
+import event.logging.SearchEventAction;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,20 +40,48 @@ import javax.inject.Provider;
 class MetaResourceImpl implements MetaResource {
 
     private final Provider<MetaService> metaServiceProvider;
+    private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
 
     @Inject
-    MetaResourceImpl(Provider<MetaService> metaServiceProvider) {
+    MetaResourceImpl(Provider<MetaService> metaServiceProvider,
+                     final Provider<StroomEventLoggingService> eventLoggingServiceProvider) {
         this.metaServiceProvider = metaServiceProvider;
+        this.eventLoggingServiceProvider = eventLoggingServiceProvider;
     }
+
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public Integer updateStatus(final UpdateStatusRequest request) {
-        return metaServiceProvider.get().updateStatus(
-                request.getCriteria(),
-                request.getCurrentStatus(),
-                request.getNewStatus());
+        final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
+
+        final ExpressionOperator expression = request.getCriteria().getExpression();
+
+        final String currentStatus = (request.getCurrentStatus() != null)
+                ?
+                request.getCurrentStatus().getDisplayValue()
+                : "selected";
+        final String newStatus = (request.getNewStatus() != null)
+                ?
+                request.getNewStatus().getDisplayValue()
+                : "unspecified / unknown";
+
+        final SearchEventAction action = SearchEventAction.builder()
+                .withQuery(StroomEventLoggingUtil.convertExpression(expression))
+                .build();
+
+        return eventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "updateStatus"))
+                .withDescription("Modify the status of " + currentStatus + " streams to " + newStatus)
+                .withDefaultEventAction(action)
+                .withSimpleLoggedResult(() -> metaServiceProvider.get().updateStatus(
+                        request.getCriteria(),
+                        request.getCurrentStatus(),
+                        request.getNewStatus()))
+                .getResultAndLog();
     }
 
+    @AutoLogged(OperationType.SEARCH)
     @Override
     public ResultPage<MetaRow> findMetaRow(final FindMetaCriteria criteria) {
         return metaServiceProvider.get().findDecoratedRows(criteria);
@@ -67,6 +100,7 @@ class MetaResourceImpl implements MetaResource {
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public List<String> getTypes() {
         return metaServiceProvider
                 .get()

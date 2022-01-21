@@ -465,7 +465,6 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
                 '}';
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

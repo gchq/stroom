@@ -129,6 +129,11 @@ start_stroom() {
     java_opts="${java_opts} -XX:HeapDumpPath=${HEAP_DUMP_DIR}"
   fi
 
+  # Open some packages to the classpath.
+  java_opts="${java_opts} --add-opens java.base/java.nio=ALL-UNNAMED"
+  java_opts="${java_opts} --add-opens java.base/sun.nio.ch=ALL-UNNAMED"
+  java_opts="${java_opts} --add-opens java.base/java.lang=ALL-UNNAMED"
+
   # change to the script dir so java is relative to there and not where
   # we happen to be calling the script from. Can't drop into a sub shell
   # as we need to capture the pid of the java process

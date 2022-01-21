@@ -5,7 +5,6 @@ import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
 
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
-import javax.annotation.concurrent.NotThreadSafe;
+import javax.validation.constraints.NotNull;
 
 /**
  * Reads the bytes in an {@link InputStream} and decodes them into {@link DecodedChar} instances
@@ -26,7 +25,6 @@ import javax.annotation.concurrent.NotThreadSafe;
  * If the file contains a byte order mark that indicates an encoding different to the one supplied
  * then the one from the bom will be used.
  */
-@NotThreadSafe
 public class CharReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CharReader.class);

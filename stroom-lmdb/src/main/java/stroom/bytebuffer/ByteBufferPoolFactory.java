@@ -13,12 +13,12 @@ public class ByteBufferPoolFactory {
     private final ByteBufferPool byteBufferPool;
 
     public ByteBufferPoolFactory() {
-        this.byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
+        this.byteBufferPool = new ByteBufferPoolImpl4(ByteBufferPoolConfig::new);
     }
 
     @Inject
     public ByteBufferPoolFactory(final ByteBufferPoolConfig byteBufferPoolConfig) {
-        this.byteBufferPool = new ByteBufferPoolImpl4(byteBufferPoolConfig);
+        this.byteBufferPool = new ByteBufferPoolImpl4(() -> byteBufferPoolConfig);
     }
 
     public ByteBufferPool getByteBufferPool() {

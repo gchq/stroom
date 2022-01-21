@@ -31,9 +31,9 @@ import event.logging.EventAction;
 import event.logging.ProcessEventAction;
 import event.logging.Query;
 import event.logging.SearchEventAction;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Optional;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 class RequestEventLogImpl implements RequestEventLog {
@@ -81,7 +81,7 @@ class RequestEventLogImpl implements RequestEventLog {
                 documentEventLog.create(responseEntity, typeId, descriptionVerb, error);
                 break;
             case COPY:
-                documentEventLog.copy(requestEntity, typeId, descriptionVerb, error);
+                documentEventLog.copy(requestEntity, responseEntity, typeId, descriptionVerb, error);
                 break;
             case UPDATE:
                 if (!RequestInfo.objectIsLoggable(responseEntity)) {

@@ -531,6 +531,12 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                                 })
                                 .fire();
                     })
+                    .onFailure(throwable -> {
+                        xmlEditor.setErrorText(
+                                "Unable to display pipeline source",
+                                throwable.getMessage()
+                        );
+                    })
                     .call(PIPELINE_RESOURCE)
                     .fetchPipelineXml(docRef);
         }

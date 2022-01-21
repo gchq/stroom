@@ -70,6 +70,7 @@ public class RemoteNodeSearch implements NodeSearch {
                 throw searchException;
             }
         } catch (final Throwable e) {
+            LOGGER.debug(e::getMessage, e);
             final SearchException searchException = new SearchException(e.getMessage(), e);
             resultCollector.onFailure(targetNode, searchException);
             throw searchException;
@@ -91,6 +92,7 @@ public class RemoteNodeSearch implements NodeSearch {
             }
 
         } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
             resultCollector.onFailure(sourceNode, e);
 
         } finally {
@@ -105,7 +107,7 @@ public class RemoteNodeSearch implements NodeSearch {
                     resultCollector.onFailure(targetNode, new SearchException("Failed to destroy remote search"));
                 }
             } catch (final Throwable e) {
-                resultCollector.onFailure(targetNode, new SearchException(e.getMessage(), e));
+                resultCollector.onFailure(targetNode, e);
             }
         }
     }
@@ -129,6 +131,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
             return response.readEntity(Boolean.class);
         } catch (Throwable e) {
+            LOGGER.debug(e::getMessage, e);
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
     }
@@ -175,6 +178,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
             return response.readEntity(Boolean.class);
         } catch (Throwable e) {
+            LOGGER.debug(e::getMessage, e);
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
     }

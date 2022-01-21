@@ -7,7 +7,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
 import org.assertj.core.api.Assertions;
@@ -18,7 +17,6 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Singleton;
 
 class TestAppConfig {
 
@@ -57,18 +55,6 @@ class TestAppConfig {
                                 fieldClass.getName(),
                                 AbstractConfig.class.getName()))
                         .isAssignableFrom(fieldClass);
-
-                if (fieldClass.getDeclaredAnnotation(NotInjectableConfig.class) == null) {
-                    // Class should be injectable so make sure it is marked singleton
-                    // Strictly it does not need to be as when we do the bindings we bind to
-                    // instances of each AbstractConfig sub class, but it makes it nice
-                    // and explicit for the dev. Just do it!
-                    Assertions.assertThat(fieldClass.getDeclaredAnnotation(Singleton.class))
-                            .withFailMessage(LogUtil.message("Class {} does not have the {} annotation.",
-                                    fieldClass.getName(),
-                                    Singleton.class.getName()))
-                            .isNotNull();
-                }
 
                 // This field is another config object so recurs into it
                 checkProperties(fieldClass, indent + "  ");
@@ -130,7 +116,7 @@ class TestAppConfig {
         Assertions.assertThat(appConfig.getActivityConfig()
                 .getDbConfig()
                 .getConnectionConfig()
-                .getBasePath())
+                .getBasePathStr())
                 .isEqualTo("stroom.activity.db.connection");
     }
 

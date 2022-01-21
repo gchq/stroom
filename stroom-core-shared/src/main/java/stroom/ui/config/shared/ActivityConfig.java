@@ -11,32 +11,48 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import javax.inject.Singleton;
 
-@Singleton
-@JsonPropertyOrder({"enabled", "chooseOnStartup", "managerTitle", "editorTitle", "editorBody"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class ActivityConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("If you would like users to be able to record some info about the activity they " +
             "are performing set this property to true.")
-    private boolean enabled;
+    private final boolean enabled;
+
     @JsonProperty
     @JsonPropertyDescription("Set to true if users should be prompted to choose an activity on login.")
-    private boolean chooseOnStartup;
+    private final boolean chooseOnStartup;
+
     @JsonProperty
     @JsonPropertyDescription("The title of the activity manager popup.")
-    private String managerTitle;
+    private final String managerTitle;
+
     @JsonProperty
     @JsonPropertyDescription("The title of the activity editor popup.")
-    private String editorTitle;
+    private final String editorTitle;
+
     @JsonProperty
     @JsonPropertyDescription("The HTML to display in the activity editor popup.")
-    private String editorBody;
+    private final String editorBody;
 
     public ActivityConfig() {
-        setDefaults();
+        enabled = false;
+        chooseOnStartup = false;
+        managerTitle = "Choose Activity";
+        editorTitle = "Edit Activity";
+        editorBody = "Activity Code:</br>" +
+                "<input type=\"text\" name=\"code\"></input></br></br>" +
+                "Activity Description:</br>" +
+                "<textarea " +
+                "rows=\"4\" " +
+                "style=\"width:100%;height:80px\" " +
+                "name=\"description\" " +
+                "validation=\".{80,}\" " +
+                "validationMessage=\"The activity description must be at least 80 characters long.\" >" +
+                "</textarea>" +
+                "Explain what the activity is";
     }
 
     @JsonCreator
@@ -50,70 +66,26 @@ public class ActivityConfig extends AbstractConfig implements IsStroomConfig {
         this.managerTitle = managerTitle;
         this.editorTitle = editorTitle;
         this.editorBody = editorBody;
-
-        setDefaults();
-    }
-
-    private void setDefaults() {
-        if (managerTitle == null) {
-            managerTitle = "Choose Activity";
-        }
-        if (editorTitle == null) {
-            editorTitle = "Edit Activity";
-        }
-        if (editorBody == null) {
-            editorBody = "Activity Code:</br>" +
-                    "<input type=\"text\" name=\"code\"></input></br></br>" +
-                    "Activity Description:</br>" +
-                    "<textarea " +
-                    "rows=\"4\" " +
-                    "style=\"width:100%;height:80px\" " +
-                    "name=\"description\" " +
-                    "validation=\".{80,}\" " +
-                    "validationMessage=\"The activity description must be at least 80 characters long.\" >" +
-                    "</textarea>" +
-                    "Explain what the activity is";
-        }
     }
 
     public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public boolean isChooseOnStartup() {
         return chooseOnStartup;
-    }
-
-    public void setChooseOnStartup(final boolean chooseOnStartup) {
-        this.chooseOnStartup = chooseOnStartup;
     }
 
     public String getManagerTitle() {
         return managerTitle;
     }
 
-    public void setManagerTitle(final String managerTitle) {
-        this.managerTitle = managerTitle;
-    }
-
     public String getEditorTitle() {
         return editorTitle;
     }
 
-    public void setEditorTitle(final String editorTitle) {
-        this.editorTitle = editorTitle;
-    }
-
     public String getEditorBody() {
         return editorBody;
-    }
-
-    public void setEditorBody(final String editorBody) {
-        this.editorBody = editorBody;
     }
 
     @Override
@@ -127,7 +99,6 @@ public class ActivityConfig extends AbstractConfig implements IsStroomConfig {
                 '}';
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

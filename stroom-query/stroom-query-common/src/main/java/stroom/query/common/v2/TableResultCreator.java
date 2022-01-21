@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class TableResultCreator implements ResultCreator {
@@ -55,20 +56,23 @@ public class TableResultCreator implements ResultCreator {
     }
 
     @Override
-    public Result create(final DataStore data, final ResultRequest resultRequest) {
+    public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
+        final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
         final List<Row> resultList = new ArrayList<>();
-        int offset = 0;
-        int length = Integer.MAX_VALUE;
-        int totalResults = 0;
-        String error = null;
+        final AtomicInteger totalResults = new AtomicInteger();
+
+        final int offset;
+        final int length;
+        final OffsetRange range = resultRequest.getRequestedRange();
+        if (range != null) {
+            offset = range.getOffset().intValue();
+            length = range.getLength().intValue();
+        } else {
+            offset = 0;
+            length = Integer.MAX_VALUE;
+        }
 
         try {
-            final OffsetRange range = resultRequest.getRequestedRange();
-            if (range != null) {
-                offset = range.getOffset().intValue();
-                length = range.getLength().intValue();
-            }
-
             //What is the interaction between the paging and the maxResults? The assumption is that
             //maxResults defines the max number of records to come back and the paging can happen up to
             //that maxResults threshold
@@ -89,23 +93,22 @@ public class TableResultCreator implements ResultCreator {
             }
             final RowCreator rowCreator = optionalRowCreator.orElse(null);
 
-            totalResults = addTableResults(data,
-                    latestFields.toArray(new Field[0]),
-                    maxResults,
-                    offset,
-                    length,
-                    openGroups,
-                    resultList,
-                    data.get(),
-                    0,
-                    0,
-                    rowCreator);
+            dataStore.getData(data ->
+                    addTableResults(data,
+                            latestFields.toArray(new Field[0]),
+                            maxResults,
+                            offset,
+                            length,
+                            openGroups,
+                            resultList,
+                            data.get(),
+                            0,
+                            totalResults,
+                            rowCreator,
+                            errorConsumer));
         } catch (final RuntimeException e) {
-            if (e.getMessage() == null || e.getMessage().isBlank()) {
-                error = e.getClass().getName();
-            } else {
-                error = e.getMessage();
-            }
+            LOGGER.debug(e.getMessage(), e);
+            errorConsumer.add(e);
         }
 
         return new TableResult(
@@ -113,38 +116,38 @@ public class TableResultCreator implements ResultCreator {
                 latestFields,
                 resultList,
                 new OffsetRange(offset, resultList.size()),
-                totalResults,
-                error);
+                totalResults.get(),
+                errorConsumer.getErrors());
     }
 
-    private int addTableResults(final DataStore data,
-                                final Field[] fields,
-                                final Sizes maxResults,
-                                final int offset,
-                                final int length,
-                                final Set<Key> openGroups,
-                                final List<Row> resultList,
-                                final Items items,
-                                final int depth,
-                                final int position,
-                                final RowCreator rowCreator) {
+    private void addTableResults(final Data data,
+                                 final Field[] fields,
+                                 final Sizes maxResults,
+                                 final int offset,
+                                 final int length,
+                                 final Set<Key> openGroups,
+                                 final List<Row> resultList,
+                                 final Items items,
+                                 final int depth,
+                                 final AtomicInteger pos,
+                                 final RowCreator rowCreator,
+                                 final ErrorConsumer errorConsumer) {
         int maxResultsAtThisDepth = maxResults.size(depth);
-        int pos = position;
         int resultCountAtThisLevel = 0;
 
         for (final Item item : items) {
             boolean hide = false;
 
             // If the result is within the requested window (offset + length) then add it.
-            if (pos >= offset && resultList.size() < length) {
-                final Row row = rowCreator.create(fields, item, depth);
+            if (pos.get() >= offset && resultList.size() < length) {
+                final Row row = rowCreator.create(fields, item, depth, errorConsumer);
                 if (row != null) {
                     resultList.add(row);
                 } else {
                     hide = true;
                 }
             } else if (rowCreator.hidesRows()) {
-                final Row row = rowCreator.create(fields, item, depth);
+                final Row row = rowCreator.create(fields, item, depth, errorConsumer);
                 if (row == null) {
                     hide = true;
                 }
@@ -152,11 +155,11 @@ public class TableResultCreator implements ResultCreator {
 
             if (!hide) {
                 // Increment the overall position.
-                pos++;
+                pos.incrementAndGet();
 
                 // Add child results if a node is open.
                 if (openGroups != null && openGroups.contains(item.getKey())) {
-                    pos = addTableResults(
+                    addTableResults(
                             data,
                             fields,
                             maxResults,
@@ -167,7 +170,8 @@ public class TableResultCreator implements ResultCreator {
                             data.get(item.getKey()),
                             depth + 1,
                             pos,
-                            rowCreator);
+                            rowCreator,
+                            errorConsumer);
                 }
 
                 // Increment the total results at this depth.
@@ -178,12 +182,14 @@ public class TableResultCreator implements ResultCreator {
                 }
             }
         }
-        return pos;
     }
 
     private interface RowCreator {
 
-        Row create(Field[] fields, Item item, int depth);
+        Row create(Field[] fields,
+                   Item item,
+                   int depth,
+                   ErrorConsumer errorConsumer);
 
         boolean hidesRows();
     }
@@ -201,7 +207,10 @@ public class TableResultCreator implements ResultCreator {
         }
 
         @Override
-        public Row create(final Field[] fields, final Item item, final int depth) {
+        public Row create(final Field[] fields,
+                          final Item item,
+                          final int depth,
+                          final ErrorConsumer errorConsumer) {
             final List<String> stringValues = new ArrayList<>(fields.length);
             for (int i = 0; i < fields.length; i++) {
                 final Field field = fields[i];
@@ -257,7 +266,10 @@ public class TableResultCreator implements ResultCreator {
         }
 
         @Override
-        public Row create(final Field[] fields, final Item item, final int depth) {
+        public Row create(final Field[] fields,
+                          final Item item,
+                          final int depth,
+                          final ErrorConsumer errorConsumer) {
             Row row = null;
 
             final Map<String, Object> fieldIdToValueMap = new HashMap<>();
@@ -283,11 +295,18 @@ public class TableResultCreator implements ResultCreator {
                             break;
                         }
                     } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
+                        final RuntimeException exception = new RuntimeException(
+                                "Error applying conditional formatting rule: " +
+                                        rule.toString() +
+                                        " - " +
+                                        e.getMessage());
+                        LOGGER.debug(exception.getMessage(), exception);
+                        errorConsumer.add(exception);
                     }
                 }
             } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.debug(e.getMessage(), e);
+                errorConsumer.add(e);
             }
 
             if (matchingRule != null) {

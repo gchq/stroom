@@ -5,6 +5,7 @@ import stroom.util.shared.Expander;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +51,10 @@ public class TableRow {
                 ? (" style=" + cell.getStyles())
                 : "";
 
-        safeHtmlBuilder.appendHtmlConstant("<div class=\"cell\"" + styleAttrStr + ">");
+        final String titleAttrStr = cell.getRawValue() != null ?
+                " title=\"" + SafeHtmlUtils.htmlEscape(cell.getRawValue()) + "\"" : "";
+
+        safeHtmlBuilder.appendHtmlConstant("<div class=\"cell\"" + styleAttrStr + titleAttrStr + ">");
 
         appendValue(cell.getRawValue(), safeHtmlBuilder);
 
@@ -87,7 +91,7 @@ public class TableRow {
             if (p instanceof Hyperlink) {
                 final Hyperlink hyperlink = (Hyperlink) p;
                 if (!hyperlink.getText().trim().isEmpty()) {
-                    sb.appendHtmlConstant("<u link=\"" + hyperlink.toString() + "\">");
+                    sb.appendHtmlConstant("<u link=\"" + hyperlink + "\">");
 
 //                    if (field != null && field.getFormat() != null && field.getFormat().getType() == Type.DATE_TIME) {
 //                        try {
@@ -150,7 +154,6 @@ public class TableRow {
                 '}';
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -187,6 +190,11 @@ public class TableRow {
 
         private String getStyles() {
             return styles;
+        }
+
+        @Override
+        public String toString() {
+            return rawValue;
         }
     }
 }

@@ -1,11 +1,10 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Stroom SSL Test - Need Client Auth" type="Application" factoryName="Application">
-    <option name="ALTERNATIVE_JRE_PATH" value="15" />
-    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="MAIN_CLASS_NAME" value="stroom.ssl.test.App" />
     <module name="stroom.stroom-ssl-test.main" />
     <option name="PROGRAM_PARAMETERS" value="server needClientAuth.yml" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/stroom-ssl-test" />
+    <option name="VM_PARAMETERS" value="--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED" />\
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

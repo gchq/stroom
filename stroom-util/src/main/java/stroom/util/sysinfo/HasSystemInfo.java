@@ -11,5 +11,11 @@ public interface HasSystemInfo {
         return this.getClass().getName();
     }
 
+    /**
+     * @return A {@link SystemInfoResult} for part of the system. e.g. for dumping debug information,
+     * the sizes of in memory collections/queues, etc.
+     * Implementations do not need to perform permission checks unless additional permissions beyond
+     * VIEW_SYSTEM_INFO_PERMISSION are required.
+     */
     SystemInfoResult getSystemInfo();
 }

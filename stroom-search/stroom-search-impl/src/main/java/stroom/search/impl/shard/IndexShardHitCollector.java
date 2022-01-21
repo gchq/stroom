@@ -16,8 +16,11 @@
 
 package stroom.search.impl.shard;
 
-import stroom.pipeline.errorhandler.TerminatedException;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.SearchProgressLog;
+import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -25,8 +28,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.SimpleCollector;
 
 import java.io.IOException;
-import java.util.OptionalInt;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -35,16 +36,19 @@ class IndexShardHitCollector extends SimpleCollector {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardHitCollector.class);
 
     private final TaskContext taskContext;
+    private final QueryKey queryKey;
     //an empty optional is used as a marker to indicate no more items will be added
-    private final LinkedBlockingQueue<OptionalInt> docIdStore;
+    private final DocIdQueue docIdQueue;
     private final AtomicLong hitCount;
     private int docBase;
 
     IndexShardHitCollector(final TaskContext taskContext,
-                           final LinkedBlockingQueue<OptionalInt> docIdStore,
+                           final QueryKey queryKey,
+                           final DocIdQueue docIdQueue,
                            final AtomicLong hitCount) {
-        this.docIdStore = docIdStore;
         this.taskContext = taskContext;
+        this.queryKey = queryKey;
+        this.docIdQueue = docIdQueue;
         this.hitCount = hitCount;
 
         info(() -> "Searching...");
@@ -62,14 +66,15 @@ class IndexShardHitCollector extends SimpleCollector {
         final int docId = docBase + doc;
 
         try {
-            docIdStore.put(OptionalInt.of(docId));
+            SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_PUT);
+            docIdQueue.put(docId);
             info(() -> "Found " + hitCount + " hits");
         } catch (final InterruptedException e) {
-            // Continue to interrupt.
             info(() -> "Quitting...");
+            LOGGER.trace(e::getMessage, e);
+            // Keep interrupting this thread.
             Thread.currentThread().interrupt();
-            LOGGER.debug(e::getMessage, e);
-            throw new TerminatedException();
+            throw new TaskTerminatedException();
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }

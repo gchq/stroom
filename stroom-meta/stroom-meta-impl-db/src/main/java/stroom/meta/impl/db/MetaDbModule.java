@@ -1,25 +1,13 @@
 package stroom.meta.impl.db;
 
-import stroom.cache.api.CacheManager;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.lifecycle.api.LifecycleBinder;
-import stroom.meta.impl.MetaDao;
-import stroom.meta.impl.MetaFeedDao;
-import stroom.meta.impl.MetaKeyDao;
-import stroom.meta.impl.MetaProcessorDao;
-import stroom.meta.impl.MetaRetentionTrackerDao;
-import stroom.meta.impl.MetaServiceConfig;
-import stroom.meta.impl.MetaTypeDao;
-import stroom.meta.impl.MetaValueDao;
-import stroom.util.RunnableWrapper;
+import stroom.meta.impl.MetaServiceConfig.MetaServiceDbConfig;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
 import javax.sql.DataSource;
 
-public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, MetaDbConnProvider> {
+public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceDbConfig, MetaDbConnProvider> {
 
     private static final String MODULE = "stroom-meta";
     private static final String FLYWAY_LOCATIONS = "stroom/meta/impl/db/migration";
@@ -29,26 +17,9 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Meta
     protected void configure() {
         super.configure();
 
-        requireBinding(CacheManager.class);
-
-        bind(MetaFeedDao.class).to(MetaFeedDaoImpl.class);
-        bind(MetaTypeDao.class).to(MetaTypeDaoImpl.class);
-        bind(MetaProcessorDao.class).to(MetaProcessorDaoImpl.class);
-        bind(MetaKeyDao.class).to(MetaKeyDaoImpl.class);
-        bind(MetaValueDao.class).to(MetaValueDaoImpl.class);
-        bind(MetaDao.class).to(MetaDaoImpl.class);
-        bind(MetaRetentionTrackerDao.class).to(MetaRetentionTrackerDaoImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(MetaValueDaoImpl.class)
-                .addBinding(MetaKeyDaoImpl.class)
-                .addBinding(MetaDaoImpl.class)
-                .addBinding(MetaProcessorDaoImpl.class)
-                .addBinding(MetaTypeDaoImpl.class)
-                .addBinding(MetaFeedDaoImpl.class);
-
-        LifecycleBinder.create(binder())
-                .bindShutdownTaskTo(MetaValueServiceFlush.class);
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(MetaDbConnProvider.class);
     }
 
     @Override
@@ -80,14 +51,6 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Meta
 
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
-        }
-    }
-
-    private static class MetaValueServiceFlush extends RunnableWrapper {
-
-        @Inject
-        MetaValueServiceFlush(final MetaValueDaoImpl metaValueService) {
-            super(metaValueService::flush);
         }
     }
 }

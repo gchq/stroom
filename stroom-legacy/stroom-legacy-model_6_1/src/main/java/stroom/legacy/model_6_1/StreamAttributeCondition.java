@@ -22,6 +22,7 @@ import java.io.Serializable;
 
 @Deprecated
 public class StreamAttributeCondition implements Serializable {
+
     private static final long serialVersionUID = -2063409357774838870L;
 
     private StreamAttributeKey streamAttributeKey;
@@ -72,7 +73,6 @@ public class StreamAttributeCondition implements Serializable {
         return builder.toHashCode();
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (o == this) {

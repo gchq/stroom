@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class DumpRefDataOffHeapStore {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DumpRefDataOffHeapStore.class);
 
     private static final Path DEFAULT_STORE_DIR = Paths.get("/tmp/stroom/refDataOffHeapStore");
@@ -43,8 +45,9 @@ public class DumpRefDataOffHeapStore {
 
         LOGGER.info("Using storeDir {}", storeDir.toAbsolutePath().normalize());
 
-        ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
-        referenceDataConfig.setLocalDir(storeDir.toAbsolutePath().toString());
+        ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig()
+                .withLmdbConfig(new ReferenceDataLmdbConfig()
+                        .withLocalDir(storeDir.toAbsolutePath().toString()));
 
         Injector injector = Guice.createInjector(
                 new AbstractModule() {

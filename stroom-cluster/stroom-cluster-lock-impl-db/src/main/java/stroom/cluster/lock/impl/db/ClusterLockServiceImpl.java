@@ -18,6 +18,7 @@ package stroom.cluster.lock.impl.db;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.node.api.NodeInfo;
+import stroom.task.api.TaskContext;
 import stroom.util.logging.LogExecutionTime;
 
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -34,14 +36,17 @@ class ClusterLockServiceImpl implements ClusterLockService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
     private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
 
+    private final TaskContext taskContext;
     private final ClusterLockHandler clusterLockHandler;
     private final NodeInfo nodeInfo;
     private final DbClusterLock dbClusterLock;
 
     @Inject
-    ClusterLockServiceImpl(final ClusterLockHandler clusterLockHandler,
+    ClusterLockServiceImpl(final TaskContext taskContext,
+                           final ClusterLockHandler clusterLockHandler,
                            final NodeInfo nodeInfo,
                            final DbClusterLock dbClusterLock) {
+        this.taskContext = taskContext;
         this.clusterLockHandler = clusterLockHandler;
         this.nodeInfo = nodeInfo;
         this.dbClusterLock = dbClusterLock;
@@ -49,7 +54,15 @@ class ClusterLockServiceImpl implements ClusterLockService {
 
     @Override
     public void lock(final String lockName, final Runnable runnable) {
-        dbClusterLock.lock(lockName, runnable);
+        dbClusterLock.lockResult(lockName, () -> {
+            runnable.run();
+            return null;
+        });
+    }
+
+    @Override
+    public <T> T lockResult(final String lockName, final Supplier<T> supplier) {
+        return dbClusterLock.lockResult(lockName, supplier);
     }
 
     @Override
@@ -113,6 +126,8 @@ class ClusterLockServiceImpl implements ClusterLockService {
 
         for (final Entry<String, ClusterLockKey> entry : lockMap.entrySet()) {
             final String lockName = entry.getKey();
+            taskContext.info(() -> "Keeping " + lockName + " alive");
+
             final ClusterLockKey clusterLockKey = entry.getValue();
 
             LOGGER.debug("keepAlive({}) - >>>", lockName);

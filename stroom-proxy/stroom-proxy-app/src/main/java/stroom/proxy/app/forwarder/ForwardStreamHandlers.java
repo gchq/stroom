@@ -50,7 +50,7 @@ public class ForwardStreamHandlers implements StreamHandlers {
                        final AttributeMap attributeMap,
                        final Consumer<StreamHandler> consumer) {
         if (feedName.isEmpty()) {
-            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
         }
         AttributeMapUtil.addFeedAndType(attributeMap, feedName, typeName);
 

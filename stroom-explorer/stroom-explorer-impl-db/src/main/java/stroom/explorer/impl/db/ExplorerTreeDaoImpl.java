@@ -6,14 +6,9 @@ import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
 import stroom.explorer.impl.TreeModel;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 
-import org.jooq.Record;
-import org.jooq.Result;
 import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,8 +25,6 @@ import static stroom.explorer.impl.db.jooq.tables.ExplorerPath.EXPLORER_PATH;
 
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerTreeDaoImpl.class);
-
     private final boolean orderIndexMatters;
     private final boolean removeReferencedNodes;
     private final ExplorerDbConnProvider explorerDbConnProvider;
@@ -46,18 +39,6 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         this.removeReferencedNodes = true;
         this.orderIndexMatters = false;
         this.explorerDbConnProvider = explorerDbConnProvider;
-
-
-        try {
-            final ExplorerTreeNode rootNode = new ExplorerTreeNode();
-            rootNode.setName(ExplorerConstants.ROOT_DOC_REF.getName());
-            rootNode.setType(ExplorerConstants.ROOT_DOC_REF.getType());
-            rootNode.setUuid(ExplorerConstants.ROOT_DOC_REF.getUuid());
-            createRoot(rootNode);
-        } catch (final RuntimeException e) {
-            // Ignore error as it is probably a duplicate entry constraint.
-            LOGGER.debug(e.getMessage(), e);
-        }
     }
 
     private boolean isPersistent(final ExplorerTreeNode entity) {
@@ -74,65 +55,19 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         return removeReferencedNodes;
     }
 
-//    private void setRemoveReferencedNodes(boolean removeReferencedNodes) {
-//        this.removeReferencedNodes = removeReferencedNodes;
-//    }
-//
-//    private ExplorerTreePath getTreePath(ExplorerTreeNode node) {
-//        JooqUtil.context(connectionProvider, context -> context
-//            final List<ExplorerTreePath> result = create
-//                    .selectFrom(p)
-//                    .where(p.ANCESTOR.eq(node.getId()))
-//                    .and(p.DESCENDANT.eq(node.getId()))
-//                    .fetch()
-//                    .stream()
-//                    .map(r -> new ExplorerTreePath(
-//                    r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
-//                    .collect(Collectors.toList());
-//
-//            if (result.size() <= 0) {
-//                return null;
-//            } else if (result.size() > 1) {
-//                throw new IllegalStateException(
-//                "Found more than one path for node " + node + ", paths are: " + result);
-//            } else {
-//                return result.get(0);
-//            }
-//
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-//    }
-//
-//    private ExplorerTreeNode find(Integer id) {
-//        JooqUtil.context(connectionProvider, context -> context
-//            return create
-//                    .selectFrom(n)
-//                    .where(n.ID.eq(id))
-//                    .fetchOptional()
-//                    .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
-//                    .orElse(null);
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-//    }
-
     private ExplorerTreeNode create(final ExplorerTreeNode node) {
-        return JooqUtil.contextResult(explorerDbConnProvider, context -> {
-            final int id = context
-                    .insertInto(EXPLORER_NODE)
-                    .set(EXPLORER_NODE.TYPE, node.getType())
-                    .set(EXPLORER_NODE.UUID, node.getUuid())
-                    .set(EXPLORER_NODE.NAME, node.getName())
-                    .set(EXPLORER_NODE.TAGS, node.getTags())
-                    .returning(EXPLORER_NODE.ID)
-                    .fetchOne()
-                    .getId();
-            node.setId(id);
-            return node;
-        });
+        final int id = JooqUtil.contextResult(explorerDbConnProvider, context ->
+                context
+                        .insertInto(EXPLORER_NODE)
+                        .set(EXPLORER_NODE.TYPE, node.getType())
+                        .set(EXPLORER_NODE.UUID, node.getUuid())
+                        .set(EXPLORER_NODE.NAME, node.getName())
+                        .set(EXPLORER_NODE.TAGS, node.getTags())
+                        .returning(EXPLORER_NODE.ID)
+                        .fetchOne()
+                        .getId());
+        node.setId(id);
+        return node;
     }
 
     @Override
@@ -172,49 +107,37 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                 .execute());
     }
 
-//    private boolean isRoot(ExplorerTreeNode node) {
-//        if (!isPersistent(node)) {
-//            return false;
-//        } else {
-//            JooqUtil.context(connectionProvider, context -> context
-//                final int count = create
-//                        .selectCount()
-//                        .from(p)
-//                        .where(p.DESCENDANT.eq(node.getId()))
-//                        .and(p.DEPTH.gt(0))
-//                        .fetchOne(0, int.class);
-//
-//                return 0 == count;
-//
-//            } catch (final SQLException e) {
-//                LOGGER.error(e.getMessage(), e);
-//                throw new RuntimeException(e.getMessage(), e);
-//            }
-//        }
-//    }
-
     @Override
     public ExplorerTreeNode createRoot(final ExplorerTreeNode root) {
         return addChild(null, root);
     }
 
     @Override
-    public List<ExplorerTreeNode> getRoots() {
-        return JooqUtil.contextResult(explorerDbConnProvider, context -> context
-                .selectFrom(n)
-                .whereNotExists(context
-                        .selectOne()
-                        .from(p)
-                        .where(p.DESCENDANT.eq(n.ID).and(p.DEPTH.gt(0))))
-                .fetch()
-                .stream()
-                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
-                .collect(Collectors.toList()));
+    public boolean doesNodeExist(final ExplorerTreeNode root) {
+        return JooqUtil.contextResult(explorerDbConnProvider, context ->
+                context
+                        .fetchCount(DSL.selectFrom(n)
+                                .where(n.UUID.eq(root.getUuid()))
+                                .and(n.TYPE.eq(root.getType())))) > 0;
     }
 
     @Override
-    public TreeModel createModel(final Function<String, String> iconUrlProvider) {
-        final TreeModel treeModel = new TreeModel();
+    public List<ExplorerTreeNode> getRoots() {
+        return JooqUtil.contextResult(explorerDbConnProvider, context -> context
+                        .selectFrom(n)
+                        .whereNotExists(context
+                                .selectOne()
+                                .from(p)
+                                .where(p.DESCENDANT.eq(n.ID).and(p.DEPTH.gt(0))))
+                        .fetch())
+                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
+    }
+
+    @Override
+    public TreeModel createModel(final Function<String, String> iconUrlProvider,
+                                 final long id,
+                                 final long creationTime) {
+        final TreeModel treeModel = new TreeModel(id, creationTime);
 
         final List<Integer> roots = JooqUtil.contextResult(explorerDbConnProvider, context -> context
                 .select(p.ANCESTOR)
@@ -229,9 +152,10 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                 )
                 .fetch(p.ANCESTOR));
         if (roots.size() > 0) {
-            final Map<Integer, ExplorerNode> nodeMap = JooqUtil.contextResult(explorerDbConnProvider, context -> context
-                    .selectFrom(n)
-                    .fetch()
+            final Map<Integer, ExplorerNode> nodeMap = JooqUtil.contextResult(explorerDbConnProvider,
+                            context -> context
+                                    .selectFrom(n)
+                                    .fetch())
                     .stream()
                     .collect(Collectors.toMap(ExplorerNodeRecord::getId, r ->
                             ExplorerNode
@@ -241,7 +165,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                     .name(r.getName())
                                     .tags(r.getTags())
                                     .iconClassName(iconUrlProvider.apply(r.getType()))
-                                    .build())));
+                                    .build()));
 
             // Add the roots.
             roots.forEach(rootId -> {
@@ -252,11 +176,11 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
             });
 
             // Add parents and children.
-            JooqUtil.context(explorerDbConnProvider, context -> context
-                    .select(p.ANCESTOR, p.DESCENDANT)
-                    .from(p)
-                    .where(p.DEPTH.eq(1))
-                    .fetch()
+            JooqUtil.contextResult(explorerDbConnProvider, context -> context
+                            .select(p.ANCESTOR, p.DESCENDANT)
+                            .from(p)
+                            .where(p.DEPTH.eq(1))
+                            .fetch())
                     .forEach(r -> {
                         final int ancestorId = r.value1();
                         final int descendantId = r.value2();
@@ -265,7 +189,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                         if (ancestor != null && descendant != null) {
                             treeModel.add(ancestor, descendant);
                         }
-                    }));
+                    });
         }
 
         return treeModel;
@@ -285,160 +209,63 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     @Override
     public List<ExplorerTreeNode> getTree(final ExplorerTreeNode parent) {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
-                .selectFrom(n)
-                .where(n.ID.in(context
-                        .select(p.DESCENDANT)
-                        .from(p)
-                        .where(p.ANCESTOR.eq(parent.getId()))))
-                .fetch()
-                .stream()
-                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
-                .collect(Collectors.toList()));
-
+                        .selectFrom(n)
+                        .where(n.ID.in(context
+                                .select(p.DESCENDANT)
+                                .from(p)
+                                .where(p.ANCESTOR.eq(parent.getId()))))
+                        .fetch())
+                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
     }
-
-//    private int getChildCount(ExplorerTreeNode parent) {
-//        JooqUtil.context(connectionProvider, context -> context
-//            return create
-//                    .selectCount()
-//                    .from(p)
-//                    .where(p.ANCESTOR.eq(parent.getId()))
-//                    .and(p.DEPTH.eq(1))
-//                    .fetchOne(0, int.class);
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-//    }
 
     @Override
     public List<ExplorerTreeNode> getChildren(final ExplorerTreeNode parent) {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
-                .selectFrom(n)
-                .where(n.ID.in(context
-                        .select(p.DESCENDANT)
-                        .from(p)
-                        .where(p.ANCESTOR.eq(parent.getId()))
-                        .and(p.DEPTH.eq(1))
-                        .orderBy(p.ORDER_INDEX)))
-                .fetch()
-                .stream()
-                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
-                .collect(Collectors.toList()));
+                        .selectFrom(n)
+                        .where(n.ID.in(context
+                                .select(p.DESCENDANT)
+                                .from(p)
+                                .where(p.ANCESTOR.eq(parent.getId()))
+                                .and(p.DEPTH.eq(1))
+                                .orderBy(p.ORDER_INDEX)))
+                        .fetch())
+                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
     }
-
-//    private ExplorerTreeNode getRoot(ExplorerTreeNode node) {
-//        if (node == null) {
-//            throw new IllegalArgumentException("Can not read root for a null node!");
-//        } else {
-//            List<ExplorerTreeNode> path = getPath(node);
-//            return path.size() > 0 ? path.get(0) : node;
-//        }
-//    }
 
     @Override
     public ExplorerTreeNode getParent(final ExplorerTreeNode child) {
-        return JooqUtil.contextResult(explorerDbConnProvider, context -> {
-            final List<ExplorerTreeNode> parents = context
-                    .selectFrom(n)
-                    .where(n.ID.in(context
-                            .select(p.ANCESTOR)
-                            .from(p)
-                            .where(p.DESCENDANT.eq(child.getId()))
-                            .and(p.DEPTH.eq(1))))
-                    .fetch()
-                    .stream()
-                    .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
-                    .collect(Collectors.toList());
+        final List<ExplorerTreeNode> parents = JooqUtil.contextResult(explorerDbConnProvider, context ->
+                        context
+                                .selectFrom(n)
+                                .where(n.ID.in(context
+                                        .select(p.ANCESTOR)
+                                        .from(p)
+                                        .where(p.DESCENDANT.eq(child.getId()))
+                                        .and(p.DEPTH.eq(1))))
+                                .fetch())
+                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
 
-            if (parents.size() == 1) {
-                return parents.get(0);
-            } else if (parents.size() == 0) {
-                return null;
-            } else {
-                throw new IllegalArgumentException("More than one parent found: " + parents);
-            }
-        });
+        if (parents.size() == 1) {
+            return parents.get(0);
+        } else if (parents.size() == 0) {
+            return null;
+        } else {
+            throw new IllegalArgumentException("More than one parent found: " + parents);
+        }
     }
 
     @Override
     public List<ExplorerTreeNode> getPath(final ExplorerTreeNode node) {
-        return JooqUtil.contextResult(explorerDbConnProvider, context -> {
-
-            final Result<? extends Record> result = context
-                    .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH)
-                    .from(n.innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
-                    .where(p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
-                    .orderBy(p.DEPTH.desc())
-                    .fetch();
-
-            ArrayList<ExplorerTreeNode> path = new ArrayList<>();
-            for (Record r : result) {
-                path.add(new ExplorerTreeNode(r.get(n.ID), r.get(n.TYPE), r.get(n.UUID), r.get(n.NAME), r.get(n.TAGS)));
-            }
-            return path;
-        });
+        return JooqUtil.contextResult(explorerDbConnProvider, context ->
+                        context
+                                .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH)
+                                .from(n.innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
+                                .where(p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
+                                .orderBy(p.DEPTH.desc())
+                                .fetch())
+                .map(r ->
+                        new ExplorerTreeNode(r.get(n.ID), r.get(n.TYPE), r.get(n.UUID), r.get(n.NAME), r.get(n.TAGS)));
     }
-
-//    private int getLevel(ExplorerTreeNode node) {
-//        JooqUtil.context(connectionProvider, context -> context
-//            return create
-//                    .selectCount()
-//                    .from(p)
-//                    .where(p.DESCENDANT.eq(node.getId()))
-//                    .fetchOne(0, int.class) - 1;
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-//    }
-//
-//    private int size(ExplorerTreeNode parent) {
-//       JooqUtil.context(connectionProvider, context -> context
-//            return create
-//                    .selectCount()
-//                    .from(p)
-//                    .where(p.ANCESTOR.eq(parent.getId()))
-//                    .fetchOne(0, int.class);
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-//    }
-//
-//    private boolean isLeaf(ExplorerTreeNode node) {
-//        return getChildCount(node) <= 0;
-//    }
-//
-//    private boolean isEqualToOrChildOf(ExplorerTreeNode child, ExplorerTreeNode parent) {
-//        return Objects.equals(parent, child) || isChildOf(child, parent);
-//    }
-//
-//    private boolean isChildOf(ExplorerTreeNode child, ExplorerTreeNode parent) {
-//        if (Objects.equals(parent, child)) {
-//            return false;
-//        } else {
-//            JooqUtil.context(connectionProvider, context -> context
-//                final int count = create
-//                        .selectCount()
-//                        .from(p)
-//                        .where(p.ANCESTOR.eq(parent.getId()))
-//                        .and(p.DESCENDANT.eq(child.getId()))
-//                        .fetchOne(0, int.class);
-//
-//                if (count > 1) {
-//                    throw new IllegalStateException(
-//                    "Ambiguous ancestor/descendant, found " + count +
-//                    " paths for parent " + parent + " and child " + child);
-//                } else {
-//                    return count == 1;
-//                }
-//            } catch (final SQLException e) {
-//                LOGGER.error(e.getMessage(), e);
-//                throw new RuntimeException(e.getMessage(), e);
-//            }
-//        }
-//    }
 
     @Override
     public ExplorerTreeNode addChild(final ExplorerTreeNode parent,
@@ -451,10 +278,6 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                                      final int position) {
         return addChild(parent, null, child, position);
     }
-
-//    private synchronized ExplorerTreeNode addChildBefore(ExplorerTreeNode sibling, ExplorerTreeNode child) {
-//        return addChild(null, sibling, child, -1);
-//    }
 
     @Override
     public synchronized void remove(final ExplorerTreeNode node) {
@@ -475,55 +298,6 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                      final int position) {
         move(node, parent, position, null);
     }
-
-//    private synchronized void moveBefore(ExplorerTreeNode node, ExplorerTreeNode sibling) {
-//        move(node, null, -1, sibling);
-//    }
-//
-//    private synchronized void moveToBeRoot(ExplorerTreeNode child) {
-//        move(child, null, -1, null);
-//    }
-//
-//    private ExplorerTreeNode copy(ExplorerTreeNode node, ExplorerTreeNode parent) {
-//        return copyTo(node, parent, -1);
-//    }
-//
-//    private synchronized ExplorerTreeNode copyTo(ExplorerTreeNode node, ExplorerTreeNode parent, int position) {
-//        return copy(node, parent, position, null);
-//    }
-//
-//    private synchronized ExplorerTreeNode copyBefore(ExplorerTreeNode node, ExplorerTreeNode sibling) {
-//        return copy(node, null, -1, sibling);
-//    }
-//
-//    private synchronized ExplorerTreeNode copyToBeRoot(ExplorerTreeNode child) {
-//        return copy(child, null, -1, null);
-//    }
-//
-//    private List<ExplorerTreeNode> find(ExplorerTreeNode parent, Map<String, Object> criteria) {
-//        JooqUtil.context(connectionProvider, context -> context
-//
-//            Condition condition = null;
-//            if (parent != null) {
-//                condition = and(p.ANCESTOR.eq(parent.getId()));
-//            }
-//
-//            return create
-//                    .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS)
-//                    .from(n)
-//                    .join(p).on(p.DESCENDANT.eq(n.ID))
-//                    .where(condition)
-//                    .fetch()
-//                    .stream()
-//                    .map(r -> new ExplorerTreeNode(
-//                    r.component1(), r.component2(), r.component3(), r.component4(), r.component5()))
-//                    .collect(Collectors.toList());
-//
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-//    }
 
     private boolean shouldCloseGapOnRemove() {
         return true;
@@ -564,10 +338,6 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                 .execute());
     }
 
-//    private void removeNode(ExplorerTreeNode nodeToRemove) {
-//        removeNode(nodeToRemove.getId());
-//    }
-
     private void removeNode(final Integer id) {
         if (isRemoveReferencedNodes()) {
             JooqUtil.context(explorerDbConnProvider, context -> context
@@ -579,15 +349,13 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     private List<ExplorerTreePath> getPathsToRemove(final Integer nodeId) {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
-                .selectFrom(p)
-                .where(p.DESCENDANT.in(context
-                        .select(p1.DESCENDANT)
-                        .from(p1)
-                        .where(p1.ANCESTOR.eq(nodeId))))
-                .fetch()
-                .stream()
-                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
-                .collect(Collectors.toList()));
+                        .selectFrom(p)
+                        .where(p.DESCENDANT.in(context
+                                .select(p1.DESCENDANT)
+                                .from(p1)
+                                .where(p1.ANCESTOR.eq(nodeId))))
+                        .fetch())
+                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()));
     }
 
     private ExplorerTreeNode addChild(final ExplorerTreeNode parent,
@@ -618,14 +386,12 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     private boolean exists(final ExplorerTreeNode node) {
-        return JooqUtil.contextResult(explorerDbConnProvider, context -> {
-            final int count = context
-                    .selectCount()
-                    .from(p)
-                    .where(p.DESCENDANT.eq(node.getId()))
-                    .fetchOne(0, int.class);
-            return count > 0;
-        });
+        return JooqUtil.contextResult(explorerDbConnProvider, context ->
+                context
+                        .selectCount()
+                        .from(p)
+                        .where(p.DESCENDANT.eq(node.getId()))
+                        .fetchOne(0, int.class)) > 0;
     }
 
     private void insertSelfReference(final ExplorerTreeNode child) {
@@ -646,109 +412,40 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     private void disconnectSubTree(final ExplorerTreeNode node) {
-        JooqUtil.context(explorerDbConnProvider, context -> {
-            final List<ExplorerTreePath> pathsToRemove = context
-                    .selectFrom(p)
-                    .where(p.DESCENDANT.in(context
-                            .select(p1.DESCENDANT)
-                            .from(p1)
-                            .where(p1.ANCESTOR.eq(node.getId()))))
-                    .and(p.ANCESTOR.notIn(context
-                            .select(p2.DESCENDANT)
-                            .from(p2)
-                            .where(p2.ANCESTOR.eq(node.getId()))))
-                    .fetch()
-                    .stream()
-                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
-                    .collect(Collectors.toList());
+        final List<ExplorerTreePath> pathsToRemove = JooqUtil.contextResult(explorerDbConnProvider, context ->
+                        context
+                                .selectFrom(p)
+                                .where(p.DESCENDANT.in(context
+                                        .select(p1.DESCENDANT)
+                                        .from(p1)
+                                        .where(p1.ANCESTOR.eq(node.getId()))))
+                                .and(p.ANCESTOR.notIn(context
+                                        .select(p2.DESCENDANT)
+                                        .from(p2)
+                                        .where(p2.ANCESTOR.eq(node.getId()))))
+                                .fetch())
+                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()));
 
-            List<ExplorerTreePath> pathSiblings = getAllTreePathSiblings(node.getId());
-            int oldPosition = -1;
+        List<ExplorerTreePath> pathSiblings = getAllTreePathSiblings(node.getId());
+        int oldPosition = -1;
 
-            for (final ExplorerTreePath path : pathsToRemove) {
-                removePath(path);
-                if (path.getDepth() == 1) {
-                    oldPosition = path.getOrderIndex();
-                }
+        for (final ExplorerTreePath path : pathsToRemove) {
+            removePath(path);
+            if (path.getDepth() == 1) {
+                oldPosition = path.getOrderIndex();
             }
+        }
 
-            closeGap(pathSiblings, oldPosition);
-        });
+        closeGap(pathSiblings, oldPosition);
     }
 
     private List<ExplorerTreePath> getPathsIntoSubtree(final ExplorerTreeNode parent) {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
-                .selectFrom(p)
-                .where(p.ANCESTOR.eq(parent.getId()))
-                .fetch()
-                .stream()
-                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
-                .collect(Collectors.toList()));
+                        .selectFrom(p)
+                        .where(p.ANCESTOR.eq(parent.getId()))
+                        .fetch())
+                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()));
     }
-
-//    private ExplorerTreeNode copy(
-//    ExplorerTreeNode node, ExplorerTreeNode newParent, int position, ExplorerTreeNode sibling) {
-//        assertCopyOrMoveParameters(node, newParent, position, sibling);
-//        List<ExplorerTreePath> pathsToCopy = getSubTreePathsToCopy(node);
-//        List<ExplorerTreePath> childPaths = new ArrayList<>();
-//        ExplorerTreeNode copiedNode = copySubTree(pathsToCopy, node, childPaths);
-//        if (newParent != null || sibling != null) {
-//            connectSubTree(newParent, position, sibling, childPaths);
-//        }
-//
-//        return copiedNode;
-//    }
-//
-//    private List<ExplorerTreePath> getSubTreePathsToCopy(ExplorerTreeNode parent) {
-//        JooqUtil.context(connectionProvider, context -> context
-//            return create
-//                    .selectFrom(p)
-//                    .where(p.DESCENDANT.in(create
-//                            .select(p2.DESCENDANT)
-//                            .from(p2)
-//                            .where(p2.ANCESTOR.eq(parent.getId()))))
-//                    .and(p.ANCESTOR.in(create
-//                            .select(p2.DESCENDANT)
-//                            .from(p2)
-//                            .where(p2.ANCESTOR.eq(parent.getId()))))
-//                    .fetch()
-//                    .stream()
-//                    .map(r -> new ExplorerTreePath(
-//                    r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
-//                    .collect(Collectors.toList());
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-//    }
-//
-//    private ExplorerTreeNode copySubTree(
-//    List<ExplorerTreePath> pathsToCopy, ExplorerTreeNode node, List<ExplorerTreePath> childPaths) {
-//        Map<Integer, ExplorerTreeNode> cloneMap = new HashMap<>();
-//        ExplorerTreeNode copiedNode = node;
-//        Map<Integer, ExplorerTreeNode> mergedCloneMap = new HashMap<>();
-//
-//        for (final Entry<Integer, ExplorerTreeNode> entry : cloneMap.entrySet()) {
-//            Integer originalId = entry.getKey();
-//            ExplorerTreeNode clonedNode = entry.getValue();
-//            ExplorerTreeNode mergedClonedNode = create(clonedNode);
-//            mergedCloneMap.put(originalId, mergedClonedNode);
-//            if (clonedNode == copiedNode) {
-//                copiedNode = mergedClonedNode;
-//            }
-//        }
-//
-//        for (final ExplorerTreePath pathToCopy : pathsToCopy) {
-//            ExplorerTreePath clonedPath = new ExplorerTreePath(pathToCopy.getAncestor(),
-//            pathToCopy.getDescendant(), pathToCopy.getDepth(), pathToCopy.getOrderIndex());
-//            ExplorerTreePath mergedClonedPath = create(clonedPath);
-//            if (Objects.equals(pathToCopy.getAncestor(), node.getId())) {
-//                childPaths.add(mergedClonedPath);
-//            }
-//        }
-//
-//        return copiedNode;
-//    }
 
     private void connectSubTree(final ExplorerTreeNode newParent,
                                 int position,
@@ -773,45 +470,35 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         assert !relatedNodeIsParent || parent != null;
 
         if (relatedNodeIsParent) {
-            JooqUtil.context(explorerDbConnProvider, context -> {
-                final List<ExplorerTreePath> paths = context
-                        .selectFrom(p)
-                        .where(p.DESCENDANT.eq(parent.getId()))
-                        .fetch()
-                        .stream()
-                        .map(r -> new ExplorerTreePath(r.getAncestor(),
-                                r.getDescendant(),
-                                r.getDepth(),
-                                r.getOrderIndex()))
-                        .collect(Collectors.toList());
-                pathsToClone.addAll(paths);
-            });
+            pathsToClone.addAll(JooqUtil.contextResult(explorerDbConnProvider, context ->
+                            context
+                                    .selectFrom(p)
+                                    .where(p.DESCENDANT.eq(parent.getId()))
+                                    .fetch())
+                    .map(r -> new ExplorerTreePath(r.getAncestor(),
+                            r.getDescendant(),
+                            r.getDepth(),
+                            r.getOrderIndex())));
         } else if (sibling != null) {
-            position = JooqUtil.contextResult(explorerDbConnProvider, context -> {
-                final List<ExplorerTreePath> paths = context
-                        .selectFrom(p)
-                        .where(p.DESCENDANT.eq(parent.getId()))
-                        .and(p.DEPTH.gt(0))
-                        .orderBy(p.DEPTH)
-                        .fetch()
-                        .stream()
-                        .map(r -> new ExplorerTreePath(r.getAncestor(),
-                                r.getDescendant(),
-                                r.getDepth(),
-                                r.getOrderIndex()))
-                        .collect(Collectors.toList());
-                pathsToClone.addAll(paths);
+            pathsToClone.addAll(JooqUtil.contextResult(explorerDbConnProvider, context ->
+                            context
+                                    .selectFrom(p)
+                                    .where(p.DESCENDANT.eq(parent.getId()))
+                                    .and(p.DEPTH.gt(0))
+                                    .orderBy(p.DEPTH)
+                                    .fetch())
+                    .map(r -> new ExplorerTreePath(r.getAncestor(),
+                            r.getDescendant(),
+                            r.getDepth(),
+                            r.getOrderIndex())));
 
-                if (pathsToClone.size() <= 0) {
-                    throw new IllegalArgumentException("Sibling seems not to be a child but a root: " + sibling);
-                }
+            if (pathsToClone.size() <= 0) {
+                throw new IllegalArgumentException("Sibling seems not to be a child but a root: " + sibling);
+            }
 
-                final int pos = pathsToClone.get(0).getOrderIndex();
+            position = pathsToClone.get(0).getOrderIndex();
 
-                assert pos >= 0 : "Position of first path is not valid: " + pathsToClone;
-
-                return pos;
-            });
+            assert position >= 0 : "Position of first path is not valid: " + pathsToClone;
         }
 
         return position;
@@ -875,31 +562,27 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     private List<ExplorerTreePath> getAllDirectTreePathChildren(final Integer parentId) {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
-                .selectFrom(p)
-                .where(p.ANCESTOR.eq(parentId))
-                .and(p.DEPTH.eq(1))
-                .orderBy(p.ORDER_INDEX)
-                .fetch()
-                .stream()
-                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
-                .collect(Collectors.toList()));
+                        .selectFrom(p)
+                        .where(p.ANCESTOR.eq(parentId))
+                        .and(p.DEPTH.eq(1))
+                        .orderBy(p.ORDER_INDEX)
+                        .fetch())
+                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()));
     }
 
     private List<ExplorerTreePath> getAllTreePathSiblings(final Integer nodeId) {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
-                .selectFrom(p)
-                .where(p.DEPTH.eq(1))
-                .and(p.DESCENDANT.notEqual(nodeId))
-                .and(p.ANCESTOR.in(context
-                        .select(p2.ANCESTOR)
-                        .from(p2)
-                        .where(p2.DESCENDANT.eq(nodeId))
-                        .and(p2.DEPTH.eq(1))))
-                .orderBy(p.ORDER_INDEX)
-                .fetch()
-                .stream()
-                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
-                .collect(Collectors.toList()));
+                        .selectFrom(p)
+                        .where(p.DEPTH.eq(1))
+                        .and(p.DESCENDANT.notEqual(nodeId))
+                        .and(p.ANCESTOR.in(context
+                                .select(p2.ANCESTOR)
+                                .from(p2)
+                                .where(p2.DESCENDANT.eq(nodeId))
+                                .and(p2.DEPTH.eq(1))))
+                        .orderBy(p.ORDER_INDEX)
+                        .fetch())
+                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()));
     }
 
     @Override
@@ -908,25 +591,22 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
             return null;
         }
 
-        return JooqUtil.contextResult(explorerDbConnProvider, context -> {
-            final List<ExplorerTreeNode> list = context
-                    .selectFrom(n)
-                    .where(n.UUID.eq(uuid))
-                    .fetch()
-                    .stream()
-                    .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
-                    .collect(Collectors.toList());
+        final List<ExplorerTreeNode> list = JooqUtil.contextResult(explorerDbConnProvider, context ->
+                        context
+                                .selectFrom(n)
+                                .where(n.UUID.eq(uuid))
+                                .fetch())
+                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
 
-            if (list.size() == 0) {
-                return null;
-            }
+        if (list.size() == 0) {
+            return null;
+        }
 
-            if (list.size() > 1) {
-                throw new RuntimeException("Found more than 1 tree node with uuid=" + uuid);
-            }
+        if (list.size() > 1) {
+            throw new RuntimeException("Found more than 1 tree node with uuid=" + uuid);
+        }
 
-            return list.get(0);
-        });
+        return list.get(0);
     }
 
     private void assertInsertParameters(final ExplorerTreeNode parent,

@@ -61,9 +61,9 @@ public class JobSystemModule extends AbstractModule {
         // Make sure the last thing to start and the first thing to stop is the scheduled task executor.
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(JobBootstrapStartup.class)
-                .bindShutdownTaskTo(DistributedTaskFetcherShutdown.class, 999)
-                .bindStartupTaskTo(ScheduledTaskExecutorStartup.class, Integer.MIN_VALUE)
-                .bindShutdownTaskTo(ScheduledTaskExecutorShutdown.class, Integer.MIN_VALUE);
+                .bindShutdownTaskTo(DistributedTaskFetcherShutdown.class, 10)
+                .bindStartupTaskTo(ScheduledTaskExecutorStartup.class, 0)
+                .bindShutdownTaskTo(ScheduledTaskExecutorShutdown.class, 9);
     }
 
     private static class FetchNewTasks extends RunnableWrapper {

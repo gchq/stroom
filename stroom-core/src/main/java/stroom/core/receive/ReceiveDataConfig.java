@@ -4,25 +4,38 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class ReceiveDataConfig extends AbstractConfig implements IsStroomConfig {
 
-    private String receiptPolicyUuid;
-    private String unknownClassification = "UNKNOWN CLASSIFICATION";
-    private String feedNamePattern = "^[A-Z0-9_-]{3,}$";
+    private final String receiptPolicyUuid;
+    private final String unknownClassification;
+    private final String feedNamePattern;
+
+    public ReceiveDataConfig() {
+        receiptPolicyUuid = null;
+        unknownClassification = "UNKNOWN CLASSIFICATION";
+        feedNamePattern = "^[A-Z0-9_-]{3,}$";
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public ReceiveDataConfig(@JsonProperty("receiptPolicyUuid") final String receiptPolicyUuid,
+                             @JsonProperty("unknownClassification") final String unknownClassification,
+                             @JsonProperty("feedNamePattern") final String feedNamePattern) {
+        this.receiptPolicyUuid = receiptPolicyUuid;
+        this.unknownClassification = unknownClassification;
+        this.feedNamePattern = feedNamePattern;
+    }
 
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
     public String getReceiptPolicyUuid() {
         return receiptPolicyUuid;
-    }
-
-    @SuppressWarnings("unused")
-    public void setReceiptPolicyUuid(final String receiptPolicyUuid) {
-        this.receiptPolicyUuid = receiptPolicyUuid;
     }
 
     @JsonPropertyDescription("The classification banner to display for data if one is not defined")
@@ -30,20 +43,10 @@ public class ReceiveDataConfig extends AbstractConfig implements IsStroomConfig 
         return unknownClassification;
     }
 
-    @SuppressWarnings("unused")
-    public void setUnknownClassification(final String unknownClassification) {
-        this.unknownClassification = unknownClassification;
-    }
-
     @ValidRegex
     @JsonPropertyDescription("The regex pattern for feed names")
     public String getFeedNamePattern() {
         return feedNamePattern;
-    }
-
-    @SuppressWarnings("unused")
-    public void setFeedNamePattern(final String feedNamePattern) {
-        this.feedNamePattern = feedNamePattern;
     }
 
     @Override

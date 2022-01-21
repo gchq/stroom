@@ -1,11 +1,11 @@
 package stroom.proxy.repo.dao;
 
 import stroom.data.zip.StroomZipFileType;
+import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.ProxyRepoTestModule;
-import stroom.proxy.repo.dao.SourceDao.Source;
-import stroom.proxy.repo.dao.SourceEntryDao.SourceItem;
-import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
-import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
+import stroom.proxy.repo.RepoSource;
+import stroom.proxy.repo.RepoSourceEntry;
+import stroom.proxy.repo.RepoSourceItem;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -14,11 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,74 +29,61 @@ public class TestAggregateDao {
     @Inject
     private SourceDao sourceDao;
     @Inject
-    private SourceEntryDao sourceEntryDao;
+    private SourceItemDao sourceItemDao;
     @Inject
     private AggregateDao aggregateDao;
+    @Inject
+    private Aggregator aggregator;
 
     @BeforeEach
     void beforeEach() {
         sourceDao.clear();
-        sourceEntryDao.clear();
+        sourceItemDao.clear();
         aggregateDao.clear();
     }
 
     @Test
     void testAggregate() {
-        Optional<Long> id = sourceDao.getSourceId("test");
-        assertThat(id.isPresent()).isFalse();
+        assertThat(sourceDao.countSources()).isZero();
+        assertThat(sourceItemDao.countEntries()).isZero();
+        assertThat(aggregateDao.countAggregates()).isZero();
+        assertThat(sourceDao.pathExists("test")).isFalse();
 
-        Source source = sourceDao.addSource("test", "test", "test", System.currentTimeMillis());
-        assertThat(source).isNotNull();
+        sourceDao.addSource("test", "test", "test", System.currentTimeMillis());
 
-        id = sourceDao.getSourceId("test");
-        assertThat(id.isPresent()).isTrue();
+        final Optional<RepoSource> optionalSource = sourceDao.getNewSource(0, TimeUnit.MILLISECONDS);
+        assertThat(optionalSource.isPresent()).isTrue();
 
-        assertThat(source.getSourceId()).isEqualTo(id.get());
+        final RepoSource source = optionalSource.get();
+        assertThat(source.getSourcePath()).isEqualTo("test");
 
-        assertThat(sourceEntryDao.countEntries()).isZero();
-        final Map<String, SourceItemRecord> itemNameMap = new HashMap<>();
-        final Map<Long, List<SourceEntryRecord>> entryMap = new HashMap<>();
+        final Map<String, RepoSourceItem> itemNameMap = new HashMap<>();
         for (int i = 0; i < 100; i++) {
-            final SourceItemRecord sourceItemRecord = new SourceItemRecord(
-                    sourceEntryDao.nextSourceItemId(),
-                    "item" + i,
-                    "testFeed",
-                    "Raw Events",
-                    source.getSourceId(),
-                    false);
+            final RepoSourceItem sourceItemRecord = RepoSourceItem
+                    .builder()
+                    .source(source)
+                    .name("item" + i)
+                    .feedName("testFeed")
+                    .typeName("Raw Events")
+                    .build();
             itemNameMap.put(sourceItemRecord.getName(), sourceItemRecord);
 
             for (int j = 0; j < 10; j++) {
-                final long sourceEntryId = sourceEntryDao.nextSourceEntryId();
-                entryMap
-                        .computeIfAbsent(sourceItemRecord.getId(), k -> new ArrayList<>())
-                        .add(new SourceEntryRecord(
-                                sourceEntryId,
-                                "dat",
-                                StroomZipFileType.DATA.getId(),
-                                100L,
-                                sourceItemRecord.getId()));
+                final RepoSourceEntry entry = RepoSourceEntry
+                        .builder()
+                        .type(StroomZipFileType.DATA)
+                        .extension("dat")
+                        .byteSize(100L)
+                        .build();
+                sourceItemRecord.addEntry(entry);
             }
         }
 
-        sourceEntryDao.addEntries(Paths.get("test"), source.getSourceId(), itemNameMap, entryMap);
+        sourceItemDao.addItems(Paths.get("test"), source.getId(), itemNameMap.values());
+        assertThat(sourceDao.getDeletableSources().size()).isZero();
+        aggregator.aggregateAll();
+        aggregator.closeOldAggregates(System.currentTimeMillis());
 
-        assertThat(sourceEntryDao.getDeletableSourceEntryIds().size()).isZero();
-        assertThat(sourceEntryDao.getDeletableSourceItemIds().size()).isZero();
-        assertThat(sourceEntryDao.deleteUnused()).isZero();
-        assertThat(sourceDao.getDeletableSources(10).size()).isZero();
-
-        for (final SourceItemRecord sourceItemRecord : itemNameMap.values()) {
-            final SourceItem sourceItem = new SourceItem(
-                    sourceItemRecord.getId(),
-                    sourceItemRecord.getFeedName(),
-                    sourceItemRecord.getTypeName(),
-                    1000L);
-            aggregateDao.addItem(sourceItem, 10, 10000L);
-        }
-        aggregateDao.closeAggregates(10, 10000L, System.currentTimeMillis());
-        assertThat(sourceEntryDao.getDeletableSourceEntryIds().size()).isZero();
-        assertThat(sourceEntryDao.getDeletableSourceItemIds().size()).isZero();
-        assertThat(sourceEntryDao.deleteUnused()).isZero();
+        assertThat(aggregateDao.countAggregates()).isOne();
     }
 }

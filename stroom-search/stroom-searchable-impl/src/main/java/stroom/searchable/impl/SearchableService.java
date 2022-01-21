@@ -1,6 +1,7 @@
 package stroom.searchable.impl;
 
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.OffsetRange;
@@ -19,8 +20,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,11 +28,10 @@ import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 // Used by DI
-class SearchableService {
+class SearchableService implements DataSourceProvider {
 
     public static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
-    private static final Logger LOGGER = LoggerFactory.getLogger(SearchableService.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SearchableService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchableService.class);
     private final SearchableProvider searchableProvider;
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final SecurityContext securityContext;
@@ -47,9 +45,10 @@ class SearchableService {
         this.securityContext = securityContext;
     }
 
-    DataSource getDataSource(final DocRef docRef) {
+    @Override
+    public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
-            LOGGER.debug("getDataSource called for docRef {}", docRef);
+            LOGGER.debug(() -> "getDataSource called for docRef " + docRef);
             final Searchable searchable = searchableProvider.get(docRef);
             if (searchable == null) {
                 return null;
@@ -58,17 +57,18 @@ class SearchableService {
         });
     }
 
+    @Override
     public SearchResponse search(final SearchRequest searchRequest) {
         return securityContext.useAsReadResult(() -> {
-            LOGGER.debug("search called for searchRequest {}", searchRequest);
+            LOGGER.debug(() -> "search called for searchRequest " + searchRequest);
 
             // Replace expression parameters.
             final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
             final DocRef docRef = Preconditions.checkNotNull(
                     Preconditions.checkNotNull(
-                            Preconditions.checkNotNull(modifiedSearchRequest)
-                                    .getQuery())
+                                    Preconditions.checkNotNull(modifiedSearchRequest)
+                                            .getQuery())
                             .getDataSource());
             Preconditions.checkNotNull(modifiedSearchRequest.getResultRequests(),
                     "searchRequest must have at least one resultRequest");
@@ -79,15 +79,25 @@ class SearchableService {
             if (searchable == null) {
                 return buildEmptyResponse(
                         modifiedSearchRequest,
-                        "Searchable could not be found for uuid " + docRef.getUuid());
+                        Collections.singletonList("Searchable could not be found for uuid " + docRef.getUuid()));
             } else {
                 return buildResponse(modifiedSearchRequest, searchable);
             }
         });
     }
 
-    Boolean destroy(final QueryKey queryKey) {
-        LOGGER.debug("destroy called for queryKey {}", queryKey);
+    @Override
+    public Boolean keepAlive(final QueryKey queryKey) {
+        LOGGER.trace(() -> "keepAlive() " + queryKey);
+        return searchResponseCreatorManager
+                .getOptional(new SearchResponseCreatorCache.Key(queryKey))
+                .map(SearchResponseCreator::keepAlive)
+                .orElse(Boolean.FALSE);
+    }
+
+    @Override
+    public Boolean destroy(final QueryKey queryKey) {
+        LOGGER.debug(() -> "destroy called for queryKey " + queryKey);
         // remove the creator from the cache which will trigger the onRemove listener
         // which will call destroy on the store
         searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
@@ -108,11 +118,7 @@ class SearchableService {
         return searchResponseCreator.create(searchRequest);
     }
 
-    private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final String errorMessage) {
-        return buildEmptyResponse(searchRequest, Collections.singletonList(errorMessage));
-    }
-
-    private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final List<String> errorMessages) {
+    private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final List<String> errors) {
 
         List<Result> results;
         if (searchRequest.getResultRequests() != null) {
@@ -132,7 +138,12 @@ class SearchableService {
         return new SearchResponse(
                 Collections.emptyList(),
                 results,
-                errorMessages,
+                errors,
                 true);
+    }
+
+    @Override
+    public String getType() {
+        return "Searchable";
     }
 }

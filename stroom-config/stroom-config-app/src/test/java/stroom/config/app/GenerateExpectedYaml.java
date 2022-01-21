@@ -34,7 +34,7 @@ public class GenerateExpectedYaml {
      * Builds a fresh config object tree with all the hard coded default values
      * and generates the yaml serialised form of it, saving the result to the
      * EXPECTED_YAML_FILE_NAME file so that it can be used in
-     * {@link TestYamlUtil#testGeneratedYamlAgainstExpected()}
+     * {@link TestStroomYamlUtil#testGeneratedYamlAgainstExpected()}
      * <p>
      * NOTE: This main method is called from the stroom-app gradle build so if it
      * is moved you will need to refactor that too.
@@ -47,7 +47,7 @@ public class GenerateExpectedYaml {
             defaultsFile = Paths.get(args[0]);
             schemaFile = Paths.get(args[1]);
         } else {
-            defaultsFile = TestYamlUtil.getExpectedYamlFilePath();
+            defaultsFile = TestStroomYamlUtil.getExpectedYamlFilePath();
             schemaFile = null;
         }
 
@@ -58,7 +58,7 @@ public class GenerateExpectedYaml {
             Files.createDirectories(parentDir);
         }
 
-        final String generatedYaml = TestYamlUtil.getYamlFromJavaModel();
+        final String generatedYaml = TestStroomYamlUtil.getYamlFromJavaModel();
 
 
         List<String> outputLines;
@@ -89,11 +89,10 @@ public class GenerateExpectedYaml {
     public static List<String> removeDropWizardLines(final String value) {
         return value.lines()
                 .sequential()
-                .takeWhile(line ->
-                        line.startsWith("---") || line.startsWith(APP_CONFIG + ":") || line.startsWith(" "))
+                .dropWhile(line -> !line.startsWith(APP_CONFIG + ":"))
+                .takeWhile(line -> line.startsWith(APP_CONFIG + ":") || line.startsWith("  "))
                 .collect(Collectors.toList());
     }
-
 
     static void generateJsonSchema(final Path schemaFile) throws IOException {
         final ObjectMapper objectMapper = new ObjectMapper();
