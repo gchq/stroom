@@ -16,7 +16,6 @@
 
 package stroom.pipeline;
 
-
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
@@ -42,14 +41,14 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
+import stroom.util.io.ByteCountInputStream;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Severity;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -61,14 +60,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAppenderTest.class);
 
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
@@ -89,9 +87,11 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
     @Inject
-    private Store streamStore;
+    private TaskContext taskContext;
     @Inject
-    private MetaService dataMetaService;
+    private MetaService metaService;
+    @Inject
+    private Store streamStore;
 
     private LoggingErrorReceiver loggingErrorReceiver;
 
@@ -167,7 +167,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
             // Create the parser.
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
+            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext);
 
             // Get the input streams.
             final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
@@ -212,158 +212,147 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).isEqualTo(0);
     }
 
-    void validateOutput(final String outputReference,
+    void checkSegments(final int streamCount,
+                       final int segmentTotal,
+                       final long[] segmentCounts,
+                       final long[] byteCounts) throws IOException {
+        final List<Meta> list = metaService.find(new FindMetaCriteria()).getValues();
+        assertThat(list.size()).isEqualTo(streamCount);
+
+//        final List<Long> byteCountList = new ArrayList<>();
+//        final List<Long> segmentCountList = new ArrayList<>();
+        int segments = 0;
+
+        for (int i = 0; i < streamCount; i++) {
+            final Meta meta = list.get(i);
+            final long id = meta.getId();
+            final long segmentCount = segmentCounts[i];
+            final long byteCount = byteCounts[i];
+
+            segments += segmentCount; // Add to the total segments.
+            segments -= 2; // Remove header and footer.
+
+            try (final Source streamSource = streamStore.openSource(id)) {
+                try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
+                    final SegmentInputStream segmentInputStream = inputStreamProvider.get();
+                    final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(segmentInputStream);
+                    StreamUtil.streamToString(byteCountInputStream);
+                    assertThat(segmentInputStream.count()).isEqualTo(segmentCount);
+                    assertThat(byteCountInputStream.getCount()).isEqualTo(byteCount);
+
+//                    byteCountList.add(byteCountInputStream.getCount());
+//                    segmentCountList.add(segmentInputStream.count());
+                }
+            }
+        }
+
+        assertThat(segments).isEqualTo(segmentTotal);
+
+//        System.out.println(segments);
+//        System.out.println(byteCountList.stream().map(Objects::toString).collect(Collectors.joining(",")));
+//        System.out.println(segmentCountList.stream().map(Objects::toString).collect(Collectors.joining(",")));
+    }
+
+    void validateOutput(final String name,
                         final String type) {
         try {
-            final List<Meta> list = dataMetaService.find(new FindMetaCriteria()).getValues();
-            assertThat(list.size()).isEqualTo(1);
-
-            final long id = list.get(0).getId();
-            checkOuterData(id, type.equalsIgnoreCase("text"));
-            checkInnerData(id, type.equalsIgnoreCase("text"));
-            checkFull(id, outputReference);
+            final Path refDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(name);
+            final List<Meta> list = metaService.find(new FindMetaCriteria()).getValues();
+            int num = 0;
+            for (final Meta meta : list) {
+                final long id = meta.getId();
+                num++;
+                if (type.toLowerCase(Locale.ROOT).contains("text")) {
+                    checkFirstData(id, refDir.resolve(name + "_" + type + "-" + num + ".first.out.txt"));
+                    checkLastData(id, refDir.resolve(name + "_" + type + "-" + num + ".last.out.txt"));
+                    checkFull(id, refDir.resolve(name + "_" + type + "-" + num + ".full.out.txt"));
+                } else {
+                    checkOuterData(id, refDir.resolve(name + "_" + type + "-" + num + ".outer.out.xml"));
+                    checkInnerData(id, refDir.resolve(name + "_" + type + "-" + num + ".inner.out.xml"));
+                    checkFirstData(id, refDir.resolve(name + "_" + type + "-" + num + ".first.out.xml"));
+                    checkLastData(id, refDir.resolve(name + "_" + type + "-" + num + ".last.out.xml"));
+                    checkFull(id, refDir.resolve(name + "_" + type + "-" + num + ".full.out.xml"));
+                }
+            }
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    private void checkInnerData(final long streamId, final boolean text) throws IOException {
-        if (text) {
-            @SuppressWarnings("checkstyle:LineLength") final String innerRef = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
-                    "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123lastuser1234/goodGETHTTP/1.0someagent200\n";
-
-            checkInnerData(streamId, 143, innerRef);
-
-        } else {
-            final String innerRef = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
-                    "<Events xmlns=\"event-logging:3\"\n" +
-                    "        xmlns:stroom=\"stroom\"\n" +
-                    "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                    "        xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\"\n" +
-                    "        Version=\"3.0.0\">\n" +
-                    "   <Event>\n" +
-                    "      <EventTime>\n" +
-                    "         <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>\n" +
-                    "      </EventTime>\n" +
-                    "      <EventSource>\n" +
-                    "         <System>\n" +
-                    "            <Name>Test</Name>\n" +
-                    "            <Environment>Test</Environment>\n" +
-                    "         </System>\n" +
-                    "         <Generator>Apache</Generator>\n" +
-                    "         <Device>\n" +
-                    "            <HostName>test.test.com</HostName>\n" +
-                    "         </Device>\n" +
-                    "         <Client>\n" +
-                    "            <IPAddress>123.123.123.123</IPAddress>\n" +
-                    "         </Client>\n" +
-                    "         <User>\n" +
-                    "            <Id>firstuser</Id>\n" +
-                    "         </User>\n" +
-                    "      </EventSource>\n" +
-                    "      <EventDetail>\n" +
-                    "         <TypeId>1234</TypeId>\n" +
-                    "         <View>\n" +
-                    "            <Resource>\n" +
-                    "               <URL>/good</URL>\n" +
-                    "               <HTTPMethod>GET</HTTPMethod>\n" +
-                    "               <HTTPVersion>HTTP/1.0</HTTPVersion>\n" +
-                    "               <UserAgent>someagent</UserAgent>\n" +
-                    "               <ResponseCode>200</ResponseCode>\n" +
-                    "            </Resource>\n" +
-                    "         </View>\n" +
-                    "      </EventDetail>\n" +
-                    "   </Event>\n" +
-                    "   <Event>\n" +
-                    "      <EventTime>\n" +
-                    "         <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>\n" +
-                    "      </EventTime>\n" +
-                    "      <EventSource>\n" +
-                    "         <System>\n" +
-                    "            <Name>Test</Name>\n" +
-                    "            <Environment>Test</Environment>\n" +
-                    "         </System>\n" +
-                    "         <Generator>Apache</Generator>\n" +
-                    "         <Device>\n" +
-                    "            <HostName>test.test.com</HostName>\n" +
-                    "         </Device>\n" +
-                    "         <Client>\n" +
-                    "            <IPAddress>123.123.123.123</IPAddress>\n" +
-                    "         </Client>\n" +
-                    "         <User>\n" +
-                    "            <Id>lastuser</Id>\n" +
-                    "         </User>\n" +
-                    "      </EventSource>\n" +
-                    "      <EventDetail>\n" +
-                    "         <TypeId>1234</TypeId>\n" +
-                    "         <View>\n" +
-                    "            <Resource>\n" +
-                    "               <URL>/good</URL>\n" +
-                    "               <HTTPMethod>GET</HTTPMethod>\n" +
-                    "               <HTTPVersion>HTTP/1.0</HTTPVersion>\n" +
-                    "               <UserAgent>someagent</UserAgent>\n" +
-                    "               <ResponseCode>200</ResponseCode>\n" +
-                    "            </Resource>\n" +
-                    "         </View>\n" +
-                    "      </EventDetail>\n" +
-                    "   </Event>\n" +
-                    "</Events>\n";
-
-            checkInnerData(streamId, 143, innerRef);
-        }
-    }
-
-    private void checkOuterData(final long streamId, final boolean text) throws IOException {
-        if (text) {
-            final String outerRef = "";
-
-            checkOuterData(streamId, 143, outerRef);
-
-        } else {
-            final String outerRef = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
-                    "<Events xmlns=\"event-logging:3\"\n" +
-                    "        xmlns:stroom=\"stroom\"\n" +
-                    "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                    "        xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\"\n" +
-                    "        Version=\"3.0.0\">\n" +
-                    "</Events>\n";
-
-            checkOuterData(streamId, 143, outerRef);
-        }
-    }
-
-    private void checkFull(final long streamId, final String outputReference) throws IOException {
+    private void checkFull(final long streamId, final Path refFile) throws IOException {
         try (final Source streamSource = streamStore.openSource(streamId)) {
-            final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
             final String refData = StreamUtil.fileToString(refFile);
             final String data = SourceUtil.readString(streamSource);
             assertThat(data).isEqualTo(refData);
+
+//            Files.writeString(refFile, data);
         }
     }
 
-    private void checkOuterData(final long streamId, final int count, final String ref) throws IOException {
+    private void checkFirstData(final long streamId, final Path refFile) throws IOException {
         try (final Source streamSource = streamStore.openSource(streamId)) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
                 final SegmentInputStream segmentInputStream = inputStreamProvider.get();
 
-                assertThat(segmentInputStream.count()).isEqualTo(count);
+                // Include the first and last segment as these are header and footer.
+                segmentInputStream.include(0);
+                segmentInputStream.include(segmentInputStream.count() - 1);
+
+                // Include the first data segment.
+                segmentInputStream.include(1);
+
+                final String refData = StreamUtil.fileToString(refFile);
+                final String data = StreamUtil.streamToString(segmentInputStream);
+                assertThat(data).isEqualTo(refData);
+
+//                Files.writeString(refFile, data);
+            }
+        }
+    }
+
+    private void checkLastData(final long streamId, final Path refFile) throws IOException {
+        try (final Source streamSource = streamStore.openSource(streamId)) {
+            try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
+                final SegmentInputStream segmentInputStream = inputStreamProvider.get();
+
+                // Include the first and last segment as these are header and footer.
+                segmentInputStream.include(0);
+                segmentInputStream.include(segmentInputStream.count() - 1);
+
+                // Include the last data segment.
+                segmentInputStream.include(segmentInputStream.count() - 2);
+
+                final String refData = StreamUtil.fileToString(refFile);
+                final String data = StreamUtil.streamToString(segmentInputStream);
+                assertThat(data).isEqualTo(refData);
+
+//                Files.writeString(refFile, data);
+            }
+        }
+    }
+
+    private void checkOuterData(final long streamId, final Path refFile) throws IOException {
+        try (final Source streamSource = streamStore.openSource(streamId)) {
+            try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
+                final SegmentInputStream segmentInputStream = inputStreamProvider.get();
 
                 // Include the first and last segment only.
                 segmentInputStream.include(0);
                 segmentInputStream.include(segmentInputStream.count() - 1);
 
+                final String refData = StreamUtil.fileToString(refFile);
                 final String data = StreamUtil.streamToString(segmentInputStream);
-                assertThat(data).isEqualTo(ref);
+                assertThat(data).withFailMessage(() -> FileUtil.getCanonicalPath(refFile)).isEqualTo(refData);
+
+//                Files.writeString(refFile, data);
             }
         }
     }
 
-    private void checkInnerData(final long streamId, final int count, final String ref) throws IOException {
+    private void checkInnerData(final long streamId, final Path refFile) throws IOException {
         try (final Source streamSource = streamStore.openSource(streamId)) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
                 final SegmentInputStream segmentInputStream = inputStreamProvider.get();
-
-                assertThat(segmentInputStream.count()).isEqualTo(count);
 
                 // Include the first and last segment only.
                 segmentInputStream.include(0);
@@ -371,8 +360,11 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
                 segmentInputStream.include(segmentInputStream.count() - 2);
                 segmentInputStream.include(segmentInputStream.count() - 1);
 
+                final String refData = StreamUtil.fileToString(refFile);
                 final String data = StreamUtil.streamToString(segmentInputStream);
-                assertThat(data).isEqualTo(ref);
+                assertThat(data).withFailMessage(() -> FileUtil.getCanonicalPath(refFile)).isEqualTo(refData);
+
+//                Files.writeString(refFile, data);
             }
         }
     }

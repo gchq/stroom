@@ -17,7 +17,7 @@
 package stroom.processor.impl;
 
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -34,7 +34,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.shared.ResultPage;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -83,7 +82,7 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
+                       final ValuesConsumer consumer) {
         securityContext.secure(PERMISSION, () ->
                 processorTaskDao.search(criteria, fields, consumer));
     }

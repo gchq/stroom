@@ -11,17 +11,24 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.base.Strings;
 import event.logging.ComplexLoggedOutcome;
+import event.logging.Query;
+import event.logging.SearchEventAction;
 import event.logging.UpdateEventAction;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,39 +43,87 @@ import javax.ws.rs.core.GenericType;
 @AutoLogged
 public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigResourceImpl.class);
+
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<GlobalConfigService> globalConfigServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<UiConfig> uiConfig;
     private final Provider<UriFactory> uriFactory;
+    private final Provider<NodeInfo> nodeInfoProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
                              final Provider<GlobalConfigService> globalConfigServiceProvider,
                              final Provider<NodeService> nodeServiceProvider,
                              final Provider<UiConfig> uiConfig,
-                             final Provider<UriFactory> uriFactory) {
+                             final Provider<UriFactory> uriFactory,
+                             final Provider<NodeInfo> nodeInfoProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
         this.nodeServiceProvider = Objects.requireNonNull(nodeServiceProvider);
         this.uiConfig = uiConfig;
         this.uriFactory = uriFactory;
+        this.nodeInfoProvider = nodeInfoProvider;
     }
 
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Timed
     @Override
     public ListConfigResponse list(final GlobalConfigCriteria criteria) {
-        final ListConfigResponse list = globalConfigServiceProvider.get().list(criteria);
-        List<ConfigProperty> values = list.getValues();
-        values = values.stream().map(this::sanitise).collect(Collectors.toList());
-        return new ListConfigResponse(values, list.getPageResponse());
+        return listWithLogging(criteria);
     }
 
+    private ListConfigResponse listWithoutLogging(final GlobalConfigCriteria criteria) {
+        final ListConfigResponse list = globalConfigServiceProvider.get().list(criteria);
+        List<ConfigProperty> values = list.getValues();
+        values = values.stream()
+                .map(this::sanitise)
+                .collect(Collectors.toList());
+        return new ListConfigResponse(
+                values,
+                list.getPageResponse(),
+                nodeInfoProvider.get().getThisNodeName(),
+                list.getQualifiedFilterInput());
+    }
+
+    private ListConfigResponse listWithLogging(final GlobalConfigCriteria criteria) {
+        LOGGER.debug("list called for {}", criteria);
+
+        final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
+
+        return eventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "list"))
+                .withDescription("List filtered configuration properties")
+                .withDefaultEventAction(SearchEventAction.builder()
+                        .withQuery(buildRawQuery(criteria.getQuickFilterInput()))
+                        .build())
+                .withComplexLoggedResult(searchEventAction -> {
+                    // Do the work
+                    final ListConfigResponse sanitisedResult = listWithoutLogging(criteria);
+
+                    // Ignore the previous searchEventAction as it didn't have anything useful on it
+                    final SearchEventAction newSearchEventAction = SearchEventAction.builder()
+                            .withQuery(buildRawQuery(sanitisedResult.getQualifiedFilterInput()))
+                            .withResultPage(StroomEventLoggingUtil.createResultPage(sanitisedResult))
+                            .withTotalResults(BigInteger.valueOf(sanitisedResult.size()))
+                            .build();
+
+                    return ComplexLoggedOutcome.success(sanitisedResult, newSearchEventAction);
+                })
+                .getResultAndLog();
+    }
+
+
+    // logging handled by initial call to list() on ui node. Don't want to log the call to each node
+    @AutoLogged(OperationType.UNLOGGED)
     @Timed
     @Override
     public ListConfigResponse listByNode(final String nodeName,
                                          final GlobalConfigCriteria criteria) {
+        LOGGER.debug("listByNode called for node: {}, criteria: {}", nodeName, criteria);
         return nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 ListConfigResponse.class,
@@ -77,7 +132,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                         GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
                         nodeName),
                 () ->
-                        list(criteria),
+                        listWithoutLogging(criteria),
                 builder ->
                         builder.post(Entity.json(criteria)));
     }
@@ -175,24 +230,29 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
             final GlobalConfigService globalConfigService = globalConfigServiceProvider.get();
             final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
-            return stroomEventLoggingService.loggedResult(
-                    StroomEventLoggingUtil.buildTypeId(this, "update"),
-                    "Updating property " + configProperty.getNameAsString(),
-                    UpdateEventAction.builder()
+            return stroomEventLoggingService.loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "update"))
+                    .withDescription("Updating property " + configProperty.getNameAsString())
+                    .withDefaultEventAction(UpdateEventAction.builder()
                             .withAfter(stroomEventLoggingService.convertToMulti(() -> configProperty))
-                            .build(),
-                    eventAction -> {
+                            .build())
+                    .withComplexLoggedResult(eventAction -> {
                         // Do the update
                         final ConfigProperty persistedProperty = globalConfigService.update(configProperty);
 
                         return ComplexLoggedOutcome.success(
                                 persistedProperty,
                                 stroomEventLoggingService.buildUpdateEventAction(
-                                        () -> globalConfigService.fetch(configProperty.getId())
-                                                .orElse(null),
+                                        () -> {
+                                            if (configProperty.getId() == null) {
+                                                return null;
+                                            }
+                                            return globalConfigService.fetch(configProperty.getId())
+                                                    .orElse(null);
+                                        },
                                         () -> persistedProperty));
-                    },
-                    null);
+                    })
+                    .getResultAndLog();
         } catch (ConfigPropertyValidationException e) {
             throw RestUtil.badRequest(e);
         }
@@ -203,5 +263,15 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Override
     public UiConfig fetchUiConfig() {
         return uiConfig.get();
+    }
+
+    private Query buildRawQuery(final String userInput) {
+        return Strings.isNullOrEmpty(userInput)
+                ? new Query()
+                : Query.builder()
+                        .withRaw("Configuration property matches \""
+                                + Objects.requireNonNullElse(userInput, "")
+                                + "\"")
+                        .build();
     }
 }

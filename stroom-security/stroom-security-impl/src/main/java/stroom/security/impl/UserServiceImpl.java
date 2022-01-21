@@ -182,10 +182,7 @@ class UserServiceImpl implements UserService, UserNameProvider {
     public List<String> getAssociates(final String filter) {
         final Set<User> userSet;
 
-        final Predicate<User> userPredicate = user ->
-                user.isEnabled()
-                        && user.getUuid().length() > 5
-                        && !user.isGroup();
+        final Predicate<User> userPredicate = user -> user.getUuid().length() > 5 && !user.isGroup();
 
         // Admin users will see all.
         if (securityContext.isAdmin()) {

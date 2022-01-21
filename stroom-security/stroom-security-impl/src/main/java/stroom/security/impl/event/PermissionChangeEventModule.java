@@ -34,7 +34,6 @@ public class PermissionChangeEventModule extends AbstractModule {
         RestResourcesBinder.create(binder()).bind(PermissionChangeResourceImpl.class);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

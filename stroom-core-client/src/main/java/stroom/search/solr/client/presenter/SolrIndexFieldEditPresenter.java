@@ -20,8 +20,8 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexFieldType;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 

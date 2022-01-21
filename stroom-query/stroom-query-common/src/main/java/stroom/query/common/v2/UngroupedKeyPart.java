@@ -33,7 +33,6 @@ class UngroupedKeyPart implements KeyPart {
         throw new RuntimeException("No group values exist for ungrouped parts");
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

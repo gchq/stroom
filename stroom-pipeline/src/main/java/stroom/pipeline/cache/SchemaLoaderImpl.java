@@ -24,10 +24,10 @@ import stroom.pipeline.filter.LSResourceResolverImpl;
 import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 
@@ -40,7 +40,7 @@ import javax.xml.validation.SchemaFactory;
 
 public class SchemaLoaderImpl implements SchemaLoader {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SchemaLoaderImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SchemaLoaderImpl.class);
 
     private final XmlSchemaCache xmlSchemaCache;
 
@@ -53,10 +53,7 @@ public class SchemaLoaderImpl implements SchemaLoader {
     public StoredSchema load(final String schemaLanguage,
                              final String data,
                              final FindXMLSchemaCriteria findXMLSchemaCriteria) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Creating schema: " + data);
-        }
-
+        LOGGER.debug(() -> "Creating schema: " + data);
         final StoredErrorReceiver errorReceiver = new StoredErrorReceiver();
         final LocationFactory locationFactory = new DefaultLocationFactory();
         final ErrorHandler errorHandler = new ErrorHandlerAdaptor(getClass().getSimpleName(), locationFactory,
@@ -78,13 +75,13 @@ public class SchemaLoaderImpl implements SchemaLoader {
             schema = schemaFactory.newSchema(new StreamSource(inputStream));
 
         } catch (final SAXException e) {
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.debug(e::getMessage, e);
             errorReceiver.log(Severity.FATAL_ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         } finally {
             try {
                 inputStream.close();
             } catch (final IOException e) {
-                LOGGER.debug(e.getMessage(), e);
+                LOGGER.debug(e::getMessage, e);
                 errorReceiver.log(Severity.FATAL_ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
             }
         }

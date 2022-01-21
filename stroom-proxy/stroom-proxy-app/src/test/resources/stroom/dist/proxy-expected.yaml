@@ -10,8 +10,16 @@ proxyConfig:
   contentSync:
     apiKey: null
     contentSyncEnabled: false
-    syncFrequency: 0
+    syncFrequency: 60000
     upstreamUrl: null
+  db:
+    connectionPragma:
+    - "pragma synchronous = normal;"
+    - "pragma temp_store = memory;"
+    - "pragma mmap_size = 30000000000;"
+    dbDir: "db"
+    globalPragma:
+    - "pragma journal_mode = WAL;"
   feedStatus:
     apiKey: null
     url: null
@@ -27,10 +35,21 @@ proxyConfig:
     home: null
     temp: null
   receiptPolicy:
+    metaTypes:
+    - "Context"
+    - "Raw Reference"
+    - "Events"
+    - "Raw Events"
+    - "Reference"
+    - "Error"
+    - "Test Events"
+    - "Test Reference"
+    - "Detections"
+    - "Meta Data"
+    - "Records"
     receiptPolicyUuid: null
   repository:
     cleanupFrequency: "PT1H"
-    dbDir: "repo"
     dirCleanDelay: "PT10S"
     format: "${pathId}/${id}"
     lockDeleteAge: "PT1H"
@@ -52,12 +71,16 @@ proxyConfig:
     timeToLive: "PT1H"
     timeout: "PT0.5S"
     tls: null
-    userAgent:
-      empty: true
-      present: false
+    userAgent: null
     validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
   scanner:
-    scanningEnabled: false
     scanFrequency: "PT10S"
+    scanningEnabled: false
+  threads:
+    aggregatorThreadCount: 2
+    createForwardRecordThreadCount: 2
+    examineSourceThreadCount: 3
+    forwardRetryThreadCount: 2
+    forwardThreadCount: 10
   useDefaultOpenIdCredentials: true

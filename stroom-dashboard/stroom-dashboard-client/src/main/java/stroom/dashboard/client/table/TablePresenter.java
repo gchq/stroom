@@ -914,7 +914,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public void link() {
         String queryId = getTableSettings().getQueryId();
-        queryId = getComponents().validateOrGetFirstComponentId(queryId, QueryPresenter.TYPE.getId());
+        queryId = getComponents().validateOrGetLastComponentId(queryId, QueryPresenter.TYPE.getId());
         setSettings(getTableSettings().copy().queryId(queryId).build());
         setQueryId(queryId);
     }

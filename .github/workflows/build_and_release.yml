@@ -109,10 +109,13 @@ jobs:
         id: update_gh-pages
         if: ${{ env.BUILD_IS_RELEASE == 'true' }}
         env:
-          # ssh private key (corresponding to the public key in github deploy keys
-          # for the stroom repo), manually added to secrets
-          # https://github.com/gchq/stroom/settings/secrets/actions
-          # https://github.com/gchq/stroom/settings/keys
+          # Github provided secret. To set it up do:
+          # Use this to generate the pub/priv key pair
+          #   ssh-keygen -t rsa -b 4096 -f <repo>_deploy_key
+          # Create a repo deploy key with the public key, name 'Actions Deploy Key' and with write access
+          #   https://github.com/<namespace>/<repo>/settings/keys/new
+          # Create a repo secret with the private key, name 'SSH_DEPLOY_KEY'
+          #   https://github.com/<namespace>/<repo>/settings/secrets/actions/new
           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
         run: "${ACTIONS_SCRIPTS_DIR}/update_gh_pages.sh"
 

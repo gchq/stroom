@@ -20,7 +20,7 @@ import stroom.task.shared.TaskId;
 
 import java.util.function.Supplier;
 
-public interface TaskContext {
+public interface TaskContext extends Terminator {
 
     void info(Supplier<String> messageSupplier);
 
@@ -30,4 +30,9 @@ public interface TaskContext {
      * @return The task id of this context.
      */
     TaskId getTaskId();
+
+    /**
+     * Reset submission time etc.
+     */
+    void reset();
 }

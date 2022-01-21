@@ -13,6 +13,7 @@ import stroom.proxy.repo.ProxyRepo;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlers;
+import stroom.test.common.TemporaryPathCreator;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -109,18 +111,18 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                                                          final boolean isForwardingEnabled,
                                                          final List<String> forwardUrlList) {
         final LogStreamConfig logRequestConfig = new LogStreamConfig();
-        final ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
-        final ForwarderConfig forwarderConfig = new ForwarderConfig();
+        final ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig()
+                .withRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()))
+                .withStoringEnabled(isStoringEnabled);
 
-        proxyRepoConfig.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));
-        proxyRepoConfig.setStoringEnabled(isStoringEnabled);
-        forwarderConfig.setForwardingEnabled(isForwardingEnabled);
+        final List<ForwardDestinationConfig> forwardDestinationConfigList = forwardUrlList.stream()
+                .map(url ->
+                        new ForwardDestinationConfig().withForwardUrl(url))
+                .collect(Collectors.toList());
 
-        for (final String url : forwardUrlList) {
-            ForwardDestinationConfig destinationConfig = new ForwardDestinationConfig();
-            destinationConfig.setForwardUrl(url);
-            forwarderConfig.getForwardDestinations().add(destinationConfig);
-        }
+        final ForwarderConfig forwarderConfig = new ForwarderConfig()
+                .withForwardingEnabled(isForwardingEnabled)
+                .withForwardDestinations(forwardDestinationConfigList);
 
         try {
             final StroomZipOutputStream mockStroomZipOutputStream = Mockito.mock(StroomZipOutputStream.class);
@@ -137,11 +139,12 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
         final long now = System.currentTimeMillis();
         final BuildInfo buildInfo = new BuildInfo(now, "test version", now);
 
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new TemporaryPathCreator(tempDir);
+//        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
 
         final ForwarderDestinations forwarderDestinations = new ForwarderDestinationsImpl(
                 logStream,
-                forwarderConfig,
+                () -> forwarderConfig,
                 proxyRepoConfig,
                 () -> buildInfo,
                 pathCreator);

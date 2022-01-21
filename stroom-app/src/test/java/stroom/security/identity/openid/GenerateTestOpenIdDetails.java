@@ -90,7 +90,7 @@ public class GenerateTestOpenIdDetails {
         final OpenIdClient oAuth2Client = OpenIdClientDetailsFactoryImpl.createRandomisedOAuth2Client(CLIENT_NAME);
 
         final TokenBuilderFactory tokenBuilderFactory = new TokenBuilderFactory(
-                new IdentityConfig(),
+                IdentityConfig::new,
                 publicJsonWebKeyProvider);
 
         final TokenBuilder tokenBuilder = tokenBuilderFactory

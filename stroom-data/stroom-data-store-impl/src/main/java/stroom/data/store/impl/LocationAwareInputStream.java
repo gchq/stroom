@@ -19,9 +19,7 @@ package stroom.data.store.impl;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import javax.annotation.concurrent.NotThreadSafe;
 
-@NotThreadSafe
 public class LocationAwareInputStream extends FilterInputStream {
 
     private long firstOffsetInLastRead = -1;

@@ -18,8 +18,8 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 

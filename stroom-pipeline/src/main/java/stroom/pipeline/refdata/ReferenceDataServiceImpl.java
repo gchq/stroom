@@ -1,9 +1,11 @@
 package stroom.pipeline.refdata;
 
+import stroom.bytebuffer.ByteBufferPool;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.shared.StreamTypeNames;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
@@ -17,7 +19,10 @@ import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedStore;
+import stroom.node.api.FindNodeCriteria;
+import stroom.node.api.NodeService;
 import stroom.pipeline.refdata.RefDataLookupRequest.ReferenceLoader;
+import stroom.pipeline.refdata.store.ProcessingInfoResponse;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataValueConverter;
@@ -34,6 +39,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -41,8 +47,10 @@ import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.time.StroomDuration;
 
+import com.google.common.base.Strings;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
@@ -53,7 +61,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -61,6 +73,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.client.SyncInvoker;
 
 public class ReferenceDataServiceImpl implements ReferenceDataService {
 
@@ -118,34 +131,6 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private static final Map<String, AbstractField> FIELD_NAME_TO_FIELD_MAP = FIELDS.stream()
             .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
 
-//    private static final Map<String, Function<RefStoreEntry, Val>> FIELD_TO_VAL_EXTRACTOR_MAP = Map.ofEntries(
-//            Map.entry(KEY_FIELD.getName(), refStoreEntry ->
-//                    ValString.create(refStoreEntry.getKey())),
-//            Map.entry(VALUE_FIELD.getName(), refStoreEntry ->
-//                    ValString.create(refStoreEntry.getValue())),
-//            Map.entry(MAP_NAME_FIELD.getName(), refStoreEntry ->
-//                    ValString.create(refStoreEntry.getMapDefinition().getMapName())),
-//            Map.entry(CREATE_TIME_FIELD.getName(), refStoreEntry ->
-//                    ValLong.create(refStoreEntry.getRefDataProcessingInfo().getCreateTimeEpochMs())),
-//            Map.entry(EFFECTIVE_TIME_FIELD.getName(), refStoreEntry ->
-//                    ValLong.create(refStoreEntry.getRefDataProcessingInfo().getEffectiveTimeEpochMs())),
-//            Map.entry(LAST_ACCESSED_TIME_FIELD.getName(), refStoreEntry ->
-//                    ValLong.create(refStoreEntry.getRefDataProcessingInfo().getLastAccessedTimeEpochMs())),
-//            Map.entry(PIPELINE_FIELD.getName(), refStoreEntry ->
-//                    ValString.create(refStoreEntry.getMapDefinition()
-//                    .getRefStreamDefinition()
-//                    .getPipelineDocRef().toInfoString())),
-//            Map.entry(PROCESSING_STATE_FIELD.getName(), refStoreEntry ->
-//                    ValString.create(refStoreEntry.getRefDataProcessingInfo()
-//                    .getProcessingState().getDisplayName())),
-//            Map.entry(STREAM_ID_FIELD.getName(), refStoreEntry ->
-//                    ValLong.create(refStoreEntry.getMapDefinition().getRefStreamDefinition().getStreamId())),
-//            Map.entry(STREAM_NO_FIELD.getName(), refStoreEntry ->
-//                    ValLong.create(refStoreEntry.getMapDefinition().getRefStreamDefinition().getStreamNo())),
-//            Map.entry(PIPELINE_VERSION_FIELD.getName(), refStoreEntry ->
-//                    ValString.create(refStoreEntry.getMapDefinition()
-//                    .getRefStreamDefinition().getPipelineVersion())));
-
     private static final Map<String, Function<RefStoreEntry, Object>> FIELD_TO_EXTRACTOR_MAP = Map.ofEntries(
             Map.entry(KEY_FIELD.getName(),
                     RefStoreEntry::getKey),
@@ -180,6 +165,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final TaskContextFactory taskContextFactory;
     private final RefDataValueProxyConsumerFactory.Factory refDataValueProxyConsumerFactoryFactory;
+    private final ByteBufferPool byteBufferPool;
+    private final NodeService nodeService;
 
     @Inject
     public ReferenceDataServiceImpl(final RefDataStoreFactory refDataStoreFactory,
@@ -189,7 +176,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final RefDataValueConverter refDataValueConverter,
                                     final PipelineScopeRunnable pipelineScopeRunnable,
                                     final TaskContextFactory taskContextFactory,
-                                    final Factory refDataValueProxyConsumerFactoryFactory) {
+                                    final Factory refDataValueProxyConsumerFactoryFactory,
+                                    final ByteBufferPool byteBufferPool,
+                                    final NodeService nodeService) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.securityContext = securityContext;
         this.feedStore = feedStore;
@@ -198,16 +187,74 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.taskContextFactory = taskContextFactory;
         this.refDataValueProxyConsumerFactoryFactory = refDataValueProxyConsumerFactoryFactory;
+        this.byteBufferPool = byteBufferPool;
+        this.nodeService = nodeService;
     }
 
     @Override
     public List<RefStoreEntry> entries(final int limit) {
+        return entries(limit, null, null);
+    }
+
+    @Override
+    public List<RefStoreEntry> entries(final int limit,
+                                       final Long refStreamId,
+                                       final String mapName) {
         return withPermissionCheck(() -> {
             final List<RefStoreEntry> entries;
             try {
-                entries = refDataStore.list(limit);
+                Predicate<RefStoreEntry> predicate = entry -> true;
+
+                if (refStreamId != null) {
+                    predicate = predicate.and(refStoreEntry ->
+                            refStoreEntry.getMapDefinition()
+                                    .getRefStreamDefinition()
+                                    .getStreamId() == refStreamId);
+                }
+
+                if (!Strings.isNullOrEmpty(mapName)) {
+                    predicate = predicate.and(refStoreEntry ->
+                            mapName.equals(refStoreEntry.getMapDefinition().getMapName()));
+                }
+
+                entries = refDataStore.list(limit, predicate);
             } catch (Exception e) {
                 LOGGER.error("Error listing reference data", e);
+                throw e;
+            }
+            return entries;
+        });
+    }
+
+    @Override
+    public List<ProcessingInfoResponse> refStreamInfo(final int limit) {
+        return refStreamInfo(limit, null, null);
+    }
+
+    @Override
+    public List<ProcessingInfoResponse> refStreamInfo(final int limit,
+                                                      final Long refStreamId,
+                                                      final String mapName) {
+
+        return withPermissionCheck(() -> {
+            final List<ProcessingInfoResponse> entries;
+            try {
+                Predicate<ProcessingInfoResponse> predicate = entry -> true;
+
+                if (refStreamId != null) {
+                    predicate = predicate.and(refStreamProcessingInfo ->
+                            refStreamProcessingInfo.getRefStreamDefinition()
+                                    .getStreamId() == refStreamId);
+                }
+
+                if (!Strings.isNullOrEmpty(mapName)) {
+                    predicate = predicate.and(refStreamProcessingInfo ->
+                            refStreamProcessingInfo.getMaps().containsKey(mapName));
+                }
+
+                entries = refDataStore.listProcessingInfo(limit, predicate);
+            } catch (Exception e) {
+                LOGGER.error("Error listing ref stream processing info data", e);
                 throw e;
             }
             return entries;
@@ -227,30 +274,211 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // TODO @AT This is a lot of cross over between ReferenceData and ReferenceDataServiceImpl
 
         return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () ->
-                taskContextFactory.contextResult("Reference Data Lookup (API)",
-                        taskContext ->
-                                LOGGER.logDurationIfDebugEnabled(
-                                        () ->
-                                                performLookup(refDataLookupRequest),
-                                        LogUtil.message("Performing lookup for {}", refDataLookupRequest))))
+                        taskContextFactory.contextResult("Reference Data Lookup (API)",
+                                taskContext ->
+                                        LOGGER.logDurationIfDebugEnabled(
+                                                () ->
+                                                        performLookup(refDataLookupRequest),
+                                                LogUtil.message("Performing lookup for {}", refDataLookupRequest))))
                 .get();
     }
 
     @Override
-    public void purge(final StroomDuration purgeAge) {
-        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
-                taskContextFactory.context("Reference Data Purge",
-                        taskContext ->
-                                LOGGER.logDurationIfDebugEnabled(
-                                        () ->
-                                                performPurge(purgeAge),
-                                        LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
-                        .run());
+    public void purge(final StroomDuration purgeAge, final String nodeName) {
+
+        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+
+            final List<String> nodeNames = getNodeList(nodeName);
+            final Set<String> failedNodes = new ConcurrentSkipListSet<>();
+            final AtomicReference<Throwable> exception = new AtomicReference<>();
+
+            taskContextFactory.context(
+                    "Reference Data Purge on all nodes (" + purgeAge.toString() + ")",
+                    parentTaskContext -> {
+                        nodeNames.stream()
+                                .map(nodeName2 -> {
+
+                                    final Runnable runnable = taskContextFactory.childContext(
+                                            parentTaskContext,
+                                            "Reference Data Purge on node " + nodeName2,
+                                            taskContext -> {
+                                                nodeService.remoteRestCall(
+                                                        nodeName2,
+                                                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                                                ReferenceDataResource.BASE_PATH,
+                                                                ReferenceDataResource.PURGE_BY_AGE_SUB_PATH,
+                                                                purgeAge.getValueAsStr()),
+                                                        () ->
+                                                                purgeLocally(purgeAge),
+                                                        SyncInvoker::delete,
+                                                        Collections.singletonMap(
+                                                                ReferenceDataResource.QUERY_PARAM_NODE_NAME,
+                                                                nodeName2));
+                                            });
+
+                                    return CompletableFuture
+                                            .runAsync(runnable)
+                                            .exceptionally(throwable -> {
+                                                failedNodes.add(nodeName2);
+                                                exception.set(throwable);
+                                                LOGGER.error(
+                                                        "Error purging reference data store on node [{}]: {}. " +
+                                                                "Enable DEBUG for stacktrace",
+                                                        nodeName2,
+                                                        throwable.getMessage());
+                                                LOGGER.debug("Error purging ref data store on node [{}]",
+                                                        nodeName2, throwable);
+                                                return null;
+                                            });
+                                })
+                                .forEach(CompletableFuture::join);
+
+                        if (!failedNodes.isEmpty()) {
+                            throw new RuntimeException(LogUtil.message(
+                                    "Error puring ref data store ({}) on node(s) [{}]. See logs for details",
+                                    purgeAge,
+                                    String.join(",", failedNodes)),
+                                    exception.get());
+                        }
+                    }).run();
+        });
+    }
+
+    private void purgeLocally(final StroomDuration purgeAge) {
+        LOGGER.logDurationIfDebugEnabled(
+                () ->
+                        refDataStore.purgeOldData(purgeAge),
+                LogUtil.message("Performing Purge for entries older than {}", purgeAge));
 
     }
 
-    private void performPurge(final StroomDuration purgeAge) {
-        refDataStore.purgeOldData(purgeAge);
+    @Override
+    public void purge(final long refStreamId, final String nodeName) {
+
+        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+            final List<String> nodeNames = getNodeList(nodeName);
+            final Set<String> failedNodes = new ConcurrentSkipListSet<>();
+            final AtomicReference<Throwable> exception = new AtomicReference<>();
+
+            taskContextFactory.context(
+                    LogUtil.message("Reference Data Purge on all nodes (Stream: {})", refStreamId),
+                    parentTaskContext -> {
+                        nodeNames.stream()
+                                .map(nodeName2 -> {
+
+                                    final Runnable runnable = taskContextFactory.childContext(
+                                            parentTaskContext,
+                                            "Reference Data Purge on node " + nodeName2,
+                                            taskContext -> {
+                                                nodeService.remoteRestCall(
+                                                        nodeName2,
+                                                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                                                ReferenceDataResource.BASE_PATH,
+                                                                ReferenceDataResource.PURGE_BY_STREAM_SUB_PATH,
+                                                                Long.toString(refStreamId)),
+                                                        () ->
+                                                                purgeLocally(refStreamId),
+                                                        SyncInvoker::delete,
+                                                        Collections.singletonMap(
+                                                                ReferenceDataResource.QUERY_PARAM_NODE_NAME,
+                                                                nodeName2));
+                                            });
+
+                                    return CompletableFuture
+                                            .runAsync(runnable)
+                                            .exceptionally(throwable -> {
+                                                failedNodes.add(nodeName2);
+                                                exception.set(throwable);
+                                                LOGGER.error(
+                                                        "Error purging reference data store on node [{}]: {}. " +
+                                                                "Enable DEBUG for stacktrace",
+                                                        nodeName2,
+                                                        throwable.getMessage());
+                                                LOGGER.debug("Error purging ref data store on node [{}]",
+                                                        nodeName2, throwable);
+                                                return null;
+                                            });
+                                })
+                                .forEach(CompletableFuture::join);
+
+                        if (!failedNodes.isEmpty()) {
+                            throw new RuntimeException(LogUtil.message(
+                                    "Error puring ref data store ({}) on node(s) [{}]. See logs for details",
+                                    refStreamId,
+                                    String.join(",", failedNodes)),
+                                    exception.get());
+                        }
+
+                    }).run();
+        });
+    }
+
+    public void purgeLocally(final long refStreamId) {
+        LOGGER.logDurationIfDebugEnabled(
+                () -> refDataStore.purge(refStreamId),
+                LogUtil.message("Performing Purge for ref stream {}", refStreamId));
+    }
+
+    @Override
+    public void clearBufferPool(final String nodeName) {
+        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+            final List<String> nodeNames = getNodeList(nodeName);
+
+            final Set<String> failedNodes = new ConcurrentSkipListSet<>();
+            final AtomicReference<Throwable> exception = new AtomicReference<>();
+
+            taskContextFactory.context(
+                    "Clearing Byte Buffer Pool on all nodes",
+                    parentTaskContext -> {
+                        nodeNames.stream()
+                                .map(nodeName2 -> {
+
+                                    final Runnable runnable = taskContextFactory.childContext(
+                                            parentTaskContext,
+                                            "Reference Data Purge on node " + nodeName2,
+                                            taskContext -> {
+                                                nodeService.remoteRestCall(
+                                                        nodeName2,
+                                                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                                                ReferenceDataResource.BASE_PATH,
+                                                                ReferenceDataResource.CLEAR_BUFFER_POOL_PATH),
+                                                        byteBufferPool::clear,
+                                                        SyncInvoker::delete,
+                                                        Collections.singletonMap(
+                                                                ReferenceDataResource.QUERY_PARAM_NODE_NAME,
+                                                                nodeName2));
+                                            });
+
+                                    return CompletableFuture
+                                            .runAsync(runnable)
+                                            .exceptionally(throwable -> {
+                                                failedNodes.add(nodeName2);
+                                                exception.set(throwable);
+                                                LOGGER.error(
+                                                        "Error clearing byte buffer pool on node [{}]: {}. " +
+                                                                "Enable DEBUG for stacktrace",
+                                                        nodeName2,
+                                                        throwable.getMessage());
+                                                LOGGER.debug("Error clearing byte buffer pool on node [{}]",
+                                                        nodeName2, throwable);
+                                                return null;
+                                            });
+                                })
+                                .forEach(CompletableFuture::join);
+
+                        if (!failedNodes.isEmpty()) {
+                            throw new RuntimeException(LogUtil.message(
+                                    "Error clearing byte buffer pool on node(s) [{}]. See logs for details",
+                                    String.join(",", failedNodes)), exception.get());
+                        }
+                    }).run();
+        });
+    }
+
+    private List<String> getNodeList(final String nodeName) {
+        return nodeName == null
+                ? nodeService.findNodeNames(new FindNodeCriteria())
+                : Collections.singletonList(nodeName);
     }
 
     private String performLookup(final RefDataLookupRequest refDataLookupRequest) {
@@ -300,7 +528,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
             return stringWriter.toString();
         } catch (Exception e) {
-            LOGGER.error("Error looking up {}", refDataLookupRequest, e);
+            // Errors for unknown keys are to be expected
+            if (!(e instanceof NotFoundException)) {
+                LOGGER.error("Error looking up {}", refDataLookupRequest, e);
+            }
             throw e;
         }
     }
@@ -313,10 +544,15 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     .map(referenceLoader -> {
                         final DocRef feedDocRef = getFeedDocRef(referenceLoader);
 
+                        // TODO validate the stream type name
+                        final String streamType = Objects.requireNonNullElse(
+                                referenceLoader.getStreamType(),
+                                StreamTypeNames.REFERENCE);
+
                         return new PipelineReference(
                                 referenceLoader.getLoaderPipeline(),
                                 feedDocRef,
-                                StreamTypeNames.REFERENCE);
+                                streamType);
                     })
                     .collect(Collectors.toList());
         }
@@ -380,16 +616,19 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
+                       final ValuesConsumer consumer) {
 
         withPermissionCheck(() -> LOGGER.logDurationIfInfoEnabled(
-                () -> doSearch(criteria, fields, consumer),
+                () -> taskContextFactory.context("Querying reference data store", taskContext ->
+                                doSearch(criteria, fields, consumer, taskContext))
+                        .run(),
                 "Querying ref store"));
     }
 
     private void doSearch(final ExpressionCriteria criteria,
                           final AbstractField[] fields,
-                          final Consumer<Val[]> consumer) {
+                          final ValuesConsumer consumer,
+                          final TaskContext taskContext) {
         // TODO @AT This is a temporary very crude impl to see if it works.
         //  The search code ought to be pushed down to the offHeapStore so it can query the many DBs
         //  selectively and in a MUCH more efficient way, e.g. using start/stop keys on the kv store scan.
@@ -403,15 +642,42 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         // TODO @AT Need to run the query as a task so it can be monitored from the UI.
 
-        final List<RefStoreEntry> entries = entries(10_000);
-
+        // TODO @AT need to get rid of the up front limit. Instead we need a method on the refstore to
+        //  allow us consume a stream of entries within a read txn. The limit can then be set after the
+        //  filtering has happened.
         final Predicate<RefStoreEntry> predicate = buildEntryPredicate(criteria);
 
-        try {
-            entries.stream()
+        final long skipCount = Optional.ofNullable(criteria)
+                .flatMap(criteria2 -> Optional.ofNullable(criteria.getPageRequest()))
+                .flatMap(pageRequest -> Optional.ofNullable(pageRequest.getOffset()))
+                .orElse(0);
+
+        final int limit = Optional.ofNullable(criteria)
+                .flatMap(criteria2 -> Optional.ofNullable(criteria.getPageRequest()))
+                .flatMap(pageRequest -> Optional.ofNullable(pageRequest.getLength()))
+                .orElse(Integer.MAX_VALUE);
+
+        LOGGER.debug("Searching ref entries with criteria {}, skipCount {}, limit {}",
+                criteria, skipCount, limit);
+
+        refDataStore.consumeEntryStream(stream -> {
+            stream
                     .filter(predicate)
+                    .skip(skipCount)
+                    .limit(limit)
                     .forEach(refStoreEntry -> {
+                        if (taskContext.isTerminated()) {
+                            throw new RuntimeException("Aborting search due to task termination");
+                        }
+
                         final Val[] valArr = new Val[fields.length];
+
+                        // Useful for slowing down the search in dev to test termination
+//                        try {
+//                            Thread.sleep(50);
+//                        } catch (InterruptedException e) {
+//                            Thread.currentThread().interrupt();
+//                        }
 
                         for (int i = 0; i < fields.length; i++) {
                             AbstractField field = fields[i];
@@ -422,12 +688,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                 valArr[i] = convertToVal(value, fields[i]);
                             }
                         }
-                        consumer.accept(valArr);
+                        consumer.add(valArr);
                     });
-        } catch (Exception e) {
-            LOGGER.error("Error querying entry list", e);
-            throw e;
-        }
+            return null;
+        });
     }
 
 

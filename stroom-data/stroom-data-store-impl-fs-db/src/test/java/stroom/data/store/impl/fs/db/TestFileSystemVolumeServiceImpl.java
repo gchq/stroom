@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs.db;
 
 
-import stroom.data.store.impl.fs.DataStoreServiceConfig;
+import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeService;
@@ -29,10 +29,12 @@ import stroom.node.api.NodeInfo;
 import stroom.node.mock.MockNodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.task.api.SimpleTaskContext;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -92,20 +94,21 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         final NodeInfo nodeInfo = new MockNodeInfo();
 
         final FsDataStoreDbConnProvider fsDataStoreDbConnProvider = DbTestUtil.getTestDbDatasource(
-                new FsDataStoreDbModule(), new DataStoreServiceConfig());
+                new FsDataStoreDbModule(), new DataStoreServiceDbConfig());
 
         final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(fsDataStoreDbConnProvider);
         final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(fsDataStoreDbConnProvider);
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         volumeService = new FsVolumeService(fsVolumeDao,
                 fsVolumeStateDao,
                 securityContext,
-                new FsVolumeConfig(),
+                FsVolumeConfig::new,
                 null,
                 null,
                 null,
                 pathCreator,
-                nodeInfo);
+                nodeInfo,
+                new SimpleTaskContext());
 
 //        volumeService.volumeList = volumeList;
     }

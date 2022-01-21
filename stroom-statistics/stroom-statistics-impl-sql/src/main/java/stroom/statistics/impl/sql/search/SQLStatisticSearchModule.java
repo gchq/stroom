@@ -16,6 +16,7 @@
 
 package stroom.statistics.impl.sql.search;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.statistics.impl.sql.StatisticsQueryService;
 import stroom.util.RunnableWrapper;
@@ -38,6 +39,9 @@ public class SQLStatisticSearchModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(SqlStatisticsSearchResponseCreatorManager.class);
+
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(StatisticsQueryServiceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(SqlStatisticsQueryResourceImpl.class);

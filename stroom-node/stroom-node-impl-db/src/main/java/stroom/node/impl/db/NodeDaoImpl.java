@@ -26,19 +26,12 @@ import stroom.util.shared.ResultPage;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
-import org.jooq.impl.DSL;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import javax.inject.Inject;
 
-import static org.jooq.impl.DSL.select;
-import static org.jooq.impl.DSL.trueCondition;
-import static stroom.job.impl.db.jooq.tables.Job.JOB;
-import static stroom.job.impl.db.jooq.tables.JobNode.JOB_NODE;
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
 public class NodeDaoImpl implements NodeDao {
@@ -70,11 +63,10 @@ public class NodeDaoImpl implements NodeDao {
 
     @Override
     public Node update(final Node node) {
-        return JooqUtil.contextResultWithOptimisticLocking(nodeDbConnProvider, context -> {
-            final NodeRecord nodeRecord = context.newRecord(NODE, node);
-            nodeRecord.update();
-            return nodeRecord.into(Node.class);
-        });
+        final NodeRecord record = NODE.newRecord();
+        record.from(node);
+        final NodeRecord persistedRecord = JooqUtil.updateWithOptimisticLocking(nodeDbConnProvider, record);
+        return persistedRecord.into(Node.class);
     }
 
     @Override
@@ -84,48 +76,26 @@ public class NodeDaoImpl implements NodeDao {
                 JooqUtil.getBooleanCondition(NODE.ENABLED, criteria.isEnabled()));
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final List<Node> list = JooqUtil.contextResult(nodeDbConnProvider, context ->
-                context
-                        .selectFrom(NODE)
-                        .where(conditions)
-                        .orderBy(orderFields)
-                        .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                        .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                        .fetch()
-                        .map(r -> r.into(Node.class)));
+                        context
+                                .selectFrom(NODE)
+                                .where(conditions)
+                                .orderBy(orderFields)
+                                .limit(offset, limit)
+                                .fetch())
+                .map(r -> r.into(Node.class));
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override
     public Node getNode(final String nodeName) {
-        final Optional<Node> optional = JooqUtil.contextResult(nodeDbConnProvider, context -> context
-                .selectFrom(NODE)
-                .where(NODE.NAME.eq(nodeName))
-                .fetchOptional()
-                .map(r -> r.into(Node.class)));
-        return optional.orElse(null);
-    }
-
-    @Override
-    public int setJobsEnabled(final String nodeName,
-                              final boolean enabled,
-                              final Set<String> includeJobs,
-                              final Set<String> excludeJobs) {
         return JooqUtil.contextResult(nodeDbConnProvider, context -> context
-                .update(JOB_NODE)
-                .set(JOB_NODE.ENABLED, enabled)
-                .where(JOB_NODE.NODE_NAME.eq(nodeName)
-                        .and(JOB_NODE.JOB_ID.in(
-                                select(JOB.ID).from(JOB)
-                                        .where(JOB.NAME.in(includeJobs)
-                                                .or(DSL.condition(includeJobs.size() == 0)))
-                        )).and(JOB_NODE.JOB_ID.notIn(
-                                select(JOB.ID).from(JOB)
-                                        .where(JOB.NAME.in(excludeJobs)
-                                                .and(DSL.condition(excludeJobs.size() > 0)))
-                        )))
-                .execute()
-        );
+                        .selectFrom(NODE)
+                        .where(NODE.NAME.eq(nodeName))
+                        .fetchOptional())
+                .map(r -> r.into(Node.class))
+                .orElse(null);
     }
 }

@@ -93,8 +93,8 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         LOGGER.debug("key {}", ByteBufferUtils.byteBufferInfo(key));
         LOGGER.debug("value {}", ByteBufferUtils.byteBufferInfo(value));
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            long entryCount = LmdbUtils.getEntryCount(lmdbEnv, dbi);
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            long entryCount = LmdbUtils.getEntryCount(lmdbEnv, writeTxn, dbi);
             assertThat(entryCount).isEqualTo(0);
             dbi.put(writeTxn, key, value);
             entryCount = LmdbUtils.getEntryCount(lmdbEnv, writeTxn, dbi);
@@ -105,7 +105,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         assertThat(entryCount).isEqualTo(1);
         LmdbUtils.logRawDatabaseContents(lmdbEnv, dbi, LOGGER::info);
 
-        final Long entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
+        final Long entries = lmdbEnv.getWithReadTxn(txn ->
                 dbi.stat(txn).entries);
 
         assertThat(entries).isEqualTo(1);
@@ -114,7 +114,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         searchKey.put("greeting".getBytes(StandardCharsets.UTF_8)).flip();
         LOGGER.debug("searchKey {}", ByteBufferUtils.byteBufferInfo(searchKey));
 
-        final ByteBuffer foundValue = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
+        final ByteBuffer foundValue = lmdbEnv.getWithReadTxn(txn ->
                 dbi.get(txn, searchKey));
         LOGGER.debug("foundValue {}", ByteBufferUtils.byteBufferInfo(foundValue));
     }
@@ -129,7 +129,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition,
                 "MyMapName");
 
-        final UID uid1 = LmdbUtils.getWithWriteTxn(lmdbEnv, writeTxn -> {
+        final UID uid1 = lmdbEnv.getWithWriteTxn(writeTxn -> {
             UID uid = mapDefinitionUIDStore.getOrCreateUid(
                     writeTxn,
                     mapDefinition,
@@ -150,7 +150,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         mapUidReverseDb.logRawDatabaseContents();
 
         // now try again with the same mapDefinition, which should give the same UID
-        final UID uid2 = LmdbUtils.getWithWriteTxn(lmdbEnv, writeTxn -> {
+        final UID uid2 = lmdbEnv.getWithWriteTxn(writeTxn -> {
             UID uid = mapDefinitionUIDStore.getOrCreateUid(
                     writeTxn,
                     mapDefinition,
@@ -282,8 +282,10 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         assertThat(mapUidForwardDb.getEntryCount()).isEqualTo(3);
         assertThat(mapUidReverseDb.getEntryCount()).isEqualTo(3);
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            mapDefinitionUIDStore.deletePair(writeTxn, loadedEntries.entrySet().iterator().next().getKey());
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            mapDefinitionUIDStore.deletePair(
+                    writeTxn,
+                    loadedEntries.entrySet().iterator().next().getKey());
         });
 
         assertThat(mapUidForwardDb.getEntryCount()).isEqualTo(2);
@@ -316,7 +318,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         LOGGER.info("--------------------------------------------------------------------------------");
 
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
 
             doGetNextMapDefinitionTest(
                     writeTxn, refStreamDefinition1, Optional.of(mapDefinition11), false);
@@ -370,7 +372,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         if (optMapUid.isPresent()) {
 
-            MapDefinition actualMapDefinition = mapUidReverseDb.get(optMapUid.get()).get();
+            MapDefinition actualMapDefinition = mapUidReverseDb.get(writeTxn, optMapUid.get()).get();
 
             assertThat(actualMapDefinition).isEqualTo(optExpectedMapDefinition.get());
 
@@ -388,7 +390,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         List<UID> uids = new ArrayList<>();
 
         Map<UID, MapDefinition> loadedEntries = new HashMap<>();
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             mapDefinitions.stream()
                     .forEach(mapDefinition -> {
                         final UID uid = mapDefinitionUIDStore.getOrCreateUid(
@@ -413,7 +415,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         mapUidReverseDb.logRawDatabaseContents();
 
         // now verify all the uid<->mapDef mappings we are about to return
-        LmdbUtils.doWithReadTxn(lmdbEnv, readTxn -> {
+        lmdbEnv.doWithReadTxn(readTxn -> {
             loadedEntries.forEach(((uid, mapDefinition) -> {
                 UID uid2 = mapUidForwardDb.get(readTxn, mapDefinition).get();
 

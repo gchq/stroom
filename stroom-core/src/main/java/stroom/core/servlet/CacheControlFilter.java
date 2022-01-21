@@ -28,6 +28,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -49,7 +50,7 @@ public class CacheControlFilter implements Filter {
 
     private static final String GET_METHOD = "GET";
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
-            .ofPattern("EEE, d MMM yyyy HH:mm:ss zzz");
+            .ofPattern("EEE, d MMM yyyy HH:mm:ss zzz", Locale.ENGLISH);
     private static final Set<String> CACHEABLE_FILE_TYPES = new HashSet<>(Arrays.asList(
             "js", "css", "png", "jpg", "gif", "svg", "ico", "gif", "jpeg", "woff", "woff2", "eot", "ttf", "webp"));
     private static final String GWT_NO_CACHE = ".nocache.";

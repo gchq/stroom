@@ -13,6 +13,7 @@ import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.event.logging.mock.MockStroomEventLoggingModule;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.impl.MetaModule;
@@ -35,6 +36,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.time.TimePeriod;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -60,27 +62,23 @@ class TestMetaServiceImpl {
     private static final String FEED_4 = "FEED4";
     private static final String FEED_5 = "FEED5";
 
-    private static final List<String> ALL_FEEDS = List.of(
-            "FEED1",
-            "FEED2",
-            "FEED3",
-            "FEED4",
-            "FEED5");
-
     @Inject
     private Cleanup cleanup;
     @Inject
     private MetaService metaService;
     @Inject
     private MetaDaoImpl metaDao;
-    @Inject
+
     private DataRetentionConfig dataRetentionConfig;
 
     @BeforeEach
     void setup() {
+        dataRetentionConfig = new DataRetentionConfig();
+
         Guice.createInjector(
                 new MetaModule(),
                 new MetaDbModule(),
+                new MetaDaoModule(),
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
@@ -89,10 +87,22 @@ class TestMetaServiceImpl {
                 new CacheModule(),
                 new DbTestModule(),
                 new MetaTestModule(),
-                new MockTaskModule())
+                new MockTaskModule(),
+                new MockStroomEventLoggingModule(),
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(DataRetentionConfig.class)
+                                .toProvider(() -> getDataRetentionConfig());
+                    }
+                })
                 .injectMembers(this);
         // Delete everything
         cleanup.cleanup();
+    }
+
+    public DataRetentionConfig getDataRetentionConfig() {
+        return dataRetentionConfig;
     }
 
     @Test
@@ -159,7 +169,7 @@ class TestMetaServiceImpl {
     }
 
     @Test
-    void testRetentionDelete_noData() {
+    void testRetentionDelete_emptyNot() {
 
         // Testing a true condition
         List<DataRetentionRuleAction> ruleActions = List.of(
@@ -174,10 +184,11 @@ class TestMetaServiceImpl {
 
         TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
 
+        // A NOT with no children does nothing.
         metaService.delete(ruleActions, period);
 
-        // Rules all say delete, but nothing will match
-        assertTotalRowCount(0, Status.DELETED);
+        // Rules all say delete
+        assertTotalRowCount(3, Status.DELETED);
     }
 
     @Test
@@ -263,6 +274,28 @@ class TestMetaServiceImpl {
         // Only one feed is deleted
         assertTotalRowCount(1, Status.DELETED);
         assertTotalRowCount(2, Status.UNLOCKED);
+    }
+
+    @Test
+    void testRetentionDelete_noMatch() {
+
+        // Testing a true condition
+        List<DataRetentionRuleAction> ruleActions = List.of(
+                buildRuleAction(
+                        1,
+                        "NOT_FOUND_FEED",
+                        RetentionRuleOutcome.DELETE)
+        );
+        setupRetentionData();
+
+        assertTotalRowCount(3, Status.UNLOCKED);
+
+        TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
+
+        metaService.delete(ruleActions, period);
+
+        // Nothing will match so no deletes.
+        assertTotalRowCount(0, Status.DELETED);
     }
 
     @Test
@@ -443,7 +476,7 @@ class TestMetaServiceImpl {
 
         // Use a batch size smaller than the expected number of deletes to ensure we exercise
         // batching
-        dataRetentionConfig.setDeleteBatchSize(Math.max(1, (expectedRowsDeleted / 2) - 10));
+        dataRetentionConfig = dataRetentionConfig.withDeleteBatchSize(Math.max(1, (expectedRowsDeleted / 2) - 10));
 //        dataRetentionConfig.setDeleteBatchSize(7);
 
         LOGGER.info("Doing data retention delete for period {}, batch size {}",

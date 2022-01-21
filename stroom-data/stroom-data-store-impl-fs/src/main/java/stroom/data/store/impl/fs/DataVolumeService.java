@@ -36,8 +36,8 @@ public class DataVolumeService {
                 dataVolumeDao.findDataVolume(metaId));
     }
 
-    public DataVolume createDataVolume(final long dataId, final FsVolume volume) {
+    public DataVolume createDataVolume(final long metaId, final FsVolume volume) {
         return securityContext.secureResult(() ->
-                dataVolumeDao.createDataVolume(dataId, volume));
+                dataVolumeDao.createDataVolume(metaId, volume));
     }
 }

@@ -164,7 +164,7 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
         apiKey.setUpdateUser(CLI_USER);
         apiKey.setUserId(account.getUserId());
         apiKey.setUserEmail(account.getUserId());
-        apiKey.setType(KeyType.USER.getText());
+        apiKey.setType(KeyType.API.getText());
         apiKey.setData(tokenBuilder.build());
         apiKey.setExpiresOnMs(tokenBuilder.getExpirationTime().toEpochMilli());
         apiKey.setEnabled(true);

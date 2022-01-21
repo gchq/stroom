@@ -1,13 +1,17 @@
 package stroom.config.common;
 
-import stroom.util.config.FieldMapper;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.BootStrapConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.inject.Singleton;
+@BootStrapConfig
+public class CommonDbConfig extends AbstractDbConfig {
 
-@Singleton
-public class CommonDbConfig extends DbConfig {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CommonDbConfig.class);
 
     public CommonDbConfig() {
         // IMPORTANT - setting the defaults in this way means that they will be ignored by
@@ -21,13 +25,20 @@ public class CommonDbConfig extends DbConfig {
                 new ConnectionPoolConfig());
     }
 
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public CommonDbConfig(@JsonProperty("connection") final ConnectionConfig connectionConfig,
+                          @JsonProperty("connectionPool") final ConnectionPoolConfig connectionPoolConfig) {
+        super(connectionConfig, connectionPoolConfig);
+    }
+
     /**
-     * Creates a new {@link DbConfig} then deep copies in the values of
+     * Creates a new {@link AbstractDbConfig} then deep copies in the values of
      * this, followed by values of otherDbConfig.
      * Thus allowing otherDbConfig to override values in this {@link CommonDbConfig}
      */
     @JsonIgnore
-    public DbConfig mergeConfig(final DbConfig otherDbConfig) {
+    public AbstractDbConfig mergeConfig(final AbstractDbConfig otherDbConfig) {
 
 //        // These will contain all hard coded defaults
 //        final DbConfig outputConfig = new CommonDbConfig();
@@ -38,50 +49,47 @@ public class CommonDbConfig extends DbConfig {
 //        // If the custom config has been set in the module specific config then copy it over
 //        FieldMapper.copyNonDefaults(otherDbConfig, outputConfig, vanillaConfig);
 
-        final DbConfig outputConfig = new DbConfig();
+//        final DbConfig outputConfig = new DbConfig();
 
-        // DbConfig has no default values so add them in
-        applyDefaultConnectionProperties(outputConfig.getConnectionConfig());
+        // A new instance of ConnectionConfig has all nulls so use defaults()
+        final ConnectionConfig defaultConnectionConfig = ConnectionConfig.defaults();
 
-        final ConnectionPoolConfig vanillaPoolConfig = new ConnectionPoolConfig();
-        final ConnectionPoolConfig mergedPoolConfig = outputConfig.getConnectionPoolConfig();
+        final ConnectionConfig mergedConnectionConfig1 = defaultConnectionConfig.merge(getConnectionConfig());
+        final ConnectionConfig mergedConnectionConfig2 = mergedConnectionConfig1.merge(
+                otherDbConfig.getConnectionConfig());
+
+        final ConnectionPoolConfig defaultPoolConfig = new ConnectionPoolConfig();
+
         // common trumps ctor defaults
-        if (this.getConnectionPoolConfig() != null) {
-            FieldMapper.copy(this.getConnectionPoolConfig(), mergedPoolConfig);
-        }
-        // otherDbConfig trumps common, but only if it is not a default value
-        // (else a default in otherDbConfig will overwrite a non-default in common)
-        FieldMapper.copyNonDefaults(otherDbConfig.getConnectionPoolConfig(),
-                mergedPoolConfig,
-                vanillaPoolConfig);
+        final ConnectionPoolConfig mergedPoolConfig1 = defaultPoolConfig.merge(
+                this.getConnectionPoolConfig(), true, false);
 
-        // The ConnectionConfig is a bit different as it has no ctor defaults,
-        // the defaults live in CommonDbConfig. This is so the user doesn't see a load
-        // of defaults against the non-common db connection props in the UI and get confused.
-        // Cleaner to have no defaults and deal with things in this merege.
+        // merge non-null values from the module specific config over the common ones.
+        final ConnectionPoolConfig mergedPoolConfig2 = mergedPoolConfig1.merge(
+                otherDbConfig.getConnectionPoolConfig(),
+                false,
+                false);
 
-        final ConnectionConfig mergedConnConfig = outputConfig.getConnectionConfig();
-        // common trumps ctor defaults, not that there are any
-        if (this.getConnectionConfig() != null) {
-            // We would never want to explicitly set a ConnectionConfig prop to null as we
-            // need them all.
-            FieldMapper.copyNonNulls(this.getConnectionConfig(), mergedConnConfig);
-        }
-        // otherDbConfig trumps common
-        if (otherDbConfig.getConnectionConfig() != null) {
-            // We would never want to explicitly set a ConnectionConfig prop to null as we
-            // need them all.
-            FieldMapper.copyNonNulls(otherDbConfig.getConnectionConfig(), mergedConnConfig);
-        }
-
-        return outputConfig;
+        final AbstractDbConfig mergedConfig = new AbstractDbConfig(mergedConnectionConfig2, mergedPoolConfig2) {
+        };
+        LOGGER.debug("""
+                        mergeConfig() called for {}
+                        common: {}
+                        other: {}
+                        merged: {}""",
+                otherDbConfig.getClass().getName(),
+                this,
+                otherDbConfig,
+                mergedConfig);
+        return mergedConfig;
     }
 
-    private void applyDefaultConnectionProperties(final ConnectionConfig connectionConfig) {
-        // Set some default values.
-        connectionConfig.setClassName(ConnectionConfig.DEFAULT_JDBC_DRIVER_CLASS_NAME);
-        connectionConfig.setUrl(ConnectionConfig.DEFAULT_JDBC_DRIVER_URL);
-        connectionConfig.setUser(ConnectionConfig.DEFAULT_JDBC_DRIVER_USERNAME);
-        connectionConfig.setPassword(ConnectionConfig.DEFAULT_JDBC_DRIVER_PASSWORD);
-    }
+//    private void applyDefaultConnectionProperties(final ConnectionConfig connectionConfig) {
+//        // Set some default values.
+//        connectionConfig.setClassName(ConnectionConfig.DEFAULT_JDBC_DRIVER_CLASS_NAME);
+//        connectionConfig.setUrl(ConnectionConfig.DEFAULT_JDBC_DRIVER_URL);
+//        connectionConfig.setUser(ConnectionConfig.DEFAULT_JDBC_DRIVER_USERNAME);
+//        connectionConfig.setPassword(ConnectionConfig.DEFAULT_JDBC_DRIVER_PASSWORD);
+//    }
+
 }

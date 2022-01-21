@@ -5,4 +5,5 @@ import stroom.util.shared.HasIntCrud;
 
 public interface FsVolumeStateDao extends HasIntCrud<FsVolumeState> {
 
+    FsVolumeState updateWithoutOptimisticLocking(FsVolumeState volumeState);
 }

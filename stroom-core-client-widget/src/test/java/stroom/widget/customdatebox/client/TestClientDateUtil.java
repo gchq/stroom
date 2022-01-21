@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 public class TestClientDateUtil {
 
@@ -33,7 +34,7 @@ public class TestClientDateUtil {
 
         System.out.println("Testing " + javaFormatStr);
 
-        DateTimeFormatter.ofPattern(javaFormatStr);
+        DateTimeFormatter.ofPattern(javaFormatStr, Locale.ENGLISH);
 
         final String actual = ClientDateUtil.convertJavaFormatToJs(javaFormatStr).get();
 

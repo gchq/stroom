@@ -17,6 +17,8 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsTypePath.FS_TYPE_PATH;
 
 /**
  * This class exists to map feed id's to file paths using old data from the DB.
+ * e.g. Legacy system may have "Test Events" linked to the /EVENTS/ path which differs
+ * from the default of "Test Events" => /TEST_EVENTS/
  */
 @Singleton
 class FsTypePathDaoImpl implements FsTypePathDao {
@@ -24,10 +26,8 @@ class FsTypePathDaoImpl implements FsTypePathDao {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsTypePathDaoImpl.class);
 
     private static final String NAME_TO_PATH_CACHE_NAME = "Name To Path Cache";
-    private static final String PATH_TO_NAME_CACHE_NAME = "Path To Name Cache";
 
     private final ICache<String, String> nameToPathCache;
-    private final ICache<String, String> pathToNameCache;
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject
@@ -38,19 +38,11 @@ class FsTypePathDaoImpl implements FsTypePathDao {
         nameToPathCache = cacheManager.create(NAME_TO_PATH_CACHE_NAME,
                 fsVolumeConfig::getTypePathCache,
                 this::loadPath);
-        pathToNameCache = cacheManager.create(PATH_TO_NAME_CACHE_NAME,
-                fsVolumeConfig::getTypePathCache,
-                this::loadName);
     }
 
     @Override
     public String getOrCreatePath(final String name) {
         return nameToPathCache.get(name);
-    }
-
-    @Override
-    public String getType(final String path) {
-        return pathToNameCache.get(path);
     }
 
     private String loadPath(final String typeName) {
@@ -61,12 +53,6 @@ class FsTypePathDaoImpl implements FsTypePathDao {
                     return getPath(typeName);
                 })
                 .orElseThrow();
-    }
-
-    private String loadName(final String path) {
-        // Try and get the existing id from the DB.
-        return getName(path)
-                .orElseThrow(() -> new RuntimeException("Unable to get type name from path"));
     }
 
     private void createPath(final String name) {
@@ -89,13 +75,5 @@ class FsTypePathDaoImpl implements FsTypePathDao {
                 .from(FS_TYPE_PATH)
                 .where(FS_TYPE_PATH.NAME.eq(name))
                 .fetchOptional(FS_TYPE_PATH.PATH));
-    }
-
-    private Optional<String> getName(final String path) {
-        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
-                .select(FS_TYPE_PATH.NAME)
-                .from(FS_TYPE_PATH)
-                .where(FS_TYPE_PATH.PATH.eq(path))
-                .fetchOptional(FS_TYPE_PATH.NAME));
     }
 }

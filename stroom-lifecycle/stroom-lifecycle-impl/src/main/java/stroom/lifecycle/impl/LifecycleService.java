@@ -24,7 +24,6 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -62,13 +61,13 @@ class LifecycleService implements Managed {
 
         startPending = startupTaskMap.entrySet()
                 .stream()
-                .sorted(Comparator.comparingInt(e -> e.getKey().getPriority()))
+                .sorted((o1, o2) -> o2.getKey().getPriority() - o1.getKey().getPriority())
                 .map(Entry::getValue)
                 .collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
 
         stopPending = shutdownTaskMap.entrySet()
                 .stream()
-                .sorted(Comparator.comparingInt(e -> e.getKey().getPriority()))
+                .sorted((o1, o2) -> o2.getKey().getPriority() - o1.getKey().getPriority())
                 .map(Entry::getValue)
                 .collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
     }
@@ -130,7 +129,7 @@ class LifecycleService implements Managed {
             }
 
         } else {
-            final Provider<Runnable> runnableProvider = startPending.pollLast();
+            final Provider<Runnable> runnableProvider = startPending.pollFirst();
             if (runnableProvider != null) {
                 final Runnable runnable = runnableProvider.get();
                 LOGGER.info("Lifecycle " + runnable.getClass().getSimpleName() + " starting up");

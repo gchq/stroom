@@ -5,24 +5,29 @@ import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.TerminateHandler;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
-class TaskContextFactoryImpl implements TaskContextFactory {
+@Singleton
+class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskContextFactoryImpl.class);
+
+    private static final TerminateHandlerFactory DEFAULT_TERMINATE_HANDLER_FACTORY =
+            new ThreadTerminateHandlerFactory();
 
     private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
@@ -39,60 +44,158 @@ class TaskContextFactoryImpl implements TaskContextFactory {
     }
 
     @Override
-    public Runnable context(final String taskName, final Consumer<TaskContext> consumer) {
-        return createFromConsumer(null, taskName, consumer);
+    public Runnable context(final String taskName,
+                            final Consumer<TaskContext> consumer) {
+        return createFromConsumer(
+                null,
+                securityContext.getUserIdentity(),
+                taskName,
+                DEFAULT_TERMINATE_HANDLER_FACTORY,
+                consumer);
     }
 
     @Override
-    public Runnable context(final TaskContext parentContext,
-                            final String taskName,
-                            final Consumer<TaskContext> consumer) {
-        Objects.requireNonNull(parentContext, "Null parent context");
-        return createFromConsumer(parentContext, taskName, consumer);
+    public Runnable childContext(final TaskContext parentContext,
+                                 final String taskName,
+                                 final Consumer<TaskContext> consumer) {
+        final TaskContext parent = resolveParent(parentContext);
+        return createFromConsumer(
+                getTaskId(parent),
+                getUserIdentity(parent),
+                taskName,
+                DEFAULT_TERMINATE_HANDLER_FACTORY,
+                consumer);
     }
 
     @Override
     public <R> Supplier<R> contextResult(final String taskName, final Function<TaskContext, R> function) {
-        return createFromFunction(null, taskName, function);
+        return createFromFunction(
+                null,
+                securityContext.getUserIdentity(),
+                taskName,
+                DEFAULT_TERMINATE_HANDLER_FACTORY,
+                function);
     }
 
     @Override
-    public <R> Supplier<R> contextResult(final TaskContext parentContext,
-                                         final String taskName,
-                                         final Function<TaskContext, R> function) {
-        Objects.requireNonNull(parentContext, "Null parent context");
-        return createFromFunction(parentContext, taskName, function);
+    public <R> Supplier<R> childContextResult(final TaskContext parentContext,
+                                              final String taskName,
+                                              final Function<TaskContext, R> function) {
+        final TaskContext parent = resolveParent(parentContext);
+        return createFromFunction(
+                getTaskId(parent),
+                getUserIdentity(parent),
+                taskName,
+                DEFAULT_TERMINATE_HANDLER_FACTORY,
+                function);
     }
 
-    private Runnable createFromConsumer(final TaskContext parentContext,
+    @Override
+    public Runnable context(final String taskName,
+                            final TerminateHandlerFactory terminateHandlerFactory,
+                            final Consumer<TaskContext> consumer) {
+        return createFromConsumer(
+                null,
+                securityContext.getUserIdentity(),
+                taskName,
+                terminateHandlerFactory,
+                consumer);
+    }
+
+    @Override
+    public Runnable childContext(final TaskContext parentContext,
+                                 final String taskName,
+                                 final TerminateHandlerFactory terminateHandlerFactory,
+                                 final Consumer<TaskContext> consumer) {
+        final TaskContext parent = resolveParent(parentContext);
+        return createFromConsumer(
+                getTaskId(parent),
+                getUserIdentity(parent),
+                taskName,
+                terminateHandlerFactory,
+                consumer);
+    }
+
+    @Override
+    public <R> Supplier<R> contextResult(final String taskName,
+                                         final TerminateHandlerFactory terminateHandlerFactory,
+                                         final Function<TaskContext, R> function) {
+        return createFromFunction(
+                null,
+                securityContext.getUserIdentity(),
+                taskName,
+                terminateHandlerFactory,
+                function);
+    }
+
+    @Override
+    public <R> Supplier<R> childContextResult(final TaskContext parentContext,
+                                              final String taskName,
+                                              final TerminateHandlerFactory terminateHandlerFactory,
+                                              final Function<TaskContext, R> function) {
+        final TaskContext parent = resolveParent(parentContext);
+        return createFromFunction(
+                getTaskId(parent),
+                getUserIdentity(parent),
+                taskName,
+                terminateHandlerFactory,
+                function);
+    }
+
+    private TaskContext resolveParent(final TaskContext parentContext) {
+        if (parentContext instanceof TaskContextFactoryImpl) {
+            return CurrentTaskContext.currentContext();
+        }
+        return parentContext;
+    }
+
+    private TaskId getTaskId(final TaskContext taskContext) {
+        if (taskContext != null) {
+            return taskContext.getTaskId();
+        }
+        return null;
+    }
+
+    private UserIdentity getUserIdentity(final TaskContext taskContext) {
+        if (taskContext instanceof TaskContextImpl) {
+            return ((TaskContextImpl) taskContext).getUserIdentity();
+        }
+        return securityContext.getUserIdentity();
+    }
+
+    private Runnable createFromConsumer(final TaskId parentTaskId,
+                                        final UserIdentity userIdentity,
                                         final String taskName,
+                                        final TerminateHandlerFactory terminateHandlerFactory,
                                         final Consumer<TaskContext> consumer) {
-        final Supplier<Void> supplierOut = createFromFunction(parentContext, taskName, taskContext -> {
-            consumer.accept(taskContext);
-            return null;
-        });
+        final Supplier<Void> supplierOut = createFromFunction(
+                parentTaskId,
+                userIdentity,
+                taskName,
+                terminateHandlerFactory,
+                taskContext -> {
+                    consumer.accept(taskContext);
+                    return null;
+                });
         return supplierOut::get;
     }
 
-    private <R> Supplier<R> createFromFunction(final TaskContext parentContext,
+    private <R> Supplier<R> createFromFunction(final TaskId parentTaskId,
+                                               final UserIdentity userIdentity,
                                                final String taskName,
+                                               final TerminateHandlerFactory terminateHandlerFactory,
                                                final Function<TaskContext, R> function) {
-        return wrap(parentContext, taskName, function);
+        return wrap(parentTaskId, userIdentity, taskName, terminateHandlerFactory, function);
     }
 
-    @Override
-    public TaskContext currentContext() {
-        return CurrentTaskContext.currentContext();
-    }
-
-    private <R> Supplier<R> wrap(final TaskContext parentContext,
+    private <R> Supplier<R> wrap(final TaskId parentTaskId,
+                                 final UserIdentity userIdentity,
                                  final String taskName,
+                                 final TerminateHandlerFactory terminateHandlerFactory,
                                  final Function<TaskContext, R> function) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        final TaskId parentTaskId = getParentTaskId(parentContext);
         final TaskId taskId = TaskIdFactory.create(parentTaskId);
-        final UserIdentity userIdentity = getUserIdentity(parentContext);
-        final TaskContextImpl subTaskContext = new TaskContextImpl(taskId, taskName, userIdentity);
+        final TaskContextImpl subTaskContext = new TaskContextImpl(taskId, taskName, userIdentity, stop);
 
         return () -> {
             R result;
@@ -113,21 +216,34 @@ class TaskContextFactoryImpl implements TaskContextFactory {
             }
 
             // Get the parent task thread if there is one.
-            final Set<TaskContextImpl> ancestorTaskSet = getAncestorTaskSet(parentTaskId);
-
+            final Optional<TaskContextImpl> parentTask = getTaskById(parentTaskId);
             final Thread currentThread = Thread.currentThread();
-            final String oldThreadName = currentThread.getName();
+//            final String oldThreadName = currentThread.getName();
+//
+//            currentThread.setName(oldThreadName + " - " + taskName);
 
-            currentThread.setName(oldThreadName + " - " + taskName);
-
+            // Set the thread.
             subTaskContext.setThread(currentThread);
 
+            // Create the termination handler.
+            final TerminateHandler terminateHandler = terminateHandlerFactory.create();
+            // Set the termination handler.
+            subTaskContext.setTerminateHandler(terminateHandler);
+
             try {
-                // Let every ancestor know this descendant task is being executed.
-                ancestorTaskSet.forEach(ancestorTask -> ancestorTask.addChild(subTaskContext));
+                // Let the parent task know about the child task.
+                if (parentTaskId != null) {
+                    if (parentTask.isPresent()) {
+                        parentTask.get().addChild(subTaskContext);
+                    } else {
+                        // If we don't have the parent task at this point then terminate the sub-task as the parent must
+                        // have already terminated.
+                        subTaskContext.terminate();
+                    }
+                }
 
                 taskRegistry.put(taskId, subTaskContext);
-                LOGGER.debug(() -> "execAsync()->exec() - " + taskName + " took " + logExecutionTime.toString());
+                LOGGER.debug(() -> "execAsync()->exec() - " + taskName + " took " + logExecutionTime);
 
                 if (stop.get() || currentThread.isInterrupted()) {
                     throw new TaskTerminatedException(stop.get());
@@ -145,8 +261,7 @@ class TaskContextFactoryImpl implements TaskContextFactory {
             } catch (final Throwable t) {
                 try {
                     if (t instanceof ThreadDeath || t instanceof TaskTerminatedException) {
-                        LOGGER.warn(() -> "exec() - Task killed! (" + taskName + ")");
-                        LOGGER.debug(() -> "exec() (" + taskName + ")", t);
+                        LOGGER.debug(() -> "exec() - Task killed! (" + taskName + ")", t);
                     } else {
                         LOGGER.debug(() -> t.getMessage() + " (" + taskName + ")", t);
                     }
@@ -160,46 +275,55 @@ class TaskContextFactoryImpl implements TaskContextFactory {
             } finally {
                 taskRegistry.remove(taskId);
 
-                // Let every ancestor know this descendant task has completed.
-                ancestorTaskSet.forEach(ancestorTask -> ancestorTask.removeChild(subTaskContext));
+                // Let the parent task know the child task has completed.
+                parentTask.ifPresent(parent -> parent.removeChild(subTaskContext));
 
-                subTaskContext.setThread(null);
-                currentThread.setName(oldThreadName);
+                try {
+                    subTaskContext.setThread(null);
+                    subTaskContext.setTerminateHandler(null);
+                    terminateHandler.onDestroy();
+                } finally {
+//                    currentThread.setName(oldThreadName);
+                }
             }
 
             return result;
         };
     }
 
-    private TaskId getParentTaskId(final TaskContext parentContext) {
-        if (parentContext != null) {
-            return parentContext.getTaskId();
+    private Optional<TaskContextImpl> getTaskById(final TaskId taskId) {
+        if (taskId == null) {
+            return Optional.empty();
         }
-        return null;
-    }
-
-    private UserIdentity getUserIdentity(final TaskContext parentContext) {
-        if (parentContext != null) {
-            return ((TaskContextImpl) parentContext).getUserIdentity();
-        }
-        return securityContext.getUserIdentity();
-    }
-
-    private Set<TaskContextImpl> getAncestorTaskSet(final TaskId parentTask) {
-        // Get the parent task thread if there is one.
-        final Set<TaskContextImpl> ancestorTaskSet = new HashSet<>();
-        TaskId ancestor = parentTask;
-        while (ancestor != null) {
-            TaskContextImpl ancestorTaskState = taskRegistry.get(ancestor);
-            if (ancestorTaskState != null) {
-                ancestorTaskSet.add(ancestorTaskState);
-            }
-            ancestor = ancestor.getParentId();
-        }
-        return ancestorTaskSet;
+        return Optional.ofNullable(taskRegistry.get(taskId));
     }
 
     void setStop(final boolean stop) {
         this.stop.set(stop);
+    }
+
+    @Override
+    public void info(final Supplier<String> messageSupplier) {
+        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
+        if (taskContext != null) {
+            taskContext.info(messageSupplier);
+        }
+    }
+
+    @Override
+    public TaskId getTaskId() {
+        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
+        if (taskContext != null) {
+            return taskContext.getTaskId();
+        }
+        return null;
+    }
+
+    @Override
+    public void reset() {
+        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
+        if (taskContext != null) {
+            taskContext.reset();
+        }
     }
 }

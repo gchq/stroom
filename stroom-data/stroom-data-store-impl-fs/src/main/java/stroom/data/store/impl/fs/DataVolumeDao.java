@@ -9,9 +9,9 @@ public interface DataVolumeDao {
 
     ResultPage<DataVolume> find(FindDataVolumeCriteria criteria);
 
-    DataVolume findDataVolume(long dataId);
+    DataVolume findDataVolume(long metaId);
 
-    DataVolume createDataVolume(long dataId, FsVolume volume);
+    DataVolume createDataVolume(long metaId, FsVolume volume);
 
     int delete(List<Long> metaIdList);
 

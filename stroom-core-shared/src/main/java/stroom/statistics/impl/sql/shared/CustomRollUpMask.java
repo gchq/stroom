@@ -98,7 +98,6 @@ public class CustomRollUpMask implements HasDisplayValue {
         return result;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
         if (this == obj) {
@@ -113,7 +112,9 @@ public class CustomRollUpMask implements HasDisplayValue {
         final CustomRollUpMask other = (CustomRollUpMask) obj;
         if (rolledUpTagPosition == null) {
             return other.rolledUpTagPosition == null;
-        } else return rolledUpTagPosition.equals(other.rolledUpTagPosition);
+        } else {
+            return rolledUpTagPosition.equals(other.rolledUpTagPosition);
+        }
     }
 
     @Override

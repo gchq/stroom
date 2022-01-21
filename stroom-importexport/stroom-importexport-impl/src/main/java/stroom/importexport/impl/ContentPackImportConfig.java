@@ -4,15 +4,29 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class ContentPackImportConfig extends AbstractConfig implements IsStroomConfig {
 
-    private boolean enabled;
-    private String importDirectory = "content_pack_import";
+    private final boolean enabled;
+    private final String importDirectory;
+
+    public ContentPackImportConfig() {
+        enabled = false;
+        importDirectory = "content_pack_import";
+    }
+
+    @JsonCreator
+    public ContentPackImportConfig(@JsonProperty("enabled") final boolean enabled,
+                                   @JsonProperty("importDirectory") final String importDirectory) {
+        this.enabled = enabled;
+        this.importDirectory = importDirectory;
+    }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
     @JsonPropertyDescription("If true any content packs found in 'importDirectory' will be imported " +
@@ -22,21 +36,12 @@ public class ContentPackImportConfig extends AbstractConfig implements IsStroomC
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-    }
-
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("When stroom starts, if 'enabled' is set to true, it will attempt to import content " +
             "packs from this directory. If the value is null or the directory does not exist it will be ignored." +
             "If the value is a relative path then it will be treated as being relative to stroom.path.home.")
     public String getImportDirectory() {
         return importDirectory;
-    }
-
-    @SuppressWarnings("unused")
-    public void setImportDirectory(final String importDirectory) {
-        this.importDirectory = importDirectory;
     }
 
     @Override

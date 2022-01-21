@@ -1,10 +1,8 @@
-import stroom.search.elastic.shared.ElasticIndexConstants;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
 
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -12,13 +10,6 @@ public class TestElasticIndexFieldType {
 
     @Test
     public void testFromNativeType() {
-        // ID fields
-        assertSame(ElasticIndexFieldType.ID,
-                ElasticIndexFieldType.fromNativeType(ElasticIndexConstants.EVENT_ID, "long"));
-        assertNotSame(ElasticIndexFieldType.INTEGER,
-                ElasticIndexFieldType.fromNativeType(ElasticIndexConstants.FEED_ID, "int"),
-                "Non-ID field is not detected as an ID field");
-
         assertSame(ElasticIndexFieldType.BOOLEAN,
                 ElasticIndexFieldType.fromNativeType("name", "boolean"));
         assertSame(ElasticIndexFieldType.INTEGER,

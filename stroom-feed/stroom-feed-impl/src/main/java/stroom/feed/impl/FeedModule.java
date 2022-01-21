@@ -44,7 +44,9 @@ public class FeedModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(FeedStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(FeedDocCache.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(FeedDocCache.class)
+                .addBinding(MetaSecurityFilterImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(FeedDoc.DOCUMENT_TYPE, FeedStoreImpl.class);

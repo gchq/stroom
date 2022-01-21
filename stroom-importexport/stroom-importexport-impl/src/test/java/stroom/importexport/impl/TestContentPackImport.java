@@ -20,6 +20,7 @@ package stroom.importexport.impl;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -130,7 +131,7 @@ class TestContentPackImport {
 
         contentPackImport.startup();
 
-        Mockito.verifyZeroInteractions(importExportService);
+        Mockito.verifyNoInteractions(importExportService);
         assertThat(Files.exists(testPack1)).isTrue();
     }
 
@@ -140,7 +141,7 @@ class TestContentPackImport {
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
         ContentPackImport contentPackImport = getContentPackImport();
         contentPackImport.startup();
-        Mockito.verifyZeroInteractions(importExportService);
+        Mockito.verifyNoInteractions(importExportService);
     }
 
     @Test
@@ -152,7 +153,7 @@ class TestContentPackImport {
 
         ContentPackImport contentPackImport = getContentPackImport();
         contentPackImport.startup();
-        Mockito.verifyZeroInteractions(importExportService);
+        Mockito.verifyNoInteractions(importExportService);
     }
 
     @Test
@@ -165,7 +166,7 @@ class TestContentPackImport {
 
         ContentPackImport contentPackImport = getContentPackImport();
         contentPackImport.startup();
-        Mockito.verifyZeroInteractions(importExportService);
+        Mockito.verifyNoInteractions(importExportService);
     }
 
     @Test
@@ -247,7 +248,7 @@ class TestContentPackImport {
     }
 
     private ContentPackImport getContentPackImport() {
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         return new ContentPackImport(
                 importExportService, contentPackImportConfig, securityContext, pathCreator);
     }

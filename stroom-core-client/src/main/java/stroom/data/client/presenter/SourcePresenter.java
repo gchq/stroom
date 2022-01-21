@@ -118,13 +118,15 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         textPresenter.setReadOnly(true);
 
         // Default to wrapped lines
-        textPresenter.getLineWrapOption().setOn(true);
-        textPresenter.getLineNumbersOption().setOn(true);
-        textPresenter.getStylesOption().setOn(true);
+        textPresenter.getLineWrapOption().setOn();
+        textPresenter.getLineNumbersOption().setOn();
+        textPresenter.getStylesOption().setOn();
 
-        textPresenter.getBasicAutoCompletionOption().setAvailable(false);
-        textPresenter.getUseVimBindingsOption().setAvailable(true);
-        textPresenter.getFormatAction().setAvailable(false);
+        textPresenter.getUseVimBindingsOption().setAvailable();
+
+        textPresenter.getBasicAutoCompletionOption().setUnavailable();
+        textPresenter.getFormatAction().setUnavailable();
+        textPresenter.getViewAsHexOption().setUnavailable();
     }
 
     private void updateStepControlVisibility() {
@@ -440,17 +442,34 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     }
 
     private void updateEditor() {
-        textPresenter.setText(lastResult.getData());
-        int firstLineNo = receivedSourceLocation.getOptDataRange()
-                .flatMap(DataRange::getOptLocationFrom)
-                .map(Location::getLineNo)
-                .orElse(1);
+        if (lastResult.hasErrors()) {
+            showErrors(lastResult);
+        } else {
+            textPresenter.setText(lastResult.getData());
+            int firstLineNo = receivedSourceLocation.getOptDataRange()
+                    .flatMap(DataRange::getOptLocationFrom)
+                    .map(Location::getLineNo)
+                    .orElse(1);
 
-        textPresenter.setFirstLineNumber(firstLineNo);
+            textPresenter.setFirstLineNumber(firstLineNo);
 
-        setEditorMode(lastResult);
+            setEditorMode(lastResult);
 
-        updateEditorHighlights();
+            updateEditorHighlights();
+        }
+    }
+
+    private void showErrors(final FetchDataResult result) {
+        final String childStreamText = lastResult.getSourceLocation().getOptChildType()
+                .map(childType -> " (" + childType + ")")
+                .orElse("");
+        final String title = "Unable to display source ["
+                + lastResult.getSourceLocation().getIdentifierString()
+                + "]"
+                + childStreamText;
+
+        final String errorText = String.join("\n", lastResult.getErrors());
+        textPresenter.setErrorText(title, errorText);
     }
 
     private void updateEditorHighlights() {

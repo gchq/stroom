@@ -150,7 +150,7 @@ public class UsersAndGroupsTabPresenter extends
                                         listPresenter.getSelectionModel().clear();
                                     })
                                     .call(USER_RESOURCE)
-                                    .deleteUser(userRef.getUuid());
+                                    .delete(userRef.getUuid());
                         }
                     });
         }

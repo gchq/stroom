@@ -20,8 +20,6 @@ import stroom.util.shared.EntityServiceException;
 
 public class TaskTerminatedException extends EntityServiceException {
 
-    private static final long serialVersionUID = -6310262786770706152L;
-
     private final boolean stop;
 
     /**
@@ -30,6 +28,7 @@ public class TaskTerminatedException extends EntityServiceException {
      * for execution and we want to know not to submit further tasks,
      */
     public TaskTerminatedException(final boolean stop) {
+        super("Task terminated");
         this.stop = stop;
     }
 

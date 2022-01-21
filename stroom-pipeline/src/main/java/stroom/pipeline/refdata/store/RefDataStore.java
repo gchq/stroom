@@ -22,8 +22,11 @@ import stroom.util.time.StroomDuration;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public interface RefDataStore {
 
@@ -38,7 +41,24 @@ public interface RefDataStore {
      * Returns true if all the data for the passed stream definition has been successfully loaded into the
      * store and is available for use. Will also touch the last accessed time on the record (if found).
      */
-    boolean isDataLoaded(final RefStreamDefinition refStreamDefinition);
+    default boolean isDataLoaded(final RefStreamDefinition refStreamDefinition) {
+        return getLoadState(refStreamDefinition)
+                .filter(processingState ->
+                        processingState.equals(ProcessingState.COMPLETE))
+                .isPresent();
+    }
+
+
+    /**
+     * Returns the set of map names for the passed refStreamDefinition. Intended to be run
+     * after a load.
+     */
+    Set<String> getMapNames(final RefStreamDefinition refStreamDefinition);
+
+    /**
+     * Get the load state for this refStreamDefinition if there is one.
+     */
+    Optional<ProcessingState> getLoadState(final RefStreamDefinition refStreamDefinition);
 
     /**
      * Returns true if this {@link MapDefinition} exists in the store. It makes no guarantees about the state
@@ -88,6 +108,13 @@ public interface RefDataStore {
     List<RefStoreEntry> list(final int limit,
                              final Predicate<RefStoreEntry> filter);
 
+    <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction);
+
+    List<ProcessingInfoResponse> listProcessingInfo(final int limit);
+
+    List<ProcessingInfoResponse> listProcessingInfo(final int limit,
+                                                    final Predicate<ProcessingInfoResponse> filter);
+
     long getKeyValueEntryCount();
 
     long getKeyRangeValueEntryCount();
@@ -97,6 +124,15 @@ public interface RefDataStore {
     void purgeOldData();
 
     void purgeOldData(final StroomDuration purgeAge);
+
+    /**
+     * Purges this ref stream regardless of how recently it has been accessed
+     */
+    void purge(final long refStreamId, final long partIndex);
+
+    default void purge(final long refStreamId) {
+        purge(refStreamId, RefStreamDefinition.DEFAULT_PART_INDEX);
+    }
 
     void logAllContents();
 

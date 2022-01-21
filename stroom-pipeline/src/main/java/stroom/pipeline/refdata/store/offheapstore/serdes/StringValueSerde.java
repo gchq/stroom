@@ -18,6 +18,7 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.bytebuffer.PooledByteBufferOutputStream;
+import stroom.lmdb.serde.StringSerde;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.util.logging.LogUtil;

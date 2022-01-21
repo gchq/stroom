@@ -43,12 +43,16 @@ import java.util.Objects;
         "description",
         "clusterRef",
         "indexName",
+        "searchSlices",
+        "searchScrollSize",
         "fields",
         "retentionExpression"
 })
 @JsonInclude(Include.NON_NULL)
 public class ElasticIndexDoc extends Doc {
 
+    public static final int DEFAULT_SEARCH_SLICES = 1;
+    public static final int DEFAULT_SEARCH_SCROLL_SIZE = 1000;
     public static final String DOCUMENT_TYPE = "ElasticIndex";
 
     /**
@@ -60,17 +64,41 @@ public class ElasticIndexDoc extends Doc {
     @JsonProperty
     private String description;
 
+    /**
+     * Name or pattern of the Elasticsearch index(es) to query
+     */
     @JsonProperty
     private String indexName;
 
+    /**
+     * Number of slices to query concurrently when searching
+     */
+    @JsonProperty
+    private Integer searchSlices;
+
+    /**
+     * Number of documents to retrieve at a time in each search scroll batch request
+     */
+    @JsonProperty
+    private Integer searchScrollSize;
+
+    /**
+     * Array of fields, populated at query time
+     */
     @JsonProperty
     private List<ElasticIndexField> fields;
 
+    /**
+     * Criteria determining which documents should be deleted periodically by the `Elastic Index Retention`
+     * server task
+     */
     @JsonProperty
     private ExpressionOperator retentionExpression;
 
     public ElasticIndexDoc() {
-        this.fields = new ArrayList<>();
+        searchSlices = DEFAULT_SEARCH_SLICES;
+        searchScrollSize = DEFAULT_SEARCH_SCROLL_SIZE;
+        fields = new ArrayList<>();
     }
 
     @JsonCreator
@@ -86,6 +114,8 @@ public class ElasticIndexDoc extends Doc {
             @JsonProperty("description") final String description,
             @JsonProperty("clusterRef") final DocRef clusterRef,
             @JsonProperty("indexName") final String indexName,
+            @JsonProperty("searchSlices") final Integer searchSlices,
+            @JsonProperty("searchScrollSize") final Integer searchScrollSize,
             @JsonProperty("fields") final List<ElasticIndexField> fields,
             @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression
     ) {
@@ -93,8 +123,17 @@ public class ElasticIndexDoc extends Doc {
         this.description = description;
         this.clusterRef = clusterRef;
         this.indexName = indexName;
+        this.searchSlices = searchSlices;
+        this.searchScrollSize = searchScrollSize;
         this.fields = fields;
         this.retentionExpression = retentionExpression;
+
+        if (this.searchSlices == null) {
+            this.searchSlices = DEFAULT_SEARCH_SLICES;
+        }
+        if (this.searchScrollSize == null) {
+            this.searchScrollSize = DEFAULT_SEARCH_SCROLL_SIZE;
+        }
     }
 
     public String getDescription() {
@@ -123,6 +162,22 @@ public class ElasticIndexDoc extends Doc {
         } else {
             this.indexName = indexName;
         }
+    }
+
+    public Integer getSearchSlices() {
+        return searchSlices;
+    }
+
+    public void setSearchSlices(final Integer searchSlices) {
+        this.searchSlices = searchSlices;
+    }
+
+    public Integer getSearchScrollSize() {
+        return searchScrollSize;
+    }
+
+    public void setSearchScrollSize(final Integer searchScrollSize) {
+        this.searchScrollSize = searchScrollSize;
     }
 
     public List<ElasticIndexField> getFields() {
@@ -162,12 +217,15 @@ public class ElasticIndexDoc extends Doc {
         return Objects.equals(description, elasticIndex.description) &&
                 Objects.equals(clusterRef, elasticIndex.clusterRef) &&
                 Objects.equals(indexName, elasticIndex.indexName) &&
+                Objects.equals(searchSlices, elasticIndex.searchSlices) &&
+                Objects.equals(searchScrollSize, elasticIndex.searchScrollSize) &&
                 Objects.equals(fields, elasticIndex.fields);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, indexName, clusterRef, fields);
+        return Objects.hash(super.hashCode(), description, indexName, searchSlices, searchScrollSize, clusterRef,
+                fields);
     }
 
     @Override
@@ -176,6 +234,8 @@ public class ElasticIndexDoc extends Doc {
                 "description='" + description + '\'' +
                 ", clusterRef='" + clusterRef + '\'' +
                 ", indexName='" + indexName + '\'' +
+                ", searchSlices=" + searchSlices +
+                ", searchScrollSize=" + searchScrollSize +
                 ", fields=" + fields +
                 '}';
     }

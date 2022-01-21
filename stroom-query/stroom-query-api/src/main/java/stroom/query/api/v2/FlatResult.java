@@ -50,8 +50,8 @@ public final class FlatResult extends Result {
                       @JsonProperty("structure") final List<Field> structure,
                       @JsonProperty("values") final List<List<Object>> values,
                       @JsonProperty("size") final Long size,
-                      @JsonProperty("error") final String error) {
-        super(componentId, error);
+                      @JsonProperty("errors") final List<String> errors) {
+        super(componentId, errors);
         this.structure = structure;
         this.values = values;
         this.size = size;
@@ -69,7 +69,6 @@ public final class FlatResult extends Result {
         return size;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -160,9 +159,9 @@ public final class FlatResult extends Result {
 
         public FlatResult build() {
             if (null != overriddenSize) {
-                return new FlatResult(componentId, structure, values, overriddenSize, error);
+                return new FlatResult(componentId, structure, values, overriddenSize, errors);
             } else {
-                return new FlatResult(componentId, structure, values, (long) values.size(), error);
+                return new FlatResult(componentId, structure, values, (long) values.size(), errors);
             }
         }
     }

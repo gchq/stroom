@@ -1,10 +1,11 @@
 package stroom.test.common.util.db;
 
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
-import stroom.config.common.DbConfig;
-import stroom.config.common.HasDbConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceKey;
 import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
@@ -35,10 +36,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -60,7 +65,9 @@ public class DbTestUtil {
             "WHERE TABLE_SCHEMA = database() " +
             "AND TABLE_TYPE LIKE '%BASE TABLE%' " +
             "AND TABLE_NAME NOT LIKE '%schema%';";
-    private static final ThreadLocal<DataSource> THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<AbstractDbConfig> THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<Set<DataSource>> LOCAL_DATA_SOURCES = new ThreadLocal<>();
+    private static final ConcurrentMap<DataSourceKey, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
     private static volatile EmbeddedMysql EMBEDDED_MYSQL;
     private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
 
@@ -70,14 +77,14 @@ public class DbTestUtil {
     /**
      * Gets an embedded DB datasource for use in tests that don't use guice injection
      */
-    public static <T_CONFIG extends HasDbConfig, T_CONN_PROV extends DataSource> T_CONN_PROV getTestDbDatasource(
+    public static <T_CONFIG extends AbstractDbConfig, T_CONN_PROV extends DataSource> T_CONN_PROV getTestDbDatasource(
             final AbstractFlyWayDbModule<T_CONFIG, T_CONN_PROV> dbModule,
             final T_CONFIG config) {
 
         // We are only running one module so just pass in any empty ForceCoreMigration
         return dbModule.getConnectionProvider(
                 () -> config,
-                new TestDataSourceFactory(new CommonDbConfig()),
+                new TestDataSourceFactory(CommonDbConfig::new),
                 new ForceLegacyMigration() {
                 });
     }
@@ -93,7 +100,7 @@ public class DbTestUtil {
     }
 
     public static DataSource createTestDataSource() {
-        return createTestDataSource(new CommonDbConfig());
+        return createTestDataSource(new CommonDbConfig(), "test", false);
     }
 
     private static <T> T getValueOrOverride(final String envVarName,
@@ -111,15 +118,18 @@ public class DbTestUtil {
                 .orElseGet(valueSupplier);
     }
 
-    public static DataSource createTestDataSource(final DbConfig dbConfig) {
+    public static DataSource createTestDataSource(final AbstractDbConfig dbConfig,
+                                                  final String name,
+                                                  final boolean unique) {
+
         if ("org.sqlite.JDBC".equals(dbConfig.getConnectionConfig().getClassName())) {
             final HikariConfig hikariConfig = HikariUtil.createConfig(dbConfig);
             return new HikariDataSource(hikariConfig);
         }
 
         // See if we have a local data source.
-        DataSource dataSource = THREAD_LOCAL.get();
-        if (dataSource == null) {
+        AbstractDbConfig testDbConfig = THREAD_LOCAL.get();
+        if (testDbConfig == null) {
             // Create a merged config using the common db config as a base.
             ConnectionConfig connectionConfig = dbConfig.getConnectionConfig();
             ConnectionConfig rootConnectionConfig;
@@ -197,19 +207,40 @@ public class DbTestUtil {
                     .build()
                     .toString();
 
-
             final ConnectionConfig newConnectionConfig = connectionConfig
                     .copy()
                     .url(url)
                     .build();
             LOGGER.info("Using DB connection url: {}", url);
-            dbConfig.setConnectionConfig(newConnectionConfig);
+            testDbConfig = new AbstractDbConfig() {
+                @Override
+                public ConnectionConfig getConnectionConfig() {
+                    return newConnectionConfig;
+                }
 
-            final HikariConfig hikariConfig = HikariUtil.createConfig(dbConfig);
-            dataSource = new HikariDataSource(hikariConfig);
+                @Override
+                public ConnectionPoolConfig getConnectionPoolConfig() {
+                    return dbConfig.getConnectionPoolConfig();
+                }
+            };
 
-            THREAD_LOCAL.set(dataSource);
+            THREAD_LOCAL.set(testDbConfig);
         }
+
+        // Get a data source from a map to limit connections where connection details are common.
+        final DataSourceKey dataSourceKey = new DataSourceKey(testDbConfig, name, unique);
+        final DataSource dataSource = DATA_SOURCE_MAP.computeIfAbsent(dataSourceKey, k -> {
+            final HikariConfig hikariConfig = HikariUtil.createConfig(
+                    k.getConfig(), null, null, null);
+            return new HikariDataSource(hikariConfig);
+        });
+
+        Set<DataSource> dataSources = LOCAL_DATA_SOURCES.get();
+        if (dataSources == null) {
+            dataSources = new HashSet<>();
+            LOCAL_DATA_SOURCES.set(dataSources);
+        }
+        dataSources.add(dataSource);
 
         return dataSource;
     }
@@ -259,11 +290,11 @@ public class DbTestUtil {
                 .build()
                 .toString();
 
-        final ConnectionConfig connectionConfig = new ConnectionConfig();
-        connectionConfig.setClassName(DEFAULT_JDBC_DRIVER_CLASS_NAME);
-        connectionConfig.setUrl(url);
-        connectionConfig.setUser(mysqlConfig.getUsername());
-        connectionConfig.setPassword(mysqlConfig.getPassword());
+        final ConnectionConfig connectionConfig = new ConnectionConfig(
+                DEFAULT_JDBC_DRIVER_CLASS_NAME,
+                url,
+                mysqlConfig.getUsername(),
+                mysqlConfig.getPassword());
 
         return connectionConfig;
 
@@ -295,23 +326,6 @@ public class DbTestUtil {
 //
 //
 //        return createConnectionConfig(dbName, mysqlConfig);
-    }
-
-    private static ConnectionConfig createConnectionConfig(final String dbName, final MysqldConfig mysqlConfig) {
-        final String url = DbUrl
-                .builder()
-                .port(mysqlConfig.getPort())
-                .dbName(dbName)
-                .query("useUnicode=yes&characterEncoding=UTF-8")
-                .build()
-                .toString();
-
-        final ConnectionConfig connectionConfig = new ConnectionConfig();
-        connectionConfig.setUrl(url);
-        connectionConfig.setUser(mysqlConfig.getUsername());
-        connectionConfig.setPassword(mysqlConfig.getPassword());
-
-        return connectionConfig;
     }
 
     private static synchronized EmbeddedMysql createEmbeddedMysql() {
@@ -408,13 +422,15 @@ public class DbTestUtil {
     }
 
     public static void clear() {
-        final DataSource dataSource = THREAD_LOCAL.get();
-        if (dataSource != null) {
-            // Clear the database.
-            try (final Connection connection = dataSource.getConnection()) {
-                DbTestUtil.clearAllTables(connection);
-            } catch (final SQLException e) {
-                throw new RuntimeException(e.getMessage(), e);
+        final Set<DataSource> dataSources = LOCAL_DATA_SOURCES.get();
+        if (dataSources != null) {
+            for (final DataSource dataSource : dataSources) {
+                // Clear the database.
+                try (final Connection connection = dataSource.getConnection()) {
+                    DbTestUtil.clearAllTables(connection);
+                } catch (final SQLException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
             }
         }
     }

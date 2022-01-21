@@ -23,6 +23,7 @@ import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.shared.Meta;
+import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -40,6 +41,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
@@ -53,20 +55,23 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
 
     private final MetaDbConnProvider metaDbConnProvider;
     private final MetaKeyDao metaKeyService;
-    private final MetaValueConfig metaValueConfig;
+    private final Provider<MetaValueConfig> metaValueConfigProvider;
     private final ClusterLockService clusterLockService;
+    private final TaskContext taskContext;
 
     private volatile List<Row> queue = new ArrayList<>();
 
     @Inject
     MetaValueDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                      final MetaKeyDao metaKeyService,
-                     final MetaValueConfig metaValueConfig,
-                     final ClusterLockService clusterLockService) {
+                     final Provider<MetaValueConfig> metaValueConfigProvider,
+                     final ClusterLockService clusterLockService,
+                     final TaskContext taskContext) {
         this.metaDbConnProvider = metaDbConnProvider;
         this.metaKeyService = metaKeyService;
-        this.metaValueConfig = metaValueConfig;
+        this.metaValueConfigProvider = metaValueConfigProvider;
         this.clusterLockService = clusterLockService;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -91,8 +96,9 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 .map(Optional::get);
 
         final List<Row> records = stream.collect(Collectors.toList());
-        if (metaValueConfig.isAddAsync()) {
-            final Optional<List<Row>> optional = add(records, metaValueConfig.getFlushBatchSize());
+        if (metaValueConfigProvider.get().isAddAsync()) {
+            final Optional<List<Row>> optional = add(records, metaValueConfigProvider.get()
+                    .getFlushBatchSize());
             optional.ifPresent(this::insertRecords);
         } else {
             insertRecords(records);
@@ -113,6 +119,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
 
     @Override
     public void flush() {
+        taskContext.info(() -> "Flushing meta values to the DB");
         final Optional<List<Row>> optional = add(Collections.emptyList(), 1);
         optional.ifPresent(this::insertRecords);
     }
@@ -136,11 +143,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
             batchBindStep.execute();
         });
 
-        if (logExecutionTime.getDuration() > 1000) {
-            LOGGER.warn(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
-        } else {
-            LOGGER.debug(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
-        }
+        LOGGER.debug(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
     }
 
     @Override
@@ -148,10 +151,16 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
         // Acquire a cluster lock before performing a batch delete to reduce db contention and to let a
         // single node do the job.
         clusterLockService.tryLock(LOCK_NAME, () -> {
-            final Long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
-            final int batchSize = metaValueConfig.getDeleteBatchSize();
+            taskContext.info(() -> "Deleting old meta values");
+            final long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
+            final int batchSize = metaValueConfigProvider.get().getDeleteBatchSize();
             int count = batchSize;
             while (count >= batchSize) {
+                if (Thread.currentThread().isInterrupted()) {
+                    LOGGER.error("Aborting meta value deletion due to thread interruption. " +
+                            "Deletion will continue as normal on the next run.");
+                    break;
+                }
                 count = deleteBatchOfOldValues(createTimeThresholdEpochMs, batchSize);
             }
         });
@@ -183,12 +192,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                                 batchSize)
         );
 
-        if (logExecutionTime.getDuration() > 1000) {
-            LOGGER.warn(() -> "Deleted " + count + ", completed in " + logExecutionTime);
-        } else {
-            LOGGER.debug(() -> "Deleted " + count + ", completed in " + logExecutionTime);
-        }
-
+        LOGGER.debug(() -> "Deleted " + count + ", completed in " + logExecutionTime);
         return count;
 
 //        final SqlBuilder sql = new SqlBuilder();
@@ -210,8 +214,10 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     /**
      * @return The oldest data attribute that we should keep
      */
-    private Long getAttributeCreateTimeThresholdEpochMs() {
-        final Duration deleteAge = metaValueConfig.getDeleteAge().getDuration();
+    private long getAttributeCreateTimeThresholdEpochMs() {
+        final Duration deleteAge = metaValueConfigProvider.get()
+                .getDeleteAge()
+                .getDuration();
         return System.currentTimeMillis() - deleteAge.toMillis();
     }
 
@@ -227,7 +233,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 .map(Meta::getId)
                 .collect(Collectors.toList());
 
-        JooqUtil.context(metaDbConnProvider, context -> context
+        JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(
                         META_VAL.META_ID,
                         META_VAL.META_KEY_ID,
@@ -235,7 +241,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 )
                 .from(META_VAL)
                 .where(META_VAL.META_ID.in(idList))
-                .fetch()
+                .fetch())
                 .forEach(r -> {
                     final int keyId = r.get(META_VAL.META_KEY_ID);
                     metaKeyService.getNameForId(keyId).ifPresent(name -> {
@@ -243,8 +249,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                         final String value = String.valueOf(r.get(META_VAL.VAL));
                         attributeMap.computeIfAbsent(dataId, k -> new HashMap<>()).put(name, value);
                     });
-                })
-        );
+                });
 
         return attributeMap;
 

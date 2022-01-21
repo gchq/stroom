@@ -25,6 +25,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.concurrent.StripedLock;
 import stroom.util.logging.LambdaLogger;
@@ -54,6 +55,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -65,7 +67,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final IndexShardService indexShardService;
     private final IndexStructureCache indexStructureCache;
     private final IndexShardManager indexShardManager;
-    private final IndexConfig indexConfig;
+    private final Provider<IndexConfig> indexConfigProvider;
 
     private final Map<Long, IndexShardWriter> openWritersByShardId = new ConcurrentHashMap<>();
     private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
@@ -73,6 +75,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final AtomicLong closing = new AtomicLong();
     private final IndexShardWriterExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final SecurityContext securityContext;
 
     private volatile Settings settings;
@@ -80,19 +83,21 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     @Inject
     public IndexShardWriterCacheImpl(final NodeInfo nodeInfo,
                                      final IndexShardService indexShardService,
-                                     final IndexConfig indexConfig,
+                                     final Provider<IndexConfig> indexConfigProvider,
                                      final IndexStructureCache indexStructureCache,
                                      final IndexShardManager indexShardManager,
                                      final IndexShardWriterExecutorProvider executorProvider,
                                      final TaskContextFactory taskContextFactory,
+                                     final TaskContext taskContext,
                                      final SecurityContext securityContext) {
         this.nodeInfo = nodeInfo;
         this.indexShardService = indexShardService;
-        this.indexConfig = indexConfig;
+        this.indexConfigProvider = indexConfigProvider;
         this.indexStructureCache = indexStructureCache;
         this.indexShardManager = indexShardManager;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.securityContext = securityContext;
     }
 
@@ -195,7 +200,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         // Mark the index shard as opening.
         LOGGER.debug(() -> "Opening " + indexShardId);
-        LOGGER.trace(() -> "Opening " + indexShardId + " - " + indexShardKey.toString());
+        LOGGER.trace(() -> "Opening " + indexShardId + " - " + indexShardKey);
         indexShardManager.setStatus(indexShardId, IndexShardStatus.OPENING);
 
         try {
@@ -225,7 +230,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         } catch (final IOException | RuntimeException e) {
             // Something unexpected went wrong.
-            LOGGER.error(() -> "Setting index shard status to corrupt because (" + e.toString() + ")", e);
+            LOGGER.error(() -> "Setting index shard status to corrupt because (" + e + ")", e);
             indexShardManager.setStatus(indexShardId, IndexShardStatus.CORRUPT);
         }
 
@@ -234,8 +239,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private int getRamBufferSize() {
         int ramBufferSizeMB = 1024;
-        if (indexConfig != null) {
-            ramBufferSizeMB = indexConfig.getRamBufferSizeMB();
+        if (indexConfigProvider != null) {
+            ramBufferSizeMB = indexConfigProvider.get().getRamBufferSizeMB();
         }
         return ramBufferSizeMB;
     }
@@ -272,7 +277,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     countDownLatch.await();
                 }
             } catch (final InterruptedException e) {
-                LOGGER.error(e::getMessage, e);
+                LOGGER.trace(e::getMessage, e);
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             }
         }, "flushAll()");
     }
@@ -362,6 +369,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Override
     public void close(final IndexShardWriter indexShardWriter) {
+        taskContext.info(() -> "Closing index shard writer for shard: " + indexShardWriter.getIndexShardId());
         close(indexShardWriter, executorProvider.getAsyncExecutor());
     }
 
@@ -394,7 +402,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         return CompletableFuture.supplyAsync(supplier, executor);
     }
 
-    private void close(final IndexShardWriter indexShardWriter, final Executor executor) {
+    private void close(final IndexShardWriter indexShardWriter,
+                       final Executor executor) {
         final long indexShardId = indexShardWriter.getIndexShardId();
 
         // Remove the shard from the map.
@@ -498,7 +507,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                         executor = Executors.newSingleThreadScheduledExecutor();
                         // Start logging action progress.
                         executor.scheduleAtFixedRate(() ->
-                                        LOGGER.info(() -> "Waiting for " + closing.get() + " index shards to close"),
+                                        LOGGER.info(() ->
+                                                "Waiting for " + closing.get() + " index shards to close"),
                                 10,
                                 10,
                                 TimeUnit.SECONDS);
@@ -509,7 +519,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     }
                 } catch (final InterruptedException e) {
                     LOGGER.error(e::getMessage, e);
-
                     // Continue to interrupt this thread.
                     Thread.currentThread().interrupt();
                 } finally {
@@ -542,7 +551,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private Settings getSettings() {
         if (settings == null || settings.creationTime < (System.currentTimeMillis() - 60_000)) {
-            final IndexCacheConfig indexCacheConfig = indexConfig.getIndexWriterConfig().getIndexCacheConfig();
+            final IndexCacheConfig indexCacheConfig = indexConfigProvider.get()
+                    .getIndexWriterConfig()
+                    .getIndexCacheConfig();
             final long timeToLive = indexCacheConfig.getTimeToLive() != null
                     ? indexCacheConfig.getTimeToLive().toMillis()
                     : 0L;

@@ -56,6 +56,10 @@ import stroom.data.client.view.ItemSelectionViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.TextViewImpl;
+import stroom.data.grid.client.PagerView;
+import stroom.data.grid.client.PagerViewImpl;
+import stroom.data.grid.client.WrapperView;
+import stroom.data.grid.client.WrapperViewImpl;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
@@ -167,5 +171,8 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 ItemSelectionPresenter.class,
                 ItemSelectionView.class,
                 ItemSelectionViewImpl.class);
+
+        bindSharedView(PagerView.class, PagerViewImpl.class);
+        bindSharedView(WrapperView.class, WrapperViewImpl.class);
     }
 }

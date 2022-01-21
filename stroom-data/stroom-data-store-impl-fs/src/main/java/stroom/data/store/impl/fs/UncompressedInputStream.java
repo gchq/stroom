@@ -27,7 +27,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 /**
  * A stream that interfaces with a random access file.
@@ -78,7 +78,7 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
      * @param b to fill
      */
     @Override
-    public int read(@Nonnull final byte[] b) throws IOException {
+    public int read(@NotNull final byte[] b) throws IOException {
         if (streamAdaptor == null) {
             // LAZY
             return -1;
@@ -97,7 +97,7 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
      * @param len length
      */
     @Override
-    public int read(@Nonnull final byte[] b, final int off, final int len) throws IOException {
+    public int read(@NotNull final byte[] b, final int off, final int len) throws IOException {
         if (streamAdaptor == null) {
             // LAZY
             return -1;

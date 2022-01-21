@@ -16,13 +16,13 @@
 
 package stroom.legacy.model_6_1;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "customRollUpMask")
@@ -86,7 +86,7 @@ public class CustomRollUpMask implements HasDisplayValue, SharedObject {
     public CustomRollUpMask deepCopy() {
         final List<Integer> tagPositions = new ArrayList<>();
         for (final Integer tagPosition : tagPositions) {
-            tagPositions.add(new Integer(tagPosition));
+            tagPositions.add(Integer.valueOf(tagPosition));
         }
 
         return new CustomRollUpMask(tagPositions);

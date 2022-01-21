@@ -111,7 +111,7 @@ class TaskManagerImpl implements TaskManager {
                 // Stop all of the current tasks.
                 taskRegistry.list().forEach(TaskContextImpl::terminate);
 
-                final int currentCount = executorProvider.getCurrentTaskCount();
+                final int currentCount = taskRegistry.list().size();
                 waiting = currentCount > 0;
                 if (waiting) {
                     // Output some debug to list the tasks that are executing
@@ -141,120 +141,7 @@ class TaskManagerImpl implements TaskManager {
         LOGGER.info("shutdown() - Complete");
     }
 
-//    private Set<TaskContextImpl> getAncestorTaskSet(final TaskId parentTask) {
-//        // Get the parent task thread if there is one.
-//        final Set<TaskContextImpl> ancestorTaskSet = new HashSet<>();
-//        TaskId ancestor = parentTask;
-//        while (ancestor != null) {
-//            TaskContextImpl ancestorTaskState = currentTasks.get(ancestor);
-//            if (ancestorTaskState != null) {
-//                ancestorTaskSet.add(ancestorTaskState);
-//            }
-//            ancestor = ancestor.getParentId();
-//        }
-//        return ancestorTaskSet;
-//    }
-//
-//    private TaskId getParentTaskId(final TaskContext parentContext) {
-//        if (parentContext != null) {
-//            return parentContext.getTaskId();
-//        }
-//        return null;
-//    }
-//
-//    private UserIdentity getUserIdentity(final TaskContext parentContext) {
-//        if (parentContext != null) {
-//            return ((TaskContextImpl) parentContext).getUserIdentity();
-//        }
-//        return securityContext.getUserIdentity();
-//    }
-//
-//    <R> Supplier<R> wrap(
-//    final TaskContext parentContext, final String taskName, final Function<TaskContext, R> function) {
-//        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-//        final TaskId parentTaskId = getParentTaskId(parentContext);
-//        final TaskId taskId = TaskIdFactory.create(parentTaskId);
-//        final UserIdentity userIdentity = getUserIdentity(parentContext);
-//        final TaskContextImpl subTaskContext = new TaskContextImpl(taskId, taskName, userIdentity);
-//
-//        return () -> {
-//            R result;
-//
-//            // Make sure this thread is not interrupted.
-//            if (Thread.interrupted()) {
-//                LOGGER.warn("This thread was previously interrupted");
-//            }
-//            // Do not execute the task if we are no longer supposed to be running.
-//            if (stop.get()) {
-//                throw new TaskTerminatedException(stop.get());
-//            }
-//            if (taskName == null) {
-//                throw new IllegalStateException("All tasks must have a name");
-//            }
-//            if (userIdentity == null) {
-//                throw new IllegalStateException("Null user identity: " + taskName);
-//            }
-//
-//            // Get the parent task thread if there is one.
-//            final Set<TaskContextImpl> ancestorTaskSet = getAncestorTaskSet(parentTaskId);
-//
-//            final Thread currentThread = Thread.currentThread();
-//            final String oldThreadName = currentThread.getName();
-//
-//            currentThread.setName(oldThreadName + " - " + taskName);
-//
-//            subTaskContext.setThread(currentThread);
-//
-//            try {
-//                // Let every ancestor know this descendant task is being executed.
-//                ancestorTaskSet.forEach(ancestorTask -> ancestorTask.addChild(subTaskContext));
-//
-//                currentTasks.put(taskId, subTaskContext);
-//                LOGGER.debug(() -> "execAsync()->exec() - " + taskName + " took " + logExecutionTime.toString());
-//
-//                if (stop.get() || currentThread.isInterrupted()) {
-//                    throw new TaskTerminatedException(stop.get());
-//                }
-//
-//                result = securityContext.asUserResult(userIdentity, () -> pipelineScopeRunnable.scopeResult(() -> {
-//                    CurrentTaskContext.pushContext(subTaskContext);
-//                    try {
-//                        return LOGGER.logDurationIfDebugEnabled(() -> function.apply(subTaskContext), () -> taskName);
-//                    } finally {
-//                        CurrentTaskContext.popContext();
-//                    }
-//                }));
-//
-//            } catch (final Throwable t) {
-//                try {
-//                    if (t instanceof ThreadDeath || t instanceof TaskTerminatedException) {
-//                        LOGGER.warn(() -> "exec() - Task killed! (" + taskName + ")");
-//                        LOGGER.debug(() -> "exec() (" + taskName + ")", t);
-//                    } else {
-//                        LOGGER.error(() -> t.getMessage() + " (" + taskName + ")", t);
-//                    }
-//
-//                } catch (final Throwable t2) {
-//                    LOGGER.debug(t2::getMessage, t2);
-//                }
-//
-//                throw t;
-//
-//            } finally {
-//                currentTasks.remove(taskId);
-//
-//                // Let every ancestor know this descendant task has completed.
-//                ancestorTaskSet.forEach(ancestorTask -> ancestorTask.removeChild(subTaskContext));
-//
-//                subTaskContext.setThread(null);
-//                currentThread.setName(oldThreadName);
-//            }
-//
-//            return result;
-//        };
-//    }
-
-    ResultPage<TaskProgress> terminate(final FindTaskCriteria criteria, final boolean kill) {
+    ResultPage<TaskProgress> terminate(final FindTaskCriteria criteria) {
         return securityContext.secureResult(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
             // This can change a little between servers
             final long timeNowMs = System.currentTimeMillis();
@@ -270,7 +157,7 @@ class TaskManagerImpl implements TaskManager {
                     final TaskId taskId = taskContext.getTaskId();
 
                     // Terminate it?
-                    if (kill || !taskContext.isTerminated()) {
+                    if (!taskContext.isTerminated()) {
                         if (criteria.isMatch(taskId, taskContext.getSessionId())) {
                             terminateList.add(taskContext);
                         }
@@ -278,31 +165,23 @@ class TaskManagerImpl implements TaskManager {
                 }
 
                 // Now terminate the relevant tasks.
-                doTerminated(kill, timeNowMs, taskProgressList, terminateList);
+                doTerminated(timeNowMs, taskProgressList, terminateList);
             }
 
             return ResultPage.createUnboundedList(taskProgressList);
         });
     }
 
-    private void doTerminated(final boolean kill, final long timeNowMs, final List<TaskProgress> taskProgressList,
+    private void doTerminated(final long timeNowMs, final List<TaskProgress> taskProgressList,
                               final List<TaskContextImpl> itemsToKill) {
         LOGGER.trace(() -> LogUtil.message("doTerminated() - itemsToKill.size() {}", itemsToKill.size()));
 
         for (final TaskContextImpl taskContext : itemsToKill) {
             final TaskId taskId = taskContext.getTaskId();
-            // First try and terminate the task.
+            // Try and terminate the task.
             if (!taskContext.isTerminated()) {
                 LOGGER.trace(() -> LogUtil.message("terminating task {}", taskId));
                 taskContext.terminate();
-            }
-
-            // If we are forced to kill then kill the associated thread.
-            if (kill) {
-                LOGGER.trace(() -> LogUtil.message("killing task {} on thread {}",
-                        taskId,
-                        taskContext.getThreadName()));
-                taskContext.kill();
             }
             final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskContext, taskId);
             taskProgressList.add(taskProgress);
@@ -356,7 +235,7 @@ class TaskManagerImpl implements TaskManager {
 
         // For DEV testing uncomment this line to send dummy data to UI so you have some thing to
         // look at in the UI.
-//        final List<TaskProgress> taskProgressList = buildDummyTaskDataForTesting(fuzzyMatchPredicate);
+//        taskProgressList.addAll(buildDummyTaskDataForTesting(fuzzyMatchPredicate));
 //        if (LOGGER.isDebugEnabled()) {
 //            LOGGER.debug("taskProgressList:\n" + AsciiTable.from(taskProgressList));
 //        }
@@ -435,11 +314,13 @@ class TaskManagerImpl implements TaskManager {
     /**
      * This code is here to help UI testing in dev when you have no tasks to look at in the UI.
      * It produces a load of made up tasks
+     * Used in {@link TaskManagerImpl#doFind(FindTaskProgressCriteria)}
      */
+    @SuppressWarnings("unused") // Used in commented out debugging code
     private List<TaskProgress> buildDummyTaskDataForTesting(final Predicate<TaskProgress> fuzzyMatchPredicate) {
 
-        AtomicInteger id = new AtomicInteger(0);
-        List<String> taskNames = List.of(
+        final AtomicInteger id = new AtomicInteger(0);
+        final List<String> taskNames = List.of(
                 "Red",
                 "Blue",
                 "Green",
@@ -448,15 +329,15 @@ class TaskManagerImpl implements TaskManager {
                 "Pink",
                 "Orange");
 
-        List<String> users = List.of(
+        final List<String> users = List.of(
                 "joebloggs",
                 "johndoe");
 
-        Instant startTime = Instant.EPOCH;
-        Instant now = Instant.now();
-        String nodeName = nodeInfo.getThisNodeName();
+        final Instant startTime = Instant.EPOCH;
+        final Instant now = Instant.now();
+        final String nodeName = nodeInfo.getThisNodeName();
 
-        return taskNames.stream()
+        final List<TaskProgress> colourTasks = taskNames.stream()
                 .flatMap(taskname -> {
                     // Need to make sure task IDs are unique over the cluster
                     TaskId grandparentTaskId = new TaskId(nodeName + "-" + id.incrementAndGet(), null);
@@ -488,6 +369,24 @@ class TaskManagerImpl implements TaskManager {
                     return taskProgress;
 
                 })
+                .collect(Collectors.toList());
+
+        // If a parent task has died for some reason that leaves an orphaned task so the UI
+        // needs to be able to cope with those too.
+        final TaskId missingParentTask = new TaskId(Long.toString(Long.MAX_VALUE), null);
+        final TaskProgress orphanedTask = new TaskProgress(
+                new TaskId(Long.toString(id.incrementAndGet()), missingParentTask),
+                "Orphaned-task",
+                "taskInfo-Orphaned-task",
+                "janedoe",
+                "threadY",
+                nodeInfo.getThisNodeName(),
+                startTime.plus(id.get() * 100, ChronoUnit.DAYS).toEpochMilli(),
+                now.toEpochMilli(),
+                null,
+                null);
+
+        return Stream.concat(colourTasks.stream(), Stream.of(orphanedTask))
                 .collect(Collectors.toList());
     }
 }

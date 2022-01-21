@@ -4,7 +4,7 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.lmdb.AbstractLmdbDb;
-import stroom.lmdb.LmdbUtils;
+import stroom.lmdb.LmdbEnv;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -18,7 +18,6 @@ import com.google.inject.assistedinject.Assisted;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.lmdbjava.CursorIterable;
-import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -41,7 +40,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
     private final RefDataProcessingInfoSerde valueSerde;
 
     @Inject
-    public ProcessingInfoDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+    public ProcessingInfoDb(@Assisted final LmdbEnv lmdbEnvironment,
                             final ByteBufferPool byteBufferPool,
                             final RefStreamDefinitionSerde keySerde,
                             final RefDataProcessingInfoSerde valueSerde) {
@@ -57,7 +56,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
 
     public void updateLastAccessedTime(final RefStreamDefinition refStreamDefinition,
                                        final long newLastAccessedTimeMs) {
-        LmdbUtils.doWithWriteTxn(getLmdbEnvironment(), writeTxn ->
+        getLmdbEnvironment().doWithWriteTxn(writeTxn ->
                 updateValue(writeTxn,
                         refStreamDefinition,
                         valueBuffer ->
@@ -92,8 +91,30 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
                 });
     }
 
+    public void updateProcessingState(final Txn<ByteBuffer> writeTxn,
+                                      final ByteBuffer refStreamDefinitionBuffer,
+                                      final ProcessingState expectedProcessingState,
+                                      final ProcessingState newProcessingState,
+                                      final boolean touchLastAccessedTime) {
+
+        updateValue(writeTxn,
+                refStreamDefinitionBuffer, newValueBuf -> {
+                    final ProcessingState currentProcessingState =
+                            RefDataProcessingInfoSerde.extractProcessingState(newValueBuf);
+                    if (!currentProcessingState.equals(expectedProcessingState)) {
+                        throw new RuntimeException("currentProcessingState {} does not match expected. " +
+                                "Another thread may have changed it.");
+                    }
+
+                    valueSerde.updateState(newValueBuf, newProcessingState);
+                    if (touchLastAccessedTime) {
+                        valueSerde.updateLastAccessedTime(newValueBuf);
+                    }
+                });
+    }
+
     public ProcessingState getProcessingState(final RefStreamDefinition refStreamDefinition) {
-        return LmdbUtils.getWithReadTxn(getLmdbEnvironment(), readTxn ->
+        return getLmdbEnvironment().getWithReadTxn(readTxn ->
                 getByteBufferPool().getWithBuffer(keySerde.getBufferCapacity(), keyBuffer -> {
                     keySerde.serialize(keyBuffer, refStreamDefinition);
                     ByteBuffer valueBuffer = getLmdbDbi().get(readTxn, keyBuffer);
@@ -147,7 +168,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
         final LongAccumulator earliestLastAccessedTime = new LongAccumulator(Long::min, earliestInitialValue);
         final LongAccumulator latestLastAccessedTime = new LongAccumulator(Long::max, latestInitialValue);
 
-        LmdbUtils.doWithReadTxn(getLmdbEnvironment(), txn ->
+        getLmdbEnvironment().doWithReadTxn(txn ->
                 forEachEntryAsBytes(txn, KeyRange.all(), keyVal -> {
                     // It would be quicker to keep a copy of the earliest/latest times in there byte
                     // form and do the comparison on that but as this is only intended for use
@@ -168,7 +189,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
 
     public interface Factory {
 
-        ProcessingInfoDb create(final Env<ByteBuffer> lmdbEnvironment);
+        ProcessingInfoDb create(final LmdbEnv lmdbEnvironment);
     }
 
 }

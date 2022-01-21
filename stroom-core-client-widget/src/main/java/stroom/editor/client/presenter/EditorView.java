@@ -55,6 +55,8 @@ public interface EditorView extends View, Focus, HasKeyDownHandlers, HasFormatHa
 
     void setHighlights(final List<TextRange> highlights);
 
+    public void setErrorText(final String title, final String errorText);
+
     /**
      * If the text is being formatted by this view then you can provide a function to generate
      * highlights on the formatted text as the line/col positions in the formatted text may
@@ -80,6 +82,8 @@ public interface EditorView extends View, Focus, HasKeyDownHandlers, HasFormatHa
 
     Option getLineWrapOption();
 
+    Option getShowIndentGuides();
+
     Option getShowInvisiblesOption();
 
     Option getUseVimBindingsOption();
@@ -91,6 +95,8 @@ public interface EditorView extends View, Focus, HasKeyDownHandlers, HasFormatHa
     Option getLiveAutoCompletionOption();
 
     Option getHighlightActiveLineOption();
+
+    Option getViewAsHexOption();
 
     void setControlsVisible(boolean visible);
 }

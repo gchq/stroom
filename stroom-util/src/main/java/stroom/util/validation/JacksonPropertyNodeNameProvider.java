@@ -1,9 +1,5 @@
 package stroom.util.validation;
 
-//import org.hibernate.validator.spi.nodenameprovider.JavaBeanProperty;
-//import org.hibernate.validator.spi.nodenameprovider.Property;
-//import org.hibernate.validator.spi.nodenameprovider.PropertyNodeNameProvider;
-
 /**
  * Use the @JsonPropery name instead of the bean property name when producing constraint violations
  * This is a stop-gap until https://hibernate.atlassian.net/browse/HV-823 makes it into the version

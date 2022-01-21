@@ -41,9 +41,8 @@ import stroom.security.impl.SecurityContextModule;
 import stroom.security.impl.UserService;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.User;
-import stroom.test.AppConfigTestModule;
+import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
-import stroom.test.common.util.db.DbTestModule;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -57,10 +56,12 @@ import javax.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(GuiceExtension.class)
-@IncludeModule(DbTestModule.class)
-@IncludeModule(AppConfigTestModule.class)
+//@IncludeModule(DbTestModule.class)
+//@IncludeModule(AppConfigTestModule.class)
 @IncludeModule(UriFactoryModule.class)
+//@IncludeModule(DbConnectionsModule.class)
 @IncludeModule(CoreModule.class)
+@IncludeModule(BootstrapTestModule.class)
 @IncludeModule(ResourceModule.class)
 @IncludeModule(stroom.cluster.impl.MockClusterModule.class)
 @IncludeModule(VolumeTestConfigModule.class)
@@ -69,6 +70,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
 @IncludeModule(MockIndexShardWriterExecutorModule.class)
+//@IncludeModule(GlobalConfigBootstrapModule.class)
+//@IncludeModule(GlobalConfigDaoModule.class)
+//@IncludeModule(DirProvidersModule.class)
 class TestMetaService extends StroomIntegrationTest {
 
     private static final String TEST_USER = "test_user";
@@ -168,9 +172,9 @@ class TestMetaService extends StroomIntegrationTest {
                 assertThat(readExpression).isNotEmpty();
                 assertThat(readExpression.get().getChildren().size() == 1);
 
-                createMeta(FEED_NO_PERMISSION);
-                createMeta(FEED_USE_PERMISSION);
-                createMeta(FEED_READ_PERMISSION);
+                final Meta noPermissionMeta = createMeta(FEED_NO_PERMISSION);
+                final Meta usePermissionMeta = createMeta(FEED_USE_PERMISSION);
+                final Meta readPermissionMeta = createMeta(FEED_READ_PERMISSION);
 
                 final SelectionSummary selectionSummary = metaService.getSelectionSummary(new FindMetaCriteria());
                 assertThat(selectionSummary.getItemCount()).isEqualTo(1);
@@ -190,6 +194,10 @@ class TestMetaService extends StroomIntegrationTest {
 
                     final SelectionSummary selectionSummary2 = metaService.getSelectionSummary(new FindMetaCriteria());
                     assertThat(selectionSummary2.getItemCount()).isEqualTo(2);
+
+                    assertThat(metaService.getMeta(noPermissionMeta.getId(), true)).isNull();
+                    assertThat(metaService.getMeta(usePermissionMeta.getId(), true)).isNotNull();
+                    assertThat(metaService.getMeta(readPermissionMeta.getId(), true)).isNotNull();
                 });
             });
         });

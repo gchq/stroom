@@ -18,195 +18,124 @@ package stroom.proxy.repo;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.repo.dao.AggregateDao;
-import stroom.proxy.repo.dao.ForwardAggregateDao;
 import stroom.proxy.repo.dao.ForwardSourceDao;
-import stroom.proxy.repo.dao.ForwardUrlDao;
-import stroom.proxy.repo.dao.SourceDao;
-import stroom.proxy.repo.dao.SourceDao.Source;
-import stroom.proxy.repo.dao.SourceEntryDao;
 import stroom.receive.common.StreamHandlers;
-import stroom.receive.common.StroomStreamProcessor;
-import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
-import stroom.util.thread.CustomThreadFactory;
-import stroom.util.thread.StroomThreadGroup;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadFactory;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class SourceForwarder implements Forwarder {
+public class SourceForwarder {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceForwarder.class);
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";
-    private static final int BATCH_SIZE = 1000000;
 
-    private final ThreadFactory threadFactory = new CustomThreadFactory(
-            "Forward Data",
-            StroomThreadGroup.instance(),
-            Thread.NORM_PRIORITY - 1);
-    private final ExecutorService executor = ScalingThreadPoolExecutor.newScalingThreadPool(
-            1,
-            10,
-            100,
-            10,
-            TimeUnit.MINUTES,
-            threadFactory);
-
-    private final SourceDao sourceDao;
-    private final SourceEntryDao sourceEntryDao;
-    private final AggregateDao aggregateDao;
-    private final ForwardAggregateDao forwardAggregateDao;
+    private final RepoSources sources;
     private final ForwardSourceDao forwardSourceDao;
-    private final ForwardUrlDao forwardUrlDao;
+    private final ForwardUrls forwardUrls;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
     private final ForwarderDestinations forwarderDestinations;
     private final Path repoDir;
-
-    private final List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
+    private final ProgressLog progressLog;
+    private final Sender sender;
 
     private volatile String hostName = null;
-    private volatile boolean shutdown;
 
     @Inject
-    SourceForwarder(final SourceDao sourceDao,
-                    final SourceEntryDao sourceEntryDao,
-                    final AggregateDao aggregateDao,
-                    final ForwardAggregateDao forwardAggregateDao,
+    SourceForwarder(final RepoSources sources,
                     final ForwardSourceDao forwardSourceDao,
-                    final ForwardUrlDao forwardUrlDao,
+                    final ForwardUrls forwardUrls,
                     final ForwarderDestinations forwarderDestinations,
-                    final RepoDirProvider repoDirProvider) {
+                    final RepoDirProvider repoDirProvider,
+                    final ProgressLog progressLog,
+                    final Sender sender) {
 
-        this.sourceDao = sourceDao;
-        this.sourceEntryDao = sourceEntryDao;
-        this.aggregateDao = aggregateDao;
-        this.forwardAggregateDao = forwardAggregateDao;
+        this.sources = sources;
         this.forwardSourceDao = forwardSourceDao;
-        this.forwardUrlDao = forwardUrlDao;
+        this.forwardUrls = forwardUrls;
+        this.progressLog = progressLog;
+        this.sender = sender;
 
         this.forwarderDestinations = forwarderDestinations;
         this.repoDir = repoDirProvider.get();
+
+        init();
     }
 
-    @Override
-    public synchronized int cleanup() {
-        int total = 0;
+    public void init() {
+        // Add forward records for new forward URLs.
+        forwardSourceDao.addNewForwardSources(forwardUrls.getNewForwardUrls());
 
-        // Delete any aggregate forward attempts as we are no longer forwarding aggregates.
-        total += forwardAggregateDao.deleteAll();
-        total += aggregateDao.deleteAll();
-        total += sourceEntryDao.deleteAll();
-        total += sourceDao.resetExamined();
-
-        return total;
+        // Remove forward records for forward URLs that are no longer in use.
+        forwardSourceDao.removeOldForwardSources(forwardUrls.getOldForwardUrls());
     }
 
-    @Override
-    public int retryFailures() {
-        int count = 0;
-
-        // Allow the system to retry all failed destinations.
-        count += forwardSourceDao.deleteFailedForwards();
-
-        // Reconsider failed sources for forwarding.
-        count += sourceDao.resetFailedForwards();
-
-        return count;
+    public void createAllForwardRecords() {
+        QueueUtil.consumeAll(() -> sources.getNewSource(0, TimeUnit.MILLISECONDS),
+                this::createForwardRecord);
     }
 
-    @Override
-    public synchronized void forward() {
-        boolean run = true;
-        while (run && !shutdown) {
-
-            final AtomicInteger count = new AtomicInteger();
-
-            final List<Source> sources = sourceDao.getCompletedSources(BATCH_SIZE);
-
-            final List<CompletableFuture<Void>> futures = new ArrayList<>();
-            sources.forEach(source -> {
-                if (!shutdown) {
-                    count.incrementAndGet();
-                    final CompletableFuture<Void> completableFuture = forwardSource(source);
-                    futures.add(completableFuture);
-                }
-            });
-
-            // Wait for all forwarding jobs to complete.
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-            // Stop forwarding if the last query did not return a result as big as the batch size.
-            if (sources.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
-                run = false;
-            }
-        }
+    public void createNextForwardRecord() {
+        sources.getNewSource().ifPresent(this::createForwardRecord);
     }
 
-    private CompletableFuture<Void> forwardSource(final Source source) {
-        // See if this data has been sent to all forward URLs.
-        final Map<Integer, Boolean> successMap = forwardSourceDao.getForwardingState(source.getSourceId());
-
+    private void createForwardRecord(final RepoSource source) {
         // Forward to all remaining places.
-        final List<CompletableFuture<Void>> futures = new ArrayList<>();
-        final AtomicInteger failureCount = new AtomicInteger();
-        for (final Entry<Integer, String> entry : forwardUrlDao.getForwardIdUrlMap().entrySet()) {
-            final int forwardId = entry.getKey();
-
-            final Boolean previousSuccess = successMap.get(forwardId);
-            if (previousSuccess == Boolean.FALSE) {
-                failureCount.incrementAndGet();
-
-            } else if (previousSuccess == null) {
-                final String forwardUrl = entry.getValue();
-                final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
-                    final boolean success = forwardSourceData(
-                            source,
-                            forwardId,
-                            forwardUrl);
-                    if (!success) {
-                        failureCount.incrementAndGet();
-                    }
-                }, executor);
-                futures.add(completableFuture);
-            }
-        }
-
-        // When all futures complete we want to try and delete the source.
-        return CompletableFuture
-                .allOf(futures.toArray(new CompletableFuture[0]))
-                .thenRunAsync(() -> {
-                    // Delete the source if we have successfully forwarded to all destinations.
-                    if (failureCount.get() == 0) {
-                        setForwardSuccess(source.getSourceId());
-                    } else {
-                        // Mark the source as having errors so we don't keep endlessly trying to send it.
-                        sourceDao.setForwardError(source.getSourceId());
-                    }
-                }, executor);
+        progressLog.increment("SourceForwarder - createForwardRecord");
+        forwardSourceDao.createForwardSources(source.getId(), forwardUrls.getForwardUrls());
     }
 
-    boolean forwardSourceData(final Source source,
-                              final int forwardUrlId,
-                              final String forwardUrl) {
+    public void forwardAll() {
+        Optional<ForwardSource> optionalForwardAggregate;
+        do {
+            optionalForwardAggregate = forwardSourceDao.getNewForwardSource(0, TimeUnit.MILLISECONDS);
+            optionalForwardAggregate.ifPresent(this::forwardSource);
+        } while (optionalForwardAggregate.isPresent());
+    }
+
+    public void forwardNext() {
+        final Optional<ForwardSource> optional = forwardSourceDao.getNewForwardSource();
+        optional.ifPresent(this::forwardSource);
+    }
+
+    private void forwardSource(final ForwardSource forwardSource) {
+        progressLog.increment("SourceForwarder - forwardSource");
+        forward(forwardSource);
+    }
+
+    public void forwardRetry(final long oldest) {
+        final Optional<ForwardSource> optional = forwardSourceDao.getRetryForwardSource();
+        optional.ifPresent(forwardSource -> {
+            progressLog.increment("SourceForwarder - forwardRetry");
+
+            final long updateTime = forwardSource.getUpdateTimeMs();
+            final long delay = updateTime - oldest;
+            // Wait until the item is old enough before sending.
+            if (delay > 0) {
+                try {
+                    Thread.sleep(delay);
+                } catch (final InterruptedException e) {
+                    // Continue to interrupt.
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            }
+            forward(forwardSource);
+        });
+    }
+
+    private void forward(final ForwardSource forwardSource) {
+        final RepoSource source = forwardSource.getSource();
+        final String forwardUrl = forwardSource.getForwardUrl().getUrl();
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();
 
@@ -228,19 +157,13 @@ public class SourceForwarder implements Forwarder {
         final StreamHandlers streamHandlers = forwarderDestinations.getProvider(forwardUrl);
         final Path zipFilePath = repoDir.resolve(source.getSourcePath());
 
-        final Consumer<Long> progressHandler = new ProgressHandler("Sending" +
-                zipFilePath);
-
         // Start the POST
         try {
             streamHandlers.handle(source.getFeedName(), source.getTypeName(), attributeMap, handler -> {
-                // Use the Stroom stream processor to send zip entries in a consistent order.
-                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                        attributeMap, handler, progressHandler);
-                stroomStreamProcessor.processZipFile(zipFilePath);
+                sender.sendDataToHandler(source, handler);
+                success.set(true);
+                progressLog.increment("SourceForwarder - forward");
             });
-
-            success.set(true);
 
         } catch (final RuntimeException ex) {
             error.set(ex.getMessage());
@@ -249,18 +172,14 @@ public class SourceForwarder implements Forwarder {
         }
 
         // Record that we sent the data or if there was no data to send.
-        forwardSourceDao.createForwardSourceRecord(forwardUrlId, source.getSourceId(), success.get(), error.get());
-
-        return success.get();
-    }
-
-    void setForwardSuccess(final long sourceId) {
-        LOGGER.debug(() -> "deleteSource: " + sourceId);
-
-        forwardSourceDao.setForwardSuccess(sourceId);
-
-        // Once we have deleted a source cleanup operation might want to run.
-        fireChange();
+        final ForwardSource updatedForwardAggregate = forwardSource
+                .copy()
+                .updateTimeMs(System.currentTimeMillis())
+                .success(success.get())
+                .error(error.get())
+                .tries(forwardSource.getTries() + 1)
+                .build();
+        forwardSourceDao.update(updatedForwardAggregate);
     }
 
     private String getHostName() {
@@ -270,30 +189,7 @@ public class SourceForwarder implements Forwarder {
         return hostName;
     }
 
-    @Override
-    public void shutdown() {
-        shutdown = true;
-        executor.shutdown();
-        try {
-            while (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                LOGGER.debug(() -> "Shutting down");
-            }
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
     public void clear() {
         forwardSourceDao.clear();
-        forwardUrlDao.clear();
-    }
-
-    private void fireChange() {
-        changeListeners.forEach(ChangeListener::onChange);
-    }
-
-    @Override
-    public void addChangeListener(final ChangeListener changeListener) {
-        changeListeners.add(changeListener);
     }
 }

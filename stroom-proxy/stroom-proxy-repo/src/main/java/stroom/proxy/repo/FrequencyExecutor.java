@@ -11,28 +11,28 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class FrequencyExecutor implements Managed {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FrequencyExecutor.class);
 
     private final ScheduledExecutorService executorService;
-    private final Runnable command;
+    private final Supplier<Runnable> runnableSupplier;
     private final long frequency;
 
     private volatile boolean stop = false;
-    private volatile Thread thread;
 
-    public FrequencyExecutor(final String name,
-                             final Runnable command,
+    public FrequencyExecutor(final String threadName,
+                             final Supplier<Runnable> runnableSupplier,
                              final long frequency) {
-        this.command = command;
+        this.runnableSupplier = runnableSupplier;
         this.frequency = frequency;
         final ThreadFactory threadFactory = new CustomThreadFactory(
-                name,
+                threadName + " ",
                 StroomThreadGroup.instance(),
                 Thread.NORM_PRIORITY - 1);
-        executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        executorService = Executors.newScheduledThreadPool(1, threadFactory);
     }
 
     @Override
@@ -43,33 +43,33 @@ public class FrequencyExecutor implements Managed {
 
     private void run() {
 
-        thread = Thread.currentThread();
-        final long start = System.currentTimeMillis();
+//        final long start = System.currentTimeMillis();
 
         try {
             if (!stop) {
-                command.run();
+                final Runnable runnable = runnableSupplier.get();
+                runnable.run();
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
-        // How long were we running for?
-        final long duration = System.currentTimeMillis() - start;
-        final long delay = Math.max(0, frequency - duration);
-        thread = null;
+//        // How long were we running for?
+//        final long duration = System.currentTimeMillis() - start;
+//        final long delay = Math.max(0, frequency - duration);
+//
+//        if (!stop) {
+//            executorService.schedule(this::run, delay, TimeUnit.MILLISECONDS);
+//        }
 
         if (!stop) {
-            executorService.schedule(this::run, delay, TimeUnit.MILLISECONDS);
+            executorService.schedule(this::run, frequency, TimeUnit.MILLISECONDS);
         }
     }
 
     @Override
     public void stop() {
         stop = true;
-        final Thread t = thread;
-        if (t != null) {
-            t.interrupt();
-        }
+        executorService.shutdown();
     }
 }

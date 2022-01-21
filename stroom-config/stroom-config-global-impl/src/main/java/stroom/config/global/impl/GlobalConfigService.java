@@ -18,14 +18,15 @@
 package stroom.config.global.impl;
 
 
-import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
+import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContext;
 import stroom.util.AuditUtil;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
@@ -41,24 +42,16 @@ import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
-@Singleton // Needs to be singleton to prevent initialise being called multiple times
 public class GlobalConfigService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigService.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
 
     private static final FilterFieldMappers<ConfigProperty> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(
@@ -85,89 +78,59 @@ public class GlobalConfigService {
                             prop.getEffectiveValueMasked().orElse(""), String::compareToIgnoreCase),
             GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(), Comparator.comparing(ConfigProperty::getSource));
 
+    private final GlobalConfigBootstrapService globalConfigBootstrapService;
     private final ConfigPropertyDao dao;
     private final SecurityContext securityContext;
     private final ConfigMapper configMapper;
     private final AppConfigValidator appConfigValidator;
+    private final TaskContext taskContext;
+    private final NodeInfo nodeInfo;
 
     @Inject
-    GlobalConfigService(final ConfigPropertyDao dao,
+    GlobalConfigService(final GlobalConfigBootstrapService globalConfigBootstrapService,
+                        final ConfigPropertyDao dao,
                         final SecurityContext securityContext,
                         final ConfigMapper configMapper,
-                        final AppConfigValidator appConfigValidator) {
+                        final AppConfigValidator appConfigValidator,
+                        final TaskContext taskContext,
+                        final NodeInfo nodeInfo) {
+        this.globalConfigBootstrapService = globalConfigBootstrapService;
         this.dao = dao;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
         this.appConfigValidator = appConfigValidator;
-
-        LOGGER.debug("Initialising GlobalConfigService");
-        initialise();
+        this.taskContext = taskContext;
+        this.nodeInfo = nodeInfo;
     }
 
-    private void initialise() {
-        // At this point the configMapper.getGlobalProperties() will contain the name, defaultValue
-        // and the yamlValue. It will also contain any info gained from the config class annotations,
-        // e.g. @Readonly
-        updateConfigFromDb(true);
-        LOGGER.info("Initialised application config with global database properties");
-    }
+//    private void initialise() {
+//        // At this point the configMapper.getGlobalProperties() will contain the name, defaultValue
+//        // and the yamlValue. It will also contain any info gained from the config class annotations,
+//        // e.g. @Readonly
+//        updateConfigFromDb(true);
+//        LOGGER.info("Initialised application config with global database properties");
+//    }
 
-    private void updateConfigFromDb() {
-        updateConfigFromDb(false);
-        LOGGER.info("Updated application config with global database properties");
-    }
-
-    private void updateConfigFromDb(final boolean deleteUnknownProps) {
-        // Get all props held in the DB, which may be a subset of those in the config
-        // object model
-
-        final List<ConfigProperty> allDbProps = dao.list();
-        final List<ConfigProperty> validDbProps = new ArrayList<>(allDbProps.size());
-
-        allDbProps.forEach(dbConfigProp -> {
-            if (dbConfigProp.getName() == null || !configMapper.validatePropertyPath(dbConfigProp.getName())) {
-                LOGGER.debug("Property {} is in the database but not in the appConfig model",
-                        dbConfigProp.getName().toString());
-                if (deleteUnknownProps) {
-                    deleteFromDb(dbConfigProp.getName());
-                }
-            } else {
-                validDbProps.add(dbConfigProp);
-            }
-        });
-
-        configMapper.decorateAllDbConfigProperty(validDbProps);
-    }
 
     /**
      * Refresh in background
      */
     void updateConfigObjects() {
-        updateConfigFromDb();
+        taskContext.info(() -> "Updating config from DB");
+        globalConfigBootstrapService.updateConfigFromDb(false);
     }
-
-    void updateConfigObjects(final AppConfig newAppConfig) {
-        configMapper.refreshPropertyMap(newAppConfig);
-        updateConfigFromDb();
-    }
-
-//    public List<ConfigProperty> list(final FindGlobalConfigCriteria criteria) {
-//        if (criteria.getName() != null) {
-//            return list(configProperty ->
-//                criteria.getName().isMatch(configProperty.getName().toString()));
-//        } else {
-//            return list();
-//        }
-//    }
 
     public ListConfigResponse list(final GlobalConfigCriteria criteria) {
         Objects.requireNonNull(criteria);
 
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-            // Ensure the global config properties are up to date with the db values
-            // TODO This is not ideal as each time the filter is changed we hit the db to
-            //   update the config props.
-            updateConfigFromDb();
+
+            // We don't need to be updating all the props from the db.
+            // Any updates to props from the UI will trigger updateConfigFromDb, so the only thing
+            // we need to update for is changes to a yaml file. If the yaml is changed on this node
+            // then updateConfigFromDb will be called. If the yaml is updated on another node then
+            // updateConfigFromDb will be called on that node. Thus when list is called on any node
+            // the in memory model should be up to date.
 
             final PageRequest pageRequest = criteria.getPageRequest() != null
                     ? criteria.getPageRequest()
@@ -175,12 +138,22 @@ public class GlobalConfigService {
 
             final Optional<Comparator<ConfigProperty>> optConfigPropertyComparator = buildComparator(criteria);
 
+            final String fullyQualifyInput = QuickFilterPredicateFactory.fullyQualifyInput(
+                    criteria.getQuickFilterInput(),
+                    FIELD_MAPPERS);
+
             return QuickFilterPredicateFactory.filterStream(
                     criteria.getQuickFilterInput(),
                     FIELD_MAPPERS,
                     configMapper.getGlobalProperties().stream(),
                     optConfigPropertyComparator.orElse(null))
-                    .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
+                    .collect(ListConfigResponse.collector(
+                            pageRequest,
+                            (configProperties, pageResponse) ->
+                                    new ListConfigResponse(configProperties,
+                                            pageResponse,
+                                            nodeInfo.getThisNodeName(),
+                                            fullyQualifyInput)));
         });
     }
 
@@ -265,7 +238,7 @@ public class GlobalConfigService {
     public ConfigProperty update(final ConfigProperty configProperty) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
 
-            LAMBDA_LOGGER.debug(() -> LogUtil.message(
+            LOGGER.debug(() -> LogUtil.message(
                     "Saving property [{}] with new database value [{}]",
                     configProperty.getName(), configProperty.getDatabaseOverrideValue()));
 
@@ -313,6 +286,9 @@ public class GlobalConfigService {
             // Update property in the config object tree
             configMapper.decorateDbConfigProperty(persistedConfigProperty);
 
+            // Having updated a prop make sure the in mem config is correct.
+            globalConfigBootstrapService.updateConfigFromDb(false);
+
             return persistedConfigProperty;
         });
     }
@@ -324,7 +300,13 @@ public class GlobalConfigService {
 
         final PropertyPath propertyPath = configProperty.getName();
         final String effectiveValueStr = configProperty.getEffectiveValue().orElse(null);
-        final Object effectiveValue = configMapper.convertValue(propertyPath, effectiveValueStr);
+        final Object effectiveValue;
+        try {
+            effectiveValue = configMapper.convertValue(propertyPath, effectiveValueStr);
+        } catch (Exception e) {
+            throw new ConfigPropertyValidationException(LogUtil.message("Error parsing [{}]: {}",
+                    effectiveValueStr, e.getMessage(), e));
+        }
 
         final PropertyUtil.Prop prop = configMapper.getProp(propertyPath)
                 .orElseThrow(() ->
@@ -353,11 +335,5 @@ public class GlobalConfigService {
             });
             throw new ConfigPropertyValidationException(stringBuilder.toString());
         }
-    }
-
-    private void deleteFromDb(final PropertyPath name) {
-        LAMBDA_LOGGER.warn(() ->
-                LogUtil.message("Deleting property {} as it is not valid in the object model", name));
-        dao.delete(name);
     }
 }

@@ -25,6 +25,7 @@ import stroom.index.shared.IndexShard;
 import stroom.search.impl.SearchException;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
@@ -44,6 +45,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -58,7 +60,8 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     private final AtomicLong closing = new AtomicLong();
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
-    private final IndexShardSearchConfig indexShardSearchConfig;
+    private final TaskContext taskContext;
+    private final Provider<IndexShardSearchConfig> indexShardSearchConfigProvider;
     private final SecurityContext securityContext;
 
     private volatile ICache<Key, IndexShardSearcher> cache;
@@ -69,16 +72,18 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                                 final IndexShardWriterCache indexShardWriterCache,
                                 final ExecutorProvider executorProvider,
                                 final TaskContextFactory taskContextFactory,
-                                final IndexShardSearchConfig indexShardSearchConfig,
+                                final TaskContext taskContext,
+                                final Provider<IndexShardSearchConfig> indexShardSearchConfigProvider,
                                 final SecurityContext securityContext) {
         this.cacheManager = cacheManager;
         this.indexShardService = indexShardService;
         this.indexShardWriterCache = indexShardWriterCache;
         this.taskContextFactory = taskContextFactory;
-        this.indexShardSearchConfig = indexShardSearchConfig;
+        this.taskContext = taskContext;
+        this.indexShardSearchConfigProvider = indexShardSearchConfigProvider;
         this.securityContext = securityContext;
 
-        final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Searcher Cache", 3, 0, Integer.MAX_VALUE);
+        final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Searcher Cache", 3);
         executor = executorProvider.get(threadPool);
     }
 
@@ -89,7 +94,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                 result = cache;
                 if (result == null) {
                     result = cacheManager.create(CACHE_NAME,
-                            indexShardSearchConfig::getIndexShardSearcherCache,
+                            () -> indexShardSearchConfigProvider.get().getIndexShardSearcherCache(),
                             this::create,
                             this::destroy);
                     cache = result;
@@ -241,6 +246,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
      */
     @Override
     public void refresh() {
+        taskContext.info(() -> "Refreshing index shard searcher cache");
         final ICache<Key, IndexShardSearcher> cache = getCache();
         if (cache != null) {
             LOGGER.logDurationIfDebugEnabled(() ->
@@ -269,7 +275,6 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
             this.indexWriter = indexWriter;
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {

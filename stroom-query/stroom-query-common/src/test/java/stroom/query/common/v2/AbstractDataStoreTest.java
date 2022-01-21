@@ -30,6 +30,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.util.logging.Metrics;
 import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -73,7 +74,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -146,7 +147,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -213,7 +214,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -251,7 +252,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -296,7 +297,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -308,7 +309,7 @@ abstract class AbstractDataStoreTest {
                         .addMappings(tableSettings)
                         .requestedRange(new OffsetRange(0, 3000))
                         .build();
-        checkResults(dataStore, tableResultRequest, 0, false);
+        checkResults(dataStore, tableResultRequest, 0, true);
     }
 
     @Test
@@ -341,7 +342,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -386,7 +387,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);

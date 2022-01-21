@@ -11,7 +11,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.io.OutputStream;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -26,7 +25,7 @@ class RemoteSearchResultFactory {
     private volatile TaskId taskId;
     private volatile boolean destroy;
     private volatile boolean started;
-    private volatile String initialisationError;
+    private volatile List<String> initialisationError;
 
     RemoteSearchResultFactory(final TaskManager taskManager,
                               final SecurityContext securityContext) {
@@ -37,7 +36,7 @@ class RemoteSearchResultFactory {
     public void write(final OutputStream outputStream) {
         try (final Output output = new Output(outputStream)) {
             if (initialisationError != null) {
-                NodeResultSerialiser.write(output, true, coprocessors, Collections.singletonList(initialisationError));
+                NodeResultSerialiser.write(output, true, coprocessors, initialisationError);
             } else {
                 try {
                     // Wait to complete.
@@ -58,7 +57,6 @@ class RemoteSearchResultFactory {
                     } else {
                         // Drain all current errors to a list.
                         final List<String> errorsSnapshot = coprocessors.getErrorConsumer().drain();
-
                         NodeResultSerialiser.write(output, complete, coprocessors, errorsSnapshot);
                     }
 
@@ -104,7 +102,7 @@ class RemoteSearchResultFactory {
         this.started = started;
     }
 
-    public void setInitialisationError(final String initialisationError) {
+    public void setInitialisationError(final List<String> initialisationError) {
         this.initialisationError = initialisationError;
     }
 }

@@ -18,6 +18,7 @@ package stroom.processor.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorResource;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -34,6 +35,11 @@ class ProcessorResourceImpl implements ProcessorResource {
     @Inject
     ProcessorResourceImpl(final Provider<ProcessorService> processorServiceProvider) {
         this.processorServiceProvider = processorServiceProvider;
+    }
+
+    @Override
+    public Processor fetch(final Integer id) {
+        return processorServiceProvider.get().fetch(id).orElse(null);
     }
 
     @Override

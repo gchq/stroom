@@ -2,6 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -18,10 +19,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
-public class Coprocessors implements Iterable<Coprocessor> {
+public class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Coprocessors.class);
 
@@ -44,23 +44,15 @@ public class Coprocessors implements Iterable<Coprocessor> {
         this.errorConsumer = errorConsumer;
     }
 
-    public boolean readPayloads(final Input input) {
+    public void readPayloads(final Input input) {
         // If the remote node hasn't started yet it will return 0 results so by default we need to tell the calling
         // process that we still want to keep polling by returning true by default.
-        boolean allAccepted = true;
-
         final int length = input.readInt();
         for (int i = 0; i < length; i++) {
-            allAccepted = false;
             final int coprocessorId = input.readInt();
             final Coprocessor coprocessor = coprocessorMap.get(coprocessorId);
-            final boolean accepted = coprocessor.readPayload(input);
-            if (accepted) {
-                allAccepted = true;
-            }
+            coprocessor.readPayload(input);
         }
-
-        return allAccepted;
     }
 
     public void writePayloads(final Output output) {
@@ -73,46 +65,24 @@ public class Coprocessors implements Iterable<Coprocessor> {
         }
     }
 
-    public boolean awaitTransfer(final long timeout, final TimeUnit unit) throws InterruptedException {
-        boolean complete = true;
-        for (final Entry<Integer, Coprocessor> entry : coprocessorMap.entrySet()) {
-            final Coprocessor coprocessor = entry.getValue();
-            if (!coprocessor.awaitTransfer(timeout, unit)) {
-                complete = false;
-            }
-        }
-        return complete;
-    }
-
-    public Consumer<Val[]> getValuesConsumer() {
-        return values -> {
-            counter.increment();
-            LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(values)));
-
-            // Give the data array to each of our coprocessors
-            coprocessorMap.values().forEach(coprocessor -> coprocessor.getValuesConsumer().accept(values));
-        };
+    @Override
+    public void add(final Val[] values) {
+        counter.increment();
+        LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(values)));
+        // Give the data array to each of our coprocessors
+        coprocessorMap.values().forEach(coprocessor -> coprocessor.add(values));
     }
 
     public ErrorConsumer getErrorConsumer() {
         return errorConsumer;
     }
 
-    public Consumer<Long> getCompletionConsumer() {
-        return count -> {
-            LOGGER.trace(() -> String.format("completion: [%s]", count));
-
-            // Give the data array to each of our coprocessors
-            coprocessorMap.values().forEach(coprocessor -> coprocessor.getCompletionConsumer().accept(count));
-        };
-    }
-
     public CompletionState getCompletionState() {
         return new CompletionState() {
             @Override
-            public void complete() {
+            public void signalComplete() {
                 for (final Coprocessor coprocessor : coprocessorMap.values()) {
-                    coprocessor.getCompletionState().complete();
+                    coprocessor.getCompletionState().signalComplete();
                 }
             }
 
@@ -142,17 +112,12 @@ public class Coprocessors implements Iterable<Coprocessor> {
                 }
                 return true;
             }
-
-            @Override
-            public void accept(final Long value) {
-                getCompletionConsumer().accept(value);
-            }
         };
     }
 
     public void clear() {
         for (final Coprocessor coprocessor : coprocessorMap.values()) {
-            coprocessor.getCompletionState().complete();
+            coprocessor.getCompletionState().signalComplete();
             coprocessor.clear();
         }
     }
@@ -175,7 +140,7 @@ public class Coprocessors implements Iterable<Coprocessor> {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public Iterator<Coprocessor> iterator() {
         return coprocessorMap.values().iterator();
     }

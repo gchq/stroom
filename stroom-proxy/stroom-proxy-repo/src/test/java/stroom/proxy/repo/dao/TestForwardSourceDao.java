@@ -1,7 +1,7 @@
 package stroom.proxy.repo.dao;
 
 import stroom.proxy.repo.ProxyRepoTestModule;
-import stroom.proxy.repo.dao.SourceDao.Source;
+import stroom.proxy.repo.QueueUtil;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,22 +34,33 @@ public class TestForwardSourceDao {
 
     @Test
     void testForwardSource() {
-        Optional<Long> id = sourceDao.getSourceId("test");
-        assertThat(id.isPresent()).isFalse();
+        assertThat(sourceDao.countSources()).isZero();
+        assertThat(forwardSourceDao.countForwardSource()).isZero();
+        assertThat(forwardUrlDao.countForwardUrl()).isZero();
+        assertThat(sourceDao.pathExists("test")).isFalse();
 
-        Source source = sourceDao.addSource("test", "test", "test", System.currentTimeMillis());
-        assertThat(source).isNotNull();
+        sourceDao.addSource("test", "test", "test", System.currentTimeMillis());
+        assertThat(sourceDao.getDeletableSources().size()).isZero();
 
-        id = sourceDao.getSourceId("test");
-        assertThat(id.isPresent()).isTrue();
+        // Create forward sources.
+        forwardUrlDao.getForwardUrlId("test");
+        assertThat(forwardUrlDao.countForwardUrl()).isOne();
+        QueueUtil.consumeAll(
+                () -> sourceDao.getNewSource(0, TimeUnit.MILLISECONDS),
+                s -> forwardSourceDao.createForwardSources(s.getId(),
+                        forwardUrlDao.getAllForwardUrls())
+        );
 
-        assertThat(source.getSourceId()).isEqualTo(id.get());
-        assertThat(sourceDao.getDeletableSources(10).size()).isZero();
+        // Mark all as forwarded.
+        QueueUtil.consumeAll(
+                () -> forwardSourceDao.getNewForwardSource(0, TimeUnit.MILLISECONDS),
+                forwardSource -> forwardSourceDao.update(forwardSource.copy().tries(1).success(true).build())
+        );
 
-        final int forwardUrlId = forwardUrlDao.getForwardUrlId("test");
-        forwardSourceDao.createForwardSourceRecord(forwardUrlId, source.getSourceId(), true, null);
-        assertThat(sourceDao.getDeletableSources(10).size()).isZero();
-        forwardSourceDao.setForwardSuccess(source.getSourceId());
-        assertThat(sourceDao.getDeletableSources(10).size()).isOne();
+        sourceDao.getDeletableSources().forEach(s -> sourceDao.deleteSource(s.getId()));
+
+        assertThat(forwardSourceDao.countForwardSource()).isZero();
+        assertThat(sourceDao.countSources()).isZero();
+        assertThat(sourceDao.pathExists("test")).isFalse();
     }
 }

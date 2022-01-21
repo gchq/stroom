@@ -30,7 +30,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -127,15 +126,11 @@ public class DocumentPermissionsTabPresenter
 
         if (userRef != null) {
             final String userUuid = userRef.getUuid();
-            final Set<String> currentPermissions = documentPermissions.getPermissions().get(userUuid);
-            if (currentPermissions != null) {
-                final Set<String> permissionsToRemove = new HashSet<>(currentPermissions);
-                for (final String permission : permissionsToRemove) {
-                    permissionsListPresenter.removePermission(userUuid, permission);
-                }
-                documentPermissions.getPermissions().remove(userUuid);
+            final Set<String> currentPermissions = documentPermissions.getPermissionsForUser(userUuid);
+            for (final String permission : currentPermissions) {
+                permissionsListPresenter.removePermission(userUuid, permission);
             }
-
+            documentPermissions.removeUser(userRef);
             refreshUserList();
         }
     }

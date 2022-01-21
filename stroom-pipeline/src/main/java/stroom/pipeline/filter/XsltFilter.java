@@ -61,7 +61,6 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.xml.transform.ErrorListener;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.TransformerHandler;
@@ -280,7 +279,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         if (handler != null) {
             try {
                 handler.endDocument();
-            } catch (final RuntimeException e) {
+            } catch (final Throwable e) {
                 try {
                     final Throwable throwable = unwrapException(e);
 

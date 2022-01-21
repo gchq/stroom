@@ -1,11 +1,11 @@
 ext.moduleName = 'stroom.kafka.api'
 
 dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-util-shared')
 
-    compile project(':stroom-core-shared')
-
-    compile project(':stroom-docref')
-
-    compile libs.kafka_clients
-
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
+    implementation libs.kafka_clients
 }

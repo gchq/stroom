@@ -2,11 +2,6 @@ package stroom.app.guice;
 
 import stroom.app.uri.UriFactoryModule;
 import stroom.cluster.impl.ClusterModule;
-import stroom.config.app.AppConfig;
-import stroom.config.app.AppConfigModule;
-import stroom.config.app.Config;
-import stroom.config.app.ConfigHolder;
-import stroom.db.util.DbModule;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.index.impl.IndexShardWriterExecutorProvider;
 import stroom.index.impl.IndexShardWriterExecutorProviderImpl;
@@ -18,57 +13,63 @@ import stroom.statistics.impl.sql.search.SQLStatisticSearchModule;
 import stroom.util.guice.HasSystemInfoBinder;
 
 import com.google.inject.AbstractModule;
-import io.dropwizard.setup.Environment;
-
-import java.nio.file.Path;
 
 public class AppModule extends AbstractModule {
 
-    private final Config configuration;
-    private final Environment environment;
-    private final ConfigHolder configHolder;
+//    private final Config configuration;
+//    private final Environment environment;
+//    private final ConfigHolder configHolder;
 
-    public AppModule(final Config configuration,
-                     final Environment environment,
-                     final Path configFile) {
-        this.configuration = configuration;
-        this.environment = environment;
-
-        configHolder = new ConfigHolder() {
-            @Override
-            public AppConfig getAppConfig() {
-                return configuration.getAppConfig();
-            }
-
-            @Override
-            public Path getConfigFile() {
-                return configFile;
-            }
-        };
-    }
+//    public AppModule(final Config configuration,
+//                     final Environment environment,
+//                     final Path configFile) {
+////        this.configuration = configuration;
+////        this.environment = environment;
+////
+////        configHolder = new ConfigHolder() {
+////            @Override
+////            public AppConfig getBootStrapConfig() {
+////                return configuration.getAppConfig();
+////            }
+////
+////            @Override
+////            public Path getConfigFile() {
+////                return configFile;
+////            }
+////        };
+//    }
 
     /**
      * Alternative constructor for when we are running the app in the absence of
      * the DW Environment and jetty server, i.e. for DB migrations.
      */
-    public AppModule(final Config configuration,
-                     final Path configFile) {
-        this(configuration, null, configFile);
-    }
-
+//    public AppModule(final Config configuration,
+//                     final Path configFile) {
+//        this(configuration, null, configFile);
+//    }
     @Override
     protected void configure() {
-        bind(Config.class).toInstance(configuration);
 
-        // Allows us to load up the app in the absence of a the DW jersey environment
-        // e.g. for migrations
-        if (environment != null) {
-            bind(Environment.class).toInstance(environment);
-        }
+//        final HealthCheckRegistry healthCheckRegistry;
+//        final MetricRegistry metricRegistry;
+//        if (environment != null) {
+//            // Make the various DW objects available, bind them individually so
+//            // modules don't need to pull in all of DW just for metrics.
+//            bind(Environment.class).toInstance(environment);
+//            metricRegistry = environment.metrics();
+//            healthCheckRegistry = environment.healthChecks();
+//        } else {
+//            // Allows us to load up the app in the absence of a the DW jersey environment
+//            // e.g. for migrations
+//            // Just use brand new registries so code works. We don't care what gets written to
+//            // those registries.
+//            metricRegistry = new MetricRegistry();
+//            healthCheckRegistry = new HealthCheckRegistry();
+//        }
+//        bind(MetricRegistry.class).toInstance(metricRegistry);
+//        bind(HealthCheckRegistry.class).toInstance(healthCheckRegistry);
 
-        install(new AppConfigModule(configHolder));
         install(new UriFactoryModule());
-        install(new DbModule());
         install(new CoreModule());
         install(new LifecycleServiceModule());
         install(new JobsModule());

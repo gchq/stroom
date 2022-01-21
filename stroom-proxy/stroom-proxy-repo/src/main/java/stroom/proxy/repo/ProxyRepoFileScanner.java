@@ -39,7 +39,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,7 +53,8 @@ public final class ProxyRepoFileScanner {
 
     private final TaskContextFactory taskContextFactory;
 
-    private final ProxyRepoSources proxyRepoSources;
+    private final RepoSources proxyRepoSources;
+    private final ProgressLog progressLog;
     private final Path repoDir;
     private final String repoPath;
 
@@ -62,10 +62,12 @@ public final class ProxyRepoFileScanner {
 
     @Inject
     public ProxyRepoFileScanner(final TaskContextFactory taskContextFactory,
-                                final ProxyRepoSources proxyRepoSources,
+                                final RepoSources proxyRepoSources,
+                                final ProgressLog progressLog,
                                 final RepoDirProvider repoDirProvider) {
         this.taskContextFactory = taskContextFactory;
         this.proxyRepoSources = proxyRepoSources;
+        this.progressLog = progressLog;
         repoDir = repoDirProvider.get();
         repoPath = FileUtil.getCanonicalPath(repoDir);
     }
@@ -172,13 +174,14 @@ public final class ProxyRepoFileScanner {
                     lastModified = System.currentTimeMillis();
                 }
 
+                progressLog.increment("ProxyRepoFileScanner - addFile");
+
                 final Path relativePath = repoDir.relativize(file);
                 final String relativePathString = relativePath.toString();
 
                 // See if we already know about this source.
-                final Optional<Long> optionalSourceId =
-                        proxyRepoSources.getSourceId(relativePathString);
-                if (optionalSourceId.isEmpty()) {
+                final boolean exists = proxyRepoSources.sourceExists(relativePathString);
+                if (!exists) {
                     // Read meta.
                     final String metaFileName = ProxyRepoFileNames.getMeta(file.getFileName().toString());
                     final Path metaFile = file.getParent().resolve(metaFileName);
@@ -194,7 +197,7 @@ public final class ProxyRepoFileScanner {
                         final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
 
                         // This is an unrecorded source so add it.
-                        proxyRepoSources.addSource(relativePathString, feedName, typeName, lastModified);
+                        proxyRepoSources.addSource(relativePathString, feedName, typeName, lastModified, attributeMap);
 
                     } catch (final IOException e) {
                         throw new UncheckedIOException(e);
@@ -223,20 +226,21 @@ public final class ProxyRepoFileScanner {
 
     private List<Path> getSortedPathList(final Path dir) {
         try (final Stream<Path> stream = Files.list(dir)) {
-            return stream.sorted((o1, o2) -> {
-                final boolean o1IsDir = Files.isDirectory(o1);
-                final boolean o2IsDir = Files.isDirectory(o2);
-                if (o1IsDir) {
-                    if (o2IsDir) {
+            return stream
+                    .sorted((o1, o2) -> {
+                        final boolean o1IsDir = Files.isDirectory(o1);
+                        final boolean o2IsDir = Files.isDirectory(o2);
+                        if (o1IsDir) {
+                            if (o2IsDir) {
+                                return o1.getFileName().toString().compareTo(o2.getFileName().toString());
+                            }
+                            return 1;
+                        }
+                        if (o2IsDir) {
+                            return -1;
+                        }
                         return o1.getFileName().toString().compareTo(o2.getFileName().toString());
-                    }
-                    return 1;
-                }
-                if (o2IsDir) {
-                    return -1;
-                }
-                return o1.getFileName().toString().compareTo(o2.getFileName().toString());
-            })
+                    })
                     .collect(Collectors.toList());
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);

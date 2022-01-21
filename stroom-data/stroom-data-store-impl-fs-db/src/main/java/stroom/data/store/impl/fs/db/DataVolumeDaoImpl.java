@@ -29,18 +29,17 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getSetCondition(FS_META_VOLUME.FS_VOLUME_ID, criteria.getVolumeIdSet()),
                 JooqUtil.getSetCondition(FS_META_VOLUME.META_ID, criteria.getMetaIdSet()));
-
-        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
-            final List<DataVolume> list = context.select(FS_META_VOLUME.META_ID, FS_VOLUME.PATH)
-                    .from(FS_META_VOLUME)
-                    .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
-                    .where(conditions)
-                    .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                    .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                    .fetch()
-                    .map(r -> new DataVolumeImpl(r.get(FS_META_VOLUME.META_ID), r.get(FS_VOLUME.PATH)));
-            return ResultPage.createCriterialBasedList(list, criteria);
-        });
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
+        final List<DataVolume> list = JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
+                        context.select(FS_META_VOLUME.META_ID, FS_VOLUME.PATH)
+                                .from(FS_META_VOLUME)
+                                .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
+                                .where(conditions)
+                                .limit(offset, limit)
+                                .fetch())
+                .map(r -> new DataVolumeImpl(r.get(FS_META_VOLUME.META_ID), r.get(FS_VOLUME.PATH)));
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     /**
@@ -49,22 +48,22 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
     @Override
     public DataVolume findDataVolume(final long metaId) {
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
-                .select(FS_META_VOLUME.META_ID, FS_VOLUME.PATH)
-                .from(FS_META_VOLUME)
-                .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
-                .where(FS_META_VOLUME.META_ID.eq(metaId))
-                .fetchOptional()
+                        .select(FS_META_VOLUME.META_ID, FS_VOLUME.PATH)
+                        .from(FS_META_VOLUME)
+                        .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
+                        .where(FS_META_VOLUME.META_ID.eq(metaId))
+                        .fetchOptional())
                 .map(r -> new DataVolumeImpl(r.get(FS_META_VOLUME.META_ID), r.get(FS_VOLUME.PATH)))
-                .orElse(null));
+                .orElse(null);
     }
 
     @Override
-    public DataVolume createDataVolume(final long dataId, final FsVolume volume) {
+    public DataVolume createDataVolume(final long metaId, final FsVolume volume) {
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
             context.insertInto(FS_META_VOLUME, FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
-                    .values(dataId, volume.getId())
+                    .values(metaId, volume.getId())
                     .execute();
-            return new DataVolumeImpl(dataId, volume.getPath());
+            return new DataVolumeImpl(metaId, volume.getPath());
         });
     }
 
@@ -76,7 +75,7 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
                 .execute());
     }
 
-    class DataVolumeImpl implements DataVolume {
+    private static class DataVolumeImpl implements DataVolume {
 
         private final long metaId;
         private final String volumePath;

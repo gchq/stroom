@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -46,6 +47,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 /**
  * Filter to avoid posts to the wrong place (e.g. the root of the app)
@@ -59,18 +61,18 @@ class SecurityFilter implements Filter {
     private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(
             ".js", ".css", ".htm", ".html", ".json", ".png", ".jpg", ".gif", ".ico", ".svg", ".woff", ".woff2");
 
-    private final AuthenticationConfig authenticationConfig;
+    private final Provider<AuthenticationConfig> authenticationConfigProvider;
     private final UriFactory uriFactory;
     private final SecurityContext securityContext;
     private final OpenIdManager openIdManager;
 
     @Inject
     SecurityFilter(
-            final AuthenticationConfig authenticationConfig,
+            final Provider<AuthenticationConfig> authenticationConfigProvider,
             final UriFactory uriFactory,
             final SecurityContext securityContext,
             final OpenIdManager openIdManager) {
-        this.authenticationConfig = authenticationConfig;
+        this.authenticationConfigProvider = authenticationConfigProvider;
         this.uriFactory = uriFactory;
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
@@ -136,11 +138,11 @@ class SecurityFilter implements Filter {
                             .map(str -> "/" + str)
                             .orElse("")));
 
-            if (!authenticationConfig.isAuthenticationRequired()) {
+            if (!authenticationConfigProvider.get().isAuthenticationRequired()) {
                 // If authentication is turned off then proceed as admin.
-                final String propPath = authenticationConfig.getFullPath(
+                final String propPath = authenticationConfigProvider.get().getFullPathStr(
                         AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
-                LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
+                LOGGER.debug("{} is false, authenticating as admin for {}", propPath, fullPath);
                 securityContext.asAdminUser(() -> {
                     // Set the user ref in the session.
                     openIdManager.getOrSetSessionUser(request, Optional.of(securityContext.getUserIdentity()));
@@ -165,8 +167,8 @@ class SecurityFilter implements Filter {
                     LOGGER.debug("API request is unauthorised.");
                     response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
 
-                } else {
-                    // We assume all other requests are from the UI, so instigate an OpenID authentication flow
+                } else if (request.getRequestURI().equals("/")) {
+                    // UI request, so instigate an OpenID authentication flow
                     // like the good relying party we are.
                     try {
                         final String postAuthRedirectUri = getPostAuthRedirectUri(request);
@@ -182,6 +184,10 @@ class SecurityFilter implements Filter {
                         LOGGER.error(e.getMessage(), e);
                         throw e;
                     }
+                } else {
+                    final int statusCode = Status.NOT_FOUND.getStatusCode();
+                    LOGGER.debug("Unexpected URI {}, returning {}", request.getRequestURI(), statusCode);
+                    response.setStatus(statusCode);
                 }
             }
         }

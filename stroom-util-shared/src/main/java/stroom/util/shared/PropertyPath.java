@@ -17,7 +17,6 @@
 package stroom.util.shared;
 
 import stroom.docref.HasName;
-import stroom.docref.HasNameMutable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,13 +29,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Class for representing a path to a property in an object tree, i.e
  * stroom.node.name
  * The aim is to break the dot delimited path strings into its parts to
- * reduce the memory overhead of holding all the paths as many parts are similar
- *
+ * reduce the memory overhead of holding all the paths as many parts are similar.
+ * Also makes it easier to merge property paths together.
  */
 @JsonInclude(Include.NON_NULL)
 public class PropertyPath implements Comparable<PropertyPath>, HasName {
@@ -51,18 +51,55 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     @JsonProperty("parts")
     private final List<String> parts;
 
+    // Cache the hash to speed up map look-ups
+    @JsonIgnore
+    private final int hashCode;
+
     @JsonCreator
     PropertyPath(@JsonProperty("parts") final List<String> parts) {
         if (parts == null) {
             this.parts = Collections.emptyList();
         } else {
             validateParts(parts);
-            this.parts = new ArrayList<>(parts);
+            // Can't use List.copyOf() as GWT doesn't know about it.
+            this.parts = Collections.unmodifiableList(new ArrayList<>(parts));
         }
+        hashCode = buildHashCode(this.parts);
+    }
+
+    private PropertyPath(final List<String> parts1, final List<String> parts2) {
+        final List<String> mutableParts = new ArrayList<>(parts1.size() + parts2.size());
+        mutableParts.addAll(parts1);
+        mutableParts.addAll(parts2);
+        parts = Collections.unmodifiableList(mutableParts);
+        validateParts(parts);
+        hashCode = buildHashCode(this.parts);
+    }
+
+    private PropertyPath(final List<String> parts1, final String finalPart) {
+        final List<String> mutableParts = new ArrayList<>(parts1.size() + 1);
+        mutableParts.addAll(parts1);
+        mutableParts.add(finalPart);
+        parts = Collections.unmodifiableList(mutableParts);
+        validateParts(parts);
+        hashCode = buildHashCode(this.parts);
+    }
+
+    private int buildHashCode(final List<String> parts) {
+        return Objects.hashCode(parts);
     }
 
     public static PropertyPath blank() {
         return EMPTY_INSTANCE;
+    }
+
+    @JsonIgnore
+    public boolean isBlank() {
+        return parts.isEmpty();
+    }
+
+    public boolean containsPart(final String part) {
+        return parts.contains(part);
     }
 
     /**
@@ -98,7 +135,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     private static void validateParts(final List<String> parts) {
         for (final String part : parts) {
             if (part == null || part.isEmpty()) {
-                throw new RuntimeException("Null or empty path part in " + parts.toString());
+                throw new RuntimeException("Null or empty path part in " + parts);
             }
         }
     }
@@ -107,7 +144,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         if (parts.isEmpty()) {
             return Collections.emptyList();
         } else {
-            return new ArrayList<>(parts);
+            return parts;
         }
     }
 
@@ -115,18 +152,31 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
      * Merge otherPath onto the end of this and return a new {@link PropertyPath}
      */
     public PropertyPath merge(final PropertyPath otherPath) {
-        List<String> mergedParts = new ArrayList<>(this.parts);
-        mergedParts.addAll(otherPath.parts);
-        return new PropertyPath(mergedParts);
+        if (otherPath == null || otherPath.isBlank()) {
+            return this;
+        } else {
+            return new PropertyPath(this.parts, otherPath.parts);
+        }
     }
 
     /**
      * Merge part onto the end of this and return a new {@link PropertyPath}
      */
     public PropertyPath merge(final String part) {
-        List<String> mergedParts = new ArrayList<>(this.parts);
-        mergedParts.add(part);
-        return new PropertyPath(mergedParts);
+        if (part == null || part.isEmpty()) {
+            return this;
+        } else {
+            return new PropertyPath(this.parts, part);
+        }
+    }
+
+    @JsonIgnore
+    public Optional<PropertyPath> getParent() {
+        if (parts.size() <= 1) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new PropertyPath(parts.subList(0, parts.size() - 1)));
+        }
     }
 
     /**
@@ -148,13 +198,20 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     @Override
     public String toString() {
         if (parts == null || parts.isEmpty()) {
-            return null;
+            return "";
         } else {
             return String.join(DELIMITER, parts);
         }
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
+    public String delimitedBy(final String delimiter) {
+        if (parts == null || parts.isEmpty()) {
+            return "";
+        } else {
+            return String.join(delimiter, parts);
+        }
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -187,7 +244,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
 
     @Override
     public int hashCode() {
-        return Objects.hash(parts);
+        return hashCode;
     }
 
     public static Builder builder() {

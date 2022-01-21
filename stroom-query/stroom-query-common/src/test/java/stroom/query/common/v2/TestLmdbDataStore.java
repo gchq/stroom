@@ -16,22 +16,24 @@
 
 package stroom.query.common.v2;
 
-import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolConfig;
-import stroom.bytebuffer.ByteBufferPoolImpl4;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
+import stroom.util.io.TempDirProvider;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,23 +61,28 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     DataStore create(final TableSettings tableSettings, final Sizes maxResults, final Sizes storeSize) {
         final FieldIndex fieldIndex = new FieldIndex();
 
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
-        final LmdbConfig lmdbConfig = new LmdbConfig();
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
-        final LmdbEnvironmentFactory lmdbEnvironmentFactory =
-                new LmdbEnvironmentFactory(lmdbConfig, pathCreator);
+        final TempDirProvider tempDirProvider = () -> tempDir;
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
+        final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
+        final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
+        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
+                pathCreator,
+                tempDirProvider,
+                () -> lmdbLibraryConfig);
+        final Executor executor = Executors.newCachedThreadPool();
 
         return new LmdbDataStore(
-                lmdbEnvironmentFactory,
-                lmdbConfig,
-                byteBufferPool,
-                UUID.randomUUID().toString(),
+                lmdbEnvFactory,
+                resultStoreConfig,
+                new QueryKey(UUID.randomUUID().toString()),
                 "0",
                 tableSettings,
                 fieldIndex,
                 Collections.emptyMap(),
                 maxResults,
-                storeSize);
+                false,
+                () -> executor,
+                new ErrorConsumerImpl());
     }
 
     @Test
@@ -109,7 +118,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);

@@ -286,10 +286,20 @@ public class ExpressionParser {
                         int rightParamIndex = i + 1;
 
                         // Get left param.
-                        final Param leftParam = getParam(copyList(objects, leftParamIndex, leftParamIndex), fieldIndex);
+                        final Param leftParam;
+                        if (leftParamIndex >= 0) {
+                            leftParam = getParam(copyList(objects, leftParamIndex, leftParamIndex), fieldIndex);
+                        } else {
+                            leftParam = null;
+                        }
                         // Get right param.
-                        final Param rightParam = getParam(copyList(objects, rightParamIndex, rightParamIndex),
-                                fieldIndex);
+                        final Param rightParam;
+                        if (rightParamIndex < objects.size()) {
+                            rightParam = getParam(copyList(objects, rightParamIndex, rightParamIndex),
+                                    fieldIndex);
+                        } else {
+                            rightParam = null;
+                        }
 
                         // Addition and subtraction without a preceding param are allowed. In this form plus can be
                         // ignored and minus will negate right param.

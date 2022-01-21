@@ -23,18 +23,17 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.pipeline.factory.AbstractElement;
 import stroom.pipeline.factory.HasTargets;
 import stroom.pipeline.factory.Processor;
 import stroom.pipeline.factory.TakesInput;
 import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
-import stroom.pipeline.factory.Terminator;
 import stroom.pipeline.filter.ExitSteppingException;
 import stroom.pipeline.filter.NullXMLFilter;
 import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.filter.XMLFilterForkFactory;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
@@ -185,7 +184,7 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
             } catch (final ExitSteppingException e) {
                 // This is expected so do nothing.
 
-            } catch (final TerminatedException | LoggedException e) {
+            } catch (final TaskTerminatedException | LoggedException e) {
                 throw e;
             } catch (final IOException | SAXException e) {
                 final ProcessException processException = ProcessException.wrap(e);
@@ -197,8 +196,8 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
                 while (cause != null) {
                     if (cause instanceof ExitSteppingException) {
                         exception = null;
-                    } else if (cause instanceof TerminatedException) {
-                        throw (TerminatedException) cause;
+                    } else if (cause instanceof TaskTerminatedException) {
+                        throw (TaskTerminatedException) cause;
                     } else if (cause instanceof LoggedException) {
                         throw (LoggedException) cause;
                     } else if (cause instanceof SAXException) {
@@ -288,9 +287,5 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
 
     public ErrorReceiverProxy getErrorReceiverProxy() {
         return errorReceiverProxy;
-    }
-
-    @Override
-    public void setTerminator(final Terminator terminator) {
     }
 }

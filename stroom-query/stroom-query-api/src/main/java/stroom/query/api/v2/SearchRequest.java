@@ -237,7 +237,6 @@ public final class SearchRequest {
         return incremental != null && incremental;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

@@ -28,7 +28,7 @@ import stroom.processor.shared.AssignTasksRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.ProcessorTaskResource;
-import stroom.task.api.SimpleThreadPool;
+import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 
 import org.slf4j.Logger;
@@ -46,7 +46,7 @@ import javax.inject.Provider;
 public class DataProcessorTaskFactory implements DistributedTaskFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProcessorTaskFactory.class);
-    private static final ThreadPool THREAD_POOL = new SimpleThreadPool("Data Processor#", 1);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Data Processor#", 1);
 
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final ProcessorTaskResource processorTaskResource;

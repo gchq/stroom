@@ -81,7 +81,7 @@ class TestMultiServiceInternalStatisticsReceiver {
 
         MultiServiceInternalStatisticsReceiver facade = new MultiServiceInternalStatisticsReceiver(
                 docRefTypeToServiceMap,
-                internalStatisticsConfig);
+                () -> internalStatisticsConfig);
 
         //fire 6 events at the facade, 3 for each key
         facade.putEvents(Arrays.asList(

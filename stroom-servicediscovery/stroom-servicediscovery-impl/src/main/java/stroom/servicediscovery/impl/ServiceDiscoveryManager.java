@@ -27,7 +27,6 @@ public class ServiceDiscoveryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
 
-    private final ServiceDiscoveryConfig serviceDiscoveryConfig;
     private final String zookeeperUrl;
 
     private final AtomicReference<CuratorFramework> curatorFrameworkRef = new AtomicReference<>();
@@ -36,10 +35,10 @@ public class ServiceDiscoveryManager {
 
     private final Deque<Closeable> closeables = new LinkedList<>();
 
+    // ServiceDiscoveryConfig not injected as provider as it is only used in ctor of a singleton
     @SuppressWarnings("unused")
     @Inject
     ServiceDiscoveryManager(final ServiceDiscoveryConfig serviceDiscoveryConfig) {
-        this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.zookeeperUrl = serviceDiscoveryConfig.getZookeeperUrl();
 
         boolean isServiceDiscoveryEnabled = serviceDiscoveryConfig.isEnabled();
@@ -47,8 +46,8 @@ public class ServiceDiscoveryManager {
         if (isServiceDiscoveryEnabled) {
             //try and start the connection with ZK in another thread to prevent connection problems from stopping
             // the bean creation and application startup, then start ServiceDiscovery and notify any listeners
-            CompletableFuture.runAsync(this::startCurator)
-                    .thenRun(this::startServiceDiscovery)
+            CompletableFuture.runAsync(() -> startCurator(serviceDiscoveryConfig))
+                    .thenRun(() -> startServiceDiscovery(serviceDiscoveryConfig))
                     .thenRun(this::notifyListeners)
                     .exceptionally(throwable -> {
                         LOGGER.error("Error initialising service discovery", throwable);
@@ -68,7 +67,7 @@ public class ServiceDiscoveryManager {
         }
     }
 
-    private void startCurator() {
+    private void startCurator(final ServiceDiscoveryConfig serviceDiscoveryConfig) {
         int baseSleepTimeMs = serviceDiscoveryConfig.getCuratorBaseSleepTimeMs();
         int maxSleepTimeMs = serviceDiscoveryConfig.getCuratorMaxSleepTimeMs();
         int maxRetries = serviceDiscoveryConfig.getCuratorMaxRetries();
@@ -95,7 +94,7 @@ public class ServiceDiscoveryManager {
         }
     }
 
-    private void startServiceDiscovery() {
+    private void startServiceDiscovery(final ServiceDiscoveryConfig serviceDiscoveryConfig) {
         String basePath = Preconditions.checkNotNull(serviceDiscoveryConfig.getZookeeperBasePath());
         ServiceDiscovery<String> serviceDiscovery = ServiceDiscoveryBuilder
                 .builder(String.class)

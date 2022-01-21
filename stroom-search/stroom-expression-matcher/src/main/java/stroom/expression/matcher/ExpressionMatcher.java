@@ -32,6 +32,7 @@ import stroom.query.common.v2.DateExpressionParser;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -400,6 +401,11 @@ public class ExpressionMatcher {
         if (attribute instanceof DocRef) {
             final String uuid = ((DocRef) attribute).getUuid();
             return (null != uuid && uuid.equals(docRef.getUuid()));
+        } else if (attribute instanceof String) {
+            // Trying to compare a string to a docRef so assume the string is EITHER the uuid or the name
+            // In theory a 'uuid' could match a name but as we use proper uuids it will be fine.
+            return Objects.equals(docRef.getName(), attribute)
+                    || Objects.equals(docRef.getUuid(), attribute);
         }
 
         return false;

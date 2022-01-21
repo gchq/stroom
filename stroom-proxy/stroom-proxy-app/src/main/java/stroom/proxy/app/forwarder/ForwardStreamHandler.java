@@ -8,6 +8,8 @@ import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.SSLUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +30,7 @@ import javax.net.ssl.SSLSocketFactory;
  */
 public class ForwardStreamHandler implements StreamHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardStreamHandler.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 
     private final LogStream logStream;
@@ -57,7 +59,7 @@ public class ForwardStreamHandler implements StreamHandler {
         startTimeMs = System.currentTimeMillis();
         attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
-        LOGGER.info("handleHeader() - {} Sending request {}", forwardUrl, attributeMap);
+        LOGGER.info(() -> "handleHeader() - " + forwardUrl + " Sending request " + attributeMap);
 
         final URL url = new URL(forwardUrl);
         connection = (HttpURLConnection) url.openConnection();
@@ -87,9 +89,7 @@ public class ForwardStreamHandler implements StreamHandler {
         }
 
         if (forwardChunkSize != null) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("handleHeader() - setting ChunkedStreamingMode = " + forwardChunkSize);
-            }
+            LOGGER.debug(() -> "handleHeader() - setting ChunkedStreamingMode = " + forwardChunkSize);
             connection.setChunkedStreamingMode(forwardChunkSize);
         }
         connection.connect();
@@ -108,10 +108,10 @@ public class ForwardStreamHandler implements StreamHandler {
 
         if (forwardDelayMs != null) {
             try {
-                LOGGER.debug("handleEntryData() - adding delay {}", forwardDelayMs);
+                LOGGER.debug(() -> "handleEntryData() - adding delay " + forwardDelayMs);
                 Thread.sleep(forwardDelayMs);
             } catch (final InterruptedException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
 
                 // Continue to interrupt this thread.
                 Thread.currentThread().interrupt();
@@ -124,24 +124,21 @@ public class ForwardStreamHandler implements StreamHandler {
     }
 
     void error() {
-        LOGGER.info("error() - " + forwardUrl);
-        if (connection != null) {
-            connection.disconnect();
-            connection = null;
-        }
+        LOGGER.info(() -> "error() - " + forwardUrl);
+        logAndDisconnect();
     }
 
     void close() throws IOException {
         zipOutputStream.close();
+        LOGGER.debug(() -> "handleFooter() - header fields " + connection.getHeaderFields());
+        logAndDisconnect();
+    }
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("handleFooter() - header fields " + connection.getHeaderFields());
-        }
-        int responseCode = -1;
-
+    private void logAndDisconnect() {
         if (connection != null) {
+            int responseCode = -1;
             try {
-                responseCode = StroomStreamException.checkConnectionResponse(connection);
+                responseCode = StroomStreamException.checkConnectionResponse(connection, attributeMap);
             } finally {
                 final long duration = System.currentTimeMillis() - startTimeMs;
                 logStream.log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, totalBytesSent, duration);

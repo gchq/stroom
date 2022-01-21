@@ -115,6 +115,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                           final String classification,
                           final Set<String> highlightStrings,
                           final boolean isHtml) {
+        TextPresenter.this.isHtml = isHtml;
 //        final List<TextRange> highlights = getHighlights(data, highlightStrings);
 
         // Defer showing data to be sure that the data display has been made
@@ -130,29 +131,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
             getView().setClassification(classification);
             if (isHtml) {
-                if (htmlPresenter == null) {
-                    htmlPresenter = htmlPresenterProvider.get();
-                    htmlPresenter.getWidget().addDomHandler(event -> {
-                        final Element target = event.getNativeEvent().getEventTarget().cast();
-                        final String link = target.getAttribute("link");
-                        if (link != null) {
-                            final Hyperlink hyperlink = Hyperlink.create(link);
-                            if (hyperlink != null) {
-                                HyperlinkEvent.fire(TextPresenter.this, hyperlink);
-                            }
-                        }
-                    }, ClickEvent.getType());
-                }
+                initHtmlPresenter();
 
                 getView().setContent(htmlPresenter.getView());
                 htmlPresenter.setHtml(data);
             } else {
-                if (rawPresenter == null) {
-                    rawPresenter = rawPresenterProvider.get();
-                    rawPresenter.setReadOnly(true);
-                    rawPresenter.getLineNumbersOption().setOn(false);
-                    rawPresenter.getLineWrapOption().setOn(true);
-                }
+                initRawPresenter();
 
                 getView().setContent(rawPresenter.getView());
 
@@ -168,6 +152,53 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                 rawPresenter.setControlsVisible(playButtonVisible);
             }
         });
+    }
+
+    private void showError(final FetchDataRequest request,
+                           final FetchDataResult fetchDataResult) {
+        // Defer showing data to be sure that the data display has been made
+        // visible first.
+        Scheduler.get().scheduleDeferred(() -> {
+            // Determine if we should show tha play button.
+            // Show the play button if we have fetched input data.
+            getView().setClassification(fetchDataResult.getClassification());
+
+            initRawPresenter();
+            getView().setContent(rawPresenter.getView());
+
+            final String title = "Unable to display stream ["
+                    + fetchDataResult.getSourceLocation().getIdentifierString()
+                    + "]";
+
+            final String errorText = String.join("\n", fetchDataResult.getErrors());
+
+            rawPresenter.setErrorText(title, errorText);
+        });
+    }
+
+    private void initRawPresenter() {
+        if (rawPresenter == null) {
+            rawPresenter = rawPresenterProvider.get();
+            rawPresenter.setReadOnly(true);
+            rawPresenter.getLineNumbersOption().setOn(false);
+            rawPresenter.getLineWrapOption().setOn(true);
+        }
+    }
+
+    private void initHtmlPresenter() {
+        if (htmlPresenter == null) {
+            htmlPresenter = htmlPresenterProvider.get();
+            htmlPresenter.getWidget().addDomHandler(event -> {
+                final Element target = event.getNativeEvent().getEventTarget().cast();
+                final String link = target.getAttribute("link");
+                if (link != null) {
+                    final Hyperlink hyperlink = Hyperlink.create(link);
+                    if (hyperlink != null) {
+                        HyperlinkEvent.fire(TextPresenter.this, hyperlink);
+                    }
+                }
+            }, ClickEvent.getType());
+        }
     }
 
     /**
@@ -313,6 +344,21 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     final Long currentColFrom = getLong(colFromField, selected);
                     final Long currentLineTo = getLong(lineToField, selected);
                     final Long currentColTo = getLong(colToField, selected);
+
+                    GWT.log("TextPresenter - selected table row = " + selected);
+                    GWT.log("TextPresenter - " +
+                            "streamIdField=" +
+                            streamIdField +
+                            "partNoField=" +
+                            partNoField +
+                            "recordNoField=" +
+                            recordNoField +
+                            "currentStreamId=" +
+                            currentStreamId +
+                            ", currentPartIndex=" +
+                            currentPartIndex +
+                            ", currentRecordIndex=" +
+                            currentRecordIndex);
 
                     // Validate settings.
                     if (getTextSettings().getStreamIdField() == null) {
@@ -545,23 +591,26 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                                 // the text.
                                 if (fetchDataQueue.size() == 0) {
                                     String data = "The data has been deleted or reprocessed since this index was built";
-                                    String classification = null;
                                     boolean isHtml = false;
                                     if (result != null) {
                                         if (result instanceof FetchDataResult) {
                                             final FetchDataResult fetchDataResult = (FetchDataResult) result;
-                                            data = fetchDataResult.getData();
-                                            classification = result.getClassification();
                                             isHtml = fetchDataResult.isHtml();
+                                            if (fetchDataResult.hasErrors()) {
+                                                showError(request, fetchDataResult);
+                                            } else {
+                                                showData(fetchDataResult.getData(),
+                                                        fetchDataResult.getClassification(),
+                                                        currentHighlightStrings,
+                                                        fetchDataResult.isHtml());
+                                            }
                                         } else {
-                                            data = "";
-                                            classification = null;
                                             isHtml = false;
+                                            showData("", null, currentHighlightStrings, false);
                                         }
+                                    } else {
+                                        showData("", null, currentHighlightStrings, false);
                                     }
-
-                                    TextPresenter.this.isHtml = isHtml;
-                                    showData(data, classification, currentHighlightStrings, isHtml);
                                 }
                             })
                             .call(DATA_RESOURCE)
@@ -615,7 +664,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     @Override
     public void link() {
         final String tableId = getTextSettings().getTableId();
-        String newTableId = getComponents().validateOrGetFirstComponentId(tableId, TablePresenter.TYPE.getId());
+        String newTableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
 
         // If we can't get the same table id then set to null so that changes to any table can be listened to.
         if (!EqualsUtil.isEquals(tableId, newTableId)) {

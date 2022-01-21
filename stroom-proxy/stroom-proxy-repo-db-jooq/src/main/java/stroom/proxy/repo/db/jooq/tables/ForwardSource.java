@@ -4,14 +4,17 @@
 package stroom.proxy.repo.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.proxy.repo.db.jooq.DefaultSchema;
+import stroom.proxy.repo.db.jooq.Indexes;
+import stroom.proxy.repo.db.jooq.Keys;
+import stroom.proxy.repo.db.jooq.tables.records.ForwardSourceRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row5;
+import org.jooq.Row9;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -21,9 +24,8 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.proxy.repo.db.jooq.DefaultSchema;
-import stroom.proxy.repo.db.jooq.Keys;
-import stroom.proxy.repo.db.jooq.tables.records.ForwardSourceRecord;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -53,14 +55,19 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
     public final TableField<ForwardSourceRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT, this, "");
 
     /**
+     * The column <code>forward_source.update_time_ms</code>.
+     */
+    public final TableField<ForwardSourceRecord, Long> UPDATE_TIME_MS = createField(DSL.name("update_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
      * The column <code>forward_source.fk_forward_url_id</code>.
      */
     public final TableField<ForwardSourceRecord, Integer> FK_FORWARD_URL_ID = createField(DSL.name("fk_forward_url_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>forward_source.fk_source_id</code>.
+     * The column <code>forward_source.source_id</code>.
      */
-    public final TableField<ForwardSourceRecord, Long> FK_SOURCE_ID = createField(DSL.name("fk_source_id"), SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<ForwardSourceRecord, Long> SOURCE_ID = createField(DSL.name("source_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>forward_source.success</code>.
@@ -71,6 +78,21 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
      * The column <code>forward_source.error</code>.
      */
     public final TableField<ForwardSourceRecord, String> ERROR = createField(DSL.name("error"), SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>forward_source.tries</code>.
+     */
+    public final TableField<ForwardSourceRecord, Long> TRIES = createField(DSL.name("tries"), SQLDataType.BIGINT.defaultValue(DSL.field("0", SQLDataType.BIGINT)), this, "");
+
+    /**
+     * The column <code>forward_source.new_position</code>.
+     */
+    public final TableField<ForwardSourceRecord, Long> NEW_POSITION = createField(DSL.name("new_position"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>forward_source.retry_position</code>.
+     */
+    public final TableField<ForwardSourceRecord, Long> RETRY_POSITION = createField(DSL.name("retry_position"), SQLDataType.BIGINT, this, "");
 
     private ForwardSource(Name alias, Table<ForwardSourceRecord> aliased) {
         this(alias, aliased, null);
@@ -111,6 +133,11 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
     }
 
     @Override
+    public List<Index> getIndexes() {
+        return Arrays.<Index>asList(Indexes.NEW_POSITION_FORWARD_SOURCE_INDEX, Indexes.RETRY_POSITION_FORWARD_SOURCE_INDEX);
+    }
+
+    @Override
     public UniqueKey<ForwardSourceRecord> getPrimaryKey() {
         return Keys.PK_FORWARD_SOURCE;
     }
@@ -122,24 +149,16 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
 
     @Override
     public List<ForeignKey<ForwardSourceRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<ForwardSourceRecord, ?>>asList(Keys.FK_FORWARD_SOURCE_FORWARD_URL_1, Keys.FK_FORWARD_SOURCE_SOURCE_1);
+        return Arrays.<ForeignKey<ForwardSourceRecord, ?>>asList(Keys.FK_FORWARD_SOURCE_FORWARD_URL_1);
     }
 
     private transient ForwardUrl _forwardUrl;
-    private transient Source _source;
 
     public ForwardUrl forwardUrl() {
         if (_forwardUrl == null)
             _forwardUrl = new ForwardUrl(this, Keys.FK_FORWARD_SOURCE_FORWARD_URL_1);
 
         return _forwardUrl;
-    }
-
-    public Source source() {
-        if (_source == null)
-            _source = new Source(this, Keys.FK_FORWARD_SOURCE_SOURCE_1);
-
-        return _source;
     }
 
     @Override
@@ -169,11 +188,11 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row5 type methods
+    // Row9 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row5<Long, Integer, Long, Boolean, String> fieldsRow() {
-        return (Row5) super.fieldsRow();
+    public Row9<Long, Long, Integer, Long, Boolean, String, Long, Long, Long> fieldsRow() {
+        return (Row9) super.fieldsRow();
     }
 }

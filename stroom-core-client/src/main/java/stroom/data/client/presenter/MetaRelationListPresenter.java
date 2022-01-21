@@ -32,7 +32,6 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
@@ -60,7 +59,6 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
     public MetaRelationListPresenter(final EventBus eventBus,
                                      final PagerView view,
                                      final RestFactory restFactory,
-                                     final TooltipPresenter tooltipPresenter,
                                      final LocationManager locationManager,
                                      final DateTimeFormatter dateTimeFormatter,
                                      final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
@@ -69,7 +67,6 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         super(eventBus,
                 view,
                 restFactory,
-                tooltipPresenter,
                 locationManager,
                 dateTimeFormatter,
                 selectionSummaryPresenterProvider,

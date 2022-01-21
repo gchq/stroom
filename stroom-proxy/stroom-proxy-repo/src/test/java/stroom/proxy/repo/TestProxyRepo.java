@@ -35,9 +35,7 @@ import static org.assertj.core.api.Assertions.fail;
 class TestProxyRepo {
 
     @Inject
-    private ProxyRepoConfig proxyRepoConfig;
-    @Inject
-    private ProxyRepoSources proxyRepoSources;
+    private RepoSources proxyRepoSources;
 
     @BeforeEach
     void beforeEach() {
@@ -47,8 +45,12 @@ class TestProxyRepo {
     @Test
     void testScan() throws IOException {
         final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
-        final ProxyRepo proxyRepo =
-                new ProxyRepo(() -> repoDir, null, proxyRepoSources, 100, 0);
+        final ProxyRepo proxyRepo = new ProxyRepo(
+                () -> repoDir,
+                null,
+                proxyRepoSources,
+                100,
+                0);
 
         final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.addFeedAndType(attributeMap, "test", null);
@@ -59,7 +61,7 @@ class TestProxyRepo {
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
         }
 
-        proxyRepo.setCount(10000000000L);
+        proxyRepo.setCount(10_000_000_000L);
 
         try (final StroomZipOutputStream out2 = proxyRepo.getStroomZipOutputStream(attributeMap)) {
             StroomZipOutputStreamUtil.addSimpleEntry(
@@ -78,7 +80,7 @@ class TestProxyRepo {
         reopenProxyRepo.scanRepository((min, max) -> {
             assertThat(1L == min)
                     .isTrue();
-            assertThat(10000000001L == max)
+            assertThat(10_000_000_001L == max)
                     .isTrue();
         });
 
@@ -101,7 +103,7 @@ class TestProxyRepo {
         final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo2");
 
         ProxyRepo proxyRepo = new ProxyRepo(
-                () -> repoDir, null, proxyRepoSources, 10000, 0);
+                () -> repoDir, null, proxyRepoSources, 10_000, 0);
 
         final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.addFeedAndType(attributeMap, "test", null);
@@ -135,7 +137,7 @@ class TestProxyRepo {
         // Leave open
 
         proxyRepo = new ProxyRepo(
-                () -> repoDir, null, proxyRepoSources, 1000, 0);
+                () -> repoDir, null, proxyRepoSources, 1_000, 0);
         assertThat(Files.isRegularFile(out1.getFile()))
                 .as("Expecting pucker file to be left")
                 .isTrue();
@@ -159,7 +161,7 @@ class TestProxyRepo {
 
         try {
             Files.setLastModifiedTime(lockFile3,
-                    FileTime.fromMillis(System.currentTimeMillis() - (48 * 60 * 60 * 1000)));
+                    FileTime.fromMillis(System.currentTimeMillis() - (48 * 60 * 60 * 1_000)));
         } catch (final RuntimeException e) {
             fail("Unable to set LastModified");
         }
@@ -174,7 +176,7 @@ class TestProxyRepo {
         final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo2");
 
         ProxyRepo proxyRepo = new ProxyRepo(
-                () -> repoDir, null, proxyRepoSources, 10000, 0);
+                () -> repoDir, null, proxyRepoSources, 10_000, 0);
 
         assertThat(repoDir).exists();
 
@@ -193,7 +195,7 @@ class TestProxyRepo {
         int cleanDelayMs = (int) Duration.ofHours(1).toMillis();
 
         ProxyRepo proxyRepo = new ProxyRepo(
-                () -> repoDir, null, proxyRepoSources, 10000, cleanDelayMs);
+                () -> repoDir, null, proxyRepoSources, 10_000, cleanDelayMs);
 
         assertThat(repoDir).exists();
 
@@ -305,38 +307,32 @@ class TestProxyRepo {
         attributeMap.put("feed", "myFeed");
         attributeMap.put("key1", "myKey1");
 
-        final String originalFormat = proxyRepoConfig.getFormat();
-        try {
-            final String repositoryFormat = "%{id}_${id}_${FEED}_${kEy1}";
-            proxyRepoConfig.setFormat(repositoryFormat);
-            final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo3");
+        final String repositoryFormat = "%{id}_${id}_${FEED}_${kEy1}";
+        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo3");
 
-            final ProxyRepo proxyRepo = new ProxyRepo(
-                    () -> repoDir,
-                    repositoryFormat,
-                    proxyRepoSources,
-                    10000,
-                    0);
-            StroomZipOutputStreamImpl out1;
-            try (final StroomZipOutputStreamImpl out =
-                    (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream(attributeMap)) {
-                StroomZipOutputStreamUtil.addSimpleEntry(
-                        out,
-                        StroomZipEntry.create("file", StroomZipFileType.DATA),
-                        "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
-                assertThat(Files.isRegularFile(out.getFile()))
-                        .isFalse();
-                out1 = out;
-            }
-            Path zipFile = out1.getFile();
-            assertThat(Files.isRegularFile(zipFile))
-                    .isTrue();
-            final String expectedFilename = "__id__001_myFeed_myKey1.zip";
-            assertThat(zipFile.getFileName().toString())
-                    .isEqualTo(expectedFilename);
-
-        } finally {
-            proxyRepoConfig.setFormat(originalFormat);
+        final ProxyRepo proxyRepo = new ProxyRepo(
+                () -> repoDir,
+                repositoryFormat,
+                proxyRepoSources,
+                10000,
+                0);
+        StroomZipOutputStreamImpl out1;
+        try (final StroomZipOutputStreamImpl out =
+                (StroomZipOutputStreamImpl) proxyRepo.getStroomZipOutputStream(attributeMap)) {
+            StroomZipOutputStreamUtil.addSimpleEntry(
+                    out,
+                    StroomZipEntry.create("file", StroomZipFileType.DATA),
+                    "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
+            assertThat(Files.isRegularFile(out.getFile()))
+                    .isFalse();
+            out1 = out;
         }
+        Path zipFile = out1.getFile();
+        assertThat(Files.isRegularFile(zipFile))
+                .isTrue();
+        final String expectedFilename = "__id__001_myFeed_myKey1.zip";
+        assertThat(zipFile.getFileName().toString())
+                .isEqualTo(expectedFilename);
+
     }
 }

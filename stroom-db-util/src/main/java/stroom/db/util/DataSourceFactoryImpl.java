@@ -1,20 +1,22 @@
 package stroom.db.util;
 
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
-import stroom.config.common.DbConfig;
-import stroom.config.common.HasDbConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.health.HealthCheckRegistry;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
@@ -23,41 +25,57 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataSourceFactoryImpl.class);
 
-    private final CommonDbConfig commonDbConfig;
-    private static final Map<DbConfig, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
+    private final Provider<CommonDbConfig> commonDbConfigProvider;
+    private final MetricRegistry metricRegistry;
+    private final HealthCheckRegistry healthCheckRegistry;
+    private static final ConcurrentMap<DataSourceKey, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
 
     @Inject
-    public DataSourceFactoryImpl(final CommonDbConfig commonDbConfig) {
-        this.commonDbConfig = commonDbConfig;
+    public DataSourceFactoryImpl(final Provider<CommonDbConfig> commonDbConfigProvider,
+                                 final MetricRegistry metricRegistry,
+                                 final HealthCheckRegistry healthCheckRegistry) {
+        this.commonDbConfigProvider = commonDbConfigProvider;
+        this.metricRegistry = metricRegistry;
+        this.healthCheckRegistry = healthCheckRegistry;
         LOGGER.debug("Initialising {}", this.getClass().getSimpleName());
 
         JooqUtil.disableJooqLogoInLogs();
     }
 
     @Override
-    public DataSource create(final HasDbConfig config) {
-        final DbConfig dbConfig = config.getDbConfig();
+    public DataSource create(final AbstractDbConfig dbConfig, final String name, final boolean unique) {
 
         // Create a merged config using the common db config as a base.
-        final DbConfig mergedConfig = commonDbConfig.mergeConfig(dbConfig);
+        final String className = dbConfig.getClass()
+                .getSimpleName();
+
+        final CommonDbConfig commonDbConfig = commonDbConfigProvider.get();
+        final AbstractDbConfig mergedConfig = commonDbConfig.mergeConfig(dbConfig);
+        final DataSourceKey key = new DataSourceKey(mergedConfig, name, unique);
 
         LOGGER.debug(() ->
                 LogUtil.message("Class: {}\n  {}\n  {}\n  {}",
-                        config.getClass().getSimpleName(),
+                        className,
                         dbConfig.getConnectionConfig(),
                         commonDbConfig.getConnectionConfig(),
-                        mergedConfig.getConnectionConfig()));
+                        key));
 
         // Get a data source from a map to limit connections where connection details are common.
-        return DATA_SOURCE_MAP.computeIfAbsent(mergedConfig, k -> {
+        return DATA_SOURCE_MAP.computeIfAbsent(key, k -> {
+            final String poolName = k.getPoolName();
             LOGGER.debug(() ->
-                    LogUtil.message("Creating datasource for {} with user {}",
+                    LogUtil.message("Creating datasource for: {}, user: {}, poolName: {}",
                             Optional.ofNullable(mergedConfig.getConnectionConfig())
                                     .map(ConnectionConfig::getUrl).orElse("null"),
                             Optional.ofNullable(mergedConfig.getConnectionConfig())
-                                    .map(ConnectionConfig::getUser).orElse("null")));
+                                    .map(ConnectionConfig::getUser).orElse("null"),
+                            poolName));
 
-            final HikariConfig hikariConfig = HikariUtil.createConfig(k);
+            final HikariConfig hikariConfig = HikariUtil.createConfig(
+                    k.getConfig(),
+                    poolName,
+                    metricRegistry,
+                    healthCheckRegistry);
             return new HikariDataSource(hikariConfig);
         });
     }

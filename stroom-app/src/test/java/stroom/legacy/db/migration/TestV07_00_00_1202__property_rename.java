@@ -1,13 +1,15 @@
 package stroom.legacy.db.migration;
 
-import stroom.config.app.AppConfig;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.legacy.db.migration.V07_00_00_1202__property_rename.Mapping;
 import stroom.legacy.db.migration.V07_00_00_1202__property_rename.Mappings;
 import stroom.legacy.model_6_1.GlobalProperty;
+import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil.Prop;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
 
+import org.apache.commons.lang3.ClassUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -39,15 +42,15 @@ class TestV07_00_00_1202__property_rename {
         return testDefaultProperties(stroom.legacy.model_6_1.DefaultProperties.getList());
     }
 
-    Stream<DynamicTest> testDefaultProperties(final List<GlobalProperty> defaultProperties) {
+    Stream<DynamicTest> testDefaultProperties(final List<GlobalProperty> legacyDefaultProperties) {
         final Mappings mappings = new V07_00_00_1202__property_rename.Mappings();
-        final ConfigMapper configMapper = new ConfigMapper(new AppConfig());
+        final ConfigMapper configMapper = new ConfigMapper();
 
-        return defaultProperties
+        return legacyDefaultProperties
                 .stream()
                 .sorted(Comparator.comparing(GlobalProperty::getName))
-                .map(defaultProperty -> {
-                    final String oldName = defaultProperty.getName();
+                .map(legacyDefaultProperty -> {
+                    final String oldName = legacyDefaultProperty.getName();
                     if (mappings.ignore(oldName)) {
                         return null;
                     }
@@ -65,19 +68,43 @@ class TestV07_00_00_1202__property_rename {
                                 .describedAs("Destination key %s does not exist in the model", newName)
                                 .isTrue();
 
-                        final String oldValue = defaultProperty.getValue();
+                        final String oldValue = legacyDefaultProperty.getValue();
                         final String mappedValue = mapping.getSerialisationMappingFunc().apply(oldValue);
                         final Object value = configMapper.convertValue(propertyPath, mappedValue);
 
+                        LOGGER.debug("{} => {}, value: [{}] ({})",
+                                oldName, newName, value, NullSafe.get(value, Object::getClass, Class::getName));
+
                         final Prop prop = optionalProp.get();
-                        prop.getSetter().invoke(prop.getParentObject(), value);
+                        if (value != null) {
+                            final Class<?> propClass = prop.getValueClass();
 
+                            // Prop class will always be boxed
+                            assertThat(ClassUtils.primitiveToWrapper(propClass))
+                                    .isAssignableFrom(ClassUtils.primitiveToWrapper(value.getClass()));
 
-                        final String oldValue2 = defaultProperty.getDefaultValue();
-                        final String mappedValue2 = mapping.getSerialisationMappingFunc().apply(oldValue2);
-                        final Object value2 = configMapper.convertValue(propertyPath, mappedValue2);
+                            final AbstractConfig config = configMapper.createObject(Map.of(propertyPath, value));
 
-                        prop.getSetter().invoke(prop.getParentObject(), value2);
+                            assertThat(prop.getValueFromConfigObject(config))
+                                    .isEqualTo(value);
+                        }
+
+                        final String oldValue2 = legacyDefaultProperty.getDefaultValue();
+                        // Most legacy props don't have a default value set
+                        if (oldValue2 != null) {
+                            final String mappedValue2 = mapping.getSerialisationMappingFunc().apply(oldValue2);
+                            final Object value2 = configMapper.convertValue(propertyPath, mappedValue2);
+
+                            LOGGER.debug("default value: [{}] ({})",
+                                    value2, NullSafe.get(value2, Object::getClass, Class::getName));
+
+                            if (value2 != null) {
+                                final Class<?> propClass2 = value2.getClass();
+
+                                assertThat(ClassUtils.primitiveToWrapper(propClass2))
+                                        .isAssignableFrom(ClassUtils.primitiveToWrapper(value2.getClass()));
+                            }
+                        }
                     });
                 })
                 .filter(Objects::nonNull);

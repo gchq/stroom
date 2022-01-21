@@ -50,18 +50,6 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
             operationId = "fetchUser")
     User fetch(@PathParam("userUuid") String userUuid);
 
-//    @GET
-//    @Path("/usersInGroup/{groupUuid}")
-//    ResultPage<User> findUsersInGroup(@PathParam("groupUuid") String groupUuid);
-//
-//    @GET
-//    @Path("/groupsForUserName/{userName}")
-//    ResultPage<User> findGroupsForUserName(@PathParam("userName") String userName);
-//
-//    @GET
-//    @Path("/groupsForUser/{userUuid}")
-//    ResultPage<User> findGroupsForUser(@PathParam("userUuid") String userUuid);
-
     @POST
     @Path("/create/{name}/{isGroup}")
     @Operation(
@@ -75,15 +63,7 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     @Operation(
             summary = "Deletes the user with the supplied UUID",
             operationId = "deleteUser")
-    Boolean deleteUser(@PathParam("uuid") String uuid);
-
-    @PUT
-    @Path("/{userName}/status")
-    @Operation(
-            summary = "Enables/disables the Stroom user with the supplied username",
-            operationId = "setUserStatus")
-    Boolean setStatus(@PathParam("userName") String userName,
-                      @QueryParam("enabled") boolean status);
+    Boolean delete(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{userUuid}/{groupUuid}")

@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:c="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="max form-page form">
         <form:FormGroup identity="processChoicePriority" label="Priority of new filters (unless auto)">
             <v:ValueSpinner ui:field="priority"/>
@@ -16,6 +17,12 @@
         </form:FormGroup>
         <form:FormGroup identity="processChoiceEnable" label="Enable new filters">
             <tickbox:CustomCheckBox ui:field="enabled"/>
+        </form:FormGroup>
+        <form:FormGroup identity="processChoiceMinCreateTime" label="Min Create Time">
+            <c:MyDateBox ui:field="minMetaCreateTimeMs"/>
+        </form:FormGroup>
+        <form:FormGroup identity="processChoiceMaxCreateTime" label="Max Create Time">
+            <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

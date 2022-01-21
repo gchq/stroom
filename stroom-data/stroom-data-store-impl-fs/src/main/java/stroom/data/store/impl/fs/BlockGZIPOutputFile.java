@@ -30,7 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.zip.GZIPOutputStream;
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 /**
  * @see BlockGZIPConstants
@@ -198,13 +198,13 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
     }
 
     @Override
-    public void write(@Nonnull final byte[] b) throws IOException {
+    public void write(@NotNull final byte[] b) throws IOException {
         // Delegate
         write(b, 0, b.length);
     }
 
     @Override
-    public void write(@Nonnull final byte[] bytes, final int offset, final int length) throws IOException {
+    public void write(@NotNull final byte[] bytes, final int offset, final int length) throws IOException {
         if (currentStreamBuffer == null) {
             startGzipBlock();
         }

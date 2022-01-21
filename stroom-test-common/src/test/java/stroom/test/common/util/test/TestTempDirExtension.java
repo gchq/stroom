@@ -18,25 +18,8 @@ class TestTempDirExtension extends TempDirSuperClass {
 
     @Test
     void testMethodDir(@TempDir Path tempDir) {
-
         assertThat(tempDir).isNotNull();
         assertThat(tempDir).exists();
         assertThat(tempDir).isDirectory();
     }
-
-    @Test
-    void testMethodDirTwoArgs(@TempDir Path tempDir1) {
-        assertThat(getInstanceTempDir()).isNotNull();
-        assertThat(getInstanceTempDir()).exists();
-        assertThat(getInstanceTempDir()).isDirectory();
-
-        assertThat(tempDir1).isNotNull();
-        assertThat(tempDir1).exists();
-        assertThat(tempDir1).isDirectory();
-
-        // No matter how many times you use the annotation in a test (as an instance variable
-        // of as a method arg) they will all get the same value
-        assertThat(tempDir1).isEqualTo(getInstanceTempDir());
-    }
-
 }

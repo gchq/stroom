@@ -21,11 +21,15 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
+import stroom.node.shared.NodeSetJobsEnabledRequest;
+import stroom.node.shared.NodeSetJobsEnabledResponse;
 import stroom.util.shared.ResultPage;
 
 import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.function.Consumer;
 import javax.inject.Inject;
@@ -33,6 +37,9 @@ import javax.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class JobResourceImpl implements JobResource {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobResourceImpl.class);
+
     private final Provider<JobService> jobServiceProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
 
@@ -105,5 +112,24 @@ class JobResourceImpl implements JobResource {
             documentEventLogProvider.get().update(before, after, e);
             throw e;
         }
+    }
+
+    @Override
+    public NodeSetJobsEnabledResponse setJobsEnabled(final String nodeName, final NodeSetJobsEnabledRequest params) {
+        final JobService jobService = jobServiceProvider.get();
+        final int recordsUpdated = jobService.setJobsEnabledForNode(
+                nodeName,
+                params.isEnabled(),
+                params.getIncludeJobs(),
+                params.getExcludeJobs());
+
+        if (recordsUpdated > 0) {
+            String enabledState = params.isEnabled()
+                    ? "Enabled"
+                    : "Disabled";
+            LOGGER.info(enabledState + " " + recordsUpdated + " tasks for node " + nodeName);
+        }
+
+        return new NodeSetJobsEnabledResponse(recordsUpdated);
     }
 }

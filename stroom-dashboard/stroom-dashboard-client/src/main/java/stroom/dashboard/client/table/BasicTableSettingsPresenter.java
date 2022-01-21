@@ -111,7 +111,7 @@ public class BasicTableSettingsPresenter
     public void read(final ComponentConfig componentData) {
         super.read(componentData);
 
-        final List<Component> list = getComponents().getComponentsByType(QueryPresenter.TYPE.getId());
+        final List<Component> list = getComponents().getSortedComponentsByType(QueryPresenter.TYPE.getId());
         setQueryList(list);
 
         final TableComponentSettings settings = (TableComponentSettings) componentData.getSettings();

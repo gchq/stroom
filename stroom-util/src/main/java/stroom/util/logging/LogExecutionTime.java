@@ -25,17 +25,16 @@ public class LogExecutionTime {
 
     private final long startTime = System.currentTimeMillis();
 
-    public long getDuration() {
-        return System.currentTimeMillis() - startTime;
+    public static LogExecutionTime start() {
+        return new LogExecutionTime();
     }
 
-    public long getStartTime() {
-        return startTime;
+    public long getDuration() {
+        return System.currentTimeMillis() - startTime;
     }
 
     @Override
     public String toString() {
         return ModelStringUtil.formatDurationString(getDuration());
     }
-
 }

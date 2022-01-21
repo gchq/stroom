@@ -31,6 +31,7 @@ import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
+import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -64,7 +65,6 @@ public class UserTaskManagerPresenter
     private final NodeManager nodeManager;
     private final Map<TaskProgress, UserTaskPresenter> taskPresenterMap = new HashMap<>();
     private final Map<TaskId, TaskProgress> idMap = new HashMap<>();
-    private final Set<TaskId> requestTaskKillSet = new HashSet<>();
     private final Timer refreshTimer;
     private boolean visible;
     private final Set<String> refreshing = new HashSet<>();
@@ -74,6 +74,7 @@ public class UserTaskManagerPresenter
     private final FindTaskProgressCriteria criteria;
 
     private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
+    private final DelayedUpdate delayedUpdate = new DelayedUpdate(this::update);
 
     @Inject
     public UserTaskManagerPresenter(final EventBus eventBus,
@@ -120,6 +121,7 @@ public class UserTaskManagerPresenter
     }
 
     private void refreshTaskStatus() {
+        delayedUpdate.reset();
         // Stop this refreshing more than once before the call returns.
         nodeManager.listAllNodes(
                 this::refresh,
@@ -136,12 +138,12 @@ public class UserTaskManagerPresenter
                 rest
                         .onSuccess(response -> {
                             responseMap.put(nodeName, response.getValues());
-                            update();
+                            delayedUpdate.update();
                             refreshing.remove(nodeName);
                         })
                         .onFailure(throwable -> {
                             responseMap.remove(nodeName);
-                            update();
+                            delayedUpdate.update();
                             refreshing.remove(nodeName);
                         })
                         .call(TASK_RESOURCE)
@@ -154,17 +156,11 @@ public class UserTaskManagerPresenter
         // Combine data from all nodes.
         final ResultPage<TaskProgress> list = TaskProgressUtil.combine(criteria, responseMap.values(), treeAction);
 
-        final HashSet<TaskId> idSet = new HashSet<>();
-        for (final TaskProgress value : list.getValues()) {
-            idSet.add(value.getId());
-        }
-        requestTaskKillSet.retainAll(idSet);
-
         // Refresh the display.
         setData(list);
     }
 
-    private void setData(ResultPage<TaskProgress> list) {
+    private void setData(final ResultPage<TaskProgress> list) {
         if (visible) {
             final Set<UserTaskPresenter> tasksToRemove = new HashSet<>(taskPresenterMap.values());
 
@@ -209,15 +205,10 @@ public class UserTaskManagerPresenter
     @Override
     public void onTerminate(final TaskProgress taskProgress) {
         String message = "Are you sure you want to terminate this task?";
-        if (requestTaskKillSet.contains(taskProgress.getId())) {
-            message = "Are you sure you want to kill this task?";
-        }
         ConfirmEvent.fire(UserTaskManagerPresenter.this, message, result -> {
-            final boolean kill = requestTaskKillSet.contains(taskProgress.getId());
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addId(taskProgress.getId());
-            requestTaskKillSet.add(taskProgress.getId());
-            final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria, kill);
+            final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
             final Rest<Boolean> rest = restFactory.create();
             rest
                     .call(TASK_RESOURCE)

@@ -1,18 +1,17 @@
 /*
  * Copyright 2016 Crown Copyright
  *
- *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * Licensed under the Apache License, Version 2.0 (the "License");
- * See the License for the specific language governing permissions and
+ *
  * Unless required by applicable law or agreed to in writing, software
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * You may obtain a copy of the License at
  * distributed under the License is distributed on an "AS IS" BASIS,
- * import stroom.util.shared.IsStroomConfig;
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  * limitations under the License.
- * you may not use this file except in compliance with the License.
  */
 
 package stroom.ui.config.shared;
@@ -29,10 +28,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import javax.inject.Singleton;
 import javax.validation.constraints.Pattern;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class UiConfig extends AbstractConfig implements IsStroomConfig {
@@ -40,43 +37,43 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty
     @JsonPropertyDescription("The welcome message that is displayed in the welcome tab when logging in to Stroom. " +
             "The welcome message is in HTML format.")
-    private String welcomeHtml;
+    private final String welcomeHtml;
 
     @JsonProperty
     @JsonPropertyDescription("The about message that is displayed when selecting Help -> About. " +
             "The about message is in HTML format.")
-    private String aboutHtml;
+    private final String aboutHtml;
 
     @JsonProperty
     @JsonPropertyDescription("Provide a warning message to users about an outage or other significant event.")
-    private String maintenanceMessage;
+    private final String maintenanceMessage;
 
     @JsonProperty
     @JsonPropertyDescription("The default maximum number of search results to return to the dashboard, unless the " +
             "user requests lower values.")
-    private String defaultMaxResults;
+    private final String defaultMaxResults;
 
     @JsonProperty
-    private ProcessConfig process;
+    private final ProcessConfig process;
 
     @JsonProperty
     @JsonPropertyDescription("The URL of hosted help files.")
-    private String helpUrl;
+    private final String helpUrl;
 
     @JsonProperty
-    private ThemeConfig theme;
+    private final ThemeConfig theme;
 
     @JsonProperty
-    private QueryConfig query;
+    private final QueryConfig query;
 
     @ValidRegex
     @JsonProperty
     @JsonPropertyDescription("The regex pattern for entity names.")
-    private String namePattern;
+    private final String namePattern;
 
     @JsonProperty
     @JsonPropertyDescription("The title to use for the application in the browser.")
-    private String htmlTitle;
+    private final String htmlTitle;
 
     @Pattern(regexp = "^return (true|false);$")
     @JsonProperty
@@ -84,16 +81,16 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
             "for developer use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' " +
             "to see the standard " +
             "browser menu.")
-    private String oncontextmenu;
+    private final String oncontextmenu;
 
     @JsonProperty
-    private SplashConfig splash;
+    private final SplashConfig splash;
 
     @JsonProperty
-    private ActivityConfig activity;
+    private final ActivityConfig activity;
 
     @JsonProperty
-    private SourceConfig source;
+    private final SourceConfig source;
 
     @JsonProperty
     @JsonPropertyDescription("The Stroom GWT UI is now wrapped in a new React UI that provides some additional " +
@@ -105,7 +102,21 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     private Boolean requireReactWrapper;
 
     public UiConfig() {
-        setDefaults();
+        welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
+        aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
+        maintenanceMessage = null;
+        defaultMaxResults = "1000000,100,10,1";
+        process = new ProcessConfig();
+        helpUrl = "https://gchq.github.io/stroom-docs";
+        theme = new ThemeConfig();
+        query = new QueryConfig();
+        namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
+        htmlTitle = "Stroom";
+        oncontextmenu = "return false;";
+        splash = new SplashConfig();
+        activity = new ActivityConfig();
+        source = new SourceConfig();
+        requireReactWrapper = true;
     }
 
     @JsonCreator
@@ -139,165 +150,62 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.activity = activity;
         this.source = source;
         this.requireReactWrapper = requireReactWrapper;
-
-        setDefaults();
-    }
-
-    private void setDefaults() {
-        if (welcomeHtml == null) {
-            welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
-        }
-        if (aboutHtml == null) {
-            aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
-        }
-        if (defaultMaxResults == null) {
-            defaultMaxResults = "1000000,100,10,1";
-        }
-        if (process == null) {
-            process = new ProcessConfig();
-        }
-        if (helpUrl == null) {
-            helpUrl = "https://gchq.github.io/stroom-docs";
-        }
-        if (theme == null) {
-            theme = new ThemeConfig();
-        }
-        if (query == null) {
-            query = new QueryConfig();
-        }
-        if (namePattern == null) {
-            namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
-        }
-        if (htmlTitle == null) {
-            htmlTitle = "Stroom";
-        }
-        if (oncontextmenu == null) {
-            oncontextmenu = "return false;";
-        }
-        if (splash == null) {
-            splash = new SplashConfig();
-        }
-        if (activity == null) {
-            activity = new ActivityConfig();
-        }
-        if (source == null) {
-            source = new SourceConfig();
-        }
-        if (requireReactWrapper == null) {
-            requireReactWrapper = true;
-        }
     }
 
     public String getWelcomeHtml() {
         return welcomeHtml;
     }
 
-    public void setWelcomeHtml(final String welcomeHtml) {
-        this.welcomeHtml = welcomeHtml;
-    }
-
     public String getAboutHtml() {
         return aboutHtml;
-    }
-
-    public void setAboutHtml(final String aboutHtml) {
-        this.aboutHtml = aboutHtml;
     }
 
     public String getMaintenanceMessage() {
         return maintenanceMessage;
     }
 
-    public void setMaintenanceMessage(final String maintenanceMessage) {
-        this.maintenanceMessage = maintenanceMessage;
-    }
-
     public String getDefaultMaxResults() {
         return defaultMaxResults;
-    }
-
-    public void setDefaultMaxResults(final String defaultMaxResults) {
-        this.defaultMaxResults = defaultMaxResults;
     }
 
     public ProcessConfig getProcess() {
         return process;
     }
 
-    public void setProcess(final ProcessConfig process) {
-        this.process = process;
-    }
-
     public String getHelpUrl() {
         return helpUrl;
-    }
-
-    public void setHelpUrl(final String helpUrl) {
-        this.helpUrl = helpUrl;
     }
 
     public ThemeConfig getTheme() {
         return theme;
     }
 
-    public void setTheme(final ThemeConfig theme) {
-        this.theme = theme;
-    }
-
     public QueryConfig getQuery() {
         return query;
-    }
-
-    public void setQuery(final QueryConfig query) {
-        this.query = query;
     }
 
     public String getNamePattern() {
         return namePattern;
     }
 
-    public void setNamePattern(final String namePattern) {
-        this.namePattern = namePattern;
-    }
-
     public SplashConfig getSplash() {
         return splash;
-    }
-
-    public void setSplash(final SplashConfig splash) {
-        this.splash = splash;
     }
 
     public ActivityConfig getActivity() {
         return activity;
     }
 
-    public void setActivity(final ActivityConfig activity) {
-        this.activity = activity;
-    }
-
     public String getHtmlTitle() {
         return htmlTitle;
-    }
-
-    public void setHtmlTitle(final String htmlTitle) {
-        this.htmlTitle = htmlTitle;
     }
 
     public String getOncontextmenu() {
         return oncontextmenu;
     }
 
-    public void setOncontextmenu(final String oncontextmenu) {
-        this.oncontextmenu = oncontextmenu;
-    }
-
     public SourceConfig getSource() {
         return source;
-    }
-
-    public void setSource(final SourceConfig source) {
-        this.source = source;
     }
 
     public Boolean getRequireReactWrapper() {

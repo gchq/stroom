@@ -24,6 +24,8 @@ public interface TargetNodeSetFactory {
 
     String getMasterNode() throws NullClusterStateException, NodeNotFoundException;
 
+    Set<String> getEnabledTargetNodeSet() throws NullClusterStateException, NodeNotFoundException;
+
     Set<String> getEnabledActiveTargetNodeSet() throws NullClusterStateException, NodeNotFoundException;
 
     boolean isClusterStateInitialised();

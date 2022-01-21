@@ -21,6 +21,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -37,8 +38,8 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
@@ -269,7 +270,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     private void onAdd(final ClickEvent event) {
         if (currentElement != null) {
             final PipelineReference pipelineReference = new PipelineReference(currentElement.getId(),
-                    propertyType.getName(), null, null, null, null);
+                    propertyType.getName(), null, null, StreamTypeNames.REFERENCE, null);
             pipelineReference.setSourcePipeline(DocRefUtil.create(pipeline));
             showEditor(pipelineReference, true);
         }

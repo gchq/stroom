@@ -20,11 +20,8 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.resource.api.ResourceStore;
-import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
@@ -44,6 +41,7 @@ import javax.inject.Provider;
 
 @AutoLogged
 class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<DictionaryDoc> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryResourceImpl.class);
 
     private final Provider<DictionaryStore> dictionaryStoreProvider;

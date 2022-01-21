@@ -25,10 +25,15 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.DefaultErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
@@ -58,15 +63,20 @@ import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
+import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskFields;
+import stroom.processor.shared.TaskStatus;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
@@ -74,12 +84,13 @@ import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
 import com.google.common.collect.ImmutableMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
@@ -89,15 +100,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecutor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineDataProcessorTaskExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineDataProcessorTaskExecutor.class);
     private static final String PROCESSING = "Processing:";
     private static final String FINISHED = "Finished:";
-    private static final String SUPERCEDED = "Superceded:";
     private static final int PREVIEW_SIZE = 100;
     private static final int MIN_STREAM_SIZE = 1;
     private static final Pattern XML_DECL_PATTERN = Pattern.compile(
@@ -107,6 +120,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     private final PipelineFactory pipelineFactory;
     private final Store streamStore;
     private final PipelineStore pipelineStore;
+    private final MetaService metaService;
+    private final ProcessorTaskService processorTaskService;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
     private final FeedProperties feedProperties;
@@ -123,19 +138,24 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     private final NodeInfo nodeInfo;
     private final PipelineDataCache pipelineDataCache;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
-    private final SupersededOutputHelperImpl supersededOutputHelper;
 
     private Processor streamProcessor;
     private ProcessorFilter processorFilter;
-    private ProcessorTask streamTask;
+    private ProcessorTask processorTask;
     private Source streamSource;
 
     private long startTime;
+    private long totalTimeStart;
+    private long totalTime;
+    private long processingTime;
+    private long duplicatgeCheckTime;
 
     @Inject
     PipelineDataProcessorTaskExecutor(final PipelineFactory pipelineFactory,
                                       final Store store,
                                       final PipelineStore pipelineStore,
+                                      final MetaService metaService,
+                                      final ProcessorTaskService processorTaskService,
                                       final PipelineHolder pipelineHolder,
                                       final FeedHolder feedHolder,
                                       final FeedProperties feedProperties,
@@ -151,11 +171,12 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                       final RecordErrorReceiver recordErrorReceiver,
                                       final NodeInfo nodeInfo,
                                       final PipelineDataCache pipelineDataCache,
-                                      final InternalStatisticsReceiver internalStatisticsReceiver,
-                                      final SupersededOutputHelperImpl supersededOutputHelper) {
+                                      final InternalStatisticsReceiver internalStatisticsReceiver) {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = store;
         this.pipelineStore = pipelineStore;
+        this.metaService = metaService;
+        this.processorTaskService = processorTaskService;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
         this.feedProperties = feedProperties;
@@ -172,7 +193,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         this.nodeInfo = nodeInfo;
         this.pipelineDataCache = pipelineDataCache;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
-        this.supersededOutputHelper = supersededOutputHelper;
     }
 
     @Override
@@ -183,7 +203,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                 final Source streamSource) {
         this.streamProcessor = processor;
         this.processorFilter = processorFilter;
-        this.streamTask = processorTask;
+        this.processorTask = processorTask;
         this.streamSource = streamSource;
 
         // Record when processing began so we know how long it took
@@ -196,7 +216,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         // Initialise the helper class that will ensure we only keep the latest output for this stream source and
         // processor.
         final Meta meta = streamSource.getMeta();
-        supersededOutputHelper.init(meta, processor, processorTask, startTime);
 
         // Setup the process info writer.
         try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider =
@@ -208,8 +227,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                         processorFilter,
                         processorTask,
                         recordCount,
-                        errorReceiverProxy,
-                        supersededOutputHelper)) {
+                        errorReceiverProxy)) {
 
             try {
                 final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
@@ -223,11 +241,14 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             } finally {
                 // Ensure we are no longer interrupting if necessary.
                 if (Thread.interrupted()) {
-                    LOGGER.debug("Cleared interrupt flag");
+                    LOGGER.debug(() -> "Cleared interrupt flag");
                 }
             }
         } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
+        } finally {
+            // Delete duplicate output.
+            deleteDuplicateOutput(meta, processor);
         }
 
         // Produce processing result.
@@ -252,11 +273,12 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
             // Update the meta data for all output streams to use.
             metaData.put("Source Stream", String.valueOf(meta.getId()));
+            metaData.put("Processing Node", nodeInfo.getThisNodeName());
 
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case
             // with a batch search.
-            if (processorFilter != null && streamTask.getData() != null && streamTask.getData().length() > 0) {
+            if (processorFilter != null && processorTask.getData() != null && processorTask.getData().length() > 0) {
                 searchIdHolder.setSearchId(Long.toString(processorFilter.getId()));
             }
 
@@ -278,45 +300,38 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                     pipelineDoc.getName() +
                     ", feed=" +
                     feedName +
-                    ", id=" +
+                    ", meta_id=" +
                     meta.getId() +
                     ", created=" +
-                    DateUtil.createNormalDateTimeString(meta.getCreateMs());
+                    DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
+                    ", processor_filter_id=" +
+                    processorFilter.getId() +
+                    ", task_id=" +
+                    processorTask.getId();
 
             // Create processing start message.
             final String processingInfo = PROCESSING + info;
 
             // Log that we are starting to process.
             taskContext.info(() -> processingInfo);
-            LOGGER.info(processingInfo);
+            LOGGER.info(() -> processingInfo);
 
             // Hold the source and feed so the pipeline filters can get them.
-            streamProcessorHolder.setStreamProcessor(streamProcessor, streamTask);
+            streamProcessorHolder.setStreamProcessor(streamProcessor, processorTask);
 
             // Process the streams.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            final Pipeline pipeline = pipelineFactory.create(pipelineData);
-            processNestedStreams(pipeline, meta, streamSource);
+            final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
+            processNestedStreams(pipeline, meta, streamSource, taskContext);
 
-            final String finishedInfo;
-            //Calling isSuperceded() now always ensures that it is called, even in cases when there is no output.
-            if (supersededOutputHelper.isSuperseded()) {
-                finishedInfo =
-                        SUPERCEDED +
-                                info +
-                                ", finished in " +
-                                ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
-            } else {
-                finishedInfo =
-                        FINISHED +
-                                info +
-                                ", finished in  " +
-                                ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
-            }
+            final String finishedInfo = FINISHED +
+                    info +
+                    ", finished in  " +
+                    ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
 
             // Log that we have finished processing.
             taskContext.info(() -> finishedInfo);
-            LOGGER.info(finishedInfo);
+            LOGGER.info(() -> finishedInfo);
 
         } catch (final RuntimeException e) {
             outputError(e);
@@ -340,38 +355,17 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             internalStatisticsReceiver.putEvent(event);
 
         } catch (final RuntimeException e) {
-            LOGGER.error("recordStats", e);
+            LOGGER.error(() -> "recordStats", e);
         }
     }
-
-//    @Override
-//    public long getRead() {
-//        return recordCount.getRead();
-//    }
-//
-//    @Override
-//    public long getWritten() {
-//        return recordCount.getWritten();
-//    }
-//
-//    @Override
-//    public long getMarkerCount(final Severity... severity) {
-//        long count = 0;
-//        if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
-//            final ErrorStatistics statistics = (ErrorStatistics) errorReceiverProxy.getErrorReceiver();
-//            for (final Severity sev : severity) {
-//                count += statistics.getRecords(sev);
-//            }
-//        }
-//        return count;
-//    }
 
     /**
      * Processes a source and writes the result to a target.
      */
     private void processNestedStreams(final Pipeline pipeline,
                                       final Meta meta,
-                                      final Source source) {
+                                      final Source source,
+                                      final TaskContext taskContext) {
         boolean startedProcessing = false;
 
         // Get the stream providers.
@@ -384,13 +378,13 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             // Loop over the stream boundaries and process each
             // sequentially.
             final long count = source.count();
-            for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
+            for (long index = 0; index < count && !taskContext.isTerminated(); index++) {
                 try (final InputStreamProvider inputStreamProvider = source.get(index)) {
                     InputStream inputStream;
 
                     // If the task requires specific events to be processed then
                     // add them.
-                    final String data = streamTask.getData();
+                    final String data = processorTask.getData();
                     if (data != null && !data.isEmpty()) {
                         final List<InclusiveRange> ranges = InclusiveRanges.rangesFromString(data);
                         final SegmentInputStream raSegmentInputStream = inputStreamProvider.get();
@@ -447,9 +441,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                             } catch (final LoggedException e) {
                                 // The exception has already been logged so
                                 // ignore it.
-                                if (LOGGER.isTraceEnabled()) {
-                                    LOGGER.trace("Error while processing data task: id = " + meta.getId(), e);
-                                }
+                                LOGGER.trace(() -> "Error while processing data task: id = " + meta.getId(), e);
                             } catch (final RuntimeException e) {
                                 outputError(e);
                             }
@@ -464,8 +456,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             }
         } catch (final LoggedException e) {
             // The exception has already been logged so ignore it.
-            if (LOGGER.isTraceEnabled() && meta != null) {
-                LOGGER.trace("Error while processing data task: id = " + meta.getId(), e);
+            if (meta != null) {
+                LOGGER.trace(() -> "Error while processing data task: id = " + meta.getId(), e);
             }
         } catch (final IOException | RuntimeException e) {
             // An exception that's gets here is definitely a failure.
@@ -478,9 +470,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                 }
             } catch (final LoggedException e) {
                 // The exception has already been logged so ignore it.
-                if (LOGGER.isTraceEnabled()) {
-                    LOGGER.trace("Error while processing data task: id = " + meta.getId(), e);
-                }
+                LOGGER.trace(() -> "Error while processing data task: id = " + meta.getId(), e);
             } catch (final RuntimeException e) {
                 outputError(e);
             }
@@ -510,8 +500,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                 ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(-1);
             }
 
-            if (LOGGER.isTraceEnabled() && streamSource.getMeta() != null) {
-                LOGGER.trace("Error while processing stream task: id = " + streamSource.getMeta().getId(), e);
+            if (streamSource.getMeta() != null) {
+                LOGGER.trace(() -> "Error while processing stream task: id = " + streamSource.getMeta().getId(), e);
             }
         } else {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
@@ -521,6 +511,69 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     @Override
     public String toString() {
         return String.valueOf(streamSource.getMeta());
+    }
+
+    private void deleteDuplicateOutput(final Meta meta,
+                                       final Processor processor) {
+        final AtomicInteger count = new AtomicInteger();
+        try {
+            final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
+                    .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, meta.getId())
+                    .addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, processor.getPipeline())
+                    .addOperator(
+                            ExpressionOperator
+                                    .builder()
+                                    .op(Op.OR)
+                                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.toString())
+                                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.toString())
+                                    .build())
+                    .build();
+            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
+            final List<Meta> streamList = metaService.find(findMetaCriteria).getValues();
+
+            Map<Long, ProcessorTask> taskMap = null;
+            if (streamList != null && streamList.size() > 0) {
+                for (final Meta oldMeta : streamList) {
+                    try {
+                        if (oldMeta.getProcessorTaskId() == null) {
+                            metaService.updateStatus(oldMeta, oldMeta.getStatus(), Status.DELETED);
+                            count.incrementAndGet();
+                        } else if (oldMeta.getProcessorTaskId() != processorTask.getId()) {
+                            if (taskMap == null) {
+                                final ExpressionOperator findTaskExpression = ExpressionOperator.builder()
+                                        .addTerm(ProcessorTaskFields.META_ID, Condition.EQUALS, meta.getId())
+                                        .addTerm(ProcessorTaskFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
+                                        .build();
+                                final ResultPage<ProcessorTask> tasks = processorTaskService.find(
+                                        new ExpressionCriteria(findTaskExpression));
+                                taskMap = tasks
+                                        .stream()
+                                        .collect(Collectors.toMap(ProcessorTask::getId, Function.identity()));
+                            }
+
+                            final ProcessorTask task = taskMap.get(oldMeta.getProcessorTaskId());
+                            if (task == null ||
+                                    TaskStatus.COMPLETE.equals(task.getStatus()) ||
+                                    TaskStatus.FAILED.equals(task.getStatus()) ||
+                                    TaskStatus.DELETED.equals(task.getStatus())) {
+                                // If the task associated with the other output is complete in some way then delete the
+                                // output.
+                                metaService.updateStatus(oldMeta, oldMeta.getStatus(), Status.DELETED);
+                                count.incrementAndGet();
+                            }
+                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
+                }
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+
+        if (count.get() > 0) {
+            LOGGER.info(() -> "Deleted " + count.get() + " duplicates");
+        }
     }
 
     private static class ProcessInfoOutputStreamProvider extends AbstractElement
@@ -534,7 +587,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         private final ProcessorTask processorTask;
         private final RecordCount recordCount;
         private final ErrorReceiverProxy errorReceiverProxy;
-        private final SupersededOutputHelper supersededOutputHelper;
 
         private OutputStream processInfoOutputStream;
         private Target processInfoStreamTarget;
@@ -546,8 +598,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                         final ProcessorFilter processorFilter,
                                         final ProcessorTask processorTask,
                                         final RecordCount recordCount,
-                                        final ErrorReceiverProxy errorReceiverProxy,
-                                        final SupersededOutputHelper supersededOutputHelper) {
+                                        final ErrorReceiverProxy errorReceiverProxy) {
             this.streamStore = streamStore;
             this.metaData = metaData;
             this.meta = meta;
@@ -556,7 +607,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             this.processorTask = processorTask;
             this.recordCount = recordCount;
             this.errorReceiverProxy = errorReceiverProxy;
-            this.supersededOutputHelper = supersededOutputHelper;
         }
 
         @Override
@@ -577,7 +627,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         public OutputStream getOutputStream(final byte[] header, final byte[] footer) {
             if (processInfoOutputStream == null) {
                 String processorUuid = null;
-                String processorFilterUuid = null;
+                Integer processorFilterId = null;
                 String pipelineUuid = null;
                 Long processorTaskId = null;
 
@@ -586,7 +636,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                     pipelineUuid = processor.getPipelineUuid();
                 }
                 if (processorFilter != null) {
-                    processorFilterUuid = processorFilter.getUuid();
+                    processorFilterId = processorFilter.getId();
                 }
                 if (processorTask != null) {
                     processorTaskId = processorTask.getId();
@@ -600,10 +650,11 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                         .parent(meta)
                         .processorUuid(processorUuid)
                         .pipelineUuid(pipelineUuid)
+                        .processorFilterId(processorFilterId)
+                        .processorTaskId(processorTaskId)
                         .build();
 
-                processInfoStreamTarget = supersededOutputHelper.addTarget(() ->
-                        streamStore.openTarget(dataProperties));
+                processInfoStreamTarget = streamStore.openTarget(dataProperties);
                 processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.next().get()) {
                     @Override
                     public void close() throws IOException {
@@ -625,24 +676,14 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                             recordCount, errorReceiverProxy);
                                     processStatistics.write(processInfoStreamTarget.getAttributes());
                                 } catch (final RuntimeException e) {
-                                    LOGGER.error(e.getMessage(), e);
+                                    LOGGER.error(e::getMessage, e);
                                 }
 
                                 // Close the stream target.
                                 try {
-                                    if (supersededOutputHelper.isSuperseded()) {
-                                        streamStore.deleteTarget(processInfoStreamTarget);
-                                    } else {
-                                        processInfoStreamTarget.close();
-                                    }
-//                                } catch (final OptimisticLockException e) {
-//                                    // This exception will be thrown is the stream target has already been deleted
-//                                    by another thread if it was superseded.
-//                                    LOGGER.debug("Optimistic lock exception thrown when closing stream target
-//                                    (see trace for details)");
-//                                    LOGGER.trace(e.getMessage(), e);
+                                    processInfoStreamTarget.close();
                                 } catch (final RuntimeException e) {
-                                    LOGGER.error(e.getMessage(), e);
+                                    LOGGER.error(e::getMessage, e);
                                 }
                             }
                         }

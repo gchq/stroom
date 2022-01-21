@@ -33,10 +33,17 @@ public class ProcessorTaskFields {
 
     public static final DateField CREATE_TIME = new DateField("Create Time");
     public static final LongField CREATE_TIME_MS = new LongField("Create Time Ms");
+    public static final DateField START_TIME = new DateField("Start Time");
+    public static final LongField START_TIME_MS = new LongField("Start Time Ms");
+    public static final LongField END_TIME_MS = new LongField("End Time Ms");
+    public static final DateField END_TIME = new DateField("End Time");
+    public static final LongField STATUS_TIME_MS = new LongField("Status Time Ms");
+    public static final DateField STATUS_TIME = new DateField("Status Time");
     public static final IdField META_ID = new IdField("Meta Id");
     public static final TextField NODE_NAME = new TextField("Node");
     public static final DocRefField PIPELINE = new DocRefField(PipelineDoc.DOCUMENT_TYPE, "Pipeline");
     public static final IdField PROCESSOR_FILTER_ID = new IdField("Processor Filter Id");
+    public static final LongField PROCESSOR_FILTER_PRIORITY = new LongField("Processor Filter Priority");
     public static final IdField PROCESSOR_ID = new IdField("Processor Id");
     public static final DocRefField FEED = new DocRefField("Feed", "Feed");
     public static final TextField STATUS = new TextField("Status");
@@ -45,10 +52,17 @@ public class ProcessorTaskFields {
     static {
         FIELDS.add(CREATE_TIME);
         FIELDS.add(CREATE_TIME_MS);
+        FIELDS.add(START_TIME);
+        FIELDS.add(START_TIME_MS);
+        FIELDS.add(END_TIME);
+        FIELDS.add(END_TIME_MS);
+        FIELDS.add(STATUS_TIME);
+        FIELDS.add(STATUS_TIME_MS);
         FIELDS.add(META_ID);
         FIELDS.add(NODE_NAME);
         FIELDS.add(PIPELINE);
         FIELDS.add(PROCESSOR_FILTER_ID);
+        FIELDS.add(PROCESSOR_FILTER_PRIORITY);
         FIELDS.add(PROCESSOR_ID);
         FIELDS.add(FEED);
         FIELDS.add(STATUS);

@@ -3,6 +3,7 @@ package stroom.query.api.v2;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -12,7 +13,7 @@ class TableResultBuilderTest {
     @Test
     void doesBuild() {
         // Given
-        final String error = "Something went wrong";
+        final List<String> error = Collections.singletonList("Something went wrong");
         final String componentId = "someTabularComponentId";
 
         final Long offset = 30L;
@@ -24,7 +25,7 @@ class TableResultBuilderTest {
         final TableResult.Builder builder = TableResult
                 .builder()
                 .componentId(componentId)
-                .error(error)
+                .errors(error)
                 .resultRange(OffsetRange
                         .builder()
                         .offset(offset)
@@ -41,7 +42,7 @@ class TableResultBuilderTest {
 
         // Then
         assertThat(tableResult.getComponentId()).isEqualTo(componentId);
-        assertThat(tableResult.getError()).isEqualTo(error);
+        assertThat(tableResult.getErrors()).isEqualTo(error);
         assertThat(tableResult.getResultRange().getOffset()).isEqualTo(offset);
         assertThat(tableResult.getResultRange().getLength()).isEqualTo(length);
 

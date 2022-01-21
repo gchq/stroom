@@ -1,12 +1,21 @@
 package stroom.meta.api;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestAttributeMapUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestAttributeMapUtil.class);
+
+    @Test
+    void testDefaultLocale() {
+        LOGGER.info("Default locale = " + Locale.getDefault(Locale.Category.FORMAT));
+    }
 
     @Test
     void testDataFormatter1() {

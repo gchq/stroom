@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS `meta` (
   `feed_id` int NOT NULL,
   `type_id` int NOT NULL,
   `processor_id` int DEFAULT NULL,
+  `processor_filter_id` int DEFAULT NULL,
+  `processor_task_id` bigint DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `meta_create_time` (`create_time`),
   KEY `meta_feed_id_create_time` (`feed_id`,`create_time`),
@@ -75,7 +77,8 @@ BEGIN
             status_time,
             feed_id,
             type_id,
-            processor_id)
+            processor_id,
+            processor_task_id)
         SELECT
             ID,
             CRT_MS,
@@ -85,7 +88,8 @@ BEGIN
             STAT_MS,
             FK_FD_ID,
             FK_STRM_TP_ID,
-            FK_STRM_PROC_ID
+            FK_STRM_PROC_ID,
+            STRM_TASK_ID
         FROM OLD_STRM
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta)
         ORDER BY ID;

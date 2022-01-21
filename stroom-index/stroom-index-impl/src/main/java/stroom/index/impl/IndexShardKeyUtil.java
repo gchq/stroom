@@ -39,9 +39,9 @@ public final class IndexShardKeyUtil {
     private static final AtomicSequence SEQUENCE = new AtomicSequence();
 
     private static final ZoneId UTC = ZoneOffset.UTC;
-    private static final DateTimeFormatter YEAR_FORMAT = DateTimeFormatter.ofPattern("yyyy");
-    private static final DateTimeFormatter MONTH_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM");
-    private static final DateTimeFormatter DAY_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter YEAR_FORMAT = DateTimeFormatter.ofPattern("yyyy", Locale.ENGLISH);
+    private static final DateTimeFormatter MONTH_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM", Locale.ENGLISH);
+    private static final DateTimeFormatter DAY_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH);
     private static final TemporalField DAY_OF_WEEK = WeekFields.of(Locale.UK).dayOfWeek();
 
     private IndexShardKeyUtil() {

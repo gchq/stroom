@@ -55,9 +55,9 @@ class TestStroomStatsInternalStatisticsService {
 
     @Test
     void putEvents_multipleEvents() {
-        final HBaseStatisticsConfig hBaseStatisticsConfig = new HBaseStatisticsConfig();
-        hBaseStatisticsConfig.setDocRefType(DOC_REF_TYPE_1);
-        hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");
+        final HBaseStatisticsConfig hBaseStatisticsConfig = new HBaseStatisticsConfig()
+                .withDocRefType(DOC_REF_TYPE_1)
+                .withKafkaTopicConfig(new KafkaTopicsConfig("MyTopic", "DUMMY"));
 
         initMocks();
 
@@ -88,10 +88,10 @@ class TestStroomStatsInternalStatisticsService {
 
     @Test
     void putEvents_largeBatch() {
-        final HBaseStatisticsConfig hBaseStatisticsConfig = new HBaseStatisticsConfig();
-        hBaseStatisticsConfig.setDocRefType(DOC_REF_TYPE_1);
-        hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");
-        hBaseStatisticsConfig.setEventsPerMessage(10);
+        final HBaseStatisticsConfig hBaseStatisticsConfig = new HBaseStatisticsConfig()
+                .withDocRefType(DOC_REF_TYPE_1)
+                .withKafkaTopicConfig(new KafkaTopicsConfig("MyTopic", "DUMMY"))
+                .withEventsPerMessage(10);
 
         initMocks();
 

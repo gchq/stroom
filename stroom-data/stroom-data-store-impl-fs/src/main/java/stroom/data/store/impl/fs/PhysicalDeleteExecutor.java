@@ -31,6 +31,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.WorkQueue;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -49,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -70,6 +70,7 @@ public class PhysicalDeleteExecutor {
     private final PhysicalDelete physicalDelete;
     private final DataVolumeDao dataVolumeDao;
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
     private final DataStoreServiceConfig config;
 
@@ -82,6 +83,7 @@ public class PhysicalDeleteExecutor {
             final PhysicalDelete physicalDelete,
             final DataVolumeDao dataVolumeDao,
             final TaskContextFactory taskContextFactory,
+            final TaskContext taskContext,
             final ExecutorProvider executorProvider,
             final DataStoreServiceConfig config) {
         this.clusterLockService = clusterLockService;
@@ -91,15 +93,12 @@ public class PhysicalDeleteExecutor {
         this.physicalDelete = physicalDelete;
         this.dataVolumeDao = dataVolumeDao;
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.executorProvider = executorProvider;
         this.config = config;
     }
 
     public void exec() {
-        taskContextFactory.context("Physically Delete Data", this::lockAndDelete).run();
-    }
-
-    final void lockAndDelete(final TaskContext taskContext) {
         LOGGER.info(() -> TASK_NAME + " - start");
         clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
@@ -107,9 +106,9 @@ public class PhysicalDeleteExecutor {
                     final LogExecutionTime logExecutionTime = new LogExecutionTime();
                     final long deleteThresholdEpochMs = getDeleteThresholdEpochMs(dataStoreServiceConfig);
                     if (deleteThresholdEpochMs > 0) {
-                        delete(taskContext, deleteThresholdEpochMs);
+                        delete(deleteThresholdEpochMs);
                     }
-                    LOGGER.info(() -> TASK_NAME + " - finished in " + logExecutionTime);
+                    LOGGER.info("{} - finished in {}", TASK_NAME, logExecutionTime);
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
@@ -117,23 +116,18 @@ public class PhysicalDeleteExecutor {
         });
     }
 
-    public void delete(final TaskContext taskContext, final long deleteThresholdEpochMs) {
+    public void delete(final long deleteThresholdEpochMs) {
         if (!Thread.currentThread().isInterrupted()) {
             long count;
             long total = 0;
 
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            final LogExecutionTime logExecutionTime = LogExecutionTime.start();
 
             final int deleteBatchSize = dataStoreServiceConfig.getDeleteBatchSize();
 
             long minId = 0;
             if (!Thread.currentThread().isInterrupted()) {
-                final ThreadPool threadPool = new ThreadPoolImpl(
-                        "Data Delete#",
-                        1,
-                        1,
-                        config.getFileSystemCleanBatchSize(),
-                        Integer.MAX_VALUE);
+                final ThreadPool threadPool = new ThreadPoolImpl("Data Delete#", Thread.MIN_PRIORITY);
                 final Executor executor = executorProvider.get(threadPool);
 
                 do {
@@ -159,36 +153,35 @@ public class PhysicalDeleteExecutor {
                         }
 
                         total += count;
-                        deleteCurrentBatch(taskContext, metaList, deleteThresholdEpochMs, executor);
+                        final WorkQueue workQueue = new WorkQueue(
+                                executor,
+                                config.getFileSystemCleanBatchSize(),
+                                metaList.size());
+                        deleteCurrentBatch(taskContext, metaList, deleteThresholdEpochMs, workQueue);
                     }
                 } while (!Thread.currentThread().isInterrupted() && count >= deleteBatchSize);
             }
 
-            // Done with if as total is not final so can't be in a lambda
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Deleted {} streams in {}.", total, logExecutionTime);
-            }
+            LOGGER.info("{} - Deleted {} streams in {}.", TASK_NAME, total, logExecutionTime);
         }
     }
 
     private void deleteCurrentBatch(final TaskContext taskContext,
                                     final List<Meta> metaList,
                                     final long deleteThresholdEpochMs,
-                                    final Executor executor) {
+                                    final WorkQueue workQueue) {
         try {
             final LinkedBlockingQueue<Long> successfulMetaIdDeleteQueue = new LinkedBlockingQueue<>();
             final Map<Path, Path> directoryMap = new ConcurrentHashMap<>();
 
             // Delete all matching files.
-            final List<CompletableFuture<Void>> futures = new ArrayList<>();
             for (final Meta meta : metaList) {
                 final Runnable runnable = deleteFiles(meta, taskContext, successfulMetaIdDeleteQueue, directoryMap);
-                final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-                futures.add(completableFuture);
+                workQueue.exec(runnable);
             }
 
             // Wait for all completable futures to complete.
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            workQueue.join();
             if (Thread.interrupted()) {
                 throw new InterruptedException();
             }
@@ -205,17 +198,18 @@ public class PhysicalDeleteExecutor {
             successfulMetaIdDeleteQueue.drainTo(metaIdList);
 
             // Delete data volumes.
-            info(taskContext, () -> "Deleting data volumes");
+            info(() -> "Deleting data volumes");
             dataVolumeDao.delete(metaIdList);
 
             // Physically delete meta data.
-            info(taskContext, () -> "Deleting meta data");
+            info(() -> "Deleting meta data");
             physicalDelete.cleanup(metaIdList);
 
         } catch (final InterruptedException e) {
-            LOGGER.debug(e::getMessage, e);
+            LOGGER.debug("{} - {}", TASK_NAME, e.getMessage(), e);
 
-            // Continue to interrupt.
+            LOGGER.trace(e::getMessage, e);
+            // Keep interrupting this thread.
             Thread.currentThread().interrupt();
         }
     }
@@ -256,13 +250,13 @@ public class PhysicalDeleteExecutor {
                                  final TaskContext parentTaskContext,
                                  final Queue<Long> successfulMetaIdDeleteQueue,
                                  final Map<Path, Path> directoryMap) {
-        return taskContextFactory.context(parentTaskContext, "Deleting files", taskContext -> {
+        return taskContextFactory.childContext(parentTaskContext, "Deleting files", taskContext -> {
             try {
                 if (Thread.interrupted()) {
                     throw new InterruptedException();
                 }
 
-                info(taskContext, () -> "Deleting everything associated with " + meta);
+                info(() -> "Deleting everything associated with " + meta);
 
                 final DataVolume dataVolume = dataVolumeDao.findDataVolume(meta.getId());
                 if (dataVolume == null) {
@@ -280,7 +274,7 @@ public class PhysicalDeleteExecutor {
                         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, glob)) {
                             stream.forEach(f -> {
                                 try {
-                                    info(taskContext, () -> "Deleting file: " + FileUtil.getCanonicalPath(f));
+                                    info(() -> "Deleting file: " + FileUtil.getCanonicalPath(f));
                                     Files.deleteIfExists(f);
                                 } catch (final IOException e) {
                                     LOGGER.debug(e.getMessage(), e);
@@ -312,15 +306,14 @@ public class PhysicalDeleteExecutor {
                 successfulMetaIdDeleteQueue.add(meta.getId());
 
             } catch (final InterruptedException e) {
-                LOGGER.debug(e::getMessage, e);
-
-                // Continue to interrupt.
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
                 Thread.currentThread().interrupt();
             }
         });
     }
 
-    private void info(final TaskContext taskContext, final Supplier<String> message) {
+    private void info(final Supplier<String> message) {
         try {
             taskContext.info(message);
             LOGGER.debug(message);

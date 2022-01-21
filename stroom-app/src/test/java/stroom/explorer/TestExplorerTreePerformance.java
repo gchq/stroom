@@ -107,7 +107,7 @@ class TestExplorerTreePerformance {
 
             LOGGER.logDurationIfInfoEnabled(() -> {
                 // Check create model.
-                explorerTreeDao.createModel(null);
+                explorerTreeDao.createModel(null, 0, System.currentTimeMillis());
             }, "Create model");
 
             final AtomicReference<ExplorerNode> lastChild = new AtomicReference<>();

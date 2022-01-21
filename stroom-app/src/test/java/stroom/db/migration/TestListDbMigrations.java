@@ -6,7 +6,6 @@ import stroom.util.ConsoleColour;
 import com.google.common.base.Strings;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import javax.validation.constraints.NotNull;
 
 import static stroom.util.ConsoleColour.BLUE;
 import static stroom.util.ConsoleColour.RED;

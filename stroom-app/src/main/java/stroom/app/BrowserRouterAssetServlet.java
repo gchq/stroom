@@ -10,13 +10,13 @@ import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
 import io.dropwizard.servlets.assets.ByteRange;
 import io.dropwizard.servlets.assets.ResourceURL;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;

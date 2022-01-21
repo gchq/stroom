@@ -23,6 +23,5 @@ public class ExtractionModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new ExtractionElementModule());
-        install(new ExtractionLifecycleModule());
     }
 }

@@ -13,7 +13,6 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.filter.QuickFilterPredicateFactory;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.validation.constraints.NotNull;
 
 @Singleton
 @SuppressWarnings("unused")
@@ -159,13 +159,9 @@ public class SuggestionsServiceImpl implements SuggestionsService {
     }
 
     private List<String> createStreamTypeList(final String userInput) {
-        // TODO this seems pretty inefficient as each call hits the db to get ALL feeds
-        //   then limits/filters in java.  Needs to work off a cached feed name list
-
         return QuickFilterPredicateFactory.filterStream(
-                userInput, metaService.getTypes().parallelStream())
+                userInput, metaService.getTypes().stream())
                 .limit(LIMIT)
                 .collect(Collectors.toList());
     }
-
 }

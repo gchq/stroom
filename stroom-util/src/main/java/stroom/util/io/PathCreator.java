@@ -16,220 +16,47 @@
 
 package stroom.util.io;
 
-import com.google.common.base.Strings;
+import com.google.inject.ImplementedBy;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
-import javax.inject.Inject;
 
-public class PathCreator {
+@ImplementedBy(SimplePathCreator.class)
+public interface PathCreator {
 
-    private static final String STROOM_TEMP = "stroom.temp";
-    private static final String STROOM_HOME = "stroom.home";
-    private static final String[] NON_ENV_VARS = {
-            "feed",
-            "pipeline",
-            "sourceId",
-            "streamId", // TODO : DEPRECATED ALIAS FOR SOURCE ID.
-            "partNo",
-            "streamNo", // TODO : DEPRECATED ALIAS FOR PART NO.
-            "searchId",
-            "node",
-            "year",
-            "month",
-            "day",
-            "hour",
-            "minute",
-            "second",
-            "millis",
-            "ms",
-            "uuid",
-            "fileName",
-            "fileStem",
-            "fileExtension",
-            STROOM_HOME,
-            STROOM_TEMP};
+    String replaceTimeVars(String path);
 
-    private static final Set<String> NON_ENV_VARS_SET = Set.of(NON_ENV_VARS);
+    String replaceTimeVars(String path, ZonedDateTime dateTime);
 
-    private final TempDirProvider tempDirProvider;
-    private final HomeDirProvider homeDirProvider;
-
-    @Inject
-    public PathCreator(final HomeDirProvider homeDirProvider,
-                       final TempDirProvider tempDirProvider) {
-        this.homeDirProvider = homeDirProvider;
-        this.tempDirProvider = tempDirProvider;
-    }
-
-    public String replaceTimeVars(String path) {
-        // Replace some of the path elements with time variables.
-        final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
-        return replaceTimeVars(path, dateTime);
-    }
-
-    String replaceTimeVars(String path, final ZonedDateTime dateTime) {
-        // Replace some of the path elements with time variables.
-        path = replace(path, "year", dateTime::getYear, 4);
-        path = replace(path, "month", dateTime::getMonthValue, 2);
-        path = replace(path, "day", dateTime::getDayOfMonth, 2);
-        path = replace(path, "hour", dateTime::getHour, 2);
-        path = replace(path, "minute", dateTime::getMinute, 2);
-        path = replace(path, "second", dateTime::getSecond, 2);
-        path = replace(path, "millis", () -> dateTime.toInstant().toEpochMilli(), 3);
-        path = replace(path, "ms", () -> dateTime.toInstant().toEpochMilli(), 0);
-
-        return path;
-    }
-
-    public String replaceSystemProperties(String path) {
-        if (path != null) {
-            path = replace(
-                    path,
-                    STROOM_HOME,
-                    () -> FileUtil.getCanonicalPath(homeDirProvider.get()));
-            path = replace(
-                    path,
-                    STROOM_TEMP,
-                    () -> FileUtil.getCanonicalPath(tempDirProvider.get()));
-            path = FileUtil.replaceHome(path);
-
-            path = SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
-        }
-        return path;
-    }
+    String replaceSystemProperties(String path);
 
     /**
      * Turns an application relative path into an absolute path making use of the home directory location set for the
      * application and performing any other system property replacement that may be needed.
      */
-    public Path toAppPath(String pathString) {
-        if (pathString == null) {
-            pathString = "";
-        } else {
-            pathString = pathString.trim();
-        }
+    Path toAppPath(String pathString);
 
-        pathString = replaceSystemProperties(pathString);
-        return toAbsolutePath(pathString);
-    }
+    String replaceUUIDVars(String path);
 
-    private Path toAbsolutePath(final String pathString) {
-        Path path = Paths.get(pathString);
-        path = path.toAbsolutePath();
+    String replaceFileName(String path, String fileName);
 
-        // If this isn't an absolute path then make it so.
-        if (!pathString.equals(path.toString())) {
-            path = homeDirProvider.get().resolve(pathString).toAbsolutePath();
-        }
-        return path.normalize();
-    }
+    String[] findVars(String path);
 
-    public String replaceUUIDVars(String path) {
-        path = replace(path, "uuid", () -> UUID.randomUUID().toString());
-        return path;
-    }
+    String replace(String path,
+                   String type,
+                   LongSupplier replacementSupplier,
+                   int pad);
 
-    public String replaceFileName(String path, final String fileName) {
-        path = replace(path, "fileName", () -> fileName);
+    String replace(String path,
+                   String type,
+                   Supplier<String> replacementSupplier);
 
-        path = replace(path, "fileStem", () -> {
-            String fileStem = fileName;
-            final int index = fileName.lastIndexOf(".");
-            if (index != -1) {
-                fileStem = fileName.substring(0, index);
-            }
-            return fileStem;
-        });
+    String replaceAll(String path);
 
-        path = replace(path, "fileExtension", () -> {
-            String fileExtension = "";
-            final int index = fileName.lastIndexOf(".");
-            if (index != -1) {
-                fileExtension = fileName.substring(index + 1);
-            }
-            return fileExtension;
-        });
-        return path;
-    }
-
-    public String[] findVars(final String path) {
-        final List<String> vars = new ArrayList<>();
-        final char[] arr = path.toCharArray();
-        char lastChar = 0;
-        int start = -1;
-        for (int i = 0; i < arr.length; i++) {
-            final char c = arr[i];
-            if (start == -1 && c == '{' && lastChar == '$') {
-                start = i + 1;
-            } else if (start != -1 && c == '}') {
-                vars.add(new String(arr, start, i - start));
-                start = -1;
-            }
-
-            lastChar = c;
-        }
-
-        return vars.toArray(new String[0]);
-    }
-
-    protected String replace(final String path,
-                             final String type,
-                             final LongSupplier replacementSupplier,
-                             final int pad) {
-
-        //convert the long supplier into a string supplier to prevent the
-        //evaluation of the long supplier
-        Supplier<String> stringReplacementSupplier = () -> {
-            String value = String.valueOf(replacementSupplier.getAsLong());
-            if (pad > 0) {
-                value = Strings.padStart(value, pad, '0');
-            }
-            return value;
-        };
-        return replace(path, type, stringReplacementSupplier);
-    }
-
-    public String replace(final String path,
-                          final String type,
-                          final Supplier<String> replacementSupplier) {
-        String newPath = path;
-        final String param = "${" + type + "}";
-        int start = newPath.indexOf(param);
-        while (start != -1) {
-            final int end = start + param.length();
-            newPath = newPath.substring(0, start) + replacementSupplier.get() + newPath.substring(end);
-            start = newPath.indexOf(param, start);
-        }
-
-        return newPath;
-    }
-
-    public String replaceAll(String path) {
-        path = replaceContextVars(path);
-        path = replaceTimeVars(path);
-        path = replaceUUIDVars(path);
-        path = replaceSystemProperties(path);
-        return path;
-    }
-
-    public String replaceContextVars(String path) {
-        return path;
-    }
+    String replaceContextVars(String path);
 
     @Override
-    public String toString() {
-        return "PathCreator{" +
-                "tempDir=" + tempDirProvider.get() +
-                ", homeDir=" + homeDirProvider.get() +
-                '}';
-    }
+    String toString();
 }

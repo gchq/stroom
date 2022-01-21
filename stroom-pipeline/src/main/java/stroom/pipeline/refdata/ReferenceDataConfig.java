@@ -2,67 +2,54 @@ package stroom.pipeline.refdata;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.io.ByteSize;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
-import stroom.util.shared.validation.ValidFilePath;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.annotation.Nonnull;
-import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfig {
 
-    public static final String LOCAL_DIR_PROP_NAME = "localDir";
+    private final int maxPutsBeforeCommit;
+    private final int maxPurgeDeletesBeforeCommit;
+    private final StroomDuration purgeAge;
+    private final int loadingLockStripes;
+    private final ReferenceDataLmdbConfig lmdbConfig;
+    private final CacheConfig effectiveStreamCache;
 
-    private String localDir = "reference_data";
-    private String lmdbSystemLibraryPath = null;
-    private int maxPutsBeforeCommit = 0;
-    private int maxReaders = 100;
-    private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
-    private StroomDuration purgeAge = StroomDuration.ofDays(30);
-    private boolean isReadAheadEnabled = true;
+    public ReferenceDataConfig() {
+        maxPutsBeforeCommit = 200_000;
+        maxPurgeDeletesBeforeCommit = 200_000;
+        purgeAge = StroomDuration.ofDays(30);
+        loadingLockStripes = 2048;
+        lmdbConfig = new ReferenceDataLmdbConfig();
 
-    private CacheConfig effectiveStreamCache = CacheConfig.builder()
-            .maximumSize(1000L)
-            .expireAfterAccess(StroomDuration.ofMinutes(10))
-            .build();
-
-    @Nonnull
-    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonProperty(LOCAL_DIR_PROP_NAME)
-    @JsonPropertyDescription("The path relative to the home directory to use for storing the reference data store. " +
-            "It MUST be on local disk, NOT network storage, due to use of memory mapped files. " +
-            "The directory will be created if it doesn't exist." +
-            "If the value is a relative path then it will be treated as being relative to stroom.path.home.")
-    public String getLocalDir() {
-        return localDir;
+        effectiveStreamCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
     }
 
-    public void setLocalDir(final String localDir) {
-        this.localDir = localDir;
-    }
-
-    @ValidFilePath
-    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The path to a provided LMDB system library file. If unset the LMDB binary " +
-            "bundled with Stroom will be extracted to 'localDir'. This property can be used if you already have LMDB " +
-            "installed or want to make use of a package manager provided instance. If you set this property care " +
-            "needs  to be taken over version compatibility between the version of LMDBJava (that Stroom uses to " +
-            "interact with LMDB) and the version of the LMDB binary.")
-    public String getLmdbSystemLibraryPath() {
-        return lmdbSystemLibraryPath;
-    }
-
-    public void setLmdbSystemLibraryPath(final String lmdbSystemLibraryPath) {
-        this.lmdbSystemLibraryPath = lmdbSystemLibraryPath;
+    @JsonCreator
+    public ReferenceDataConfig(@JsonProperty("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
+                               @JsonProperty("maxPurgeDeletesBeforeCommit") final int maxPurgeDeletesBeforeCommit,
+                               @JsonProperty("purgeAge") final StroomDuration purgeAge,
+                               @JsonProperty("loadingLockStripes") final int loadingLockStripes,
+                               @JsonProperty("lmdb") final ReferenceDataLmdbConfig lmdbConfig,
+                               @JsonProperty("effectiveStreamCache") final CacheConfig effectiveStreamCache) {
+        this.maxPutsBeforeCommit = maxPutsBeforeCommit;
+        this.maxPurgeDeletesBeforeCommit = maxPurgeDeletesBeforeCommit;
+        this.purgeAge = purgeAge;
+        this.loadingLockStripes = loadingLockStripes;
+        this.lmdbConfig = lmdbConfig;
+        this.effectiveStreamCache = effectiveStreamCache;
     }
 
     @Min(0)
@@ -75,34 +62,13 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
         return maxPutsBeforeCommit;
     }
 
-    @SuppressWarnings("unused")
-    public void setMaxPutsBeforeCommit(final int maxPutsBeforeCommit) {
-        this.maxPutsBeforeCommit = maxPutsBeforeCommit;
-    }
-
-    @Min(1)
-    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The maximum number of concurrent readers/threads that can use the off-heap store.")
-    public int getMaxReaders() {
-        return maxReaders;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMaxReaders(final int maxReaders) {
-        this.maxReaders = maxReaders;
-    }
-
-    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The maximum size for the ref loader off heap store. There must be " +
-            "available space on the disk to accommodate this size. It can be larger than the amount of available RAM " +
-            "and will only be allocated as it is needed. Can be expressed in IEC units (multiples of 1024), " +
-            "e.g. 1024, 1024B, 1024bytes, 1KiB, 1KB, 1K, etc.")
-    public ByteSize getMaxStoreSize() {
-        return maxStoreSize;
-    }
-
-    public void setMaxStoreSize(final ByteSize maxStoreSize) {
-        this.maxStoreSize = maxStoreSize;
+    @Min(0)
+    @JsonPropertyDescription("The maximum number of entries in one reference stream to purge before the " +
+            "transaction is committed. A value high enough to purge all entries in one transaction is " +
+            "preferable but for large reference streams this may result in errors due to the transaction " +
+            "being too large.")
+    public int getMaxPurgeDeletesBeforeCommit() {
+        return maxPurgeDeletesBeforeCommit;
     }
 
     @JsonPropertyDescription("The time to retain reference data for in the off heap store. The time is taken " +
@@ -112,42 +78,73 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
         return purgeAge;
     }
 
-    @SuppressWarnings("unused")
-    public void setPurgeAge(final StroomDuration purgeAge) {
-        this.purgeAge = purgeAge;
+    @Min(2)
+    @RequiresRestart(RestartScope.SYSTEM)
+    @JsonPropertyDescription("The number of lock stripes used for preventing multiple pipeline processes " +
+            "from loading the same reference stream at the same time. Values should be a power of 2. " +
+            "Lower values will mean it is more likely for two different streams from blocking one another.")
+    public int getLoadingLockStripes() {
+        return loadingLockStripes;
     }
 
-    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("Read ahead means the OS will pre-fetch additional data from the disk in the " +
-            "expectation that it will be used at some point. This generally improves performance as more data is " +
-            "available in the page cache. Read ahead is enabled by default. It may be worth disabling it if " +
-            "the actively used ref data is larger than the available RAM, as this will stop it evicting hot " +
-            "ref entries to make space for pre-fetched data.")
-    public boolean isReadAheadEnabled() {
-        return isReadAheadEnabled;
-    }
-
-    public void setReadAheadEnabled(final boolean isReadAheadEnabled) {
-        this.isReadAheadEnabled = isReadAheadEnabled;
+    @JsonProperty("lmdb")
+    public ReferenceDataLmdbConfig getLmdbConfig() {
+        return lmdbConfig;
     }
 
     public CacheConfig getEffectiveStreamCache() {
         return effectiveStreamCache;
     }
 
-    public void setEffectiveStreamCache(final CacheConfig effectiveStreamCache) {
-        this.effectiveStreamCache = effectiveStreamCache;
+    public ReferenceDataConfig withLmdbConfig(final ReferenceDataLmdbConfig lmdbConfig) {
+        return new ReferenceDataConfig(
+                maxPutsBeforeCommit,
+                maxPurgeDeletesBeforeCommit,
+                purgeAge,
+                loadingLockStripes,
+                lmdbConfig,
+                effectiveStreamCache);
+    }
+
+    public ReferenceDataConfig withPurgeAge(final StroomDuration purgeAge) {
+        return new ReferenceDataConfig(
+                maxPutsBeforeCommit,
+                maxPurgeDeletesBeforeCommit,
+                purgeAge,
+                loadingLockStripes,
+                lmdbConfig,
+                effectiveStreamCache);
+    }
+
+    public ReferenceDataConfig withMaxPutsBeforeCommit(final int maxPutsBeforeCommit) {
+        return new ReferenceDataConfig(
+                maxPutsBeforeCommit,
+                maxPurgeDeletesBeforeCommit,
+                purgeAge,
+                loadingLockStripes,
+                lmdbConfig,
+                effectiveStreamCache);
+    }
+
+    public ReferenceDataConfig withEffectiveStreamCache(final CacheConfig effectiveStreamCache) {
+        return new ReferenceDataConfig(
+                maxPutsBeforeCommit,
+                maxPurgeDeletesBeforeCommit,
+                purgeAge,
+                loadingLockStripes,
+                lmdbConfig,
+                effectiveStreamCache);
     }
 
     @Override
     public String toString() {
-        return "RefDataStoreConfig{" +
-                "localDir='" + localDir + '\'' +
-                ", maxPutsBeforeCommit=" + maxPutsBeforeCommit +
-                ", maxReaders=" + maxReaders +
-                ", maxStoreSize='" + maxStoreSize + '\'' +
-                ", purgeAge='" + purgeAge + '\'' +
-                ", isReadAheadEnabled=" + isReadAheadEnabled +
+        return "ReferenceDataConfig{" +
+                "maxPutsBeforeCommit=" + maxPutsBeforeCommit +
+                ", maxPurgeDeletesBeforeCommit=" + maxPurgeDeletesBeforeCommit +
+                ", purgeAge=" + purgeAge +
+                ", loadingLockStripes=" + loadingLockStripes +
+                ", lmdbConfig=" + lmdbConfig +
+                ", effectiveStreamCache=" + effectiveStreamCache +
                 '}';
     }
 }

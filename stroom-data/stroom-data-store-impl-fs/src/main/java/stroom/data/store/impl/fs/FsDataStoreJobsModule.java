@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 
@@ -31,33 +32,45 @@ public class FsDataStoreJobsModule extends AbstractModule {
     protected void configure() {
 
         ScheduledJobsBinder.create(binder())
-                .bindJobTo(PhysicalDelete.class, builder -> builder
+                .bindJobTo(DataDelete.class, builder -> builder
                         .name("Data Delete")
                         .description("Physically delete meta data and associated files that have been logically " +
                                 "deleted based on age of delete (stroom.data.store.deletePurgeAge)")
                         .schedule(CRON, "0 0 *")
                         .advanced(false))
-                .bindJobTo(FileSystemClean.class, builder -> builder
-                        .name("File System Clean (deprecated)")
-                        .description("Job to process a volume deleting files that are no " +
-                                "longer indexed (maybe the retention period has past or they have been deleted)")
+                .bindJobTo(OrphanFileFinder.class, builder -> builder
+                        .name(FsOrphanFileFinderExecutor.TASK_NAME)
+                        .description("Job to find files that do not exist in the meta store")
+                        .schedule(CRON, "0 0 *")
+                        .enabled(false))
+                .bindJobTo(OrphanMetaFinder.class, builder -> builder
+                        .name(FsOrphanMetaFinderExecutor.TASK_NAME)
+                        .description("Job to find items in the meta store that have no associated data")
                         .schedule(CRON, "0 0 *")
                         .enabled(false));
     }
 
-    private static class PhysicalDelete extends RunnableWrapper {
+    private static class DataDelete extends RunnableWrapper {
 
         @Inject
-        PhysicalDelete(final PhysicalDeleteExecutor physicalDeleteExecutor) {
-            super(physicalDeleteExecutor::exec);
+        DataDelete(final PhysicalDeleteExecutor physicalDeleteExecutor, final ClusterLockService clusterLockService) {
+            super(() -> clusterLockService.tryLock("Data Delete", physicalDeleteExecutor::exec));
         }
     }
 
-    private static class FileSystemClean extends RunnableWrapper {
+    private static class OrphanFileFinder extends RunnableWrapper {
 
         @Inject
-        FileSystemClean(final FsCleanExecutor fileSystemCleanExecutor) {
-            super(fileSystemCleanExecutor::clean);
+        OrphanFileFinder(final FsOrphanFileFinderExecutor executor, final ClusterLockService clusterLockService) {
+            super(() -> clusterLockService.tryLock(FsOrphanFileFinderExecutor.TASK_NAME, executor::scan));
+        }
+    }
+
+    private static class OrphanMetaFinder extends RunnableWrapper {
+
+        @Inject
+        OrphanMetaFinder(final FsOrphanMetaFinderExecutor executor, final ClusterLockService clusterLockService) {
+            super(() -> clusterLockService.tryLock(FsOrphanMetaFinderExecutor.TASK_NAME, executor::scan));
         }
     }
 }

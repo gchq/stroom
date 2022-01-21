@@ -29,7 +29,7 @@ import { Confirm, PromptType } from "../../Prompt/Prompt";
 
 const initialToken: ApiKey = {
   userId: "",
-  type: "user",
+  type: "api",
   data: "",
   expiresOnMs: 0,
   comments: "",
@@ -97,6 +97,7 @@ const TokenManager: FunctionComponent<{
           },
           quickFilterProps,
           pagerProps,
+          keyExtractor: (token) => token.id.toString(),
         }}
         onClose={onClose}
       />

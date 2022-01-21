@@ -31,7 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -92,7 +92,7 @@ class TestRASegmentStreams {
         final RASegmentInputStream inputStream = new RASegmentInputStream(
                 new UncompressedInputStream(dir.resolve("main.dat"), true) {
                     @Override
-                    public int read(@Nonnull final byte[] b, final int off, int len) throws IOException {
+                    public int read(@NotNull final byte[] b, final int off, int len) throws IOException {
                         if (len > 3) {
                             len = 3;
                         }
@@ -121,7 +121,7 @@ class TestRASegmentStreams {
         final RASegmentInputStream inputStream = new RASegmentInputStream(
                 new UncompressedInputStream(dir.resolve("main.dat"), true) {
                     @Override
-                    public int read(@Nonnull final byte[] b, final int off, int len) throws IOException {
+                    public int read(@NotNull final byte[] b, final int off, int len) throws IOException {
                         if (len > 3) {
                             len = 3;
                         }

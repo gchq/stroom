@@ -27,9 +27,10 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.api.SecurityContext;
 import stroom.storedquery.impl.StoredQueryConfig;
+import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.StoredQueryHistoryCleanExecutor;
-import stroom.task.api.SimpleTaskContextFactory;
+import stroom.task.api.SimpleTaskContext;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
@@ -68,7 +69,7 @@ class TestStoredQueryDao {
 
         // need an explicit teardown and setup of the DB before each test method
         final StoredQueryDbConnProvider storedQueryDbConnProvider = DbTestUtil.getTestDbDatasource(
-                new StoredQueryDbModule(), new StoredQueryConfig());
+                new StoredQueryDbModule(), new StoredQueryDbConfig());
 
         // Clear the current DB.
         DbTestUtil.clear();
@@ -77,7 +78,7 @@ class TestStoredQueryDao {
 
         queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(storedQueryDao,
                 new StoredQueryConfig(),
-                new SimpleTaskContextFactory());
+                new SimpleTaskContext());
 
         dashboardRef = new DocRef("Dashboard", "8c1bc23c-f65c-413f-ba72-7538abf90b91", "Test Dashboard");
         indexRef = new DocRef("Index", "4a085071-1d1b-4c96-8567-82f6954584a4", "Test Index");

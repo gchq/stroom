@@ -40,9 +40,9 @@ import stroom.proxy.repo.AggregateForwarder;
 import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoFileNames;
-import stroom.proxy.repo.ProxyRepoSourceEntries;
-import stroom.proxy.repo.ProxyRepoSources;
 import stroom.proxy.repo.RepoDirProvider;
+import stroom.proxy.repo.RepoSourceItems;
+import stroom.proxy.repo.RepoSources;
 import stroom.security.api.SecurityContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -97,9 +97,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Inject
     private Aggregator aggregator;
     @Inject
-    private ProxyRepoSourceEntries proxyRepoSourceEntries;
+    private RepoSourceItems proxyRepoSourceEntries;
     @Inject
-    private ProxyRepoSources proxyRepoSources;
+    private RepoSources proxyRepoSources;
     @Inject
     private RepoDirProvider repoDirProvider;
     @Inject
@@ -123,8 +123,11 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
     private void aggregate(final int maxAggregation,
                            final long maxStreamSize) {
-        aggregatorConfig.setMaxItemsPerAggregate(maxAggregation);
-        aggregatorConfig.setMaxUncompressedByteSize(maxStreamSize);
+        clearConfigValueMapper();
+        setConfigValueMapper(AggregatorConfig.class, aggregatorConfig -> aggregatorConfig.copy()
+                .withMaxItemsPerAggregate(maxAggregation)
+                .withMaxUncompressedByteSize(maxStreamSize)
+                .build());
         proxyAggregationExecutor.exec(true, true);
     }
 
@@ -139,6 +142,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         aggregator.clear();
         proxyRepoSourceEntries.clear();
         proxyRepoSources.clear();
+
 
         securityContext.asProcessingUser(() -> {
             commonTestControl.cleanup();

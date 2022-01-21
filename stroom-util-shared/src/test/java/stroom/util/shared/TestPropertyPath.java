@@ -12,18 +12,61 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPropertyPath {
 
+    @Test
+    void blank() {
+        PropertyPath propertyPath = PropertyPath.blank();
+
+        Assertions.assertThat(propertyPath.toString())
+                .isEqualTo("");
+
+        Assertions.assertThat(propertyPath.getParts())
+                .isEmpty();
+
+        Assertions.assertThat(propertyPath.isBlank())
+                .isTrue();
+    }
 
     @Test
     void getPropertyPath() {
         PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
-        Assertions.assertThat(propertyPath.toString()).isEqualTo("stroom.node.name");
+
+        Assertions.assertThat(propertyPath.toString())
+                .isEqualTo("stroom.node.name");
+
+        Assertions.assertThat(propertyPath.getParts())
+                .containsExactly("stroom", "node", "name");
     }
 
     @Test
     void merge() {
         PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
         PropertyPath propertyPath2 = PropertyPath.fromParts("name");
-        Assertions.assertThat(propertyPath1.merge(propertyPath2).toString()).isEqualTo("stroom.node.name");
+        Assertions.assertThat(propertyPath1.merge(propertyPath2).toString())
+                .isEqualTo("stroom.node.name");
+    }
+
+    @Test
+    void merge2() {
+        PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
+        String part2 = "name";
+        Assertions.assertThat(propertyPath1.merge(part2).toString()).isEqualTo("stroom.node.name");
+    }
+
+    @Test
+    void containsPart1() {
+        PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
+        propertyPath.getParts()
+                .forEach(part -> {
+                    Assertions.assertThat(propertyPath.containsPart(part))
+                            .isTrue();
+                });
+    }
+
+    @Test
+    void containsPart2() {
+        PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
+        Assertions.assertThat(propertyPath.containsPart("not_found"))
+                .isFalse();
     }
 
     @Test
@@ -34,7 +77,8 @@ class TestPropertyPath {
                 .add("name")
                 .build();
 
-        Assertions.assertThat(propertyPath.toString()).isEqualTo("stroom.node.name");
+        Assertions.assertThat(propertyPath.toString())
+                .isEqualTo("stroom.node.name");
     }
 
     @Test
@@ -70,7 +114,27 @@ class TestPropertyPath {
 
         boolean result = path1.equalsIgnoreCase(path2);
 
-        Assertions.assertThat(result).isEqualTo(expectedResult);
+        Assertions.assertThat(result)
+                .isEqualTo(expectedResult);
+    }
+
+    @Test
+    void testGetParent1() {
+        final PropertyPath propertyPath = PropertyPath.fromPathString("stroom.node.name");
+        assertThat(propertyPath.getParent())
+                .hasValue(PropertyPath.fromPathString("stroom.node"));
+    }
+
+    @Test
+    void testGetParent2() {
+        final PropertyPath propertyPath = PropertyPath.fromPathString("stroom");
+        assertThat(propertyPath.getParent())
+                .isEmpty();
+    }
+
+    @Test
+    void testGetParent3() {
+        final PropertyPath propertyPath = PropertyPath.fromPathString("");
     }
 
     @Test
@@ -83,7 +147,8 @@ class TestPropertyPath {
         doSerdeTest(PropertyPath.blank(), PropertyPath.class);
     }
 
-    private <T> void doSerdeTest(final T entity, final Class<T> clazz) throws IOException {
+    private <T> void doSerdeTest(final T entity,
+                                 final Class<T> clazz) throws IOException {
 
         final ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -97,6 +162,7 @@ class TestPropertyPath {
 
         final T entity2 = mapper.readValue(json, clazz);
 
-        assertThat(entity2).isEqualTo(entity);
+        assertThat(entity2)
+                .isEqualTo(entity);
     }
 }

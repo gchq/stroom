@@ -29,12 +29,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -47,7 +48,7 @@ class JobBootstrap {
 
     private final JobDao jobDao;
     private final JobNodeDao jobNodeDao;
-    private final JobSystemConfig jobSystemConfig;
+    private final Provider<JobSystemConfig> jobSystemConfigProvider;
     private final ClusterLockService clusterLockService;
     private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
@@ -57,7 +58,7 @@ class JobBootstrap {
     @Inject
     JobBootstrap(final JobDao jobDao,
                  final JobNodeDao jobNodeDao,
-                 final JobSystemConfig jobSystemConfig,
+                 final Provider<JobSystemConfig> jobSystemConfigProvider,
                  final ClusterLockService clusterLockService,
                  final SecurityContext securityContext,
                  final NodeInfo nodeInfo,
@@ -65,7 +66,7 @@ class JobBootstrap {
                  final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry) {
         this.jobDao = jobDao;
         this.jobNodeDao = jobNodeDao;
-        this.jobSystemConfig = jobSystemConfig;
+        this.jobSystemConfigProvider = jobSystemConfigProvider;
         this.clusterLockService = clusterLockService;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
@@ -81,11 +82,11 @@ class JobBootstrap {
         securityContext.asProcessingUser(() -> clusterLockService.lock(LOCK_NAME, () -> {
             final String nodeName = nodeInfo.getThisNodeName();
 
-            final List<JobNode> existingJobList = jobNodeDao.find(new FindJobNodeCriteria()).getValues();
-            final Map<String, JobNode> existingJobMap = new HashMap<>();
-            for (final JobNode jobNode : existingJobList) {
-                existingJobMap.put(jobNode.getJob().getName(), jobNode);
-            }
+            final List<JobNode> existingJobNodes = jobNodeDao.find(new FindJobNodeCriteria()).getValues();
+            final Map<String, JobNode> localJobNodeMap = existingJobNodes
+                    .stream()
+                    .filter(jobNode -> nodeName.equals(jobNode.getNodeName()))
+                    .collect(Collectors.toMap(jobNode -> jobNode.getJob().getName(), Function.identity()));
 
             final Set<String> validJobNames = new HashSet<>();
 
@@ -122,8 +123,8 @@ class JobBootstrap {
                     newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
 
                     // Add the job node to the DB if it isn't there already.
-                    JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
-                    if (existingJobNode == null) {
+                    JobNode jobNode = localJobNodeMap.get(scheduledJob.getName());
+                    if (jobNode == null) {
                         LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
                                 "' for node '" + newJobNode.getNodeName() + "' (state: " +
                                 (newJobNode.isEnabled()
@@ -132,26 +133,31 @@ class JobBootstrap {
 
                         AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                         jobNodeDao.create(newJobNode);
-                        existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+                        localJobNodeMap.put(newJobNode.getJob().getName(), newJobNode);
 
-                    } else if (!Objects.equals(newJobNode.getJobType(), existingJobNode.getJobType())) {
+                    } else if (!Objects.equals(newJobNode.getJobType(), jobNode.getJobType())) {
                         // If the job type has changed then update the job node.
-                        existingJobNode.setJobType(newJobNode.getJobType());
-                        existingJobNode.setSchedule(newJobNode.getSchedule());
-                        AuditUtil.stamp(securityContext.getUserId(), existingJobNode);
-                        existingJobNode = jobNodeDao.update(existingJobNode);
-                        existingJobMap.put(scheduledJob.getName(), existingJobNode);
+                        jobNode.setJobType(newJobNode.getJobType());
+                        jobNode.setSchedule(newJobNode.getSchedule());
+                        AuditUtil.stamp(securityContext.getUserId(), jobNode);
+                        jobNode = jobNodeDao.update(jobNode);
+                        localJobNodeMap.put(scheduledJob.getName(), jobNode);
                     }
                 }
             }
 
             // Distributed Jobs done a different way
             distributedTaskFactoryRegistry.getFactoryMap().forEach((jobName, factory) -> {
+                if (validJobNames.contains(jobName)) {
+                    LOGGER.error("Duplicate job name detected: " + jobName);
+                    throw new RuntimeException("Duplicate job name detected: " + jobName);
+                }
                 validJobNames.add(jobName);
 
                 // Add the job node to the DB if it isn't there already.
-                final JobNode existingJobNode = existingJobMap.get(jobName);
-                if (existingJobNode == null) {
+                final JobNode jobNode = localJobNodeMap.get(jobName);
+                if (jobNode == null) {
+                    final JobSystemConfig jobSystemConfig = jobSystemConfigProvider.get();
                     // Get or create the actual parent job record
                     Job job = new Job();
                     job.setName(jobName);
@@ -173,18 +179,16 @@ class JobBootstrap {
 
                     AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                     jobNodeDao.create(newJobNode);
-                    existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
                 }
             });
 
-            existingJobList.stream().filter(jobNode -> !validJobNames.contains(jobNode.getJob().getName()))
+            existingJobNodes.stream().filter(jobNode -> !validJobNames.contains(jobNode.getJob().getName()))
                     .forEach(jobNode -> {
                         LOGGER.info(() -> "Removing old job node " + jobNode.getJob().getName());
                         jobNodeDao.delete(jobNode.getId());
                     });
 
             final int deleteCount = jobDao.deleteOrphans();
-
             if (deleteCount > 0) {
                 LOGGER.info(() -> "Removed " + deleteCount + " orphan jobs");
             }

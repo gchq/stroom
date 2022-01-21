@@ -19,6 +19,7 @@ package stroom.node.impl;
 
 
 import stroom.node.api.FindNodeCriteria;
+import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.AbstractCoreIntegrationTest;
 
@@ -31,10 +32,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestNodeService extends AbstractCoreIntegrationTest {
 
     @Inject
+    private NodeInfo nodeInfo;
+    @Inject
     private NodeService nodeService;
 
     @Test
     void testBasic() {
+        assertThat(nodeInfo.getThisNodeName()).isNotNull();
+        assertThat(nodeInfo.getThisNodeName()).isEqualTo("node1a");
+        assertThat(nodeService).isInstanceOf(NodeServiceImpl.class);
         assertThat(nodeService.findNodeNames(new FindNodeCriteria()).size() > 0).isTrue();
     }
 }

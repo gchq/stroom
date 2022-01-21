@@ -28,9 +28,9 @@ import stroom.util.shared.Clearable;
 import org.jooq.Condition;
 import org.jooq.Field;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -52,11 +52,9 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
         cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaTypeCache, this::load);
 
         // Ensure some types are preloaded.
-        final String metaTypes = metaServiceConfig.getMetaTypes();
-        if (metaTypes != null && !metaTypes.isEmpty()) {
-            Arrays
-                    .stream(metaTypes.split("\n"))
-                    .map(String::trim)
+        final Set<String> metaTypes = metaServiceConfig.getMetaTypes();
+        if (metaTypes != null) {
+            metaTypes.stream()
                     .filter(s -> !s.isEmpty())
                     .forEach(this::load);
         }
@@ -117,8 +115,8 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
                 .values(name)
                 .onDuplicateKeyIgnore()
                 .returning(META_TYPE.ID)
-                .fetchOptional()
-                .map(MetaTypeRecord::getId));
+                .fetchOptional())
+                .map(MetaTypeRecord::getId);
     }
 
     @Override

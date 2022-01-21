@@ -56,7 +56,9 @@ public class EditorMenuPresenter {
         addMenuItem(position++, menuItems, xmlEditorPresenter.getIndicatorsOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getLineNumbersOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getLineWrapOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getShowIndentGuides());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getShowInvisiblesOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getViewAsHexOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getHighlightActiveLineOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getUseVimBindingsOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getBasicAutoCompletionOption());

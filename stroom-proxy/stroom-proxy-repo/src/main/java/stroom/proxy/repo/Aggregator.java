@@ -17,112 +17,144 @@
 package stroom.proxy.repo;
 
 import stroom.proxy.repo.dao.AggregateDao;
-import stroom.proxy.repo.dao.SourceEntryDao;
-import stroom.proxy.repo.dao.SourceEntryDao.SourceItem;
+import stroom.util.concurrent.StripedLock;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
 public class Aggregator {
 
-    private static final int BATCH_SIZE = 1000000;
-
-    private final SourceEntryDao sourceEntryDao;
+    private final RepoSourceItems sourceItems;
     private final AggregateDao aggregateDao;
-    private final AggregatorConfig config;
-
-    private final List<ChangeListener> listeners = new CopyOnWriteArrayList<>();
-
-    private long lastClosedAggregates;
-    private volatile boolean firstRun = true;
+    private final Provider<AggregatorConfig> aggregatorConfigProvider;
+    private final ProgressLog progressLog;
+    private final StripedLock stripedLock = new StripedLock();
 
     @Inject
-    Aggregator(final SourceEntryDao sourceEntryDao,
+    Aggregator(final RepoSourceItems sourceItems,
                final AggregateDao aggregateDao,
-               final AggregatorConfig config) {
-        this.sourceEntryDao = sourceEntryDao;
+               final Provider<AggregatorConfig> aggregatorConfigProvider,
+               final ProgressLog progressLog) {
+        this.sourceItems = sourceItems;
         this.aggregateDao = aggregateDao;
-        this.config = config;
+        this.aggregatorConfigProvider = aggregatorConfigProvider;
+        this.progressLog = progressLog;
     }
 
-    public synchronized void aggregate() {
-        // Start by trying to close old aggregates.
-        closeOldAggregates();
+    public void aggregateAll() {
+        QueueUtil.consumeAll(() -> sourceItems.getNewSourceItem(0, TimeUnit.MILLISECONDS),
+                this::addItem);
+    }
 
-        boolean run = true;
-        while (run) {
-            final List<SourceItem> sourceItems = sourceEntryDao.getNewSourceItems(BATCH_SIZE);
-            sourceItems.forEach(this::addItem);
+    public void aggregateNext() {
+        sourceItems.getNewSourceItem().ifPresent(this::addItem);
+    }
 
-            // Stop aggregating if the last query did not return a result as big as the batch size.
-            if (sourceItems.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
-                run = false;
+    void addItem(final RepoSourceItemRef sourceItem) {
+        // Only deal with finding an aggregate that is the right fit for the feed and type name one at a time.
+        final AggregateKey aggregateKey = new AggregateKey(sourceItem.getFeedName(), sourceItem.getTypeName());
+        final Lock lock = stripedLock.getLockForKey(aggregateKey);
+        try {
+            lock.lockInterruptibly();
+            try {
+                final AggregatorConfig aggregatorConfig = aggregatorConfigProvider.get();
+                aggregateDao.addItem(
+                        sourceItem,
+                        aggregatorConfig.getMaxItemsPerAggregate(),
+                        aggregatorConfig.getMaxUncompressedByteSize());
+            } finally {
+                lock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            // Continue to interrupt.
+            Thread.currentThread().interrupt();
+        }
+        progressLog.increment("Aggregator - addItem");
+    }
+
+    public void closeOldAggregates() {
+        final long now = System.currentTimeMillis();
+        final long oldest = now - aggregatorConfigProvider.get().getMaxAggregateAge().toMillis();
+        closeOldAggregates(oldest);
+    }
+
+    public void closeOldAggregates(final long oldest) {
+        final AggregatorConfig aggregatorConfig = aggregatorConfigProvider.get();
+        final List<Aggregate> aggregates = aggregateDao.getClosableAggregates(
+                aggregatorConfig.getMaxItemsPerAggregate(),
+                aggregatorConfig.getMaxUncompressedByteSize(),
+                oldest
+        );
+
+        progressLog.add("Aggregator - closeOldAggregates", aggregates.size());
+        for (final Aggregate aggregate : aggregates) {
+            final AggregateKey aggregateKey = new AggregateKey(aggregate.getFeedName(), aggregate.getTypeName());
+            final Lock lock = stripedLock.getLockForKey(aggregateKey);
+            try {
+                lock.lockInterruptibly();
+                try {
+                    aggregateDao.closeAggregate(aggregate);
+                } finally {
+                    lock.unlock();
+                }
+            } catch (final InterruptedException e) {
+                // Continue to interrupt.
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e.getMessage(), e);
             }
         }
     }
 
-    public synchronized void aggregate(final long sourceId) {
-        // Start by trying to close old aggregates.
-        closeOldAggregates();
-
-        final List<SourceItem> sourceItems = sourceEntryDao.getNewSourceItemsForSource(sourceId);
-        sourceItems.forEach(this::addItem);
+    public Map<RepoSource, List<RepoSourceItem>> getItems(final long aggregateId) {
+        return aggregateDao.fetchSourceItems(aggregateId);
     }
 
-    synchronized int addItem(final SourceItem sourceItem) {
-        aggregateDao.addItem(
-                sourceItem,
-                config.getMaxItemsPerAggregate(),
-                config.getMaxUncompressedByteSize());
-
-        // Close any old aggregates.
-        return closeOldAggregates();
+    public Optional<Aggregate> getCompleteAggregate() {
+        return aggregateDao.getNewAggregate();
     }
 
-    synchronized int closeOldAggregates() {
-        final long now = System.currentTimeMillis();
-        if (now > lastClosedAggregates + config.getAggregationFrequency().toMillis()) {
-            lastClosedAggregates = now;
-
-            final long oldest = now - config.getMaxAggregateAge().toMillis();
-            return closeOldAggregates(oldest);
-        }
-        return 0;
-    }
-
-    public synchronized int closeOldAggregates(final long oldest) {
-        final int count = aggregateDao.closeAggregates(
-                config.getMaxItemsPerAggregate(),
-                config.getMaxUncompressedByteSize(),
-                oldest
-        );
-
-        // If we have closed some aggregates then let others know there are some available.
-        if (count > 0 || firstRun) {
-            firstRun = false;
-            fireChange(count);
-        }
-
-        return count;
-    }
-
-    private void fireChange(final int count) {
-        listeners.forEach(listener -> listener.onChange(count));
-    }
-
-    public void addChangeListener(final ChangeListener changeListener) {
-        listeners.add(changeListener);
+    public Optional<Aggregate> getCompleteAggregate(final long timeout,
+                                                    final TimeUnit timeUnit) {
+        return aggregateDao.getNewAggregate(timeout, timeUnit);
     }
 
     public void clear() {
         aggregateDao.clear();
     }
 
-    public interface ChangeListener {
+    private static class AggregateKey {
 
-        void onChange(int count);
+        private final String feedName;
+        private final String typeName;
+
+        public AggregateKey(final String feedName, final String typeName) {
+            this.feedName = feedName;
+            this.typeName = typeName;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final AggregateKey that = (AggregateKey) o;
+            return Objects.equals(feedName, that.feedName) && Objects.equals(typeName, that.typeName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(feedName, typeName);
+        }
     }
 }

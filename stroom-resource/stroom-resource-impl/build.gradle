@@ -1,33 +1,28 @@
 ext.moduleName = 'stroom.resource.impl'
 
 dependencies {
-//    compile project(':stroom-core-shared')
-//    compile project(':stroom-event-logging:stroom-event-logging-api')
-    compile project(':stroom-job:stroom-job-api')
-    compile project(':stroom-lifecycle:stroom-lifecycle-api')
-    compile project(':stroom-resource:stroom-resource-api')
-//    compile project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
+    implementation project(':stroom-resource:stroom-resource-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
-
-//    compile project(':stroom-docref')
-    compile libs.eventLogging
-    compile libs.guice5
-    compile libs.javax_inject
-    compile libs.javax_servlet_api
-
-//    compile libs.slf4j_api
+    implementation libs.eventLogging
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.jakarta_servlet_api
+    implementation libs.javax_inject
     
-    testCompile libs.assertj_core
-    testCompile libs.mockito_core
-    testCompile libs.mockito_junit_jupiter
+    testImplementation libs.assertj_core
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.javax_activation
-    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_impl
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine

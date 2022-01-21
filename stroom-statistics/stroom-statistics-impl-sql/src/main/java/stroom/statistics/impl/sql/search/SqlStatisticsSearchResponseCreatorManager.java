@@ -24,32 +24,38 @@ import stroom.query.common.v2.SearchResponseCreatorCache.Key;
 import stroom.query.common.v2.SearchResponseCreatorFactory;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.common.v2.Store;
+import stroom.task.api.TaskContext;
 import stroom.util.shared.Clearable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @SuppressWarnings("unused") //Used by DI
 @Singleton
 class SqlStatisticsSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsSearchResponseCreatorManager.class);
 
     private static final String CACHE_NAME = "SQL Statistics Search Result Creators";
 
     private final SqlStatisticStoreFactory storeFactory;
     private final SearchResponseCreatorFactory searchResponseCreatorFactory;
+    private final TaskContext taskContext;
     private final ICache<Key, SearchResponseCreator> cache;
 
     @Inject
     public SqlStatisticsSearchResponseCreatorManager(final CacheManager cacheManager,
                                                      final SearchConfig searchConfig,
                                                      final SqlStatisticStoreFactory storeFactory,
-                                                     final SearchResponseCreatorFactory searchResponseCreatorFactory) {
+                                                     final SearchResponseCreatorFactory searchResponseCreatorFactory,
+                                                     final TaskContext taskContext) {
         this.storeFactory = storeFactory;
         this.searchResponseCreatorFactory = searchResponseCreatorFactory;
+        this.taskContext = taskContext;
         cache = cacheManager.create(CACHE_NAME, searchConfig::getSearchResultCache, this::create, this::destroy);
     }
 
@@ -74,12 +80,18 @@ class SqlStatisticsSearchResponseCreatorManager implements SearchResponseCreator
     }
 
     @Override
+    public Optional<SearchResponseCreator> getOptional(final Key key) {
+        return cache.getOptional(key);
+    }
+
+    @Override
     public void remove(final SearchResponseCreatorCache.Key key) {
         cache.remove(key);
     }
 
     @Override
     public void evictExpiredElements() {
+        taskContext.info(() -> "Evicting expired search responses");
         cache.evictExpiredElements();
     }
 

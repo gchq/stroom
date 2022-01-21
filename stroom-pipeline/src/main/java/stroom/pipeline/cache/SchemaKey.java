@@ -59,7 +59,6 @@ public class SchemaKey implements Serializable {
         return builder.toHashCode();
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (o == this) {
@@ -75,5 +74,14 @@ public class SchemaKey implements Serializable {
         builder.append(findXMLSchemaCriteria, schemaKey.findXMLSchemaCriteria);
 
         return builder.isEquals();
+    }
+
+    @Override
+    public String toString() {
+        return "SchemaKey{" +
+                "schemaLanguage='" + schemaLanguage + '\'' +
+                ", data='" + data + '\'' +
+                ", findXMLSchemaCriteria=" + findXMLSchemaCriteria +
+                '}';
     }
 }

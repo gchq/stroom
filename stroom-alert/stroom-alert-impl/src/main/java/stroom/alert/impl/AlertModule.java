@@ -19,8 +19,6 @@ package stroom.alert.impl;
 import stroom.alert.api.AlertManager;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 

@@ -19,10 +19,16 @@ package stroom.dashboard.expression.v1;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Stream;
 
 class ExpressionTokeniser {
+
+    private static final EnumSet<Token.Type> VALUE_TYPES = EnumSet.of(
+            Token.Type.NUMBER,
+            Token.Type.FIELD);
+
     List<Token> tokenise(final String expression) {
         List<Token> tokens = new ArrayList<>();
 
@@ -49,9 +55,90 @@ class ExpressionTokeniser {
 
             // Extract numeric tokens.
             tokens = extractNumericTokens(tokens);
+
+            // Convert subtraction followed by a number into a minus number depending on context.
+            // Must be done last once all other tokens have been established so we have the context.
+            tokens = handleMinusNumbers(tokens);
         }
 
         return tokens;
+    }
+
+    private List<Token> handleMinusNumbers(final List<Token> input) {
+        List<Token> output = new ArrayList<>(input);
+        int i = 1; // start at one as we need the curr and prev types
+        int listSize = output.size();
+        while (i < listSize) {
+            final Token currToken = output.get(i);
+            final Token.Type currType = currToken.getType();
+            final Token.Type prevType = i == 0
+                    ? null
+                    : output.get(i - 1).getType();
+
+            if (Token.Type.NUMBER.equals(currType)
+                    && Token.Type.SUBTRACTION.equals(prevType)) {
+                // "...-10" or "...-${field}" so now see what came before to establish if "-"
+                // is subtraction or negation
+
+                if (!isTypeFoundBeforeThisIndex(Token.Type.NUMBER, output, i - 1)) {
+                    // e.g. "add(-10,20)", "add(10,-20)", "10 > -10"
+                    output = mergeTokens(output, i - 1, i, Token.Type.NUMBER);
+                    // Two list items merged so adjust position and size
+                    listSize--;
+                    i--;
+                }
+            }
+            i++;
+        }
+        return output;
+    }
+
+    /**
+     * @param type   The type to test for
+     * @param tokens
+     * @param idx    The index of tokens to look for type before this one.
+     * @return
+     */
+    private boolean isTypeFoundBeforeThisIndex(final Token.Type type,
+                                               final List<Token> tokens,
+                                               final int idx) {
+        if (idx != 0) {
+            for (int i = idx - 1; i >= 0; i--) {
+                final Token.Type currType = tokens.get(i).getType();
+                if (Token.Type.WHITESPACE.equals(currType)) {
+                    // Whitespace has no meaning so ignore it and move on
+                } else {
+                    return type.equals(currType);
+                }
+            }
+        }
+        return false;
+    }
+
+    private List<Token> mergeTokens(final List<Token> input,
+                                    final int tokenIdx1,
+                                    final int tokenIdx2,
+                                    final Token.Type newType) {
+        if (tokenIdx2 != tokenIdx1 + 1) {
+            throw new RuntimeException("Indexes must be contiguous " + tokenIdx1 + " " + tokenIdx2);
+        }
+
+        final List<Token> output = new ArrayList<>(input.size() - 1);
+
+        if (tokenIdx1 > 0) {
+            // Add tokens before the pair being merged
+            output.addAll(input.subList(0, tokenIdx1));
+        }
+
+        final Token mergedToken = Token.merge(newType, input.get(tokenIdx1), input.get(tokenIdx2));
+        output.add(mergedToken);
+
+        if (tokenIdx2 < input.size() - 1) {
+            // Add tokens after the pair being merged
+            output.addAll(input.subList(tokenIdx2 + 1, input.size()));
+        }
+
+        return output;
     }
 
     private List<Token> extractStringTokens(final List<Token> input) {
@@ -321,6 +408,7 @@ class ExpressionTokeniser {
     }
 
     static class Token implements Param {
+
         // refuses to compile if I create the reverse comparator in one step, who knows why
         private static Comparator<Type> IDENTIFIER_LENGTH_COMPARATOR = Comparator.comparing(t -> t.identifier.length);
         private static Comparator<Type> IDENTIFIER_LENGTH_COMPARATOR_REVERSED = IDENTIFIER_LENGTH_COMPARATOR.reversed();
@@ -347,6 +435,10 @@ class ExpressionTokeniser {
         private final int start;
         private final int end;
 
+        /**
+         * @param start zero based, inclusive
+         * @param end   zero based, inclusive
+         */
         Token(final Type type, final char[] expression, final int start, final int end) {
             this.type = type;
             this.expression = expression;
@@ -360,6 +452,17 @@ class ExpressionTokeniser {
 
         int getStart() {
             return start;
+        }
+
+        Token asNewType(final Type type) {
+            return new Token(type, expression, start, end);
+        }
+
+        static Token merge(final Type newType, final Token token1, final Token token2) {
+            if (token2.start != token1.end + 1) {
+                throw new RuntimeException("Tokens being merged must be contiguous");
+            }
+            return new Token(newType, token1.expression, token1.start, token2.end);
         }
 
         @Override
@@ -392,6 +495,15 @@ class ExpressionTokeniser {
 
             Type(final String identifier) {
                 this.identifier = identifier.toCharArray();
+            }
+
+            public boolean isOneOf(final Type... types) {
+                for (final Type type : types) {
+                    if (this.equals(type)) {
+                        return true;
+                    }
+                }
+                return false;
             }
         }
     }

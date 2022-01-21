@@ -113,7 +113,7 @@ public class BasicTextSettingsPresenter
     public void read(final ComponentConfig componentData) {
         super.read(componentData);
 
-        final List<Component> list = getComponents().getComponentsByType(TablePresenter.TYPE.getId());
+        final List<Component> list = getComponents().getSortedComponentsByType(TablePresenter.TYPE.getId());
         setTableList(list);
 
         TextComponentSettings settings = (TextComponentSettings) componentData.getSettings();

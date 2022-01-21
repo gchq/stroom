@@ -25,6 +25,7 @@ import com.google.common.net.HttpHeaders;
 import java.io.IOException;
 import java.util.Objects;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -42,12 +43,12 @@ public class ContentSecurityFilter implements Filter {
     private static final String USER_AGENT_IE_10 = "MSIE 10";
     private static final String USER_AGENT_IE_11 = "rv:11.0";
 
-    private final ContentSecurityConfig config;
+    private final Provider<ContentSecurityConfig> configProvider;
 
     @Inject
-    public ContentSecurityFilter(final ContentSecurityConfig config) {
-        Objects.requireNonNull(config);
-        this.config = config;
+    public ContentSecurityFilter(final Provider<ContentSecurityConfig> configProvider) {
+        Objects.requireNonNull(configProvider);
+        this.configProvider = configProvider;
     }
 
     @Override
@@ -78,6 +79,7 @@ public class ContentSecurityFilter implements Filter {
         Objects.requireNonNull(request);
         Objects.requireNonNull(response);
 
+        final ContentSecurityConfig config = configProvider.get();
         if (!Strings.isNullOrEmpty(config.getContentSecurityPolicy())) {
             response.setHeader(HttpHeaders.CONTENT_SECURITY_POLICY, config.getContentSecurityPolicy());
 

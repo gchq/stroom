@@ -38,19 +38,20 @@ public class ForwarderDestinationsImpl implements ForwarderDestinations, HasHeal
 
     private static final String USER_AGENT_FORMAT = "stroom-proxy/{} java/{}";
 
-    private final ForwarderConfig forwarderConfig;
+    private final Provider<ForwarderConfig> forwarderConfigProvider;
     private final Provider<BuildInfo> buildInfoProvider;
     private final Map<String, ForwardStreamHandlers> providers;
     private final String userAgentString;
 
     @Inject
     public ForwarderDestinationsImpl(final LogStream logStream,
-                                     final ForwarderConfig forwarderConfig,
+                                     final Provider<ForwarderConfig> forwarderConfigProvider,
                                      final ProxyRepoConfig proxyRepoConfig,
                                      final Provider<BuildInfo> buildInfoProvider,
                                      final PathCreator pathCreator) {
-        this.forwarderConfig = forwarderConfig;
+        this.forwarderConfigProvider = forwarderConfigProvider;
         this.buildInfoProvider = buildInfoProvider;
+        final ForwarderConfig forwarderConfig = forwarderConfigProvider.get();
 
         // Set the user agent string to something like
         // stroom-proxy/v6.0-beta.46 java/1.8.0_181
@@ -94,6 +95,7 @@ public class ForwarderDestinationsImpl implements ForwarderDestinations, HasHeal
 
         final AtomicBoolean allHealthy = new AtomicBoolean(true);
 
+        final ForwarderConfig forwarderConfig = forwarderConfigProvider.get();
         resultBuilder
                 .withDetail("forwardingEnabled", forwarderConfig.isForwardingEnabled());
 

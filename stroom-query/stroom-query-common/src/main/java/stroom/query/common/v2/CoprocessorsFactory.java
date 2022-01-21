@@ -4,6 +4,7 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.Param;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
@@ -16,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class CoprocessorsFactory {
@@ -59,12 +59,17 @@ public class CoprocessorsFactory {
 
     public Coprocessors create(final SearchRequest searchRequest) {
         final List<CoprocessorSettings> coprocessorSettingsList = createSettings(searchRequest);
-        return create(searchRequest.getKey().getUuid(), coprocessorSettingsList, searchRequest.getQuery().getParams());
+        return create(
+                searchRequest.getKey(),
+                coprocessorSettingsList,
+                searchRequest.getQuery().getParams(),
+                false);
     }
 
-    public Coprocessors create(final String queryKey,
+    public Coprocessors create(final QueryKey queryKey,
                                final List<CoprocessorSettings> coprocessorSettingsList,
-                               final List<Param> params) {
+                               final List<Param> params,
+                               final boolean producePayloads) {
         // Create a field index map.
         final FieldIndex fieldIndex = new FieldIndex();
 
@@ -72,7 +77,7 @@ public class CoprocessorsFactory {
         final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(params);
 
         // Create error consumer.
-        final ErrorConsumer errorConsumer = new ErrorConsumer();
+        final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
         final Map<Integer, Coprocessor> coprocessorMap = new HashMap<>();
         final Map<String, TableCoprocessor> componentIdCoprocessorMap = new HashMap<>();
@@ -82,7 +87,8 @@ public class CoprocessorsFactory {
                         coprocessorSettings,
                         fieldIndex,
                         paramMap,
-                        errorConsumer);
+                        errorConsumer,
+                        producePayloads);
 
                 if (coprocessor != null) {
                     coprocessorMap.put(coprocessorSettings.getCoprocessorId(), coprocessor);
@@ -123,11 +129,12 @@ public class CoprocessorsFactory {
                 errorConsumer);
     }
 
-    private Coprocessor create(final String queryKey,
+    private Coprocessor create(final QueryKey queryKey,
                                final CoprocessorSettings settings,
                                final FieldIndex fieldIndex,
                                final Map<String, String> paramMap,
-                               final Consumer<Throwable> errorConsumer) {
+                               final ErrorConsumer errorConsumer,
+                               final boolean producePayloads) {
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
             final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
@@ -136,7 +143,9 @@ public class CoprocessorsFactory {
                     String.valueOf(tableCoprocessorSettings.getCoprocessorId()),
                     tableSettings,
                     fieldIndex,
-                    paramMap);
+                    paramMap,
+                    producePayloads,
+                    errorConsumer);
             return new TableCoprocessor(tableSettings, dataStore, errorConsumer);
         } else if (settings instanceof EventCoprocessorSettings) {
             final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;
@@ -146,11 +155,13 @@ public class CoprocessorsFactory {
         return null;
     }
 
-    private DataStore create(final String queryKey,
+    private DataStore create(final QueryKey queryKey,
                              final String componentId,
                              final TableSettings tableSettings,
                              final FieldIndex fieldIndex,
-                             final Map<String, String> paramMap) {
+                             final Map<String, String> paramMap,
+                             final boolean producePayloads,
+                             final ErrorConsumer errorConsumer) {
         final Sizes storeSizes = sizesProvider.getStoreSizes();
 
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
@@ -165,6 +176,8 @@ public class CoprocessorsFactory {
                 fieldIndex,
                 paramMap,
                 maxResults,
-                storeSizes);
+                storeSizes,
+                producePayloads,
+                errorConsumer);
     }
 }

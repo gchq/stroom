@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
     <g:FlowPanel styleName="dock-container-vertical stroom-control-page">
         <g:Grid styleName="dock-min stroom-control-grid">
             <g:row>
@@ -19,6 +20,22 @@
                 <g:cell>Index name or pattern:</g:cell>
                 <g:customCell>
                     <g:TextBox ui:field="indexName" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Search slices:</g:cell>
+                <g:customCell>
+                    <g:FlowPanel>
+                        <valuespinner:ValueSpinner ui:field="searchSlices" width="80px"/>
+                    </g:FlowPanel>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Search scroll size:</g:cell>
+                <g:customCell>
+                    <g:FlowPanel>
+                        <valuespinner:ValueSpinner ui:field="searchScrollSize" width="80px"/>
+                    </g:FlowPanel>
                 </g:customCell>
             </g:row>
             <g:row>

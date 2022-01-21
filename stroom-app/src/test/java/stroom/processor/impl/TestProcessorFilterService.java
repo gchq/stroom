@@ -25,6 +25,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.QueryData;
@@ -79,11 +80,22 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345", "Test Pipeline");
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
 
-        processorFilterService.create(pipelineRef, new QueryData(), 1, false, true);
+        processorFilterService.create(
+                CreateProcessFilterRequest
+                        .builder()
+                        .pipeline(pipelineRef)
+                        .queryData(new QueryData())
+                        .priority(1)
+                        .build());
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(1);
 
-        processorFilterService.create(pipelineRef, new QueryData(), 10, false, true);
+        processorFilterService.create(
+                CreateProcessFilterRequest
+                        .builder()
+                        .pipeline(pipelineRef)
+                        .queryData(new QueryData())
+                        .build());
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(2);
 
@@ -130,7 +142,13 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
 
-        processorFilterService.create(pipelineRef, findStreamQueryData, 1, false, true);
+        processorFilterService.create(
+                CreateProcessFilterRequest
+                        .builder()
+                        .pipeline(pipelineRef)
+                        .queryData(findStreamQueryData)
+                        .priority(1)
+                        .build());
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
 
         final ResultPage<ProcessorFilter> filters = processorFilterService

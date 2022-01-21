@@ -831,3 +831,16 @@ input[type="file"]:disabled {
 .scrollable {
     overflow: auto;
 }
+
+.clickableLabel.enabled {
+    cursor: pointer;
+}
+
+.clickableLabel.enabled:hover {
+    text-decoration: underline;
+}
+
+.clickableLabel.disabled {
+    color: #8f8f8f;
+    cursor: default;
+}

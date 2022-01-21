@@ -23,7 +23,6 @@ import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.bytebuffer.PooledByteBufferOutputStream.Factory;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
@@ -129,7 +128,7 @@ class TestValueStore extends AbstractLmdbDbTest {
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(0);
         assertThat(valueStoreMetaDb.getEntryCount()).isEqualTo(0);
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr1));
 
             assertThat(valueStoreKey).isNotNull();
@@ -146,7 +145,7 @@ class TestValueStore extends AbstractLmdbDbTest {
 
         // now put the same value again. Entry count should not change as we already have the value
         // returned valueStoreKey should also be the same.
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr1));
 
             assertThat(valueStoreKey).isNotNull();
@@ -163,7 +162,7 @@ class TestValueStore extends AbstractLmdbDbTest {
 
         // now put a different value with same hashcode. Entry count should increase and the
         // returned valueStoreKey should have an id of 1 as it has same hashcode as last one
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr2));
 
             assertThat(valueStoreKey).isNotNull();
@@ -177,7 +176,7 @@ class TestValueStore extends AbstractLmdbDbTest {
         LOGGER.debug("----------------------------");
 
         // get the same value again, no change to DB or returned values
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr2));
 
             assertThat(valueStoreKey).isNotNull();
@@ -193,7 +192,7 @@ class TestValueStore extends AbstractLmdbDbTest {
 
         // now put a different value with a different hashcode. Entry count should increase and the
         // returned valueStoreKey should have an id of 0 as it has a different hashcode.
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr3));
 
             assertThat(valueStoreKey).isNotNull();
@@ -207,7 +206,7 @@ class TestValueStore extends AbstractLmdbDbTest {
         LOGGER.debug("----------------------------");
 
         // get the same value again, no change to DB or returned values
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr3));
 
             assertThat(valueStoreKey).isNotNull();
@@ -245,7 +244,7 @@ class TestValueStore extends AbstractLmdbDbTest {
         // insert 10 of the same values, should have one entry with a ref count going up to 10
         for (int i = 1; i <= iterations; i++) {
             final int expectedRefCount = i;
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 final ValueStoreKey valueStoreKey1a = getOrCreate(writeTxn, value1);
 
                 // value should always be the same
@@ -275,7 +274,7 @@ class TestValueStore extends AbstractLmdbDbTest {
         // with a ref count going up to 10
         for (int i = 1; i <= iterations; i++) {
             final int expectedRefCount = i;
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 final ValueStoreKey valueStoreKey2a = getOrCreate(writeTxn, value2);
                 valueStoreKey2aRef.accumulateAndGet(valueStoreKey2a, (currVal, newVal) -> {
                     if (currVal != null) {
@@ -300,7 +299,7 @@ class TestValueStore extends AbstractLmdbDbTest {
         // Now keep trying to delete value 1, ref count should go down until the delete happens
         for (int i = iterations; i >= 1; i--) {
             final int expectedPreDeleteRefCount = i;
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 assertThat(getRefCount(writeTxn, valueStoreKey1aRef.get()))
                         .isEqualTo(expectedPreDeleteRefCount);
                 // now dereference value1
@@ -331,13 +330,15 @@ class TestValueStore extends AbstractLmdbDbTest {
         // Now keep trying to delete value 2, ref count should go down until the delete happens
         for (int i = iterations; i >= 1; i--) {
             final int expectedPreDeleteRefCount = i;
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 assertThat(getRefCount(writeTxn, valueStoreKey2aRef.get()))
                         .isEqualTo(expectedPreDeleteRefCount);
                 // now dereference value1
                 deReferenceOrDeleteValue(writeTxn, valueStoreKey2aRef.get());
 
-                final Optional<RefDataValue> optValue = valueStore.get(writeTxn, valueStoreKey2aRef.get());
+                final Optional<RefDataValue> optValue = valueStore.get(
+                        writeTxn,
+                        valueStoreKey2aRef.get());
                 if (expectedPreDeleteRefCount == 1) {
                     // entry should actually be deleted here
                     assertThat(optValue)

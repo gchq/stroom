@@ -81,7 +81,7 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
             final RequestHandler requestHandler = requestHandlerProvider.get();
             requestHandler.handle(request, response);
         } catch (final RuntimeException e) {
-            StroomStreamException.sendErrorResponse(response, e);
+            StroomStreamException.sendErrorResponse(request, response, e);
         }
     }
 

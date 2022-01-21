@@ -49,7 +49,6 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.CreateProcessFilterRequest;
-import stroom.processor.shared.CreateReprocessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
@@ -59,6 +58,8 @@ import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.ExpressionValidationException;
+import stroom.query.api.v2.ExpressionValidator;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
@@ -70,7 +71,6 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -99,8 +99,6 @@ public abstract class AbstractMetaListPresenter
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
-    private final TooltipPresenter tooltipPresenter;
-
     private final Selection<Long> selection = new Selection<>(false, new HashSet<>());
     private final RestFactory restFactory;
     private final LocationManager locationManager;
@@ -120,7 +118,6 @@ public abstract class AbstractMetaListPresenter
     AbstractMetaListPresenter(final EventBus eventBus,
                               final PagerView view,
                               final RestFactory restFactory,
-                              final TooltipPresenter tooltipPresenter,
                               final LocationManager locationManager,
                               final DateTimeFormatter dateTimeFormatter,
                               final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
@@ -128,7 +125,6 @@ public abstract class AbstractMetaListPresenter
                               final Provider<EntityChooser> pipelineSelection,
                               final boolean allowSelectAll) {
         super(eventBus, view);
-        this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -345,7 +341,7 @@ public abstract class AbstractMetaListPresenter
 
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
-                        dateTimeFormatter.format(metaRow.getMeta().getCreateMs()))
+                                dateTimeFormatter.format(metaRow.getMeta().getCreateMs()))
                         .withSorting(MetaFields.CREATE_TIME)
                         .build(),
                 "Created",
@@ -355,10 +351,10 @@ public abstract class AbstractMetaListPresenter
     void addFeedColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
-                        Optional.ofNullable(metaRow)
-                                .map(MetaRow::getMeta)
-                                .map(Meta::getFeedName)
-                                .orElse(""))
+                                Optional.ofNullable(metaRow)
+                                        .map(MetaRow::getMeta)
+                                        .map(Meta::getFeedName)
+                                        .orElse(""))
                         .withSorting(MetaFields.FEED)
                         .build(),
                 "Feed",
@@ -368,10 +364,10 @@ public abstract class AbstractMetaListPresenter
     void addStreamTypeColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
-                        Optional.ofNullable(metaRow)
-                                .map(MetaRow::getMeta)
-                                .map(Meta::getTypeName)
-                                .orElse(""))
+                                Optional.ofNullable(metaRow)
+                                        .map(MetaRow::getMeta)
+                                        .map(Meta::getTypeName)
+                                        .orElse(""))
                         .withSorting(MetaFields.TYPE)
                         .build(),
                 "Type",
@@ -380,16 +376,17 @@ public abstract class AbstractMetaListPresenter
 
     void addPipelineColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((MetaRow metaRow) -> {
-                    if (metaRow.getMeta().getProcessorUuid() != null) {
-                        if (metaRow.getPipelineName() != null) {
-                            return metaRow.getPipelineName();
-                        } else {
-                            return "Not visible";
-                        }
-                    }
-                    return "";
-                })
+                DataGridUtil
+                        .textColumnBuilder((MetaRow metaRow) -> {
+                            if (metaRow.getMeta().getProcessorUuid() != null) {
+                                if (metaRow.getPipelineName() != null) {
+                                    return metaRow.getPipelineName();
+                                } else {
+                                    return "Not visible";
+                                }
+                            }
+                            return "";
+                        })
                         .build(),
                 "Pipeline",
                 ColumnSizeConstants.BIG_COL);
@@ -423,10 +420,8 @@ public abstract class AbstractMetaListPresenter
                             final Function<String, String> formatter,
                             final int size) {
 
-        final Function<MetaRow, String> extractor = metaRow -> {
-            final String value = metaRow.getAttributeValue(attribute.getName());
-            return value;
-        };
+        final Function<MetaRow, String> extractor = metaRow ->
+                metaRow.getAttributeValue(attribute.getName());
 
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
                 .build();
@@ -442,10 +437,8 @@ public abstract class AbstractMetaListPresenter
                                         final Function<String, String> formatter,
                                         final int size) {
 
-        final Function<MetaRow, String> extractor = metaRow -> {
-            final String value = metaRow.getAttributeValue(attribute.getName());
-            return value;
-        };
+        final Function<MetaRow, String> extractor = metaRow ->
+                metaRow.getAttributeValue(attribute.getName());
 
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
                 .rightAligned()
@@ -488,7 +481,7 @@ public abstract class AbstractMetaListPresenter
         };
 
         final Column<MetaRow, SafeHtml> column = DataGridUtil.htmlColumnBuilder(
-                DataGridUtil.colouredCellExtractor(extractor, colourFunc))
+                        DataGridUtil.colouredCellExtractor(extractor, colourFunc))
                 .rightAligned()
                 .build();
 
@@ -503,17 +496,19 @@ public abstract class AbstractMetaListPresenter
     }
 
     public void setExpression(final ExpressionOperator expression) {
-        this.criteria.setExpression(expression);
-        this.criteria.obtainPageRequest().setOffset(0);
-        this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
-        refresh();
+        validateExpression(expression, exp -> {
+            this.criteria.setExpression(exp);
+            this.criteria.obtainPageRequest().setOffset(0);
+            this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
+            refresh();
+        });
     }
 
     public void download() {
         validateSelection("download", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
-            if (expression != null) {
-                final FindMetaCriteria criteria = expressionToNonPagedCriteria(expression);
+            validateExpression(expression, exp -> {
+                final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                 showSummary(
                         criteria,
                         "downloaded",
@@ -521,7 +516,7 @@ public abstract class AbstractMetaListPresenter
                         "Confirm Download",
                         false,
                         () -> download(criteria));
-            }
+            });
         });
     }
 
@@ -536,7 +531,7 @@ public abstract class AbstractMetaListPresenter
                     doProcess(choice);
                 }
             };
-            processChoicePresenter.show(processChoiceUiHandler);
+            processChoicePresenter.show(selection, processChoiceUiHandler);
         } else {
             AlertEvent.fireError(
                     AbstractMetaListPresenter.this,
@@ -549,9 +544,10 @@ public abstract class AbstractMetaListPresenter
         choosePipeline(docRef -> {
             if (docRef != null) {
                 validateSelection("process", () -> {
-                    final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
-                    if (expression != null) {
-                        final FindMetaCriteria criteria = expressionToNonPagedCriteria(expression);
+                    final Selection<Long> selection = getSelection();
+                    final ExpressionOperator expression = selectionToExpression(this.criteria, selection);
+                    validateExpression(expression, exp -> {
+                        final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                         showSummary(
                                 criteria,
                                 "processed",
@@ -559,7 +555,7 @@ public abstract class AbstractMetaListPresenter
                                 "Confirm Process",
                                 false,
                                 () -> process(docRef, criteria, processChoice));
-                    }
+                    });
                 });
             }
         });
@@ -568,8 +564,8 @@ public abstract class AbstractMetaListPresenter
     private void doReprocess(final ProcessChoice processChoice) {
         validateSelection("reprocess", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
-            if (expression != null) {
-                final FindMetaCriteria criteria = expressionToNonPagedCriteria(expression);
+            validateExpression(expression, exp -> {
+                final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                 showSummary(
                         criteria,
                         "reprocessed",
@@ -577,8 +573,21 @@ public abstract class AbstractMetaListPresenter
                         "Confirm Reprocess",
                         true,
                         () -> reprocess(criteria, processChoice));
-            }
+            });
         });
+    }
+
+    private void validateExpression(final ExpressionOperator expression,
+                                    final Consumer<ExpressionOperator> consumer) {
+        if (expression != null) {
+            try {
+                final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getAllFields());
+                expressionValidator.validate(expression);
+                consumer.accept(expression);
+            } catch (final ExpressionValidationException e) {
+                AlertEvent.fireError(this, e.getMessage(), null);
+            }
+        }
     }
 
     private void choosePipeline(final Consumer<DocRef> consumer) {
@@ -596,12 +605,12 @@ public abstract class AbstractMetaListPresenter
     public void delete() {
         validateSelection("delete", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
-            if (expression != null) {
+            validateExpression(expression, exp -> {
                 final Builder not = ExpressionOperator.builder().op(Op.NOT);
                 not.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
 
                 final Builder builder = ExpressionOperator.builder();
-                builder.addOperator(expression);
+                builder.addOperator(exp);
                 builder.addOperator(not.build());
 
                 final FindMetaCriteria criteria = expressionToNonPagedCriteria(builder.build());
@@ -612,16 +621,16 @@ public abstract class AbstractMetaListPresenter
                         "Confirm Delete",
                         false,
                         update(criteria, "Deleted", null, Status.DELETED));
-            }
+            });
         });
     }
 
     public void restore() {
         validateSelection("restore", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
-            if (expression != null) {
+            validateExpression(expression, exp -> {
                 final Builder builder = ExpressionOperator.builder();
-                builder.addOperator(expression);
+                builder.addOperator(exp);
                 builder.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
 
                 final FindMetaCriteria criteria = expressionToNonPagedCriteria(builder.build());
@@ -632,7 +641,7 @@ public abstract class AbstractMetaListPresenter
                         "Confirm Restore",
                         false,
                         update(criteria, "Restored", Status.DELETED, Status.UNLOCKED));
-            }
+            });
         });
     }
 
@@ -666,16 +675,21 @@ public abstract class AbstractMetaListPresenter
     private void process(final DocRef pipeline,
                          final FindMetaCriteria criteria,
                          final ProcessChoice processChoice) {
-        final QueryData queryData = new QueryData(
-                MetaFields.STREAM_STORE_DOC_REF,
-                criteria.getExpression(),
-                null);
-        final CreateProcessFilterRequest request = new CreateProcessFilterRequest(
-                pipeline,
-                queryData,
-                processChoice.getPriority(),
-                processChoice.isAutoPriority(),
-                processChoice.isEnabled());
+        final QueryData queryData = QueryData
+                .builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(criteria.getExpression())
+                .build();
+        final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                .builder()
+                .pipeline(pipeline)
+                .queryData(queryData)
+                .priority(processChoice.getPriority())
+                .autoPriority(processChoice.isAutoPriority())
+                .enabled(processChoice.isEnabled())
+                .minMetaCreateTimeMs(processChoice.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(processChoice.getMaxMetaCreateTimeMs())
+                .build();
 
         final Rest<ProcessorFilter> rest = restFactory.create();
         rest
@@ -693,15 +707,21 @@ public abstract class AbstractMetaListPresenter
 
     private void reprocess(final FindMetaCriteria criteria,
                            final ProcessChoice processChoice) {
-        final QueryData queryData = new QueryData(
-                MetaFields.STREAM_STORE_DOC_REF,
-                criteria.getExpression(),
-                null);
-        final CreateReprocessFilterRequest request = new CreateReprocessFilterRequest(
-                queryData,
-                processChoice.getPriority(),
-                processChoice.isAutoPriority(),
-                processChoice.isEnabled());
+        final QueryData queryData = QueryData
+                .builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(criteria.getExpression())
+                .build();
+        final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                .builder()
+                .queryData(queryData)
+                .priority(processChoice.getPriority())
+                .autoPriority(processChoice.isAutoPriority())
+                .reprocess(true)
+                .enabled(processChoice.isEnabled())
+                .minMetaCreateTimeMs(processChoice.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(processChoice.getMaxMetaCreateTimeMs())
+                .build();
 
         final Rest<List<ReprocessDataInfo>> rest = restFactory.create();
         rest

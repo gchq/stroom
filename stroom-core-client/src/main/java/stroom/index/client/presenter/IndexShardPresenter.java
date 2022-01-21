@@ -42,6 +42,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
@@ -76,6 +77,7 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
     private ResultPage<IndexShard> resultList = null;
     private final FindIndexShardCriteria selectionCriteria = FindIndexShardCriteria.matchAll();
     private final FindIndexShardCriteria queryCriteria = FindIndexShardCriteria.matchAll();
+    private final DelayedUpdate delayedUpdate;
 
     private ButtonView buttonFlush;
     private ButtonView buttonDelete;
@@ -108,6 +110,7 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
         }
 
         addColumns();
+        delayedUpdate = new DelayedUpdate(this::refresh);
     }
 
     @Override
@@ -505,10 +508,11 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void doFlush() {
+        delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-            final Rest<Boolean> rest = restFactory.create();
+            final Rest<Long> rest = restFactory.create();
             rest
-                    .onSuccess(result -> refresh())
+                    .onSuccess(result -> delayedUpdate.update())
                     .call(INDEX_RESOURCE)
                     .flushIndexShards(nodeName, selectionCriteria);
         }), throwable -> {
@@ -520,10 +524,11 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void doDelete() {
+        delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-            final Rest<Boolean> rest = restFactory.create();
+            final Rest<Long> rest = restFactory.create();
             rest
-                    .onSuccess(result -> refresh())
+                    .onSuccess(result -> delayedUpdate.update())
                     .call(INDEX_RESOURCE)
                     .deleteIndexShards(nodeName, selectionCriteria);
         }), throwable -> {

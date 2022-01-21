@@ -21,7 +21,7 @@ public class MockDocRefInfoModule extends AbstractModule {
 
             @Override
             public Optional<String> name(final DocRef docRef) {
-                return Optional.empty();
+                return Optional.ofNullable(docRef.getName());
             }
         };
     }

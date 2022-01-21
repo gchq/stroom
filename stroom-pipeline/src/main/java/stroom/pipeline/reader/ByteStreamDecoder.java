@@ -1,9 +1,11 @@
 package stroom.pipeline.reader;
 
+import stroom.bytebuffer.ByteArrayUtils;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.string.HexDumpUtil;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -11,9 +13,11 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.util.Objects;
 import java.util.function.Supplier;
-import javax.annotation.concurrent.NotThreadSafe;
 
-@NotThreadSafe
+/**
+ * Class to decode a byte stream one 'char' at a time. A 'char' may consist of one or more bytes
+ * in the stream.
+ */
 public class ByteStreamDecoder {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteStreamDecoder.class);
@@ -42,6 +46,12 @@ public class ByteStreamDecoder {
                 .newDecoder();
     }
 
+    /**
+     * @param byteSupplier A supplier of consecutive bytes, e.g. from a byte stream. This will be called
+     *                     one or more times (up to a maximum of MAX_BYTES_PER_CHAR) until a 'char' can be
+     *                     decoded from the bytes supplied.
+     * @return
+     */
     public DecodedChar decodeNextChar(final Supplier<Byte> byteSupplier) {
         // Clear the buffers ready for a new char's bytes
         inputBuffer.clear();
@@ -59,75 +69,88 @@ public class ByteStreamDecoder {
         boolean charDecoded = false;
         int loopCnt = 0;
         int byteCnt = 0;
-        while (!charDecoded && loopCnt++ < MAX_BYTES_PER_CHAR) {
-            byte b = 0;
-            try {
-                final Byte suppliedByte = byteSupplier.get();
-                if (suppliedByte == null) {
-                    // end of stream
-                    endOfSupply = true;
-                    break;
+
+        try {
+            while (!charDecoded && byteCnt < MAX_BYTES_PER_CHAR) {
+                byte b = 0;
+                try {
+                    final Byte suppliedByte = byteSupplier.get();
+                    byteCnt++;
+                    if (suppliedByte == null) {
+                        // end of stream
+                        endOfSupply = true;
+                        break;
+                    }
+                    b = suppliedByte;
+                } catch (Exception e) {
+                    throw new RuntimeException("Error getting next byte");
                 }
-                b = suppliedByte;
-            } catch (Exception e) {
-                throw new RuntimeException("Error getting next byte");
-            }
 
-            // Add the byte to our input buffer and get it ready for reading
-            inputBuffer.put(b);
-            inputBuffer.flip();
+                // Add the byte to our input buffer and get it ready for reading
+                inputBuffer.put(b);
+                inputBuffer.flip();
 
-            // Attempt to decode the content of out input buffer
-            final CoderResult coderResult = charsetDecoder.decode(
-                    inputBuffer,
-                    outputBuffer,
-                    true);
+                // Attempt to decode the content of out input buffer
+                final CoderResult coderResult = charsetDecoder.decode(
+                        inputBuffer,
+                        outputBuffer,
+                        true);
 
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("coderResult: {}, loopCnt: {}, inPos: {}, inLimit: {}, " +
-                                "inBytes: [{}], outPos:{}, outLimit: {}, outputBuffer: [{}]",
-                        coderResult,
-                        loopCnt,
-                        inputBuffer.position(),
-                        inputBuffer.limit(),
-                        ByteBufferUtils.byteBufferToHex(inputBuffer),
-                        outputBuffer.position(),
-                        outputBuffer.limit(),
-                        outputBuffer.toString());
-            }
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("coderResult: {}, byteCnt: {}, inPos: {}, inLimit: {}, " +
+                                    "inBytes: [{}], outPos:{}, outLimit: {}, outputBuffer: [{}]",
+                            coderResult,
+                            byteCnt,
+                            inputBuffer.position(),
+                            inputBuffer.limit(),
+                            ByteBufferUtils.byteBufferToHex(inputBuffer),
+                            outputBuffer.position(),
+                            outputBuffer.limit(),
+                            outputBuffer.toString());
+                }
 
-            byteCnt++;
+                // We may have only one byte of a multibyte char so a malformed result is likely
+                // for any non ascii chars.
+                if (!coderResult.isMalformed()) {
+                    // We have decoded something so output it
+                    charDecoded = true;
+                    final String decodedStr;
+                    if (outputBuffer.array()[0] != 0 && outputBuffer.array()[1] != 0) {
+                        int codePoint = Character.toCodePoint(
+                                outputBuffer.array()[0],
+                                outputBuffer.array()[1]);
+                        decodedStr = new String(new int[]{codePoint}, 0, 1);
 
-            // We may have only one byte of a multibyte char so a malformed result is likely
-            // for any non ascii chars.
-            if (!coderResult.isMalformed()) {
-                // We have decoded something so output it
-                charDecoded = true;
-                final String decodedStr;
-                if (outputBuffer.array()[0] != 0 && outputBuffer.array()[1] != 0) {
-                    int codePoint = Character.toCodePoint(
-                            outputBuffer.array()[0],
-                            outputBuffer.array()[1]);
-                    decodedStr = new String(new int[]{codePoint}, 0, 1);
+                        LOGGER.trace("Multi-char character found with codePoint: [{}], decodedStr: [{}]",
+                                codePoint, decodedStr);
+                    } else {
+                        decodedStr = String.valueOf(outputBuffer.array()[0]);
+                    }
 
-                    LOGGER.trace("Multi-char character found with codePoint: [{}], decodedStr: [{}]",
-                            codePoint, decodedStr);
+                    LOGGER.trace("Decoded char {}, with byte count {}", decodedStr, byteCnt);
+                    result = new DecodedChar(decodedStr, byteCnt);
                 } else {
-                    decodedStr = String.valueOf(outputBuffer.array()[0]);
+                    // Malformed so go round again as we obvs don't have enough bytes to form the char
+                    // Update the input buffer to take the next byte
+                    if (byteCnt < MAX_BYTES_PER_CHAR) {
+                        inputBuffer.limit(byteCnt + 1);
+                        inputBuffer.position(byteCnt);
+                    } else {
+                        inputBuffer.limit(MAX_BYTES_PER_CHAR);
+                        inputBuffer.position(0);
+                    }
+                    //                    byteOffset++;
                 }
-
-                LOGGER.trace("Decoded char {}, with byte count {}", decodedStr, byteCnt);
-                result = new DecodedChar(decodedStr, byteCnt);
-            } else {
-                // Malformed so go round again as we obvs don't have enough bytes to form the char
-                // Update the input buffer to take the next byte
-                inputBuffer.limit(byteCnt + 1);
-                inputBuffer.position(byteCnt);
-//                    byteOffset++;
             }
-        }
-        if (!charDecoded && !endOfSupply) {
-            throw new RuntimeException(LogUtil.message("Failed to decode char after {} iterations.", loopCnt));
+            if (!charDecoded && !endOfSupply) {
+                final byte[] malformedBytes = new byte[inputBuffer.remaining()];
+                inputBuffer.get(malformedBytes);
+                throw new DecoderException(charsetDecoder.charset(), malformedBytes);
+            }
+        } catch (DecoderException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new RuntimeException(LogUtil.message("Error decoding bytes after {} iterations", byteCnt), e);
         }
 
         return result;
@@ -161,6 +184,39 @@ public class ByteStreamDecoder {
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static class DecoderException extends RuntimeException {
+
+        private final byte[] malformedBytes;
+        private final Charset charset;
+
+        public DecoderException(final Charset charset,
+                                final byte[] malformedBytes) {
+            super(buildErrorMessage(charset, malformedBytes));
+
+            this.malformedBytes = malformedBytes;
+            this.charset = charset;
+        }
+
+        private static String buildErrorMessage(final Charset charset,
+                                                final byte[] malformedBytes) {
+            final String printableStr = HexDumpUtil.decodeAsPrintableChars(malformedBytes, charset);
+            return "Unable to decode a "
+                    + charset.displayName()
+                    + " character starting at bytes ["
+                    + ByteArrayUtils.byteArrayToHex(malformedBytes)
+                    + "] [" + printableStr
+                    + "]. View the data as hex to see the raw data.";
+        }
+
+        public byte[] getMalformedBytes() {
+            return malformedBytes;
+        }
+
+        public Charset getCharset() {
+            return charset;
+        }
+    }
 
 
     /**

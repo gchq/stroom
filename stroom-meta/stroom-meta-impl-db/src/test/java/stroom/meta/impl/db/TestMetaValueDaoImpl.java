@@ -22,9 +22,11 @@ import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.event.logging.mock.MockStroomEventLoggingModule;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaModule;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaServiceImpl;
 import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.shared.FindMetaCriteria;
@@ -37,6 +39,7 @@ import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.date.DateUtil;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,14 +57,15 @@ class TestMetaValueDaoImpl {
     private MetaServiceImpl metaService;
     @Inject
     private MetaValueDaoImpl metaValueDao;
-    @Inject
-    private MetaValueConfig metaValueConfig;
+
+    private MetaServiceConfig metaServiceConfig = new MetaServiceConfig();
 
     @BeforeEach
     void setup() {
         Guice.createInjector(
                 new MetaModule(),
                 new MetaDbModule(),
+                new MetaDaoModule(),
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
@@ -70,16 +74,26 @@ class TestMetaValueDaoImpl {
                 new CacheModule(),
                 new DbTestModule(),
                 new MetaTestModule(),
-                new MockTaskModule())
+                new MockTaskModule(),
+                new MockStroomEventLoggingModule(),
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(MetaServiceConfig.class).toProvider(() ->
+                                getMetaServiceConfig());
+                        bind(MetaValueConfig.class).toProvider(() ->
+                                getMetaValueConfig());
+                    }
+                })
                 .injectMembers(this);
-        metaValueConfig.setAddAsync(false);
+        setAddAsync(false);
         // Delete everything
         cleanup.cleanup();
     }
 
     @AfterEach
     void unsetProperties() {
-        metaValueConfig.setAddAsync(true);
+        setAddAsync(true);
     }
 
     @Test
@@ -179,5 +193,19 @@ class TestMetaValueDaoImpl {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(MetaFields.FILE_SIZE.getName(), "100");
         return attributeMap;
+    }
+
+    public MetaServiceConfig getMetaServiceConfig() {
+        return metaServiceConfig;
+    }
+
+    public MetaValueConfig getMetaValueConfig() {
+        return metaServiceConfig.getMetaValueConfig();
+    }
+
+    private void setAddAsync(final boolean addAsync) {
+        metaServiceConfig = metaServiceConfig.withMetaValueConfig(
+                metaServiceConfig.getMetaValueConfig()
+                        .withAddAsync(addAsync));
     }
 }

@@ -43,9 +43,11 @@ server:
   applicationConnectors:
     - type: http
       port: "8090"
+      useForwardedHeaders: true
   adminConnectors:
     - type: http
       port: "8091"
+      useForwardedHeaders: true
   requestLog:
     appenders:
       # Log appender for the web server request logging
@@ -129,7 +131,7 @@ logging:
 proxyConfig:
   path:
     # By default all files read or written to by stroom-proxy will be in directories relative to
-    # the home location. This should be set to an absolute path that differs from the location of
+    # the home location. This must be set to an absolute path and also to one that differs
     # the installed software as it has a different lifecycle.
     home: "{{ proxyHome }}"
 

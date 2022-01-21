@@ -111,7 +111,6 @@ public class ExplorerTreeNode implements HasIntegerId {
         return clone;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -127,5 +126,16 @@ public class ExplorerTreeNode implements HasIntegerId {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "ExplorerTreeNode{" +
+                "id=" + id +
+                ", type='" + type + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", name='" + name + '\'' +
+                ", tags='" + tags + '\'' +
+                '}';
     }
 }

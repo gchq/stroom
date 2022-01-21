@@ -54,9 +54,8 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                                         .name("RefFeed")
                                         .type(StreamTypeNames.REFERENCE)
                                         .uuid(UUID.randomUUID().toString())
-                                        .build()
-
-                        )
+                                        .build(),
+                                StreamTypeNames.REFERENCE)
                 )
         );
 
@@ -91,9 +90,8 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                                         .name("RefFeed")
                                         .type(StreamTypeNames.REFERENCE)
                                         .uuid(UUID.randomUUID().toString())
-                                        .build()
-
-                        )
+                                        .build(),
+                                StreamTypeNames.REFERENCE)
                 )
         );
 
@@ -105,7 +103,7 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                     "GBR");
         })
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("mapName may not be null");
+                .hasMessageContaining("mapName must not be null");
     }
 
     @Test
@@ -128,9 +126,8 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                                         .name("RefFeed")
                                         .type(StreamTypeNames.REFERENCE)
                                         .uuid(UUID.randomUUID().toString())
-                                        .build()
-
-                        )
+                                        .build(),
+                                StreamTypeNames.REFERENCE)
                 )
         );
 
@@ -142,7 +139,7 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                     "GBR");
         })
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("key may not be null");
+                .hasMessageContaining("key must not be null");
     }
 
     @Test
@@ -164,6 +161,6 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                     "GBR");
         })
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("referenceLoaders may not be empty");
+                .hasMessageContaining("referenceLoaders must not be empty");
     }
 }

@@ -4,24 +4,55 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Map;
 import java.util.TreeMap;
-import javax.inject.Singleton;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConfig {
 
-    // Use a treemap so we get a consistent order in the yaml so TestYamlUtil doesn't fail
-    private Map<Integer, Integer> pooledByteBufferCounts = new TreeMap<>(Map.of(
-            1, 50,
-            10, 50,
-            100, 50,
-            1_000, 50,
-            10_000, 50,
-            100_000, 10,
-            1_000_000, 3));
+    private final int warningThresholdPercentage;
+    private final Map<Integer, Integer> pooledByteBufferCounts;
+    private final boolean blockOnExhaustedPool;
+
+    public ByteBufferPoolConfig() {
+        warningThresholdPercentage = 90;
+        // Use a treemap so we get a consistent order in the yaml so TestYamlUtil doesn't fail
+        pooledByteBufferCounts = new TreeMap<>(Map.of(
+                1, 50,
+                10, 50,
+                100, 50,
+                1_000, 50,
+                10_000, 50,
+                100_000, 10,
+                1_000_000, 3));
+        blockOnExhaustedPool = false;
+    }
+
+    @JsonCreator
+    public ByteBufferPoolConfig(
+            @JsonProperty("warningThresholdPercentage") final int warningThresholdPercentage,
+            @JsonProperty("pooledByteBufferCounts") final Map<Integer, Integer> pooledByteBufferCounts,
+            @JsonProperty("blockOnExhaustedPool") final boolean blockOnExhaustedPool) {
+        this.warningThresholdPercentage = warningThresholdPercentage;
+        this.pooledByteBufferCounts = pooledByteBufferCounts;
+        this.blockOnExhaustedPool = blockOnExhaustedPool;
+    }
+
+    @Max(100)
+    @Min(1)
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonPropertyDescription("When the number of created buffers for any size reaches this threshold a warning will " +
+            "be logged.")
+    public int getWarningThresholdPercentage() {
+        return warningThresholdPercentage;
+    }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Defines the maximum number of byte buffers that will be held in the pool, " +
@@ -34,14 +65,27 @@ public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConf
         return pooledByteBufferCounts;
     }
 
-    public void setPooledByteBufferCounts(final Map<Integer, Integer> pooledByteBufferCounts) {
-        this.pooledByteBufferCounts = pooledByteBufferCounts;
+    @JsonPropertyDescription("Whether the thread should be blocked when requesting a buffer from the pool and the " +
+            "limit for that buffer size has been reached. If false new buffers will be created and excess buffers " +
+            "will have to be destroyed when no longer needed which may have a performance/memory penalty.")
+    public boolean isBlockOnExhaustedPool() {
+        return blockOnExhaustedPool;
+    }
+
+    public ByteBufferPoolConfig withPooledByteBufferCounts(final Map<Integer, Integer> pooledByteBufferCounts) {
+        return new ByteBufferPoolConfig(warningThresholdPercentage, pooledByteBufferCounts, blockOnExhaustedPool);
+    }
+
+    public ByteBufferPoolConfig withBlockOnExhaustedPool(final boolean blockOnExhaustedPool) {
+        return new ByteBufferPoolConfig(warningThresholdPercentage, pooledByteBufferCounts, blockOnExhaustedPool);
     }
 
     @Override
     public String toString() {
         return "ByteBufferPoolConfig{" +
-                "pooledByteBufferCounts=" + pooledByteBufferCounts +
+                "warningThresholdPercentage=" + warningThresholdPercentage +
+                ", pooledByteBufferCounts=" + pooledByteBufferCounts +
+                ", blockOnExhaustedPool=" + blockOnExhaustedPool +
                 '}';
     }
 }

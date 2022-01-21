@@ -33,11 +33,15 @@ import stroom.proxy.app.servlet.ProxyWelcomeServlet;
 import stroom.proxy.repo.ErrorReceiver;
 import stroom.proxy.repo.ErrorReceiverImpl;
 import stroom.proxy.repo.ForwarderDestinations;
+import stroom.proxy.repo.ProgressLog;
+import stroom.proxy.repo.ProgressLogImpl;
 import stroom.proxy.repo.ProxyRepoDbModule;
 import stroom.proxy.repo.RepoDbDirProvider;
 import stroom.proxy.repo.RepoDbDirProviderImpl;
 import stroom.proxy.repo.RepoDirProvider;
 import stroom.proxy.repo.RepoDirProviderImpl;
+import stroom.proxy.repo.Sender;
+import stroom.proxy.repo.SenderImpl;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.FeedStatusResourceImpl;
@@ -133,6 +137,8 @@ public class ProxyModule extends AbstractModule {
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
+        bind(Sender.class).to(SenderImpl.class);
+        bind(ProgressLog.class).to(ProgressLogImpl.class);
 
         bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
         bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);

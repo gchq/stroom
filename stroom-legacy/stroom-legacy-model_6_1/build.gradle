@@ -1,13 +1,14 @@
 ext.moduleName = 'stroom.legacy.model_6_1'
 
 dependencies {
-    compile "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final"
-    compile libs.jackson_annotations
-    compile libs.jackson_databind
-    compile libs.javassist
-    compile libs.jaxb_api
-    compile libs.saxon_he
-    compile libs.slf4j_api
-    compile libs.swagger_annotations
-    compile libs.validation_api
+    implementation libs.hibernate_jpa
+    implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.jakarta_validation_api
+    implementation libs.javassist
+    implementation libs.jaxb_api
+    implementation libs.saxon_he
+    implementation libs.slf4j_api
+    implementation libs.swagger_annotations
 }

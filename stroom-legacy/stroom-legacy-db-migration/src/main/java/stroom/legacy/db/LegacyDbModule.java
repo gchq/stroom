@@ -19,9 +19,9 @@ package stroom.legacy.db;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
+import stroom.legacy.db.LegacyConfig.LegacyDbConfig;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Version;
@@ -31,7 +31,6 @@ import com.google.inject.Provides;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.MarkerFactory;
 
 import java.sql.Connection;
@@ -50,6 +49,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
+import javax.validation.constraints.NotNull;
 
 /**
  * Configures anything related to persistence, e.g. transaction management, the
@@ -75,19 +75,16 @@ public class LegacyDbModule extends AbstractModule {
         super.configure();
 
         // Force creation of connection provider so that legacy migration code executes.
-        bind(ForceMigrationImpl.class).asEagerSingleton();
-
         // Allows other db modules to inject ForceLegacyMigration to ensure the legacy db migration
         // has run before they do
         // The legacy migration renames all the old tables, creates the new ones and copies old into new
-        bind(ForceLegacyMigration.class).to(ForceMigrationImpl.class);
+        bind(ForceLegacyMigration.class)
+                .to(ForceMigrationImpl.class)
+                .asEagerSingleton();
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
                 .addBinding(LegacyDbConnProvider.class);
-
-        HasHealthCheckBinder.create(binder())
-                .bind(DbHealthCheck.class);
     }
 
     @Provides
@@ -96,7 +93,7 @@ public class LegacyDbModule extends AbstractModule {
                                                       final DataSourceFactory dataSourceFactory) {
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 
-        final DataSource dataSource = dataSourceFactory.create(configProvider.get());
+        final DataSource dataSource = dataSourceFactory.create(configProvider.get(), getModuleName(), false);
 
         // Prevent migrations from being re-run for each test
         final boolean required = COMPLETED_MIGRATIONS

@@ -5,7 +5,7 @@ import stroom.dashboard.expression.v1.Val;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public interface DataStore {
 
@@ -17,19 +17,11 @@ public interface DataStore {
     void add(Val[] values);
 
     /**
-     * Get root items from the data store.
+     * Get data from the store
      *
-     * @return Root items.
+     * @param consumer Consumer for the data.
      */
-    Items get();
-
-    /**
-     * Get child items from the data store for the provided parent key.
-     *
-     * @param parentKey The parent key to get child items for.
-     * @return The child items for the parent key.
-     */
-    Items get(final Key key);
+    void getData(Consumer<Data> consumer);
 
     /**
      * Clear the data store.
@@ -50,7 +42,7 @@ public interface DataStore {
      * @param input The input to read.
      * @return True if we still happy to keep on receiving data, false otherwise.
      */
-    boolean readPayload(Input input);
+    void readPayload(Input input);
 
     /**
      * Write data from the data store to an output removing them from the datastore as we go as they will be transferred
@@ -59,14 +51,4 @@ public interface DataStore {
      * @param output The output to write to.
      */
     void writePayload(Output output);
-
-    /**
-     * Wait for all current items that might be queued for adding to be added.
-     *
-     * @param timeout How long to wait for items to be added.
-     * @param unit    The time unit for the wait period.
-     * @return True if we didn't timeout and all items are now added.
-     * @throws InterruptedException Thrown if the thread is interrupted while waiting.
-     */
-    boolean awaitTransfer(long timeout, TimeUnit unit) throws InterruptedException;
 }

@@ -82,11 +82,14 @@ public class ValueStoreKey {
         return uniqueId;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ValueStoreKey key = (ValueStoreKey) o;
         return valueHashCode == key.valueHashCode &&
                 uniqueId == key.uniqueId;

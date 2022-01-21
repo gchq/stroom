@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.AttributeMapFactory;
-import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.util.guice.GuiceUtil;
@@ -32,7 +31,6 @@ public class FsDataStoreModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(DataStoreMaintenanceService.class).to(FsDataStoreMaintenanceService.class);
         bind(Store.class).to(FsStore.class);
         bind(AttributeMapFactory.class).to(FsStore.class);
 
@@ -49,7 +47,6 @@ public class FsDataStoreModule extends AbstractModule {
                 .bind(EchoServlet.class);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

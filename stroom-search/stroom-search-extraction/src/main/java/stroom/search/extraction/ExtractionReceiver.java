@@ -1,8 +1,9 @@
 package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.query.common.v2.Receiver;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 
-public interface ExtractionReceiver extends Receiver {
-    FieldIndex getFieldMap();
+public interface ExtractionReceiver extends ValuesConsumer {
+
+    FieldIndex getFieldIndex();
 }

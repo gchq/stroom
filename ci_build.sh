@@ -265,10 +265,24 @@ gather_release_artefacts() {
     "${RELEASE_ARTEFACTS_DIR}" \
     "The Stroom database schema SQL"
 
+  format_manifest_file
+
   # Now generate hashes for all the zips
   for file in "${RELEASE_ARTEFACTS_DIR}"/*.zip; do
     create_file_hash "${file}"
   done
+}
+
+format_manifest_file() {
+  local temp_file
+  temp_file="$(mktemp)"
+  # Now format the manifest into columns
+  # Replace ' - ' with '|' then split to columns on '|'
+  sed 's/ - /|/g' "${RELEASE_MANIFEST}" \
+    | column -t -s\| \
+    > "${temp_file}"
+
+  mv "${temp_file}" "${RELEASE_MANIFEST}"
 }
 
 # args: dockerRepo contextRoot tag1VersionPart tag2VersionPart ... tagNVersionPart

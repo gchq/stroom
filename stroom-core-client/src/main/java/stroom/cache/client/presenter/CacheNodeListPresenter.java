@@ -30,6 +30,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DelayedUpdate;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
@@ -66,6 +67,8 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private RestDataProvider<CacheInfo, CacheInfoResponse> dataProvider;
     private String cacheName;
+
+    private DelayedUpdate delayedUpdate;
 
     @Inject
     public CacheNodeListPresenter(final EventBus eventBus,
@@ -181,6 +184,12 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                     @Override
                     protected void exec(final Consumer<CacheInfoResponse> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
+                        if (delayedUpdate == null) {
+                            delayedUpdate = new DelayedUpdate(() ->
+                                    combineNodeTasks(dataConsumer, throwableConsumer));
+                        }
+                        delayedUpdate.reset();
+
                         nodeManager.listAllNodes(nodeNames ->
                                 fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames), throwableConsumer);
                     }
@@ -200,11 +209,11 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
             rest
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
-                        combineNodeTasks(dataConsumer, throwableConsumer);
+                        delayedUpdate.update();
                     })
                     .onFailure(throwable -> {
                         responseMap.remove(nodeName);
-                        combineNodeTasks(dataConsumer, throwableConsumer);
+                        delayedUpdate.update();
                     })
                     .call(CACHE_RESOURCE).info(cacheName, nodeName);
         }

@@ -32,6 +32,11 @@ class TestQuickFilterPredicateFactory {
             FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Name"), Pojo::getDocRef, DocRef::getName),
             FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Uuid"), Pojo::getDocRef, DocRef::getUuid));
 
+    private static final FilterFieldMappers<Pojo> FIELD_MAPPERS_2 = FilterFieldMappers.of(
+            FilterFieldMapper.of(FilterFieldDefinition.defaultField("Name"), Pojo::getStatus),
+            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Age"), Pojo::getSimpleStr1),
+            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Sex"), Pojo::getSimpleStr2));
+
     private static final Pojo POJO_1 = new Pojo(
             "OK",
             "MY NAME",
@@ -346,6 +351,66 @@ class TestQuickFilterPredicateFactory {
                         "Blue Whale",
                         "Red Dragon",
                         "Red Panda"); // matches on e to 2nd a, i.e. rED PANDA
+    }
+
+    @Test
+    void testQualifyTerms() {
+        final String input = "xxx";
+        final String expectedQualifiedInput = "name:xxx";
+        doQualifyInputTest(input, expectedQualifiedInput, FIELD_MAPPERS_2);
+    }
+
+    @Test
+    void testQualifyTerms2() {
+        final String input = "?xxx";
+        final String expectedQualifiedInput = "name:?xxx";
+        doQualifyInputTest(input, expectedQualifiedInput, FIELD_MAPPERS_2);
+    }
+
+    @Test
+    void testQualifyTerms3() {
+        final String input = "jane sex:fe";
+        final String expectedQualifiedInput = "name:jane AND sex:fe";
+        doQualifyInputTest(input, expectedQualifiedInput, FIELD_MAPPERS_2);
+    }
+
+    @Test
+    void testQualifyTerms4() {
+        final String input = "name:jane sex:fe";
+        final String expectedQualifiedInput = "name:jane AND sex:fe";
+        doQualifyInputTest(input, expectedQualifiedInput, FIELD_MAPPERS_2);
+    }
+
+    @Test
+    void testQualifyTerms5() {
+        final String input = "xxx";
+        final String expectedQualifiedInput = "(simplestr1:xxx OR simplestr2:xxx)";
+        doQualifyInputTest(input, expectedQualifiedInput, FIELD_MAPPERS);
+    }
+
+    @Test
+    void testQualifyTerms6() {
+        final String input = "simplestr1:xxx";
+        final String expectedQualifiedInput = "simplestr1:xxx";
+        doQualifyInputTest(input, expectedQualifiedInput, FIELD_MAPPERS);
+    }
+
+    @Test
+    void testQualifyTerms7() {
+        final String input = "xxx name:fubar";
+        final String expectedQualifiedInput = "(simplestr1:xxx OR simplestr2:xxx) AND name:fubar";
+        doQualifyInputTest(input, expectedQualifiedInput, FIELD_MAPPERS);
+    }
+
+    private void doQualifyInputTest(final String input,
+                                    final String expectedQualifiedInput,
+                                    final FilterFieldMappers<?> fieldMappers) {
+        final String qualifiedInput = QuickFilterPredicateFactory.fullyQualifyInput(input, fieldMappers);
+
+        LOGGER.info("input: {}, qualifiedInput: {}", input, qualifiedInput);
+
+        Assertions.assertThat(qualifiedInput)
+                .isEqualTo(expectedQualifiedInput);
     }
 
     private DynamicTest makeTokenTest(final String input,

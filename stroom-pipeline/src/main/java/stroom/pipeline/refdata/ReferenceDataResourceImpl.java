@@ -2,6 +2,7 @@ package stroom.pipeline.refdata;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.pipeline.refdata.store.ProcessingInfoResponse;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
@@ -27,11 +28,27 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
 
     @AutoLogged(OperationType.VIEW)
     @Override
-    public List<RefStoreEntry> entries(final Integer limit) {
+    public List<RefStoreEntry> entries(final Integer limit,
+                                       final Long refStreamId,
+                                       final String mapName) {
         return referenceDataServiceProvider.get()
                 .entries(limit != null
-                        ? limit
-                        : 100);
+                                ? limit
+                                : 100,
+                        refStreamId,
+                        mapName);
+    }
+
+    @Override
+    public List<ProcessingInfoResponse> refStreamInfo(final Integer limit,
+                                                      final Long refStreamId,
+                                                      final String mapName) {
+        return referenceDataServiceProvider.get()
+                .refStreamInfo(limit != null
+                                ? limit
+                                : 100,
+                        refStreamId,
+                        mapName);
     }
 
     @AutoLogged(OperationType.VIEW)
@@ -43,7 +60,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
 
     @AutoLogged(OperationType.DELETE)
     @Override
-    public boolean purge(final String purgeAge) {
+    public boolean purge(final String purgeAge, final String nodeName) {
         StroomDuration purgeAgeDuration;
         try {
             purgeAgeDuration = StroomDuration.parse(purgeAge);
@@ -53,10 +70,36 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
         }
         try {
             referenceDataServiceProvider.get()
-                    .purge(purgeAgeDuration);
+                    .purge(purgeAgeDuration, nodeName);
             return true;
         } catch (Exception e) {
             LOGGER.error("Failed to purgeAge " + purgeAge, e);
+            throw e;
+        }
+    }
+
+    @AutoLogged(OperationType.DELETE)
+    @Override
+    public boolean purge(final long refStreamId, final String nodeName) {
+        try {
+            // partNo is one based, partIndex is zero based
+            referenceDataServiceProvider.get()
+                    .purge(refStreamId, nodeName);
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to purge stream " + refStreamId, e);
+            throw e;
+        }
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public void clearBufferPool(final String nodeName) {
+        try {
+            referenceDataServiceProvider.get()
+                    .clearBufferPool(nodeName);
+        } catch (RuntimeException e) {
+            LOGGER.error("Failed to clear buffer pool", e);
             throw e;
         }
     }

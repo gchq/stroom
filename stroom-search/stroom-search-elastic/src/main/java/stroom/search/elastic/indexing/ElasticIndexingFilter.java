@@ -47,6 +47,8 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -76,8 +78,14 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
 
+    private int batchSize = 10000;
+    private String ingestPipelineName = null;
+    private boolean refreshAfterEachBatch = false;
     private DocRef clusterRef;
-    private String indexName;
+    private String indexBaseName;
+    private String indexNameDateFormat;
+    private String indexNameDateFieldName = "@timestamp";
+
     private Collection<Map<String, Object>> currentDocuments = new ArrayList<>();
     private Map<String, Object> document = new HashMap<>();
     private List<String> currentStringArray;
@@ -89,8 +97,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private boolean isBuildingObject = false;
     private String currentPropertyName;
 
-    private int batchSize = 10000;
-    private boolean refreshAfterEachBatch = false;
     private int fieldsIndexed;
     private long docsIndexed;
 
@@ -120,7 +126,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 throw new LoggedException("Elasticsearch cluster ref has not been set");
             }
 
-            if (indexName == null || indexName.isEmpty()) {
+            if (indexBaseName == null || indexBaseName.isEmpty()) {
                 log(Severity.FATAL_ERROR, "Index name has not been set", null);
                 throw new LoggedException("Index name has not been set");
             }
@@ -306,7 +312,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             currentDocuments.add(document);
             document = new HashMap<>();
 
-            if (currentDocuments.size() > batchSize) {
+            if (currentDocuments.size() >= batchSize) {
                 addDocuments(currentDocuments);
                 currentDocuments = new ArrayList<>();
             }
@@ -328,9 +334,29 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
                         // For each document, create an indexing request and append to the bulk request
                         bulkRequest.add(
-                                documents.stream().map(document -> new IndexRequest(indexName)
-                                        .opType(OpType.CREATE)
-                                        .source(document)).collect(Collectors.toList())
+                                documents.stream()
+                                        .map(document -> {
+                                            String indexName = this.indexBaseName;
+
+                                            // If a date format has specified, append the formatted timestamp field
+                                            // value to the index base name
+                                            if (indexNameDateFormat != null && !indexNameDateFormat.isEmpty()) {
+                                                indexName = formatIndexName(document);
+                                            }
+
+                                            final IndexRequest indexRequest = new IndexRequest(indexName)
+                                                    .opType(OpType.CREATE)
+                                                    .source(document);
+
+                                            // If an ingest pipeline name is specified, execute it when ingesting
+                                            // the document
+                                            if (ingestPipelineName != null && !ingestPipelineName.isEmpty()) {
+                                                indexRequest.setPipeline(ingestPipelineName);
+                                            }
+
+                                            return indexRequest;
+                                        })
+                                        .collect(Collectors.toList())
                         );
 
                         if (refreshAfterEachBatch) {
@@ -345,8 +371,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         if (response.hasFailures()) {
                             throw new IOException("Bulk index request failed: " + response.buildFailureMessage());
                         } else {
-                            LOGGER.info(() -> "Indexed " + documents.size() + " items to '" + indexName + "' in " +
-                                response.getTook().getSecondsFrac() + " seconds");
+                            LOGGER.info(() -> "Indexed " + documents.size() + " items to Elasticsearch cluster '" +
+                                    elasticCluster.getName() + "' in " + response.getTook().getSecondsFrac() +
+                                    " seconds");
                         }
                     }
                 } catch (final RuntimeException | IOException e) {
@@ -360,6 +387,26 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     /**
+     * Where an index name date pattern is specified, formats the value of the document timestamp field
+     * using the date pattern
+     * @param document Document to be indexed
+     * @return Index base name appended with the formatted document timestamp
+     */
+    private String formatIndexName(final Map<String, Object> document) {
+        try {
+            final ZonedDateTime timestamp = ZonedDateTime.parse((String) document.get(indexNameDateFieldName));
+            final DateTimeFormatter pattern = DateTimeFormatter.ofPattern(indexNameDateFormat);
+
+            return indexBaseName + pattern.format(timestamp);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(String.format("Invalid index name date format: %s", indexNameDateFormat));
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Field %s not found in document, which is " +
+                    "required as property `indexNameDateFormat` has been set", indexNameDateFieldName));
+        }
+    }
+
+    /**
      * Adds a field and value to the document, where an existing mapping is not defined.
      * If Elasticsearch index dynamic properties are defined, a field mapping will be created if the field name matches
      * the defined pattern. Regardless, the field will be added to the document's `_source`.
@@ -367,7 +414,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private void addFieldToDocument(final String fieldName, final Object value) {
         if (!document.containsKey(fieldName)) {
             LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
-                indexName +
+                    indexBaseName +
                 " name=" +
                 fieldName +
                 " value=" +
@@ -391,27 +438,53 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(
-            description = "Name of the index to send records to",
+            description = "Name of the Elasticsearch index",
             displayPriority = 2
     )
-    public void setIndex(final String indexName) {
-        this.indexName = indexName;
+    public void setIndexBaseName(final String indexBaseName) {
+        this.indexBaseName = indexBaseName;
     }
 
     @PipelineProperty(
-            description = "How many documents to send to the index in a single post",
+            description = "Format of the date to append to the index name (see `DateTimeFormatter`)",
+            displayPriority = 3
+    )
+    public void setIndexNameDateFormat(final String indexNameDateFormat) {
+        this.indexNameDateFormat = indexNameDateFormat;
+    }
+
+    @PipelineProperty(
+            description = "Name of the field containing the `DateTime` value to use when determining the index date " +
+                    "suffix",
+            defaultValue = "@timestamp",
+            displayPriority = 4
+    )
+    public void setIndexNameDateFieldName(final String indexNameDateFieldName) {
+        this.indexNameDateFieldName = indexNameDateFieldName;
+    }
+
+    @PipelineProperty(
+            description = "Maximum number of documents to index in each bulk request",
             defaultValue = "10000",
-            displayPriority = 2
+            displayPriority = 5
     )
     public void setBatchSize(final int batchSize) {
         this.batchSize = batchSize;
     }
 
     @PipelineProperty(
-            description = "Refresh the index after each batch is processed, making the indexed documents visible to" +
+            description = "Name of the Elasticsearch ingest pipeline to execute when indexing",
+            displayPriority = 6
+    )
+    public void setIngestPipeline(final String ingestPipelineName) {
+        this.ingestPipelineName = ingestPipelineName;
+    }
+
+    @PipelineProperty(
+            description = "Refresh the index after each batch is processed, making the indexed documents visible to " +
                     "searches",
             defaultValue = "false",
-            displayPriority = 3
+            displayPriority = 7
     )
     public void setRefreshAfterEachBatch(final boolean refreshAfterEachBatch) {
         this.refreshAfterEachBatch = refreshAfterEachBatch;

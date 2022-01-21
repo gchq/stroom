@@ -8,7 +8,7 @@ import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.annotation.shared.SetStatusRequest;
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -21,7 +21,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.shared.PermissionException;
 
 import java.util.List;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class AnnotationService implements Searchable, AnnotationCreator {
@@ -57,7 +56,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
+                       final ValuesConsumer consumer) {
         checkPermission();
 
         final ExpressionFilter expressionFilter = ExpressionFilter.builder()

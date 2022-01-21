@@ -3,64 +3,55 @@ apply plugin: 'nu.studer.jooq'
 ext.moduleName = 'stroom.annotation.impl.db.jooq'
 
 dependencies {
-    compile libs.javax_annotation
-    permitUnusedDeclared libs.javax_annotation
-    compile libs.jooq
+    implementation libs.jakarta_annotation_api
+    implementation libs.jooq
 
+    runtimeOnly libs.mysql_connector_java
     jooqGenerator libs.mysql_connector_java
 }
 
-def propNameJooqGeneration = 'jooqGeneration'
+// Configure jooq plugin to generate code
+jooq {
+    version = versions.jooq
+    edition = nu.studer.gradle.jooq.JooqEdition.OSS  // default (can be omitted)
 
-// to run the jooq code generation add the following to the gradle command arguments
-// -PjooqGeneration=true
-if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
-    configure(project) {
-        //configure jooq plugin to generate code
+    configurations {
+        main {  // name of the jOOQ configuration
 
-        jooq {
-            version = versions.jooq
-            edition = nu.studer.gradle.jooq.JooqEdition.OSS  // default (can be omitted)
+            // Disable JOOQ code generation on build
+            generateSchemaSourceOnCompilation = false
 
-            configurations {
-                main {  // name of the jOOQ configuration
-
-                    // Disable JOOQ code generation on build
-                    generateSchemaSourceOnCompilation = false
-
-                    generationTool {
-                        logging = org.jooq.meta.jaxb.Logging.WARN
-                        jdbc {
-                            driver = 'com.mysql.cj.jdbc.Driver'
-                            url = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
-                            user = 'stroomuser'
-                            password = 'stroompassword1'
-                        }
-                        generator {
-                            name = 'org.jooq.codegen.JavaGenerator'
-                            database {
-                                name = 'org.jooq.meta.mysql.MySQLDatabase'
-                                inputSchema = 'stroom'
-                                // Add anything you want included in generation below, whitespace ignored
-                                // and comments allowed. Each one is a java regex
-                                includes = 'annotation|annotation_data_link|annotation_entry'
-                                // We don't want to include flyway versioning
-                                excludes = 'annotation_schema_version'
-                                // Specify 'version' for use in optimistic concurrency control
-                                recordVersionFields = 'version'
-                                // Treat tinyint(1) columns as booleans
-                                forcedTypes {
-                                    forcedType {
-                                        name = 'BOOLEAN'
-                                        types = '(?i:TINYINT\\(1\\))'
-                                    }
-                                }
-                            }
-                            target {
-                                packageName = 'stroom.annotation.impl.db.jooq'
-                                directory = 'src/main/java'
+            generationTool {
+                logging = org.jooq.meta.jaxb.Logging.WARN
+                jdbc {
+                    driver = 'com.mysql.cj.jdbc.Driver'
+                    url = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
+                    user = 'stroomuser'
+                    password = 'stroompassword1'
+                }
+                generator {
+                    name = 'org.jooq.codegen.JavaGenerator'
+                    database {
+                        name = 'org.jooq.meta.mysql.MySQLDatabase'
+                        inputSchema = 'stroom'
+                        // Add anything you want included in generation below, whitespace ignored
+                        // and comments allowed. Each one is a java regex
+                        includes = 'annotation|annotation_data_link|annotation_entry'
+                        // We don't want to include flyway versioning
+                        excludes = 'annotation_schema_version'
+                        // Specify 'version' for use in optimistic concurrency control
+                        recordVersionFields = 'version'
+                        // Treat tinyint(1) columns as booleans
+                        forcedTypes {
+                            forcedType {
+                                name = 'BOOLEAN'
+                                types = '(?i:TINYINT\\(1\\))'
                             }
                         }
+                    }
+                    target {
+                        packageName = 'stroom.annotation.impl.db.jooq'
+                        directory = 'src/main/java'
                     }
                 }
             }

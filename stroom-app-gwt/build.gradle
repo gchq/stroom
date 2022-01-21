@@ -29,39 +29,40 @@ sourceSets {
 }
 
 dependencies {
-    compile project(':stroom-core-client')
-    compile project(':stroom-core-client-widget')
-    compile project(':stroom-dashboard:stroom-dashboard-client')
-    compile project(':stroom-docref')
-    compile project(':stroom-query:stroom-query-api')
-    compile project(':stroom-query:stroom-query-common')
-    compile project(':stroom-security:stroom-security-client')
-    compile project(':stroom-statistics:stroom-statistics-client')
+    implementation project(':stroom-core-client')
+    implementation project(':stroom-core-client-widget')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-dashboard:stroom-dashboard-client')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-security:stroom-security-client')
+    implementation project(':stroom-statistics:stroom-statistics-client')
 
     // These source deps are all needed for the GWT transpiling to javascript
-    compile libs.gin
-    compile libs.guice3
-    compile libs.gwt_dev
-    compile libs.gwt_user
-    compile libs.gwtp_mvp_client
-    compile libs.jackson_annotations
-    compile libs.jaxb_api
-    compile libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
+    implementation libs.gin
+    implementation libs.guice3
+    implementation libs.gwt_dev
+    implementation libs.gwt_user
+    implementation libs.gwtp_mvp_client
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
+    implementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
 
-    gwtSourceCompile libs.gin
-    gwtSourceCompile libs.gwt_dev
-    gwtSourceCompile libs.gwt_user
-    gwtSourceCompile libs.gwtp_mvp_client
-    gwtSourceCompile libs.jaxb_api
-    gwtSourceCompile libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
-    gwtSourceCompile libs.restygwt
-    gwtSourceCompile libs.ws_rs_api
+    gwtSourceImplementation libs.gin
+    gwtSourceImplementation libs.gwt_dev
+    gwtSourceImplementation libs.gwt_user
+    gwtSourceImplementation libs.gwtp_mvp_client
+    gwtSourceImplementation libs.jaxb_api
+    gwtSourceImplementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
+    gwtSourceImplementation libs.restygwt
+    gwtSourceImplementation libs.ws_rs_api
 
-//    gwtSourceCompile libs.stroomDocRef
+//    gwtSourceImplementation libs.stroomDocRef
 //    gwtSourceCompile "${libs.stroomDocRef}:sources"
-//    gwtSourceCompile libs.stroomQueryApi
+//    gwtSourceImplementation libs.stroomQueryApi
 //    gwtSourceCompile "${libs.stroomQueryApi}:sources"
-//    gwtSourceCompile libs.stroomQueryCommon
+//    gwtSourceImplementation libs.stroomQueryCommon
 //    gwtSourceCompile "${libs.stroomQueryCommon}:sources"
 }
 
@@ -72,18 +73,18 @@ gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
 
 // Define a list of projects that contain the source code we want to compile with GWT.
 def projList = [
-    project(':stroom-app-gwt'),
-    project(':stroom-core-client'),
-    project(':stroom-core-client-widget'),
-    project(':stroom-core-shared'),
-    project(':stroom-dashboard:stroom-dashboard-client'),
-    project(':stroom-docref'),
-    project(':stroom-query:stroom-query-api'),
-    project(':stroom-query:stroom-query-common'),
-    project(':stroom-security:stroom-security-client'),
-    project(':stroom-security:stroom-security-client-api'),
-    project(':stroom-statistics:stroom-statistics-client'),
-    project(':stroom-util-shared')
+        project(':stroom-app-gwt'),
+        project(':stroom-core-client'),
+        project(':stroom-core-client-widget'),
+        project(':stroom-core-shared'),
+        project(':stroom-dashboard:stroom-dashboard-client'),
+        project(':stroom-docref'),
+        project(':stroom-query:stroom-query-api'),
+        project(':stroom-query:stroom-query-common'),
+        project(':stroom-security:stroom-security-client'),
+        project(':stroom-security:stroom-security-client-api'),
+        project(':stroom-statistics:stroom-statistics-client'),
+        project(':stroom-util-shared')
 ]
 
 // Add source from each of the defined projects.
@@ -95,7 +96,7 @@ projList.each { p ->
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {
     dependsOn 'gwtClean'
-    
+
     def module = 'stroom.app.App'
 
     doFirst {
@@ -121,14 +122,13 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         }
     }
 
-    main = gwtCompilerProps.mainClass
+    mainClass = gwtCompilerProps.mainClass
 
     classpath {
         gwtSourceDirs
     }
 
-    args =
-        [
+    args = [
             '-logLevel', 'INFO',
             '-workDir', workDir,
             '-XfragmentCount', '5',
@@ -140,9 +140,12 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
             '-extra', extraDir,
             '-strict',
             module                               // Your GWT module
-        ]
+    ]
 
-    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    jvmArgs = [
+            "-Djava.io.tmpdir=${tmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
     minHeapSize = gwtCompilerProps.minHeap
     maxHeapSize = gwtCompilerProps.maxHeap
 }
@@ -162,14 +165,13 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         file(extraDir).mkdirs()
     }
 
-    main = 'com.google.gwt.dev.Compiler'
+    mainClass = 'com.google.gwt.dev.Compiler'
 
     classpath {
         gwtSourceDirs
     }
 
-    args =
-        [
+    args = [
             '-logLevel', 'INFO',
             '-workDir', workDir,
             '-draftCompile',                        // Speeds up compile with 25%
@@ -183,9 +185,12 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
             '-extra', extraDir,
             '-strict',
             module                                  // Your GWT module
-        ]
+    ]
 
-    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    jvmArgs = [
+            "-Djava.io.tmpdir=${tmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
     minHeapSize = '1G'
     maxHeapSize = '4G'
 }
@@ -210,8 +215,8 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
         println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
 
-        def GREEN='\033[1;32m'
-        def NC='\033[0m'
+        def GREEN = '\033[1;32m'
+        def NC = '\033[0m'
 
         println """
         To run stroom in SuperDevMode:${GREEN}
@@ -222,14 +227,13 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
         """.stripIndent().trim()
     }
 
-    main = 'com.google.gwt.dev.DevMode'
+    mainClass = 'com.google.gwt.dev.DevMode'
 
     classpath {
         gwtSourceDirs
     }
 
-    args =
-        [
+    args = [
             '-logLevel', 'INFO',
             '-workDir', workDir,
             '-failOnError',
@@ -239,9 +243,12 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
             '-strict',
             '-noserver',
             module                                  // Your GWT module
-        ]
+    ]
 
-    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    jvmArgs = [
+            "-Djava.io.tmpdir=${tmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
     minHeapSize = gwtCompilerProps.minHeap
     maxHeapSize = gwtCompilerProps.maxHeap
 }
@@ -260,8 +267,6 @@ task gwtClean {
         file(tmpDir).mkdirs()
     }
 }
-
-
 
 
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin

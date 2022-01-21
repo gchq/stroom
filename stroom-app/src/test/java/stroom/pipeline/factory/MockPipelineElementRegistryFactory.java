@@ -82,6 +82,7 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
                         null,
                         null,
                         null,
+                        null,
                         null);
             }
             if (elementClass.equals(DSParser.class)) {
@@ -99,6 +100,7 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
             }
             if (elementClass.equals(XMLFragmentParser.class)) {
                 return (T) new XMLFragmentParser(
+                        null,
                         null,
                         null,
                         null,
@@ -151,7 +153,6 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
             }
             if (elementClass.equals(StreamAppender.class)) {
                 return (T) new StreamAppender(
-                        null,
                         null,
                         null,
                         null,

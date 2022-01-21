@@ -3741,6 +3741,44 @@
         "tags" : [ "Jobs" ]
       }
     },
+    "/job/v1/setJobsEnabled/{nodeName}" : {
+      "put" : {
+        "operationId" : "setNodeJobsEnabled",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NodeSetJobsEnabledRequest"
+              }
+            }
+          },
+          "description" : "Request parameters",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NodeSetJobsEnabledResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` are unspecified or empty, this action will apply to ALL jobs.",
+        "tags" : [ "Jobs" ]
+      }
+    },
     "/job/v1/{id}/enabled" : {
       "put" : {
         "operationId" : "setJobEnabled",
@@ -4375,44 +4413,6 @@
         "tags" : [ "Nodes" ]
       }
     },
-    "/node/v1/setJobsEnabled/{nodeName}" : {
-      "put" : {
-        "operationId" : "setNodeJobsEnabled",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "nodeName",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/NodeSetJobsEnabledRequest"
-              }
-            }
-          },
-          "description" : "Request parameters",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/NodeSetJobsEnabledResponse"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` are unspecified or empty, this action will apply to ALL jobs.",
-        "tags" : [ "Nodes" ]
-      }
-    },
     "/oauth2/v1/noauth/.well-known/openid-configuration" : {
       "get" : {
         "operationId" : "openIdConfiguration",
@@ -4819,7 +4819,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/User"
+                    "$ref" : "#/components/schemas/SimpleUser"
                   }
                 }
               }
@@ -5157,6 +5157,32 @@
         },
         "summary" : "Deletes a processor",
         "tags" : [ "Processors" ]
+      },
+      "get" : {
+        "operationId" : "fetchProcessor",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Processor"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a processor",
+        "tags" : [ "Processors" ]
       }
     },
     "/processor/v1/{id}/enabled" : {
@@ -5265,7 +5291,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/CreateReprocessFilterRequest"
+                "$ref" : "#/components/schemas/CreateProcessFilterRequest"
               }
             }
           },
@@ -5591,6 +5617,28 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
+    "/refData/v1/clearBufferPool" : {
+      "delete" : {
+        "operationId" : "clearBufferPool",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Clear all buffers currently available in the buffer pool to reclaim memory. Performed on the named node or all nodes if null.",
+        "tags" : [ "Reference Data" ]
+      }
+    },
     "/refData/v1/entries" : {
       "get" : {
         "description" : "This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.",
@@ -5601,6 +5649,19 @@
           "schema" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }, {
+          "in" : "query",
+          "name" : "refStreamId",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "mapName",
+          "schema" : {
+            "type" : "string"
           }
         } ],
         "responses" : {
@@ -5647,17 +5708,23 @@
             "description" : "default response"
           }
         },
-        "summary" : "Perform a reference data lookup using the supplied lookup request.",
+        "summary" : "Perform a reference data lookup using the supplied lookup request. Reference data will be loaded if required using the supplied reference pipeline. Performed on this node only.",
         "tags" : [ "Reference Data" ]
       }
     },
-    "/refData/v1/purge/{purgeAge}" : {
+    "/refData/v1/purgeByAge/{purgeAge}" : {
       "delete" : {
-        "operationId" : "purgeReferenceData",
+        "operationId" : "purgeReferenceDataByAge",
         "parameters" : [ {
           "in" : "path",
           "name" : "purgeAge",
           "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "nodeName",
           "schema" : {
             "type" : "string"
           }
@@ -5674,7 +5741,86 @@
             "description" : "default response"
           }
         },
-        "summary" : "Explicitly delete all entries that are older than purgeAge.",
+        "summary" : "Explicitly delete all entries that are older than purgeAge. Performed on the named node, or all nodes if null.",
+        "tags" : [ "Reference Data" ]
+      }
+    },
+    "/refData/v1/purgeByStream/{refStreamId}" : {
+      "delete" : {
+        "operationId" : "purgeReferenceDataByStream",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "refStreamId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 1
+          }
+        }, {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete all entries for a reference stream. Performed on the named node or all nodes if null.",
+        "tags" : [ "Reference Data" ]
+      }
+    },
+    "/refData/v1/refStreamInfo" : {
+      "get" : {
+        "description" : "This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries. Performed on this node only.",
+        "operationId" : "getReferenceStreamProcessingInfoEntries",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "limit",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "query",
+          "name" : "refStreamId",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "mapName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ProcessingInfoResponse"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "List processing info entries for all ref streams",
         "tags" : [ "Reference Data" ]
       }
     },
@@ -6086,6 +6232,36 @@
         "tags" : [ "Searchable" ]
       }
     },
+    "/searchable/v2/keepAlive" : {
+      "post" : {
+        "operationId" : "keepAliveSearchableQuery",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "QueryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Keep a running query alive",
+        "tags" : [ "Searchable" ]
+      }
+    },
     "/searchable/v2/search" : {
       "post" : {
         "operationId" : "startSearchableQuery",
@@ -6373,7 +6549,7 @@
     },
     "/sqlstatistics/v2/destroy" : {
       "post" : {
-        "operationId" : "destroySqlStatisticsSearch",
+        "operationId" : "destroySqlStatisticsQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6401,9 +6577,39 @@
         "tags" : [ "Sql Statistics Query" ]
       }
     },
+    "/sqlstatistics/v2/keepAlive" : {
+      "post" : {
+        "operationId" : "keepAliveSqlStatisticsQuery",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "QueryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Keep a running query alive",
+        "tags" : [ "Sql Statistics Query" ]
+      }
+    },
     "/sqlstatistics/v2/search" : {
       "post" : {
-        "operationId" : "searchSqlStatistics",
+        "operationId" : "startSqlStatisticsQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7109,7 +7315,7 @@
     },
     "/stroom-index/v2/destroy" : {
       "post" : {
-        "operationId" : "destroyStroomIndex",
+        "operationId" : "destroyStroomIndexQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7137,9 +7343,39 @@
         "tags" : [ "Stroom-Index Queries" ]
       }
     },
+    "/stroom-index/v2/keepAlive" : {
+      "post" : {
+        "operationId" : "keepAliveStroomIndexQuery",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "QueryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Keep a running query alive",
+        "tags" : [ "Stroom-Index Queries" ]
+      }
+    },
     "/stroom-index/v2/search" : {
       "post" : {
-        "operationId" : "searchStroomIndex",
+        "operationId" : "startStroomIndexQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7199,7 +7435,7 @@
     },
     "/stroom-solr-index/v2/destroy" : {
       "post" : {
-        "operationId" : "destroySolrIndexSearch",
+        "operationId" : "destroySolrIndexQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7227,9 +7463,39 @@
         "tags" : [ "Solr Queries" ]
       }
     },
+    "/stroom-solr-index/v2/keepAlive" : {
+      "post" : {
+        "operationId" : "keepAliveSolrIndexQuery",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "QueryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Keep a running query alive",
+        "tags" : [ "Solr Queries" ]
+      }
+    },
     "/stroom-solr-index/v2/search" : {
       "post" : {
-        "operationId" : "searchSolrIndex",
+        "operationId" : "startSolrIndexQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7715,39 +7981,6 @@
         "tags" : [ "Authorisation" ]
       }
     },
-    "/users/v1/{userName}/status" : {
-      "put" : {
-        "operationId" : "setUserStatus",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "userName",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "enabled",
-          "schema" : {
-            "type" : "boolean"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Enables/disables the Stroom user with the supplied username",
-        "tags" : [ "Authorisation" ]
-      }
-    },
     "/users/v1/{userUuid}" : {
       "get" : {
         "operationId" : "fetchUser",
@@ -8095,6 +8328,16 @@
           "classification" : {
             "type" : "string"
           },
+          "displayMode" : {
+            "type" : "string",
+            "enum" : [ "TEXT", "HEX", "MARKER" ]
+          },
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "feedName" : {
             "type" : "string"
           },
@@ -8224,6 +8467,9 @@
         "properties" : {
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
+          },
+          "qualifiedFilterInput" : {
+            "type" : "string"
           },
           "values" : {
             "type" : "array",
@@ -8487,6 +8733,9 @@
         "properties" : {
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
+          },
+          "qualifiedFilterInput" : {
+            "type" : "string"
           },
           "values" : {
             "type" : "array",
@@ -9154,6 +9403,14 @@
           "enabled" : {
             "type" : "boolean"
           },
+          "maxMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "minMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
           },
@@ -9163,24 +9420,9 @@
           },
           "queryData" : {
             "$ref" : "#/components/schemas/QueryData"
-          }
-        }
-      },
-      "CreateReprocessFilterRequest" : {
-        "type" : "object",
-        "properties" : {
-          "autoPriority" : {
+          },
+          "reprocess" : {
             "type" : "boolean"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "priority" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "queryData" : {
-            "$ref" : "#/components/schemas/QueryData"
           }
         }
       },
@@ -9364,7 +9606,10 @@
             "type" : "boolean"
           },
           "errors" : {
-            "type" : "string"
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           },
           "highlights" : {
             "type" : "array",
@@ -10019,6 +10264,14 @@
           "retentionExpression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
           },
+          "searchScrollSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "searchSlices" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "type" : {
             "type" : "string"
           },
@@ -10090,6 +10343,19 @@
           },
           "value" : {
             "type" : "string"
+          }
+        }
+      },
+      "EntryCounts" : {
+        "type" : "object",
+        "properties" : {
+          "keyValueCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rangeValueCount" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -10510,15 +10776,16 @@
       "FetchDataRequest" : {
         "type" : "object",
         "properties" : {
+          "displayMode" : {
+            "type" : "string",
+            "enum" : [ "TEXT", "HEX", "MARKER" ]
+          },
           "expandedSeverities" : {
             "type" : "array",
             "items" : {
               "type" : "string",
               "enum" : [ "INFO", "WARN", "ERROR", "FATAL" ]
             }
-          },
-          "markerMode" : {
-            "type" : "boolean"
           },
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
@@ -10567,6 +10834,9 @@
             "items" : {
               "type" : "string"
             }
+          },
+          "qualifiedFilterInput" : {
+            "type" : "string"
           },
           "rootNodes" : {
             "type" : "array",
@@ -10753,7 +11023,7 @@
           "users" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/User"
+              "$ref" : "#/components/schemas/SimpleUser"
             }
           }
         }
@@ -11279,7 +11549,7 @@
           },
           "stroomStatusCode" : {
             "type" : "string",
-            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 110 - Feed is not set to receive data", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "403 - 310 - Client Certificate not authorised", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
+            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 110 - Feed is not set to receive data", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "403 - 310 - Client Certificate not authorised", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
           }
         }
       },
@@ -11875,8 +12145,14 @@
         "type" : "object",
         "description" : "List of config properties",
         "properties" : {
+          "nodeName" : {
+            "type" : "string"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
+          },
+          "qualifiedFilterInput" : {
+            "type" : "string"
           },
           "values" : {
             "type" : "array",
@@ -12000,6 +12276,14 @@
           },
           "pipelineUuid" : {
             "type" : "string"
+          },
+          "processorFilterId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "processorTaskId" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "processorUuid" : {
             "type" : "string"
@@ -12643,6 +12927,33 @@
           }
         }
       },
+      "ProcessingInfoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "createTime" : {
+            "type" : "string"
+          },
+          "effectiveTime" : {
+            "type" : "string"
+          },
+          "lastAccessedTime" : {
+            "type" : "string"
+          },
+          "maps" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/EntryCounts"
+            }
+          },
+          "processingState" : {
+            "type" : "string",
+            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED" ]
+          },
+          "refStreamDefinition" : {
+            "$ref" : "#/components/schemas/RefStreamDefinition"
+          }
+        }
+      },
       "Processor" : {
         "type" : "object",
         "properties" : {
@@ -12713,6 +13024,14 @@
           "id" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "maxMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "minMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "pipelineName" : {
             "type" : "string"
@@ -13229,7 +13548,7 @@
           },
           "processingState" : {
             "type" : "string",
-            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE" ]
+            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED" ]
           }
         }
       },
@@ -13281,6 +13600,9 @@
           },
           "referenceFeed" : {
             "$ref" : "#/components/schemas/DocRef"
+          },
+          "streamType" : {
+            "type" : "string"
           }
         },
         "required" : [ "loaderPipeline", "referenceFeed" ]
@@ -13366,9 +13688,13 @@
             "type" : "string",
             "description" : "The ID of the component that this result set was requested for. See ResultRequest in SearchRequest"
           },
-          "error" : {
-            "type" : "string",
-            "description" : "If an error has occurred producing this result set then this will have details of the error"
+          "errors" : {
+            "type" : "array",
+            "description" : "If an error has occurred producing this result set then this will have details of the error",
+            "items" : {
+              "type" : "string",
+              "description" : "If an error has occurred producing this result set then this will have details of the error"
+            }
           },
           "type" : {
             "type" : "string"
@@ -14175,6 +14501,17 @@
           }
         }
       },
+      "SimpleUser" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "Size" : {
         "type" : "object",
         "properties" : {
@@ -14419,6 +14756,11 @@
             "type" : "integer",
             "format" : "int64",
             "minimum" : 0
+          },
+          "maxHexDumpLines" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 1
           }
         }
       },
@@ -15137,6 +15479,12 @@
       "TaskProgressResponse" : {
         "type" : "object",
         "properties" : {
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -15153,9 +15501,6 @@
         "properties" : {
           "criteria" : {
             "$ref" : "#/components/schemas/FindTaskCriteria"
-          },
-          "kill" : {
-            "type" : "boolean"
           }
         }
       },
@@ -15482,9 +15827,6 @@
           },
           "createUser" : {
             "type" : "string"
-          },
-          "enabled" : {
-            "type" : "boolean"
           },
           "group" : {
             "type" : "boolean"
