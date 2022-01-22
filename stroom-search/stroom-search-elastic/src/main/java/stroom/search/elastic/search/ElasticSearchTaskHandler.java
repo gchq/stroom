@@ -39,6 +39,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.Scroll;
@@ -48,7 +49,6 @@ import org.elasticsearch.search.slice.SliceBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
@@ -145,7 +145,13 @@ public class ElasticSearchTaskHandler {
                     try {
                         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
                                 .query(query)
+                                .fetchSource(false)
                                 .size(elasticIndex.getSearchScrollSize());
+
+                        // Limit the returned fields to what the values consumers require
+                        for (var field : fieldIndex.getFieldNames()) {
+                            searchSourceBuilder.fetchField(field);
+                        }
 
                         // Number of slices needs to be > 1 else an exception is raised
                         if (elasticIndex.getSearchSlices() > 1) {
@@ -207,46 +213,12 @@ public class ElasticSearchTaskHandler {
             for (final SearchHit searchHit : searchHits) {
                 hitCount.incrementAndGet();
 
-                final Map<String, Object> mapSearchHit = searchHit.getSourceAsMap();
+                final Map<String, DocumentField> mapSearchHit = searchHit.getFields();
                 Val[] values = null;
 
                 for (final String fieldName : fieldIndex.getFieldNames()) {
                     final Integer insertAt = fieldIndex.getPos(fieldName);
-                    Object fieldValue = null;
-
-                    if (mapSearchHit.containsKey(fieldName)) {
-                        // Property found by its key
-                        fieldValue = mapSearchHit.get(fieldName);
-                    } else if (fieldName.contains(".")) {
-                        // Property is an object or array, so use the first part of the key to access the
-                        // child properties or array items
-                        final String[] fieldNameParts = fieldName.split("\\.");
-                        final Object property = mapSearchHit.get(fieldNameParts[0]);
-                        final String childPropertyName = fieldNameParts[1];
-
-                        if (property instanceof ArrayList) {
-                            final ArrayList<?> propertyArray = (ArrayList<?>) property;
-
-                            if (propertyArray.size() > 0) {
-                                if (propertyArray.get(0) instanceof HashMap) {
-                                    @SuppressWarnings("unchecked")
-                                    ArrayList<HashMap<String, Object>> propertyArrayMap =
-                                            (ArrayList<HashMap<String, Object>>) propertyArray;
-
-                                    // Create an array of all child properties matching the field path
-                                    fieldValue = propertyArrayMap.stream()
-                                            .map(prop -> prop.get(childPropertyName))
-                                            .collect(Collectors.toList());
-                                }
-                            }
-                        } else if (property instanceof HashMap) {
-                            @SuppressWarnings("unchecked") final HashMap<String, Object> propertyMap =
-                                    (HashMap<String, Object>) property;
-
-                            // Get the child property matching the field path
-                            fieldValue = propertyMap.get(childPropertyName);
-                        }
-                    }
+                    Object fieldValue = getFieldValue(mapSearchHit, fieldName);
 
                     if (fieldValue != null) {
                         if (values == null) {
@@ -279,6 +251,22 @@ public class ElasticSearchTaskHandler {
             }
         } catch (final RuntimeException e) {
             error(errorConsumer, e);
+        }
+    }
+
+    /**
+     * Locate the value of the doc field by its full path
+     */
+    private Object getFieldValue(final Map<String, DocumentField> searchHitMap, final String fieldName) {
+        if (fieldName == null || !searchHitMap.containsKey(fieldName)) {
+            return null;
+        }
+
+        DocumentField docField = searchHitMap.get(fieldName);
+        if (docField.getValues().size() > 1) {
+            return docField.getValues();
+        } else {
+            return docField.getValue();
         }
     }
 
