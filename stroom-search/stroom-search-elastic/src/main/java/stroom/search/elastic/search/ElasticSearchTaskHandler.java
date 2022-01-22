@@ -60,18 +60,16 @@ public class ElasticSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchTaskHandler.class);
 
-    /**
-     * Number of minutes to allow a scroll request to continue before being aborted
-     */
-    private static final long SCROLL_DURATION = 1L;
-
+    private final ElasticSearchConfig elasticSearchConfig;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
     private final CountDownLatch completionLatch = new CountDownLatch(1);
 
     @Inject
-    ElasticSearchTaskHandler(final ElasticClientCache elasticClientCache,
+    ElasticSearchTaskHandler(final ElasticSearchConfig elasticSearchConfig,
+                             final ElasticClientCache elasticClientCache,
                              final ElasticClusterStore elasticClusterStore) {
+        this.elasticSearchConfig = elasticSearchConfig;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
     }
@@ -158,7 +156,8 @@ public class ElasticSearchTaskHandler {
                             searchSourceBuilder.slice(new SliceBuilder(slice, elasticIndex.getSearchSlices()));
                         }
 
-                        final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(SCROLL_DURATION));
+                        final Scroll scroll = new Scroll(TimeValue.timeValueSeconds(
+                                elasticSearchConfig.getScrollDuration().getDuration().getSeconds()));
                         SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
                                 .source(searchSourceBuilder)
                                 .scroll(scroll);
