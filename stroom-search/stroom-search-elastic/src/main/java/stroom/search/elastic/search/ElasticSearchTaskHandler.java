@@ -30,15 +30,21 @@ import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -50,28 +56,36 @@ import org.elasticsearch.search.slice.SliceBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 public class ElasticSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchTaskHandler.class);
+    public static final ThreadPool SCROLL_REQUEST_THREAD_POOL =
+            new ThreadPoolImpl("Elasticsearch Scroll Request");
 
     private final ElasticSearchConfig elasticSearchConfig;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
-    private final CountDownLatch completionLatch = new CountDownLatch(1);
+    private final ExecutorProvider executorProvider;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     ElasticSearchTaskHandler(final ElasticSearchConfig elasticSearchConfig,
                              final ElasticClientCache elasticClientCache,
-                             final ElasticClusterStore elasticClusterStore) {
+                             final ElasticClusterStore elasticClusterStore,
+                             final ExecutorProvider executorProvider,
+                             final TaskContextFactory taskContextFactory) {
         this.elasticSearchConfig = elasticSearchConfig;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
+        this.executorProvider = executorProvider;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void search(final TaskContext taskContext,
@@ -83,131 +97,139 @@ public class ElasticSearchTaskHandler {
                        final AtomicLong hitCount) {
         if (!Thread.currentThread().isInterrupted()) {
             taskContext.reset();
-            taskContext.info(() -> "Searching Elasticsearch index");
+            taskContext.info(() -> LogUtil.message("Searching Elasticsearch index {}", elasticIndex.getName()));
 
-            // Start searching.
-            searchIndex(
-                    elasticIndex,
-                    query,
-                    fieldIndex,
-                    valuesConsumer,
-                    errorConsumer,
-                    hitCount);
+            final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+            final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
+
+            try {
+                final CompletableFuture<Void> searchFuture = executeSearch(
+                        taskContext,
+                        elasticIndex,
+                        query,
+                        fieldIndex,
+                        valuesConsumer,
+                        errorConsumer,
+                        hitCount,
+                        connectionConfig);
+
+                searchFuture.get();
+
+            } catch (final RuntimeException | ExecutionException e) {
+                error(errorConsumer, e);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
-    private void searchIndex(final ElasticIndexDoc elasticIndex,
+    private CompletableFuture<Void> executeSearch(final TaskContext parentContext,
+                                                  final ElasticIndexDoc elasticIndex,
+                                                  final QueryBuilder query,
+                                                  final FieldIndex fieldIndex,
+                                                  final ValuesConsumer valuesConsumer,
+                                                  final ErrorConsumer errorConsumer,
+                                                  final AtomicLong hitCount,
+                                                  final ElasticConnectionConfig connectionConfig) {
+
+        final CompletableFuture<Void>[] futures = new CompletableFuture[elasticIndex.getSearchSlices()];
+        final Executor executor = executorProvider.get(SCROLL_REQUEST_THREAD_POOL);
+
+        try {
+            elasticClientCache.context(connectionConfig, elasticClient -> {
+                for (int i = 0; i < elasticIndex.getSearchSlices(); i++) {
+                    final int slice = i;
+                    futures[i] = CompletableFuture.runAsync(() -> taskContextFactory
+                            .childContext(parentContext, "Elasticsearch Search Scroll Slice", taskContext -> {
+                                searchSlice(elasticIndex,
+                                        query,
+                                        fieldIndex,
+                                        valuesConsumer,
+                                        errorConsumer,
+                                        hitCount,
+                                        elasticClient,
+                                        slice,
+                                        taskContext);
+                            }).run(), executor);
+                }
+            });
+        } catch (final RuntimeException e) {
+            error(errorConsumer, e);
+        }
+
+        return CompletableFuture.allOf(futures);
+    }
+
+    private void searchSlice(final ElasticIndexDoc elasticIndex,
                              final QueryBuilder query,
                              final FieldIndex fieldIndex,
                              final ValuesConsumer valuesConsumer,
                              final ErrorConsumer errorConsumer,
-                             final AtomicLong hitCount) {
-        final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
-        final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
-
-        // If there is an error building the query then it will be null here.
+                             final AtomicLong hitCount,
+                             final RestHighLevelClient elasticClient,
+                             final int slice,
+                             final TaskContext taskContext) {
         try {
-            LOGGER.logDurationIfDebugEnabled(
-                    () -> {
-                        try {
-                            streamingSearch(
-                                    elasticIndex,
-                                    query,
-                                    fieldIndex,
-                                    valuesConsumer,
-                                    errorConsumer,
-                                    hitCount,
-                                    connectionConfig);
-                        } catch (final RuntimeException e) {
-                            error(errorConsumer, e);
-                        } finally {
-                            completionLatch.countDown();
-                        }
-                    },
-                    () -> "searcher.search()");
-        } catch (final RuntimeException e) {
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
+                    .query(query)
+                    .fetchSource(false)
+                    .size(elasticIndex.getSearchScrollSize());
+
+            // Limit the returned fields to what the values consumers require
+            for (String field : fieldIndex.getFieldNames()) {
+                searchSourceBuilder.fetchField(field);
+            }
+
+            // Number of slices needs to be > 1 else an exception is raised
+            if (elasticIndex.getSearchSlices() > 1) {
+                searchSourceBuilder.slice(new SliceBuilder(slice,
+                        elasticIndex.getSearchSlices()));
+            }
+
+            final Scroll scroll = new Scroll(
+                    TimeValue.timeValueSeconds(elasticSearchConfig.getScrollDuration().getDuration().getSeconds()));
+            final SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
+                    .source(searchSourceBuilder)
+                    .scroll(scroll);
+
+            SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
+            String scrollId = searchResponse.getScrollId();
+
+            // Retrieve the initial result batch
+            SearchHit[] searchHits = searchResponse.getHits().getHits();
+            processResultBatch(fieldIndex, valuesConsumer, errorConsumer, hitCount, searchHits);
+            int totalHitCount = searchHits.length;
+
+            // Continue requesting results until we have all results
+            while (searchHits.length > 0) {
+                SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId).scroll(scroll);
+                searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
+                searchHits = searchResponse.getHits().getHits();
+
+                processResultBatch(fieldIndex, valuesConsumer, errorConsumer, hitCount, searchHits);
+
+                totalHitCount += searchHits.length;
+                final Integer finalTotalHitCount = totalHitCount;
+                taskContext.info(() -> LogUtil.message("Processed {} hits", finalTotalHitCount));
+            }
+
+            // Close the scroll context as we're done streaming results
+            ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+            clearScrollRequest.addScrollId(scrollId);
+            elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+        } catch (final IOException | RuntimeException e) {
             error(errorConsumer, e);
         }
     }
 
-    private void streamingSearch(final ElasticIndexDoc elasticIndex,
-                                 final QueryBuilder query,
-                                 final FieldIndex fieldIndex,
-                                 final ValuesConsumer valuesConsumer,
-                                 final ErrorConsumer errorConsumer,
-                                 final AtomicLong hitCount,
-                                 final ElasticConnectionConfig connectionConfig) {
-        elasticClientCache.context(connectionConfig, elasticClient -> {
-            try {
-                IntStream.range(0, elasticIndex.getSearchSlices()).parallel().forEach(slice -> {
-                    try {
-                        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
-                                .query(query)
-                                .fetchSource(false)
-                                .size(elasticIndex.getSearchScrollSize());
-
-                        // Limit the returned fields to what the values consumers require
-                        for (var field : fieldIndex.getFieldNames()) {
-                            searchSourceBuilder.fetchField(field);
-                        }
-
-                        // Number of slices needs to be > 1 else an exception is raised
-                        if (elasticIndex.getSearchSlices() > 1) {
-                            searchSourceBuilder.slice(new SliceBuilder(slice, elasticIndex.getSearchSlices()));
-                        }
-
-                        final Scroll scroll = new Scroll(TimeValue.timeValueSeconds(
-                                elasticSearchConfig.getScrollDuration().getDuration().getSeconds()));
-                        SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
-                                .source(searchSourceBuilder)
-                                .scroll(scroll);
-
-                        SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
-                        String scrollId = searchResponse.getScrollId();
-
-                        SearchHit[] searchHits = searchResponse.getHits().getHits();
-                        processBatch(
-                                fieldIndex,
-                                valuesConsumer,
-                                errorConsumer,
-                                hitCount,
-                                searchHits);
-
-                        // Continue requesting results until we have all results
-                        while (searchHits != null && searchHits.length > 0) {
-                            SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-                            scrollRequest.scroll(scroll);
-                            searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
-                            searchHits = searchResponse.getHits().getHits();
-
-                            processBatch(
-                                    fieldIndex,
-                                    valuesConsumer,
-                                    errorConsumer,
-                                    hitCount,
-                                    searchHits);
-                        }
-
-                        ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
-                        clearScrollRequest.addScrollId(scrollId);
-                        elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
-                    } catch (final IOException | RuntimeException e) {
-                        error(errorConsumer, e);
-                    }
-                });
-
-                LOGGER.debug(() -> "Total hits: " + hitCount.get());
-            } catch (final RuntimeException e) {
-                error(errorConsumer, e);
-            }
-        });
-    }
-
-    private void processBatch(final FieldIndex fieldIndex,
-                              final ValuesConsumer valuesConsumer,
-                              final ErrorConsumer errorConsumer,
-                              final AtomicLong hitCount,
-                              final SearchHit[] searchHits) {
+    /**
+     * Receive a batch of search hits and send each one to the values consumer
+     */
+    private void processResultBatch(final FieldIndex fieldIndex,
+                                    final ValuesConsumer valuesConsumer,
+                                    final ErrorConsumer errorConsumer,
+                                    final AtomicLong hitCount,
+                                    final SearchHit[] searchHits) {
         try {
             for (final SearchHit searchHit : searchHits) {
                 hitCount.incrementAndGet();
