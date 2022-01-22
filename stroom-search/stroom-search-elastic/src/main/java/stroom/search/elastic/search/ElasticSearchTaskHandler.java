@@ -139,18 +139,19 @@ public class ElasticSearchTaskHandler {
             elasticClientCache.context(connectionConfig, elasticClient -> {
                 for (int i = 0; i < elasticIndex.getSearchSlices(); i++) {
                     final int slice = i;
-                    futures[i] = CompletableFuture.runAsync(() -> taskContextFactory
-                            .childContext(parentContext, "Elasticsearch Search Scroll Slice", taskContext -> {
-                                searchSlice(elasticIndex,
-                                        query,
-                                        fieldIndex,
-                                        valuesConsumer,
-                                        errorConsumer,
-                                        hitCount,
-                                        elasticClient,
-                                        slice,
-                                        taskContext);
-                            }).run(), executor);
+                    futures[i] = CompletableFuture.runAsync(() -> taskContextFactory.childContext(parentContext,
+                            "Elasticsearch Search Scroll Slice",
+                            taskContext -> searchSlice(
+                                    elasticIndex,
+                                    query,
+                                    fieldIndex,
+                                    valuesConsumer,
+                                    errorConsumer,
+                                    hitCount,
+                                    elasticClient,
+                                    slice,
+                                    taskContext
+                            )).run(), executor);
                 }
             });
         } catch (final RuntimeException e) {
