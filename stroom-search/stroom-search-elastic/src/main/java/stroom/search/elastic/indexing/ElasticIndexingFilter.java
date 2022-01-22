@@ -274,8 +274,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_STRING:
                     value = valueBuffer.toString();
                     try {
-                        writeFieldName();
                         if (value.length() > 0) {
+                            writeFieldName();
                             jsonGenerator.writeString(value);
                             currentDocPropertyCount++;
                         }
@@ -284,42 +284,43 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             currentDocTimestamp = value;
                         }
                     } catch (IOException e) {
-                        fatalError("Invalid string value", e);
+                        fatalError("Invalid string value '" + value + "' for property '" +
+                                currentDocFieldName + "'", e);
                     }
                     break;
                 case JSONParser.XML_ELEMENT_BOOLEAN:
                     value = valueBuffer.toString();
                     try {
-                        writeFieldName();
                         if (value.length() > 0) {
+                            writeFieldName();
                             jsonGenerator.writeBoolean(Boolean.parseBoolean(value));
                             currentDocPropertyCount++;
                         }
                     } catch (IOException e) {
-                        fatalError("Invalid boolean value", e);
+                        fatalError("Invalid boolean value '" + value + "' for property '" +
+                                currentDocFieldName + "'", e);
                     }
                     break;
                 case JSONParser.XML_ELEMENT_NULL:
                     try {
                         writeFieldName();
-                        if (writeFieldName()) {
-                            jsonGenerator.writeNull();
-                            currentDocPropertyCount++;
-                        }
+                        jsonGenerator.writeNull();
+                        currentDocPropertyCount++;
                     } catch (IOException e) {
-                        fatalError("Invalid null value", e);
+                        fatalError("Invalid null value for property '" + currentDocFieldName + "'", e);
                     }
                     break;
                 case JSONParser.XML_ELEMENT_NUMBER:
                     value = valueBuffer.toString();
                     try {
-                        writeFieldName();
                         if (value.length() > 0) {
+                            writeFieldName();
                             jsonGenerator.writeNumber(value);
                             currentDocPropertyCount++;
                         }
                     } catch (IOException e) {
-                        fatalError("Invalid number value", e);
+                        fatalError("Invalid number value '" + value + "' for property '" +
+                                currentDocFieldName + "'", e);
                     }
                     break;
             }
