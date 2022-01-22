@@ -94,8 +94,9 @@ public class ElasticSearchFactory {
 
         return CompletableFuture
                 .runAsync(runnable, executor)
-                .whenCompleteAsync((r, t) ->
-                        taskContextFactory.childContext(parentContext, "Search Elasticsearch Index", taskContext -> {
+                .whenCompleteAsync((r, t) -> taskContextFactory.childContext(parentContext,
+                        "Search Elasticsearch Index",
+                        taskContext -> {
                             taskContext.info(() -> "Complete stored data queue");
                             LOGGER.debug("Complete stored data queue");
                             storedDataQueue.complete();
