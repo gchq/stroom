@@ -153,7 +153,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
             }
             return docRef.getName();
         }
-        return term.getDocRef().getUuid();
+        return docRef.getUuid();
     }
 
     private Condition eq(final ExpressionTerm term) {
