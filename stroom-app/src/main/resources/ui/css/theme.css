@@ -73,6 +73,8 @@
     --pipeline-element-box-border-color: #918e8c;
 
     --link-text-color: #0000AA;
+    --link-tab__text-color: #222;
+    --link-tab__text-color--focussed: #000;
 
     --code-editor-right-bar-background-color: #efefef;
     --code-editor-border-color: #a1a1a1;
@@ -109,6 +111,7 @@
     --scrollbar-thumb-background-color-active: rgba(0,0,0,.8);
 
     --navigation-background-color: #d5e9ff;
+    --navigation__background-color--selected: #0d47a1;
     --navigation-text-color: #fff;
     --navigation-border-color: #27252c;
 
@@ -272,6 +275,8 @@
     --pipeline-element-box-border-color: #a1a1a1;
 
     --link-text-color: #3aaaff;
+    --link-tab__text-color: #e6e1dc;
+    --link-tab__text-color--focussed: #fff;
 
     --code-editor-right-bar-background-color: #19171d;
     --code-editor-border-color: #000;
@@ -456,6 +461,8 @@
     --pipeline-element-box-text-color: #fff;
 
     --link-text-color: #3aaaff;
+    --link-tab__text-color: #e6e1dc;
+    --link-tab__text-color--focussed: #fff;
 
     --code-editor-right-bar-background-color: #19171d;
     --code-editor-border-color: #000;
@@ -492,6 +499,7 @@
     --scrollbar-thumb-background-color-active: #979797;
 
     --navigation-background-color: #19171d;
+    --navigation__background-color--selected: #19171d;
     --navigation-text-color: #e6e1dc;
     --navigation-border-color: #27252c;
 

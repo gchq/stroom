@@ -40,8 +40,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     private static final int MAX_MESSAGE_LENGTH = 1000;
 
-    private final HorizontalPanel widget = new HorizontalPanel();
-    private final VerticalPanel messageArea = new VerticalPanel();
+    private final SimplePanel container = new SimplePanel();
     private final SimplePanel image = new SimplePanel();
     private final HTML message = new HTML();
     private final Hyperlink showHideDetail = new Hyperlink();
@@ -50,15 +49,20 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     @Inject
     public CommonAlertViewImpl() {
-        widget.add(image);
-        widget.add(messageArea);
+        final HorizontalPanel layout = new HorizontalPanel();
+        container.add(layout);
+
+        layout.add(image);
+        final VerticalPanel messageArea = new VerticalPanel();
+        layout.add(messageArea);
 
         messageArea.add(message);
         messageArea.add(showHideDetail);
         messageArea.add(detail);
         detail.setEnabled(false);
 
-        widget.addStyleName("alert-table");
+        container.addStyleName("dialog-content-padding");
+        layout.addStyleName("alert-table");
         message.addStyleName("alert-message");
         showHideDetail.addStyleName("alert-showHide");
         detail.addStyleName("alert-detail");
@@ -87,7 +91,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     @Override
     public Widget asWidget() {
-        return widget;
+        return container;
     }
 
     @Override

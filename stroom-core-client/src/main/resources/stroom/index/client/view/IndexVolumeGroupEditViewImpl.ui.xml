@@ -1,11 +1,11 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:FlowPanel ui:field="layout" styleName="max default-min-sizes dock-container-vertical">
-        <g:FlowPanel styleName="dock-min input-row">
-            <g:Label text="Volume Group Name:"/>
-            <g:TextBox ui:field="name" addStyleNames="dock-max"/>
-        </g:FlowPanel>
-        <g:SimplePanel ui:field="list" styleName="dock-max"/>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="indexVolumeGroupEditVolumeGroupName" label="Volume Group Name">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <g:SimplePanel ui:field="list" styleName="dock-max stroom-control"/>
     </g:FlowPanel>
 </ui:UiBinder> 

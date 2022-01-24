@@ -4,7 +4,7 @@
              xmlns:view="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="max dock-container-vertical">
         <view:QuickFilter ui:field="nameFilter"
-                          addStyleNames="dock-min globalPropertyTabViewImpl-nameFilter"/>
-        <g:SimplePanel ui:field="dataGrid" styleName="dock-max stroom-border"/>
+                          addStyleNames="dock-min quickFilter__margin-bottom"/>
+        <g:SimplePanel ui:field="dataGrid" styleName="dock-max stroom-control"/>
     </g:FlowPanel>
 </ui:UiBinder>

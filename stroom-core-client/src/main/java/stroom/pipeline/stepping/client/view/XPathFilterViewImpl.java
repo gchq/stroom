@@ -19,11 +19,11 @@ package stroom.pipeline.stepping.client.view;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.form.client.FormGroup;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -33,7 +33,9 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
 
     private final Widget widget;
     @UiField
-    Grid grid;
+    FormGroup valueContainer;
+    @UiField
+    FormGroup ignoreCaseContainer;
     @UiField
     TextBox xPath;
     @UiField
@@ -41,7 +43,7 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     @UiField
     TextBox value;
     @UiField
-    TickBox ignoreCase;
+    CustomCheckBox ignoreCase;
 
     @Inject
     public XPathFilterViewImpl(final Binder binder) {
@@ -95,18 +97,18 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
 
     @Override
     public Boolean isIgnoreCase() {
-        return ignoreCase.getValue().toBoolean();
+        return ignoreCase.getValue();
     }
 
     @Override
     public void setIgnoreCase(final Boolean value) {
-        ignoreCase.setBooleanValue(value);
+        ignoreCase.setValue(value);
     }
 
     private void changeVisibility(final MatchType matchType) {
-        final boolean visible = matchType != null && (matchType == MatchType.CONTAINS || matchType == MatchType.EQUALS);
-        grid.getRowFormatter().setVisible(2, visible);
-        grid.getRowFormatter().setVisible(3, visible);
+        final boolean visible = matchType == MatchType.CONTAINS || matchType == MatchType.EQUALS;
+        valueContainer.setVisible(visible);
+        ignoreCaseContainer.setVisible(visible);
     }
 
     public interface Binder extends UiBinder<Widget, XPathFilterViewImpl> {

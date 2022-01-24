@@ -2,100 +2,62 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
-    <g:Grid ui:field="grid" styleName="stroom-control-grid max">
-        <g:row>
-            <g:cell>Name:</g:cell>
-            <g:customCell>
-                <g:Label ui:field="name" addStyleNames="globalProperties stroom-control-label w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Description:</g:cell>
-            <g:customCell>
-                <g:TextArea ui:field="description" addStyleNames="globalProperties globalPropertyEditViewImpl-textArea w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Default Value:</g:cell>
-            <g:customCell>
-                <g:TextArea ui:field="defaultValue" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Set Database value:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="useOverride"/>
-            </g:customCell>
-        </g:row>
-        <g:row styleName="globalPropertyEditViewImpl-textArea">
-            <g:cell>Database Value:</g:cell>
-            <g:customCell>
-                <g:TextArea ui:field="databaseValue" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Database Value:</g:cell>
-            <g:customCell>
-                <g:PasswordTextBox ui:field="databaseValuePassword" addStyleNames="globalProperties w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:customCell>
-                <g:FlowPanel>
-                    <g:Label ui:text="Node YAML Value:"/>
-                    <b:ButtonPanel ui:field="yamlValueButtonPanel"/>
-                </g:FlowPanel>
-            </g:customCell>
-            <g:customCell>
-                <g:TextArea ui:field="yamlValue" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:customCell>
-                <g:FlowPanel>
-                    <g:Label ui:text="Node Effective Value:"/>
-                    <b:ButtonPanel ui:field="effectiveValueButtonPanel"/>
-                </g:FlowPanel>
-            </g:customCell>
-            <g:customCell>
-                <g:TextArea ui:field="effectiveValue" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:customCell>
-                <g:HorizontalPanel>
-                    <g:Label ui:text="Data Type:"/>
-                    <b:ButtonPanel ui:field="dataTypeButtonPanel"/>
-                </g:HorizontalPanel>
-            </g:customCell>
-            <g:customCell>
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="globalPropertyEditName" label="Name">
+            <g:Label ui:field="name" addStyleNames="globalProperties stroom-control-label w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="globalPropertyEditDescription" label="Description">
+            <g:TextArea ui:field="description"
+                        addStyleNames="globalProperties globalPropertyEditViewImpl-textArea w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="globalPropertyEditDescription" label="Default Value">
+            <g:TextArea ui:field="defaultValue"
+                        addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="globalPropertyEditSetDatabasevalue" label="Set Database value">
+            <tickbox:CustomCheckBox ui:field="useOverride"/>
+        </form:FormGroup>
+        <form:FormGroup identity="globalPropertyEditDatabaseValue" label="Database Value">
+            <g:FlowPanel>
+                <g:TextArea ui:field="databaseValue"
+                            addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
+                <g:PasswordTextBox ui:field="databaseValuePassword"
+                                   addStyleNames="globalProperties allow-focus  w-100"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="globalPropertyEditNodeYAMLValue" label="Node YAML Value">
+            <g:FlowPanel>
+                <b:ButtonPanel ui:field="yamlValueButtonPanel"/>
+                <g:TextArea ui:field="yamlValue"
+                            addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="globalPropertyEditNodeEffectiveValue" label="Node Effective Value">
+            <g:FlowPanel>
+                <b:ButtonPanel ui:field="effectiveValueButtonPanel"/>
+                <g:TextArea ui:field="effectiveValue"
+                            addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="globalPropertyEditDataType" label="Data Type">
+            <g:FlowPanel>
+                <b:ButtonPanel ui:field="dataTypeButtonPanel"/>
                 <g:Label ui:field="dataType" addStyleNames="globalProperties w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Source:</g:cell>
-            <g:customCell>
-                <g:Label ui:field="source" addStyleNames="globalProperties w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Requires UI Refresh:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="requireUiRestart"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Requires Restart:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="requireRestart"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Read Only:</g:cell>
-            <g:customCell>
-                <tickbox:TickBox ui:field="readOnly"/>
-            </g:customCell>
-        </g:row>
-    </g:Grid>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="globalPropertyEditSource" label="Source">
+            <g:Label ui:field="source" addStyleNames="globalProperties w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="globalPropertyEditRequiresUIRefresh" label="Requires UI Refresh">
+            <tickbox:CustomCheckBox ui:field="requireUiRestart"/>
+        </form:FormGroup>
+        <form:FormGroup identity="globalPropertyEditRequiresRestart" label="Requires Restart">
+            <tickbox:CustomCheckBox ui:field="requireRestart"/>
+        </form:FormGroup>
+        <form:FormGroup identity="globalPropertyEditReadOnly" label="Read Only">
+            <tickbox:CustomCheckBox ui:field="readOnly"/>
+        </form:FormGroup>
+    </g:FlowPanel>
 </ui:UiBinder> 

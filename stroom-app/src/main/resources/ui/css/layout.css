@@ -7,6 +7,8 @@
     --control__padding--vertical: .4rem;
     --control__gap--vertical: 1rem;
     --control__gap--horizontal: 1rem;
+    --dialog__padding--horizontal: .5rem;
+    --dialog__padding--vertical: .5rem;
 }
 
 .stroom-density-compact {
@@ -18,4 +20,6 @@
     --control__padding--vertical: .4rem;
     --control__gap--vertical: .4rem;
     --control__gap--horizontal: .4rem;
+    --dialog__padding--horizontal: .5rem;
+    --dialog__padding--vertical: .5rem;
 }

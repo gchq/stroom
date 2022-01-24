@@ -1,57 +1,31 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
-    <g:FlowPanel styleName="dock-container-vertical stroom-control-page">
-        <g:Grid styleName="dock-min stroom-control-grid">
-            <g:row>
-                <g:cell>Description:</g:cell>
-                <g:customCell>
-                    <g:TextArea ui:field="description" width="400px"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Cluster configuration:</g:cell>
-                <g:customCell>
-                    <g:SimplePanel ui:field="cluster"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Index name or pattern:</g:cell>
-                <g:customCell>
-                    <g:TextBox ui:field="indexName" width="400px"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Search slices:</g:cell>
-                <g:customCell>
-                    <g:FlowPanel>
-                        <valuespinner:ValueSpinner ui:field="searchSlices" width="80px"/>
-                    </g:FlowPanel>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Search scroll size:</g:cell>
-                <g:customCell>
-                    <g:FlowPanel>
-                        <valuespinner:ValueSpinner ui:field="searchScrollSize" width="80px"/>
-                    </g:FlowPanel>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell></g:cell>
-                <g:cell></g:cell>
-            </g:row>
-            <g:row>
-                <g:cell></g:cell>
-                <g:customCell>
-                    <g:Button ui:field="testConnection" text="Test Connection" width="200px"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
-        <g:Label text="Data Retention Expression (matching data will be deleted):"
-                 addStyleNames="dock-min elasticIndexSettingsViewImpl-label w-100"/>
-        <g:SimplePanel ui:field="retentionExpressionPanel"
-                       styleName="dock-max stroom-border"/>
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="elasticIndexSettingsDescription" label="Description">
+            <g:TextArea ui:field="description" width="400px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsClusterconfiguration" label="Cluster Configuration">
+            <g:SimplePanel ui:field="cluster"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsIndexNameOrPattern" label="Index Name Or Pattern">
+            <g:TextBox ui:field="indexName" width="400px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsSearchSlices" label="Search Slices">
+            <valuespinner:ValueSpinner ui:field="searchSlices" width="80px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsSearchScrollSize" label="Search Scroll Size">
+            <valuespinner:ValueSpinner ui:field="searchScrollSize" width="80px"/>
+        </form:FormGroup>
+
+        <g:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
+
+        <form:FormGroup identity="elasticIndexSettingsRetentionExpression"
+                        label="Data Retention Expression (matching data will be deleted)"
+                        addStyleNames="default-min-sizes flex-grow-1">
+            <g:SimplePanel ui:field="retentionExpressionPanel" styleName="dock-max"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

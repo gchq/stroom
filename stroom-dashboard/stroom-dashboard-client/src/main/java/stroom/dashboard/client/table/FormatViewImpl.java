@@ -16,14 +16,14 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.form.client.FormGroup;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -32,8 +32,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -64,19 +62,37 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     private final Widget widget;
 
     @UiField
-    Grid grid;
+    FormGroup formatDecimalPlaces;
+    @UiField
+    FormGroup formatUseSeparator;
+
+    @UiField
+    FormGroup formatUsePreferences;
+    @UiField
+    FormGroup formatFormat;
+    @UiField
+    FormGroup formatCustom;
+    @UiField
+    FormGroup formatCustomFormat;
+    @UiField
+    FormGroup formatTimeZone;
+    @UiField
+    FormGroup formatTimeZoneId;
+    @UiField
+    FormGroup formatTimeZoneOffset;
+
     @UiField
     ItemListBox<Type> type;
     @UiField
     ValueSpinner decimalPlaces;
     @UiField
-    TickBox separate;
+    CustomCheckBox separate;
     @UiField
-    TickBox usePreferences;
+    CustomCheckBox usePreferences;
     @UiField
     StringListBox format;
     @UiField
-    TickBox custom;
+    CustomCheckBox custom;
     @UiField
     TextBox text;
     @UiField
@@ -88,7 +104,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     @UiField
     ValueSpinner timeZoneOffsetMinutes;
     @UiField
-    TickBox wrap;
+    CustomCheckBox wrap;
 
     @Inject
     public FormatViewImpl(final Binder binder) {
@@ -99,11 +115,6 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
         decimalPlaces.setMax(10);
 
         format.addItems(STANDARD_FORMATS);
-
-        final RowFormatter formatter = grid.getRowFormatter();
-        for (int i = 1; i <= ROW_COUNT; i++) {
-            formatter.setVisible(i, false);
-        }
 
         timeZoneUse.addItem(TimeZone.Use.LOCAL);
         timeZoneUse.addItem(TimeZone.Use.UTC);
@@ -142,22 +153,18 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     public void setType(final Type type) {
         this.type.setSelectedItem(type);
 
-        final RowFormatter formatter = grid.getRowFormatter();
-        if (Type.NUMBER.equals(type)) {
-            for (int i = 1; i <= ROW_COUNT; i++) {
-                formatter.setVisible(i, i <= 2);
-            }
-        } else if (Type.DATE_TIME.equals(type)) {
-            for (int i = 1; i <= ROW_COUNT - 2; i++) {
-                formatter.setVisible(i, i > 2);
-            }
-            formatter.setVisible(8, TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
-            formatter.setVisible(9, TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
-        } else {
-            for (int i = 1; i <= ROW_COUNT; i++) {
-                formatter.setVisible(i, false);
-            }
-        }
+        formatDecimalPlaces.setVisible(Type.NUMBER.equals(type));
+        formatUseSeparator.setVisible(Type.NUMBER.equals(type));
+
+        formatUsePreferences.setVisible(Type.DATE_TIME.equals(type));
+        formatFormat.setVisible(Type.DATE_TIME.equals(type));
+        formatCustom.setVisible(Type.DATE_TIME.equals(type));
+        formatCustomFormat.setVisible(Type.DATE_TIME.equals(type));
+        formatTimeZone.setVisible(Type.DATE_TIME.equals(type));
+        formatTimeZoneId.setVisible(Type.DATE_TIME.equals(type) &&
+                TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
+        formatTimeZoneOffset.setVisible(Type.DATE_TIME.equals(type) &&
+                TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
     }
 
     @Override
@@ -172,27 +179,27 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
 
     @Override
     public boolean isUseSeparator() {
-        return this.separate.getBooleanValue();
+        return this.separate.getValue();
     }
 
     @Override
     public void setUseSeparator(final boolean useSeparator) {
-        this.separate.setBooleanValue(useSeparator);
+        this.separate.setValue(useSeparator);
     }
 
     @Override
     public boolean isUsePreferences() {
-        return this.usePreferences.getBooleanValue();
+        return this.usePreferences.getValue();
     }
 
     @Override
     public void setUsePreferences(final boolean usePreferences) {
-        this.usePreferences.setBooleanValue(usePreferences);
+        this.usePreferences.setValue(usePreferences);
     }
 
     @Override
     public String getPattern() {
-        if (custom.getBooleanValue()) {
+        if (custom.getValue()) {
             return text.getText();
         }
 
@@ -211,7 +218,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
         }
 
         final boolean custom = this.format.getSelectedIndex() == -1;
-        this.custom.setBooleanValue(custom);
+        this.custom.setValue(custom);
         this.text.setEnabled(custom);
         this.text.setText(text);
     }
@@ -279,17 +286,17 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
 
     @Override
     public boolean isWrap() {
-        return wrap.getBooleanValue();
+        return wrap.getValue();
     }
 
     @Override
     public void setWrap(final boolean wrap) {
-        this.wrap.setBooleanValue(wrap);
+        this.wrap.setValue(wrap);
     }
 
     @UiHandler("custom")
-    public void onTickBoxClick(final ValueChangeEvent<TickBoxState> event) {
-        text.setEnabled(custom.getBooleanValue());
+    public void onCustomCheckBoxClick(final ValueChangeEvent<Boolean> event) {
+        text.setEnabled(custom.getValue());
     }
 
     @UiHandler("type")

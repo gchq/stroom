@@ -18,6 +18,7 @@ package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.InfoDocumentPresenter;
 
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -25,27 +26,32 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class InfoDocumentViewImpl extends ViewImpl implements InfoDocumentPresenter.InfoDocumentView {
 
-    private final TextArea widget;
+    private final TextArea textArea;
+    private final SimplePanel layout;
 
     @Inject
     public InfoDocumentViewImpl() {
-        widget = new TextArea();
-        widget.setReadOnly(true);
-        widget.setStyleName("info-layout");
+        textArea = new TextArea();
+        textArea.setReadOnly(true);
+        textArea.setStyleName("info-layout");
+
+        layout = new SimplePanel();
+        layout.setWidget(textArea);
+        layout.setStyleName("dialog-content-padding max");
     }
 
     @Override
     public Widget asWidget() {
-        return widget;
+        return layout;
     }
 
     @Override
     public void focus() {
-        widget.setFocus(true);
+        textArea.setFocus(true);
     }
 
     @Override
     public void setInfo(final String string) {
-        widget.setText(string);
+        textArea.setText(string);
     }
 }

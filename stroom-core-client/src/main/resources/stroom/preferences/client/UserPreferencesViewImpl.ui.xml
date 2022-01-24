@@ -6,7 +6,7 @@
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
 
-    <g:FlowPanel styleName="max form-page form">
+    <g:FlowPanel styleName="max form-padding form">
         <!-- Theme -->
         <form:FormGroup identity="userPreferencesTheme" label="Theme">
             <item:StringListBox ui:field="theme" addStyleNames="w-100"/>
@@ -53,8 +53,8 @@
         </form:FormGroup>
 
         <g:FlowPanel styleName="preferencesViewImpl-buttons">
-            <g:Button ui:field="setAsDefault" text="Set As Default"/>
-            <g:Button ui:field="revertToDefault" text="Revert To Default"/>
+            <g:Button ui:field="setAsDefault" addStyleNames="allow-focus" text="Set As Default"/>
+            <g:Button ui:field="revertToDefault" addStyleNames="allow-focus" text="Revert To Default"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

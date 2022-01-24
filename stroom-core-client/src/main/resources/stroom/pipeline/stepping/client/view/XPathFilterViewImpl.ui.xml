@@ -1,33 +1,21 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:l="urn:import:stroom.item.client"
-  xmlns:v="urn:import:stroom.widget.tickbox.client.view">
-  <g:SimplePanel styleName="w-100">
-    <g:Grid ui:field="grid" styleName="stroom-control-grid w-100">
-      <g:row>
-        <g:cell>XPath:</g:cell>
-        <g:customCell>
-          <g:TextBox ui:field="xPath" addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
-      <g:row>
-        <g:cell>Condition:</g:cell>
-        <g:customCell>
-          <l:ItemListBox ui:field="matchType" addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
-      <g:row>
-        <g:cell>Value:</g:cell>
-        <g:customCell>
-          <g:TextBox ui:field="value" addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
-      <g:row>
-        <g:cell>Ignore Case:</g:cell>
-        <g:customCell>
-          <v:TickBox ui:field="ignoreCase" />
-        </g:customCell>
-      </g:row>
-    </g:Grid>
-  </g:SimplePanel>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:v="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="xPathFilterPath" label="XPath">
+            <g:TextBox ui:field="xPath" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="xPathFilterCondition" label="Condition">
+            <l:ItemListBox ui:field="matchType"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="valueContainer" identity="xPathFilterValue" label="Value">
+            <g:TextBox ui:field="value" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="ignoreCaseContainer" identity="xPathFilterIgnoreCase" label="Ignore Case">
+            <v:CustomCheckBox ui:field="ignoreCase"/>
+        </form:FormGroup>
+    </g:FlowPanel>
 </ui:UiBinder> 

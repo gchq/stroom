@@ -39,6 +39,7 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
                                 final PagerView pagerView,
                                 final RestFactory restFactory) {
         super(eventBus, userListView, pagerView, restFactory);
+        getView().asWidget().addStyleName("form-padding");
     }
 
     @Override

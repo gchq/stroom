@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-page form">
+    <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="moveDocumentSelectParentGroup" label="Select the parent group"
                         addStyleNames="dock-max">
             <g:SimplePanel ui:field="foldersInner" styleName="dock-max"/>

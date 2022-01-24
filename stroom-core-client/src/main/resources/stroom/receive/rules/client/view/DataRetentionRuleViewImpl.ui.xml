@@ -4,12 +4,9 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-page form">
-        <form:FormGroup identity="dataRetentionRuleRuleName" label="Rule Name">
-            <g:FlowPanel>
-                <g:TextBox ui:field="name" addStyleNames="dataRetentionRuleViewImpl-name allow-focus"/>
-                <g:Label text="(optional)" addStyleNames="dataRetentionRuleViewImpl-optional"/>
-            </g:FlowPanel>
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="dataRetentionRuleRuleName" label="Rule Name (optional)">
+                <g:TextBox ui:field="name" />
         </form:FormGroup>
         <form:FormGroup identity="dataRetentionRuleKeepForever" label="Keep Forever">
             <tickbox:CustomCheckBox ui:field="forever"/>

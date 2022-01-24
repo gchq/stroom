@@ -1,14 +1,11 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui">
-  <g:Grid styleName="stroom-control-grid w-100">
-    <g:row>
-      <g:customCell>
-        <g:Label text="Id:" width="40px" />
-      </g:customCell>
-      <g:customCell>
-        <g:TextBox ui:field="id" addStyleNames="w-100" />
-      </g:customCell>
-    </g:row>
-  </g:Grid>
+<ui:UiBinder
+        xmlns:ui="urn:ui:com.google.gwt.uibinder"
+        xmlns:g="urn:import:com.google.gwt.user.client.ui"
+        xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="newElementId" label="Id">
+            <g:TextBox ui:field="id" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
 </ui:UiBinder>

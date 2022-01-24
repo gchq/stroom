@@ -1,87 +1,51 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
-  xmlns:v="urn:import:stroom.widget.tickbox.client.view"
-  xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
-  <g:FlowPanel styleName="max default-min-sizes">
-    <g:Grid ui:field="grid" styleName="stroom-control-grid w-100">
-      <g:row>
-        <g:customCell>
-          <g:Label text="Type:" width="105px" />
-        </g:customCell>
-        <g:customCell>
-          <i:ItemListBox ui:field="type" addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
+             xmlns:v="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="formatType" label="Type">
+            <i:ItemListBox ui:field="type" addStyleNames="w-100"/>
+        </form:FormGroup>
 
-      <!-- Number format settings -->
-      <g:row>
-        <g:cell>Decimal Places:</g:cell>
-        <g:customCell>
-          <valuespinner:ValueSpinner ui:field="decimalPlaces"
-            addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
-      <g:row>
-        <g:cell>Use Separator (,):</g:cell>
-        <g:customCell>
-          <v:TickBox ui:field="separate" addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
+        <!-- Number format settings -->
+        <form:FormGroup ui:field="formatDecimalPlaces" identity="formatDecimalPlaces" label="Decimal Places">
+            <valuespinner:ValueSpinner ui:field="decimalPlaces"
+                                       addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatUseSeparator" identity="formatUseSeparator" label="Use Separator (,)">
+            <v:CustomCheckBox ui:field="separate"/>
+        </form:FormGroup>
 
-      <!-- Date time settings -->
-      <g:row>
-        <g:cell>Use Preferences:</g:cell>
-        <g:customCell>
-          <v:TickBox ui:field="usePreferences" addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
-      <g:row>
-        <g:cell>Format:</g:cell>
-        <g:customCell>
-          <i:StringListBox ui:field="format" addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
-      <g:row>
-        <g:cell>Custom:</g:cell>
-        <g:customCell>
-          <v:TickBox ui:field="custom" addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
-      <g:row>
-        <g:cell>Custom Format:</g:cell>
-        <g:customCell>
-          <g:TextBox ui:field="text" addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
-      <g:row>
-        <g:cell>Time Zone:</g:cell>
-        <g:customCell>
-          <i:ItemListBox ui:field="timeZoneUse" addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
-      <g:row>
-        <g:cell>Time Zone Id:</g:cell>
-        <g:customCell>
-          <i:StringListBox ui:field="timeZoneId" addStyleNames="w-100" />
-        </g:customCell>
-      </g:row>
-      <g:row>
-        <g:cell>Time Zone Offset:</g:cell>
-        <g:customCell>
-          <g:FlowPanel>
-          	<valuespinner:ValueSpinner ui:field="timeZoneOffsetHours" />
-          	<valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes" />
-          </g:FlowPanel>
-        </g:customCell>
-      </g:row>
+        <!-- Date time settings -->
+        <form:FormGroup ui:field="formatUsePreferences" identity="formatUsePreferences" label="Use Preferences">
+            <v:CustomCheckBox ui:field="usePreferences"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatFormat" identity="formatFormat" label="Format">
+            <i:StringListBox ui:field="format" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatCustom" identity="formatCustom" label="Custom">
+            <v:CustomCheckBox ui:field="custom"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatCustomFormat" identity="formatCustomFormat" label="Custom Format">
+            <g:TextBox ui:field="text" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatTimeZone" identity="formatTimeZone" label="Time Zone">
+            <i:ItemListBox ui:field="timeZoneUse" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatTimeZoneId" identity="formatTimeZoneId" label="Time Zone Id">
+            <i:StringListBox ui:field="timeZoneId" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatTimeZoneOffset" identity="formatTimeZoneOffset" label="Time Zone Offset">
+            <g:FlowPanel>
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes"/>
+            </g:FlowPanel>
+        </form:FormGroup>
 
-      <g:row>
-        <g:cell>Wrap Text:</g:cell>
-        <g:customCell>
-          <v:TickBox ui:field="wrap" addStyleNames="w-100"/>
-        </g:customCell>
-      </g:row>
-    </g:Grid>
-  </g:FlowPanel>
+        <form:FormGroup identity="formatWrapText" label="Wrap Text">
+            <v:CustomCheckBox ui:field="wrap"/>
+        </form:FormGroup>
+    </g:FlowPanel>
 </ui:UiBinder>

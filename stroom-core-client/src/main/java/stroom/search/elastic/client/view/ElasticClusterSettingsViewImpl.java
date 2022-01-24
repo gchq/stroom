@@ -19,7 +19,7 @@ package stroom.search.elastic.client.view;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.ElasticClusterSettingsView;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsUiHandlers;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -50,7 +50,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     @UiField
     TextArea caCertificate;
     @UiField
-    TickBox useAuthentication;
+    CustomCheckBox useAuthentication;
     @UiField
     TextBox apiKeyId;
     @UiField
@@ -118,12 +118,12 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
 
     @Override
     public boolean getUseAuthentication() {
-        return useAuthentication.getBooleanValue();
+        return useAuthentication.getValue();
     }
 
     @Override
     public void setUseAuthentication(final boolean useAuthentication) {
-        this.useAuthentication.setBooleanValue(useAuthentication);
+        this.useAuthentication.setValue(useAuthentication);
     }
 
     @Override
@@ -175,5 +175,6 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     }
 
     public interface Binder extends UiBinder<Widget, ElasticClusterSettingsViewImpl> {
+
     }
 }

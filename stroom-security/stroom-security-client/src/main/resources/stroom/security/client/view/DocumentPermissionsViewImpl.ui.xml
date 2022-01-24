@@ -2,14 +2,16 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-page dock-container-vertical">
+    <g:FlowPanel styleName="max dock-container-vertical">
         <g:SimplePanel ui:field="tabs" styleName="dock-max"/>
-        <g:FlowPanel ui:field="innerLayout" styleName="dock-min form">
+        <g:FlowPanel ui:field="innerLayout" styleName="dock-min form-padding form">
             <form:FormGroup ui:field="cascadeGrid" identity="documentPermissionsCascade" label="Cascade">
                 <l:ItemListBox ui:field="cascade" addStyleNames="w-100"/>
             </form:FormGroup>
             <g:Button styleName="dock-min gwt-Button documentPermissionsViewImpl-copyPermissionsFromParentButton"
-                      ui:field="copyPermissionsFromParentButton" text="Copy permissions from parent"/>
+                      ui:field="copyPermissionsFromParentButton"
+                      addStyleNames="allow-focus"
+                      text="Copy permissions from parent"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder> 

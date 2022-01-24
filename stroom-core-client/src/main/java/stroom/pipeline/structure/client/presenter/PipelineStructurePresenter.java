@@ -505,7 +505,6 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             xmlEditor.getIndicatorsOption().setAvailable(false);
             xmlEditor.getIndicatorsOption().setOn(false);
             xmlEditor.getStylesOption().setOn(true);
-            xmlEditor.getView().asWidget().getElement().addClassName("stroom-border");
             xmlEditor.getView().asWidget().getElement().addClassName("default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);

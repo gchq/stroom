@@ -4,6 +4,6 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <v:QuickFilter ui:field="nameFilter"
                        addStyleNames="dock-min quickFilter__margin-bottom"/>
-        <g:SimplePanel styleName="dock-max" ui:field="listContainer"/>
+        <g:SimplePanel styleName="dock-max stroom-control" ui:field="listContainer"/>
     </g:FlowPanel>
 </ui:UiBinder> 

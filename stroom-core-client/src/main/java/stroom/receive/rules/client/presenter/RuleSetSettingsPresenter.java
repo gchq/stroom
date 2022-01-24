@@ -289,7 +289,7 @@ public class RuleSetSettingsPresenter
 
     private void showRulePresenter(final RulePresenter rulePresenter,
                                    final Runnable okHandler) {
-        final PopupSize popupSize = PopupSize.resizable(800, 400);
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
         ShowPopupEvent.builder(rulePresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

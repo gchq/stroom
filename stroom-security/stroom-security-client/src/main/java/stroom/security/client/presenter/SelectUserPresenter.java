@@ -74,6 +74,7 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
 
         userListView.setDatGridView(pagerView);
         userListView.setUiHandlers(this);
+        userListView.asWidget().addStyleName("form-padding");
 
         // Icon
         dataGrid.addColumn(new Column<String, Preset>(new SvgCell()) {

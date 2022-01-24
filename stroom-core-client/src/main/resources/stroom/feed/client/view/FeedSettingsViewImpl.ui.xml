@@ -4,7 +4,7 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-page form">
+    <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="feedSettingsDescription" label="Description">
             <g:TextArea ui:field="description" width="400px"/>
         </form:FormGroup>

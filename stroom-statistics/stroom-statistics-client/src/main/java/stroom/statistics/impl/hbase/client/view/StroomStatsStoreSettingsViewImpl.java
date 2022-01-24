@@ -16,14 +16,13 @@
 
 package stroom.statistics.impl.hbase.client.view;
 
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
 import stroom.statistics.impl.hbase.client.presenter.StroomStatsStoreSettingsPresenter;
 import stroom.statistics.impl.hbase.client.presenter.StroomStatsStoreSettingsUiHandlers;
 import stroom.statistics.impl.hbase.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.hbase.shared.StatisticRollUpType;
 import stroom.statistics.impl.hbase.shared.StatisticType;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -48,7 +47,7 @@ public class StroomStatsStoreSettingsViewImpl extends ViewWithUiHandlers<StroomS
     @UiField(provided = true)
     ItemListBox<StatisticRollUpType> rollUpType;
     @UiField(provided = true)
-    TickBox enabled;
+    CustomCheckBox enabled;
 
     @Inject
     public StroomStatsStoreSettingsViewImpl(final Binder binder) {
@@ -70,7 +69,7 @@ public class StroomStatsStoreSettingsViewImpl extends ViewWithUiHandlers<StroomS
             precision.addItem(item);
         }
 
-        enabled = new TickBox(TickBoxState.UNTICK, null);
+        enabled = new CustomCheckBox();
         // default to not ticked so Stroom doesn't start recording stats while the
         // enity is being built up, i.e. fields
         // added.
@@ -121,7 +120,7 @@ public class StroomStatsStoreSettingsViewImpl extends ViewWithUiHandlers<StroomS
     }
 
     @Override
-    public TickBox getEnabled() {
+    public CustomCheckBox getEnabled() {
         return enabled;
     }
 

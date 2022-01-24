@@ -5,6 +5,6 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <view:QuickFilter ui:field="quickFilter"
                           addStyleNames="dock-min quickFilter__margin-bottom"/>
-        <g:SimplePanel ui:field="dataGrid" styleName="dock-max stroom-border"/>
+        <g:SimplePanel ui:field="dataGrid" styleName="dock-max stroom-control"/>
     </g:FlowPanel>
 </ui:UiBinder>

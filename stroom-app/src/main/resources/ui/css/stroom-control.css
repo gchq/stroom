@@ -70,7 +70,7 @@
 .stroom .stroom-control-label {
   	width: 100%;
   	white-space: nowrap;
-  	padding: 3px;
+  	padding: 3px 0;
   	-webkit-user-select: text;
   	-moz-user-select: text;
   	user-select: text;

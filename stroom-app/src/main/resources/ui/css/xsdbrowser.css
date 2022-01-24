@@ -40,30 +40,30 @@
 
 .xsdBrowser .display {
 	border: none;
-	border-right: 1px solid var(--border-color);
-	border-top: 1px solid var(--border-color);
+	border-right: 1px solid var(--control__border-color);
+	border-top: 1px solid var(--control__border-color);
 }
 
 .xsdBrowser .documentation {
-	border-left: 1px solid var(--border-color);
-	border-top: 1px solid var(--border-color);
-	border-bottom: 1px solid var(--border-color);
-	overflow: auto;
 	background-color: var(--control__background-color);
+	border: 1px solid var(--control__border-color);
+	border-radius: .25rem;
+	overflow: auto;
 	padding: 5px;
 }
 
 .xsdBrowser .constraints {
 	background-color: var(--control__background-color);
-	border-left: 1px solid var(--border-color);
-	border-top: 1px solid var(--border-color);
+	border: 1px solid var(--control__border-color);
+	border-radius: .25rem;
 }
 
 .xsdBrowser .container {
+	background-color: var(--control__background-color);
+	border: 1px solid var(--control__border-color);
+	border-radius: .25rem;
 	width: 100%;
 	height: 100%;
-	background-color: var(--control__background-color);
-	border: 1px solid var(--border-color);
 }
 
 .xsdBrowser .content {
@@ -95,8 +95,9 @@
 }
 
 .xsdBrowser .outerBox {
-	border: 1px solid var(--control__background-color);
 	background-color: var(--xsdbrowser-box-background-color);
+	border: 1px solid var(--control__background-color);
+	border-radius: .25rem;
 }
 
 .xsdBrowser .restrictionType {

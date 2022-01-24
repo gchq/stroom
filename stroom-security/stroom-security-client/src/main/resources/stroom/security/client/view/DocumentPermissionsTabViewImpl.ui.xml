@@ -4,16 +4,20 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:MySplitLayoutPanel styleName="max">
         <g:north size="200">
-            <form:FormGroup ui:field="documentPermissionsUsers" identity="documentPermissionsUsers" label="Users"
-                            addStyleNames="control__padding-bottom">
-                <g:SimplePanel ui:field="users" addStyleNames="max"/>
-            </form:FormGroup>
+            <g:FlowPanel styleName="max form-padding form">
+                <form:FormGroup ui:field="documentPermissionsUsers" identity="documentPermissionsUsers" label="Users"
+                                addStyleNames="max">
+                    <g:SimplePanel ui:field="users" addStyleNames="dock-max"/>
+                </form:FormGroup>
+            </g:FlowPanel>
         </g:north>
         <g:center>
-            <form:FormGroup identity="documentPermissionsPermissions" label="Permissions"
-                            addStyleNames="control__padding-bottom">
-                <g:ScrollPanel ui:field="permissions" addStyleNames="max stroom-control"/>
-            </form:FormGroup>
+            <g:FlowPanel styleName="max form-padding form">
+                <form:FormGroup identity="documentPermissionsPermissions" label="Permissions"
+                                addStyleNames="max">
+                    <g:ScrollPanel ui:field="permissions" addStyleNames="dock-max stroom-control"/>
+                </form:FormGroup>
+            </g:FlowPanel>
         </g:center>
     </g:MySplitLayoutPanel>
 </ui:UiBinder> 

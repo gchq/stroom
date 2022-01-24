@@ -50,6 +50,7 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -167,7 +168,7 @@ public class ImportConfigConfirmPresenter extends
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Confirm Import")
-                .onShow(e -> dataGrid.setFocus(true))
+                .onShow(e -> getView().focus())
                 .onHideRequest(this)
                 .fire();
     }
@@ -402,7 +403,7 @@ public class ImportConfigConfirmPresenter extends
         // ClearFunctionCacheEvent.fire(this);
     }
 
-    public interface ImportConfigConfirmView extends View {
+    public interface ImportConfigConfirmView extends View, Focus {
 
         void setDataGrid(Widget widget);
 

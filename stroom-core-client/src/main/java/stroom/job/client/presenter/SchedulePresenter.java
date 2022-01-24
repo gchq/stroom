@@ -70,7 +70,7 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
     }
 
     private void read() {
-        getView().getScheduledType().setText(StroomCoreStringUtil.toString(jobType));
+//        getView().getScheduledType().setText(StroomCoreStringUtil.toString(jobType));
         getView().getScheduledString().setText(StroomCoreStringUtil.toString(scheduleString));
         calcTimes();
     }
@@ -136,7 +136,7 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
 
     public interface ScheduleView extends View, Focus {
 
-        HasText getScheduledType();
+//        HasText getScheduledType();
 
         HasText getScheduledString();
 

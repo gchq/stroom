@@ -1,23 +1,17 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:c="urn:import:stroom.widget.customdatebox.client">
-    <g:FlowPanel styleName="importConfigContainer max default-min-sizes dock-container-vertical">
-        <g:Grid ui:field="grid" styleName="dock-min stroom-control-grid">
-            <g:row>
-                <g:cell>Enable Processor Filters:</g:cell>
-                <g:customCell>
-                    <g:CheckBox styleName="stroom-control" ui:field="enableFilters"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>From this date</g:cell>
-                <g:customCell>
-                    <c:MyDateBox ui:field="enableFrom"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
-        <g:Label text="(or leave blank to process from first stream)" addStyleNames="dock-min"/>
+             xmlns:c="urn:import:stroom.widget.customdatebox.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="importConfigConfirmEnableProcessorFilters" label="Enable Processor Filters">
+            <tickbox:CustomCheckBox ui:field="enableFilters"/>
+        </form:FormGroup>
+        <form:FormGroup identity="importConfigConfirmFromThisdate"
+                        label="From this date (or leave blank to process from first stream)">
+            <c:MyDateBox ui:field="enableFrom"/>
+        </form:FormGroup>
         <g:SimplePanel ui:field="dataGridView" styleName="dock-max stroom-control"/>
     </g:FlowPanel>
 </ui:UiBinder> 

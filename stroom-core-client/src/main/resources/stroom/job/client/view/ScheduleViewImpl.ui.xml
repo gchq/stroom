@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="scheduleExpression" label="Expression">
+            <g:TextBox ui:field="expression"/>
+        </form:FormGroup>
+        <form:FormGroup identity="scheduleLastExecuted" label="Last Executed">
+            <g:Label ui:field="lastExecuted"/>
+        </form:FormGroup>
+        <form:FormGroup identity="scheduleNextScheduledTime" label="Next Scheduled Time">
+            <g:Label ui:field="nextScheduledTime"/>
+        </form:FormGroup>
+        <g:Button ui:field="calculate" width="200px" addStyleNames="allow-focus" text="Calculate"/>
+    </g:FlowPanel>
+</ui:UiBinder>

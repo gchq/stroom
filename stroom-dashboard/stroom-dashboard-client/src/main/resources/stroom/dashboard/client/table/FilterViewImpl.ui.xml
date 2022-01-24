@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-page form">
+    <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="filterInclude" label="Include" addStyleNames="dock-max">
             <g:TextArea ui:field="includes" styleName="max"/>
         </form:FormGroup>

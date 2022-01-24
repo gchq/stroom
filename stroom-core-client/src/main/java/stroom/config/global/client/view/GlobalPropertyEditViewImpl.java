@@ -21,18 +21,16 @@ import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public final class GlobalPropertyEditViewImpl
@@ -40,8 +38,7 @@ public final class GlobalPropertyEditViewImpl
         implements GlobalPropertyEditView {
 
     private final Widget widget;
-    @UiField
-    Grid grid;
+
     @UiField
     Label name;
     @UiField
@@ -51,7 +48,7 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     TextArea yamlValue;
     @UiField
-    TickBox useOverride;
+    CustomCheckBox useOverride;
     @UiField
     TextArea databaseValue;
     @UiField
@@ -63,11 +60,11 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     Label source;
     @UiField
-    TickBox requireRestart;
+    CustomCheckBox requireRestart;
     @UiField
-    TickBox requireUiRestart;
+    CustomCheckBox requireUiRestart;
     @UiField
-    TickBox readOnly;
+    CustomCheckBox readOnly;
     // TODO This btn panel doesn't appear to be used. Probably not needed as the effectiveValueButtonPanel
     //  does the job of showing what values are effective on the nodes.
     @UiField
@@ -78,15 +75,10 @@ public final class GlobalPropertyEditViewImpl
     ButtonPanel dataTypeButtonPanel;
 
     private boolean password;
-//    private static volatile Resources RESOURCES;
 
     @Inject
-    public GlobalPropertyEditViewImpl(final EventBus eventBus,
-                                      final Binder binder) {
+    public GlobalPropertyEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-//        RESOURCES = GWT.create(Resources.class);
-//        RESOURCES.style().ensureInjected();
-
         setPasswordStyle(false);
         setEditable(false);
 
@@ -125,7 +117,7 @@ public final class GlobalPropertyEditViewImpl
 
     @Override
     public void focus() {
-        description.setFocus(true);
+        useOverride.setFocus(true);
     }
 
     @Override
@@ -174,30 +166,30 @@ public final class GlobalPropertyEditViewImpl
 
     @Override
     public boolean getUseOverride() {
-        return useOverride.getBooleanValue();
+        return useOverride.getValue();
     }
 
     @Override
     public void setPasswordStyle(final boolean password) {
         this.password = password;
 
-        grid.getRowFormatter().setVisible(4, !password);
-        grid.getRowFormatter().setVisible(5, password);
+        databaseValue.setVisible(!password);
+        databaseValuePassword.setVisible(password);
     }
 
     @Override
     public void setRequireRestart(final boolean val) {
-        requireRestart.setBooleanValue(val);
+        requireRestart.setValue(val);
     }
 
     @Override
     public void setRequireUiRestart(final boolean val) {
-        requireUiRestart.setBooleanValue(val);
+        requireUiRestart.setValue(val);
     }
 
     @Override
     public void setEditable(final boolean edit) {
-        readOnly.setBooleanValue(!edit);
+        readOnly.setValue(!edit);
 
         databaseValue.setReadOnly(!edit);
         databaseValuePassword.setReadOnly(!edit);
@@ -205,14 +197,14 @@ public final class GlobalPropertyEditViewImpl
 
         // disable the override fields if use override is not ticked
         if (edit) {
-            databaseValue.setReadOnly(!useOverride.getBooleanValue());
-            databaseValuePassword.setReadOnly(!useOverride.getBooleanValue());
+            databaseValue.setReadOnly(!useOverride.getValue());
+            databaseValuePassword.setReadOnly(!useOverride.getValue());
         }
     }
 
     @Override
     public void setUseOverride(final boolean useOverride) {
-        this.useOverride.setBooleanValue(useOverride);
+        this.useOverride.setValue(useOverride);
     }
 
     @Override

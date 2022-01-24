@@ -19,12 +19,10 @@ package stroom.importexport.client.view;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -33,26 +31,29 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfigConfirmView {
 
     private final Widget widget;
-    @UiField
-    Grid grid;
+
     @UiField
     SimplePanel dataGridView;
     @UiField(provided = true)
     MyDateBox enableFrom;
     @UiField
-    CheckBox enableFilters;
+    CustomCheckBox enableFilters;
 
     @Inject
     public ImportConfigConfirmViewImpl(final Binder binder,
                                        final UserPreferencesManager userPreferencesManager) {
         enableFrom = new MyDateBox(userPreferencesManager.isUtc());
         widget = binder.createAndBindUi(this);
-        grid.getRowFormatter().getElement(0).getStyle().setHeight(100, Style.Unit.PCT);
     }
 
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        enableFilters.setFocus(true);
     }
 
     @Override

@@ -2,61 +2,36 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client"
-             xmlns:t="urn:import:stroom.widget.tickbox.client.view">
-    <g:FlowPanel styleName="dock-container-vertical stroom-control-page">
-        <g:Grid styleName="dock-min stroom-control-grid">
-            <g:row>
-                <g:cell>Description:</g:cell>
-                <g:customCell>
-                    <g:TextArea ui:field="description" width="400px"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Collection:</g:cell>
-                <g:customCell>
-                    <g:TextBox ui:field="collection" width="400px"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Instance Type:</g:cell>
-                <g:customCell>
-                    <l:ItemListBox ui:field="instanceType"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Solr URLs:</g:cell>
-                <g:customCell>
-                    <g:TextArea ui:field="solrUrls" width="400px"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Use ZK:</g:cell>
-                <g:customCell>
-                    <t:TickBox ui:field="useZk" width="400px"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>ZK Hosts:</g:cell>
-                <g:customCell>
-                    <g:TextArea ui:field="zkHosts" width="400px"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>ZK Path:</g:cell>
-                <g:customCell>
-                    <g:TextArea ui:field="zkPath" width="400px"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell></g:cell>
-                <g:customCell>
-                    <g:Button ui:field="testConnection" text="Test Connection" width="200px"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
-        <g:Label text="Data Retention Expression (matching data will be deleted):"
-                 addStyleNames="dock-min solrIndexSettingsViewImpl-label w-100"/>
-        <g:SimplePanel ui:field="retentionExpressionPanel"
-                       styleName="dock-max stroom-border"/>
+             xmlns:t="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="solrIndexSettingsDescription" label="Description">
+            <g:TextArea ui:field="description" width="400px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="solrIndexSettingsCollection" label="Collection">
+            <g:TextBox ui:field="collection" width="400px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="solrIndexSettingsInstanceType" label="Instance Type">
+            <l:ItemListBox ui:field="instanceType"/>
+        </form:FormGroup>
+        <form:FormGroup identity="solrIndexSettingsSolrURLs" label="Solr URLs">
+            <g:TextArea ui:field="solrUrls" width="400px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="solrIndexSettingsUseZK" label="Use ZK">
+            <t:CustomCheckBox ui:field="useZk"/>
+        </form:FormGroup>
+        <form:FormGroup identity="solrIndexSettingsZKHosts" label="ZK Hosts">
+            <g:TextArea ui:field="zkHosts" width="400px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="solrIndexSettingsZKPath" label="ZK Path">
+            <g:TextArea ui:field="zkPath" width="400px"/>
+        </form:FormGroup>
+        <g:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
+        <form:FormGroup identity="solrIndexSettingsDataRetention"
+                        label="Data Retention Expression (matching data will be deleted)"
+                        addStyleNames="default-min-sizes flex-grow-1">
+            <g:SimplePanel ui:field="retentionExpressionPanel"
+                           styleName="dock-max"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

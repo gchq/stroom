@@ -21,7 +21,7 @@ import stroom.item.client.ItemListBox;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.client.presenter.SolrIndexSettingsUiHandlers;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -54,7 +54,7 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @UiField
     TextArea solrUrls;
     @UiField
-    TickBox useZk;
+    CustomCheckBox useZk;
     @UiField
     TextArea zkHosts;
     @UiField
@@ -145,12 +145,12 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
 
     @Override
     public boolean isUseZk() {
-        return useZk.getBooleanValue();
+        return useZk.getValue();
     }
 
     @Override
     public void setUseZk(final boolean useZk) {
-        this.useZk.setBooleanValue(useZk);
+        this.useZk.setValue(useZk);
     }
 
     @Override

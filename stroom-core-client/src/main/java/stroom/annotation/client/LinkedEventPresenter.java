@@ -147,7 +147,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
                 .caption("Linked Events")
-                .onShow(e -> dataGrid.setFocus(true))
+                .onShow(e -> addEventButton.focus())
                 .onHide(e -> consumer.accept(dirty))
                 .fire();
     }
