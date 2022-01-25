@@ -33,7 +33,7 @@
     padding-right: 2px;
     text-align: left;
 
-    background-color: var(--app-background-color);
+    background-color: var(--app__background-color);
     color: black;
     overflow: hidden;
     white-space: nowrap;
@@ -46,7 +46,7 @@
     padding-left: 2px;
     padding-right: 2px;
     text-align: left;
-    background-color: var(--app-background-color);
+    background-color: var(--app__background-color);
     color: black;
     overflow: hidden;
     white-space: nowrap;
@@ -134,7 +134,7 @@
 }
 
 .cellTableSelectedRow:hover {
-    background-color: var(--row__background-color--selected-hovered);
+    background-color: var(--row__background-color--selected--hovered);
 }
 
 .cellTableOddRow:focus-within,
@@ -143,5 +143,5 @@
 }
 
 .cellTableSelectedRow:focus-within {
-    background-color: var(--row__background-color--selected-focussed);
+    background-color: var(--row__background-color--selected--focussed);
 }

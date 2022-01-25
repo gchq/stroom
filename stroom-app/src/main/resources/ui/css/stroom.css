@@ -402,8 +402,6 @@ td {
 .stroom-main-content-container {
 	height: 100%;
 	padding: 0px;
-	/*border: 1px solid var(--main-border-color);*/
-    /*background-color: var(--main-background-color);*/
 }
 
 /* DATA GRID */
@@ -614,7 +612,7 @@ input[type="file"]:disabled {
 }
 
 .info-page {
-	background-color: var(--main-background-color);
+	background-color: var(--page__background-color);
 	color: var(--text-color);
 	padding: 5px;
 	padding-top: 0;
@@ -656,22 +654,22 @@ input[type="file"]:disabled {
 }
 
 .gwt-TextArea-readonly {
-  color: var(--text-color-disabled);
+  color: var(--text-color--disabled);
   /* background-color: rgba(255, 255, 255, 0.5); */
 }
 
 .gwt-TextBox-readonly {
-  color: var(--text-color-disabled);
+  color: var(--text-color--disabled);
   /* background-color: rgba(255, 255, 255, 0.5); */
 }
 
 .gwt-PasswordTextBox-readonly {
-  color: var(--text-color-disabled);
+  color: var(--text-color--disabled);
   /* background-color: rgba(255, 255, 255, 0.5); */
 }
 
 .gwt-Label-disabled {
-  color: var(--text-color-disabled);
+  color: var(--text-color--disabled);
 }
 
 /* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree { */

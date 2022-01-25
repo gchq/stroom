@@ -19,13 +19,13 @@
 
 .cellListEvenItem {
 	cursor: pointer;
-	background: var(--odd-row-background-color);
+	background: var(--row__background-color--odd);
 	zoom: 1;
 }
 
 .cellListOddItem {
 	cursor: pointer;
-	background: var(--even-row-background-color);
+	background: var(--row__background-color--even);
 	zoom: 1;
 }
 

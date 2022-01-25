@@ -16,7 +16,7 @@
 .menuItem-separator {
     margin-left: 2px;
     margin-right: 2px;
-	border-top: 1px solid var(--menu-separator-color);
+	border-top: 1px solid var(--menu-separator__color);
 	cursor: default;
 }
 
@@ -40,7 +40,7 @@
 }
 
 .menuItem-highlight {
-	background-color: var(--code-editor-highlight-background-color);
+	background-color: var(--code-editor__background-color--highlight);
 	color: var(--row__text-color--selected);
 }
 

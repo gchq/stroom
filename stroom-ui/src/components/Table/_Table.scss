@@ -38,7 +38,7 @@
 //}
 //
 //.ReactTable .rt-tr.-odd {
-//    background-color: var(--odd-row__background-color);
+//    background-color: var(--row__background-color--odd);
 //}
 //
 //.ReactTable .rt-td {
@@ -203,11 +203,11 @@
   //}
 
   .tr:nth-of-type(odd) {
-    background-color: var(--odd-row-background-color);
+    background-color: var(--row__background-color--odd);
   }
 
   .tr:nth-of-type(even) {
-    background-color: var(--even-row-background-color);
+    background-color: var(--row__background-color--even);
   }
 
   //.tr.odd {
@@ -256,8 +256,8 @@
   //}
 
   .th {
-    background-color: var(--odd-row-background-color);
-    border-bottom: 1px solid var(--header-border-color);
+    background-color: var(--row__background-color--odd);
+    border-bottom: 1px solid var(--header__border-color);
     user-select: none;
     font-weight: 600;
   }

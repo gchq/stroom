@@ -35,10 +35,10 @@ body,table td,select {
 	box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
 	white-space: nowrap;
 
-	background-image: var(--button-background-image);
-	background-color: var(--button-background-color);
-	border: 1px solid var(--button-border-color);
-	color: var(--button-text-color);
+	background-image: var(--button__background-image);
+	background-color: var(--button__background-color);
+	border: 1px solid var(--button__border-color);
+	color: var(--button__text-color);
 }
 
 .gwt-Button {
@@ -52,10 +52,10 @@ body,table td,select {
 	box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
 	white-space: nowrap;
 	
-	background-image: var(--button-background-image);
-	background-color: var(--button-background-color);
-	border: 1px solid var(--button-border-color);
-	color: var(--button-text-color);
+	background-image: var(--button__background-image);
+	background-color: var(--button__background-color);
+	border: 1px solid var(--button__border-color);
+	color: var(--button__text-color);
 
     font-size: var(--font-size-2);
     font-weight: 500;
@@ -69,18 +69,18 @@ body,table td,select {
 /* 	border-color: #4a90e4 !important; */
 /* 	background-color: white !important; */
 	
-	background-image: var(--button-background-image-active) !important;
-	background-color: var(--button-background-color-active) !important;
-	border-color: var(--button-border-color-active) !important;
+	background-image: var(--button__background-image--active) !important;
+	background-color: var(--button__background-color--active) !important;
+	border-color: var(--button__border-color--active) !important;
 }
 .gwt-Button:hover {
 /* 	border-color: #aaa; */
 /* 	background-color: white; */
 	box-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
 	
-	background-image: var(--button-background-image-hover);
-	background-color: var(--button-background-color-hover);
-	border-color: var(--button-border-color-hover);
+	background-image: var(--button__background-image--hover);
+	background-color: var(--button__background-color--hover);
+	border-color: var(--button__border-color--hover);
 }
 .gwt-Button:focus:hover {
     border-color: var(--focus-border);
@@ -88,10 +88,10 @@ body,table td,select {
 }
 .gwt-Button[disabled] {
   cursor: default;
-  color: var(--button-text-color-disabled);
+  color: var(--button__text-color--disabled);
 }
 .gwt-Button[disabled]:hover {
-	border: 1px solid var(--button-border-color-disabled-hover);
+	border: 1px solid var(--button__border-color--disabled--hover);
 }
 
 .gwt-CheckBox {

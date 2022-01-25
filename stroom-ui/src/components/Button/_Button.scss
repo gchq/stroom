@@ -321,7 +321,7 @@
 }
 
 .Button--default.Button--disabled {
-  color: var(--button-text-color-disabled);
+  color: var(--button__text-color--disabled);
 }
 
 .Button--default.Button--disabled:focus {

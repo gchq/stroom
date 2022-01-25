@@ -55,7 +55,7 @@
     height : auto;
 	cursor: default;
 
-	border-bottom: solid 1px var(--header-border-color);
+	border-bottom: solid 1px var(--header__border-color);
 }
 
 .dataGridHeader * {
@@ -150,14 +150,14 @@
 }
 
 .dataGridEvenRow {
-    background-color: var(--even-row-background-color);
+    background-color: var(--row__background-color--even);
 }
 
 .dataGridEvenRowCell {
 }
 
 .dataGridOddRow {
-    background-color: var(--odd-row-background-color);
+    background-color: var(--row__background-color--odd);
 }
 
 .dataGridOddRowCell {
@@ -187,7 +187,7 @@
 }
 
 .dataGridSelectedRow:hover {
-    background-color: var(--row__background-color--selected-hovered);
+    background-color: var(--row__background-color--selected--hovered);
 }
 
 .dataGridOddRow:focus-within,
@@ -196,7 +196,7 @@
 }
 
 .dataGridSelectedRow:focus-within {
-    background-color: var(--row__background-color--selected-focussed);
+    background-color: var(--row__background-color--selected--focussed);
 }
 
 .dataGridSelectedRowCell {

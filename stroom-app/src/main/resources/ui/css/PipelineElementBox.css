@@ -18,10 +18,10 @@
 	position: absolute;
 	left: -100000;
 	top: -100000;
-	border: 1px solid var(--pipeline-element-box-border-color);
-	background-color: var(--pipeline-element-box-background-color);
+	border: 1px solid var(--pipeline-element-box__border-color);
+	background-color: var(--pipeline-element-box__background-color);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
-	color: var(--pipeline-element-box-text-color);
+	color: var(--pipeline-element-box__text-color);
 /* 	background-image: linear-gradient(#f5f9fd, #e1ebf8); */
 	border-radius: 50px;
 	padding: 5px 5px 5px 10px;
@@ -39,22 +39,22 @@
 }
 
 .pipelineElementBox-background:hover {
-	background-color: var(--pipeline-element-box-background-color-hover);
+	background-color: var(--pipeline-element-box__background-color--hover);
 	background-image: none;
 }
 
 .pipelineElementBox-backgroundSelected {
-	background-color: var(--pipeline-element-box-background-color-selected);
+	background-color: var(--pipeline-element-box__background-color--selected);
 	background-image: none;
 }
 
 .pipelineElementBox-backgroundSelected:hover {
-	background-color: var(--pipeline-element-box-background-color-selected-hover);
+	background-color: var(--pipeline-element-box__background-color--selected--hover);
 	background-image: none;
 }
 
 .pipelineElementBox-hotspot {
-	background-color: var(--pipeline-element-box-background-color-hotspot);
+	background-color: var(--pipeline-element-box__background-color--hotspot);
 }
 
 .pipelineElementBox-image {

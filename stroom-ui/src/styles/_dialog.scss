@@ -8,9 +8,9 @@
 .flexible-modal.flexible-modal {
   position: absolute;
   z-index: 100 !important;
-  background: var(--page-background-color) !important;
+  background: var(--page__background-color) !important;
   border-radius: 0.3rem !important;
-  box-shadow: var(--dialog-shadow) !important;
+  box-shadow: var(--dialog__shadow) !important;
 }
 
 .flexible-modal-mask.flexible-modal-mask {

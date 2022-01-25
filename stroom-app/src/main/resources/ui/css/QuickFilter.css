@@ -48,8 +48,8 @@
 }
 
 .quickFilter-tooltip {
-	background-color: var(--tooltip-background-color);
-	color: var(--tooltip-text-color);
+	background-color: var(--tooltip__background-color);
+	color: var(--tooltip__text-color);
 	padding: 1px 3px;
 	-moz-user-focus: initial;
 	-moz-user-input: initial;

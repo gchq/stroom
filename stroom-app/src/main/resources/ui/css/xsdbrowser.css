@@ -74,28 +74,28 @@
 .xsdBrowser .box {
 	width: 100%;
 	height: 100%;
-	border: 1px solid var(--main-border-color);
+	border: 1px solid var(--xsdbrowser-box__border-color);
 }
 
 .xsdBrowser .boxTitle {
 	width: 100%;
-	background: var(--xsdbrowser-title-background-color);
+	background: var(--xsdbrowser-title__background-color);
 	padding: 2px;
-	border: 1px solid var(--xsdbrowser-title-background-color);
+	border: 1px solid var(--xsdbrowser-title__background-color);
 }
 
 .xsdBrowser .boxTitle-selected {
 	width: 100%;
-	background: var(--xsdbrowser-title-background-color-selected);
+	background: var(--xsdbrowser-title__background-color--selected);
 	padding: 2px;
-	border: 1px solid var(--xsdbrowser-title-background-color-selected);
+	border: 1px solid var(--xsdbrowser-title__background-color--selected);
 }
 
 .xsdBrowser .boxTitle-noContent {
 }
 
 .xsdBrowser .outerBox {
-	background-color: var(--xsdbrowser-box-background-color);
+	background-color: var(--xsdbrowser-box__background-color);
 	border: 1px solid var(--control__background-color);
 	border-radius: .25rem;
 }
@@ -145,7 +145,7 @@
 	left: 16px;
 	top: 9px;
 	font-size: var(--font-size-8);
-	color: var(--link-text-color);
+	color: var(--link__text-color);
 }
 
 .xsdBrowser .xsdBrowser-superArrow {

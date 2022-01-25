@@ -411,10 +411,10 @@
 }
 
 .tooltip {
-    border: 1px solid var(--dialog-border-color);
+    border: 1px solid var(--dialog__border-color);
     border-radius: 6px;
-    background-color: var(--tooltip-background-color);
-    box-shadow: var(--dialog-shadow);
+    background-color: var(--tooltip__background-color);
+    box-shadow: var(--dialog__shadow);
 
 	padding: 1px 3px;
 	-moz-user-focus: initial;
@@ -901,7 +901,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: var(--main-background-color);
+    background-color: var(--page__background-color);
 }
 
 .aboutViewImpl-buildInfo {
@@ -1352,7 +1352,7 @@
 
 .stroom-theme-dark .infoMenuItem {
 	color: var(--text-color);
-    border: 1px solid var(--dialog-border-color);
+    border: 1px solid var(--dialog__border-color);
 }
 
 .button-group {
@@ -1429,7 +1429,7 @@
 }
 
 .navigation .cellTableSelectedRow:focus-within {
-    background-color: var(--navigation__background-color--selected-focussed);
+    background-color: var(--navigation__background-color--selected--focussed);
 }
 
 .navigation-title-bar {

@@ -35,7 +35,7 @@ body {
   direction: ltr;
 }
 a, a:visited, a:hover {
-  color: var(--link-text-color);
+  color: var(--link__text-color);
 }
 
 /**
@@ -933,7 +933,7 @@ a, a:visited, a:hover {
     border-radius: 4px;
 }
 .datePickerDayIsDisabled {
-  color: var(--text-color-disabled);/*#AAAAAA;*/
+  color: var(--text-color--disabled);/*#AAAAAA;*/
   font-style: italic;
 }
 .datePickerDayIsHighlighted {

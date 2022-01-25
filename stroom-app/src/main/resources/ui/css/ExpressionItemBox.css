@@ -35,37 +35,37 @@
 
 .expressionItemBox-background.expressionItemBox-selectable:hover {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: var(--expression-item-box-background-color-hover);
+	background-color: var(--expression-item-box__background-color--hover);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 
 .expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelected {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: var(--expression-item-box-background-color-selected);
+	background-color: var(--expression-item-box__background-color--selected);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 
 .expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelectedDisabled {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: var(--expression-item-box-background-color-disabled);
+	background-color: var(--expression-item-box__background-color--disabled);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 
 .expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelected:hover {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: var(--expression-item-box-background-color-selected);
+	background-color: var(--expression-item-box__background-color--selected);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 
 .expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelectedDisabled:hover {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: var(--expression-item-box-background-color-disabled);
+	background-color: var(--expression-item-box__background-color--disabled);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 
 .expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-hotspot {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: var(--expression-item-box-background-color-hotspot);
+	background-color: var(--expression-item-box__background-color--hotspot);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 

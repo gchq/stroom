@@ -128,8 +128,8 @@ label {
   flex-direction: column;
   //align-items: stretch;
   overflow: visible;
-  border: 1px solid var(--dialog-border-color);
-  background-color: var(--page-background-color);
+  border: 1px solid var(--dialog__border-color);
+  background-color: var(--page__background-color);
 }
 
 .modal-header {
