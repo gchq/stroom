@@ -139,6 +139,7 @@ td {
  * Styles for basic Stroom components
  */
 .stroom-body {
+	background-color: var(--app__background-color);
 	line-height: 14px;
 	line-height: initial;
 }

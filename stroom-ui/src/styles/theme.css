@@ -528,10 +528,6 @@
     --feedback: var(--red-200),
 }
 
-.stroom-body {
-	background-color: var(--app__background-color);
-}
-
 .stroom-theme-dark .navigation {
 	background-color: var(--navigation__background-color) !important;
 }

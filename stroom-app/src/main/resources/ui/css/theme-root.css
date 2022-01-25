@@ -1,0 +1,207 @@
+/**
+ * The style names roughly follow the BEM (Block, Element, Modifier) standard but adapted for variables.
+ * In general the form is:
+ * --<object>__<attribute>
+ * --<object>__<attribute>--<modifier>
+ * --<object>__<attribute>--<modifier>--<modifier>
+ * --<object>-<inner_object>__<attribute>--<modifier>--<modifier>
+ */
+
+:root {
+    --focus-border: var(--blue-500);
+    --focus-shadow: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6); /* blue-500*/
+    --focus-border--valid: var(--valid);
+    --focus-shadow--valid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--valid-rgb), .6); /* --bootstrap-success*/
+    --focus-border--invalid: var(--invalid);
+    --focus-shadow--invalid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--invalid-rgb), .6); /* --bootstrap-error*/
+    --focus-border--secondary: var(--pink-500);
+    --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
+
+    --text-color: #000;
+    --text-color--disabled: #666;
+    --app__background-color: #fff;/*#d50101;*/
+    --page__background-color: #fff;
+    --border-color: transparent; /*#c5cde2;*/
+
+    --header__border-color: #dddddd;
+    --row__background-color--even: #ebebeb;
+    --row__background-color--odd: #fff;
+    --row__background-color--hovered: #e6f4ff;
+    --row__background-color--selected: rgba(129, 212, 250, .5);
+    --row__background-color--selected--hovered: rgba(129, 212, 250, 1);
+    --row__background-color--focussed: rgba(129, 212, 250, .6);
+    --row__background-color--selected--focussed: rgba(129, 212, 250, .8);
+    --row__text-color--selected: #000;
+
+    --menu-separator__color: #bfbfbf;
+
+    --dialog__background-color: #fff; /*rgb(223, 234, 248);*/
+    --dialog__border-color: rgb(60, 60, 60);
+    --dialog__shadow: 0 0 8px rgba(0, 0, 0, .7);
+    --popup__shadow: 0 0 5px 0 rgba(0, 0, 0, .5);
+
+    --tooltip__background-color: #ffd;
+    --tooltip__text-color: #000;
+
+    --button__background-image: none; /*linear-gradient(#ffffff 0px, #fbfbfa 10px, #f6f5f5 0px, #e9e7e6); */
+    --button__background-color: #f6f5f5;
+    --button__border-color: #918e8c;
+    --button__text-color: #000;
+    --button__background-image--active: linear-gradient(#c8c9cb 0px, #c8cacd 10px, #c2c6c8 0px, #b5b7ba);
+    --button__background-color--active: #c2c6c8;
+    --button__border-color--active: #5b7aa1;
+    --button__background-image--hover: linear-gradient(#ffffff 0px, #ffffff 10px, #fafafa 0px, #edeceb);
+    --button__background-color--hover: #fafafa;
+    --button__border-color--hover: #918e8c;
+    --button__text-color--disabled: #888;
+    --button__border-color--disabled--hover: #aaa;
+
+    --expression-item-box__background-color--selected: #bbdefb;
+    --expression-item-box__background-color--hover: #f7fbff;
+    --expression-item-box__background-color--disabled: #ccc;
+    --expression-item-box__background-color--hotspot: rgba(255,0,0,.3);
+
+    --pipeline-element-box__background-color: #f5f9fd;
+    --pipeline-element-box__background-color--hover: #f7fbff;
+    --pipeline-element-box__background-color--selected: #bbdefb;
+    --pipeline-element-box__background-color--selected--hover: #bbdefb;
+    --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.3);
+    --pipeline-element-box__text-color: #000;
+    --pipeline-element-box__border-color: #918e8c;
+
+    --link__text-color: #0000AA;
+
+    --link-tab__text-color: #222;
+    --link-tab__text-color--focussed: #000;
+
+    --code-editor-right-bar__background-color: #efefef;
+    --code-editor__border-color: #a1a1a1;
+    --code-editor__border-color--info: #3676c6;
+    --code-editor__background-color--info: #378cff;
+    --code-editor__border-color--warning: #dd9942;
+    --code-editor__background-color--warning: #ffde81;
+    --code-editor__border-color--error: #660000;
+    --code-editor__background-color--error: #ff3a37;
+    --code-editor__border-color--fatal: #444444;
+    --code-editor__background-color--fatal: #000000;
+    --code-editor__background-color--highlight: yellow;
+
+    --xsdbrowser-box__background-color: white;
+    --xsdbrowser-box__border-color: #404e60;
+    --xsdbrowser-title__background-color: #888;
+    --xsdbrowser-title__background-color--selected: rgb(74, 144, 228);
+
+    --vis-axis__color: rgba(0,0,0,0.54);
+    --vis-text__color: rgba(0,0,0,0.87);
+    --vis-text__color--faint: rgba(0,0,0,0.12);
+    --vis-icon__color: rgba(0,0,0,0.38);
+    --vis-icon__color--hover: rgba(0,0,0,0.87);
+    --vis-barchart-element__stroke: #fff;
+    --vis-marker__stroke: #000;
+    --vis-series-label__background-color: rgba(255,255,255,0.87);
+    --vis-tip__background-color: rgba(30, 30, 30, 0.8);
+    --vis-tip__text-color: #bbb;
+
+    --scrollbar__background-color: transparent;
+    --scrollbar-corner__background-color: transparent;
+    --scrollbar-thumb__border-color: transparent;
+    --scrollbar-thumb__background-color: rgba(0,0,0,0.3);
+    --scrollbar-thumb__background-color--hover: rgba(0,0,0,.5);
+    --scrollbar-thumb__background-color--active: rgba(0,0,0,.8);
+
+
+    /**
+     * NEW UI VARS
+     */
+
+    /* Page */
+    --page__background-color: #fff;
+    --page__text-color: rgba(0, 0, 0, 0.8);
+
+    /* Controls */
+    --control__background-color: #fff;
+    --control__background-color--disabled: transparent;
+    --control__border-color: rgba(0, 0, 0, 0.1);
+    --control__border-color--disabled: transparent;
+    --control__text-color: rgba(0, 0, 0, 0.8);
+    --control__text-color--disabled: #666;
+
+    /* Items, e.g. rows for tables, drop downs lists etc. */
+    --item__background-color--focus--highlighted: rgba(144, 202, 249, 0.4);
+    --item__text-color--focus--highlighted: rgba(0, 0, 0, 0.9);
+    --item__background-color--focus--highlighted--hover: rgba(144, 202, 249, 0.4); /* rgba(24,94,144,0.4); */
+    --item__text-color--focus--highlighted--hover: rgba(0, 0, 0, 0.9);
+    --item__background-color--focus--selected: rgba(144, 202, 249, 0.9);
+    --item__text-color--focus--selected: #000;
+    --item__background-color--focus--highlighted--selected: rgba(144, 202, 249, 1); /* #cae1f1; */
+    --item__text-color--focus--highlighted--selected: #000;
+    --item__background-color--hover: rgba(0, 0, 0, 0.1); /* rgba(24,94,144,0.3); */
+    --item__text-color--hover: rgba(0, 0, 0, 0.8);
+    --item__background-color--selected: rgba(0, 0, 0, 0.2); /* rgba(24,94,144,0.6); */
+    --item__text-color--selected: #000; /* rgba(0, 0, 0, 0.8); #fff */
+    --item__background-color--selected--hover: rgba(0, 0, 0, 0.2); /* rgba(24,94,144,0.7); */
+    --item__text-color--selected--hover: #000; /* rgba(0, 0, 0, 0.8); #fff; */
+
+    /* Pipeline editor */
+    --raised-low__background-color: #e4e4e4;
+    --raised-low__text-color: rgba(0, 0, 0, 0.8);
+    --raised-high__background-color: #2185d0;
+    --raised-high__text-color: rgba(0, 0, 0, 0.8);
+    --raised-high__selected-background-color: red;
+    --raised-high__selected-focus-background-color: #1c70b1;
+    --raised-element__border: thin solid #fff;
+
+    /* Menu */
+    --menu-item__text-color: rgba(1, 1, 1, 0.8);
+    --menu-item__background-color--focus--highlighted: rgba(2, 136, 209, 0.3);
+    --menu-item__text-color--focus--highlighted: var(--white);
+    --menu-item__background-color--focus--highlighted--hover: rgba(2, 136, 209, 0.3); /* rgba(24,94,144,0.4); */
+    --menu-item__text-color--focus--highlighted--hover: var(--white);
+    --menu-item__background-color--focus--selected: rgba(2, 136, 209, 0.9);
+    --menu-item__text-color--focus--selected: var(--white);
+    --menu-item__background-color--focus--highlighted--selected: rgba(2, 136, 209, 1); /* material light blue 700 */
+    --menu-item__text-color--focus--highlighted--selected: var(--white);
+    --menu-item__background-color--hover: rgba(2, 136, 209, .2); /* rgba(24,94,144,0.3); */
+    --menu-item__text-color--hover: var(--white);
+    --menu-item__background-color--selected: rgba(2, 136, 209, .5); /* rgba(24,94,144,0.6); */
+    --menu-item__text-color--selected: var(--white);
+    --menu-item__background-color--selected--hover: rgba(2, 136, 209, .6); /* rgba(24,94,144,0.7); */
+    --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
+
+    /* Navigation pane */
+    --navigation__background-color: #1976d2;
+    --navigation__background-color--hovered: rgba(0,75,160,.2);
+    --navigation__background-color--selected: rgba(0,75,160,.8);
+    --navigation__background-color--selected-hovered: rgba(0,75,160,1);
+    --navigation__background-color--focussed: rgba(0,75,160,.5);
+    --navigation__background-color--selected--focussed: rgba(0,75,160,1);
+    --navigation__text-color: #fff;
+    --navigation__text-color--selected: #fff;
+    --navigation__border-color: var(--navigation__background-color);
+
+    /* Specific */
+    --header__icon-color: #2185d0;
+
+    /* React table */
+    --table__odd-row__background-color: rgba(var(--black-rgb), .05);
+
+    /* Dialog */
+    --dialog__border-color: rgba(var(--black-rgb), .2);
+
+    /* Status */
+    --ok: var(--blue-500);
+    --warn: var(--bootstrap-warning);
+    --error: var(--bootstrap-error);
+    --fatal: var(--black);
+
+    /* Form fields */
+    --primary-rgb: var(--blue-500-rgb);
+    --valid-rgb: var(--bootstrap-success-rgb);
+    --invalid-rgb: var(--bootstrap-error-rgb);
+    --feedback-rgb: var(--bootstrap-error-rgb);
+
+    --primary: var(--blue-500);
+    --valid: var(--bootstrap-success);
+    --invalid: var(--bootstrap-error);
+    --feedback: var(--bootstrap-error);
+}
