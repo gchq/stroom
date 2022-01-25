@@ -38,6 +38,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeThemeEvent;
 import stroom.editor.client.presenter.CurrentTheme;
+import stroom.preferences.client.Themes;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.VisResult;
@@ -72,7 +73,6 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -205,10 +205,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     private String getClassName(final String theme) {
-        if (theme != null && theme.toLowerCase(Locale.ROOT).contains("dark")) {
-            return "vis stroom-theme-dark";
-        }
-        return "vis";
+        return "vis " + Themes.getClassName(theme);
     }
 
     @Override

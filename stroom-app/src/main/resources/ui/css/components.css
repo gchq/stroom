@@ -709,10 +709,16 @@
     padding-top: 5px;
 }
 
+.dataViewImpl-tabBar {
+    align-items: center;
+    padding: 0 .75rem;
+    gap: .75rem;
+    min-height: 1.8rem;
+}
+
 .dataViewImpl-tabBarOuter {
     overflow: hidden;
     flex-shrink: 1;
-    padding-left: 5px;
 }
 
 .dataViewImpl-tabBarInner {
@@ -725,6 +731,8 @@
     justify-content: flex-end;
     padding-right: 0.25em;
     padding-top: 1px;
+    align-items: center;
+    gap: .75rem;
 }
 
 .dataViewImpl-buttonPanel {
@@ -749,9 +757,6 @@
 */
 
 .dataViewImpl-sourceLinkLabel {
-    margin: 0;
-    padding-left: 0.75em;
-    padding-right: 0.75em;
 }
 
 .classificationLabel {
@@ -1025,14 +1030,13 @@
 
 .itemNavigator {
     display: flex;
+    gap: .75rem;
 }
 
 .itemNavigator-label {
-    margin: 0px;
     cursor: pointer;
-    padding-left: 0.75em;
-    padding-right: 0.75em;
     display: flex;
+    align-items: center;
 }
 
 .itemNavigator-label:hover {

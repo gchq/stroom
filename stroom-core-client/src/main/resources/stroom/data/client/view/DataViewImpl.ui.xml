@@ -4,7 +4,7 @@
              xmlns:tab="urn:import:stroom.widget.tab.client.view"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max dock-container-vertical">
-        <g:FlowPanel styleName="dock-container-horizontal dock-min">
+        <g:FlowPanel styleName="dock-container-horizontal dock-min dataViewImpl-tabBar">
             <g:FlowPanel styleName="dock-max dataViewImpl-tabBarOuter">
                 <tab:LinkTabBar ui:field="tabBar"
                                 addStyleNames="max dataViewImpl-tabBarInner"/>

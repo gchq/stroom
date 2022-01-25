@@ -2,8 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:view="urn:import:stroom.widget.dropdowntree.client.view">
-    <g:FlowPanel styleName="max dock-container-vertical">
-        <view:QuickFilter ui:field="nameFilter" addStyleNames="dock-min quickFilter__margin-bottom"/>
+    <g:FlowPanel styleName="max quickFilter-container">
+        <view:QuickFilter ui:field="nameFilter" addStyleNames="dock-min"/>
         <g:SimplePanel ui:field="dataGrid" styleName="dock-max stroom-control"/>
     </g:FlowPanel>
 </ui:UiBinder>

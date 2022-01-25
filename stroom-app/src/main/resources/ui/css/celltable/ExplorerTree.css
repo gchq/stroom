@@ -17,6 +17,13 @@
     width: 100%;
  }
 
+.explorerTree-container {
+    overflow: auto;
+    display: flex;
+    flex-grow: 1;
+    height: 0;
+}
+
 .explorerCell {
     display: flex;
     align-items: center;

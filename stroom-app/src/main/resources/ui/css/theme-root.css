@@ -19,8 +19,6 @@
 
     --text-color: #000;
     --text-color--disabled: #666;
-    --app__background-color: #fff;/*#d50101;*/
-    --page__background-color: #fff;
     --border-color: transparent; /*#c5cde2;*/
 
     --header__border-color: #dddddd;
@@ -34,11 +32,6 @@
     --row__text-color--selected: #000;
 
     --menu-separator__color: #bfbfbf;
-
-    --dialog__background-color: #fff; /*rgb(223, 234, 248);*/
-    --dialog__border-color: rgb(60, 60, 60);
-    --dialog__shadow: 0 0 8px rgba(0, 0, 0, .7);
-    --popup__shadow: 0 0 5px 0 rgba(0, 0, 0, .5);
 
     --tooltip__background-color: #ffd;
     --tooltip__text-color: #000;
@@ -100,7 +93,7 @@
     --vis-marker__stroke: #000;
     --vis-series-label__background-color: rgba(255,255,255,0.87);
     --vis-tip__background-color: rgba(30, 30, 30, 0.8);
-    --vis-tip__text-color: #bbb;
+    --vis-tip-text__color: #bbb;
 
     --scrollbar__background-color: transparent;
     --scrollbar-corner__background-color: transparent;
@@ -115,6 +108,7 @@
      */
 
     /* Page */
+    --app__background-color: #fff;/*#d50101;*/
     --page__background-color: #fff;
     --page__text-color: rgba(0, 0, 0, 0.8);
 
@@ -186,7 +180,10 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), .05);
 
     /* Dialog */
+    --dialog__background-color: #fff; /*rgb(223, 234, 248);*/
     --dialog__border-color: rgba(var(--black-rgb), .2);
+    --dialog__shadow: 0 0 8px rgba(0, 0, 0, .7);
+    --popup__shadow: 0 0 5px 0 rgba(0, 0, 0, .5);
 
     /* Status */
     --ok: var(--blue-500);

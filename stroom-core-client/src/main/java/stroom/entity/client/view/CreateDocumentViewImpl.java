@@ -71,8 +71,6 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHand
 
     @Override
     public void setFolderView(final View view) {
-        view.asWidget().setWidth("100%");
-        view.asWidget().setHeight("100%");
         foldersInner.setWidget(view.asWidget());
     }
 

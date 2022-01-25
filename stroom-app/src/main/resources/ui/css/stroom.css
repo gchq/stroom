@@ -806,16 +806,20 @@ input[type="file"]:disabled {
 }
 
 .dock-min {
+/*
     flex-grow: 0;
     flex-shrink: 0;
     position: relative;
+    */
 }
 
 .dock-max {
     flex-grow: 1;
+    /*
     flex-shrink: 1;
     overflow: hidden;
     position: relative;
+    */
 }
 
 .input-row {

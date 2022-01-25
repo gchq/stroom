@@ -55,7 +55,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @UiField
     FlowPanel buttonContainer;
     @UiField
-    SimplePanel scrollPanel;
+    SimplePanel explorerTreeContainer;
     @UiField
     SimplePanel activityPanel;
 
@@ -131,7 +131,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
 
     @Override
     public void setNavigationWidget(final Widget widget) {
-        scrollPanel.setWidget(widget);
+        explorerTreeContainer.setWidget(widget);
     }
 
     @Override

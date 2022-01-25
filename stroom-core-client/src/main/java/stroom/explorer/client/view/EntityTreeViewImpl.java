@@ -27,7 +27,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.MaxScrollPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -39,7 +39,7 @@ public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
     @UiField
     QuickFilter nameFilter;
     @UiField
-    MaxScrollPanel scrollPanel;
+    SimplePanel explorerTreeContainer;
 
     @Inject
     public EntityTreeViewImpl(final Binder binder,
@@ -72,7 +72,7 @@ public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
 
     @Override
     public void setCellTree(Widget cellTree) {
-        scrollPanel.setWidget(cellTree);
+        explorerTreeContainer.setWidget(cellTree);
     }
 
     public interface Binder extends UiBinder<Widget, EntityTreeViewImpl> {

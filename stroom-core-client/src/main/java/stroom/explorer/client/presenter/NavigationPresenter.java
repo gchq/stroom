@@ -110,7 +110,6 @@ public class NavigationPresenter
                 "Filter",
                 true));
         final FlowPanel buttons = getView().getButtonContainer();
-        buttons.setStyleName("navigation-header-buttons");
         buttons.add(add);
         buttons.add(delete);
         buttons.add(filter);
