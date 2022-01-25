@@ -61,7 +61,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
         messageArea.add(detail);
         detail.setEnabled(false);
 
-        container.addStyleName("dialog-content-padding");
+        container.addStyleName("form-padding");
         layout.addStyleName("alert-table");
         message.addStyleName("alert-message");
         showHideDetail.addStyleName("alert-showHide");

@@ -52,7 +52,7 @@
             </g:FlowPanel>
         </form:FormGroup>
 
-        <g:FlowPanel styleName="preferencesViewImpl-buttons">
+        <g:FlowPanel styleName="preferencesViewImpl-buttons button-group">
             <g:Button ui:field="setAsDefault" addStyleNames="allow-focus" text="Set As Default"/>
             <g:Button ui:field="revertToDefault" addStyleNames="allow-focus" text="Revert To Default"/>
         </g:FlowPanel>

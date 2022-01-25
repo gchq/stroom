@@ -1,5 +1,5 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:SimplePanel ui:field="expression" styleName="max dialog-content-padding"/>
+    <g:SimplePanel ui:field="expression" styleName="max form-padding"/>
 </ui:UiBinder>

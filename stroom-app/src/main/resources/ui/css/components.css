@@ -105,15 +105,35 @@
 }
 
 .curveTab:hover {
-    border-color: rgba(255,255,255,.5);
+    border-color: rgba(0,0,0,.2);
 }
 
 .curveTab-selected {
-    border-color: rgba(255,255,255,.8);
+    border-color: rgba(0,0,0,.4);
 }
 
 .curveTab-selected:hover {
+    border-color: rgba(0,0,0,.6);
+}
+
+.curveTab .curveTab-background {
+	background-color: rgba(0,0,0,.1);
+}
+
+.stroom-theme-dark .curveTab:hover {
+    border-color: rgba(255,255,255,.5);
+}
+
+.stroom-theme-dark .curveTab-selected {
+    border-color: rgba(255,255,255,.8);
+}
+
+.stroom-theme-dark .curveTab-selected:hover {
     border-color: rgba(255,255,255,1);
+}
+
+.stroom-theme-dark .curveTab .curveTab-background {
+	background-color: rgba(255,255,255,.2);
 }
 
 /*
@@ -134,10 +154,7 @@
 	height: 100%;
 	width: 100%;
 	overflow: hidden;
-	background-color: rgba(255,255,255,.2);
 }
-
-
 
 .curveTab-selected .curveTab-background {
 	opacity: .8;
@@ -928,13 +945,19 @@
     padding-bottom: 12px;
 }
 
+/*
 .dashboardViewImpl-content {
     position: relative;
+}
+*/
+.dashboardViewImpl {
+    padding-right: 5px;
+    padding-bottom: 5px;
 }
 
 .dashboardViewImpl-params {
     width: 100%;
-    border: 1px solid #ddd;
+   /* border: 1px solid #ddd;*/
 }
 
 .subStreamNavigator {
@@ -1332,13 +1355,14 @@
     border: 1px solid var(--dialog-border-color);
 }
 
-.preferencesViewImpl-buttons {
-	margin-top: 20px;
+.button-group {
+	display: flex;
+	flex-direction: row;
+	gap: var(--control__gap--horizontal);
 }
 
 .preferencesViewImpl-buttons button {
     width: 250px;
-    margin-right: 5px;
 }
 
 .default-min-sizes {
@@ -1380,14 +1404,32 @@
 }
 
 .navigation {
-    background-color: var(--navigation-background-color);
-    color: var(--navigation-text-color);
-    border-right: 1px solid var(--navigation-border-color);
+    background-color: var(--navigation__background-color);
+    color: var(--navigation__text-color);
+    border-right: 1px solid var(--navigation__border-color);
 }
 
 .navigation .cellTableSelectedRow {
-    color: var(--navigation-text-color);
-    background-color: var(--navigation__background-color--selected);
+	background-color: var(--navigation__background-color--selected);
+	color: var(--navigation__text-color--selected);
+}
+
+.navigation .cellTableOddRow:hover,
+.navigation .cellTableEvenRow:hover {
+    background-color: var(--navigation__background-color--hovered);
+}
+
+.navigation .cellTableSelectedRow:hover {
+    background-color: var(--navigation__background-color--selected-hovered);
+}
+
+.navigation .cellTableOddRow:focus-within,
+.navigation .cellTableEvenRow:focus-within {
+    background-color: var(--navigation__background-color--focussed);
+}
+
+.navigation .cellTableSelectedRow:focus-within {
+    background-color: var(--navigation__background-color--selected-focussed);
 }
 
 .navigation-title-bar {
@@ -1435,6 +1477,11 @@
     padding: 8px;
     margin: 2px;
     background-color: transparent;
+    color: var(--navigation__background-color);
+}
+
+.stroom-theme-dark .navigation-menu-button,
+.navigation-title-bar .navigation-menu-button {
     color: white;
 }
 

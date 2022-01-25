@@ -901,10 +901,10 @@ a, a:visited, a:hover {
 }
 .datePickerWeekdayLabel,
 .datePickerWeekendLabel {
-  background: var(--dialog-titlebar-background-color);/*#1E88E5;*/
+  background: var(--navigation__background-color);/*#1E88E5;*/
   padding: 0px 4px 2px;
   cursor: default;
-  color: var(--dialog-titlebar-text-color);/*white;*/
+  color: var(--navigation__text-color);/*white;*/
 }
 .datePickerDay {
   padding: 4px;
@@ -949,9 +949,9 @@ a, a:visited, a:hover {
     border-radius: 4px;
 }
 .datePickerMonthSelector {
-  background: var(--dialog-titlebar-background-color);/*#1E88E5;*/
+  background: var(--navigation__background-color);/*#1E88E5;*/
   width: 100%;
-  color: var(--dialog-titlebar-text-color);/*white;*/
+  color: var(--navigation__text-color);/*white;*/
 }
 td.datePickerMonth,
 td.datePickerYear {
@@ -967,7 +967,7 @@ td.datePickerYear {
 .datePickerNextYearButton {
   font-size: var(--font-size-19);
   line-height: 1em;
-  color: var(--dialog-titlebar-text-color);/*white;*/
+  color: var(--navigation__text-color);/*white;*/
   cursor: hand;
   cursor: pointer;
   padding: 0px 4px;

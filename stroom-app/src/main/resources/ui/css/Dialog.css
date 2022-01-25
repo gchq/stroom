@@ -38,21 +38,20 @@
 }
 
 .dialog-titleBar {
-	background-image: var(--dialog-titlebar-background-image);
-	background-color: var(--dialog-titlebar-background-color);
-	border-bottom: 1px solid var(--dialog-titlebar-border-color);
 	flex-grow: 0;
 }
 
 .dialog-titleText {
     width: 100%;
-    padding: 7px var(--dialog__padding--horizontal);
-    font-weight: bold;
-    color: var(--dialog-titlebar-text-color);
+    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal) 0 var(--dialog__padding--horizontal);
+    color: var(--text-color);
     cursor: default;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-bottom: 0;
+    line-height: 1.5;
+    font-size: 1.5rem;
 }
 
 .dialog-body {
@@ -65,13 +64,9 @@
     overflow: hidden;
 }
 
-.dialog-content-padding {
-    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal) 0 var(--dialog__padding--horizontal);
-}
-
 .dialog-buttons {
     width: 100%;
-    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal) var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
+    padding: 0 var(--dialog__padding--horizontal) var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
     flex-grow: 0;
     gap: var(--dialog__padding--horizontal);
     display: flex;

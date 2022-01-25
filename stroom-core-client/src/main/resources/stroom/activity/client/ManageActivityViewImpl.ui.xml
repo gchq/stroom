@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:view="urn:import:stroom.widget.dropdowntree.client.view">
-    <g:FlowPanel styleName="max dialog-content-padding dock-container-vertical default-min-sizes">
+    <g:FlowPanel styleName="max form-padding dock-container-vertical default-min-sizes">
         <view:QuickFilter ui:field="nameFilter" addStyleNames="dock-min quickFilter__margin-bottom"/>
         <g:SimplePanel ui:field="dataGrid" styleName="dock-max stroom-control"/>
     </g:FlowPanel>

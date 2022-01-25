@@ -592,6 +592,7 @@ input[type="file"] {
 	background-color: var(--control__background-color);
 	color: var(--control__text-color);
 	border-radius: .25rem;
+	height: calc(1.5em + .75rem + 2px);
 }
 
 .gwt-TextArea:disabled,

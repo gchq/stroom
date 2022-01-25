@@ -15,27 +15,22 @@
     --text-color-disabled: #666;
     --app-background-color: #fff;/*#d50101;*/
     --page-background-color: #fff;
-    --border-color: #c5cde2;
+    --border-color: transparent; /*#c5cde2;*/
 
     --header-border-color: #dddddd;
     --even-row-background-color: #ebebeb;
     --odd-row-background-color: #fff;
 
     --row__background-color--hovered: #e6f4ff;
-    --row__background-color--selected: #bbdefb;
-    --row__background-color--selected-hovered: #bbdefb;
-    --row__background-color--focussed: rgba(0,120,199,.5);
-    --row__background-color--selected-focussed: rgb(0,120,199);
+    --row__background-color--selected: rgba(129, 212, 250, .5);
+    --row__background-color--selected-hovered: rgba(129, 212, 250, 1);
+    --row__background-color--focussed: rgba(129, 212, 250, .6);
+    --row__background-color--selected-focussed: rgba(129, 212, 250, .8);
     --row__text-color--selected: #000;
 
     --menu-separator-color: #bfbfbf;
 
-    --dialog-titlebar-background-image: linear-gradient(rgb(96, 161, 240), rgb(74, 144, 228) 8px);
-    --dialog-titlebar-background-color: rgb(74, 144, 228);
-    --dialog-titlebar-border-color: rgb(60, 60, 60);
-    --dialog-titlebar-text-color: #fff;
-    --dialog-background-image: linear-gradient(rgb(248, 250, 253) 21px,	rgb(223, 234, 248) 60px);
-    --dialog-background-color: rgb(223, 234, 248);
+    --dialog-background-color: #fff; /*rgb(223, 234, 248);*/
     --dialog-border-color: rgb(60, 60, 60);
     --dialog-shadow: 0 0 8px rgba(0, 0, 0, .7);
     --popup-shadow: 0 0 5px 0 rgba(0, 0, 0, .5);
@@ -110,14 +105,6 @@
     --scrollbar-thumb-background-color-hover: rgba(0,0,0,.5);
     --scrollbar-thumb-background-color-active: rgba(0,0,0,.8);
 
-    --navigation-background-color: #d5e9ff;
-    --navigation__background-color--selected: #0d47a1;
-    --navigation-text-color: #fff;
-    --navigation-border-color: #27252c;
-
-
-
-
 
 
 
@@ -164,9 +151,7 @@
     --raised-high__selected-focus-background-color: #1c70b1;
     --raised-element__border: thin solid #fff;
 
-    /* Sidebar */
-    --sidebar__header-color: var(--white);
-    --sidebar__background-color: var(--light-blue-500); /* material light blue 900 */
+    /* Menu */
     --menu-item__text-color: rgba(1, 1, 1, 0.8);
     --menu-item__background-color--focus--highlighted: rgba(2, 136, 209, 0.3);
     --menu-item__text-color--focus--highlighted: var(--white);
@@ -183,7 +168,16 @@
     --menu-item__background-color--selected--hover: rgba(2, 136, 209, .6); /* rgba(24,94,144,0.7); */
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
 
-    /*--border-color: rgba(0, 0, 0, 0.1);*/
+    /* Navigation pane */
+    --navigation__background-color: #1976d2;
+    --navigation__background-color--hovered: rgba(0,75,160,.2);
+    --navigation__background-color--selected: rgba(0,75,160,.8);
+    --navigation__background-color--selected-hovered: rgba(0,75,160,1);
+    --navigation__background-color--focussed: rgba(0,75,160,.5);
+    --navigation__background-color--selected-focussed: rgba(0,75,160,1);
+    --navigation__text-color: #fff;
+    --navigation__text-color--selected: #fff;
+    --navigation__border-color: var(--navigation__background-color);
 
     /* Specific */
     --header__icon-color: #2185d0;
@@ -232,11 +226,6 @@
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 
-    --dialog-titlebar-background-image: none;
-    --dialog-titlebar-background-color: #19171d;
-    --dialog-titlebar-border-color: #27252c;
-    --dialog-titlebar-text-color: #fff;
-    --dialog-background-image: none;
     --dialog-background-color: #1a1d21;
     --dialog-border-color: rgb(132 132 132 / 60%);
     --dialog-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
@@ -312,9 +301,6 @@
     --scrollbar-thumb-background-color-hover: #8d8d8d;
     --scrollbar-thumb-background-color-active: #979797;
 
-    --navigation-background-color: #19171d;
-    --navigation-text-color: #e6e1dc;
-    --navigation-border-color: #27252c;
 
     /**
      * NEW UI VARS
@@ -358,9 +344,7 @@
     --raised-element__border: thin solid #aaa;
     /*--border-color: #4d5250;*/
 
-    /* Sidebar */
-    --sidebar__header-color: #fff;
-    --sidebar__background-color: #252526;
+    /* Menu */
     --menu-item__text-color: rgba(255, 255, 255, 0.8);
     --menu-item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
     --menu-item__text-color--focus--highlighted: #cacbcb;
@@ -376,6 +360,17 @@
     --menu-item__text-color--selected: #fff; /* #cacbcb; #fff; */
     --menu-item__background-color--selected--hover: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.7); */
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
+
+    /* Navigation pane */
+    --navigation__background-color: #19171d;
+    --navigation__background-color--hovered: rgb(45, 47, 53);
+    --navigation__background-color--selected: rgb(0, 101, 167);
+    --navigation__background-color--selected-hovered: rgb(0,120,199);
+    --navigation__background-color--focussed: rgba(0,120,199,.5);
+    --navigation__background-color--selected-focussed: rgb(0,120,199);
+    --navigation__text-color: #e6e1dc;
+    --navigation__text-color--selected: #fff;
+    --navigation__border-color: #27252c;
 
     /* Specific */
     --header__icon-color: #2185d0;
@@ -406,7 +401,7 @@
     --page-background-color: #1a1d21;
     --border-color: #14161b;
 
-    --header-border-color: #14161b;
+    --header-border-color: transparent;//#35373b;
     --even-row-background-color: #15161b;
     --odd-row-background-color: #22252c;
 
@@ -419,11 +414,6 @@
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 
-    --dialog-titlebar-background-image: none;
-    --dialog-titlebar-background-color: #14161b;
-    --dialog-titlebar-border-color: #27252c;
-    --dialog-titlebar-text-color: #fff;
-    --dialog-background-image: none;
     --dialog-background-color: #1a1d21;
     --dialog-border-color: #15161b;
     --dialog-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
@@ -498,12 +488,6 @@
     --scrollbar-thumb-background-color-hover: #8d8d8d;
     --scrollbar-thumb-background-color-active: #979797;
 
-    --navigation-background-color: #19171d;
-    --navigation__background-color--selected: #19171d;
-    --navigation-text-color: #e6e1dc;
-    --navigation-border-color: #27252c;
-
-
 
     /**
      * NEW UI VARS
@@ -547,9 +531,7 @@
     --raised-element__border: thin solid #aaa;
     /*--border-color: #4d5250;*/
 
-    /* Sidebar */
-    --sidebar__header-color: #fff;
-    --sidebar__background-color: #252526;
+    /* Menu */
     --menu-item__text-color: rgba(255, 255, 255, 0.8);
     --menu-item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
     --menu-item__text-color--focus--highlighted: #cacbcb;
@@ -565,6 +547,17 @@
     --menu-item__text-color--selected: #fff; /* #cacbcb; #fff; */
     --menu-item__background-color--selected--hover: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.7); */
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
+
+    /* Navigation pane */
+    --navigation__background-color: #19171d;
+    --navigation__background-color--hovered: rgb(45, 47, 53);
+    --navigation__background-color--selected: rgb(0, 101, 167);
+    --navigation__background-color--selected-hovered: rgb(0,120,199);
+    --navigation__background-color--focussed: rgba(0,120,199,.5);
+    --navigation__background-color--selected-focussed: rgb(0,120,199);
+    --navigation__text-color: #e6e1dc;
+    --navigation__text-color--selected: #fff;
+    --navigation__border-color: #27252c;
 
     /* Specific */
     --header__icon-color: #2185d0;
@@ -593,7 +586,7 @@
 }
 
 .stroom-theme-dark .navigation {
-	background-color: var(--navigation-background-color) !important;
+	background-color: var(--navigation__background-color) !important;
 }
 
 /**

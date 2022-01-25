@@ -17,11 +17,6 @@
 
     --menu-separator-color: #bfbfbf;
 
-    --dialog-titlebar-background-image: linear-gradient(rgb(96, 161, 240), rgb(74, 144, 228) 8px);
-    --dialog-titlebar-background-color: rgb(74, 144, 228);
-    --dialog-titlebar-border-color: rgb(60, 60, 60);
-    --dialog-titlebar-text-color: rgba(0, 0, 0, 0.85);
-    --dialog-background-image: linear-gradient(rgb(248, 250, 253) 21px,	rgb(223, 234, 248) 60px);
     --dialog-background-color: rgb(223, 234, 248);
     --dialog-border-color: rgb(60, 60, 60);
     --dialog-shadow: 0 0 8px rgba(0, 0, 0, .7);
@@ -95,8 +90,8 @@
     --scrollbar-thumb-background-color-hover: rgba(0,0,0,.5);
     --scrollbar-thumb-background-color-active: rgba(0,0,0,.8);
 
-    --navigation-background-color: #d5e9ff;
-    --navigation-text-color: #fff;
+    --navigation__background-color: #d5e9ff;
+    --navigation__text-color: #fff;
 
 
 
@@ -143,8 +138,6 @@
     --raised-element__border: thin solid #fff;
 
     /* Sidebar */
-    --sidebar__header-color: var(--white);
-    --sidebar__background-color: var(--light-blue-500); /* material light blue 900 */
     --menu-item__text-color: rgba(1, 1, 1, 0.8);
     --menu-item__background-color--focus--highlighted: rgba(2, 136, 209, 0.3);
     --menu-item__text-color--focus--highlighted: var(--white);
@@ -218,11 +211,6 @@
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 
-    --dialog-titlebar-background-image: none;
-    --dialog-titlebar-background-color: #19171d;
-    --dialog-titlebar-border-color: #19171d;
-    --dialog-titlebar-text-color: #e6e1dc;
-    --dialog-background-image: none;
     --dialog-background-color: #1a1d21;
     --dialog-border-color: rgb(132 132 132 / 60%);
     --dialog-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
@@ -296,8 +284,8 @@
     --scrollbar-thumb-background-color-hover: #8d8d8d;
     --scrollbar-thumb-background-color-active: #979797;
 
-    --navigation-background-color: #19171d;
-    --navigation-text-color: #e6e1dc;
+    --navigation__background-color: #19171d;
+    --navigation__text-color: #e6e1dc;
 
     /**
      * NEW UI VARS
@@ -339,8 +327,6 @@
     /*--border-color: #4d5250;*/
 
     /* Sidebar */
-    --sidebar__header-color: #fff;
-    --sidebar__background-color: #252526;
     --menu-item__text-color: rgba(255, 255, 255, 0.8);
     --menu-item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
     --menu-item__text-color--focus--highlighted: #cacbcb;
@@ -395,11 +381,6 @@
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 
-    --dialog-titlebar-background-image: none;
-    --dialog-titlebar-background-color: #14161b;
-    --dialog-titlebar-border-color: #14161b;
-    --dialog-titlebar-text-color: #abb0b6;
-    --dialog-background-image: none;
     --dialog-background-color: #1b1d24;
     --dialog-border-color: #15161b;
     --dialog-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
@@ -472,8 +453,8 @@
     --scrollbar-thumb-background-color-hover: #8d8d8d;
     --scrollbar-thumb-background-color-active: #979797;
 
-    --navigation-background-color: #19171d;
-    --navigation-text-color: #e6e1dc;
+    --navigation__background-color: #19171d;
+    --navigation__text-color: #e6e1dc;
 
 
 
@@ -517,8 +498,6 @@
     /*--border-color: #4d5250;*/
 
     /* Sidebar */
-    --sidebar__header-color: #fff;
-    --sidebar__background-color: #252526;
     --menu-item__text-color: rgba(255, 255, 255, 0.8);
     --menu-item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
     --menu-item__text-color--focus--highlighted: #cacbcb;
@@ -562,7 +541,7 @@
 }
 
 .stroom-theme-dark .navigation {
-	background-color: var(--navigation-background-color) !important;
+	background-color: var(--navigation__background-color) !important;
 }
 
 /**

@@ -212,8 +212,8 @@
     white-space: pre-wrap;
     word-break: break-word;
     border-bottom: 1px solid var(--border-color);
-    background-color: var(--dialog-titlebar-background-color);
-    color: var(--dialog-titlebar-text-color);
+    background-color: var(--navigation__background-color);
+    color: var(--navigation__text-color);
 }
 
 .annotationHistoryCommentBody {
