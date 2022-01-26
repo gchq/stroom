@@ -17,7 +17,7 @@
 
 package stroom.feed.client.presenter;
 
-import stroom.data.client.presenter.ClassificationWrappedMetaPresenter;
+import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
@@ -48,7 +48,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
                          final LinkTabPanelView view,
                          final ClientSecurityContext securityContext,
                          final Provider<FeedSettingsPresenter> settingsPresenterProvider,
-                         final Provider<ClassificationWrappedMetaPresenter> metaPresenterProvider,
+                         final Provider<MetaPresenter> metaPresenterProvider,
                          final Provider<ProcessorTaskPresenter> taskPresenterProvider) {
         super(eventBus, view, securityContext);
 

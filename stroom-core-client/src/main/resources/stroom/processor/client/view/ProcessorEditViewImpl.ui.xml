@@ -4,7 +4,7 @@
              xmlns:c="urn:import:stroom.widget.customdatebox.client"
              xmlns:form="urn:import:stroom.widget.form.client"
 >
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="max form">
         <form:FormGroup identity="processorEditExpression" label="Expression" addStyleNames="dock-max">
             <g:SimplePanel ui:field="expression" styleName="max default-min-sizes stroom-control"/>
         </form:FormGroup>

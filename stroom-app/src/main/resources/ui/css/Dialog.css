@@ -61,7 +61,8 @@
 
 .dialog-content {
     flex-grow: 1;
-    overflow: hidden;
+    overflow: auto;
+    padding: var(--control__gap--vertical) var(--control__gap--horizontal);
 }
 
 .dialog-buttons {

@@ -1,9 +1,7 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
-import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
@@ -18,7 +16,6 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
@@ -27,10 +24,8 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.progress.client.presenter.Progress;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
-import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -53,6 +48,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private static final int HIGHLIGHT_CONTEXT_CHARS_BEFORE = 1_500;
     private static final int HIGHLIGHT_CONTEXT_LINES_BEFORE = 4;
 
+    private final ClassificationWrapperView classificationWrapperView;
     private final ProgressPresenter progressPresenter;
     private final TextPresenter textPresenter;
     private final CharacterNavigatorPresenter characterNavigatorPresenter;
@@ -67,13 +63,13 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private FetchDataResult lastResult = null;
     private TextRange currentHighlight = null;
     private final int highlightDelta = 0;
-    private ClassificationUiHandlers classificationUiHandlers;
     private boolean isSteppingSource = false;
     private Count<Long> exactCharCount = null;
 
     @Inject
     public SourcePresenter(final EventBus eventBus,
                            final SourceView view,
+                           final ClassificationWrapperView classificationWrapperView,
                            final ProgressPresenter progressPresenter,
                            final TextPresenter textPresenter,
                            final CharacterNavigatorPresenter characterNavigatorPresenter,
@@ -81,6 +77,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                            final RestFactory restFactory,
                            final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
+        this.classificationWrapperView = classificationWrapperView;
         this.progressPresenter = progressPresenter;
         this.textPresenter = textPresenter;
         this.characterNavigatorPresenter = characterNavigatorPresenter;
@@ -91,7 +88,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         setEditorOptions();
 
-        view.setTextView(textPresenter.getView());
+        classificationWrapperView.setContent(textPresenter.getView());
+        view.setTextView(classificationWrapperView);
         view.setNavigatorView(characterNavigatorPresenter.getView());
 
         setupProgressBar(view, progressPresenter);
@@ -374,7 +372,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
             lastResult = fetchDataResult;
             setTitle(lastResult);
-            classificationUiHandlers.setClassification(result.getClassification());
+            classificationWrapperView.setClassification(result.getClassification());
 
             updateEditor();
             updateNavigator(result);
@@ -588,10 +586,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 null);
     }
 
-    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
-        this.classificationUiHandlers = classificationUiHandlers;
-    }
-
 
     // ===================================================================
 
@@ -684,11 +678,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
     public interface SourceView extends View {
 
-        void setProgressView(final ProgressView progressView);
+        void setProgressView(final View view);
 
-        void setTextView(final TextView textView);
+        void setTextView(final View view);
 
-        void setNavigatorView(final CharacterNavigatorView characterNavigatorView);
+        void setNavigatorView(final View view);
 
         void setTitle(final String feedName,
                       final long id,

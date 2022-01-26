@@ -4,7 +4,7 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="max form">
         <form:FormGroup identity="globalPropertyEditName" label="Name">
             <g:Label ui:field="name" addStyleNames="globalProperties stroom-control-label w-100"/>
         </form:FormGroup>

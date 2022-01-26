@@ -5,14 +5,14 @@
         xmlns:form="urn:import:stroom.widget.form.client">
     <g:MySplitLayoutPanel styleName="max">
         <g:north size="200">
-            <g:FlowPanel styleName="max form-padding form">
+            <g:FlowPanel styleName="max form">
                 <form:FormGroup identity="userGroupUserMembership" label="User Membership" addStyleNames="max">
                     <g:SimplePanel ui:field="users" styleName="dock-max"/>
                 </form:FormGroup>
             </g:FlowPanel>
         </g:north>
         <g:center>
-            <g:FlowPanel styleName="max form-padding form">
+            <g:FlowPanel styleName="max form">
                 <form:FormGroup identity="userGroupApplicationPermissions" label="Application Permissions"
                                 addStyleNames="max">
                     <g:SimplePanel ui:field="appPermissions" styleName="dock-max stroom-control"/>

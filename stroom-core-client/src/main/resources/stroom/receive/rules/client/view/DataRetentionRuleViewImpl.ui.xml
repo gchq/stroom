@@ -4,7 +4,7 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="max form">
         <form:FormGroup identity="dataRetentionRuleRuleName" label="Rule Name (optional)">
                 <g:TextBox ui:field="name" />
         </form:FormGroup>

@@ -84,7 +84,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class DataPresenter
-        extends MyPresenterWidget<DataPresenter.DataView>
+        extends MyPresenterWidget<ClassificationWrapperView>
         implements TextUiHandlers, Focus {
 
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
@@ -129,6 +129,8 @@ public class DataPresenter
     private final TabData infoTab = new TabDataImpl(INFO_TAB_NAME);
     private final TabData contextTab = new TabDataImpl(CONTEXT_TAB_NAME);
 
+    private final DataView dataView;
+    private final ClassificationWrapperView classificationWrapperView;
     private final HtmlPresenter htmlPresenter;
     private final TextPresenter textPresenter;
     private final ItemNavigatorPresenter itemNavigatorPresenter;
@@ -162,7 +164,6 @@ public class DataPresenter
     private Long highlightPartIndex;
     private String highlightChildDataType;
     private boolean playButtonVisible;
-    private ClassificationUiHandlers classificationUiHandlers;
     private BeginSteppingHandler beginSteppingHandler;
     private boolean steppingSource;
     private boolean ignoreActions;
@@ -175,7 +176,8 @@ public class DataPresenter
     public DataPresenter(final EventBus eventBus,
                          final HtmlPresenter htmlPresenter,
                          final ItemNavigatorPresenter itemNavigatorPresenter,
-                         final DataView view,
+                         final DataView dataView,
+                         final ClassificationWrapperView classificationWrapperView,
                          final TextPresenter textPresenter,
                          final ProgressPresenter progressPresenter,
                          final MarkerListPresenter markerListPresenter,
@@ -183,7 +185,10 @@ public class DataPresenter
                          final UiConfigCache uiConfigCache,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
-        super(eventBus, view);
+        super(eventBus, classificationWrapperView);
+        classificationWrapperView.setContent(dataView);
+        this.dataView = dataView;
+        this.classificationWrapperView = classificationWrapperView;
         this.htmlPresenter = htmlPresenter;
         this.itemNavigatorPresenter = itemNavigatorPresenter;
         this.textPresenter = textPresenter;
@@ -217,17 +222,17 @@ public class DataPresenter
         userHasPipelineSteppingPermission = securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
 
         itemNavigatorPresenter.setDisplay(noNavigatorData);
-        view.addSourceLinkClickHandler(event ->
+        dataView.addSourceLinkClickHandler(event ->
                 openSourcePresenter());
-        view.setSourceLinkVisible(true, true);
-        view.setNavigatorView(itemNavigatorPresenter.getView());
-        view.setProgressView(progressPresenter.getView());
+        dataView.setSourceLinkVisible(true, true);
+        dataView.setNavigatorView(itemNavigatorPresenter.getView());
+        dataView.setProgressView(progressPresenter.getView());
         progressPresenter.setVisible(false);
     }
 
     @Override
     public void focus() {
-        getView().focus();
+        dataView.focus();
     }
 
     private void setCurrentRecordIndex(final long recordIndex) {
@@ -267,13 +272,13 @@ public class DataPresenter
     }
 
     private void addTab(final TabData tab) {
-        getView().getTabBar()
+        dataView.getTabBar()
                 .addTab(tab);
         hideTab(tab, true);
     }
 
     private void hideTab(final TabData tab, final boolean hide) {
-        getView().getTabBar()
+        dataView.getTabBar()
                 .setTabHidden(tab, hide);
     }
 
@@ -281,9 +286,9 @@ public class DataPresenter
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getView().getTabBar().addSelectionHandler(event ->
+        registerHandler(dataView.getTabBar().addSelectionHandler(event ->
                 onNewTabSelected(event.getSelectedItem())));
-        registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
+        registerHandler(dataView.getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     private void onNewTabSelected(final TabData tab) {
@@ -299,16 +304,16 @@ public class DataPresenter
                     effectiveChildStreamType = INFO_PSEUDO_STREAM_TYPE;
                     showHtmlPresenter();
                     fetchMetaInfoData(getCurrentMetaId());
-                    getView().setSourceLinkVisible(false, false);
+                    dataView.setSourceLinkVisible(false, false);
                     setNavigationControlsVisible(false);
-                    getView().setProgressView(null);
+                    dataView.setProgressView(null);
                     itemNavigatorPresenter.refreshNavigator();
                     refreshProgressBar(false);
                     refreshTextPresenterContent();
                 } else {
-//                    getView().setSourceLinkVisible(true, true);
+//                    dataView.setSourceLinkVisible(true, true);
                     setNavigationControlsVisible(true);
-                    getView().setProgressView(progressPresenter.getView());
+                    dataView.setProgressView(progressPresenter.getView());
                     if (META_TAB_NAME.equals(tab.getLabel())) {
                         fetchDataForCurrentStreamNo(StreamTypeNames.META);
                         refreshProgressBar(false);
@@ -490,7 +495,7 @@ public class DataPresenter
         if (sourceLocation.getDataRange() != null) {
             // We are displaying a specific range of the data so hide the
             // nav controls
-            getView().setNavigatorView(null);
+            dataView.setNavigatorView(null);
         }
         this.highlights = new ArrayList<>();
 
@@ -587,7 +592,7 @@ public class DataPresenter
                 + currentRecordNo, "");
         showTextPresenter();
         itemNavigatorPresenter.setDisplay(noNavigatorData);
-        getView().setSourceLinkVisible(false, false);
+        dataView.setSourceLinkVisible(false, false);
     }
 
     private void update(final boolean fireEvents,
@@ -851,14 +856,14 @@ public class DataPresenter
 
             // Let the classification handler know that the classification has
             // changed.
-            classificationUiHandlers.setClassification(result.getClassification());
+            classificationWrapperView.setClassification(result.getClassification());
 
             refresh(result);
             updateAvailableAndSelectedTabs(
                     result.getStreamTypeName(),
                     result.getAvailableChildStreamTypes());
         } else {
-            classificationUiHandlers.setClassification("");
+            classificationWrapperView.setClassification("");
 
             refresh(result);
             updateAvailableAndSelectedTabs(null, null);
@@ -922,35 +927,35 @@ public class DataPresenter
             itemNavigatorPresenter.refreshNavigator();
         }
 
-        if (getView().getTabBar().getSelectedTab() != null) {
-            lastTabName = getView().getTabBar().getSelectedTab().getLabel();
+        if (dataView.getTabBar().getSelectedTab() != null) {
+            lastTabName = dataView.getTabBar().getSelectedTab().getLabel();
         }
     }
 
     private void setActiveTab(final TabData tab, final String streamType) {
 //        GWT.log("Setting active tab to " + tab.getLabel());
-        getView().getTabBar().selectTab(tab);
+        dataView.getTabBar().selectTab(tab);
         currentTabName = tab.getLabel();
         updateEditorDisplay();
     }
 
     private void showHtmlPresenter() {
         itemNavigatorPresenter.setDisplay(noNavigatorData);
-        getView().getLayerContainer().show(htmlPresenter);
+        dataView.getLayerContainer().show(htmlPresenter);
     }
 
     private void showTextPresenter() {
         itemNavigatorPresenter.setDisplay(navigatorData);
-        getView().getLayerContainer().show(textPresenter);
+        dataView.getLayerContainer().show(textPresenter);
     }
 
     private void showMarkerPresenter() {
         itemNavigatorPresenter.setDisplay(navigatorData);
-        getView().getLayerContainer().show(markerListPresenter);
+        dataView.getLayerContainer().show(markerListPresenter);
     }
 
     private void hidePresenters() {
-        getView().getLayerContainer().clear();
+        dataView.getLayerContainer().clear();
     }
 
     private void refresh(final AbstractFetchDataResult result) {
@@ -966,12 +971,12 @@ public class DataPresenter
         if (result != null && result.hasErrors()) {
             // Data may be multi-part so one part may have errors but the rest not
             setNavigationControlsVisible(true);
-            getView().setSourceLinkVisible(true, false);
-            getView().setProgressView(null);
+            dataView.setSourceLinkVisible(true, false);
+            dataView.setProgressView(null);
         } else {
             setNavigationControlsVisible(true);
-            getView().setSourceLinkVisible(true, true);
-            getView().setProgressView(progressPresenter.getView());
+            dataView.setSourceLinkVisible(true, true);
+            dataView.setProgressView(progressPresenter.getView());
             refreshProgressBar(result != null);
             itemNavigatorPresenter.refreshNavigator();
             refreshHighlights(result);
@@ -1054,10 +1059,6 @@ public class DataPresenter
         this.beginSteppingHandler = beginSteppingHandler;
     }
 
-    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
-        this.classificationUiHandlers = classificationUiHandlers;
-    }
-
     public void setSteppingSource(final boolean steppingSource) {
         this.steppingSource = steppingSource;
         errorMarkerMode = !steppingSource;
@@ -1065,9 +1066,9 @@ public class DataPresenter
 
     public void setNavigationControlsVisible(final boolean visible) {
         if (visible) {
-            getView().setNavigatorView(itemNavigatorPresenter.getView());
+            dataView.setNavigatorView(itemNavigatorPresenter.getView());
         } else {
-            getView().setNavigatorView(null);
+            dataView.setNavigatorView(null);
         }
     }
 

@@ -5,8 +5,8 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
-import stroom.data.client.presenter.ClassificationWrappedDataPresenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -41,7 +41,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     private final ButtonView addEventButton;
     private final ButtonView removeEventButton;
 
-    private final ClassificationWrappedDataPresenter dataPresenter;
+    private final DataPresenter dataPresenter;
     private final AddEventLinkPresenter addEventLinkPresenter;
 
     private Annotation annotation;
@@ -56,7 +56,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
                                 final LinkedEventView view,
                                 final PagerView pagerView,
                                 final RestFactory restFactory,
-                                final ClassificationWrappedDataPresenter dataPresenter,
+                                final DataPresenter dataPresenter,
                                 final AddEventLinkPresenter addEventLinkPresenter) {
         super(eventBus, view);
 

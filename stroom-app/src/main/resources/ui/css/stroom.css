@@ -209,25 +209,29 @@ td {
 #loadingText {
 }
 
-.stroom-pipeline-stepping-button {
+.stepping-button-container {
+	position: relative;
+}
+
+.stepping-button {
 	position: absolute;
 	right: 16px;
 	bottom: 16px;
 	z-index: 5;
 }
 
-.stroom-pipeline-stepping-button-icon {
+.stepping-button-icon {
     background-image: url("../images/stepping.svg");
     width: 46px;
     height: 46px;
     margin-left: 2px;
 }
 
-.stroom-pipeline-stepping-button .face {
+.stepping-button .face {
 	background: #3385ff;
 }
 
-.stroom-pipeline-stepping-button .face:hover {
+.stepping-button .face:hover {
 	background: #51a5ff;
 }
 
@@ -592,6 +596,7 @@ input[type="file"] {
 	color: var(--control__text-color);
 	border-radius: .25rem;
 	height: calc(1.5em + .75rem + 2px);
+	overflow: hidden;
 }
 
 .gwt-TextArea:disabled,
@@ -620,10 +625,13 @@ input[type="file"]:disabled {
 	white-space: nowrap;
 }
 
-.gwt-SuggestBoxPopup .suggestPopupContent,
-.com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
+.gwt-SuggestBoxPopup .suggestPopupContent {
   background: var(--control__background-color) !important;
   color: var(--control__text-color);
+}
+
+.com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
+  background: transparent !important;
 }
 
 .gwt-ListBox {

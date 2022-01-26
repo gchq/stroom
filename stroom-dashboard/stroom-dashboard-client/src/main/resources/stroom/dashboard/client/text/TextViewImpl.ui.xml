@@ -5,11 +5,11 @@
              xmlns:button="urn:import:stroom.widget.button.client">
 
     <g:FlowPanel styleName="max dock-container-vertical stroom-dashboard-text">
-        <g:FlowPanel styleName="dock-max">
+        <g:FlowPanel styleName="dock-max stepping-button-container">
             <g:SimplePanel ui:field="content" styleName="max"/>
             <button:FabButton ui:field="playButton"
-                              addStyleNames="stroom-pipeline-stepping-button"
-                              iconClassName="stroom-pipeline-stepping-button-icon"
+                              addStyleNames="stepping-button"
+                              iconClassName="stepping-button-icon"
                               title="Enter Stepping Mode" visible="false"/>
         </g:FlowPanel>
         <l:ClassificationLabel ui:field="classification" styleName="dock-min"/>

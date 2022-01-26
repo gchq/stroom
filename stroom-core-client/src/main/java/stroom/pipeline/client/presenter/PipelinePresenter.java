@@ -17,7 +17,7 @@
 
 package stroom.pipeline.client.presenter;
 
-import stroom.data.client.presenter.ClassificationWrappedMetaPresenter;
+import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
@@ -53,7 +53,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     @Inject
     public PipelinePresenter(final EventBus eventBus, final LinkTabPanelView view,
                              final Provider<PipelineSettingsPresenter> settingsPresenter,
-                             final Provider<ClassificationWrappedMetaPresenter> streamPresenterProvider,
+                             final Provider<MetaPresenter> streamPresenterProvider,
                              final Provider<PipelineStructurePresenter> structurePresenter,
                              final Provider<ProcessorPresenter> processorPresenter,
                              final Provider<ProcessorTaskPresenter> streamTaskPresenterProvider,

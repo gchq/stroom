@@ -4,7 +4,7 @@
              xmlns:c="urn:import:stroom.widget.customdatebox.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="max form">
         <form:FormGroup identity="importConfigConfirmEnableProcessorFilters" label="Enable Processor Filters">
             <tickbox:CustomCheckBox ui:field="enableFilters"/>
         </form:FormGroup>

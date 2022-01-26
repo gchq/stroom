@@ -4,7 +4,7 @@
         <g:HTMLPanel styleName="dock-min stroom-body aboutViewImpl-stroom-body">
             <img style="position:absolute;width:185px;height:29px;" src="images/logo.svg"/>
         </g:HTMLPanel>
-        <g:FlowPanel styleName="dock-max form-padding aboutViewImpl-body">
+        <g:FlowPanel styleName="dock-max aboutViewImpl-body">
             <g:SimplePanel ui:field="html"/>
             <g:SimplePanel styleName="aboutViewImpl-buildInfo">
                 <g:FlowPanel>

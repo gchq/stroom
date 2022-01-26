@@ -30,8 +30,7 @@ import stroom.data.client.presenter.CharacterNavigatorPresenter;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
-import stroom.data.client.presenter.ClassificationWrapperPresenter;
-import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
+import stroom.data.client.presenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
@@ -128,10 +127,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 IFrameContentView.class,
                 IFrameContentViewImpl.class);
         bindPresenterWidget(
-                ClassificationWrapperPresenter.class,
-                ClassificationWrapperView.class,
-                ClassificationWrapperViewImpl.class);
-        bindPresenterWidget(
                 DataPreviewTabPresenter.class,
                 DataPreviewTabView.class,
                 DataPreviewTabViewImpl.class);
@@ -174,5 +169,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
 
         bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(WrapperView.class, WrapperViewImpl.class);
+        bindSharedView(ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
     }
 }

@@ -4,7 +4,7 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:v="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="XPathFilterViewImpl max form">
         <form:FormGroup identity="xPathFilterPath" label="XPath">
             <g:TextBox ui:field="xPath" addStyleNames="w-100"/>
         </form:FormGroup>

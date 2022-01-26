@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:SimplePanel styleName="max form-padding default-min-sizes">
+    <g:SimplePanel styleName="max default-min-sizes">
         <g:MySplitLayoutPanel styleName="max">
             <g:west size="250">
                 <g:SimplePanel ui:field="eventList" styleName="max stroom-control"/>

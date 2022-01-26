@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:lci="urn:import:stroom.widget.linecolinput.client">
-    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl max form-padding">
+    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl max">
         <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-infoLine">
             <g:Label>Total characters:</g:Label>
             <g:Label ui:field="lblTotalCharCount"

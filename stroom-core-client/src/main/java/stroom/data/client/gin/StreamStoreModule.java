@@ -23,8 +23,7 @@ import stroom.data.client.presenter.CharacterNavigatorPresenter;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
-import stroom.data.client.presenter.ClassificationWrapperPresenter;
-import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
+import stroom.data.client.presenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
@@ -89,10 +88,6 @@ public class StreamStoreModule extends PluginModule {
 
         bind(DelegatingAceCompleter.class).asEagerSingleton();
 
-        bindPresenterWidget(
-                ClassificationWrapperPresenter.class,
-                ClassificationWrapperView.class,
-                ClassificationWrapperViewImpl.class);
         bindPresenterWidget(
                 MetaPresenter.class,
                 MetaView.class,
@@ -159,5 +154,6 @@ public class StreamStoreModule extends PluginModule {
 
         bindSharedView(DropDownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreeView.class, DropDownTreeViewImpl.class);
+        bindSharedView(ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
     }
 }

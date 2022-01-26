@@ -2,34 +2,36 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:btn="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="SourceViewImpl max form-padding dock-container-vertical">
-        <g:FlowPanel styleName="dock-min form-label">
-            <g:Label styleName="sourceViewImpl-titleHeading">Feed:</g:Label>
-            <g:Label ui:field="lblFeed" styleName="sourceViewImpl-titleText"/>
+    <g:FlowPanel styleName="SourceViewImpl max dock-container-vertical">
+        <g:FlowPanel styleName="dock-min dock-container-horizontal">
+            <g:FlowPanel styleName="dock-max">
+                <g:Label styleName="sourceViewImpl-titleHeading">Feed:</g:Label>
+                <g:Label ui:field="lblFeed" styleName="sourceViewImpl-titleText"/>
 
-            <g:Label styleName="sourceViewImpl-titleHeading">ID:</g:Label>
-            <g:Label ui:field="lblId" styleName="sourceViewImpl-titleText"/>
+                <g:Label styleName="sourceViewImpl-titleHeading">ID:</g:Label>
+                <g:Label ui:field="lblId" styleName="sourceViewImpl-titleText"/>
 
-            <g:Label styleName="sourceViewImpl-titleHeading">Part:</g:Label>
-            <g:Label ui:field="lblPartNo" styleName="sourceViewImpl-titleText"/>
+                <g:Label styleName="sourceViewImpl-titleHeading">Part:</g:Label>
+                <g:Label ui:field="lblPartNo" styleName="sourceViewImpl-titleText"/>
 
-            <g:Label styleName="sourceViewImpl-titleHeading">Record:</g:Label>
-            <g:Label ui:field="lblSegmentNo" styleName="sourceViewImpl-titleText"/>
+                <g:Label styleName="sourceViewImpl-titleHeading">Record:</g:Label>
+                <g:Label ui:field="lblSegmentNo" styleName="sourceViewImpl-titleText"/>
 
-            <g:Label styleName="sourceViewImpl-titleHeading">Stream Type:</g:Label>
-            <g:Label ui:field="lblType" styleName="sourceViewImpl-titleText"/>
-        </g:FlowPanel>
-        <g:FlowPanel styleName="dock-max dock-container-vertical stroom-control">
+                <g:Label styleName="sourceViewImpl-titleHeading">Stream Type:</g:Label>
+                <g:Label ui:field="lblType" styleName="sourceViewImpl-titleText"/>
+            </g:FlowPanel>
             <g:FlowPanel styleName="dock-min">
                 <g:SimplePanel ui:field="navigatorContainer" styleName="sourceViewImpl-characterNavigator"/>
             </g:FlowPanel>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="dock-max dock-container-vertical">
             <g:SimplePanel ui:field="progressBarPanel"
                            styleName="dock-min sourceViewImpl-progressBarPanel"/>
             <g:FlowPanel ui:field="container"
-                         styleName="dock-max default-min-sizes">
+                         styleName="dock-max default-min-sizes stepping-button-container">
                 <btn:FabButton ui:field="playButton"
-                               addStyleNames="stroom-pipeline-stepping-button"
-                               iconClassName="stroom-pipeline-stepping-button-icon"
+                               addStyleNames="stepping-button"
+                               iconClassName="stepping-button-icon"
                                title="Enter Stepping Mode"
                                visible="false"/>
             </g:FlowPanel>

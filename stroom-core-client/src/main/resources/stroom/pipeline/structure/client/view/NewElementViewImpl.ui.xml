@@ -3,7 +3,7 @@
         xmlns:ui="urn:ui:com.google.gwt.uibinder"
         xmlns:g="urn:import:com.google.gwt.user.client.ui"
         xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="max form">
         <form:FormGroup identity="newElementId" label="Id">
             <g:TextBox ui:field="id" addStyleNames="w-100"/>
         </form:FormGroup>

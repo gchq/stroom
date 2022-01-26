@@ -24,8 +24,7 @@ import stroom.core.client.ContentManager.CloseCallback;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
-import stroom.data.client.presenter.ClassificationUiHandlers;
-import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
+import stroom.data.client.presenter.ClassificationWrapperView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -40,7 +39,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class SteppingContentTabPresenter extends ContentTabPresenter<ClassificationWrapperView>
-        implements HasSave, HasDirtyHandlers, CloseHandler, ClassificationUiHandlers {
+        implements HasSave, HasDirtyHandlers, CloseHandler {
 
     private final SteppingPresenter steppingPresenter;
     private final HasSaveRegistry hasSaveRegistry;
@@ -59,13 +58,7 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
         this.hasSaveRegistry = hasSaveRegistry;
         hasSaveRegistry.register(this);
 
-        steppingPresenter.setClassificationUiHandlers(this);
-        setInSlot(ClassificationWrapperView.CONTENT, steppingPresenter);
-    }
-
-    @Override
-    public void setClassification(final String classification) {
-        getView().setClassification(classification);
+        view.setContent(steppingPresenter.getView());
     }
 
     @Override

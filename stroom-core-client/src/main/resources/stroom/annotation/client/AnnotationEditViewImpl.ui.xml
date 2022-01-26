@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
 >
 
-    <g:FlowPanel styleName="form-padding annotationContainer">
+    <g:FlowPanel styleName="annotationContainer">
         <g:FlowPanel styleName="annotationTop">
             <g:FlowPanel addStyleNames="annotationTitleContainer">
                 <g:TextBox ui:field="titleTextBox" styleName="annotationTitleTextBox annotationTextBox allow-focus"/>

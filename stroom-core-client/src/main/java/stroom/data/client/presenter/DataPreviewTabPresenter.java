@@ -2,7 +2,6 @@ package stroom.data.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.DataPreviewKey;
-import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.client.Icon;
@@ -14,12 +13,12 @@ import com.gwtplatform.mvp.client.View;
 
 public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabView> {
 
-    private final ClassificationWrappedDataPresenter dataPresenter;
+    private final DataPresenter dataPresenter;
     private DataPreviewKey dataPreviewKey;
 
     @Inject
     public DataPreviewTabPresenter(final EventBus eventBus,
-                                   final ClassificationWrappedDataPresenter dataPresenter,
+                                   final DataPresenter dataPresenter,
                                    final DataPreviewTabView view) {
         super(eventBus, view);
         this.dataPresenter = dataPresenter;
@@ -50,6 +49,6 @@ public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabV
 
     public interface DataPreviewTabView extends View {
 
-        void setContentView(final ClassificationWrapperView sourceView);
+        void setContentView(final View sourceView);
     }
 }

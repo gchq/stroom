@@ -36,6 +36,7 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
         if (widget == null) {
             if (input == null) {
                 final Widget outputWidget = output.asWidget();
+                outputWidget.getElement().addClassName("stroom-control");
                 widget = outputWidget;
 
             } else if (code == null) {
@@ -43,8 +44,10 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
                 final Widget inputWidget = input.asWidget();
                 final Widget outputWidget = output.asWidget();
 
-                inputWidget.getElement().addClassName("stroom-border-right");
-                outputWidget.getElement().addClassName("stroom-border-left");
+//                inputWidget.getElement().addClassName("stroom-border-right");
+//                outputWidget.getElement().addClassName("stroom-border-left");
+                inputWidget.getElement().addClassName("stroom-control");
+                outputWidget.getElement().addClassName("stroom-control");
 
                 final MySplitLayoutPanel layout = new MySplitLayoutPanel();
                 layout.setHSplits("0.5");
@@ -59,11 +62,14 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
                 final Widget inputWidget = input.asWidget();
                 final Widget outputWidget = output.asWidget();
 
-                codeWidget.getElement().addClassName("stroom-border-bottom");
-                inputWidget.getElement().addClassName("stroom-border-top");
-                inputWidget.getElement().addClassName("stroom-border-right");
-                outputWidget.getElement().addClassName("stroom-border-top");
-                outputWidget.getElement().addClassName("stroom-border-left");
+//                codeWidget.getElement().addClassName("stroom-border-bottom");
+//                inputWidget.getElement().addClassName("stroom-border-top");
+//                inputWidget.getElement().addClassName("stroom-border-right");
+//                outputWidget.getElement().addClassName("stroom-border-top");
+//                outputWidget.getElement().addClassName("stroom-border-left");
+                codeWidget.getElement().addClassName("stroom-control");
+                inputWidget.getElement().addClassName("stroom-control");
+                outputWidget.getElement().addClassName("stroom-control");
 
                 final MySplitLayoutPanel layout = new MySplitLayoutPanel();
                 layout.setHSplits("0.5");

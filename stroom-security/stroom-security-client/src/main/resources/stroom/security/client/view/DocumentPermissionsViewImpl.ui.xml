@@ -4,7 +4,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:SimplePanel ui:field="tabs" styleName="dock-max"/>
-        <g:FlowPanel ui:field="innerLayout" styleName="dock-min form-padding form">
+        <g:FlowPanel ui:field="innerLayout" styleName="dock-min form">
             <form:FormGroup ui:field="cascadeGrid" identity="documentPermissionsCascade" label="Cascade">
                 <l:ItemListBox ui:field="cascade" addStyleNames="w-100"/>
             </form:FormGroup>

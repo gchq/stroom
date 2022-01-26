@@ -18,7 +18,6 @@
 package stroom.pipeline.stepping.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.ClassificationUiHandlers;
 import stroom.data.client.presenter.SourcePresenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -327,7 +326,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                                 .setSelected(PipelineModel.SOURCE_ELEMENT, true);
 
                         Scheduler.get().scheduleDeferred(() ->
-                                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 3));
+                                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 13));
                     } catch (final PipelineModelException e) {
                         AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
                     }
@@ -497,10 +496,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
-
-    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
-        sourcePresenter.setClassificationUiHandlers(classificationUiHandlers);
     }
 
     public interface SteppingView extends View {

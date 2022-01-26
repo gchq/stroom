@@ -2,7 +2,6 @@ package stroom.data.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.SourceKey;
-import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.client.Icon;
@@ -14,12 +13,12 @@ import com.gwtplatform.mvp.client.View;
 
 public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
-    private final ClassificationWrappedSourcePresenter sourcePresenter;
+    private final SourcePresenter sourcePresenter;
     private SourceKey sourceKey;
 
     @Inject
     public SourceTabPresenter(final EventBus eventBus,
-                              final ClassificationWrappedSourcePresenter sourcePresenter,
+                              final SourcePresenter sourcePresenter,
                               final SourceTabView view) {
         super(eventBus, view);
         this.sourcePresenter = sourcePresenter;
@@ -70,7 +69,7 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
     public interface SourceTabView extends View {
 
-        void setSourceView(final ClassificationWrapperView sourceView);
+        void setSourceView(final View sourceView);
     }
 
 }

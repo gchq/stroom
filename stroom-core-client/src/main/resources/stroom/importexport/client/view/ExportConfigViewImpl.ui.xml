@@ -4,7 +4,7 @@
              xmlns:p="urn:import:stroom.widget.button.client"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="max form">
         <form:FormGroup identity="exportConfigSelect" label="Select the items to export" addStyleNames="max">
             <g:FlowPanel styleName="max default-min-sizes quickFilter-container">
                 <g:FlowPanel styleName="dock-min dock-container-horizontal exportConfigViewImpl-filter">

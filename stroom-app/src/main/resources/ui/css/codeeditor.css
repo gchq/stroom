@@ -25,7 +25,7 @@
     position: relative;
     overflow: hidden;
     background-color: var(--code-editor-right-bar__background-color);
-    border-left: solid 1px var(--code-editor__border-color);
+    /*border-left: solid 1px var(--code-editor__border-color);*/
     -moz-user-focus: ignore;
     -moz-user-input: disabled;
     -moz-user-select: none;

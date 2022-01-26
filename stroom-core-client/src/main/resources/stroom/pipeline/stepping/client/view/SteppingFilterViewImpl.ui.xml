@@ -9,7 +9,7 @@
             </g:MaxScrollPanel>
         </g:west>
         <g:center>
-            <g:FlowPanel styleName="max form-padding form">
+            <g:FlowPanel styleName="max form">
                 <form:FormGroup identity="steppingSeverity" label="Jump to where message severity >=">
                     <g:ListBox ui:field="skipToErrors"/>
                 </form:FormGroup>

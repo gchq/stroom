@@ -55,7 +55,7 @@
     height : auto;
 	cursor: default;
 
-	border-bottom: solid 1px var(--header__border-color);
+	/*border-bottom: solid 1px var(--header__border-color);*/
 }
 
 .dataGridHeader * {

@@ -616,10 +616,6 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
                 pipelineRef);
     }
 
-    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
-        dataPresenter.setClassificationUiHandlers(classificationUiHandlers);
-    }
-
     public interface MetaView extends View {
 
     }
