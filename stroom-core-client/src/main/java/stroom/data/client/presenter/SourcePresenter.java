@@ -71,7 +71,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private boolean isSteppingSource = false;
     private Count<Long> exactCharCount = null;
 
-
     @Inject
     public SourcePresenter(final EventBus eventBus,
                            final SourceView view,
@@ -690,8 +689,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         void setTextView(final TextView textView);
 
         void setNavigatorView(final CharacterNavigatorView characterNavigatorView);
-
-        ButtonView addButton(final Preset preset);
 
         void setTitle(final String feedName,
                       final long id,

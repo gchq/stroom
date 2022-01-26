@@ -13,7 +13,6 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -74,9 +73,9 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
         this.addEventLinkPresenter = addEventLinkPresenter;
 
-        addEventButton = view.addButton(SvgPresets.ADD);
+        addEventButton = pagerView.addButton(SvgPresets.ADD);
         addEventButton.setTitle("Add Event");
-        removeEventButton = view.addButton(SvgPresets.DELETE);
+        removeEventButton = pagerView.addButton(SvgPresets.DELETE);
         removeEventButton.setEnabled(false);
 
         view.setEventListView(pagerView);
@@ -196,8 +195,6 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     }
 
     public interface LinkedEventView extends View {
-
-        ButtonView addButton(Preset preset);
 
         void setEventListView(View view);
 

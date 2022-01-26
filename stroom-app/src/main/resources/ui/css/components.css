@@ -697,10 +697,6 @@
     background-color: rgb(223, 234, 248);
 }
 
-.linkEventViewImpl-data {
-    margin-left: 3px;
-}
-
 .queryViewImpl-expressionTree {
     padding-left: 5px;
 }
@@ -1119,15 +1115,14 @@
 }
 
 .characterNavigator-labels {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 1rem;
 }
 
 .characterNavigator-label {
-    display: inline-block;
-    margin: 0px;
-    margin-top: 2px;
     cursor: pointer;
-    padding-left: 0.75em;
-    padding-right: 0.75em;
 }
 
 .characterNavigator-label:hover {
@@ -1667,7 +1662,7 @@
     padding: var(--control__gap--vertical) var(--control__gap--horizontal);
 }
 
-.dialog-content .linkTabBar {
+.settingsPresenter .linkTabBar {
     margin: var(--control__gap--vertical) var(--control__gap--horizontal) 0 var(--control__gap--horizontal);
 }
 

@@ -3,9 +3,6 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.TextPresenter.TextView;
-import stroom.svg.client.Preset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -36,9 +33,6 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     FlowPanel container;
     @UiField
     SimplePanel navigatorContainer;
-    @UiField
-    ButtonPanel buttonPanel;
-
     @UiField
     SimplePanel progressBarPanel;
 
@@ -102,11 +96,6 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
         } else {
             progressBarPanel.clear();
         }
-    }
-
-    @Override
-    public ButtonView addButton(final Preset preset) {
-        return buttonPanel.addButton(preset);
     }
 
     public interface Binder extends UiBinder<Widget, SourceViewImpl> {
