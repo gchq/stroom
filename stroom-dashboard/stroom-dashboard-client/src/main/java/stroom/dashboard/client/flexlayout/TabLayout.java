@@ -20,6 +20,7 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
+import stroom.svg.client.SvgImages;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
@@ -82,12 +83,14 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         barOuter.add(buttons);
 
         settings = new Button();
-        settings.setStyleName("fa-button face tabLayout-button tabLayout-settingsButton");
+        settings.setStyleName("tabLayout-button tabLayout-settingsButton");
+        settings.getElement().setInnerHTML(SvgImages.MONO_SETTINGS);
         settings.setTitle("Settings");
         buttons.add(settings);
 
         close = new Button();
-        close.setStyleName("fa-button face tabLayout-button tabLayout-closeButton");
+        close.setStyleName("tabLayout-button tabLayout-closeButton");
+        close.getElement().setInnerHTML(SvgImages.MONO_CLOSE);
         close.setTitle("Close");
         buttons.add(close);
 
