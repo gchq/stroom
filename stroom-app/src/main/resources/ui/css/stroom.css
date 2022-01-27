@@ -740,7 +740,7 @@ input[type="file"]:disabled {
 }
 
 .activityOuter {
-    padding: .5rem;
+    padding: var(--control__padding--vertical) var(--control__padding--horizontal);
     color: var(--text-color);
 }
 

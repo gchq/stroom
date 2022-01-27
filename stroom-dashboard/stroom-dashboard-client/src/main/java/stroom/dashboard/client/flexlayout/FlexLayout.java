@@ -52,7 +52,6 @@ public class FlexLayout extends Composite {
 
     private static final int DRAG_ZONE = 20;
     private static final int MIN_COMPONENT_WIDTH = 50;
-    private static final int SPLIT_SIZE = 4;
     private static Glass marker;
     private static Glass glass;
     private final EventBus eventBus;
@@ -1128,10 +1127,10 @@ public class FlexLayout extends Composite {
 
                         if (dim == splitLayoutData.getDimension()) {
                             positionAndSize.setPos(dim, pos);
-                            positionAndSize.setSize(dim, SPLIT_SIZE);
+                            positionAndSize.setSize(dim, -1);
                         } else {
-                            positionAndSize.setPos(dim, pos + SPLIT_SIZE);
-                            positionAndSize.setSize(dim, containerSize - SPLIT_SIZE);
+                            positionAndSize.setPos(dim, pos);
+                            positionAndSize.setSize(dim, containerSize);
                         }
 
                     } else {

@@ -84,17 +84,6 @@
     --xsdbrowser-title__background-color: #555;
     --xsdbrowser-title__background-color--selected: #1164a3;
 
-    --vis-axis__color: rgba(255,255,255,0.54);
-    --vis-text__color: rgba(255,255,255,0.87);
-    --vis-text__color--faint: rgba(255,255,255,0.12);
-    --vis-icon__color: rgba(255,255,255,0.38);
-    --vis-icon__color--hover: rgba(255,255,255,0.87);
-    --vis-barchart-element__stroke: #000;
-    --vis-marker__stroke: #fff;
-    --vis-series-label__background-color: rgba(0,0,0,0.87);
-    --vis-tip__background-color: rgba(30, 30, 30, 0.8);
-    --vis-tip-text__color: #bbb;
-
     --scrollbar__background-color: transparent;
     --scrollbar-corner__background-color: transparent;
     --scrollbar-thumb__border-color: transparent;
@@ -119,6 +108,10 @@
     --control__border-color--disabled: transparent;
     --control__text-color: #cacbcb;
     --control__text-color--disabled: #666;
+
+    /* Dashboard */
+    --dashboard-panel__background-color: #24282f;
+    --dashboard-panel__border-color: #343b47;
 
     /* Items, e.g. rows for tables, drop downs lists etc. */
     --item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
@@ -200,5 +193,18 @@
     --primary: var(--blue-500);
     --valid: var(--bootstrap-success);
     --invalid: var(--bootstrap-error);
-    --feedback: var(--red-200),
+    --feedback: var(--red-200);
+
+    /* Visualisations */
+    --vis__background-color: var(--dashboard-panel__background-color);
+    --vis-axis__color: rgba(255,255,255,0.54);
+    --vis-text__color: rgba(255,255,255,0.87);
+    --vis-text__color--faint: rgba(255,255,255,0.12);
+    --vis-icon__color: rgba(255,255,255,0.38);
+    --vis-icon__color--hover: rgba(255,255,255,0.87);
+    --vis-barchart-element__stroke: #000;
+    --vis-marker__stroke: #fff;
+    --vis-series-label__background-color: rgba(0,0,0,0.87);
+    --vis-tip__background-color: rgba(30, 30, 30, 0.8);
+    --vis-tip-text__color: #bbb;
 }

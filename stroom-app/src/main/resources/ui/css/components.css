@@ -942,6 +942,8 @@
 }
 
 .dashboardViewImpl {
+    padding-bottom: var(--control__padding--vertical);
+    padding-right: var(--control__padding--horizontal);
 }
 
 .dashboardViewImpl-params {
