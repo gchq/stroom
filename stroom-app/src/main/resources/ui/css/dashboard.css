@@ -104,17 +104,23 @@
 	overflow: hidden;
     display: flex;
     flex-direction: column;
-	border-radius: 2px;
-	background-color: var(--page__background-color);
+
+    padding: .25rem;
+    border: solid 1px var(--control__border-color);
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
+    border-radius: .25rem;
 }
 
 .tabLayout .tabLayout-barOuter {
     display: flex;
 	flex-grow: 0;
+	flex-shrink: 0;
 	gap: 5px;
 	cursor: default;
 	overflow: hidden;
 	z-index: 5;
+	padding: .25rem;
 }
 
 .tabLayout .tabLayout-barInner {
@@ -124,44 +130,46 @@
 	height: 100%;
 }
 
-.tabLayout .tabLayout-buttons {
-	z-index: 5;
-}
-
 .tabLayout .tabLayout-content {
 	position: relative;
 	width: 100%;
 	height: 100%;
 }
 
-.tabLayout .tabLayout-settingsButton {
-	color: #ddd;
-    background-image: url("../images/settings-grey.svg");
+.tabLayout .tabLayout-buttons {
+	z-index: 5;
+	transition: opacity 0.25s ease-in-out;
+    opacity: 0.1;
+}
+
+.tabLayout:hover .tabLayout-buttons {
+    opacity: 1;
+}
+
+.tabLayout .tabLayout-button {
     width: 16px;
     height: 16px;
+	color: var(--vis-icon__color);
+}
+
+.tabLayout .tabLayout-button:hover {
+	color: var(--vis-icon__color--hover);
+}
+
+.tabLayout .tabLayout-settingsButton {
+    background-image: url("../images/settings-grey.svg");
 }
 
 .stroom-theme-dark .tabLayout .tabLayout-settingsButton {
     background-image: url("../images/settings-grey-dark.svg");
 }
 
-.tabLayout .tabLayout-settingsButton:hover {
-    color: #9E9E9E;
-}
-
 .tabLayout .tabLayout-closeButton {
-	color: #ddd;
 	background-image: url("../images/close-grey.svg");
-	width: 16px;
-	height: 16px;
 }
 
 .stroom-theme-dark .tabLayout .tabLayout-closeButton {
 	background-image: url("../images/close-grey-dark.svg");
-}
-
-.tabLayout .tabLayout-closeButton:hover {
-    color: #D32F2F;
 }
 
 .queryCell-outer {

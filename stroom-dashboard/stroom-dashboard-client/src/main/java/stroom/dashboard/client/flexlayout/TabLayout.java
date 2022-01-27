@@ -82,12 +82,12 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         barOuter.add(buttons);
 
         settings = new Button();
-        settings.setStyleName("fa-button face tabLayout-settingsButton");
+        settings.setStyleName("fa-button face tabLayout-button tabLayout-settingsButton");
         settings.setTitle("Settings");
         buttons.add(settings);
 
         close = new Button();
-        close.setStyleName("fa-button face tabLayout-closeButton");
+        close.setStyleName("fa-button face tabLayout-button tabLayout-closeButton");
         close.setTitle("Close");
         buttons.add(close);
 
