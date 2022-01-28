@@ -745,9 +745,9 @@ input[type="file"]:disabled {
 }
 
 .activityButton {
-    background-color: var(--control__background-color);
+    background-color: var(--dashboard-panel__background-color);
     color: var(--control__text-color);
-    border: 1px solid var(--control__border-color);
+    border: 1px solid var(--dashboard-panel__border-color);
     border-radius: 5px;
     padding: 5px;
     width: 100%;

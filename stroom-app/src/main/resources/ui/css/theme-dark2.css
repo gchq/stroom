@@ -112,6 +112,8 @@
     /* Dashboard */
     --dashboard-panel__background-color: #22252c;
     --dashboard-panel__border-color: #2f333c;
+    --dashboard-splitter__background-color: #2196f3;
+    --dashboard-splitter__border-color: #22252c;
 
     /* Items, e.g. rows for tables, drop downs lists etc. */
     --item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);

@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.DashboardViewImpl {
-    padding-bottom: var(--control__padding--vertical);
-    padding-right: var(--control__padding--horizontal);
+.maximised .DashboardViewImpl {
+    padding-left: var(--control__padding--horizontal);
 }
 
 .DashboardViewImpl-top {
     gap: var(--control__padding--horizontal);
+    padding-bottom: var(--control__padding--horizontal);
 }
 
 .DashboardViewImpl-content {
@@ -83,9 +83,9 @@
 	margin: 0px;
 	padding: 0px;
 	border-width: 1px;
-	border-color: black;
+	border-color: var(--dashboard-splitter__border-color);
 	border-style: solid;
-	background-color: blue;
+	background-color: var(--dashboard-splitter__background-color);
 	opacity: 0.3;
 	z-index: 5;
 }
@@ -107,11 +107,21 @@
 .flexLayout-splitterDown {
 	cursor: row-resize;
 	height: var(--control__padding--vertical);
+
+    /* Debug *
+	opacity: 1 !important;
+    background: green;
+    */
 }
 
 .flexLayout-splitterAcross {
 	cursor: col-resize;
 	width: var(--control__padding--horizontal);
+
+    /* Debug *
+	opacity: 1 !important;
+	background: red;
+	*/
 }
 
 .flexLayout-selected {
@@ -121,8 +131,8 @@
 
 .tabLayout {
     display: flex;
-	padding-top: var(--control__padding--vertical);
-	padding-left: var(--control__padding--horizontal);
+    padding-bottom: var(--control__padding--vertical);
+    padding-right: var(--control__padding--horizontal);
 }
 
 .tabLayout .tabLayout-contentOuter {
