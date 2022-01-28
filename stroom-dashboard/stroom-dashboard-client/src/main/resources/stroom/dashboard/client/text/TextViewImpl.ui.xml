@@ -3,8 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.data.client.view"
              xmlns:button="urn:import:stroom.widget.button.client">
-
-    <g:FlowPanel styleName="max dock-container-vertical stroom-dashboard-text">
+    <g:FlowPanel styleName="TextView max dock-container-vertical stroom-dashboard-text">
         <g:FlowPanel styleName="dock-max stepping-button-container">
             <g:SimplePanel ui:field="content" styleName="max"/>
             <button:FabButton ui:field="playButton"

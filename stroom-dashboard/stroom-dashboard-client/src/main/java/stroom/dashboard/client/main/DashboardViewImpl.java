@@ -16,6 +16,8 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.query.QueryButtons;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -38,11 +40,11 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
     @UiField
     FlowPanel left;
     @UiField
-    FlowPanel right;
-    @UiField
     TextBox params;
     @UiField
     SimplePanel content;
+    @UiField
+    QueryButtons queryButtons;
 
     @Inject
     public DashboardViewImpl(final Binder binder) {
@@ -57,11 +59,6 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
     @Override
     public void addWidgetLeft(final Widget widget) {
         left.add(widget);
-    }
-
-    @Override
-    public void addWidgetRight(final Widget widget) {
-        right.add(widget);
     }
 
     @Override
@@ -111,6 +108,11 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
         if (getUiHandlers() != null) {
             getUiHandlers().onParamsChanged(params.getText());
         }
+    }
+
+    @Override
+    public QueryButtons getQueryButtons() {
+        return queryButtons;
     }
 
     public interface Binder extends UiBinder<Widget, DashboardViewImpl> {

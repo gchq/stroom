@@ -26,59 +26,28 @@
 	z-index: 4;
 }
 
-.stroom-dashboard-query-play-icon {
-    background-image: url("../images/play.svg");
-    width: 32px;
-    height: 36px;
-    margin-left: 5px;
+.QueryButtons-play svg {
+    color: #4caf50;
 }
 
-.stroom-dashboard-query-play .face {
-	background: #15a32c;
-	padding-left: 8px;
+.QueryButtons-pause svg {
+    color: #2196f3;
 }
 
-.stroom-dashboard-query-play .face:hover {
-	background: #0bd32b;
+.QueryButtons-stop svg {
+    color: red;
 }
 
-.stroom-dashboard-query-pause-icon {
-    background-image: url("../images/pause.svg");
-    width: 32px;
-    height: 37px;
-    margin-left: 9px;
-}
 
-.stroom-dashboard-query-pause .face {
-	background: #15a32c;
-}
 
-.stroom-dashboard-query-pause .face:hover {
-	background: #0bd32b;
-}
 
-.stroom-dashboard-query-stop-icon {
-    background-image: url("../images/stop.svg");
-    width: 16px;
-    height: 18px;
-    margin-left: 7px;
-}
 
-.stroom-dashboard-query-stop {
-	position: absolute;
-	left: 43px;
-	top: 20px;
-}
 
-.stroom-dashboard-query-stop .face {
-	background: #d30000;
-	width: 30px;
-	height: 30px;
-}
 
-.stroom-dashboard-query-stop .face:hover {
-	background: #f00;
-}
+
+
+
+
 
 .stroom-dashboard-table {
 }

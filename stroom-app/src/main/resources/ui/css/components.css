@@ -675,25 +675,9 @@
     text-align: center;
 }
 
-.dashboardMainViewImpl-root {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-.dashboardMainViewImpl-contentPanel {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background-image: linear-gradient(rgb(244, 248, 253) 0, rgb(222, 234, 248) 36px);
-    background-color: rgb(223, 234, 248);
-}
-
 .queryViewImpl-expressionTree {
-    padding-left: 5px;
+    position: relative;
+    overflow: auto;
 }
 
 .selectionHandlerViewImpl-bottom {
@@ -939,15 +923,6 @@
 }
 .characterRangeSelectionViewImpl-infoLine {
     padding-bottom: 12px;
-}
-
-.dashboardViewImpl {
-    padding-bottom: var(--control__padding--vertical);
-    padding-right: var(--control__padding--horizontal);
-}
-
-.dashboardViewImpl-params {
-    width: 100%;
 }
 
 .subStreamNavigator {

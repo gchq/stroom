@@ -21,15 +21,12 @@ import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.FabButton;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -41,13 +38,11 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
     private final Widget widget;
 
     @UiField
-    SimplePanel expressionTree;
+    FlowPanel expressionTree;
     @UiField
-    ButtonPanel buttonPanel;
+    ButtonPanel buttonPanelLeft;
     @UiField
-    StartButton start;
-    @UiField
-    FabButton stop;
+    QueryButtons queryButtons;
 
     @Inject
     public QueryViewImpl(final Binder binder) {
@@ -66,49 +61,27 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
 
     @Override
     public ButtonView addButton(final Preset preset) {
-        return buttonPanel.addButton(preset);
+        return buttonPanelLeft.addButton(preset);
     }
 
     @Override
     public void setExpressionView(final View view) {
-        expressionTree.setWidget(view.asWidget());
-    }
-
-    @UiHandler("start")
-    public void onStartClick(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().start();
-        }
-    }
-
-    @UiHandler("stop")
-    public void onStopClick(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().stop();
-        }
+        expressionTree.add(view.asWidget());
     }
 
     @Override
     public void setMode(final Mode mode) {
-        switch (mode) {
-            case ACTIVE:
-                start.pauseMode();
-                stop.setEnabled(true);
-                break;
-            case INACTIVE:
-                start.searchMode();
-                stop.setEnabled(false);
-                break;
-            case PAUSED:
-                start.resumeMode();
-                stop.setEnabled(true);
-                break;
-        }
+        queryButtons.setMode(mode);
     }
 
     @Override
     public void setEnabled(final boolean enabled) {
-        start.setEnabled(enabled);
+        queryButtons.setEnabled(enabled);
+    }
+
+    @Override
+    public void setUiHandlers(final QueryUiHandlers uiHandlers) {
+        queryButtons.setUiHandlers(uiHandlers);
     }
 
     public interface Binder extends UiBinder<Widget, QueryViewImpl> {

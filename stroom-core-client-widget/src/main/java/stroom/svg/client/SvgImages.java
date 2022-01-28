@@ -355,30 +355,6 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
-    public static String CLOSE_GREY = "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\">\n" +
-            "    <path style=\"fill:#888\"\n" +
-            "          d=\"M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294" +
-            "q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28" +
-            "-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28" +
-            " 68t-28 68l-294 294 294 294q28 28 28 68z\"/>\n" +
-            "</svg>\n" +
-            "";
-
-    public static String CLOSE_GREY_DARK = "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\">\n" +
-            "    <path style=\"fill:#e6e1dc\"\n" +
-            "          d=\"M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294" +
-            "q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28" +
-            "-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28" +
-            " 68t-28 68l-294 294 294 294q28 28 28 68z\"/>\n" +
-            "</svg>\n" +
-            "";
-
     public static String COLLAPSE_UP = "" +
             "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
             "<svg xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=\"http://www.w" +
@@ -3558,6 +3534,31 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
+    public static String MONO_PAUSE = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 448 512\">\n" +
+            "<!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com License " +
+            "- https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Co" +
+            "de: MIT License) -->\n" +
+            "<path style=\"fill:currentColor\"\n" +
+            "      d=\"M144 479H48c-26.5 0-48-21.5-48-48V79c0-26.5 21.5-48 48-48h96c26.5 0 48 " +
+            "21.5 48 48v352c0 26.5-21.5 48-48 48zm304-48V79c0-26.5-21.5-48-48-48h-96c-26.5 0-" +
+            "48 21.5-48 48v352c0 26.5 21.5 48 48 48h96c26.5 0 48-21.5 48-48z\"/>\n" +
+            "</svg>\n" +
+            "";
+
+    public static String MONO_PLAY = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 448 512\">\n" +
+            "    <!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com Lice" +
+            "nse - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1" +
+            ", Code: MIT License) -->\n" +
+            "    <path style=\"fill:currentColor\"\n" +
+            "          d=\"M424.4 214.7L72.4 6.6C43.8-10.3 0 6.1 0 47.9V464c0 37.5 40.7 60.1 7" +
+            "2.4 41.3l352-208c31.4-18.5 31.5-64.1 0-82.6z\"/>\n" +
+            "</svg>\n" +
+            "";
+
     public static String MONO_SETTINGS = "" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
@@ -3573,6 +3574,18 @@ public class SvgImages {
             "91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l14" +
             "2-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 7" +
             "0.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z\"/>\n" +
+            "</svg>\n" +
+            "";
+
+    public static String MONO_STOP = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 448 512\">\n" +
+            "<!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com License " +
+            "- https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Co" +
+            "de: MIT License) -->\n" +
+            "<path style=\"fill:currentColor\"\n" +
+            "        d=\"M400 32H48C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h352c26.5 0 48" +
+            "-21.5 48-48V80c0-26.5-21.5-48-48-48z\"/>\n" +
             "</svg>\n" +
             "";
 
@@ -4403,42 +4416,6 @@ public class SvgImages {
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#2196f3\"\n" +
-            "          d=\"M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 7" +
-            "5-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 " +
-            "25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 2" +
-            "8-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-" +
-            "14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-9" +
-            "9l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-10" +
-            "7-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 " +
-            "91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l14" +
-            "2-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 7" +
-            "0.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z\"/>\n" +
-            "</svg>\n" +
-            "";
-
-    public static String SETTINGS_GREY = "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\">\n" +
-            "    <path style=\"fill:#888\"\n" +
-            "          d=\"M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 7" +
-            "5-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 " +
-            "25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 2" +
-            "8-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-" +
-            "14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-9" +
-            "9l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-10" +
-            "7-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 " +
-            "91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l14" +
-            "2-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 7" +
-            "0.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z\"/>\n" +
-            "</svg>\n" +
-            "";
-
-    public static String SETTINGS_GREY_DARK = "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\">\n" +
-            "    <path style=\"fill:#e6e1dc\"\n" +
             "          d=\"M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 7" +
             "5-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 " +
             "25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 2" +

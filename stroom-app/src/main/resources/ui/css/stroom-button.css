@@ -81,3 +81,38 @@
 	top: 1px;
 	box-shadow: none;
 }
+
+.svg-image-button-group {
+    display: flex;
+    gap: .25rem;
+}
+
+.svg-image-button {
+    display: inline-block;
+    border: 1px solid transparent;
+    border-radius: .25rem;
+    outline: none;
+    background-color: transparent;
+	color: var(--vis-icon__color);
+	padding: 2px;
+    margin: 0;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0;
+}
+
+.svg-image-button:disabled {
+    cursor: default;
+    opacity: 0.2;
+}
+
+.svg-image-button svg {
+    width: 16px;
+    height: 16px;
+	color: var(--vis-icon__color);
+}
+
+.svg-image-button:focus:focus-visible {
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}

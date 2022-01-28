@@ -13,10 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+.DashboardViewImpl {
+    padding-bottom: var(--control__padding--vertical);
+    padding-right: var(--control__padding--horizontal);
+}
 
-.dashboardViewImpl-content {
+.DashboardViewImpl-top {
+    gap: var(--control__padding--horizontal);
+}
+
+.DashboardViewImpl-content {
     display: flex;
     flex-grow: 1;
+}
+
+.dashboardMainViewImpl-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.dashboardMainViewImpl-contentPanel {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-image: linear-gradient(rgb(244, 248, 253) 0, rgb(222, 234, 248) 36px);
+    background-color: rgb(223, 234, 248);
 }
 
 .dashboard-outerPanel {
@@ -96,26 +121,24 @@
 
 .tabLayout {
     display: flex;
+	padding-top: var(--control__padding--vertical);
+	padding-left: var(--control__padding--horizontal);
 }
 
 .tabLayout .tabLayout-contentOuter {
     display: flex;
     flex-grow: 1;
-	padding-top: var(--control__padding--vertical);
-	padding-left: var(--control__padding--horizontal);
-}
-
-.tabLayout .tabLayout-contentInner {
-	position: relative;
-	overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    padding: .25rem;
     border: solid 1px var(--dashboard-panel__border-color);
     background-color: var(--dashboard-panel__background-color);
     color: var(--control__text-color);
     border-radius: .25rem;
+    overflow: hidden;
+}
+
+.tabLayout .tabLayout-contentInner {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 
 .tabLayout .tabLayout-barOuter {
@@ -126,7 +149,7 @@
 	cursor: default;
 	overflow: hidden;
 	z-index: 5;
-	padding: .25rem;
+	padding: .5rem 0 0 .5rem;
 }
 
 .tabLayout .tabLayout-barInner {
@@ -143,8 +166,6 @@
 }
 
 .tabLayout .tabLayout-buttons {
-    display: flex;
-    gap: 5px;
 	z-index: 5;
 	transition: opacity 0.25s ease-in-out;
     opacity: 0.1;
@@ -154,21 +175,7 @@
     opacity: 1;
 }
 
-.tabLayout .tabLayout-button {
-    width: 16px;
-    height: 16px;
-	color: var(--vis-icon__color);
-	padding: 0;
-    margin: 0;
-    border: 0;
-    outline: none;
-    background-color: transparent;
-    font-size: 0;
-}
-
 .tabLayout .tabLayout-button svg {
-    width: 16px;
-    height: 16px;
 	color: var(--vis-icon__color);
 }
 

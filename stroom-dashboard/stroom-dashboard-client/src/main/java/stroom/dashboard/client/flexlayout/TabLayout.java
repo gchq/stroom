@@ -79,17 +79,17 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         barOuter.add(tabBar);
 
         final FlowPanel buttons = new FlowPanel();
-        buttons.setStyleName("dock-min button-container tabLayout-buttons");
+        buttons.setStyleName("dock-min button-container svg-image-button-group tabLayout-buttons");
         barOuter.add(buttons);
 
         settings = new Button();
-        settings.setStyleName("tabLayout-button tabLayout-settingsButton");
+        settings.setStyleName("svg-image-button tabLayout-settingsButton");
         settings.getElement().setInnerHTML(SvgImages.MONO_SETTINGS);
         settings.setTitle("Settings");
         buttons.add(settings);
 
         close = new Button();
-        close.setStyleName("tabLayout-button tabLayout-closeButton");
+        close.setStyleName("svg-image-button tabLayout-closeButton");
         close.getElement().setInnerHTML(SvgImages.MONO_CLOSE);
         close.setTitle("Close");
         buttons.add(close);

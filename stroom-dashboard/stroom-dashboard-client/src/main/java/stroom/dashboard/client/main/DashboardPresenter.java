@@ -24,7 +24,10 @@ import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
+import stroom.dashboard.client.main.SearchModel.Mode;
+import stroom.dashboard.client.query.QueryButtons;
 import stroom.dashboard.client.query.QueryInfoPresenter;
+import stroom.dashboard.client.query.QueryUiHandlers;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
@@ -70,7 +73,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
-        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, HasSave {
+        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, QueryUiHandlers, HasSave {
 
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final ButtonView saveButton;
@@ -80,7 +83,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
     private final ButtonView addButton;
     private ButtonPanel leftButtons;
-    private ButtonPanel rightButtons;
     private String lastLabel;
     private boolean loaded;
     private String customTitle;
@@ -128,6 +130,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         addButton.setEnabled(false);
 
         view.setUiHandlers(this);
+
+        view.getQueryButtons().setUiHandlers(this);
     }
 
     @Override
@@ -148,10 +152,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     private void addWidgetLeft(final Widget widget) {
         getView().addWidgetLeft(widget);
-    }
-
-    private void addWidgetRight(final Widget widget) {
-        getView().addWidgetRight(widget);
     }
 
     @Override
@@ -304,13 +304,20 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
             // Set params on the component if it needs them.
             if (component instanceof Queryable) {
-                ((Queryable) component).onQuery(currentParams, null);
+                ((Queryable) component).setParams(currentParams);
             }
 
             component.read(componentData);
         }
 
+        enableQueryButtons();
+
         return component;
+    }
+
+    private void enableQueryButtons() {
+        getView().getQueryButtons().setEnabled(getQueryableComponents().size() > 0);
+        getView().getQueryButtons().setMode(Mode.INACTIVE);
     }
 
     @Override
@@ -391,6 +398,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 if (ok) {
                     layoutPresenter.closeTab(tabConfig);
                     components.remove(tabConfig.getId(), true);
+
+                    enableQueryButtons();
                 }
             });
         }
@@ -407,27 +416,50 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             setDirty(true);
 
             currentParams = trimmed;
+            start();
+        }
+    }
 
-            // Get a sub list of components that can be queried.
-            final List<Queryable> queryableComponents = new ArrayList<>();
-            for (final Component component : components) {
-                if (component instanceof Queryable) {
-                    queryableComponents.add((Queryable) component);
-                }
-            }
+    @Override
+    public void start() {
+        // Get a sub list of components that can be queried.
+        final List<Queryable> queryableComponents = getQueryableComponents();
 
-            // If we have some queryable components then make sure we get query info for them.
-            if (queryableComponents.size() > 0) {
-                queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
-                    if (state.isOk()) {
-                        lastUsedQueryInfo = state.getQueryInfo();
-                        for (final Queryable queryable : queryableComponents) {
-                            queryable.onQuery(currentParams, lastUsedQueryInfo);
-                        }
+        // If we have some queryable components then make sure we get query info for them.
+        if (queryableComponents.size() > 0) {
+            queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
+                if (state.isOk()) {
+                    lastUsedQueryInfo = state.getQueryInfo();
+                    for (final Queryable queryable : queryableComponents) {
+                        queryable.setParams(currentParams);
+                        queryable.setQueryInfo(lastUsedQueryInfo);
+
+                        // TODO : @66 Implement pause functionality
+                        queryable.stop();
+                        queryable.start();
                     }
-                });
+                }
+            });
+        }
+    }
+
+    @Override
+    public void stop() {
+        // If we have some queryable components then make sure we get query info for them.
+        for (final Queryable queryable : getQueryableComponents()) {
+            queryable.stop();
+        }
+    }
+
+    private List<Queryable> getQueryableComponents() {
+        // Get a sub list of components that can be queried.
+        final List<Queryable> queryableComponents = new ArrayList<>();
+        for (final Component component : components) {
+            if (component instanceof Queryable) {
+                queryableComponents.add((Queryable) component);
             }
         }
+        return queryableComponents;
     }
 
     @Override
@@ -478,8 +510,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
         void addWidgetLeft(Widget widget);
 
-        void addWidgetRight(Widget widget);
-
         String getParams();
 
         void setParams(String params);
@@ -487,6 +517,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         void setContent(View view);
 
         void setEmbedded(boolean embedded);
+
+        QueryButtons getQueryButtons();
     }
 
     private void addComponent(final ComponentType type) {

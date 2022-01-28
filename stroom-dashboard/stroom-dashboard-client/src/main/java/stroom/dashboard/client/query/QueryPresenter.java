@@ -535,14 +535,24 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public void onQuery(final String params, final String queryInfo) {
+    public void setParams(final String params) {
         this.params = params;
-        lastUsedQueryInfo = queryInfo;
-        if (initialised) {
-            stop();
-            run(true, true);
-        }
     }
+
+    @Override
+    public void setQueryInfo(final String queryInfo) {
+        lastUsedQueryInfo = queryInfo;
+    }
+
+//    @Override
+//    public void onQuery(final String params, final String queryInfo) {
+//        this.params = params;
+//        lastUsedQueryInfo = queryInfo;
+//        if (initialised) {
+//            stop();
+//            run(true, true);
+//        }
+//    }
 
     @Override
     public void setQueryOnOpen(final boolean queryOnOpen) {
@@ -561,6 +571,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         } else {
             run(true, true);
         }
+    }
+
+    @Override
+    public void pause() {
+        // TODO : Implement.
     }
 
     @Override
