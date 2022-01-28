@@ -53,7 +53,14 @@ public final class MetaExpressionUtil {
 
     public static ExpressionOperator createFolderExpression(final DocRef folder) {
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder)
+                .addOperator(
+                        ExpressionOperator
+                                .builder()
+                                .op(Op.OR)
+                                .addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder)
+                                .addTerm(MetaFields.PIPELINE, Condition.IN_FOLDER, folder)
+                                .build()
+                )
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
