@@ -29,6 +29,7 @@ import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchBus;
 import stroom.dashboard.client.main.SearchModel;
+import stroom.dashboard.client.main.SearchModel.Mode;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
@@ -86,18 +87,18 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
-        implements QueryUiHandlers, HasDirtyHandlers, Queryable {
+        implements HasDirtyHandlers, Queryable {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
@@ -163,7 +164,32 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.locationManager = locationManager;
 
         view.setExpressionView(expressionPresenter.getView());
-        view.setUiHandlers(this);
+        view.getQueryButtons().setUiHandlers(new QueryUiHandlers() {
+            @Override
+            public void start() {
+                switch (searchModel.getMode()) {
+                    case ACTIVE:
+                        QueryPresenter.this.pause();
+                        break;
+                    case INACTIVE:
+                        queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
+                            if (state.isOk()) {
+                                lastUsedQueryInfo = state.getQueryInfo();
+                                QueryPresenter.this.start();
+                            }
+                        });
+                        break;
+                    case PAUSED:
+                        QueryPresenter.this.resume();
+                        break;
+                }
+            }
+
+            @Override
+            public void stop() {
+                QueryPresenter.this.stop();
+            }
+        });
 
         expressionPresenter.setUiHandlers(new ExpressionUiHandlers() {
             @Override
@@ -194,7 +220,9 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         warningsButton.setVisible(false);
 
         indexLoader = new IndexLoader(getEventBus(), restFactory);
-        searchModel = new SearchModel(searchBus, this, indexLoader, timeZones, userPreferencesManager);
+        searchModel = new SearchModel(searchBus, indexLoader, timeZones, userPreferencesManager);
+        searchModel.addErrorListener(this::setErrors);
+        searchModel.addModeListener(this::setMode);
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
@@ -354,6 +382,16 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 //                }
 //            }
         }));
+    }
+
+    @Override
+    public void addModeListener(final Consumer<Mode> consumer) {
+        searchModel.addModeListener(consumer);
+    }
+
+    @Override
+    public void removeModeListener(final Consumer<Mode> consumer) {
+        searchModel.removeModeListener(consumer);
     }
 
     public void setErrors(final List<String> errors) {
@@ -561,21 +599,17 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     @Override
     public void start() {
-        if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
-            queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
-                if (state.isOk()) {
-                    lastUsedQueryInfo = state.getQueryInfo();
-                    run(true, true);
-                }
-            });
-        } else {
-            run(true, true);
-        }
+        run(true, true);
     }
 
     @Override
     public void pause() {
-        // TODO : Implement.
+        searchModel.pause();
+    }
+
+    @Override
+    public void resume() {
+        searchModel.resume();
     }
 
     @Override
@@ -584,7 +618,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             autoRefreshTimer.cancel();
             autoRefreshTimer = null;
         }
-        searchModel.destroy();
+        searchModel.stop();
+    }
+
+    @Override
+    public Mode getMode() {
+        return searchModel.getMode();
     }
 
     private void run(final boolean incremental,
@@ -610,7 +649,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             final ExpressionOperator decorated = expressionDecorator.apply(root);
 
             // Start search.
-            searchModel.search(decorated, params, incremental, storeHistory, lastUsedQueryInfo);
+            searchModel.reset();
+            searchModel.startNewSearch(decorated, params, incremental, storeHistory, lastUsedQueryInfo);
         }
     }
 
@@ -840,7 +880,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         }
     }
 
-    public interface QueryView extends View, HasUiHandlers<QueryUiHandlers> {
+    public interface QueryView extends View {
 
         ButtonView addButton(Preset preset);
 
@@ -849,5 +889,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         void setMode(SearchModel.Mode mode);
 
         void setEnabled(boolean enabled);
+
+        QueryButtons getQueryButtons();
     }
 }

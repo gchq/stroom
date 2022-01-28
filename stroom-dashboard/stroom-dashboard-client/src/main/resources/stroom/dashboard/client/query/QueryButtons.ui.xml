@@ -2,9 +2,9 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <b:ButtonPanel addStyleNames="QueryButtonsViewImpl svg-image-button-group">
+    <b:ButtonPanel addStyleNames="QueryButtons svg-image-button-group">
         <g:Button ui:field="start" title="Execute Query" enabled="false"
-                  styleName="svg-image-button QueryButtonsViewImpl-play"/>
-        <g:Button ui:field="stop" title="Stop Query" enabled="false" styleName="svg-image-button QueryButtonsViewImpl-stop"/>
+                  styleName="svg-image-button QueryButtons-play"/>
+        <g:Button ui:field="stop" title="Stop Query" enabled="false" styleName="svg-image-button QueryButtons-stop"/>
     </b:ButtonPanel>
 </ui:UiBinder>

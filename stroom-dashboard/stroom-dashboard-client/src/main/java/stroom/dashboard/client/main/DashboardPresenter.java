@@ -69,11 +69,13 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
-        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, QueryUiHandlers, HasSave {
+        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, QueryUiHandlers, HasSave,
+        Consumer<Mode> {
 
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final ButtonView saveButton;
@@ -304,7 +306,9 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
             // Set params on the component if it needs them.
             if (component instanceof Queryable) {
-                ((Queryable) component).setParams(currentParams);
+                final Queryable queryable = (Queryable) component;
+                queryable.setParams(currentParams);
+                queryable.addModeListener(this);
             }
 
             component.read(componentData);
@@ -317,7 +321,25 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     private void enableQueryButtons() {
         getView().getQueryButtons().setEnabled(getQueryableComponents().size() > 0);
-        getView().getQueryButtons().setMode(Mode.INACTIVE);
+        getView().getQueryButtons().setMode(getCombinedMode());
+    }
+
+    @Override
+    public void accept(final Mode mode) {
+        getView().getQueryButtons().setMode(getCombinedMode());
+    }
+
+    private Mode getCombinedMode() {
+        final List<Queryable> queryableComponents = getQueryableComponents();
+        Mode combinedMode = Mode.INACTIVE;
+        for (final Queryable queryable : queryableComponents) {
+            if (queryable.getMode() == Mode.ACTIVE) {
+                combinedMode = Mode.ACTIVE;
+            } else if (combinedMode == Mode.INACTIVE && queryable.getMode() == Mode.PAUSED) {
+                combinedMode = Mode.PAUSED;
+            }
+        }
+        return combinedMode;
     }
 
     @Override
@@ -397,9 +419,15 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
                 if (ok) {
                     layoutPresenter.closeTab(tabConfig);
-                    components.remove(tabConfig.getId(), true);
-
-                    enableQueryButtons();
+                    final Component component = components.get(tabConfig.getId());
+                    if (component != null) {
+                        if (component instanceof Queryable) {
+                            final Queryable queryable = (Queryable) component;
+                            queryable.removeModeListener(this);
+                        }
+                        components.remove(tabConfig.getId(), true);
+                        enableQueryButtons();
+                    }
                 }
             });
         }
@@ -430,13 +458,22 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
                 if (state.isOk()) {
                     lastUsedQueryInfo = state.getQueryInfo();
+                    final Mode combinedMode = getCombinedMode();
                     for (final Queryable queryable : queryableComponents) {
                         queryable.setParams(currentParams);
                         queryable.setQueryInfo(lastUsedQueryInfo);
 
-                        // TODO : @66 Implement pause functionality
-                        queryable.stop();
-                        queryable.start();
+                        switch (combinedMode) {
+                            case ACTIVE:
+                                queryable.pause();
+                                break;
+                            case INACTIVE:
+                                queryable.start();
+                                break;
+                            case PAUSED:
+                                queryable.resume();
+                                break;
+                        }
                     }
                 }
             });

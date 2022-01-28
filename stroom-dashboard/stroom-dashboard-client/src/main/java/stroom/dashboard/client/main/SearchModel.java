@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
@@ -39,11 +38,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 
 public class SearchModel {
 
     private final SearchBus searchBus;
-    private final QueryPresenter queryPresenter;
     private final IndexLoader indexLoader;
     private final TimeZones timeZones;
     private final UserPreferencesManager userPreferencesManager;
@@ -57,13 +56,14 @@ public class SearchModel {
     private Search activeSearch;
     private Mode mode = Mode.INACTIVE;
 
+    private final List<Consumer<Mode>> modeListeners = new ArrayList<>();
+    private final List<Consumer<List<String>>> errorListeners = new ArrayList<>();
+
     public SearchModel(final SearchBus searchBus,
-                       final QueryPresenter queryPresenter,
                        final IndexLoader indexLoader,
                        final TimeZones timeZones,
                        final UserPreferencesManager userPreferencesManager) {
         this.searchBus = searchBus;
-        this.queryPresenter = queryPresenter;
         this.indexLoader = indexLoader;
         this.timeZones = timeZones;
         this.userPreferencesManager = userPreferencesManager;
@@ -73,7 +73,7 @@ public class SearchModel {
      * Stop searching, set the search mode to inactive and tell all components
      * that they no longer want data and search has ended.
      */
-    public void destroy() {
+    public void stop() {
         if (currentQueryKey != null) {
             searchBus.remove(currentQueryKey);
         }
@@ -94,40 +94,24 @@ public class SearchModel {
      * Destroy the previous search and ready all components for a new search to
      * begin.
      */
-    private void reset() {
-        // Destroy previous search.
-        destroy();
+    public void reset() {
+        // Stop previous search.
+        stop();
 
         // Tell every component that it should want data.
         setWantsData(true);
     }
 
-    /**
-     * Run a search with the provided expression, returning results for all
-     * components.
-     */
-    public void search(final ExpressionOperator expression,
-                       final String params,
-                       final boolean incremental,
-                       final boolean storeHistory,
-                       final String queryInfo) {
-        // Toggle the request mode or start a new search.
-        switch (mode) {
-            case ACTIVE:
-                // Tell every component not to want data.
-                setWantsData(false);
-                setMode(Mode.PAUSED);
-                break;
-            case INACTIVE:
-                reset();
-                startNewSearch(expression, params, incremental, storeHistory, queryInfo);
-                break;
-            case PAUSED:
-                // Tell every component that it should want data.
-                setWantsData(true);
-                setMode(Mode.ACTIVE);
-                break;
-        }
+    public void pause() {
+        // Tell every component not to want data.
+        setWantsData(false);
+        setMode(Mode.PAUSED);
+    }
+
+    public void resume() {
+        // Tell every component that it should want data.
+        setWantsData(true);
+        setMode(Mode.ACTIVE);
     }
 
     /**
@@ -183,7 +167,7 @@ public class SearchModel {
      *
      * @param expression The expression to search with.
      */
-    private void startNewSearch(final ExpressionOperator expression,
+    public void startNewSearch(final ExpressionOperator expression,
                                 final String params,
                                 final boolean incremental,
                                 final boolean storeHistory,
@@ -311,7 +295,7 @@ public class SearchModel {
             });
         }
 
-        queryPresenter.setErrors(result.getErrors());
+        errorListeners.forEach(listener -> listener.accept(result.getErrors()));
 
         if (result.isComplete()) {
             // Let the query presenter know search is inactive.
@@ -328,7 +312,7 @@ public class SearchModel {
 
     private void setMode(final Mode mode) {
         this.mode = mode;
-        queryPresenter.setMode(mode);
+        modeListeners.forEach(listener -> listener.accept(mode));
     }
 
     /**
@@ -424,7 +408,7 @@ public class SearchModel {
 
     public void setDashboardUUID(final DashboardUUID dashboardUUID) {
         this.dashboardUUID = dashboardUUID;
-        destroy();
+        stop();
         currentQueryKey = new DashboardQueryKey(
                 dashboardUUID.getUUID(),
                 dashboardUUID.getDashboardUuid(),
@@ -447,6 +431,22 @@ public class SearchModel {
         final Map<String, ResultComponent> componentMap = new HashMap<>(this.componentMap);
         componentMap.remove(componentId);
         this.componentMap = componentMap;
+    }
+
+    public void addModeListener(final Consumer<Mode> consumer) {
+        modeListeners.add(consumer);
+    }
+
+    public void removeModeListener(final Consumer<Mode> consumer) {
+        modeListeners.remove(consumer);
+    }
+
+    public void addErrorListener(final Consumer<List<String>> consumer) {
+        errorListeners.add(consumer);
+    }
+
+    public void removeErrorListener(final Consumer<List<String>> consumer) {
+        errorListeners.remove(consumer);
     }
 
     public enum Mode {

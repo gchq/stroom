@@ -30,10 +30,9 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
-        implements QueryView, RequiresResize, ProvidesResize {
+public class QueryViewImpl extends ViewImpl implements QueryView, RequiresResize, ProvidesResize {
 
     private final Widget widget;
 
@@ -80,8 +79,8 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
     }
 
     @Override
-    public void setUiHandlers(final QueryUiHandlers uiHandlers) {
-        queryButtons.setUiHandlers(uiHandlers);
+    public QueryButtons getQueryButtons() {
+        return queryButtons;
     }
 
     public interface Binder extends UiBinder<Widget, QueryViewImpl> {

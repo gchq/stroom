@@ -26,16 +26,16 @@
 	z-index: 4;
 }
 
-.QueryButtons-play svg {
+.QueryButtons-play:enabled svg {
     color: #4caf50;
 }
 
-.QueryButtons-pause svg {
+.QueryButtons-pause:enabled svg {
     color: #2196f3;
 }
 
-.QueryButtons-stop svg {
-    color: red;
+.QueryButtons-stop:enabled svg {
+    color: #d32f2f;
 }
 
 

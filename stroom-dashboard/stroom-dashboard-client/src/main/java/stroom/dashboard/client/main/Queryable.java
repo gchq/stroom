@@ -16,11 +16,23 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.main.SearchModel.Mode;
+
+import java.util.function.Consumer;
+
 public interface Queryable {
+
+    void addModeListener(Consumer<Mode> consumer);
+
+    void removeModeListener(Consumer<Mode> consumer);
+
+    Mode getMode();
 
     void start();
 
     void pause();
+
+    void resume();
 
     void stop();
 

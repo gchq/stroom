@@ -19,7 +19,7 @@
 
 .DashboardViewImpl-top {
     gap: var(--control__padding--horizontal);
-    padding-bottom: var(--control__padding--horizontal);
+    padding: 0 var(--control__padding--horizontal) var(--control__padding--vertical) 0;
 }
 
 .DashboardViewImpl-content {
@@ -178,7 +178,7 @@
 .tabLayout .tabLayout-buttons {
 	z-index: 5;
 	transition: opacity 0.25s ease-in-out;
-    opacity: 0.1;
+    opacity: 0.2;
 }
 
 .tabLayout:hover .tabLayout-buttons {
