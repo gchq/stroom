@@ -20,14 +20,15 @@ public class ElementUtil {
         /*
          * DON'T CHANGE THIS CODE.
          *
-         * Although it appears that `element.getClassName()` returns a String it actually doesn't when it is running as
-         * JavaScript and therefore must be tested and cast to a String.
+         * Although it appears that `element.getClassName()` returns a String it actually returns an SVGAnimatedString
+         * object for SVG elements when it is running as JavaScript. See here:
+         * https://developer.mozilla.org/en-US/docs/Web/API/Element/className
+         *
+         * To avoid this problem we get the class attribute of the element instead.
          */
-        final Object elementClassName = element.getClassName();
-        if (elementClassName instanceof String) {
-            if (((String) elementClassName).contains(className)) {
-                return true;
-            }
+        final String elementClassName = element.getAttribute("class");
+        if (elementClassName.contains(className)) {
+            return true;
         }
 
         if (depth < maxDepth) {
