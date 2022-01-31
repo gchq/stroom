@@ -3,9 +3,8 @@
              xmlns:paging="urn:import:stroom.widget.button.client">
     <ui:style>
         .paging {
-        position: relative;
-        width: 250px;
-        text-align: right;
+        display: flex;
+        align-items: center;
         }
 
         .label {
