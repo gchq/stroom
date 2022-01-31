@@ -1,9 +1,9 @@
 # Need glibc for plant_erd_linux_amd64
-FROM frolvlad/alpine-glibc:alpine-3.11_glibc-2.31
+FROM frolvlad/alpine-glibc:alpine-3.15_glibc-2.34
 
 ARG DOCKER_HOST
 ENV DOCKER_HOST=$DOCKER_HOST
-ARG PLANT_ERD_VERSION=v0.2.1
+ARG PLANT_ERD_VERSION=v0.3.0
 
 RUN apk add --no-cache \
     bash \
