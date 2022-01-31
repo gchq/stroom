@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-alpha.2] - 2022-01-31
+
+* Issue **#2730** : Fix folder presenter Processors tab always being empty.
+
+* Issue **#2118** : Rework UI.
+
+
 ## [v7.2-alpha.1] - 2022-01-31
 
 * Issue **#2118** : Rework UI.
@@ -4010,7 +4017,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.2...HEAD
+[v7.2-alpha.2]: https://github.com/gchq/stroom/compare/v7.2-alpha.1...v7.2-alpha.2
 [v7.2-alpha.1]: https://github.com/gchq/stroom/compare/v7.1-beta.9...v7.2-alpha.1
 [v7.1-beta.9]: https://github.com/gchq/stroom/compare/v7.1-beta.8...v7.1-beta.9
 [v7.1-beta.8]: https://github.com/gchq/stroom/compare/v7.1-beta.7...v7.1-beta.8
