@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-alpha.1] - 2022-01-31
+
+* Issue **#2118** : Rework UI.
+
+
 ## [v7.1-beta.9] - 2022-01-20
 
 * Make temp prop nullable and change default to TEMP/stroom(-proxy)?.
@@ -4005,7 +4010,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.1...HEAD
+[v7.2-alpha.1]: https://github.com/gchq/stroom/compare/v7.1-beta.9...v7.2-alpha.1
 [v7.1-beta.9]: https://github.com/gchq/stroom/compare/v7.1-beta.8...v7.1-beta.9
 [v7.1-beta.8]: https://github.com/gchq/stroom/compare/v7.1-beta.7...v7.1-beta.8
 [v7.1-beta.7]: https://github.com/gchq/stroom/compare/v7.1-beta.6...v7.1-beta.7
