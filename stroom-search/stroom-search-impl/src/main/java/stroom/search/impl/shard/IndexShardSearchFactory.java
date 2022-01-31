@@ -115,7 +115,7 @@ public class IndexShardSearchFactory {
                 // Create a queue of shards to search.
                 final ShardIdQueue queue = new ShardIdQueue(task.getShards());
                 final AtomicInteger shardNo = new AtomicInteger();
-                for (int i = 0; i < indexShardSearchConfig.getMaxThreadsPerTask(); i++) {
+                for (int i = 0; i < threadCount; i++) {
                     futures[i] = CompletableFuture.runAsync(() -> taskContextFactory
                             .childContext(parentContext, "Search Index Shard", taskContext -> {
                                 try {

@@ -164,13 +164,6 @@ public class IndexShardSearchTaskHandler {
             LOGGER.debug(() -> "Creating docIdStore with size " + maxDocIdQueueSize);
             final DocIdQueue docIdQueue = new DocIdQueue(maxDocIdQueueSize);
 
-            // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(
-                    parentContext,
-                    queryKey,
-                    docIdQueue,
-                    hitCount);
-
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
@@ -181,6 +174,13 @@ public class IndexShardSearchTaskHandler {
                                 try {
                                     LOGGER.logDurationIfDebugEnabled(() -> {
                                         try {
+                                            // Create a collector.
+                                            final IndexShardHitCollector collector = new IndexShardHitCollector(
+                                                    taskContext,
+                                                    queryKey,
+                                                    docIdQueue,
+                                                    hitCount);
+
                                             searcher.search(query, collector);
                                         } catch (final IOException e) {
                                             error(errorConsumer, e);
