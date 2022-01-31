@@ -1,6 +1,5 @@
-package stroom.pipeline.refdata.store.offheapstore.serdes;
+package stroom.lmdb.serde;
 
-import stroom.lmdb.KryoSerializer;
 import stroom.util.logging.LogUtil;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -14,10 +13,10 @@ import java.util.UUID;
  * <p>
  * May use variable length serialisation so the length of the serialised form is unknown.
  */
-class VariableLengthUUIDKryoSerializer implements KryoSerializer<String> {
+public class VariableLengthUUIDKryoSerializer implements KryoSerializer<String> {
 
     // Two variable length longs at 1-9 bytes each
-    static final int BUFFER_CAPACITY = 9 * 2;
+    public static final int BUFFER_CAPACITY = 9 * 2;
 
     @Override
     public void write(final Output output, final String uuidStr) {

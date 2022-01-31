@@ -18,9 +18,9 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.lmdb.Deserializer;
-import stroom.lmdb.Serde;
-import stroom.lmdb.Serializer;
+import stroom.lmdb.serde.Deserializer;
+import stroom.lmdb.serde.Serde;
+import stroom.lmdb.serde.Serializer;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.util.logging.LambdaLogger;

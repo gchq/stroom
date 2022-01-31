@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.lmdb;
+package stroom.lmdb.serde;
 
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.util.logging.LambdaLogger;
