@@ -21,6 +21,7 @@ dependencies {
     compile project(':stroom-lmdb')
     compile project(':stroom-query:stroom-expression')
     compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
 
