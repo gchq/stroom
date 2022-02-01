@@ -120,8 +120,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             final ElasticClientCache elasticClientCache,
             final ElasticClusterStore elasticClusterStore,
             final StreamProcessorHolder streamProcessorHolder,
-            final MetaHolder metaHolder
-            ) {
+            final MetaHolder metaHolder) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.elasticIndexingConfig = elasticIndexingConfig;
