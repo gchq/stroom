@@ -33,7 +33,7 @@ import javax.inject.Inject;
 public class ElasticSearchFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchFactory.class);
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Elastic Index");
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Elasticsearch Cluster");
 
     private final WordListProvider wordListProvider;
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
@@ -82,9 +82,9 @@ public class ElasticSearchFactory {
         final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, dateTimeSettings, now);
         final Runnable runnable = taskContextFactory.childContext(
                 parentContext,
-                "Search Index",
+                "Search Elasticsearch Index",
                 taskContext -> elasticSearchTaskHandler.search(
-                        parentContext,
+                        taskContext,
                         index,
                         queryBuilder,
                         fieldIndex,
@@ -94,8 +94,9 @@ public class ElasticSearchFactory {
 
         return CompletableFuture
                 .runAsync(runnable, executor)
-                .whenCompleteAsync((r, t) ->
-                        taskContextFactory.childContext(parentContext, "Search Index", taskContext -> {
+                .whenCompleteAsync((r, t) -> taskContextFactory.childContext(parentContext,
+                        "Search Elasticsearch Index",
+                        taskContext -> {
                             taskContext.info(() -> "Complete stored data queue");
                             LOGGER.debug("Complete stored data queue");
                             storedDataQueue.complete();
