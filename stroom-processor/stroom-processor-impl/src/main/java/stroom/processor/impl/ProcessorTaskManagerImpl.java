@@ -40,9 +40,11 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.ExpressionValidator;
+import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
@@ -649,7 +651,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                         loadedFilter.getId(),
                                         exhausted);
 //                                if (!exhausted || recentStreamInfo.isApplicable(loadedFilter, findStreamCriteria)) {
-                                if (ProcessorFilterTracker.COMPLETE.equals(tracker.getStatus()) &&
+                                if (ProcessorFilterTracker.COMPLETE.equals(tracker.getStatus()) ||
                                         ProcessorFilterTracker.ERROR.equals(tracker.getStatus())) {
                                     // If the tracker is complete we need to
                                     // make sure the status is updated so we can
@@ -890,6 +892,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final Query query = Query.builder()
                 .dataSource(queryData.getDataSource())
                 .expression(queryData.getExpression())
+                .params(getParams(queryData))
                 .build();
 
         // Update the tracker status message.
@@ -903,7 +906,13 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     "createTasksFromEventRefs() called for {} eventRefs, filter {}", eventRefs.size(), filter));
             try {
                 if (throwable != null) {
-                    LOGGER.error(throwable::getMessage);
+                    final String message = "" +
+                            "Error creating tasks for filter (id=" +
+                            filter.getId() +
+                            "). " +
+                            throwable.getMessage();
+                    LOGGER.error(message);
+                    LOGGER.debug(message, throwable);
                     ProcessorFilterTracker tracker2 = updatedTracker;
                     tracker2.setStatus(ProcessorFilterTracker.ERROR);
                     tracker2 = processorFilterTrackerDao.update(tracker2);
@@ -973,6 +982,17 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         // record the future so we can wait for it later
         progressTracker.addFuture(future);
+    }
+
+    private List<Param> getParams(final QueryData queryData) {
+        // Create a parameter map.
+        final Map<String, String> parameterMap = ExpressionParamUtil.parse(queryData.getParams());
+
+        final List<Param> params = new ArrayList<>();
+        for (final Entry<String, String> entry : parameterMap.entrySet()) {
+            params.add(new Param(entry.getKey(), entry.getValue()));
+        }
+        return params;
     }
 
     private void createTasksFromCriteria(final ProcessorFilter filter,
