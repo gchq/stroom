@@ -33,6 +33,7 @@ public class ProcessorFilterTracker implements HasIntegerId {
 
     public static final String ENTITY_TYPE = "ProcessorFilterTracker";
     public static final String COMPLETE = "Complete";
+    public static final String ERROR = "Error";
 
     // standard id and OCC fields
     @JsonProperty

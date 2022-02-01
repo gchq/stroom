@@ -236,9 +236,10 @@ appConfig:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 100
+    indexing:
+      maxNestedElementDepth: 10
     search:
-      maxBooleanClauseCount: 1024
-      maxStoredDataQueueSize: 1000
+      scrollDuration: "PT1M"
       searchResultCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null

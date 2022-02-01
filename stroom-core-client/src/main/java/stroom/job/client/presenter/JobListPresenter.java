@@ -112,7 +112,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         getView().addColumn(enabledColumn, "Enabled", 80);
 
         // Job name.
-        getView().addColumn(new Column<Job, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<Job, String>(new TextCell()) {
             @Override
             public String getValue(final Job row) {
                 if (row != null) {
@@ -120,9 +120,9 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                 }
                 return null;
             }
-        }, "Job");
+        }, "Job", 200);
 
-        getView().addColumn(new Column<Job, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<Job, String>(new TextCell()) {
             @Override
             public String getValue(final Job row) {
                 if (row != null) {

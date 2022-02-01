@@ -352,7 +352,9 @@ class DataServiceImpl implements DataService {
         entries.add(new DataInfoSection.Entry("Stream Id", String.valueOf(meta.getId())));
         entries.add(new DataInfoSection.Entry("Status", meta.getStatus().getDisplayValue()));
         entries.add(new DataInfoSection.Entry("Status Ms", getDateTimeString(meta.getStatusMs())));
-        entries.add(new DataInfoSection.Entry("Parent Stream Id", String.valueOf(meta.getParentMetaId())));
+        if (meta.getParentMetaId() != null) {
+            entries.add(new DataInfoSection.Entry("Parent Stream Id", String.valueOf(meta.getParentMetaId())));
+        }
         entries.add(new DataInfoSection.Entry("Created", getDateTimeString(meta.getCreateMs())));
         entries.add(new DataInfoSection.Entry("Effective", getDateTimeString(meta.getEffectiveMs())));
         entries.add(new DataInfoSection.Entry("Stream Type", meta.getTypeName()));
