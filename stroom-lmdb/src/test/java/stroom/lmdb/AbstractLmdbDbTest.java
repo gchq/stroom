@@ -15,11 +15,8 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore.databases;
+package stroom.lmdb;
 
-import stroom.lmdb.LmdbEnv;
-import stroom.lmdb.LmdbEnvFactory;
-import stroom.lmdb.LmdbLibraryConfig;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;

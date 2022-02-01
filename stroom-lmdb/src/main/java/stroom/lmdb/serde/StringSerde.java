@@ -18,7 +18,6 @@
 package stroom.lmdb.serde;
 
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.lmdb.Serde;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;

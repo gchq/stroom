@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.lmdb;
+package stroom.lmdb.serde;
 
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;

@@ -18,7 +18,10 @@ dependencies {
     implementation libs.slf4j_api
     implementation libs.vavr
 
+    testImplementation project(':stroom-test-common')
+
     testImplementation libs.assertj_core
+    testImplementation libs.dropwizard_jetty
     testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard

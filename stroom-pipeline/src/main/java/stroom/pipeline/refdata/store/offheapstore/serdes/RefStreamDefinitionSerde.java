@@ -17,7 +17,8 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
-import stroom.lmdb.AbstractKryoSerde;
+import stroom.lmdb.serde.AbstractKryoSerde;
+import stroom.lmdb.serde.VariableLengthUUIDKryoSerializer;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.logging.LambdaLogger;
