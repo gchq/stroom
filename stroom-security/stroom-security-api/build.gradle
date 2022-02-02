@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.security.api'
 
 dependencies {
+    compile libs.javax_servlet_api
     compile libs.slf4j_api
     compile libs.ws_rs_api
 }

@@ -22,12 +22,14 @@ public class ReceiveDataConfig extends AbstractConfig {
     private final int bufferSize;
     private final String unknownClassification;
     private final String feedNamePattern;
+    private final boolean requireTokenAuthentication;
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
         bufferSize = DEFAULT_BUFFER_SIZE;
         unknownClassification = "UNKNOWN CLASSIFICATION";
         feedNamePattern = "^[A-Z0-9_-]{3,}$";
+        requireTokenAuthentication = false;
     }
 
     @SuppressWarnings("unused")
@@ -35,11 +37,13 @@ public class ReceiveDataConfig extends AbstractConfig {
     public ReceiveDataConfig(@JsonProperty("receiptPolicyUuid") final String receiptPolicyUuid,
                              @JsonProperty("bufferSize") final int bufferSize,
                              @JsonProperty("unknownClassification") final String unknownClassification,
-                             @JsonProperty("feedNamePattern") final String feedNamePattern) {
+                             @JsonProperty("feedNamePattern") final String feedNamePattern,
+                             @JsonProperty("requireTokenAuthentication") final boolean requireTokenAuthentication) {
         this.receiptPolicyUuid = receiptPolicyUuid;
         this.bufferSize = bufferSize;
         this.unknownClassification = unknownClassification;
         this.feedNamePattern = feedNamePattern;
+        this.requireTokenAuthentication = requireTokenAuthentication;
     }
 
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
@@ -64,6 +68,11 @@ public class ReceiveDataConfig extends AbstractConfig {
         return feedNamePattern;
     }
 
+    @JsonPropertyDescription("Require token authentication to send data to Stroom")
+    public boolean isRequireTokenAuthentication() {
+        return requireTokenAuthentication;
+    }
+
     @Override
     public String toString() {
         return "DataFeedConfig{" +
@@ -71,6 +80,7 @@ public class ReceiveDataConfig extends AbstractConfig {
                 ", bufferSize=" + bufferSize +
                 ", unknownClassification='" + unknownClassification + '\'' +
                 ", feedNamePattern='" + feedNamePattern + '\'' +
+                ", requireTokenAuthentication='" + requireTokenAuthentication + '\'' +
                 '}';
     }
 }
