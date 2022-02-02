@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.177] - 2022-02-02
+
+* Issue **#2744** : Fix logging for expected interrupt exception.
+
+* Issue **#2746** : Fix broken help links in UI.
+
+
 ## [v7.0-beta.176] - 2022-02-02
 
 * Change byte buffer pool clear method to unmap drained buffers.
@@ -4154,7 +4161,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.176...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.177...HEAD
+[v7.0-beta.177]: https://github.com/gchq/stroom/compare/v7.0-beta.176...v7.0-beta.177
 [v7.0-beta.176]: https://github.com/gchq/stroom/compare/v7.0-beta.175...v7.0-beta.176
 [v7.0-beta.175]: https://github.com/gchq/stroom/compare/v7.0-beta.174...v7.0-beta.175
 [v7.0-beta.174]: https://github.com/gchq/stroom/compare/v7.0-beta.173...v7.0-beta.174
