@@ -1,6 +1,7 @@
 package stroom.lmdb;
 
 
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -172,10 +173,10 @@ public class LmdbEnv implements AutoCloseable {
 
         try {
             writeTxnLock.lockInterruptibly();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted while waiting for write lock on "
-                    + localDir.toAbsolutePath().normalize());
+            throw new UncheckedInterruptedException("Thread interrupted while waiting for write lock on "
+                    + localDir.toAbsolutePath().normalize(), e);
         }
 
         if (postAcquireAction != null) {
@@ -219,9 +220,9 @@ public class LmdbEnv implements AutoCloseable {
 
             LOGGER.trace("Opening new write txn");
             return new WriteTxn(writeTxnLock, env.txnWrite());
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Thread interrupted while waiting for write lock on "
-                    + localDir.toAbsolutePath().normalize());
+        } catch (final InterruptedException e) {
+            throw new UncheckedInterruptedException("Thread interrupted while waiting for write lock on "
+                    + localDir.toAbsolutePath().normalize(), e);
         }
     }
 
@@ -245,9 +246,9 @@ public class LmdbEnv implements AutoCloseable {
             }
 
             return new BatchingWriteTxn(writeTxnLock, env::txnWrite, batchSize);
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Thread interrupted while waiting for write lock on "
-                    + localDir.toAbsolutePath().normalize());
+        } catch (final InterruptedException e) {
+            throw new UncheckedInterruptedException("Thread interrupted while waiting for write lock on "
+                    + localDir.toAbsolutePath().normalize(), e);
         }
     }
 
@@ -302,9 +303,9 @@ public class LmdbEnv implements AutoCloseable {
                 }
             }
 
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted", e);
+            throw new UncheckedInterruptedException("Thread interrupted", e);
         }
 
         if (postAcquireAction != null) {
@@ -331,9 +332,9 @@ public class LmdbEnv implements AutoCloseable {
                 postAcquireAction.run();
             }
 
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted", e);
+            throw new UncheckedInterruptedException("Thread interrupted", e);
         }
 
         try {
