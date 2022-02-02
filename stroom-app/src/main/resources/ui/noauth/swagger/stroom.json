@@ -15140,6 +15140,18 @@
           "defaultMaxResults" : {
             "type" : "string"
           },
+          "helpSubPathExpressions" : {
+            "type" : "string"
+          },
+          "helpSubPathJobs" : {
+            "type" : "string"
+          },
+          "helpSubPathProperties" : {
+            "type" : "string"
+          },
+          "helpSubPathQuickFilter" : {
+            "type" : "string"
+          },
           "helpUrl" : {
             "type" : "string"
           },

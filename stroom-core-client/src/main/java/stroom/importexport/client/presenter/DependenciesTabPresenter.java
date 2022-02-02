@@ -38,7 +38,7 @@ public class DependenciesTabPresenter
                         view.setHelpTooltipText(QuickFilterTooltipUtil.createTooltip(
                                 "Dependencies Quick Filter Syntax",
                                 DependencyCriteria.FIELD_DEFINITIONS,
-                                uiConfig.getHelpUrl())));
+                                uiConfig.getHelpUrlQuickFilter())));
     }
 
     @Override
