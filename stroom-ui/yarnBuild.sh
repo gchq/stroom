@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export NODE_OPTIONS=--openssl-legacy-provider
+
 # Ensure we are in the dir where this script lives
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 pushd "${SCRIPT_DIR}" > /dev/null
