@@ -88,12 +88,11 @@ public class AttributeMapUtil {
     }
 
     public static AttributeMap create(final HttpServletRequest httpServletRequest) {
-        AttributeMap attributeMap = new AttributeMap();
+        final AttributeMap attributeMap = new AttributeMap();
         addAllSecureTokens(httpServletRequest, attributeMap);
         addAllHeaders(httpServletRequest, attributeMap);
         addAllQueryString(httpServletRequest, attributeMap);
         addRemoteClientDetails(httpServletRequest, attributeMap);
-
         return attributeMap;
     }
 

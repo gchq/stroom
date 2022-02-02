@@ -21,18 +21,30 @@ public class ProxyRequestConfig extends AbstractConfig implements IsProxyConfig 
 
     private final String receiptPolicyUuid;
     private final Set<String> metaTypes;
+    private final boolean requireTokenAuthentication;
+    private final String publicKey;
+    private final String clientId;
 
     public ProxyRequestConfig() {
         receiptPolicyUuid = null;
         metaTypes = new HashSet<>(StreamTypeNames.ALL_TYPE_NAMES);
+        requireTokenAuthentication = false;
+        publicKey = null;
+        clientId = null;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ProxyRequestConfig(@JsonProperty("receiptPolicyUuid") final String receiptPolicyUuid,
-                              @JsonProperty("metaTypes") final Set<String> metaTypes) {
+                              @JsonProperty("metaTypes") final Set<String> metaTypes,
+                              @JsonProperty("requireTokenAuthentication") final boolean requireTokenAuthentication,
+                              @JsonProperty("publicKey") final String publicKey,
+                              @JsonProperty("clientId") final String clientId) {
         this.receiptPolicyUuid = receiptPolicyUuid;
         this.metaTypes = metaTypes;
+        this.requireTokenAuthentication = requireTokenAuthentication;
+        this.publicKey = publicKey;
+        this.clientId = clientId;
     }
 
     @JsonProperty
@@ -55,5 +67,31 @@ public class ProxyRequestConfig extends AbstractConfig implements IsProxyConfig 
     }) // List should contain as a minimum all all those types that the java code reference
     public Set<String> getMetaTypes() {
         return metaTypes;
+    }
+
+    @JsonPropertyDescription("Require token authentication to send data to Stroom")
+    public boolean isRequireTokenAuthentication() {
+        return requireTokenAuthentication;
+    }
+
+    @JsonPropertyDescription("The public key to be used to verify authentication tokens")
+    public String getPublicKey() {
+        return publicKey;
+    }
+
+    @JsonPropertyDescription("The expected client id contained in the supplied token")
+    public String getClientId() {
+        return clientId;
+    }
+
+    @Override
+    public String toString() {
+        return "ProxyRequestConfig{" +
+                "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
+                ", metaTypes=" + metaTypes +
+                ", requireTokenAuthentication=" + requireTokenAuthentication +
+                ", publicKey='" + publicKey + '\'' +
+                ", clientId='" + clientId + '\'' +
+                '}';
     }
 }
