@@ -3306,6 +3306,10 @@ export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
   defaultMaxResults?: string;
+  helpSubPathExpressions?: string;
+  helpSubPathJobs?: string;
+  helpSubPathProperties?: string;
+  helpSubPathQuickFilter?: string;
   helpUrl?: string;
   htmlTitle?: string;
   maintenanceMessage?: string;
