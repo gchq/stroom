@@ -9425,6 +9425,8 @@ components:
           $ref: '#/components/schemas/ExpressionOperator'
         limits:
           $ref: '#/components/schemas/Limits'
+        params:
+          type: string
       xml:
         name: query
     QueryKey:

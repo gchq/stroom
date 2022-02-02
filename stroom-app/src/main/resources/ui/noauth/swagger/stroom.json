@@ -13367,6 +13367,9 @@
           },
           "limits" : {
             "$ref" : "#/components/schemas/Limits"
+          },
+          "params" : {
+            "type" : "string"
           }
         },
         "xml" : {

@@ -2325,6 +2325,7 @@ export interface QueryData {
   /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   limits?: Limits;
+  params?: string;
 }
 
 /**
