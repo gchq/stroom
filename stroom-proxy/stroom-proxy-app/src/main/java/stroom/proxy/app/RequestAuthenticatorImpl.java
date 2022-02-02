@@ -134,7 +134,8 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
                 // If we don't have a JWK we can't create a consumer to verify anything.
                 // Why might we not have one? If the remote authentication service was down when Stroom started
                 // then we wouldn't. It might not be up now but we're going to try and fetch it.
-                final PublicJsonWebKey publicJsonWebKey = RsaJsonWebKey.Factory.newPublicJwk(proxyRequestConfig.getPublicKey());
+                final PublicJsonWebKey publicJsonWebKey =
+                        RsaJsonWebKey.Factory.newPublicJwk(proxyRequestConfig.getPublicKey());
                 final JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(publicJsonWebKey);
 
                 final VerificationKeyResolver verificationKeyResolver = new JwksVerificationKeyResolver(
