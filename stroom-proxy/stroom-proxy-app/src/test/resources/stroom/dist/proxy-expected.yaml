@@ -32,6 +32,7 @@ proxyConfig:
     maxStreamSize: "1.0G"
     readCron: null
   proxyRequestConfig:
+    clientId: null
     metaTypes:
     - "Context"
     - "Raw Reference"
@@ -44,7 +45,9 @@ proxyConfig:
     - "Detections"
     - "Meta Data"
     - "Records"
+    publicKey: null
     receiptPolicyUuid: null
+    requireTokenAuthentication: false
   restClient:
     chunkedEncodingEnabled: true
     connectionRequestTimeout: "PT0.5S"

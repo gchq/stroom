@@ -53,7 +53,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -474,19 +473,16 @@ class TestInteractiveSearch extends AbstractSearchTest {
                 100);
         final AtomicReference<EventRefs> results = new AtomicReference<>();
 
-        final Supplier<EventRefs> supplier = taskContextFactory.contextResult("Translate", taskContext -> {
+        final Runnable runnable = taskContextFactory.context("Translate", taskContext -> {
             final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
-            return eventSearchTaskHandler.exec(eventSearchTask);
+            eventSearchTaskHandler.exec(eventSearchTask, (eventRefs, throwable) -> {
+                if (eventRefs != null) {
+                    results.set(eventRefs);
+                }
+                complete.countDown();
+            });
         });
-        CompletableFuture
-                .supplyAsync(supplier, executor)
-                .whenComplete((r, t) -> {
-                    if (r != null) {
-                        results.set(r);
-                    }
-                    complete.countDown();
-                });
-
+        CompletableFuture.runAsync(runnable, executor);
         try {
             complete.await();
         } catch (final InterruptedException e) {

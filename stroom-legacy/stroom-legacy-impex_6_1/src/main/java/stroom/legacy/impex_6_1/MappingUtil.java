@@ -675,6 +675,7 @@ public final class MappingUtil {
         return new stroom.processor.shared.QueryData(
                 map(value.getDataSource()),
                 map(value.getExpression()),
+                null,
                 map(value.getLimits()));
     }
 

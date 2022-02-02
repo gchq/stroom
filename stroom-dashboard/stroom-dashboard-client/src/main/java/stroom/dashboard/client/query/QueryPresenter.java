@@ -374,6 +374,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final QueryData queryData = new QueryData();
         queryData.setDataSource(getQuerySettings().getDataSource());
         queryData.setExpression(root);
+        queryData.setParams(params);
 
         final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");

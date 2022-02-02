@@ -519,6 +519,7 @@ appConfig:
     bufferSize: 8192
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     receiptPolicyUuid: null
+    requireTokenAuthentication: false
     unknownClassification: "UNKNOWN CLASSIFICATION"
   search:
     extraction:

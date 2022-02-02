@@ -90,7 +90,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
     private DocRef xsltRef;
     private String xsltNamePattern;
-    private boolean suppressXsltNotFoundWarnings;
+    private boolean suppressXSLTNotFoundWarnings;
 
     /**
      * We only need a single transformer factory here as it actually doesn't do
@@ -539,8 +539,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
     @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.",
             defaultValue = "false", displayPriority = 3)
-    public void setSuppressXsltNotFoundWarnings(final boolean suppressXsltNotFoundWarnings) {
-        this.suppressXsltNotFoundWarnings = suppressXsltNotFoundWarnings;
+    public void setSuppressXSLTNotFoundWarnings(final boolean suppressXSLTNotFoundWarnings) {
+        this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
     }
 
     @PipelineProperty(description = "A list of places to load reference data from if required.", displayPriority = 5)
@@ -617,6 +617,6 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 feedName,
                 pipelineName,
                 errorConsumer,
-                suppressXsltNotFoundWarnings);
+                suppressXSLTNotFoundWarnings);
     }
 }

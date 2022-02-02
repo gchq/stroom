@@ -40,9 +40,11 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.ExpressionValidator;
+import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
@@ -80,7 +82,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -650,7 +651,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                         loadedFilter.getId(),
                                         exhausted);
 //                                if (!exhausted || recentStreamInfo.isApplicable(loadedFilter, findStreamCriteria)) {
-                                if (ProcessorFilterTracker.COMPLETE.equals(tracker.getStatus())) {
+                                if (ProcessorFilterTracker.COMPLETE.equals(tracker.getStatus()) ||
+                                        ProcessorFilterTracker.ERROR.equals(tracker.getStatus())) {
                                     // If the tracker is complete we need to
                                     // make sure the status is updated so we can
                                     // see that it is not delivering any more
@@ -890,6 +892,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final Query query = Query.builder()
                 .dataSource(queryData.getDataSource())
                 .expression(queryData.getExpression())
+                .params(getParams(queryData))
                 .build();
 
         // Update the tracker status message.
@@ -898,106 +901,98 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         final Long maxMetaId = metaService.getMaxId();
 
+        final BiConsumer<EventRefs, Throwable> consumer = (eventRefs, throwable) -> {
+            LOGGER.debug(() -> LogUtil.message(
+                    "createTasksFromEventRefs() called for {} eventRefs, filter {}", eventRefs.size(), filter));
+            try {
+                if (throwable != null) {
+                    final String message = "" +
+                            "Error creating tasks for filter (id=" +
+                            filter.getId() +
+                            "). " +
+                            throwable.getMessage();
+                    LOGGER.error(message);
+                    LOGGER.debug(message, throwable);
+                    ProcessorFilterTracker tracker2 = updatedTracker;
+                    tracker2.setStatus(ProcessorFilterTracker.ERROR);
+                    tracker2 = processorFilterTrackerDao.update(tracker2);
 
-        final Consumer<EventRefs> eventRefsConsumer = contextConsumer(
-                taskContext,
-                "Creating event refs from search",
-                (taskContext2, eventRefs) -> {
-                    createTasksFromEventRefs(
+                } else if (eventRefs == null) {
+                    LOGGER.debug(() -> "eventRefs is null");
+                    ProcessorFilterTracker tracker2 = updatedTracker;
+                    tracker2.setStatus(ProcessorFilterTracker.COMPLETE);
+                    tracker2 = processorFilterTrackerDao.update(tracker2);
+
+                } else {
+                    final int resultSize = eventRefs.size();
+                    final boolean reachedLimit = eventRefs.isReachedLimit();
+                    final boolean exhausted = resultSize == 0 || reachedLimit;
+
+                    // Update the tracker status message.
+                    ProcessorFilterTracker tracker2 = updatedTracker;
+                    tracker2.setStatus("Creating...");
+                    tracker2 = processorFilterTrackerDao.update(tracker2);
+
+                    // Create a task for each stream reference.
+                    final Map<Meta, InclusiveRanges> map = createStreamMap(eventRefs);
+
+                    processorTaskDao.createNewTasks(
                             filter,
+                            tracker2,
                             streamQueryTime,
+                            map,
                             nodeName,
-                            progressTracker,
-                            queue,
                             maxMetaId,
-                            updatedTracker,
-                            eventRefs);
-                });
+                            reachedLimit,
+                            createdTasks -> {
+                                // Transfer the newly created (and available) tasks to the
+                                // queue.
+                                final List<ProcessorTask> availableTaskList = createdTasks.getAvailableTaskList();
 
-        final CompletableFuture<EventRefs> future = eventSearch.search(
+                                if (!availableTaskList.isEmpty()) {
+                                    queue.addAll(availableTaskList);
+                                    progressTracker.incrementTaskCreationCount(filter, availableTaskList.size());
+                                }
+
+                                LOGGER.debug("createTasks() - Created {} tasks for filter {}",
+                                        createdTasks.getTotalTasksCreated(),
+                                        filter.toString());
+
+                                exhaustedFilterMap.put(filter.getId(), exhausted);
+
+                                queue.setFilling(false);
+                            });
+                }
+            } catch (final Exception e) {
+                LOGGER.error("Error creating tasks for filter {}, {}", filter.getId(), e.getMessage(), e);
+            } finally {
+                queue.setFilling(false);
+            }
+        };
+
+        final CompletableFuture<Void> future = eventSearch.search(
+                taskContext,
                 query,
                 minEvent,
                 maxEvent,
                 maxStreams,
                 maxEvents,
                 maxEventsPerStream,
-                POLL_INTERVAL_MS,
-                eventRefsConsumer);
+                consumer);
 
         // record the future so we can wait for it later
         progressTracker.addFuture(future);
     }
 
-    private <T> Consumer<T> contextConsumer(final TaskContext parentContext,
-                                            final String taskName,
-                                            final BiConsumer<TaskContext, T> consumer) {
-        return t ->
-                taskContextFactory.childContext(
-                        parentContext,
-                        taskName,
-                        taskContext ->
-                                consumer.accept(taskContext, t))
-                        .run();
-    }
+    private List<Param> getParams(final QueryData queryData) {
+        // Create a parameter map.
+        final Map<String, String> parameterMap = ExpressionParamUtil.parse(queryData.getParams());
 
-    private void createTasksFromEventRefs(final ProcessorFilter filter,
-                                          final long streamQueryTime,
-                                          final String nodeName,
-                                          final TaskCreationProgressTracker progressTracker,
-                                          final ProcessorTaskQueue queue,
-                                          final Long maxMetaId,
-                                          final ProcessorFilterTracker updatedTracker,
-                                          final EventRefs eventRefs) {
-        LOGGER.debug(() -> LogUtil.message(
-                "createTasksFromEventRefs() called for {} eventRefs, filter {}", eventRefs.size(), filter));
-        try {
-            if (eventRefs == null) {
-                queue.setFilling(false);
-            } else {
-                int resultSize;
-                boolean reachedLimit;
-                resultSize = eventRefs.size();
-                reachedLimit = eventRefs.isReachedLimit();
-                final boolean exhausted = resultSize == 0 || reachedLimit;
-
-                // Update the tracker status message.
-                ProcessorFilterTracker tracker = updatedTracker;
-                tracker.setStatus("Creating...");
-                tracker = processorFilterTrackerDao.update(tracker);
-
-                // Create a task for each stream reference.
-                final Map<Meta, InclusiveRanges> map = createStreamMap(eventRefs);
-
-                processorTaskDao.createNewTasks(
-                        filter,
-                        tracker,
-                        streamQueryTime,
-                        map,
-                        nodeName,
-                        maxMetaId,
-                        reachedLimit,
-                        createdTasks -> {
-                            // Transfer the newly created (and available) tasks to the
-                            // queue.
-                            final List<ProcessorTask> availableTaskList = createdTasks.getAvailableTaskList();
-
-                            if (!availableTaskList.isEmpty()) {
-                                queue.addAll(availableTaskList);
-                                progressTracker.incrementTaskCreationCount(filter, availableTaskList.size());
-                            }
-
-                            LOGGER.debug("createTasks() - Created {} tasks for filter {}",
-                                    createdTasks.getTotalTasksCreated(),
-                                    filter.toString());
-
-                            exhaustedFilterMap.put(filter.getId(), exhausted);
-
-                            queue.setFilling(false);
-                        });
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error creating tasks for filter {}, {}", filter.getId(), e.getMessage(), e);
+        final List<Param> params = new ArrayList<>();
+        for (final Entry<String, String> entry : parameterMap.entrySet()) {
+            params.add(new Param(entry.getKey(), entry.getValue()));
         }
+        return params;
     }
 
     private void createTasksFromCriteria(final ProcessorFilter filter,

@@ -12,6 +12,27 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.176] - 2022-02-02
+
+* Change byte buffer pool clear method to unmap drained buffers.
+
+* Move some LMDB related classes.
+
+* Issue **#2736** : Fix missing or wrongly appearing meta/context tab.
+
+* Issue **#2732** : Fix bug when opening active tasks tab for an empty folder.
+
+* Issue **#2734** : Improve search task info.
+
+* Issue **#2733** : Stop search buttons disappearing.
+
+* Issue **#2735** : Fix batch search across remote nodes.
+
+* Issue **#2739** : Add support for query parameters when performing batch searches.
+
+* Issue **#2520** : Add token authentication to data feed API.
+
+
 ## [v7.0-beta.175] - 2022-01-19
 
 * Issue **#2709** : Reduce the number of UI refreshes when receiving data from multiple nodes.
@@ -4133,7 +4154,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.175...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.176...HEAD
+[v7.0-beta.176]: https://github.com/gchq/stroom/compare/v7.0-beta.175...v7.0-beta.176
 [v7.0-beta.175]: https://github.com/gchq/stroom/compare/v7.0-beta.174...v7.0-beta.175
 [v7.0-beta.174]: https://github.com/gchq/stroom/compare/v7.0-beta.173...v7.0-beta.174
 [v7.0-beta.173]: https://github.com/gchq/stroom/compare/v7.0-beta.172...v7.0-beta.173
