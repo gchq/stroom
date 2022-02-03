@@ -141,11 +141,6 @@ public class SearchExpressionQueryBuilder {
                 return null;
             }
         }
-        if (Condition.IS_DOC_REF.equals(condition)) {
-            if (docRef == null || docRef.getUuid() == null) {
-                throw new IllegalArgumentException("Doc Ref not set for field: " + field);
-            }
-        }
 
         // Create a query based on the field type and condition.
         final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
