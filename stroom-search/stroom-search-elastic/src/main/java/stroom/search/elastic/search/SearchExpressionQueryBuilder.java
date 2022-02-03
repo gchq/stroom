@@ -47,6 +47,7 @@ import java.util.stream.Stream;
  */
 public class SearchExpressionQueryBuilder {
     private static final String DELIMITER = ",";
+    private static final String WILDCARD_PATTERN = ".*[*?].*";
     private final Map<String, ElasticIndexField> indexFieldsMap;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
@@ -76,18 +77,15 @@ public class SearchExpressionQueryBuilder {
 
     private QueryBuilder getQuery(final ExpressionItem item) {
         if (item.enabled()) {
-            if (item instanceof ExpressionTerm) {
+            if (item instanceof final ExpressionTerm term) {
                 // Create queries for single terms.
-                final ExpressionTerm term = (ExpressionTerm) item;
                 return getTermQuery(term);
-            } else if (item instanceof ExpressionOperator) {
+            } else if (item instanceof final ExpressionOperator operator) {
                 // Create queries for expression tree nodes.
-                final ExpressionOperator operator = (ExpressionOperator) item;
                 if (operatorHasChildren(operator)) {
                     final List<QueryBuilder> innerChildQueries = operator.getChildren().stream()
-                        .map(this::getQuery)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
+                            .map(this::getQuery)
+                            .filter(Objects::nonNull).toList();
 
                     BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
                     final Op op = operator.getOp();
@@ -149,48 +147,93 @@ public class SearchExpressionQueryBuilder {
         // Create a query based on the field type and condition.
         final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
         if (indexField.getFieldUse().isNumeric()) {
-            return buildNumericQuery(condition, indexField, fieldName, value, this::getNumber, docRef);
+            return buildScalarQuery(condition, indexField, fieldName, value, this::getNumber, docRef);
         } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
-            return buildNumericQuery(condition, indexField, fieldName, value, this::getFloat, docRef);
+            return buildScalarQuery(condition, indexField, fieldName, value, this::getFloat, docRef);
         } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
-            return buildNumericQuery(condition, indexField, fieldName, value, this::getDouble, docRef);
+            return buildScalarQuery(condition, indexField, fieldName, value, this::getDouble, docRef);
         } else if (elasticFieldType.equals(ElasticIndexFieldType.DATE)) {
-            return buildNumericQuery(condition, indexField, fieldName, value, this::getDate, docRef);
+            return buildScalarQuery(condition, indexField, fieldName, value, this::getDate, docRef);
         } else {
-            // A string-based term
+            return buildStringQuery(condition, value, docRef, indexField, fieldName);
+        }
+    }
+
+    private QueryBuilder buildStringQuery(final Condition condition,
+                                          final String expression,
+                                          final DocRef docRef,
+                                          final ElasticIndexField indexField,
+                                          final String fieldName) {
+        final List<String> terms = tokenizeExpression(expression).filter(term -> !term.isEmpty()).toList();
+        if (terms.isEmpty()) {
+            return null;
+        }
+
+        if (indexField.getFieldType().equals("keyword")) {
+            // Elasticsearch field mapping type is `keyword`, so generate a term-level query
             switch (condition) {
                 case EQUALS:
-                    return QueryBuilders
-                            .queryStringQuery(value)
-                            .field(fieldName)
-                            .analyzeWildcard(true);
-                case CONTAINS:
-                    // Note: This is redundant as `Term::setCondition` in `stroom-core-client` prevents this condition
-                    // from being selected.
-
-                    // All terms must match
-                    BoolQueryBuilder mustQuery = QueryBuilders.boolQuery();
-                    tokenizeExpression(value).forEach(term -> {
-                        mustQuery.must(QueryBuilders.termQuery(fieldName, term));
-                    });
-                    return mustQuery;
+                    return buildKeywordQuery(fieldName, expression);
                 case IN:
-                    // One or more terms must match
-                    return QueryBuilders
-                            .termsQuery(fieldName, tokenizeExpression(value));
+                    if (terms.size() > 1) {
+                        final BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+                        terms.forEach(term -> boolQuery.should(buildKeywordQuery(fieldName, term)));
+                        return boolQuery;
+                    } else {
+                        return buildKeywordQuery(fieldName, expression);
+                    }
                 case IN_DICTIONARY:
                     return buildDictionaryQuery(fieldName, docRef, indexField);
-                case IS_DOC_REF:
-                    return QueryBuilders
-                            .termQuery(fieldName, docRef.getUuid());
                 default:
-                    throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                    throw new UnsupportedOperationException("Unsupported condition '" + condition.getDisplayValue() +
+                            "' for " + indexField.getFieldUse().getDisplayValue() + " field type");
+            }
+        } else {
+            // This is a type other than `keyword`, such as `text` or `wildcard`. Perform a full-text match.
+            switch (condition) {
+                case EQUALS:
+                    return buildTextQuery(fieldName, expression);
+                case IN:
+                    if (terms.size() > 1) {
+                        final BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+                        terms.forEach(term -> boolQuery.should(buildTextQuery(fieldName, term)));
+                        return boolQuery;
+                    } else {
+                        return buildTextQuery(fieldName, expression);
+                    }
+                case IN_DICTIONARY:
+                    return buildDictionaryQuery(fieldName, docRef, indexField);
+                default:
+                    throw new RuntimeException("Unsupported condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldUse().getDisplayValue() + " field type");
             }
         }
     }
 
-    private <T extends Number> QueryBuilder buildNumericQuery(
+    /**
+     * Creates an Elasticsearch query for a `keyword` field appropriate for the expression content
+     */
+    private QueryBuilder buildKeywordQuery(final String fieldName, final String term) {
+        if (term.matches(WILDCARD_PATTERN)) {
+            // Expression is a wildcard pattern, so return a wildcard query
+            return QueryBuilders.wildcardQuery(fieldName, term);
+        } else {
+            // Perform an exact match on the provided term
+            return QueryBuilders.termsQuery(fieldName, term);
+        }
+    }
+
+    private QueryBuilder buildTextQuery(final String fieldName, final String term) {
+        if (term.matches(WILDCARD_PATTERN)) {
+            return QueryBuilders.queryStringQuery(term)
+                    .field(fieldName)
+                    .analyzeWildcard(true);
+        } else {
+            return QueryBuilders.matchQuery(fieldName, term);
+        }
+    }
+
+    private <T extends Number> QueryBuilder buildScalarQuery(
             final ExpressionTerm.Condition condition, final ElasticIndexField indexField, final String fieldName,
             final String fieldValue, BiFunction<String, String, T> valueParser, final DocRef docRef
     ) {
@@ -308,9 +351,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     /**
-     * Loads the specified Dictionary from the doc store.
-     * For each line, constructs an AND query for all terms on that line.
-     * All lines are combined into an OR query.
+     * Loads the specified Dictionary from the doc store. Each line is combined with AND logic.
      */
     private QueryBuilder buildDictionaryQuery(
             final String fieldName,
@@ -318,35 +359,29 @@ public class SearchExpressionQueryBuilder {
             final ElasticIndexField indexField
     ) {
         final String[] lines = readDictLines(docRef);
-
         final BoolQueryBuilder builder = QueryBuilders.boolQuery();
 
         for (final String line : lines) {
-            BoolQueryBuilder mustQuery = QueryBuilders.boolQuery();
+            final BoolQueryBuilder mustQueries = QueryBuilders.boolQuery();
             final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
 
             if (elasticFieldType.isNumeric()) {
-                tokenizeExpression(line)
-                        .map(val -> getNumber(fieldName, val))
-                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getNumber(fieldName, line)));
             } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
-                tokenizeExpression(line)
-                        .map(val -> getFloat(fieldName, val))
-                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getFloat(fieldName, line)));
             } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
-                tokenizeExpression(line)
-                        .map(val -> getDouble(fieldName, val))
-                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getDouble(fieldName, line)));
             } else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
-                tokenizeExpression(line)
-                        .map(val -> getDate(fieldName, val))
-                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getDate(fieldName, line)));
             } else {
-                tokenizeExpression(line)
-                        .forEach(term -> mustQuery.must(QueryBuilders.termQuery(fieldName, term)));
+                if (indexField.getFieldType().equals("keyword")) {
+                    mustQueries.must(buildKeywordQuery(fieldName, line));
+                } else {
+                    mustQueries.must(buildTextQuery(fieldName, line));
+                }
             }
 
-            builder.should(mustQuery);
+            builder.should(mustQueries);
         }
 
         return builder;
@@ -365,8 +400,7 @@ public class SearchExpressionQueryBuilder {
         if (operator != null && operator.enabled() && operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
                 if (child.enabled()) {
-                    if (child instanceof ExpressionOperator) {
-                        final ExpressionOperator childOperator = (ExpressionOperator) child;
+                    if (child instanceof final ExpressionOperator childOperator) {
                         if (operatorHasChildren(childOperator)) {
                             return true;
                         }
