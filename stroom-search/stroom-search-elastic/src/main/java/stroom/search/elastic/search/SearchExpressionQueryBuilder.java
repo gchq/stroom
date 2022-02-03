@@ -46,6 +46,7 @@ import java.util.stream.Stream;
  * Convert our query objects to an Elasticsearch Query DSL query.
  */
 public class SearchExpressionQueryBuilder {
+
     private static final String DELIMITER = ",";
     private static final String WILDCARD_PATTERN = ".*[*?].*";
     private final Map<String, ElasticIndexField> indexFieldsMap;
@@ -77,11 +78,13 @@ public class SearchExpressionQueryBuilder {
 
     private QueryBuilder getQuery(final ExpressionItem item) {
         if (item.enabled()) {
-            if (item instanceof final ExpressionTerm term) {
+            if (item instanceof ExpressionTerm) {
                 // Create queries for single terms.
+                final ExpressionTerm term = (ExpressionTerm) item;
                 return getTermQuery(term);
-            } else if (item instanceof final ExpressionOperator operator) {
+            } else if (item instanceof ExpressionOperator) {
                 // Create queries for expression tree nodes.
+                final ExpressionOperator operator = (ExpressionOperator) item;
                 if (operatorHasChildren(operator)) {
                     final List<QueryBuilder> innerChildQueries = operator.getChildren().stream()
                             .map(this::getQuery)
@@ -295,14 +298,15 @@ public class SearchExpressionQueryBuilder {
     /**
      * Split an expression into is component terms. Useful for extracting terms for use with "in" or "contains"
      * conditions
+     *
      * @param expression - Example: "1,2, 3"
      * @return - Stream of terms. Example: [ "1", "2", "3" ]
      */
     private Stream<String> tokenizeExpression(final String expression) {
         if (expression != null) {
             return Arrays.stream(expression.split(DELIMITER))
-                .map(String::trim)
-                .filter(token -> !token.isEmpty());
+                    .map(String::trim)
+                    .filter(token -> !token.isEmpty());
         } else {
             return Stream.empty();
         }
@@ -334,7 +338,7 @@ public class SearchExpressionQueryBuilder {
         } catch (final NumberFormatException e) {
             throw new NumberFormatException(
                     "Expected a decimal (float) value for field \"" + fieldName + "\" but was given string \"" +
-                    value + "\""
+                            value + "\""
             );
         }
     }
@@ -345,7 +349,7 @@ public class SearchExpressionQueryBuilder {
         } catch (final NumberFormatException e) {
             throw new NumberFormatException(
                     "Expected a decimal (double) value for field \"" + fieldName + "\" but was given string \"" +
-                    value + "\""
+                            value + "\""
             );
         }
     }
@@ -400,7 +404,8 @@ public class SearchExpressionQueryBuilder {
         if (operator != null && operator.enabled() && operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
                 if (child.enabled()) {
-                    if (child instanceof final ExpressionOperator childOperator) {
+                    if (child instanceof ExpressionOperator) {
+                        final ExpressionOperator childOperator = (ExpressionOperator) child;
                         if (operatorHasChildren(childOperator)) {
                             return true;
                         }
