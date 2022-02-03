@@ -121,7 +121,7 @@ public class SearchExpressionQueryBuilder {
             value = value.trim();
         }
 
-        // Try and find the referenced field.
+        // Validate the field
         if (field == null || field.length() == 0) {
             throw new IllegalArgumentException("Field not set");
         }
@@ -131,15 +131,19 @@ public class SearchExpressionQueryBuilder {
         }
         final String fieldName = indexField.getFieldName();
 
-        // Ensure an appropriate value has been provided for the condition type.
+        // Validate the expression
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
         if (Condition.IN_DICTIONARY.equals(condition)) {
             if (docRef == null || docRef.getUuid() == null) {
                 throw new IllegalArgumentException("Dictionary not set for field: " + field);
             }
-        } else {
-            if (value == null || value.length() == 0) {
-                return null;
-            }
+        }
+
+        // Special case: if the expression is a wildcard, use the `exists` query
+        if (value.equals("*")) {
+            return QueryBuilders.existsQuery(fieldName);
         }
 
         // Create a query based on the field type and condition.
