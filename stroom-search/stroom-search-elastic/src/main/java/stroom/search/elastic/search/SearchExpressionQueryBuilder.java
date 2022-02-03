@@ -218,7 +218,8 @@ public class SearchExpressionQueryBuilder {
     private QueryBuilder buildKeywordQuery(final String fieldName, final String term) {
         if (term.matches(WILDCARD_PATTERN)) {
             // Expression is a wildcard pattern, so return a wildcard query
-            return QueryBuilders.wildcardQuery(fieldName, term);
+            return QueryBuilders.wildcardQuery(fieldName, term)
+                    .caseInsensitive(true);
         } else {
             // Perform an exact match on the provided term
             return QueryBuilders.termsQuery(fieldName, term);
