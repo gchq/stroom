@@ -463,7 +463,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         } else {
             final Select ids = metaExpressionMapper.addJoins(
                             DSL
-                                    .select(meta.ID)
+                                    .selectDistinct(meta.ID)
                                     .from(meta)
                                     .leftOuterJoin(metaProcessor)
                                     .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
@@ -956,7 +956,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 numberOfRows = pageRequest.getLength();
             }
 
-            var select = context.select(dbFields).from(meta);
+            var select = context.selectDistinct(dbFields).from(meta);
             if (feedUsed) {
                 select = select.straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID));
             }
@@ -1111,7 +1111,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
         return JooqUtil.contextResult(metaDbConnProvider, context ->
                         metaExpressionMapper.addJoins(context
-                                                .select(
+                                                .selectDistinct(
                                                         meta.ID,
                                                         metaFeed.NAME,
                                                         metaType.NAME,
@@ -1166,7 +1166,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
                         metaExpressionMapper.addJoins(
                                         (context
-                                                .select(
+                                                .selectDistinct(
                                                         parent.ID,
                                                         parentFeed.NAME,
                                                         parentType.NAME,
@@ -1220,7 +1220,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                         metaExpressionMapper.addJoins(
                                         context
                                                 .select(
-                                                        DSL.count(),
+                                                        DSL.countDistinct(meta.ID),
                                                         DSL.countDistinct(metaFeed.NAME),
                                                         DSL.countDistinct(metaType.NAME),
                                                         DSL.countDistinct(metaProcessor.PROCESSOR_UUID),
@@ -1392,7 +1392,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         return JooqUtil.contextResult(metaDbConnProvider,
                         context -> {
                             SelectJoinStep<Record1<String>> select = context
-                                    .select(metaProcessor.PROCESSOR_UUID)
+                                    .selectDistinct(metaProcessor.PROCESSOR_UUID)
                                     .from(meta);
 
                             select = select
