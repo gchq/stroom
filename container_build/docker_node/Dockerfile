@@ -14,7 +14,7 @@
 # limitations under the License.
 #**********************************************************************
 
-FROM node:15.14.0-alpine3.13
+FROM node:17.4.0-alpine3.14
 WORKDIR /builder
 
 # Pass in the uid/gid of the running user so we can use the same user id
