@@ -34,7 +34,8 @@ proxyConfig:
   path:
     home: null
     temp: null
-  receiptPolicy:
+  receiveDataConfig:
+    clientId: null
     metaTypes:
     - "Context"
     - "Raw Reference"
@@ -47,7 +48,9 @@ proxyConfig:
     - "Detections"
     - "Meta Data"
     - "Records"
+    publicKey: null
     receiptPolicyUuid: null
+    requireTokenAuthentication: false
   repository:
     cleanupFrequency: "PT1H"
     dirCleanDelay: "PT10S"

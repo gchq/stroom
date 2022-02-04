@@ -549,6 +549,7 @@ appConfig:
   receive:
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     receiptPolicyUuid: null
+    requireTokenAuthentication: false
     unknownClassification: "UNKNOWN CLASSIFICATION"
   search:
     extraction:

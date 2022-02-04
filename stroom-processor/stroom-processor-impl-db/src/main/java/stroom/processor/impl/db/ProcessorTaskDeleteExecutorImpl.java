@@ -212,7 +212,9 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
             for (final ProcessorFilter filter : filters) {
                 final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
 
-                if (tracker != null && ProcessorFilterTracker.COMPLETE.equals(tracker.getStatus())) {
+                if (tracker != null &&
+                        (ProcessorFilterTracker.COMPLETE.equals(tracker.getStatus()) ||
+                                ProcessorFilterTracker.ERROR.equals(tracker.getStatus()))) {
                     // The tracker thinks that no more tasks will ever be
                     // created for this filter so we can delete it if there are
                     // no remaining tasks for this filter.

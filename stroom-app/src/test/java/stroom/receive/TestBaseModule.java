@@ -13,6 +13,7 @@ import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
+import stroom.security.api.RequestAuthenticator;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.entityevent.EntityEventBus;
@@ -21,6 +22,8 @@ import stroom.util.pipeline.scope.PipelineScopeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.util.Providers;
+
+import java.util.Optional;
 
 public class TestBaseModule extends AbstractModule {
 
@@ -49,5 +52,10 @@ public class TestBaseModule extends AbstractModule {
     EntityEventBus entityEventBus() {
         return event -> {
         };
+    }
+
+    @Provides
+    RequestAuthenticator requestAuthenticator() {
+        return request -> Optional.empty();
     }
 }
