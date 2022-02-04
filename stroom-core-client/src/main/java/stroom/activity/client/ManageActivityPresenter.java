@@ -165,7 +165,7 @@ public class ManageActivityPresenter extends
 
     private void updateQuickFilterTooltipContentSupplier() {
         uiConfigCache.get().onSuccess(uiConfig -> {
-            final String helpUrl = uiConfig.getHelpUrl();
+            final String helpUrl = uiConfig.getHelpUrlQuickFilter();
             final Rest<List<FilterFieldDefinition>> rest = restFactory.create();
             // Separate to aid type inference
             rest

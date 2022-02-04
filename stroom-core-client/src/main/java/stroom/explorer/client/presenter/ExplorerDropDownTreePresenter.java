@@ -61,7 +61,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
                         view.setQuickFilterTooltipSupplier(() -> QuickFilterTooltipUtil.createTooltip(
                                 "Choose Item Quick Filter",
                                 ExplorerTreeFilter.FIELD_DEFINITIONS,
-                                uiConfig.getHelpUrl())));
+                                uiConfig.getHelpUrlQuickFilter())));
     }
 
     protected void setIncludeNullSelection(final boolean includeNullSelection) {

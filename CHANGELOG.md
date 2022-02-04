@@ -12,6 +12,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2744** : Fix logging for expected interrupt exception.
+
+* Issue **#2746** : Fix broken help links in UI.
+
 * Change byte buffer pool clear method to unmap drained buffers.
 
 * Move some LMDB related classes.

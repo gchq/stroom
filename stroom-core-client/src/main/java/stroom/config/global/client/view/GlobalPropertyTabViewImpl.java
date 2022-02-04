@@ -40,7 +40,7 @@ public class GlobalPropertyTabViewImpl
                                 QuickFilterTooltipUtil.createTooltip(
                                         "Properties Quick Filter",
                                         GlobalConfigResource.FIELD_DEFINITIONS,
-                                        uiConfig.getHelpUrl())));
+                                        uiConfig.getHelpUrlQuickFilter())));
     }
 
     @Override

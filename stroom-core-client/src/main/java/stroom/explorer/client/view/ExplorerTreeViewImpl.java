@@ -64,7 +64,7 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
                                 QuickFilterTooltipUtil.createTooltip(
                                         "Explorer Quick Filter",
                                         ExplorerTreeFilter.FIELD_DEFINITIONS,
-                                        uiConfig.getHelpUrl())));
+                                        uiConfig.getHelpUrlQuickFilter())));
     }
 
     @Override
