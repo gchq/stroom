@@ -14,6 +14,7 @@ import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
 import org.elasticsearch.client.RestClientBuilder.RequestConfigCallback;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.RestHighLevelClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,7 +93,9 @@ public class ElasticClientFactory {
             restClientBuilder.setDefaultHeaders(defaultHeaders);
         }
 
-        return new RestHighLevelClient(restClientBuilder);
+        return new RestHighLevelClientBuilder(restClientBuilder.build())
+                .setApiCompatibilityMode(true)
+                .build();
     }
 
     private SSLContext getSslContext(final ElasticConnectionConfig config) {
