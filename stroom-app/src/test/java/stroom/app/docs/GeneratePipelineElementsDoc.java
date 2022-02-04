@@ -84,6 +84,10 @@ public class GeneratePipelineElementsDoc {
                 .sorted(Comparator.comparing(ElementInfo::getType))
                 .map(elementInfo -> {
 
+                    final String descriptionText = elementInfo.description != null
+                            ? elementInfo.description
+                            : "> TODO - Add description";
+
                     final String iconText = elementInfo.iconFilename != null
                             ? LogUtil.message("""
                                     \n\n**Icon:** {{< stroom-icon "pipeline/{}" "{}" >}}""",
@@ -120,7 +124,7 @@ public class GeneratePipelineElementsDoc {
                     final String template = """
                             ### {}
 
-                            > TODO - Add description.
+                            {}
 
                             **Category:** {}{}{}{}
 
@@ -129,6 +133,7 @@ public class GeneratePipelineElementsDoc {
                     return LogUtil.message(
                             template,
                             elementInfo.getType(),
+                            elementInfo.description,
                             elementInfo.category.getDisplayValue(),
                             iconText,
                             rolesText,
@@ -153,15 +158,24 @@ public class GeneratePipelineElementsDoc {
 
             final ConfigurableElement elementAnno = clazz.getAnnotation(ConfigurableElement.class);
 
-            final String iconFileName = elementAnno.icon();
-            final String type = elementAnno.type();
+            final String description = getStringValue(elementAnno.description());
+            final String iconFileName = getStringValue(elementAnno.icon());
+            final String type = getStringValue(elementAnno.type());
             final Category category = elementAnno.category();
             final Set<String> roles = new HashSet<>(Arrays.asList(elementAnno.roles()));
             final List<PropertyInfo> propertyInfoList = getPropertyInfoList(clazz);
 
-            return new ElementInfo(type, iconFileName, category, roles, propertyInfoList);
+            return new ElementInfo(type, iconFileName, category, description, roles, propertyInfoList);
         } else {
             return null;
+        }
+    }
+
+    private static String getStringValue(final String value) {
+        if (value == null || value.isEmpty() || value.isBlank()) {
+            return null;
+        } else {
+            return value;
         }
     }
 
@@ -193,17 +207,20 @@ public class GeneratePipelineElementsDoc {
         private final String type;
         private final String iconFilename;
         private final Category category;
+        private final String description;
         private final Set<String> roles;
         private final List<PropertyInfo> propertyInfoList;
 
         public ElementInfo(final String type,
                            final String iconFilename,
                            final Category category,
+                           final String description,
                            final Set<String> roles,
                            final List<PropertyInfo> propertyInfoList) {
             this.type = type;
             this.iconFilename = iconFilename;
             this.category = category;
+            this.description = description;
             this.roles = roles;
             this.propertyInfoList = propertyInfoList;
         }
@@ -222,6 +239,7 @@ public class GeneratePipelineElementsDoc {
                     "type='" + type + '\'' +
                     ", iconFilename='" + iconFilename + '\'' +
                     ", category=" + category +
+                    ", description='" + description + '\'' +
                     ", roles=" + roles +
                     ", propertyInfoList=" + propertyInfoList +
                     '}';

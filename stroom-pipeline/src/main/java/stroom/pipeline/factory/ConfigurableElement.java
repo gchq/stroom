@@ -23,9 +23,19 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+// TODO 04/02/2022 AT: Consider using markdown for the description
+// and then using a markdown->HTML lib, e.g. commonmark-java to produce
+// html for help in the UI.
+
+/**
+ * These fields and their values will be used by
+ * GeneratePipelineElementsDoc to generate stroom-docs
+ * documentation for the pipeline elements.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ConfigurableElement {
+
     String type();
 
     Category category() default Category.INTERNAL;
@@ -33,4 +43,13 @@ public @interface ConfigurableElement {
     String[] roles();
 
     String icon();
+
+    /**
+     * A description of what this pipeline element does.
+     * For paragraph breaks use double <pre>\n\n</pre>.
+     * Only add single new lines for a new sentence, don't add hard breaks.
+     * No HTML tags as this may be used in both the UI and markdown
+     * docs.
+     */
+    String description() default "";
 }

@@ -24,6 +24,8 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import java.io.InputStream;
 
 @ConfigurableElement(type = "BOMRemovalFilterInput",
+        description = """
+                Removes the Byte Order Mark (if present) from the stream.""",
         category = Category.READER,
         roles = {
                 PipelineElementType.ROLE_HAS_TARGETS,
@@ -32,6 +34,7 @@ import java.io.InputStream;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class BOMRemovalFilterInputElement extends AbstractInputElement {
+
     private BOMRemovalInputStream bomRemovalInputStream;
 
     @Override
