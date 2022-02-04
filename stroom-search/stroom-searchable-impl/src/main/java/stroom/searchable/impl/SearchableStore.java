@@ -2,6 +2,7 @@ package stroom.searchable.impl;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.SearchRequest;
@@ -11,6 +12,7 @@ import stroom.query.common.v2.Store;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -34,7 +36,7 @@ class SearchableStore implements Store {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchableStore.class);
 
-    private static final String TASK_NAME = "DB Search";
+    static final String TASK_NAME = "DB Search";
 
     private final String searchKey;
 
@@ -52,8 +54,15 @@ class SearchableStore implements Store {
                     final ExpressionOperator expression) {
         this.coprocessors = coprocessors;
         searchKey = searchRequest.getKey().toString();
-        LOGGER.debug(() -> LogUtil.message("Starting search with key {}", searchKey));
-        taskContext.info(() -> "DB search " + searchKey + " - running query");
+        final String taskName = getTaskName(searchable.getDocRef());
+
+        final String infoPrefix = LogUtil.message(
+                "Querying {} {} - ",
+                getStoreName(searchable.getDocRef()),
+                searchKey);
+
+        LOGGER.debug(() -> LogUtil.message("{} Starting search with key {}", taskName, searchKey));
+        taskContext.info(() -> infoPrefix + "initialising query");
 
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 
@@ -67,8 +76,10 @@ class SearchableStore implements Store {
             fieldArray[i] = fieldMap.get(fieldIndex.getField(i));
         }
 
-        final Runnable runnable = taskContextFactory.context(TASK_NAME, tc ->
-                searchAsync(tc, searchable, criteria, fieldArray, coprocessors));
+        final Runnable runnable = taskContextFactory.context(taskName, tc -> {
+            tc.info(() -> infoPrefix + "running query");
+            searchAsync(tc, searchable, criteria, fieldArray, coprocessors, taskName, infoPrefix);
+        });
         CompletableFuture.runAsync(runnable, executor);
     }
 
@@ -76,7 +87,9 @@ class SearchableStore implements Store {
                              final Searchable searchable,
                              final ExpressionCriteria criteria,
                              final AbstractField[] fieldArray,
-                             final Coprocessors coprocessors) {
+                             final Coprocessors coprocessors,
+                             final String taskName,
+                             final String infoPrefix) {
         synchronized (SearchableStore.class) {
             thread = Thread.currentThread();
             if (terminate.get()) {
@@ -95,13 +108,14 @@ class SearchableStore implements Store {
         }
 
         LOGGER.debug(() ->
-                String.format("complete called, counter: %s",
+                String.format("%s complete called, counter: %s",
+                        taskName,
                         coprocessors.getValueCount()));
-        taskContext.info(() -> searchKey + " - complete");
-        LOGGER.debug(() -> "completeSearch called");
+        taskContext.info(() -> infoPrefix + "complete");
+        LOGGER.debug(() -> taskName + " completeSearch called");
         complete();
 
-        LOGGER.debug(() -> "Query finished in " + Duration.between(queryStart, Instant.now()));
+        LOGGER.debug(() -> taskName + " Query finished in " + Duration.between(queryStart, Instant.now()));
     }
 
     @Override
@@ -163,5 +177,16 @@ class SearchableStore implements Store {
                 ", completionState=" + coprocessors.getCompletionState() +
                 ", searchKey='" + searchKey + '\'' +
                 '}';
+    }
+
+    private static String getStoreName(final DocRef docRef) {
+        return NullSafe.toStringOrElse(
+                docRef,
+                DocRef::getName,
+                "Unknown Store");
+    }
+
+    static String getTaskName(final DocRef docRef) {
+        return getStoreName(docRef) + " Search";
     }
 }
