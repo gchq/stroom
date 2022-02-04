@@ -130,6 +130,9 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
             case IS_NOT_NULL -> {
                 return field.isNotNull();
             }
+            case MATCHES_REGEX -> {
+                return field.likeRegex(term.getValue());
+            }
             default -> throw new RuntimeException("Unexpected condition '" +
                     term.getCondition() +
                     "' for term: " +

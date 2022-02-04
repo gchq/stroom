@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,7 +50,8 @@ import java.util.stream.Stream;
 public class SearchExpressionQueryBuilder {
 
     private static final String DELIMITER = ",";
-    private static final String WILDCARD_PATTERN = ".*[*?].*";
+    private static final Pattern WILDCARD_PATTERN = Pattern.compile(".*[*?].*");
+    private static final Pattern QUOTED_PATTERN = Pattern.compile("^\"(.+)\"$");
     private final Map<String, ElasticIndexField> indexFieldsMap;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
@@ -176,6 +179,8 @@ public class SearchExpressionQueryBuilder {
             switch (condition) {
                 case EQUALS:
                     return buildKeywordQuery(fieldName, expression);
+                case MATCHES_REGEX:
+                    return QueryBuilders.regexpQuery(fieldName, expression);
                 case IN:
                     if (terms.size() > 1) {
                         final BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -195,6 +200,8 @@ public class SearchExpressionQueryBuilder {
             switch (condition) {
                 case EQUALS:
                     return buildTextQuery(fieldName, expression);
+                case MATCHES_REGEX:
+                    return QueryBuilders.regexpQuery(fieldName, expression);
                 case IN:
                     if (terms.size() > 1) {
                         final BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -215,24 +222,34 @@ public class SearchExpressionQueryBuilder {
     /**
      * Creates an Elasticsearch query for a `keyword` field appropriate for the expression content
      */
-    private QueryBuilder buildKeywordQuery(final String fieldName, final String term) {
-        if (term.matches(WILDCARD_PATTERN)) {
+    private QueryBuilder buildKeywordQuery(final String fieldName, final String expression) {
+        final Matcher quotedMatcher = QUOTED_PATTERN.matcher(expression);
+        if (quotedMatcher.matches()) {
+            // Expression is in quotes, so perform an exact match
+            return QueryBuilders.termQuery(fieldName, quotedMatcher.group(1));
+        } else if (WILDCARD_PATTERN.matcher(expression).matches()) {
             // Expression is a wildcard pattern, so return a wildcard query
-            return QueryBuilders.wildcardQuery(fieldName, term)
+            return QueryBuilders.wildcardQuery(fieldName, expression)
                     .caseInsensitive(true);
         } else {
             // Perform an exact match on the provided term
-            return QueryBuilders.termsQuery(fieldName, term);
+            return QueryBuilders.termQuery(fieldName, expression);
         }
     }
 
-    private QueryBuilder buildTextQuery(final String fieldName, final String term) {
-        if (term.matches(WILDCARD_PATTERN)) {
-            return QueryBuilders.queryStringQuery(term)
+    private QueryBuilder buildTextQuery(final String fieldName, final String expression) {
+        final Matcher quotedMatcher = QUOTED_PATTERN.matcher(expression);
+        if (quotedMatcher.matches()) {
+            // Expression is in quotes, so match the entire phrase exactly
+            return QueryBuilders.matchPhraseQuery(fieldName, quotedMatcher.group(1));
+        } else if (WILDCARD_PATTERN.matcher(expression).matches()) {
+            // Contains wildcard chars, so use a query string query, which supports these
+            return QueryBuilders.queryStringQuery(expression)
                     .field(fieldName)
                     .analyzeWildcard(true);
         } else {
-            return QueryBuilders.matchQuery(fieldName, term);
+            // Do a full-text tokenized match
+            return QueryBuilders.matchQuery(fieldName, expression);
         }
     }
 

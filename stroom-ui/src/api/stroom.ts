@@ -40,6 +40,7 @@ export interface AbstractField {
     | "IS_DOC_REF"
     | "IS_NULL"
     | "IS_NOT_NULL"
+    | "MATCHES_REGEX"
   )[];
   name?: string;
   queryable?: boolean;
@@ -1085,7 +1086,8 @@ export type ExpressionTerm = ExpressionItem & {
     | "IN_FOLDER"
     | "IS_DOC_REF"
     | "IS_NULL"
-    | "IS_NOT_NULL";
+    | "IS_NOT_NULL"
+    | "MATCHES_REGEX";
   docRef?: DocRef;
   field?: string;
   value?: string;
@@ -2974,6 +2976,7 @@ export interface SolrIndexField {
     | "IS_DOC_REF"
     | "IS_NULL"
     | "IS_NOT_NULL"
+    | "MATCHES_REGEX"
   )[];
   termOffsets?: boolean;
   termPayloads?: boolean;

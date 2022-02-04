@@ -364,6 +364,9 @@ public class TermEditor extends Composite {
                 case IS_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
+                case MATCHES_REGEX:
+                    enterTextMode();
+                    break;
             }
         }
     }
@@ -558,7 +561,7 @@ public class TermEditor extends Composite {
 
     private ItemListBox<Condition> createConditionBox() {
         final ItemListBox<Condition> conditionListBox = new ItemListBox<>();
-        fixStyle(conditionListBox, 100);
+        fixStyle(conditionListBox, 120);
         return conditionListBox;
     }
 
