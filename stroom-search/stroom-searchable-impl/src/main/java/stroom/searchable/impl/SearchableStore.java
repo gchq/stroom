@@ -36,8 +36,6 @@ class SearchableStore implements Store {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchableStore.class);
 
-    static final String TASK_NAME = "DB Search";
-
     private final String searchKey;
 
     private final Coprocessors coprocessors;
