@@ -111,6 +111,11 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
         checkPermission();
         validateUpdateRequest(request);
 
+        final Optional<Account> existingAccount = accountDao.get(accountId);
+        if (existingAccount.isEmpty()) {
+            throw new RuntimeException("Account with id = " + accountId + " not found");
+        }
+
 //        // Update Stroom user
 //        Optional<Account> optionalUser = accountDao.get(userId);
 //        Account foundAccount = optionalUser.get();
@@ -123,6 +128,14 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
         final Account account = request.getAccount();
         account.setUpdateUser(loggedInUser);
         account.setUpdateTimeMs(System.currentTimeMillis());
+
+        // If we are reactivating account then set the reactivated time.
+        if ((account.isEnabled() && !existingAccount.get().isEnabled()) ||
+                (!account.isInactive() && existingAccount.get().isInactive()) ||
+                (!account.isLocked() && existingAccount.get().isLocked())) {
+            account.setReactivatedMs(System.currentTimeMillis());
+        }
+
         account.setId(accountId);
         accountDao.update(account);
 
