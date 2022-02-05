@@ -238,19 +238,10 @@ public class SearchExpressionQueryBuilder {
     }
 
     private QueryBuilder buildTextQuery(final String fieldName, final String expression) {
-        final Matcher quotedMatcher = QUOTED_PATTERN.matcher(expression);
-        if (quotedMatcher.matches()) {
-            // Expression is in quotes, so match the entire phrase exactly
-            return QueryBuilders.matchPhraseQuery(fieldName, quotedMatcher.group(1));
-        } else if (WILDCARD_PATTERN.matcher(expression).matches()) {
-            // Contains wildcard chars, so use a query string query, which supports these
-            return QueryBuilders.queryStringQuery(expression)
-                    .field(fieldName)
-                    .analyzeWildcard(true);
-        } else {
-            // Do a full-text tokenized match
-            return QueryBuilders.matchQuery(fieldName, expression);
-        }
+        // Contains wildcard chars, so use a query string query, which supports these
+        return QueryBuilders.queryStringQuery(expression)
+                .field(fieldName)
+                .analyzeWildcard(true);
     }
 
     private <T extends Number> QueryBuilder buildScalarQuery(
