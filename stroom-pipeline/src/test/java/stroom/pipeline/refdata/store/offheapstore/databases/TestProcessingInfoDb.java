@@ -37,7 +37,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestProcessingInfoDb extends AbstractLmdbDbTest {
+class TestProcessingInfoDb extends AbstractStoreDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestProcessingInfoDb.class);
 

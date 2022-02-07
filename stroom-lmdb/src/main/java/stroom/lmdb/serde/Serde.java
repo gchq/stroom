@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.lmdb;
+package stroom.lmdb.serde;
 
 public interface Serde<T> extends Serializer<T>, Deserializer<T> {
 

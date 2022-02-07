@@ -1,79 +1,56 @@
 package stroom.proxy.app;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.IsSupersetOf;
-import stroom.util.shared.validation.ValidRegex;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.HashSet;
 import java.util.Set;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 
 @JsonPropertyOrder(alphabetic = true)
-public class ReceiveDataConfig extends AbstractConfig implements IsStroomConfig {
-
-    /**
-     * Same size as JDK's Buffered Output Stream.
-     */
-    private static final int DEFAULT_BUFFER_SIZE = 8192;
+public class ReceiveDataConfig extends AbstractConfig implements IsProxyConfig {
 
     private final String receiptPolicyUuid;
-    private final int bufferSize;
-    private final String unknownClassification;
-    private final String feedNamePattern;
     private final Set<String> metaTypes;
+    private final boolean requireTokenAuthentication;
+    private final String publicKey;
+    private final String clientId;
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
-        bufferSize = DEFAULT_BUFFER_SIZE;
-        unknownClassification = "UNKNOWN CLASSIFICATION";
-        feedNamePattern = "^[A-Z0-9_-]{3,}$";
         metaTypes = new HashSet<>(StreamTypeNames.ALL_TYPE_NAMES);
+        requireTokenAuthentication = false;
+        publicKey = null;
+        clientId = null;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ReceiveDataConfig(@JsonProperty("receiptPolicyUuid") final String receiptPolicyUuid,
-                             @JsonProperty("bufferSize") final int bufferSize,
-                             @JsonProperty("unknownClassification") final String unknownClassification,
-                             @JsonProperty("feedNamePattern") final String feedNamePattern,
-                             @JsonProperty("metaTypes") final Set<String> metaTypes) {
+                             @JsonProperty("metaTypes") final Set<String> metaTypes,
+                             @JsonProperty("requireTokenAuthentication") final boolean requireTokenAuthentication,
+                             @JsonProperty("publicKey") final String publicKey,
+                             @JsonProperty("clientId") final String clientId) {
         this.receiptPolicyUuid = receiptPolicyUuid;
-        this.bufferSize = bufferSize;
-        this.unknownClassification = unknownClassification;
-        this.feedNamePattern = feedNamePattern;
         this.metaTypes = metaTypes;
+        this.requireTokenAuthentication = requireTokenAuthentication;
+        this.publicKey = publicKey;
+        this.clientId = clientId;
     }
 
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
     public String getReceiptPolicyUuid() {
         return receiptPolicyUuid;
-    }
-
-    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("If set the default buffer size to use")
-    public int getBufferSize() {
-        return bufferSize;
-    }
-
-    @JsonPropertyDescription("The classification banner to display for data if one is not defined")
-    public String getUnknownClassification() {
-        return unknownClassification;
-    }
-
-    @ValidRegex
-    @JsonPropertyDescription("The regex pattern for feed names")
-    public String getFeedNamePattern() {
-        return feedNamePattern;
     }
 
     @NotNull
@@ -93,13 +70,29 @@ public class ReceiveDataConfig extends AbstractConfig implements IsStroomConfig 
         return metaTypes;
     }
 
+    @JsonPropertyDescription("Require token authentication to send data to Stroom")
+    public boolean isRequireTokenAuthentication() {
+        return requireTokenAuthentication;
+    }
+
+    @JsonPropertyDescription("The public key to be used to verify authentication tokens")
+    public String getPublicKey() {
+        return publicKey;
+    }
+
+    @JsonPropertyDescription("The expected client id contained in the supplied token")
+    public String getClientId() {
+        return clientId;
+    }
+
     @Override
     public String toString() {
-        return "DataFeedConfig{" +
+        return "ReceiveDataConfig{" +
                 "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
-                ", bufferSize=" + bufferSize +
-                ", unknownClassification='" + unknownClassification + '\'' +
-                ", feedNamePattern='" + feedNamePattern + '\'' +
+                ", metaTypes=" + metaTypes +
+                ", requireTokenAuthentication=" + requireTokenAuthentication +
+                ", publicKey='" + publicKey + '\'' +
+                ", clientId='" + clientId + '\'' +
                 '}';
     }
 }

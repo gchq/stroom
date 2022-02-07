@@ -59,7 +59,7 @@ class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements C
                         nameFilter.registerPopupTextProvider(() ->
                                 QuickFilterTooltipUtil.createTooltip(
                                         "Choose Item Quick Filter",
-                                        uiConfig.getHelpUrl())));
+                                        uiConfig.getHelpUrlQuickFilter())));
     }
 
     @Override

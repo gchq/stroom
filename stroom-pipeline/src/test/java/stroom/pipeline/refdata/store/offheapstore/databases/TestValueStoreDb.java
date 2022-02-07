@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestValueStoreDb extends AbstractLmdbDbTest {
+class TestValueStoreDb extends AbstractStoreDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestValueStoreDb.class);
 

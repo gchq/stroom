@@ -513,9 +513,9 @@ public final class ManageGlobalPropertyEditPresenter
     private void showHelp(final String anchor) {
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    final String helpUrl = result.getHelpUrl();
+                    final String helpUrl = result.getHelpUrlProperties();
                     if (helpUrl != null && helpUrl.trim().length() > 0) {
-                        String url = helpUrl + "/user-guide/properties.html" + formatAnchor(anchor);
+                        String url = helpUrl + formatAnchor(anchor);
                         Window.open(url, "_blank", "");
                     } else {
                         AlertEvent.fireError(

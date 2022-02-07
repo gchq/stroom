@@ -35,7 +35,7 @@ import javax.inject.Provider;
 public class ElasticSearchResultCollector implements Store {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchResultCollector.class);
-    private static final String TASK_NAME = "ElasticSearchTask";
+    private static final String TASK_NAME = "Elasticsearch Cluster Search";
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;

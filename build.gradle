@@ -118,7 +118,6 @@ ext.versions = [
         hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
         jooq              : '3.15.5',
-        json_path         : '2.5.0', // Used to parse JSON search results from Elasticsearch
         junit_jupiter     : '5.8.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
@@ -233,7 +232,6 @@ ext.libs = [
         jooq_codegen                   : "org.jooq:jooq-codegen:$versions.jooq",
         jooq_meta                      : "org.jooq:jooq-meta:$versions.jooq",
         jose4j                         : "org.bitbucket.b_c:jose4j:0.6.4",
-        json_path                      : "com.jayway.jsonpath:json-path:$versions.json_path",
 //        jsr173_api                     : "javax.xml.bind:jsr173_api:1.0",
         jul_to_slf4j                   : "org.slf4j:jul-to-slf4j", // version controlled by DW BOM
         junit_jupiter_api              : "org.junit.jupiter:junit-jupiter-api:$versions.junit_jupiter",

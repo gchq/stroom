@@ -30,6 +30,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import java.util.Collections;
+import java.util.function.BiConsumer;
 import javax.inject.Inject;
 
 
@@ -53,82 +54,94 @@ public class EventSearchTaskHandler {
         this.coprocessorsFactory = coprocessorsFactory;
     }
 
-    public EventRefs exec(final EventSearchTask task) {
-        return securityContext.secureResult(() -> {
-            EventRefs eventRefs;
-
-            // Get the current time in millis since epoch.
-            final long nowEpochMilli = System.currentTimeMillis();
-
-            // Get the search.
-            final Query query = task.getQuery();
-
-            // Replace expression parameters.
-            final Query modifiedQuery = ExpressionUtil.replaceExpressionParameters(query);
-
-            final int coprocessorId = 0;
-            final EventCoprocessorSettings settings = new EventCoprocessorSettings(
-                    coprocessorId,
-                    task.getMinEvent(),
-                    task.getMaxEvent(),
-                    task.getMaxStreams(),
-                    task.getMaxEvents(),
-                    task.getMaxEventsPerStream());
-
-            // Create an asynchronous search task.
-            final String searchName = "Event Search";
-            final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
-                    task.getKey(),
-                    searchName,
-                    modifiedQuery,
-                    Collections.singletonList(settings),
-                    null,
-                    nowEpochMilli);
-
-            final Coprocessors coprocessors = coprocessorsFactory.create(
-                    task.getKey(),
-                    Collections.singletonList(settings),
-                    modifiedQuery.getParams(),
-                    false);
-            final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
-
-            // Create a collector to store search results.
-            final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
-                    asyncSearchTask,
-                    nodeInfo.getThisNodeName(),
-                    null,
-                    coprocessors);
-
-            // Tell the task where results will be collected.
-            asyncSearchTask.setResultCollector(searchResultCollector);
+    public void exec(final EventSearchTask task,
+                     final BiConsumer<EventRefs, Throwable> consumer) {
+        securityContext.secure(() -> {
+            EventRefs eventRefs = null;
+            Throwable throwable = null;
 
             try {
-                // Start asynchronous search execution.
-                searchResultCollector.start();
+                // Get the current time in millis since epoch.
+                final long nowEpochMilli = System.currentTimeMillis();
 
-                LOGGER.debug(() -> "Started searchResultCollector " + searchResultCollector);
+                // Get the search.
+                final Query query = task.getQuery();
 
-                // Wait for completion or termination
-                searchResultCollector.awaitCompletion();
+                // Replace expression parameters.
+                final Query modifiedQuery = ExpressionUtil.replaceExpressionParameters(query);
 
-                eventRefs = eventCoprocessor.getEventRefs();
-                if (eventRefs != null) {
-                    eventRefs.trim();
+                final int coprocessorId = 0;
+                final EventCoprocessorSettings settings = new EventCoprocessorSettings(
+                        coprocessorId,
+                        task.getMinEvent(),
+                        task.getMaxEvent(),
+                        task.getMaxStreams(),
+                        task.getMaxEvents(),
+                        task.getMaxEventsPerStream());
+
+                // Create an asynchronous search task.
+                final String searchName = "Event Search";
+                final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
+                        task.getKey(),
+                        searchName,
+                        modifiedQuery,
+                        Collections.singletonList(settings),
+                        null,
+                        nowEpochMilli);
+
+                final Coprocessors coprocessors = coprocessorsFactory.create(
+                        task.getKey(),
+                        Collections.singletonList(settings),
+                        modifiedQuery.getParams(),
+                        false);
+                final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
+
+                // Create a collector to store search results.
+                final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
+                        asyncSearchTask,
+                        nodeInfo.getThisNodeName(),
+                        null,
+                        coprocessors);
+
+                // Tell the task where results will be collected.
+                asyncSearchTask.setResultCollector(searchResultCollector);
+
+                try {
+                    // Start asynchronous search execution.
+                    searchResultCollector.start();
+
+                    LOGGER.debug(() -> "Started searchResultCollector " + searchResultCollector);
+
+                    // Wait for completion or termination
+                    searchResultCollector.awaitCompletion();
+
+                    eventRefs = eventCoprocessor.getEventRefs();
+                    if (eventRefs != null) {
+                        eventRefs.trim();
+                    }
+
+                    if (eventCoprocessor.getErrorConsumer().hasErrors()) {
+                        final String errors = String.join("\n", eventCoprocessor
+                                .getErrorConsumer()
+                                .getErrors());
+                        LOGGER.debug(errors);
+                        throwable = new RuntimeException(errors);
+                    }
+                } catch (final InterruptedException e) {
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+
+                    //Don't want to reset interrupt status as this thread will go back into
+                    //the executor's pool. Throwing an exception will terminate the task
+                    throw new RuntimeException(
+                            LogUtil.message("Thread {} interrupted executing task {}",
+                                    Thread.currentThread().getName(), task));
+                } finally {
+                    searchResultCollector.destroy();
                 }
-            } catch (final InterruptedException e) {
-                // Continue to interrupt this thread.
-                Thread.currentThread().interrupt();
-
-                //Don't want to reset interrupt status as this thread will go back into
-                //the executor's pool. Throwing an exception will terminate the task
-                throw new RuntimeException(
-                        LogUtil.message("Thread {} interrupted executing task {}",
-                                Thread.currentThread().getName(), task));
             } finally {
-                searchResultCollector.destroy();
+                consumer.accept(eventRefs, throwable);
             }
-
-            return eventRefs;
         });
     }
 }

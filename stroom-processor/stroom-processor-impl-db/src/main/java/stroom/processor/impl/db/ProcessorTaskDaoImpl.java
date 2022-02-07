@@ -542,7 +542,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
                         .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
                         .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
-                                PROCESSOR_FILTER_TRACKER.ID))
+                        PROCESSOR_FILTER_TRACKER.ID))
                         .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                         .where(condition)
                         .orderBy(orderFields)
@@ -619,8 +619,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
                         .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                         .where(condition)
-                        .groupBy(PROCESSOR.PIPELINE_UUID,
-                                PROCESSOR_TASK.FK_PROCESSOR_FEED_ID,
+                        .groupBy(PROCESSOR_FEED.NAME,
+                                PROCESSOR.PIPELINE_UUID,
                                 PROCESSOR_FILTER.PRIORITY,
                                 PROCESSOR_TASK.STATUS)
                         .orderBy(orderFields)

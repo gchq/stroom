@@ -216,7 +216,7 @@ appConfig:
           jdbcDriverPassword: "{{ 'stroompassword1' | envVar('STROOM_STATISTICS_JDBC_DRIVER_PASSWORD') }}"
   {% if distribution == "docker" %}
   ui:
-    helpUrl: "https://{{ 'localhost' | envVar('API_GATEWAY_HOST') }}/docs"
+    helpUrl: "https://{{ 'localhost' | envVar('API_GATEWAY_HOST') }}/stroom-docs/docs"
   {% else %}
   # ui:
     # helpUrl: "https://<nginx host>/docs"

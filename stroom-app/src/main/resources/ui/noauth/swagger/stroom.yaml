@@ -8066,7 +8066,9 @@ components:
           - 406 - 120 - Unexpected data type
           - 406 - 200 - Unknown compression
           - 401 - 300 - Client Certificate Required
+          - 401 - 301 - Client Token Required
           - 403 - 310 - Client Certificate not authorised
+          - 403 - 311 - Client Token not authorised
           - 500 - 400 - Compressed stream invalid
           - 500 - 999 - Unknown error
     GetPipelineForMetaRequest:
@@ -9425,6 +9427,8 @@ components:
           $ref: '#/components/schemas/ExpressionOperator'
         limits:
           $ref: '#/components/schemas/Limits'
+        params:
+          type: string
       xml:
         name: query
     QueryKey:
@@ -11197,6 +11201,14 @@ components:
         activity:
           $ref: '#/components/schemas/ActivityConfig'
         defaultMaxResults:
+          type: string
+        helpSubPathExpressions:
+          type: string
+        helpSubPathJobs:
+          type: string
+        helpSubPathProperties:
+          type: string
+        helpSubPathQuickFilter:
           type: string
         helpUrl:
           type: string

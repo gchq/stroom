@@ -10,6 +10,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ~~~
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
+* Issue **#2744** : Fix logging for expected interrupt exception.
+
+* Issue **#2746** : Fix broken help links in UI.
+
+* Change byte buffer pool clear method to unmap drained buffers.
+
+* Move some LMDB related classes.
+
+* Issue **#2736** : Fix missing or wrongly appearing meta/context tab.
+
+* Issue **#2732** : Fix bug when opening active tasks tab for an empty folder.
+
+* Issue **#2734** : Improve search task info.
+
+* Issue **#2733** : Stop search buttons disappearing.
+
+* Issue **#2735** : Fix batch search across remote nodes.
+
+* Issue **#2739** : Add support for query parameters when performing batch searches.
+
+* Issue **#2520** : Add token authentication to data feed API.
 
 
 ## [v7.2-alpha.2] - 2022-01-31

@@ -21,6 +21,7 @@ import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,6 +34,8 @@ import javax.validation.constraints.Pattern;
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class UiConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final String DEFAULT_USER_GUIDE_BASE_SUB_PATH = "/user-guide";
 
     @JsonProperty
     @JsonPropertyDescription("The welcome message that is displayed in the welcome tab when logging in to Stroom. " +
@@ -59,6 +62,22 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty
     @JsonPropertyDescription("The URL of hosted help files.")
     private final String helpUrl;
+
+    @JsonProperty
+    @JsonPropertyDescription("The sub-path for the help page for stroom jobs. Appended to helpUrl.")
+    private final String helpSubPathJobs;
+
+    @JsonProperty
+    @JsonPropertyDescription("The sub-path for the help page for the quick filter. Appended to helpUrl.")
+    private final String helpSubPathQuickFilter;
+
+    @JsonProperty
+    @JsonPropertyDescription("The sub-path for the help page for the properties. Appended to helpUrl.")
+    private final String helpSubPathProperties;
+
+    @JsonProperty
+    @JsonPropertyDescription("The sub-path for the help page for the dashboard expressions. Appended to helpUrl.")
+    private final String helpSubPathExpressions;
 
     @JsonProperty
     private final ThemeConfig theme;
@@ -107,7 +126,11 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         maintenanceMessage = null;
         defaultMaxResults = "1000000,100,10,1";
         process = new ProcessConfig();
-        helpUrl = "https://gchq.github.io/stroom-docs";
+        helpUrl = "https://gchq.github.io/stroom-docs/7.0/docs";
+        helpSubPathJobs = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/jobs/";
+        helpSubPathQuickFilter = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/finding-things/";
+        helpSubPathProperties = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/properties/";
+        helpSubPathExpressions = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/dashboards/expressions/";
         theme = new ThemeConfig();
         query = new QueryConfig();
         namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
@@ -126,6 +149,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("defaultMaxResults") final String defaultMaxResults,
                     @JsonProperty("process") final ProcessConfig process,
                     @JsonProperty("helpUrl") final String helpUrl,
+                    @JsonProperty("helpSubPathJobs") final String helpSubPathJobs,
+                    @JsonProperty("helpSubPathQuickFilter") final String helpSubPathQuickFilter,
+                    @JsonProperty("helpSubPathProperties") final String helpSubPathProperties,
+                    @JsonProperty("helpSubPathExpressions") final String helpSubPathExpressions,
                     @JsonProperty("theme") final ThemeConfig theme,
                     @JsonProperty("query") final QueryConfig query,
                     @JsonProperty("namePattern") @ValidRegex final String namePattern,
@@ -141,6 +168,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.defaultMaxResults = defaultMaxResults;
         this.process = process;
         this.helpUrl = helpUrl;
+        this.helpSubPathJobs = helpSubPathJobs;
+        this.helpSubPathQuickFilter = helpSubPathQuickFilter;
+        this.helpSubPathProperties = helpSubPathProperties;
+        this.helpSubPathExpressions = helpSubPathExpressions;
         this.theme = theme;
         this.query = query;
         this.namePattern = namePattern;
@@ -174,6 +205,66 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     public String getHelpUrl() {
         return helpUrl;
+    }
+
+    public String getHelpSubPathJobs() {
+        return helpSubPathJobs;
+    }
+
+    public String getHelpSubPathQuickFilter() {
+        return helpSubPathQuickFilter;
+    }
+
+    public String getHelpSubPathProperties() {
+        return helpSubPathProperties;
+    }
+
+    public String getHelpSubPathExpressions() {
+        return helpSubPathExpressions;
+    }
+
+    private String appendHelpPath(final String subPath) {
+        if (helpUrl == null) {
+            // No point appending a path to a null url
+            return null;
+        } else {
+            return helpUrl
+                    + (subPath != null
+                    ? subPath
+                    : "");
+        }
+    }
+
+    /**
+     * @return The URL for the Jobs page in the help site.
+     */
+    @JsonIgnore
+    public String getHelpUrlJobs() {
+        return appendHelpPath(helpSubPathJobs);
+    }
+
+    /**
+     * @return The URL for the quick filter page in the help site.
+     */
+    @JsonIgnore
+    public String getHelpUrlQuickFilter() {
+        return appendHelpPath(helpSubPathQuickFilter);
+    }
+
+    /**
+     * @return The URL for the properties page in the help site.
+     */
+    @JsonIgnore
+    public String getHelpUrlProperties() {
+        return appendHelpPath(helpSubPathProperties);
+    }
+
+    /**
+     * @return The URL for the dashboard expressions page in the help site.
+     */
+    @JsonIgnore
+    public String getHelpUrlExpressions() {
+        return appendHelpPath(helpSubPathExpressions);
     }
 
     public ThemeConfig getTheme() {
@@ -231,6 +322,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 && Objects.equals(defaultMaxResults, uiConfig.defaultMaxResults)
                 && Objects.equals(process, uiConfig.process)
                 && Objects.equals(helpUrl, uiConfig.helpUrl)
+                && Objects.equals(helpSubPathJobs, uiConfig.helpSubPathJobs)
+                && Objects.equals(helpSubPathQuickFilter, uiConfig.helpSubPathQuickFilter)
+                && Objects.equals(helpSubPathProperties, uiConfig.helpSubPathProperties)
+                && Objects.equals(helpSubPathExpressions, uiConfig.helpSubPathExpressions)
                 && Objects.equals(theme, uiConfig.theme)
                 && Objects.equals(query, uiConfig.query)
                 && Objects.equals(namePattern, uiConfig.namePattern)
@@ -250,6 +345,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 defaultMaxResults,
                 process,
                 helpUrl,
+                helpSubPathJobs,
+                helpSubPathQuickFilter,
+                helpSubPathProperties,
+                helpSubPathExpressions,
                 theme,
                 query,
                 namePattern,
@@ -270,6 +369,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 ", defaultMaxResults='" + defaultMaxResults + '\'' +
                 ", process=" + process +
                 ", helpUrl='" + helpUrl + '\'' +
+                ", helpSubPathJobs='" + helpSubPathJobs + '\'' +
+                ", helpSubPathQuickFilter='" + helpSubPathQuickFilter + '\'' +
+                ", helpSubPathProperties='" + helpSubPathProperties + '\'' +
+                ", helpSubPathExpressions='" + helpSubPathExpressions + '\'' +
                 ", theme=" + theme +
                 ", query=" + query +
                 ", namePattern='" + namePattern + '\'' +

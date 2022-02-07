@@ -52,7 +52,7 @@ public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
                         nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
                                 "Choose Item Quick Filter",
                                 ExplorerTreeFilter.FIELD_DEFINITIONS,
-                                uiConfig.getHelpUrl())));
+                                uiConfig.getHelpUrlQuickFilter())));
     }
 
     @Override

@@ -24,7 +24,7 @@ import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
+import stroom.pipeline.refdata.store.offheapstore.databases.AbstractStoreDbTest;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
@@ -55,7 +55,7 @@ import java.util.stream.LongStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
+class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestMapDefinitionUIDStore.class);
     private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();

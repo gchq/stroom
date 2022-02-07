@@ -39,17 +39,18 @@ class IndexShardHitCollector extends SimpleCollector {
     private final QueryKey queryKey;
     //an empty optional is used as a marker to indicate no more items will be added
     private final DocIdQueue docIdQueue;
-    private final AtomicLong hitCount;
+    private final AtomicLong totalHitCount;
+    private final AtomicLong localHitCount = new AtomicLong();
     private int docBase;
 
     IndexShardHitCollector(final TaskContext taskContext,
                            final QueryKey queryKey,
                            final DocIdQueue docIdQueue,
-                           final AtomicLong hitCount) {
+                           final AtomicLong totalHitCount) {
         this.taskContext = taskContext;
         this.queryKey = queryKey;
         this.docIdQueue = docIdQueue;
-        this.hitCount = hitCount;
+        this.totalHitCount = totalHitCount;
 
         info(() -> "Searching...");
     }
@@ -68,7 +69,7 @@ class IndexShardHitCollector extends SimpleCollector {
         try {
             SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_PUT);
             docIdQueue.put(docId);
-            info(() -> "Found " + hitCount + " hits");
+            info(() -> "Found " + localHitCount + " hits");
         } catch (final InterruptedException e) {
             info(() -> "Quitting...");
             LOGGER.trace(e::getMessage, e);
@@ -80,7 +81,8 @@ class IndexShardHitCollector extends SimpleCollector {
         }
 
         // Add to the hit count.
-        hitCount.getAndIncrement();
+        localHitCount.getAndIncrement();
+        totalHitCount.getAndIncrement();
     }
 
     private void info(final Supplier<String> message) {
