@@ -370,7 +370,7 @@ public class SearchExpressionQueryBuilder {
             final DocRef docRef,
             final ElasticIndexField indexField
     ) {
-        final String[] lines = readDictLines(docRef);
+        final String[] lines = wordListProvider.getWords(docRef);
         final BoolQueryBuilder builder = QueryBuilders.boolQuery();
 
         for (final String line : lines) {
@@ -397,15 +397,6 @@ public class SearchExpressionQueryBuilder {
         }
 
         return builder;
-    }
-
-    private String[] readDictLines(final DocRef docRef) {
-        final String words = wordListProvider.getCombinedData(docRef);
-        if (words == null) {
-            throw new ResourceNotFoundException("Dictionary \"" + docRef + "\" not found");
-        }
-
-        return words.trim().split("\n");
     }
 
     private boolean operatorHasChildren(final ExpressionOperator operator) {
