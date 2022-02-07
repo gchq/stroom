@@ -333,7 +333,13 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
         var editor = $wnd.ace.edit(element, {
             theme: "ace/theme/" + theme,
         });
-		editor.getSession().setUseWorker(false);
+
+		var session = editor.getSession();
+		session.setUseWorker(false);
+
+		// Normalise line endings to `LF`, including for pasted content
+		session.setNewLineMode("unix");
+
 		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = editor;
 
 		// Store a reference to the (Java) AceEditor object in the
