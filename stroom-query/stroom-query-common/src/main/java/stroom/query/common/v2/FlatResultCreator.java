@@ -27,6 +27,7 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
+import stroom.util.concurrent.UncheckedInterruptedException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -208,6 +209,8 @@ public class FlatResultCreator implements ResultCreator {
                         .values(results)
                         .build();
 
+            } catch (final UncheckedInterruptedException e) {
+                LOGGER.debug(e.getMessage(), e);
             } catch (final Exception e) {
                 LOGGER.error("Error creating result for resultRequest {}", resultRequest.getComponentId(), e);
                 errorConsumer.add(e);

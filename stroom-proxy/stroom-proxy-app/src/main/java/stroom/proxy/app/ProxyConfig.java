@@ -3,7 +3,6 @@ package stroom.proxy.app;
 import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
-import stroom.proxy.app.handler.ReceiptPolicyConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
@@ -37,7 +36,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     private final ProxyPathConfig pathConfig;
     private final ProxyRepoDbConfig proxyDbConfig;
-    private final ReceiptPolicyConfig receiptPolicyConfig;
+    private final ReceiveDataConfig receiveDataConfig;
     private final ProxyRepoConfig proxyRepoConfig;
     private final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig;
     private final AggregatorConfig aggregatorConfig;
@@ -55,7 +54,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         pathConfig = new ProxyPathConfig();
         proxyDbConfig = new ProxyRepoDbConfig();
-        receiptPolicyConfig = new ReceiptPolicyConfig();
+        receiveDataConfig = new ReceiveDataConfig();
         proxyRepoConfig = new ProxyRepoConfig();
         proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
         aggregatorConfig = new AggregatorConfig();
@@ -74,7 +73,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty("contentDir") final String contentDir,
             @JsonProperty("path") final ProxyPathConfig pathConfig,
             @JsonProperty("db") final ProxyRepoDbConfig proxyDbConfig,
-            @JsonProperty("receiptPolicy") final ReceiptPolicyConfig receiptPolicyConfig,
+            @JsonProperty("receiveDataConfig") final ReceiveDataConfig receiveDataConfig,
             @JsonProperty("repository") final ProxyRepoConfig proxyRepoConfig,
             @JsonProperty("scanner") final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig,
             @JsonProperty("aggregator") final AggregatorConfig aggregatorConfig,
@@ -90,7 +89,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.contentDir = contentDir;
         this.pathConfig = pathConfig;
         this.proxyDbConfig = proxyDbConfig;
-        this.receiptPolicyConfig = receiptPolicyConfig;
+        this.receiveDataConfig = receiveDataConfig;
         this.proxyRepoConfig = proxyRepoConfig;
         this.proxyRepoFileScannerConfig = proxyRepoFileScannerConfig;
         this.aggregatorConfig = aggregatorConfig;
@@ -138,16 +137,15 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxyDbConfig;
     }
 
-    @JsonProperty("receiptPolicy")
-    public ReceiptPolicyConfig getReceiptPolicyConfig() {
-        return receiptPolicyConfig;
+    @JsonProperty("receiveDataConfig")
+    public ReceiveDataConfig getReceiveDataConfig() {
+        return receiveDataConfig;
     }
 
     @JsonProperty("repository")
     public ProxyRepoConfig getProxyRepositoryConfig() {
         return proxyRepoConfig;
     }
-
 
     @JsonProperty("scanner")
     public ProxyRepoFileScannerConfig getProxyRepoFileScannerConfig() {
@@ -201,7 +199,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         private ProxyPathConfig pathConfig = new ProxyPathConfig();
         private ProxyRepoDbConfig proxyDbConfig = new ProxyRepoDbConfig();
-        private ReceiptPolicyConfig receiptPolicyConfig = new ReceiptPolicyConfig();
+        private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
         private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
         private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
         private AggregatorConfig aggregatorConfig = new AggregatorConfig();
@@ -241,8 +239,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
-        public Builder withReceiptPolicyConfig(final ReceiptPolicyConfig receiptPolicyConfig) {
-            this.receiptPolicyConfig = receiptPolicyConfig;
+        public Builder withReceiveDataConfig(final ReceiveDataConfig receiveDataConfig) {
+            this.receiveDataConfig = receiveDataConfig;
             return this;
         }
 
@@ -298,7 +296,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     contentDir,
                     pathConfig,
                     proxyDbConfig,
-                    receiptPolicyConfig,
+                    receiveDataConfig,
                     proxyRepoConfig,
                     proxyRepoFileScannerConfig,
                     aggregatorConfig,

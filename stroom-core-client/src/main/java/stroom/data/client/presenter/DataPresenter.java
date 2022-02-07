@@ -588,6 +588,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             updateAvailableAndSelectedTabs(streamTypeName, availableChildStreamTypes);
             refreshMetaInfoPresenterContent(currentSourceLocation.getMetaId());
             refreshProgressBar(false);
+            // As we are not hitting the rest service we need to clear this out else it will
+            // think we are on a strm/part that we are not.
+            lastResult = null;
         } else {
             // Tabs will be updated by updateFromResource
             setEffectiveChildStreamType(streamTypeName, availableChildStreamTypes);
@@ -668,7 +671,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private boolean isSameStreamAndPartAsLastTime() {
         if (lastResult != null) {
-
             final Long lastId = Optional.ofNullable(lastResult)
                     .flatMap(result -> Optional.ofNullable(result.getSourceLocation()))
                     .map(SourceLocation::getMetaId)
@@ -678,8 +680,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     .map(SourceLocation::getPartIndex)
                     .orElse(null);
 
-            return Objects.equals(getCurrentMetaId(), lastId)
+            final boolean isSame = Objects.equals(getCurrentMetaId(), lastId)
                     && Objects.equals(getCurrentPartIndex(), lastPartNo);
+//            GWT.log(lastId + ":" + lastPartNo
+//                    + " => "
+//                    + getCurrentMetaId() + ":" + getCurrentPartIndex()
+//                    + " = " + isSame);
+            return isSame;
         } else {
             return false;
         }

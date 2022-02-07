@@ -75,7 +75,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
-    private static final String EXPRESSIONS_HELP_BASE_PATH = "/user-guide/dashboards/expressions";
 
     private final MenuListPresenter menuListPresenter;
     private final RestFactory restFactory;
@@ -151,9 +150,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private void onShowHelp(final ClickEvent clickEvent) {
         if ((clickEvent.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
             withHelpUrl(helpUrl -> {
-                String url = helpUrl + EXPRESSIONS_HELP_BASE_PATH;
-
-                Window.open(url, "_blank", "");
+                Window.open(helpUrl, "_blank", "");
             });
         }
     }
@@ -161,7 +158,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private void withHelpUrl(final Consumer<String> work) {
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    final String helpUrl = result.getHelpUrl();
+                    final String helpUrl = result.getHelpUrlExpressions();
                     if (helpUrl != null && helpUrl.trim().length() > 0) {
                         work.accept(helpUrl);
                     } else {
@@ -424,6 +421,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             return description;
         }
 
+        @Override
         public String toString() {
             // i.e. concat(value1, value2)
             return name +

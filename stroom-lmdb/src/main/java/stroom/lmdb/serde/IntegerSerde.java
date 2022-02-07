@@ -15,9 +15,7 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore.serdes;
-
-import stroom.lmdb.Serde;
+package stroom.lmdb.serde;
 
 import java.nio.ByteBuffer;
 

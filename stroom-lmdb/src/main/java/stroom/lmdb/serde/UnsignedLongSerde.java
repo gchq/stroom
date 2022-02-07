@@ -1,7 +1,5 @@
 package stroom.lmdb.serde;
 
-import stroom.lmdb.Serde;
-
 import java.nio.ByteBuffer;
 
 public class UnsignedLongSerde implements Serde<UnsignedLong> {

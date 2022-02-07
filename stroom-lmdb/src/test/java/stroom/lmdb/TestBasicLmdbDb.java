@@ -15,21 +15,15 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore.lmdb;
+package stroom.lmdb;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
-import stroom.lmdb.BasicLmdbDb;
-import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.WriteTxn;
-import stroom.lmdb.LmdbEnvFactory;
-import stroom.lmdb.LmdbLibraryConfig;
-import stroom.lmdb.PutOutcome;
+import stroom.lmdb.serde.IntegerSerde;
 import stroom.lmdb.serde.StringSerde;
-import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
-import stroom.pipeline.refdata.store.offheapstore.serdes.IntegerSerde;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -621,19 +615,19 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
     @Test
     void testMaxReaders() {
-        Assertions.assertThat(lmdbEnv.info().numReaders)
+        assertThat(lmdbEnv.info().numReaders)
                 .isEqualTo(0);
         IntStream.rangeClosed(1, 20).forEach(i -> {
             basicLmdbDb.put(buildKey(i), buildValue(i), false);
 
         });
         // Show that writes to the db do not effect the num readers high water mark
-        Assertions.assertThat(lmdbEnv.info().numReaders)
+        assertThat(lmdbEnv.info().numReaders)
                 .isEqualTo(0);
 
         basicLmdbDb.get(buildKey(1));
 
-        Assertions.assertThat(lmdbEnv.info().numReaders)
+        assertThat(lmdbEnv.info().numReaders)
                 .isEqualTo(1);
     }
 
@@ -802,7 +796,6 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         }
     }
 
-    @NotNull
     private BasicLmdbDb<String, String> createDb(final TemporaryPathCreator temporaryPathCreator,
                                                  final EnvFlags[] envFlags,
                                                  final String id) {

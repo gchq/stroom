@@ -70,11 +70,11 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
             protected void showHelp(final Job row) {
                 clientPropertyCache.get()
                         .onSuccess(result -> {
-                            final String helpUrl = result.getHelpUrl();
+                            final String helpUrl = result.getHelpUrlJobs();
                             if (helpUrl != null && helpUrl.trim().length() > 0) {
-                                final String url = helpUrl
-                                        + "/user-guide/jobs.html"
-                                        + formatAnchor(row.getName());
+                                // This is a bit fragile as if the headings change in the docs then the anchors
+                                // wont work
+                                final String url = helpUrl + formatAnchor(row.getName());
                                 Window.open(url, "_blank", "");
                             } else {
                                 AlertEvent.fireError(
@@ -112,7 +112,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         getView().addColumn(enabledColumn, "Enabled", 80);
 
         // Job name.
-        getView().addColumn(new Column<Job, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<Job, String>(new TextCell()) {
             @Override
             public String getValue(final Job row) {
                 if (row != null) {
@@ -120,9 +120,9 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                 }
                 return null;
             }
-        }, "Job");
+        }, "Job", 200);
 
-        getView().addColumn(new Column<Job, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<Job, String>(new TextCell()) {
             @Override
             public String getValue(final Job row) {
                 if (row != null) {

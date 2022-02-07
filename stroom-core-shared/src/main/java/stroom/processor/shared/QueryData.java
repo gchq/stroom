@@ -29,17 +29,17 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-@XmlType(name = "query", propOrder = {"dataSource", "expression", "limits"})
+@XmlType(name = "query", propOrder = {"dataSource", "expression", "params", "limits"})
 @XmlRootElement(name = "query")
 @JsonInclude(Include.NON_NULL)
 public class QueryData implements Serializable {
-
-    private static final long serialVersionUID = -2530827581046882396L;
 
     @JsonProperty
     private DocRef dataSource;
     @JsonProperty
     private ExpressionOperator expression;
+    @JsonProperty
+    private String params;
     @JsonProperty
     private Limits limits;
 
@@ -49,9 +49,11 @@ public class QueryData implements Serializable {
     @JsonCreator
     public QueryData(@JsonProperty("dataSource") final DocRef dataSource,
                      @JsonProperty("expression") final ExpressionOperator expression,
+                     @JsonProperty("params") final String params,
                      @JsonProperty("limits") final Limits limits) {
         this.dataSource = dataSource;
         this.expression = expression;
+        this.params = params;
         this.limits = limits;
     }
 
@@ -71,6 +73,15 @@ public class QueryData implements Serializable {
 
     public void setExpression(final ExpressionOperator expression) {
         this.expression = expression;
+    }
+
+    @XmlElement
+    public String getParams() {
+        return params;
+    }
+
+    public void setParams(final String params) {
+        this.params = params;
     }
 
     @XmlElement
@@ -94,6 +105,7 @@ public class QueryData implements Serializable {
 
         private DocRef dataSource;
         private ExpressionOperator expression;
+        private String params;
         private Limits limits;
 
         private Builder() {
@@ -102,6 +114,7 @@ public class QueryData implements Serializable {
         private Builder(final QueryData queryData) {
             this.dataSource = queryData.dataSource;
             this.expression = queryData.expression;
+            this.params = queryData.params;
             this.limits = queryData.limits;
         }
 
@@ -120,8 +133,13 @@ public class QueryData implements Serializable {
             return this;
         }
 
+        public Builder params(final String value) {
+            this.params = value;
+            return this;
+        }
+
         public QueryData build() {
-            return new QueryData(dataSource, expression, limits);
+            return new QueryData(dataSource, expression, params, limits);
         }
     }
 }

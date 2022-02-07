@@ -35,6 +35,7 @@ import stroom.receive.common.RequestHandler;
 import stroom.receive.rules.impl.DataReceiptPolicyAttributeMapFilterFactoryImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
 import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
+import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
@@ -86,6 +87,7 @@ public class StoreAndForwardTestModule extends AbstractModule {
         bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
+        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class).asEagerSingleton();
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);

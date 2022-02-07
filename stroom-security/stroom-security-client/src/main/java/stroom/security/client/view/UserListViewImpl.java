@@ -55,7 +55,7 @@ public class UserListViewImpl extends ViewWithUiHandlers<UserListUiHandlers> imp
                         nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
                                 "Quick Filter",
                                 FindUserCriteria.FILTER_FIELD_DEFINITIONS,
-                                uiConfig.getHelpUrl())));
+                                uiConfig.getHelpUrlQuickFilter())));
     }
 
     @Override

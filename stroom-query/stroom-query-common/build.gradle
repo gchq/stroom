@@ -21,6 +21,7 @@ dependencies {
     implementation project(':stroom-lmdb')
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 

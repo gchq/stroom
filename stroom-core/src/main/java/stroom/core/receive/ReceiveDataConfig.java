@@ -16,21 +16,25 @@ public class ReceiveDataConfig extends AbstractConfig implements IsStroomConfig 
     private final String receiptPolicyUuid;
     private final String unknownClassification;
     private final String feedNamePattern;
+    private final boolean requireTokenAuthentication;
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
         unknownClassification = "UNKNOWN CLASSIFICATION";
         feedNamePattern = "^[A-Z0-9_-]{3,}$";
+        requireTokenAuthentication = false;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ReceiveDataConfig(@JsonProperty("receiptPolicyUuid") final String receiptPolicyUuid,
                              @JsonProperty("unknownClassification") final String unknownClassification,
-                             @JsonProperty("feedNamePattern") final String feedNamePattern) {
+                             @JsonProperty("feedNamePattern") final String feedNamePattern,
+                             @JsonProperty("requireTokenAuthentication") final boolean requireTokenAuthentication) {
         this.receiptPolicyUuid = receiptPolicyUuid;
         this.unknownClassification = unknownClassification;
         this.feedNamePattern = feedNamePattern;
+        this.requireTokenAuthentication = requireTokenAuthentication;
     }
 
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
@@ -49,12 +53,18 @@ public class ReceiveDataConfig extends AbstractConfig implements IsStroomConfig 
         return feedNamePattern;
     }
 
+    @JsonPropertyDescription("Require token authentication to send data to Stroom")
+    public boolean isRequireTokenAuthentication() {
+        return requireTokenAuthentication;
+    }
+
     @Override
     public String toString() {
-        return "DataFeedConfig{" +
+        return "ReceiveDataConfig{" +
                 "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
                 ", unknownClassification='" + unknownClassification + '\'' +
                 ", feedNamePattern='" + feedNamePattern + '\'' +
+                ", requireTokenAuthentication=" + requireTokenAuthentication +
                 '}';
     }
 }

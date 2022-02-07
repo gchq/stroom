@@ -236,9 +236,10 @@ appConfig:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 100
+    indexing:
+      maxNestedElementDepth: 10
     search:
-      maxBooleanClauseCount: 1024
-      maxStoredDataQueueSize: 1000
+      scrollDuration: "PT1M"
       searchResultCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
@@ -548,6 +549,7 @@ appConfig:
   receive:
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     receiptPolicyUuid: null
+    requireTokenAuthentication: false
     unknownClassification: "UNKNOWN CLASSIFICATION"
   search:
     extraction:
@@ -878,7 +880,11 @@ appConfig:
       enabled: false
       managerTitle: "Choose Activity"
     defaultMaxResults: "1000000,100,10,1"
-    helpUrl: "https://gchq.github.io/stroom-docs"
+    helpSubPathExpressions: "/user-guide/dashboards/expressions/"
+    helpSubPathJobs: "/user-guide/jobs/"
+    helpSubPathProperties: "/user-guide/properties/"
+    helpSubPathQuickFilter: "/user-guide/finding-things/"
+    helpUrl: "https://gchq.github.io/stroom-docs/7.0/docs"
     htmlTitle: "Stroom"
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
     oncontextmenu: "return false;"

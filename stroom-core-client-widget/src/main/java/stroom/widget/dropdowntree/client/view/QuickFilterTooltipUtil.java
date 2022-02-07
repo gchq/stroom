@@ -14,24 +14,22 @@ import java.util.stream.Collectors;
 
 public class QuickFilterTooltipUtil {
 
-    protected static final String FINDING_THINGS_HELP_PAGE = "/user-guide/finding-things/finding-things.html";
-
     public static SafeHtml createTooltip(final String header,
-                                         final String helpUrlBase) {
-        return createTooltip(header, Collections.emptyList(), helpUrlBase);
+                                         final String quickFilterHelpUrl) {
+        return createTooltip(header, Collections.emptyList(), quickFilterHelpUrl);
     }
 
     public static SafeHtml createTooltip(final String header,
                                          final List<FilterFieldDefinition> fieldDefinitions,
-                                         final String helpUrlBase) {
+                                         final String quickFilterHelpUrl) {
 
-        return createTooltip(header, null, fieldDefinitions, helpUrlBase);
+        return createTooltip(header, null, fieldDefinitions, quickFilterHelpUrl);
     }
 
     public static SafeHtml createTooltip(final String header,
                                          final Consumer<Builder> preambleBuilder,
                                          final List<FilterFieldDefinition> fieldDefinitions,
-                                         final String helpUrlBase) {
+                                         final String quickFilterHelpUrl) {
 
         final String defaultFieldNames = getDefaultFieldNamesInfo(fieldDefinitions);
 
@@ -105,7 +103,7 @@ public class QuickFilterTooltipUtil {
                 .addBreak()
                 .appendWithoutBreak("For more information see the ")
                 .appendLinkWithoutBreak(
-                        helpUrlBase + FINDING_THINGS_HELP_PAGE,
+                        quickFilterHelpUrl,
                         "Help Documentation")
                 .appendWithoutBreak(".");
 

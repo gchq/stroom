@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore.serdes;
+package stroom.lmdb.serde;
 
 import stroom.util.logging.LogUtil;
 
@@ -32,7 +32,7 @@ import java.util.UUID;
  * <p>
  * Uses fixed length serialisation so the serialised form will always be 16 bytes long
  */
-class FixedLengthUUIDKryoSerializer extends Serializer<String> {
+public class FixedLengthUUIDKryoSerializer extends Serializer<String> {
 
     @Override
     public void write(final Kryo kryo, final Output output, final String uuidStr) {

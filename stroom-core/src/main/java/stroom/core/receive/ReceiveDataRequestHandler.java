@@ -28,7 +28,9 @@ import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
+import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
 import stroom.util.logging.LambdaLogger;
@@ -40,10 +42,10 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.HttpHeaders;
 
 /**
  * <p>
@@ -59,68 +61,98 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final StreamTargetStreamHandlers streamTargetStreamHandlerProvider;
     private final TaskContextFactory taskContextFactory;
     private final MetaService metaService;
+    private final RequestAuthenticator requestAuthenticator;
+    private final ReceiveDataConfig receiveDataConfig;
 
     @Inject
     public ReceiveDataRequestHandler(final SecurityContext securityContext,
                                      final AttributeMapFilterFactory attributeMapFilterFactory,
                                      final StreamTargetStreamHandlers streamTargetStreamHandlerProvider,
                                      final TaskContextFactory taskContextFactory,
-                                     final MetaService metaService) {
+                                     final MetaService metaService,
+                                     final RequestAuthenticator requestAuthenticator,
+                                     final ReceiveDataConfig receiveDataConfig) {
         this.securityContext = securityContext;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.streamTargetStreamHandlerProvider = streamTargetStreamHandlerProvider;
         this.taskContextFactory = taskContextFactory;
         this.metaService = metaService;
+        this.requestAuthenticator = requestAuthenticator;
+        this.receiveDataConfig = receiveDataConfig;
     }
 
     @Override
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
         securityContext.asProcessingUser(() -> {
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
-
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
-            // Validate the supplied attributes.
-            AttributeMapValidator.validate(attributeMap, metaService::getTypes);
+            final String authorisationHeader = attributeMap.get(HttpHeaders.AUTHORIZATION);
 
-            final String feedName;
-            if (attributeMapFilter.filter(attributeMap)) {
-                debug("Receiving data", attributeMap);
-
-                feedName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.FEED))
-                        .map(String::trim)
-                        .orElse("");
-
-                // Get the type name from the header arguments if supplied.
-                String typeName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.TYPE))
-                        .map(String::trim)
-                        .orElse("");
-
-                taskContextFactory.context("Receiving Data", taskContext -> {
-                    final Consumer<Long> progressHandler =
-                            new TaskProgressHandler(taskContext, "Receiving " + feedName + " - ");
-                    try (final InputStream inputStream = request.getInputStream()) {
-                        streamTargetStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
-                            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                                    attributeMap,
-                                    handler,
-                                    progressHandler);
-                            stroomStreamProcessor.processRequestHeader(request);
-                            stroomStreamProcessor.processInputStream(inputStream, "");
-                        });
-                    } catch (final RuntimeException | IOException e) {
-                        LOGGER.error(e.getMessage(), e);
-                        StroomStreamException.createAndThrow(e, attributeMap);
-                    }
-                }).run();
-            } else {
-                // Drop the data.
-                debug("Dropping data", attributeMap);
+            // If token authentication is required but no token is supplied then error.
+            if (receiveDataConfig.isRequireTokenAuthentication() &&
+                    (authorisationHeader == null || authorisationHeader.isBlank())) {
+                throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
             }
 
-            // Set the response status.
-            final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
-            response.setStatus(stroomStatusCode.getHttpCode());
-            logSuccess(attributeMap, stroomStatusCode);
+            // Authenticate the request token if there is one.
+            final Optional<UserIdentity> optionalUserIdentity = requestAuthenticator.authenticate(request);
+
+            // Add the user identified in the token (if present) to the attribute map.
+            optionalUserIdentity
+                    .map(UserIdentity::getId)
+                    .ifPresent(id -> attributeMap.put("UploadUser", id));
+
+            if (receiveDataConfig.isRequireTokenAuthentication() && optionalUserIdentity.isEmpty()) {
+                // If token authentication is required, but we could not verify the token then error.
+                throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED, attributeMap);
+
+            } else {
+                // Remove authorization header from attributes.
+                attributeMap.remove(HttpHeaders.AUTHORIZATION);
+
+                // Validate the supplied attributes.
+                AttributeMapValidator.validate(attributeMap, metaService::getTypes);
+
+                final String feedName;
+                if (attributeMapFilter.filter(attributeMap)) {
+                    debug("Receiving data", attributeMap);
+
+                    feedName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.FEED))
+                            .map(String::trim)
+                            .orElse("");
+
+                    // Get the type name from the header arguments if supplied.
+                    String typeName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.TYPE))
+                            .map(String::trim)
+                            .orElse("");
+
+                    taskContextFactory.context("Receiving Data", taskContext -> {
+                        final Consumer<Long> progressHandler =
+                                new TaskProgressHandler(taskContext, "Receiving " + feedName + " - ");
+                        try (final InputStream inputStream = request.getInputStream()) {
+                            streamTargetStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
+                                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                                        attributeMap,
+                                        handler,
+                                        progressHandler);
+                                stroomStreamProcessor.processRequestHeader(request);
+                                stroomStreamProcessor.processInputStream(inputStream, "");
+                            });
+                        } catch (final RuntimeException | IOException e) {
+                            LOGGER.error(e.getMessage(), e);
+                            StroomStreamException.createAndThrow(e, attributeMap);
+                        }
+                    }).run();
+                } else {
+                    // Drop the data.
+                    debug("Dropping data", attributeMap);
+                }
+
+                // Set the response status.
+                final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
+                response.setStatus(stroomStatusCode.getHttpCode());
+                logSuccess(attributeMap, stroomStatusCode);
+            }
         });
     }
 
@@ -151,7 +183,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                     .keySet()
                     .stream()
                     .sorted()
-                    .collect(Collectors.toList());
+                    .toList();
             final StringBuilder sb = new StringBuilder();
             keys.forEach(key -> {
                 sb.append(key);

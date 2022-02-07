@@ -17,6 +17,7 @@
 package stroom.security.impl;
 
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.RequestAuthenticator;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
@@ -45,6 +46,7 @@ public class SecurityModule extends AbstractModule {
         bind(UserService.class).to(UserServiceImpl.class);
         bind(UserIdentityFactory.class).to(UserIdentityFactoryImpl.class);
         bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
+        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),

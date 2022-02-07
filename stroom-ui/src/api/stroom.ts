@@ -1451,7 +1451,9 @@ export interface GetFeedStatusResponse {
     | "406 - 120 - Unexpected data type"
     | "406 - 200 - Unknown compression"
     | "401 - 300 - Client Certificate Required"
+    | "401 - 301 - Client Token Required"
     | "403 - 310 - Client Certificate not authorised"
+    | "403 - 311 - Client Token not authorised"
     | "500 - 400 - Compressed stream invalid"
     | "500 - 999 - Unknown error";
 }
@@ -2327,6 +2329,7 @@ export interface QueryData {
   /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   limits?: Limits;
+  params?: string;
 }
 
 /**
@@ -3422,6 +3425,10 @@ export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
   defaultMaxResults?: string;
+  helpSubPathExpressions?: string;
+  helpSubPathJobs?: string;
+  helpSubPathProperties?: string;
+  helpSubPathQuickFilter?: string;
   helpUrl?: string;
   htmlTitle?: string;
   maintenanceMessage?: string;

@@ -40,7 +40,6 @@ public final class ExpressionParamUtil {
             return Collections.emptyMap();
         }
 
-
         final Map<String, String> paramMap = new HashMap<>();
         final char[] chars = trimmed.toCharArray();
 

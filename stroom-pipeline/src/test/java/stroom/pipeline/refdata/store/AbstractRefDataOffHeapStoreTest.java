@@ -18,7 +18,7 @@
 package stroom.pipeline.refdata.store;
 
 import stroom.pipeline.refdata.ReferenceDataConfig;
-import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
+import stroom.pipeline.refdata.store.offheapstore.databases.AbstractStoreDbTest;
 import stroom.util.io.ByteSize;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.time.StroomDuration;
@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
-public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest {
+public abstract class AbstractRefDataOffHeapStoreTest extends AbstractStoreDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRefDataOffHeapStoreTest.class);
     private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(5);

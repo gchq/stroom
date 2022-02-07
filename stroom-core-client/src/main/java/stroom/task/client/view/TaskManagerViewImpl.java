@@ -56,7 +56,7 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
                                         .addLine("All relations of a matched task will be included in the results.")
                                         .addBreak(),
                                 FindTaskProgressCriteria.FIELD_DEFINITIONS,
-                                uiConfig.getHelpUrl())));
+                                uiConfig.getHelpUrlQuickFilter())));
     }
 
     @Override
