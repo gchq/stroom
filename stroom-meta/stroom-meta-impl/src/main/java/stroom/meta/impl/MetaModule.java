@@ -45,7 +45,8 @@ public class MetaModule extends AbstractModule {
                         .schedule(PERIODIC, "10s"))
                 .bindJobTo(DataAttributesRetention.class, builder -> builder
                         .name("Attribute Value Data Retention")
-                        .description("Delete data attribute values older than system property stroom.meta.deleteAge")
+                        .description("Delete data attribute values older than system property " +
+                                "stroom.data.meta.metaValue.deleteAge")
                         .schedule(PERIODIC, "1d"));
     }
 

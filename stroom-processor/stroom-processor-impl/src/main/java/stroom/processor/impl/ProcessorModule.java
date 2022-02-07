@@ -74,7 +74,7 @@ public class ProcessorModule extends AbstractModule {
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
                         .name("Processor Task Retention")
                         .description("Physically delete processor tasks that have been logically " +
-                                "deleted or complete based on age (stroom.process.deletePurgeAge)")
+                                "deleted or complete based on age (stroom.processor.deletePurgeAge)")
                         .schedule(PERIODIC, "1m"));
 
         LifecycleBinder.create(binder())
