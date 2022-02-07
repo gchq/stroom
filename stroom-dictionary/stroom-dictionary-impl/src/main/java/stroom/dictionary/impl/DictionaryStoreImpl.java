@@ -32,6 +32,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.shared.Message;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -210,14 +211,15 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public String[] getWords(final DocRef dictionaryRef) {
-//            return wordMap.computeIfAbsent(docRef, k -> {
         final String words = getCombinedData(dictionaryRef);
         if (words != null) {
-            return words.trim().split("\n");
+            // Split by line break (`LF` or `CRLF`) and trim whitespace from each resulting line
+            return Arrays.stream(words.split("\r?\n"))
+                    .map(String::trim)
+                    .toArray(String[]::new);
         }
 
         return null;
-//            });
     }
 
     private String doGetCombinedData(final DocRef docRef, final Set<DocRef> visited) {
