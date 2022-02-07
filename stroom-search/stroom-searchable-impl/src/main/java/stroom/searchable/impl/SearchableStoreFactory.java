@@ -31,7 +31,6 @@ class SearchableStoreFactory implements StoreFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableStoreFactory.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SearchableStoreFactory.class);
-    private static final String TASK_NAME = "DB Search";
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
@@ -57,20 +56,21 @@ class SearchableStoreFactory implements StoreFactory {
 
     @Override
     public Store create(final SearchRequest searchRequest) {
-        return taskContextFactory.contextResult(TASK_NAME, taskContext -> {
+        final DocRef docRef = Preconditions.checkNotNull(
+                Preconditions.checkNotNull(
+                        Preconditions.checkNotNull(searchRequest)
+                                .getQuery())
+                        .getDataSource());
+        final Searchable searchable = searchableProvider.get(docRef);
+        final String taskName = SearchableStore.getTaskName(docRef);
+
+        return taskContextFactory.contextResult(taskName, taskContext -> {
             LOGGER.debug("create called for searchRequest {} ", searchRequest);
 
-            final DocRef docRef = Preconditions.checkNotNull(
-                    Preconditions.checkNotNull(
-                            Preconditions.checkNotNull(searchRequest)
-                                    .getQuery())
-                            .getDataSource());
             Preconditions.checkNotNull(searchRequest.getResultRequests(),
                     "searchRequest must have at least one resultRequest");
             Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(),
                     "searchRequest must have at least one resultRequest");
-
-            final Searchable searchable = searchableProvider.get(docRef);
 
             Preconditions.checkNotNull(searchable, "Searchable could not be found for " + docRef);
 

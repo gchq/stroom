@@ -63,6 +63,10 @@ import javax.inject.Inject;
  */
 @ConfigurableElement(
         type = "ReferenceDataFilter",
+        description = """
+                Takes XML input (conforming to the reference-data:2 schema) and \
+                loads the data into the Reference Data Store.
+                Reference data values can be either simple strings or XML fragments.""",
         category = Category.FILTER,
         roles = {
                 PipelineElementType.ROLE_TARGET,
