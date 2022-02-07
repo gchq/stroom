@@ -12,6 +12,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.178] - 2022-02-07
+
+* Issue **#2743** : Reset reactivation time when accounts are reactivated.
+
+* Issue **#2742** : Ensure meta queries provide unique results.
+
+* Issue **#2751** : Change task name for searchables to be the searchable name. Ensure task info is populated.
+
+* Issue **#2757** : Make ref load throw exception (and thus result in an ERROR) when a stream previously failed.
+
+* Issue **#2753** : Change default proxy config to set useDefaultOpenIdCredentials to false.
+
+* Issue **#2761** : Fix descriptions of _Attribute Value Data Retention_ and _Processor Task Retention_ jobs.
+
+
 ## [v7.0-beta.177] - 2022-02-02
 
 * Issue **#2744** : Fix logging for expected interrupt exception.
@@ -4161,7 +4176,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.177...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.178...HEAD
+[v7.0-beta.178]: https://github.com/gchq/stroom/compare/v7.0-beta.177...v7.0-beta.178
 [v7.0-beta.177]: https://github.com/gchq/stroom/compare/v7.0-beta.176...v7.0-beta.177
 [v7.0-beta.176]: https://github.com/gchq/stroom/compare/v7.0-beta.175...v7.0-beta.176
 [v7.0-beta.175]: https://github.com/gchq/stroom/compare/v7.0-beta.174...v7.0-beta.175
