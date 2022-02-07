@@ -41,7 +41,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public ProxyConfig() {
         proxyContentDir = "content";
-        useDefaultOpenIdCredentials = true;
+        useDefaultOpenIdCredentials = false;
         haltBootOnConfigValidationFailure = true;
 
         contentSyncConfig = new ContentSyncConfig();
