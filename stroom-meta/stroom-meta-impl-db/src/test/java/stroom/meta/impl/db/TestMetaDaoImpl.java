@@ -83,17 +83,17 @@ class TestMetaDaoImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-                new MetaTestModule(),
-                new MetaDbModule(),
-                new MetaDaoModule(),
-                new MockClusterLockModule(),
-                new MockSecurityContextModule(),
-                new MockTaskModule(),
-                new MockCollectionModule(),
-                new MockDocRefInfoModule(),
-                new MockWordListProviderModule(),
-                new CacheModule(),
-                new DbTestModule())
+                        new MetaTestModule(),
+                        new MetaDbModule(),
+                        new MetaDaoModule(),
+                        new MockClusterLockModule(),
+                        new MockSecurityContextModule(),
+                        new MockTaskModule(),
+                        new MockCollectionModule(),
+                        new MockDocRefInfoModule(),
+                        new MockWordListProviderModule(),
+                        new CacheModule(),
+                        new DbTestModule())
                 .injectMembers(this);
         // Delete everything`
         cleanup.cleanup();
@@ -127,8 +127,6 @@ class TestMetaDaoImpl {
 
     @TestFactory
     Stream<DynamicTest> testFind() {
-        setup();
-
         final AtomicInteger testNo = new AtomicInteger(1);
         return Stream.of(
 
@@ -266,6 +264,52 @@ class TestMetaDaoImpl {
         ).sequential();
     }
 
+    @Test
+    void testComplexQuery() {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(MetaFields.REC_READ.getName(), "" + 100);
+        attributeMap.put(MetaFields.REC_WRITE.getName(), "" + 10);
+        attributeMap.put(MetaFields.REC_ERROR.getName(), "" + 100);
+        attributeMap.put(MetaFields.REC_FATAL.getName(), "" + 10);
+
+        final Meta parent = metaDao.create(createRawProperties(TEST1_FEED_NAME));
+        final Meta myMeta = metaDao.create(createErrorProperties(parent, TEST1_FEED_NAME));
+
+        metaValueDao.addAttributes(myMeta, attributeMap);
+
+        metaValueDao.flush();
+        // Unlock all streams.
+        metaDao.updateStatus(new FindMetaCriteria(ExpressionOperator.builder().build()),
+                Status.LOCKED,
+                Status.UNLOCKED,
+                System.currentTimeMillis());
+
+        ExpressionOperator expression = ExpressionOperator.builder()
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, "Unlocked")
+                .addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN, "2000-01-01T00:00:00.000Z")
+                .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.ERROR)
+                .addTerm(MetaFields.ID, Condition.EQUALS, myMeta.getId())
+                .build();
+        ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(expression));
+        assertThat(resultPage.size()).isOne();
+
+        expression = ExpressionOperator.builder()
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, "Unlocked")
+                .addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN, "2000-01-01T00:00:00.000Z")
+                .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.ERROR)
+                .addTerm(MetaFields.ID, Condition.EQUALS, myMeta.getId())
+                .addOperator(
+                        ExpressionOperator.builder()
+                                .op(Op.OR)
+                                .addTerm(MetaFields.REC_ERROR, Condition.GREATER_THAN, 0)
+                                .addTerm(MetaFields.REC_FATAL, Condition.GREATER_THAN, 0)
+                                .build()
+                )
+                .build();
+        resultPage = metaDao.find(new FindMetaCriteria(expression));
+        assertThat(resultPage.size()).isOne();
+    }
+
     private DynamicTest makeTest(final int testNo, final ExpressionOperator expression, final int expected) {
         return DynamicTest.dynamicTest(
                 Strings.padStart(String.valueOf(testNo), 2, '0')
@@ -289,8 +333,6 @@ class TestMetaDaoImpl {
 
     @Test
     void testExtendedFind() {
-        setup();
-
         ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
                 TEST1_FEED_NAME)));
         assertThat(resultPage.size())
@@ -327,8 +369,6 @@ class TestMetaDaoImpl {
 
     @Test
     void testFindReprocess() {
-        setup();
-
         ResultPage<Meta> resultPage = metaDao.findReprocess(
                 new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
         assertThat(resultPage.size())
@@ -363,8 +403,6 @@ class TestMetaDaoImpl {
 
     @Test
     void testFindReprocess_ensureSingleParent() {
-        setup();
-
         final Meta parent = metaDao.create(createRawProperties(TEST1_FEED_NAME));
         final Meta processedMeta = metaDao.create(createProcessedProperties(parent, TEST1_FEED_NAME));
         final Meta errorMeta = metaDao.create(createErrorProperties(parent, TEST1_FEED_NAME));
@@ -394,8 +432,6 @@ class TestMetaDaoImpl {
 
     @Test
     void testGetSelectionSummary() {
-        setup();
-
         SelectionSummary selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(
                 MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
         assertThat(selectionSummary.getItemCount())
@@ -428,8 +464,6 @@ class TestMetaDaoImpl {
 
     @Test
     void testGetReprocessSelectionSummary() {
-        setup();
-
         SelectionSummary selectionSummary = metaDao.getReprocessSelectionSummary(
                 new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
                         TEST1_FEED_NAME)));
