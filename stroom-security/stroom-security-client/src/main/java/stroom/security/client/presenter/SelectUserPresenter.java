@@ -74,7 +74,6 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
 
         userListView.setDatGridView(pagerView);
         userListView.setUiHandlers(this);
-        userListView.asWidget().addStyleName("form-padding");
 
         // Icon
         dataGrid.addColumn(new Column<String, Preset>(new SvgCell()) {
@@ -158,7 +157,7 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
                 .popupSize(popupSize)
                 .caption("Choose User To Add")
                 .onShow(e -> getView().focus())
-                .onHideRequest(e -> {
+                .onHide(e -> {
                     if (e.isOk()) {
                         final String selected = getSelected();
                         if (selected != null) {

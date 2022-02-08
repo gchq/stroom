@@ -37,7 +37,7 @@ public class InfoDocumentViewImpl extends ViewImpl implements InfoDocumentPresen
 
         layout = new SimplePanel();
         layout.setWidget(textArea);
-        layout.setStyleName("form-padding max");
+        layout.setStyleName("max");
     }
 
     @Override

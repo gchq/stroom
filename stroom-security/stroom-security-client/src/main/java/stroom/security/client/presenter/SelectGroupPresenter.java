@@ -39,7 +39,6 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
                                 final PagerView pagerView,
                                 final RestFactory restFactory) {
         super(eventBus, userListView, pagerView, restFactory);
-        getView().asWidget().addStyleName("form-padding");
     }
 
     @Override
@@ -62,21 +61,7 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
         findUserCriteria.setGroup(true);
         setup(findUserCriteria);
 
-        final PopupSize popupSize = PopupSize.builder()
-                .width(Size
-                        .builder()
-                        .initial(400)
-                        .min(400)
-                        .resizable(true)
-                        .build())
-                .height(Size
-                        .builder()
-                        .initial(400)
-                        .min(400)
-                        .resizable(true)
-                        .build())
-                .build();
-
+        final PopupSize popupSize = PopupSize.resizable(400, 400);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
