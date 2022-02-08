@@ -418,12 +418,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                     .build();
 
             final UpdateEventAction.Builder<Void> actionBuilder = UpdateEventAction.builder();
-            if (add) {
-                actionBuilder.withAfter(MultiObject.builder().addObject(object).build());
-            } else {
-                actionBuilder.withBefore(MultiObject.builder().addObject(object).build());
-            }
-
+            actionBuilder.withAfter(MultiObject.builder().addObject(object).build());
             final Event event = stroomEventLoggingServiceProvider.get().createEvent(
                     typeId,
                     (add
