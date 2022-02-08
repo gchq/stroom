@@ -22,6 +22,7 @@ import stroom.docref.HasUuid;
 import stroom.util.shared.FetchWithUuid;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -50,6 +51,7 @@ public class SavePipelineXmlRequest implements HasUuid {
     }
 
     @Override
+    @JsonIgnore
     public String getUuid() {
         if (pipeline != null) {
             return pipeline.getUuid();
