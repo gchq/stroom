@@ -1,0 +1,212 @@
+/**
+ * The style names roughly follow the BEM (Block, Element, Modifier) standard but adapted for variables.
+ * In general the form is:
+ * --<object>__<attribute>
+ * --<object>__<attribute>--<modifier>
+ * --<object>__<attribute>--<modifier>--<modifier>
+ * --<object>-<inner_object>__<attribute>--<modifier>--<modifier>
+ */
+
+.stroom-theme-dark {
+    --focus-border: var(--blue-500);
+    --focus-shadow: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6); /* blue-500*/
+    --focus-border--valid: var(--valid);
+    --focus-shadow--valid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--valid-rgb), .6); /* --bootstrap-success*/
+    --focus-border--invalid: var(--invalid);
+    --focus-shadow--invalid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--invalid-rgb), .6); /* --bootstrap-error*/
+    --focus-border--secondary: var(--pink-500);
+    --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
+
+    --text-color: #e6e1dc;
+    --text-color--disabled: #666;
+    --border-color: transparent; /*#c5cde2;*/
+
+    --header__border-color: #333;
+    --row__background-color--even: #282c31;
+    --row__background-color--odd: #1a1d21;
+    --row__background-color--hovered: rgb(45, 47, 53);
+    --row__background-color--selected: rgb(0, 101, 167);
+    --row__background-color--selected--hovered: rgb(0,120,199);
+    --row__background-color--focussed: rgba(0,120,199,.5);
+    --row__background-color--selected--focussed: rgb(0,120,199);
+    --row__text-color--selected: #fff;
+
+    --menu-separator__color: rgb(255 255 255 / 20%);
+
+    --tooltip__background-color: #3c3f41;
+    --tooltip__text-color: #fff;
+
+    --button__background-image: none;
+    --button__background-color: #454545;
+    --button__border-color: #555;
+    --button__text-color: #fff;
+    --button__background-image--active: none;
+    --button__background-color--active: #555555;
+    --button__border-color--active: #444;
+    --button__background-image--hover: none;
+    --button__background-color--hover: #505050;
+    --button__border-color--hover: #666;
+    --button__text-color--disabled: #888;
+    --button__border-color--disabled--hover: #000;
+
+    --expression-item-box__background-color--selected: #454545;
+    --expression-item-box__background-color--hover: #555;
+    --expression-item-box__background-color--disabled: #333;
+    --expression-item-box__background-color--hotspot: rgba(255,0,0,.3);
+
+    --pipeline-element-box__background-color: #454545;
+    --pipeline-element-box__background-color--hover: #505050;
+    --pipeline-element-box__background-color--selected: #1164a3;
+    --pipeline-element-box__background-color--selected--hover: #1164a3;
+    --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.5);
+    --pipeline-element-box__text-color: #fff;
+    --pipeline-element-box__border-color: #a1a1a1;
+
+    --link__text-color: #3aaaff;
+
+    --link-tab__text-color: #e6e1dc;
+    --link-tab__text-color--focussed: #fff;
+
+    --code-editor-right-bar__background-color: #19171d;
+    --code-editor__border-color: #000;
+    --code-editor__border-color--info: #3676c6;
+    --code-editor__background-color--info: #378cff;
+    --code-editor__border-color--warning: #dd9942;
+    --code-editor__background-color--warning: #ffde81;
+    --code-editor__border-color--error: #660000;
+    --code-editor__background-color--error: #ff3a37;
+    --code-editor__border-color--fatal: #c5cde2;
+    --code-editor__background-color--fatal: #000000;
+    --code-editor__background-color--highlight: #1164a3;
+
+    --xsdbrowser-box__background-color: #19171d;
+    --xsdbrowser-box__border-color: #555;
+    --xsdbrowser-title__background-color: #555;
+    --xsdbrowser-title__background-color--selected: #1164a3;
+
+    --scrollbar__background-color: transparent;
+    --scrollbar-corner__background-color: transparent;
+    --scrollbar-thumb__border-color: transparent;
+    --scrollbar-thumb__background-color: #5c5c5c;
+    --scrollbar-thumb__background-color--hover: #8d8d8d;
+    --scrollbar-thumb__background-color--active: #979797;
+
+
+    /**
+     * NEW UI VARS
+     */
+
+    /* Page */
+    --app__background-color: #212121;/*#19171d;*/
+    --page__background-color: #212121;
+    --page__text-color: #cacbcb;
+
+    /* Controls */
+    --control__background-color: #131417;
+    --control__background-color--disabled: transparent;
+    --control__border-color: #4d5250;
+    --control__border-color--disabled: transparent;
+    --control__text-color: #cacbcb;
+    --control__text-color--disabled: #666;
+
+    /* Dashboard */
+    --dashboard-panel__background-color: #131417;
+    --dashboard-panel__border-color: #4d5250;
+    --dashboard-splitter__background-color: #2196f3;
+    --dashboard-splitter__border-color: #22252c;
+
+    /* Items, e.g. rows for tables, drop downs lists etc. */
+    --item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
+    --item__text-color--focus--highlighted: #cacbcb;
+    --item__background-color--focus--highlighted--hover: rgba(24, 94, 144, 0.3); /* rgba(24,94,144,0.4); */
+    --item__text-color--focus--highlighted--hover: #cacbcb;
+    --item__background-color--focus--selected: rgba(24, 94, 144, 0.9);
+    --item__text-color--focus--selected: #fff;
+    --item__background-color--focus--highlighted--selected: rgba(24, 94, 144, 1);
+    --item__text-color--focus--highlighted--selected: #fff;
+    --item__background-color--hover: rgba(255, 255, 255, 0.1); /* rgba(24,94,144,0.3); */
+    --item__text-color--hover: #cacbcb;
+    --item__background-color--selected: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.6); */
+    --item__text-color--selected: #fff; /* #cacbcb; #fff; */
+    --item__background-color--selected--hover: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.7); */
+    --item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
+
+    /* Pipeline editor */
+    --raised-low__background-color: #adadad;
+    --raised-low__text-color: #cacbcb;
+    --raised-high__background-color: #4d5250;
+    --raised-high__text-color: #cacbcb;
+    --raised-high__selected-background-color: #747c79;
+    --raised-high__selected-focus-background-color: #747c79;
+    --raised-element__border: thin solid #aaa;
+
+    /* Menu */
+    --menu-item__text-color: rgba(255, 255, 255, 0.8);
+    --menu-item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
+    --menu-item__text-color--focus--highlighted: #cacbcb;
+    --menu-item__background-color--focus--highlighted--hover: rgba(24, 94, 144, 0.3); /* rgba(24,94,144,0.4); */
+    --menu-item__text-color--focus--highlighted--hover: #cacbcb;
+    --menu-item__background-color--focus--selected: rgba(24, 94, 144, 0.9);
+    --menu-item__text-color--focus--selected: #fff;
+    --menu-item__background-color--focus--highlighted--selected: rgba(24, 94, 144, 1);
+    --menu-item__text-color--focus--highlighted--selected: #fff;
+    --menu-item__background-color--hover: rgba(255, 255, 255, 0.1); /* rgba(24,94,144,0.3); */
+    --menu-item__text-color--hover: #cacbcb;
+    --menu-item__background-color--selected: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.6); */
+    --menu-item__text-color--selected: #fff; /* #cacbcb; #fff; */
+    --menu-item__background-color--selected--hover: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.7); */
+    --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
+
+    /* Navigation pane */
+    --navigation__background-color: #19171d;
+    --navigation__background-color--hovered: rgb(45, 47, 53);
+    --navigation__background-color--selected: rgb(0, 101, 167);
+    --navigation__background-color--selected-hovered: rgb(0,120,199);
+    --navigation__background-color--focussed: rgba(0,120,199,.5);
+    --navigation__background-color--selected--focussed: rgb(0,120,199);
+    --navigation__text-color: #e6e1dc;
+    --navigation__text-color--selected: #fff;
+    --navigation__border-color: #27252c;
+
+    /* Specific */
+    --header__icon-color: #2185d0;
+
+    /* React table */
+    --table__odd-row__background-color: rgba(var(--black-rgb), 0.2);
+
+    /* Dialog */
+    --dialog__background-color: #1a1d21;
+    --dialog__border-color: rgb(132 132 132 / 60%);
+    --dialog__shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
+    --popup__shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
+
+    /* Status */
+    --ok: var(--blue-500);
+    --warn: var(--bootstrap-warning);
+    --error: var(--bootstrap-error);
+    --fatal: var(--black);
+
+    /* Form fields */
+    --primary-rgb: var(--blue-500-rgb);
+    --valid-rgb: var(--bootstrap-success-rgb);
+    --invalid-rgb: var(--bootstrap-error-rgb);
+    --feedback-rgb: var(--bootstrap-error-rgb);
+
+    --primary: var(--blue-500);
+    --valid: var(--bootstrap-success);
+    --invalid: var(--bootstrap-error);
+    --feedback: var(--red-200);
+
+    /* Visualisations */
+    --vis__background-color: var(--dashboard-panel__background-color);
+    --vis-axis__color: rgba(255,255,255,0.54);
+    --vis-text__color: rgba(255,255,255,0.87);
+    --vis-text__color--faint: rgba(255,255,255,0.12);
+    --vis-icon__color: rgba(255,255,255,0.38);
+    --vis-icon__color--hover: rgba(255,255,255,0.87);
+    --vis-barchart-element__stroke: #000;
+    --vis-marker__stroke: #fff;
+    --vis-series-label__background-color: rgba(0,0,0,0.87);
+    --vis-tip__background-color: rgba(30, 30, 30, 0.8);
+    --vis-tip-text__color: #bbb;
+}
