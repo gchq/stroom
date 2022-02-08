@@ -889,40 +889,18 @@
     justify-content: flex-end;
 }
 
-.characterRangeSelectionViewImpl-lineColInput {
-    width: 120px;
+.characterRangeSelectionViewImpl-options {
+   display: flex;
+   gap: var(--control__gap--horizontal);
 }
-.characterRangeSelectionViewImpl-offsetSpinner {
-    width: 120px;
+
+.characterRangeSelectionViewImpl-options > * {
+   min-width: 120px;
 }
-.characterRangeSelectionViewImpl-charSpinner {
-    width: 120px;
-}
-.characterRangeSelectionViewImpl tr.headingRow>td {
-    font-weight: bold !important;
-}
-.characterRangeSelectionViewImpl tr.paddedRow {
-    height: 30px;
-}
-.characterRangeSelectionViewImpl-paddedCol {
-    padding-left: 10px;
-}
-.characterRangeSelectionViewImpl-panelChild {
-}
-.characterRangeSelectionViewImpl-countLabel {
-    padding-left: 6px;
-}
-.characterRangeSelectionViewImpl-flowPanel {
-    display: flex;
-}
-.characterRangeSelectionViewImpl-flowPanel .lineColInput{
-    width: 120px !important;
-}
-.characterRangeSelectionViewImpl-cell {
-    padding-top: 4px;
-}
+
 .characterRangeSelectionViewImpl-infoLine {
-    padding-bottom: 12px;
+    display: flex;
+    gap: var(--control__gap--horizontal);
 }
 
 .subStreamNavigator {

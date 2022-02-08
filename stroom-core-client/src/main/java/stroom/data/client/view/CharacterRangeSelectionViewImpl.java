@@ -1,27 +1,27 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
+import stroom.docref.HasDisplayValue;
+import stroom.item.client.ItemListBox;
 import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class CharacterRangeSelectionViewImpl
         extends ViewImpl
         implements CharacterRangeSelectionView {
 
-    private static final String RADIO_BUTTON_GROUP = "RadioBtnGrp";
-    private static final long ZERO_TO_ONE_BASED_INCREMENT = 1L;
     private static final long ONE_TO_ZERO_BASED_DECREMENT = 1L;
     private static final NumberFormat numberFormatter = NumberFormat.getFormat("#,###");
 
@@ -30,121 +30,49 @@ public class CharacterRangeSelectionViewImpl
     @UiField
     Label lblTotalCharCount;
 
-    // from line:col => line;col
-    @UiField(provided = true)
-    RadioButton radioLocationToLocation;
     @UiField
-    Label lblLineColFrom1;
+    ItemListBox<From> fromType;
     @UiField
-    LineColInput lineColFrom1;
+    LineColInput fromLineCol;
     @UiField
-    Label lblLineColTo;
-    @UiField
-    LineColInput lineColTo;
+    ValueSpinner fromCharOffset;
 
-    // from line:col => char count
-    @UiField(provided = true)
-    RadioButton radioLocationWithCount;
     @UiField
-    Label lblLineColFrom2;
+    ItemListBox<To> toType;
     @UiField
-    LineColInput lineColFrom2;
+    LineColInput toLineCol;
     @UiField
-    Label lblCharCountSpinner1;
+    ValueSpinner toCharOffset;
     @UiField
-    ValueSpinner charCountSpinner1;
-
-    // from char offset => char offset
-    @UiField(provided = true)
-    RadioButton radioOffsetToOffset;
-    @UiField
-    Label lblCharOffsetFromSpinner1;
-    @UiField
-    ValueSpinner charOffsetFromSpinner1; // one based
-    @UiField
-    Label lblCharOffsetToSpinner1;
-    @UiField
-    ValueSpinner charOffsetToSpinner1; // one based
-
-    // from char offset => char count
-    @UiField(provided = true)
-    RadioButton radioOffsetWithCount;
-    @UiField
-    Label lblCharOffsetFromSpinner2;
-    @UiField
-    ValueSpinner charOffsetFromSpinner2; // one based
-    @UiField
-    Label lblCharCountSpinner2;
-    @UiField
-    ValueSpinner charCountSpinner2;
+    ValueSpinner toCharCount;
 
     private Count<Long> totalCharCount = Count.of(0L, false);
 
     @Inject
-    public CharacterRangeSelectionViewImpl(final EventBus eventBus,
-                                           final Binder binder) {
-
-        radioLocationToLocation = new RadioButton(RADIO_BUTTON_GROUP);
-        radioLocationWithCount = new RadioButton(RADIO_BUTTON_GROUP);
-        radioOffsetToOffset = new RadioButton(RADIO_BUTTON_GROUP);
-        radioOffsetWithCount = new RadioButton(RADIO_BUTTON_GROUP);
-
+    public CharacterRangeSelectionViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
         setInitialMinMax();
 
-        radioLocationToLocation.addValueChangeHandler(event -> updateRadioGroup());
-        radioLocationWithCount.addValueChangeHandler(event -> updateRadioGroup());
-        radioOffsetToOffset.addValueChangeHandler(event -> updateRadioGroup());
-        radioOffsetWithCount.addValueChangeHandler(event -> updateRadioGroup());
-        updateRadioGroup();
-    }
+        fromType.clear();
+        fromType.addItem(From.LINE_COL);
+        fromType.addItem(From.OFFSET);
 
-    private void updateRadioGroup() {
-        lineColFrom1.setEnabled(radioLocationToLocation.getValue());
-        lblLineColFrom1.setStyleDependentName(
-                "disabled", !radioLocationToLocation.getValue());
-        lineColTo.setEnabled(radioLocationToLocation.getValue());
-        lblLineColTo.setStyleDependentName(
-                "disabled", !radioLocationToLocation.getValue());
-
-        lineColFrom2.setEnabled(radioLocationWithCount.getValue());
-        lblLineColFrom2.setStyleDependentName(
-                "disabled", !radioLocationWithCount.getValue());
-        charCountSpinner1.setEnabled(radioLocationWithCount.getValue());
-        lblCharCountSpinner1.setStyleDependentName(
-                "disabled", !radioLocationWithCount.getValue());
-
-        charOffsetFromSpinner1.setEnabled(radioOffsetToOffset.getValue());
-        lblCharOffsetFromSpinner1.setStyleDependentName(
-                "disabled", !radioOffsetToOffset.getValue());
-        charOffsetToSpinner1.setEnabled(radioOffsetToOffset.getValue());
-        lblCharOffsetToSpinner1.setStyleDependentName(
-                "disabled", !radioOffsetToOffset.getValue());
-
-        charOffsetFromSpinner2.setEnabled(radioOffsetWithCount.getValue());
-        lblCharOffsetFromSpinner2.setStyleDependentName(
-                "disabled", !radioOffsetWithCount.getValue());
-        charCountSpinner2.setEnabled(radioOffsetWithCount.getValue());
-        lblCharCountSpinner2.setStyleDependentName(
-                "disabled", !radioOffsetWithCount.getValue());
+        toType.clear();
+        toType.addItem(To.LINE_COL);
+        toType.addItem(To.OFFSET);
+        toType.addItem(To.COUNT);
     }
 
     private void setInitialMinMax() {
-        charCountSpinner1.setMin(1);
-        charCountSpinner1.setMax(Long.MAX_VALUE);
+        fromCharOffset.setMin(1);
+        fromCharOffset.setMax(Long.MAX_VALUE);
 
-        charCountSpinner2.setMin(1);
-        charCountSpinner2.setMax(Long.MAX_VALUE);
+        toCharOffset.setMin(1);
+        toCharOffset.setMax(Long.MAX_VALUE);
 
-        charOffsetFromSpinner1.setMin(1);
-        charOffsetFromSpinner1.setMax(Long.MAX_VALUE);
-
-        charOffsetFromSpinner2.setMin(1);
-        charOffsetFromSpinner2.setMax(Long.MAX_VALUE);
-
-        charOffsetToSpinner1.setMin(1);
-        charOffsetToSpinner1.setMax(Long.MAX_VALUE);
+        toCharCount.setMin(1);
+        toCharCount.setMax(Long.MAX_VALUE);
     }
 
     @Override
@@ -154,27 +82,47 @@ public class CharacterRangeSelectionViewImpl
 
     @Override
     public void focus() {
-        radioLocationToLocation.setFocus(true);
+        fromType.focus();
     }
 
     @Override
     public DataRange getDataRange() {
         final DataRange.Builder dataRangeBuilder = DataRange.builder();
 
-        if (radioLocationToLocation.getValue()) {
-            lineColFrom1.getLocation().ifPresent(dataRangeBuilder::fromLocation);
-            lineColTo.getLocation().ifPresent(dataRangeBuilder::toLocation);
-        } else if (radioLocationWithCount.getValue()) {
-            lineColFrom2.getLocation().ifPresent(dataRangeBuilder::fromLocation);
-            dataRangeBuilder.withLength((long) charCountSpinner1.getValue());
-        } else if (radioOffsetToOffset.getValue()) {
-            dataRangeBuilder
-                    .fromCharOffset(toZeroBased(charOffsetFromSpinner1.getValue()))
-                    .toCharOffset((long) charOffsetToSpinner1.getValue() - ONE_TO_ZERO_BASED_DECREMENT);
-        } else if (radioOffsetWithCount.getValue()) {
-            dataRangeBuilder
-                    .fromCharOffset(toZeroBased(charOffsetFromSpinner2.getValue()))
-                    .withLength((long) charCountSpinner2.getValue());
+        switch (fromType.getSelectedItem()) {
+            case LINE_COL:
+
+                switch (toType.getSelectedItem()) {
+                    case LINE_COL:
+                        fromLineCol.getLocation().ifPresent(dataRangeBuilder::fromLocation);
+                        toLineCol.getLocation().ifPresent(dataRangeBuilder::toLocation);
+                        break;
+
+                    case COUNT:
+                        fromLineCol.getLocation().ifPresent(dataRangeBuilder::fromLocation);
+                        dataRangeBuilder.withLength((long) toCharCount.getValue());
+
+                        break;
+                }
+
+                break;
+            case OFFSET:
+                switch (toType.getSelectedItem()) {
+                    case OFFSET:
+                        dataRangeBuilder
+                                .fromCharOffset(toZeroBased(fromCharOffset.getValue()))
+                                .toCharOffset((long) toCharOffset.getValue() - ONE_TO_ZERO_BASED_DECREMENT);
+
+                        break;
+                    case COUNT:
+                        dataRangeBuilder
+                                .fromCharOffset(toZeroBased(fromCharOffset.getValue()))
+                                .withLength((long) toCharCount.getValue());
+
+                        break;
+                }
+
+                break;
         }
 
         return dataRangeBuilder.build();
@@ -183,42 +131,69 @@ public class CharacterRangeSelectionViewImpl
     @Override
     public void setDataRange(final DataRange dataRange) {
         setEnabledAndCheckedStates(dataRange);
-        updateRadioGroup();
+        updateFromSelection();
 
         dataRange.getOptLocationFrom().ifPresent(location -> {
-            lineColFrom1.setValue(location);
-            lineColFrom2.setValue(location);
+            fromLineCol.setValue(location);
         });
         dataRange.getOptCharOffsetFrom().ifPresent(offset -> {
-            charOffsetFromSpinner1.setValue(toOneBased(offset));
-            charOffsetFromSpinner2.setValue(toOneBased(offset));
+            fromCharOffset.setValue(toOneBased(offset));
         });
         dataRange.getOptLocationTo().ifPresent(location -> {
-            lineColTo.setValue(location);
+            toLineCol.setValue(location);
         });
         dataRange.getOptCharOffsetTo().ifPresent(offset -> {
-            charOffsetToSpinner1.setValue(toOneBased(offset));
+            toCharOffset.setValue(toOneBased(offset));
         });
-
         dataRange.getOptLength().ifPresent(count -> {
-            charCountSpinner1.setValue(count);
-            charCountSpinner2.setValue(count);
+            toCharCount.setValue(count);
         });
     }
 
 
     private void setEnabledAndCheckedStates(final DataRange dataRange) {
         if (dataRange.getOptLocationFrom().isPresent()) {
-            radioLocationToLocation.setValue(true, true);
-            radioLocationWithCount.setValue(false, true);
-            radioOffsetToOffset.setValue(false, true);
-            radioOffsetWithCount.setValue(false, true);
+            fromType.setSelectedItem(From.LINE_COL);
         } else {
-            radioLocationToLocation.setValue(false, true);
-            radioLocationWithCount.setValue(false, true);
-            radioOffsetToOffset.setValue(false, true);
-            radioOffsetWithCount.setValue(true, true);
+            fromType.setSelectedItem(From.OFFSET);
         }
+    }
+
+    private void updateFromSelection() {
+        final From from = fromType.getSelectedItem();
+        fromLineCol.setVisible(From.LINE_COL.equals(from));
+        fromCharOffset.setVisible(From.OFFSET.equals(from));
+
+        final To to = toType.getSelectedItem();
+        toType.clear();
+        switch (from) {
+            case LINE_COL:
+                toType.addItem(To.LINE_COL);
+                toType.addItem(To.COUNT);
+                if (to == To.COUNT) {
+                    toType.setSelectedItem(to);
+                } else {
+                    toType.setSelectedItem(To.LINE_COL);
+                }
+                break;
+            case OFFSET:
+                toType.addItem(To.OFFSET);
+                toType.addItem(To.COUNT);
+                if (to == To.COUNT) {
+                    toType.setSelectedItem(to);
+                } else {
+                    toType.setSelectedItem(To.OFFSET);
+                }
+                break;
+        }
+        updateToSelection();
+    }
+
+    private void updateToSelection() {
+        final To to = toType.getSelectedItem();
+        toLineCol.setVisible(To.LINE_COL.equals(to));
+        toCharOffset.setVisible(To.OFFSET.equals(to));
+        toCharCount.setVisible(To.COUNT.equals(to));
     }
 
     private void updateCountLabels() {
@@ -233,26 +208,18 @@ public class CharacterRangeSelectionViewImpl
     public void setTotalCharsCount(final Count<Long> totalCharCount) {
         this.totalCharCount = totalCharCount;
         if (totalCharCount.isExact() && totalCharCount.getCount() != null) {
-            charOffsetFromSpinner1.setMax(totalCharCount.getCount());
-            charOffsetFromSpinner2.setMax(totalCharCount.getCount());
-            charOffsetToSpinner1.setMax(totalCharCount.getCount());
-            charCountSpinner1.setMax(totalCharCount.getCount());
-            charCountSpinner2.setMax(totalCharCount.getCount());
+            fromCharOffset.setMax(totalCharCount.getCount());
+            toCharOffset.setMax(totalCharCount.getCount());
+            toCharCount.setMax(totalCharCount.getCount());
         } else {
-            charOffsetFromSpinner1.setMax(Long.MAX_VALUE);
-            charOffsetFromSpinner2.setMax(Long.MAX_VALUE);
-            charOffsetToSpinner1.setMax(Long.MAX_VALUE);
-            charCountSpinner1.setMax(Long.MAX_VALUE);
-            charCountSpinner2.setMax(Long.MAX_VALUE);
+            fromCharOffset.setMax(Long.MAX_VALUE);
+            toCharOffset.setMax(Long.MAX_VALUE);
+            toCharCount.setMax(Long.MAX_VALUE);
         }
         updateCountLabels();
     }
 
     private long toOneBased(final long zeroBasedValue) {
-        return zeroBasedValue + 1;
-    }
-
-    private long toOneBased(final int zeroBasedValue) {
         return zeroBasedValue + 1;
     }
 
@@ -262,5 +229,48 @@ public class CharacterRangeSelectionViewImpl
 
     public interface Binder extends UiBinder<Widget, CharacterRangeSelectionViewImpl> {
 
+    }
+
+    @UiHandler("fromType")
+    public void onFromTypeChange(final SelectionEvent<From> event) {
+        updateFromSelection();
+    }
+
+    @UiHandler("toType")
+    public void onToTypeChange(final SelectionEvent<To> event) {
+        updateToSelection();
+    }
+
+    public enum From implements HasDisplayValue {
+        LINE_COL("Line:Col (inc)"),
+        OFFSET("Character Offset (inc)");
+
+        private final String displayValue;
+
+        From(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
+    }
+
+    public enum To implements HasDisplayValue {
+        LINE_COL("Line:Col (inc)"),
+        OFFSET("Character Offset (inc)"),
+        COUNT("Character Count");
+
+        private final String displayValue;
+
+        To(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
     }
 }

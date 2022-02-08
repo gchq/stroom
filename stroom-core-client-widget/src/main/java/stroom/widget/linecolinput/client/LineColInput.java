@@ -38,6 +38,7 @@ public class LineColInput extends Composite {
 
         valueBox.addKeyPressHandler(LineColInput::onKeyPress);
         valueBox.addKeyUpHandler(this::validateEntry);
+        valueBox.addStyleName("allow-focus");
 
         final FlowPanel layout = new FlowPanel();
         layout.setStylePrimaryName("lineColInput");

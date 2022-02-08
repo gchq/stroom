@@ -15,15 +15,6 @@
  */
 
 .lineColInput {
-	display: inline-block;
-	position: relative;
-	width: 6em;
-}
-
-.lineColInput .gwt-TextBox {
-	margin: 0;
-	padding: 0 0 0 0;
-	width: 100%;
 }
 
 .lineColInput .highlight {
