@@ -58,6 +58,13 @@
 	position: relative;
 }
 
+.dashboard-panel {
+    border: solid 1px var(--dashboard-panel__border-color);
+    background-color: var(--dashboard-panel__background-color);
+    color: var(--control__text-color);
+    border-radius: .25rem;
+}
+
 .flexLayout-glass {
 	position: absolute;
 	left: 0px;
@@ -138,10 +145,6 @@
 .tabLayout .tabLayout-contentOuter {
     display: flex;
     flex-grow: 1;
-    border: solid 1px var(--dashboard-panel__border-color);
-    background-color: var(--dashboard-panel__background-color);
-    color: var(--control__text-color);
-    border-radius: .25rem;
     overflow: hidden;
 }
 

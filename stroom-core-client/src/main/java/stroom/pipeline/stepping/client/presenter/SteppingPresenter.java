@@ -18,6 +18,7 @@
 package stroom.pipeline.stepping.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.client.presenter.ClassificationUiHandlers;
 import stroom.data.client.presenter.SourcePresenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -71,7 +72,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.SteppingView> implements HasDirtyHandlers {
+public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.SteppingView> implements
+        HasDirtyHandlers,
+        ClassificationUiHandlers {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
@@ -95,6 +98,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private ButtonPanel leftButtons;
 
     private Meta meta;
+    private String classification;
 
     @Inject
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
@@ -137,6 +141,15 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 foundRecord);
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
+        sourcePresenter.setClassificationUiHandlers(this);
+    }
+
+    @Override
+    public void setClassification(final String classification) {
+        this.classification = classification;
+        for (final ElementPresenter elementPresenter : editorMap.values()) {
+            elementPresenter.setClassification(classification);
+        }
     }
 
     @Override
@@ -196,6 +209,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 presenter.setProperties(properties);
                 presenter.setFeedName(meta.getFeedName());
                 presenter.setPipelineName(request.getPipeline().getName());
+                presenter.setClassification(classification);
                 editorMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);
 

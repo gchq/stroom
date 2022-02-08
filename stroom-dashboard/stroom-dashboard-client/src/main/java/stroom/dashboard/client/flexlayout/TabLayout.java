@@ -63,7 +63,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         initWidget(panel);
 
         final FlowPanel contentOuter = new FlowPanel();
-        contentOuter.setStyleName("tabLayout-contentOuter");
+        contentOuter.setStyleName("tabLayout-contentOuter dashboard-panel");
         panel.add(contentOuter);
 
         final FlowPanel contentInner = new FlowPanel();

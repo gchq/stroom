@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:e="urn:import:stroom.editor.client.view">
-    <g:FlowPanel styleName="EditorViewImpl max dock-container-horizontal">
+    <g:FlowPanel styleName="EditorViewImpl max dock-container-horizontal dashboard-panel">
         <g:SimplePanel ui:field="content" styleName="dock-max"/>
         <e:RightBar ui:field="rightBar" addStyleNames="dock-min"/>
     </g:FlowPanel>

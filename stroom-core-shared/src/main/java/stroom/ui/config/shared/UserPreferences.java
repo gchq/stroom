@@ -152,7 +152,7 @@ public class UserPreferences {
     public static final class Builder {
 
         public static final String DEFAULT_EDITOR_THEME = "chrome";
-        public static final String DEFAULT_EDITOR_THEME_DARK = "tomorrow_night_eighties";
+        public static final String DEFAULT_EDITOR_THEME_DARK = "tomorrow_night";
         public static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
         private String theme;

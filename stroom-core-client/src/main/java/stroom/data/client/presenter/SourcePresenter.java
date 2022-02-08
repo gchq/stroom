@@ -42,7 +42,10 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-public class SourcePresenter extends MyPresenterWidget<SourceView> implements TextUiHandlers, Focus {
+public class SourcePresenter extends MyPresenterWidget<SourceView> implements
+        TextUiHandlers,
+        ClassificationUiHandlers,
+        Focus {
 
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
     private static final int HIGHLIGHT_CONTEXT_CHARS_BEFORE = 1_500;
@@ -65,6 +68,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private final int highlightDelta = 0;
     private boolean isSteppingSource = false;
     private Count<Long> exactCharCount = null;
+
+    private ClassificationUiHandlers classificationUiHandlers;
 
     @Inject
     public SourcePresenter(final EventBus eventBus,
@@ -372,7 +377,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
             lastResult = fetchDataResult;
             setTitle(lastResult);
-            classificationWrapperView.setClassification(result.getClassification());
+            setClassification(result.getClassification());
 
             updateEditor();
             updateNavigator(result);
@@ -564,6 +569,18 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
     private void beginStepping(ClickEvent clickEvent) {
         beginStepping();
+    }
+
+    @Override
+    public void setClassification(final String classification) {
+        classificationWrapperView.setClassification(classification);
+        if (this.classificationUiHandlers != null) {
+            this.classificationUiHandlers.setClassification(classification);
+        }
+    }
+
+    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
+        this.classificationUiHandlers = classificationUiHandlers;
     }
 
     @Override

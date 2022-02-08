@@ -123,7 +123,7 @@ public class NavigationPresenter
             final ActivityConfig activityConfig = uiConfig.getActivity();
             if (activityConfig.isEnabled()) {
                 updateActivitySummary();
-                activityButton.setStyleName("activityButton");
+                activityButton.setStyleName("activityButton dashboard-panel");
                 activityOuter.setStyleName("activityOuter");
                 activityOuter.setWidget(activityButton);
 

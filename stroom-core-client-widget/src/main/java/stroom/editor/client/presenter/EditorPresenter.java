@@ -78,7 +78,7 @@ public class EditorPresenter
         AceEditorTheme aceEditorTheme = AceEditorTheme.CHROME;
         if (theme != null &&
                 theme.toLowerCase(Locale.ROOT).contains("dark")) {
-            aceEditorTheme = AceEditorTheme.TOMORROW_NIGHT_EIGHTIES;
+            aceEditorTheme = AceEditorTheme.TOMORROW_NIGHT;
         }
         if (editorTheme != null) {
             aceEditorTheme = Arrays
