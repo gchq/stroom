@@ -17,16 +17,28 @@
 
 package stroom.pipeline;
 
+import stroom.docref.DocRef;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.pipeline.shared.PipelineDoc;
 
 import event.logging.BaseObject;
+import event.logging.Data;
 import event.logging.OtherObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Provider;
+
 class PipelineDocObjectInfoProvider implements ObjectInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineDocObjectInfoProvider.class);
+
+    private final Provider<PipelineService> pipelineServiceProvider;
+
+    @Inject
+    PipelineDocObjectInfoProvider(final Provider<PipelineService> pipelineServiceProvider) {
+        this.pipelineServiceProvider = pipelineServiceProvider;
+    }
 
     @Override
     public BaseObject createBaseObject(final Object obj) {
@@ -41,12 +53,37 @@ class PipelineDocObjectInfoProvider implements ObjectInfoProvider {
             LOGGER.error("Unable to get pipeline description!", e);
         }
 
-        return OtherObject.builder()
+        OtherObject.Builder builder = OtherObject.builder()
                 .withType(pipelineDoc.getType())
                 .withName(pipelineDoc.getName())
                 .withId(pipelineDoc.getUuid())
-                .withDescription(description)
-                .build();
+                .withDescription(description);
+
+
+        if (pipelineDoc.getParentPipeline() != null) {
+            builder.addData(Data.builder().withName("Parent")
+                    .withValue(pipelineDoc.getParentPipeline().getDisplayValue()).build());
+            builder.addData(Data.builder().withName("ParentUuid")
+                    .withValue(pipelineDoc.getParentPipeline().getUuid()).build());
+        } else {
+            builder.addData(Data.builder().withName("Parent")
+                    .withValue("<None>").build());
+            builder.addData(Data.builder().withName("ParentUuid")
+                    .withValue("").build());
+        }
+
+
+        try {
+            final String xml = pipelineServiceProvider.get().fetchPipelineXml(
+                    new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineDoc.getUuid()));
+            if (xml != null) {
+                builder.addData(Data.builder().withName("Structure").withValue(xml).build());
+            }
+        } catch (Exception ex) {
+            //Ignore this error
+        }
+
+        return builder.build();
     }
 
     @Override
