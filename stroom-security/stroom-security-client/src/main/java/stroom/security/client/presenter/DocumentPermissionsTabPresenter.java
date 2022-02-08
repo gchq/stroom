@@ -143,10 +143,10 @@ public class DocumentPermissionsTabPresenter
         this.isGroup = group;
 
         if (group) {
-            getView().setUsersLabelText("Groups:");
+            getView().setUsersLabelText("Groups");
             userListPresenter.setDocumentPermissions(documentPermissions.getGroups());
         } else {
-            getView().setUsersLabelText("Users:");
+            getView().setUsersLabelText("Users");
             userListPresenter.setDocumentPermissions(documentPermissions.getUsers());
         }
 
