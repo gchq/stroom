@@ -242,7 +242,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 selectionModel.setSelection(selection, selectionType);
 
             } else if (selectionModel.isSelected(row)) {
-                selectionModel.clear();
+//                selectionModel.clear();
 
             } else {
                 selectionModel.clear();
