@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.179] - 2022-02-09
+
+* Issue **gchq/stroom#2578** : Improve logging of Pipeline operations.
+
+* Issue **#2768** : Fix auto recurring searches.
+
+
 ## [v7.0-beta.178] - 2022-02-07
 
 * Issue **#2743** : Reset reactivation time when accounts are reactivated.
@@ -4176,7 +4183,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.178...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.179...HEAD
+[v7.0-beta.179]: https://github.com/gchq/stroom/compare/v7.0-beta.178...v7.0-beta.179
 [v7.0-beta.178]: https://github.com/gchq/stroom/compare/v7.0-beta.177...v7.0-beta.178
 [v7.0-beta.177]: https://github.com/gchq/stroom/compare/v7.0-beta.176...v7.0-beta.177
 [v7.0-beta.176]: https://github.com/gchq/stroom/compare/v7.0-beta.175...v7.0-beta.176
