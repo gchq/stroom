@@ -224,10 +224,13 @@ public class SearchResponseCreator {
                 : Duration.ofMillis(searchRequest.getTimeout());
         if (requestedTimeout != null) {
             return requestedTimeout;
-        } else {
-            // This is synchronous so just use the service's default
-            return FALL_BACK_DEFAULT_TIMEOUT;
+        } else if (searchRequest.incremental()) {
+            // No timeout supplied so they want a response immediately
+            return Duration.ZERO;
         }
+
+        // This is synchronous so just use the service's default.
+        return FALL_BACK_DEFAULT_TIMEOUT;
     }
 
     private List<Result> getResults(final SearchRequest searchRequest) {
