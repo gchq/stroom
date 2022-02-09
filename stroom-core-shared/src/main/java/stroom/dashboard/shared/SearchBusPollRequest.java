@@ -45,4 +45,12 @@ public class SearchBusPollRequest {
     public Set<DashboardSearchRequest> getSearchRequests() {
         return searchRequests;
     }
+
+    @Override
+    public String toString() {
+        return "SearchBusPollRequest{" +
+                "applicationInstanceId='" + applicationInstanceId + '\'' +
+                ", searchRequests=" + searchRequests +
+                '}';
+    }
 }
