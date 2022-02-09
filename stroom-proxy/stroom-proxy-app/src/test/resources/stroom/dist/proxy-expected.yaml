@@ -67,4 +67,4 @@ proxyConfig:
     userAgent: null
     validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
-  useDefaultOpenIdCredentials: true
+  useDefaultOpenIdCredentials: false

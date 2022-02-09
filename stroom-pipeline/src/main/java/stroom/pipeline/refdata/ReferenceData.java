@@ -291,8 +291,7 @@ public class ReferenceData {
         LOGGER.debug("optLoadState: {}, isRefLoadRequired: {}", optLoadState, isRefLoadRequired);
 
         if (optLoadState.isPresent() && optLoadState.get().equals(ProcessingState.FAILED)) {
-            //TODO do we throw or return an empty result?
-            result.log(Severity.ERROR, () -> LogUtil.message(
+            throw new RuntimeException(LogUtil.message(
                     "Reference stream {} has been loaded previously but failed, unable to lookup key {} in map {}",
                     refStreamDefinition.getStreamId(), keyName, mapName));
         } else {
@@ -503,13 +502,10 @@ public class ReferenceData {
             LOGGER.debug("optLoadState {}, isRefLoadRequired {}", optLoadState, isRefLoadRequired);
 
             if (optLoadState.isPresent() && optLoadState.get().equals(ProcessingState.FAILED)) {
-                //TODO do we throw or return an empty result?
-                result.log(Severity.ERROR, () -> LogUtil.message(
+                throw new RuntimeException(LogUtil.message(
                         "Reference stream {} has been loaded previously but failed, " +
                                 "aborting lookup against this stream.",
                         refStreamDefinition.getStreamId()));
-                isAvailableForLookups = false;
-//                throw new RuntimeException(result.getMessages());
             } else {
                 if (isRefLoadRequired) {
                     // we don't have the complete data so kick off a process to load it all
