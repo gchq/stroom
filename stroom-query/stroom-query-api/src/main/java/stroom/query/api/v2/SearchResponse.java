@@ -47,6 +47,8 @@ import javax.xml.bind.annotation.XmlType;
         "may only be a partial set if an iterative screech was requested")
 public final class SearchResponse {
 
+    public static final String TIMEOUT_MESSAGE = "The search timed out after ";
+
     @XmlElementWrapper(name = "highlights")
     @XmlElement(name = "highlight")
     @Schema(description = "A list of strings to highlight in the UI that should correlate with the search query.",

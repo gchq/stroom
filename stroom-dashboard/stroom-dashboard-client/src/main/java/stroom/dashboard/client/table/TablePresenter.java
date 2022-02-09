@@ -954,9 +954,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public void reset() {
         final long length = Math.max(1, tableResultRequest.getRequestedRange().getLength());
-        dataGrid.setRowData(0, new ArrayList<>());
-        dataGrid.setRowCount(0, true);
-        dataGrid.setVisibleRange(0, (int) length);
+
+        // Reset the data grid paging.
+        if (dataGrid.getVisibleRange().getStart() > 0) {
+            dataGrid.setVisibleRange(0, (int) length);
+        }
+
         tableResultRequest = tableResultRequest
                 .copy()
                 .requestedRange(new OffsetRange(0L, length))

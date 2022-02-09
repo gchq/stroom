@@ -67,19 +67,6 @@ public class SearchResponseCreator {
     }
 
     /**
-     * @param store          The underlying store to use for creating the search responses.
-     * @param defaultTimeout The service's default timeout period to use for waiting for the store to complete. This
-     *                       will be used when the search request hasn't specified a timeout period.
-     */
-    SearchResponseCreator(final SizesProvider sizesProvider,
-                          final Store store,
-                          final Duration defaultTimeout) {
-        this.sizesProvider = sizesProvider;
-        this.store = Objects.requireNonNull(store);
-        this.defaultTimeout = Objects.requireNonNull(defaultTimeout);
-    }
-
-    /**
      * @param throwable List of errors to add to the {@link SearchResponse}
      * @return An empty {@link SearchResponse} with the passed error messages
      */
@@ -133,7 +120,7 @@ public class SearchResponseCreator {
     public SearchResponse create(final SearchRequest searchRequest) {
         final boolean didSearchComplete;
 
-        if (!store.isComplete()) {
+        if (!searchRequest.incremental() && !store.isComplete()) {
             LOGGER.debug(() -> "Store not complete so will wait for completion or timeout");
             try {
                 final Duration effectiveTimeout = getEffectiveTimeout(searchRequest);
@@ -147,11 +134,11 @@ public class SearchResponseCreator {
                         ", didSearchComplete=" +
                         didSearchComplete);
 
-                if (!didSearchComplete && !searchRequest.incremental()) {
+                if (!didSearchComplete) {
                     // Search didn't complete non-incremental search in time so return a timed out error response
                     return createErrorResponse(
                             store,
-                            new RuntimeException("The search timed out after " + effectiveTimeout));
+                            new RuntimeException(SearchResponse.TIMEOUT_MESSAGE + effectiveTimeout));
                 }
 
             } catch (InterruptedException e) {
@@ -166,7 +153,7 @@ public class SearchResponseCreator {
         }
 
         // We will only get here if the search is complete or it is an incremental search in which case we don't care
-        // about completion state. Therefore assemble whatever results we currently have
+        // about completion state. Therefore, assemble whatever results we currently have
         try {
             // Get completion state before we get results.
             final boolean complete = store.isComplete();
@@ -240,13 +227,8 @@ public class SearchResponseCreator {
         if (requestedTimeout != null) {
             return requestedTimeout;
         } else {
-            if (searchRequest.incremental()) {
-                // No timeout supplied so they want a response immediately
-                return Duration.ZERO;
-            } else {
-                // This is synchronous so just use the service's default
-                return defaultTimeout;
-            }
+            // This is synchronous so just use the service's default
+            return defaultTimeout;
         }
     }
 
