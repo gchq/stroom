@@ -49,7 +49,6 @@ public class SearchResponseCreator {
 
     private final SizesProvider sizesProvider;
     private final Store store;
-    private final Duration defaultTimeout;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
 
@@ -63,7 +62,6 @@ public class SearchResponseCreator {
                                  final Store store) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
-        this.defaultTimeout = FALL_BACK_DEFAULT_TIMEOUT;
     }
 
     /**
@@ -120,7 +118,7 @@ public class SearchResponseCreator {
     public SearchResponse create(final SearchRequest searchRequest) {
         final boolean didSearchComplete;
 
-        if (!searchRequest.incremental() && !store.isComplete()) {
+        if (!store.isComplete()) {
             LOGGER.debug(() -> "Store not complete so will wait for completion or timeout");
             try {
                 final Duration effectiveTimeout = getEffectiveTimeout(searchRequest);
@@ -134,7 +132,7 @@ public class SearchResponseCreator {
                         ", didSearchComplete=" +
                         didSearchComplete);
 
-                if (!didSearchComplete) {
+                if (!didSearchComplete && !searchRequest.incremental()) {
                     // Search didn't complete non-incremental search in time so return a timed out error response
                     return createErrorResponse(
                             store,
@@ -228,7 +226,7 @@ public class SearchResponseCreator {
             return requestedTimeout;
         } else {
             // This is synchronous so just use the service's default
-            return defaultTimeout;
+            return FALL_BACK_DEFAULT_TIMEOUT;
         }
     }
 
