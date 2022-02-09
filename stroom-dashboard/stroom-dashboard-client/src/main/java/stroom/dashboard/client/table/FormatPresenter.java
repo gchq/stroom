@@ -67,7 +67,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
 
         getView().setWrap(format != null && format.getWrap() != null && format.getWrap());
 
-        final PopupSize popupSize = PopupSize.resizable(450, 350);
+        final PopupSize popupSize = PopupSize.resizable(450, 380);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

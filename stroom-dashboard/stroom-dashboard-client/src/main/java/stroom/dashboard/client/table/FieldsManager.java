@@ -24,6 +24,7 @@ import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -51,7 +52,6 @@ public class FieldsManager implements HeadingListener {
     private final FormatPresenter formatPresenter;
     private final FilterPresenter filterPresenter;
     private int fieldsStartIndex;
-    private boolean busy;
     private int currentColIndex = -1;
     private boolean ignoreNext;
 
@@ -75,7 +75,9 @@ public class FieldsManager implements HeadingListener {
         }
 
         ignoreNext = currentColIndex == colIndex;
-//        HidePopupEvent.fire(tablePresenter, menuPresenter);
+        HideMenuEvent
+                .builder()
+                .fire(tablePresenter);
     }
 
     @Override
@@ -85,62 +87,46 @@ public class FieldsManager implements HeadingListener {
 
             final Field field = getField(colIndex);
             if (field != null && !ignoreNext) {
-                busy = true;
                 new Timer() {
                     @Override
                     public void run() {
-//                        if (currentColIndex == colIndex) {
-//                            HidePopupEvent.fire(tablePresenter, menuPresenter);
-//
-//                        } else {
-                        currentColIndex = colIndex;
-                        final Element target = heading.getElement();
+                        if (currentColIndex == colIndex) {
+                            HideMenuEvent
+                                    .builder()
+                                    .fire(tablePresenter);
 
-                        final List<Item> menuItems = getMenuItems(field);
+                        } else {
+                            currentColIndex = colIndex;
+                            final Element target = heading.getElement();
 
-                        Element element = event.getEventTarget().cast();
-                        while (!element.getTagName().equalsIgnoreCase("th")) {
-                            element = element.getParentElement();
+                            final List<Item> menuItems = getMenuItems(field);
+
+                            Element element = event.getEventTarget().cast();
+                            while (!element.getTagName().equalsIgnoreCase("th")) {
+                                element = element.getParentElement();
+                            }
+
+                            final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
+                                    target.getAbsoluteRight(),
+                                    target.getAbsoluteTop(),
+                                    target.getAbsoluteBottom(),
+                                    null,
+                                    VerticalLocation.BELOW);
+
+                            ShowMenuEvent
+                                    .builder()
+                                    .items(menuItems)
+                                    .popupPosition(popupPosition)
+                                    .addAutoHidePartner(element)
+                                    .onHide(e2 -> currentColIndex = -1)
+                                    .fire(tablePresenter);
                         }
-                        final Element e = element;
-
-                        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
-                                target.getAbsoluteRight(),
-                                target.getAbsoluteTop(),
-                                target.getAbsoluteBottom(),
-                                null,
-                                VerticalLocation.BELOW);
-//                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-//                            @Override
-//                            public void onHideRequest(final boolean autoClose, final boolean ok) {
-//                                HidePopupEvent.fire(tablePresenter, menuPresenter);
-//                            }
-//
-//                            @Override
-//                            public void onHide(final boolean autoClose, final boolean ok) {
-//                                busy = false;
-//                                currentColIndex = -1;
-//                            }
-//                        };
-
-
-                        ShowMenuEvent.fire(tablePresenter, menuItems, popupPosition, element);
-//                        }
                     }
                 }.schedule(0);
             }
         }
 
         ignoreNext = false;
-    }
-
-    @Override
-    public boolean isBusy() {
-        return busy;
-    }
-
-    public void setBusy(final boolean busy) {
-        this.busy = busy;
     }
 
     @Override

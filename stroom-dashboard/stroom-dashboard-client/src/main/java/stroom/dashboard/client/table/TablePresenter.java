@@ -376,7 +376,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-            ShowMenuEvent.fire(this, menuItems, popupPosition);
+            ShowMenuEvent
+                    .builder()
+                    .items(menuItems)
+                    .popupPosition(popupPosition)
+                    .fire(this);
         }
     }
 

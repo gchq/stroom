@@ -23,6 +23,7 @@ public class Menu {
                 final Provider<MenuPresenter> menuPresenterProvider) {
         this.menuPresenterProvider = menuPresenterProvider;
         eventBus.addHandler(ShowMenuEvent.getType(), this::show);
+        eventBus.addHandler(HideMenuEvent.getType(), this::hide);
     }
 
     private void show(final ShowMenuEvent event) {
@@ -39,16 +40,23 @@ public class Menu {
             ShowPopupEvent.builder(menuPresenter)
                     .popupType(PopupType.POPUP)
                     .popupPosition(event.getPopupPosition())
-                    .addAutoHidePartner(event.getAutoHidePartner())
+                    .addAutoHidePartner(event.getAutoHidePartners())
                     .onShow(e -> {
                         menuPresenter.selectFirstItem(true);
                     })
                     .onHide(e -> {
+                        if (event.getHideHandler() != null) {
+                            event.getHideHandler().onHide(e);
+                        }
                         menuPresenter = null;
                         currentItems = null;
                     })
                     .fire();
         }
+    }
+
+    private void hide(final HideMenuEvent e) {
+        hide(false, false);
     }
 
     private void hide(final boolean autoClose, final boolean ok) {

@@ -363,11 +363,12 @@ public class DocumentPluginEventManager extends Plugin {
             if (getSelectedItems().size() == 1) {
                 final ExplorerNode primarySelection = getPrimarySelection();
                 getNewMenuItems(primarySelection).onSuccess(children ->
-                        ShowMenuEvent.fire(
-                                this,
-                                children,
-                                event.getPopupPosition(),
-                                event.getElement()));
+                        ShowMenuEvent
+                                .builder()
+                                .items(children)
+                                .popupPosition(event.getPopupPosition())
+                                .addAutoHidePartner(event.getElement())
+                                .fire(this));
             }
         }));
         registerHandler(getEventBus().addHandler(ShowExplorerMenuEvent.getType(), event -> {
@@ -388,10 +389,11 @@ public class DocumentPluginEventManager extends Plugin {
                                             documentTypes);
                                     addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
-                                    ShowMenuEvent.fire(
-                                            this,
-                                            menuItems,
-                                            event.getPopupPosition());
+                                    ShowMenuEvent
+                                            .builder()
+                                            .items(menuItems)
+                                            .popupPosition(event.getPopupPosition())
+                                            .fire(this);
 
 //                            menuPresenter.setData(menuItems);
 //                            menuPresenter.selectFirstItem();

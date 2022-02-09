@@ -11,6 +11,4 @@ public interface HeadingListener {
     void moveColumn(int fromIndex, int toIndex);
 
     void resizeColumn(int colIndex, int size);
-
-    boolean isBusy();
 }

@@ -82,9 +82,11 @@ public class TabManager {
                             tabConfig,
                             componentConfig,
                             nameChangeConsumer);
-                    ShowMenuEvent.fire(dashboardPresenter,
-                            menuItems,
-                            popupPosition);
+                    ShowMenuEvent
+                            .builder()
+                            .items(menuItems)
+                            .popupPosition(popupPosition)
+                            .fire(dashboardPresenter);
                 }
             }.schedule(0);
         }

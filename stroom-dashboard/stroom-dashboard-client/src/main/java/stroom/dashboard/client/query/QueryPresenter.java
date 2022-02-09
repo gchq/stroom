@@ -849,7 +849,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void showMenu(final List<Item> menuItems,
                           final PopupPosition popupPosition) {
-        ShowMenuEvent.fire(this, menuItems, popupPosition);
+        ShowMenuEvent
+                .builder()
+                .items(menuItems)
+                .popupPosition(popupPosition)
+                .fire(this);
     }
 
     private void downloadQuery() {

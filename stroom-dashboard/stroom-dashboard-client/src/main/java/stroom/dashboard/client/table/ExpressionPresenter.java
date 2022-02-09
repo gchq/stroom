@@ -233,7 +233,7 @@ public class ExpressionPresenter
             editorPresenter.setText("");
         }
 
-        final PopupSize popupSize = PopupSize.resizable(700, 300);
+        final PopupSize popupSize = PopupSize.resizable(700, 400);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -304,7 +304,11 @@ public class ExpressionPresenter
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-            ShowMenuEvent.fire(this, menuItems, popupPosition);
+            ShowMenuEvent
+                    .builder()
+                    .items(menuItems)
+                    .popupPosition(popupPosition)
+                    .fire(this);
         }
     }
 

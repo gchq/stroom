@@ -233,7 +233,12 @@ public class NavigationPresenter
         BeforeRevealMenubarEvent.fire(this, menuItems);
         final List<Item> items = menuItems.getMenuItems(MenuKeys.MAIN_MENU);
         if (items != null && items.size() > 0) {
-            ShowMenuEvent.fire(this, items, popupPosition, autoHidePartner);
+            ShowMenuEvent
+                    .builder()
+                    .items(items)
+                    .popupPosition(popupPosition)
+                    .addAutoHidePartner(autoHidePartner)
+                    .fire(this);
         }
     }
 

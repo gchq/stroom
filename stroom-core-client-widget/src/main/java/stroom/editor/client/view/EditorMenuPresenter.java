@@ -39,9 +39,11 @@ public class EditorMenuPresenter {
     public void show(final EditorPresenter xmlEditorPresenter,
                      final PopupPosition popupPosition) {
         this.xmlEditorPresenter = xmlEditorPresenter;
-        ShowMenuEvent.fire(xmlEditorPresenter,
-                getMenuItems(),
-                popupPosition);
+        ShowMenuEvent
+                .builder()
+                .items(getMenuItems())
+                .popupPosition(popupPosition)
+                .fire(xmlEditorPresenter);
     }
 
     /**

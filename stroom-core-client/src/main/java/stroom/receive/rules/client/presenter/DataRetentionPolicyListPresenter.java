@@ -133,7 +133,11 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
     private void showActionMenu(final DataRetentionRule row, final NativeEvent event) {
         final PopupPosition popupPosition = new PopupPosition(event.getClientX() + 10, event.getClientY());
         final List<Item> items = actionMenuItemProvider.apply(row);
-        ShowMenuEvent.fire(this, items, popupPosition);
+        ShowMenuEvent
+                .builder()
+                .items(items)
+                .popupPosition(popupPosition)
+                .fire(this);
     }
 
     private void addTickBoxColumn(final String name,

@@ -585,10 +585,12 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                     .build());
         }
 
-        ShowMenuEvent.fire(this,
-                menuItems,
-                popupPosition,
-                element);
+        ShowMenuEvent
+                .builder()
+                .items(menuItems)
+                .popupPosition(popupPosition)
+                .addAutoHidePartner(element)
+                .fire(this);
     }
 
     private void fireTabSelection(final TabData tabData) {

@@ -179,7 +179,11 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                     .build());
         }
 
-        ShowMenuEvent.fire(this, menuItems, popupPosition);
+        ShowMenuEvent
+                .builder()
+                .items(menuItems)
+                .popupPosition(popupPosition)
+                .fire(this);
     }
 
     public void setParams(final String params) {

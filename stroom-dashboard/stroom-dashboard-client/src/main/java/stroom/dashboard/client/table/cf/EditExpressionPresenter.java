@@ -216,7 +216,11 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
     private void showMenu(final List<Item> menuItems,
                           final PopupPosition popupPosition) {
-        ShowMenuEvent.fire(this, menuItems, popupPosition);
+        ShowMenuEvent
+                .builder()
+                .items(menuItems)
+                .popupPosition(popupPosition)
+                .fire(this);
     }
 
     public void setDirty(final boolean dirty) {

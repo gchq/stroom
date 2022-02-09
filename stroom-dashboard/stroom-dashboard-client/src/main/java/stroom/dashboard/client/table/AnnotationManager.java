@@ -67,7 +67,11 @@ public class AnnotationManager {
                 VerticalLocation.BELOW);
 
         final List<Item> menuItems = getMenuItems(tableComponentSettings, selectedItems);
-        ShowMenuEvent.fire(changeStatusPresenter, menuItems, popupPosition);
+        ShowMenuEvent
+                .builder()
+                .items(menuItems)
+                .popupPosition(popupPosition)
+                .fire(changeStatusPresenter);
     }
 
     private List<Item> getMenuItems(final TableComponentSettings tableComponentSettings,
