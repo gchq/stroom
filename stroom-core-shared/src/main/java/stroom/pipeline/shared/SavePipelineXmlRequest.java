@@ -17,14 +17,18 @@
 package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
+import stroom.docref.HasType;
+import stroom.docref.HasUuid;
+import stroom.util.shared.FetchWithUuid;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class SavePipelineXmlRequest {
+public class SavePipelineXmlRequest implements HasUuid {
 
     @JsonProperty
     private final DocRef pipeline;
@@ -44,5 +48,14 @@ public class SavePipelineXmlRequest {
 
     public String getXml() {
         return xml;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getUuid() {
+        if (pipeline != null) {
+            return pipeline.getUuid();
+        }
+        return null;
     }
 }

@@ -12,6 +12,22 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **gchq/stroom#2578** : Improve logging of Pipeline operations.
+
+* Issue **#2768** : Fix auto recurring searches.
+
+* Issue **#2743** : Reset reactivation time when accounts are reactivated.
+
+* Issue **#2742** : Ensure meta queries provide unique results.
+
+* Issue **#2751** : Change task name for searchables to be the searchable name. Ensure task info is populated.
+
+* Issue **#2757** : Make ref load throw exception (and thus result in an ERROR) when a stream previously failed.
+
+* Issue **#2753** : Change default proxy config to set useDefaultOpenIdCredentials to false.
+
+* Issue **#2761** : Fix descriptions of _Attribute Value Data Retention_ and _Processor Task Retention_ jobs.
+
 * Issue **#2744** : Fix logging for expected interrupt exception.
 
 * Issue **#2746** : Fix broken help links in UI.

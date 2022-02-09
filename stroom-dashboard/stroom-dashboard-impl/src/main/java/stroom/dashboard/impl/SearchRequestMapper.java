@@ -81,6 +81,7 @@ public class SearchRequestMapper {
                 .resultRequests(mapResultRequests(searchRequest))
                 .dateTimeSettings(searchRequest.getDateTimeSettings())
                 .incremental(searchRequest.getSearch().isIncremental())
+                .timeout(0L)
                 .build();
     }
 

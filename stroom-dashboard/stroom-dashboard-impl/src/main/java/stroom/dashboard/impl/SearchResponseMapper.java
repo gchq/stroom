@@ -22,6 +22,7 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.VisResult;
 import stroom.query.api.v2.VisResult.Store;
 import stroom.util.logging.LambdaLogger;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SearchResponseMapper {
 
@@ -66,9 +68,18 @@ public class SearchResponseMapper {
             }
         }
 
+        List<String> errors = searchResponse.getErrors();
+        if (errors != null) {
+            // Remove timeout message as this is expected to occur for non-incremental dashboard searches.
+            errors = errors
+                    .stream()
+                    .filter(error -> !error.startsWith(SearchResponse.TIMEOUT_MESSAGE))
+                    .collect(Collectors.toList());
+        }
+
         return new DashboardSearchResponse(queryKey,
                 highlights,
-                searchResponse.getErrors(),
+                errors,
                 searchResponse.complete(),
                 results);
     }

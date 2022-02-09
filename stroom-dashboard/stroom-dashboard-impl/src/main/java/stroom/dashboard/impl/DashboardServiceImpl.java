@@ -95,7 +95,7 @@ import javax.servlet.http.HttpServletRequest;
 @AutoLogged
 class DashboardServiceImpl implements DashboardService {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DashboardResourceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DashboardServiceImpl.class);
 
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");

@@ -26,9 +26,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("proxyConfig");
 
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
-    protected static final boolean DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS = true;
+    protected static final boolean DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS = false;
     protected static final boolean DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = true;
-    protected static final String DEFAULT_CONTENT_DIR = null;
+    protected static final String DEFAULT_CONTENT_DIR = "content";
 
     private final boolean useDefaultOpenIdCredentials;
     private final boolean haltBootOnConfigValidationFailure;

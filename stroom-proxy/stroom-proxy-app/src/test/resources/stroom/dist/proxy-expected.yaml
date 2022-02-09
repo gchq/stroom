@@ -6,7 +6,7 @@ proxyConfig:
     maxAggregateAge: "PT10M"
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1.0G"
-  contentDir: null
+  contentDir: "content"
   contentSync:
     apiKey: null
     contentSyncEnabled: false
@@ -86,4 +86,4 @@ proxyConfig:
     examineSourceThreadCount: 3
     forwardRetryThreadCount: 2
     forwardThreadCount: 10
-  useDefaultOpenIdCredentials: true
+  useDefaultOpenIdCredentials: false
