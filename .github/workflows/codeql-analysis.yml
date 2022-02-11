@@ -30,6 +30,13 @@ jobs:
         # Learn more about CodeQL language support at https://git.io/codeql-language-support
 
     steps:
+
+    - name: Install Java
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'temurin' # See 'Supported distributions' for available options
+        java-version: '15'
+
     - name: Checkout repository
       uses: actions/checkout@v2
 
@@ -63,7 +70,16 @@ jobs:
     - if: matrix.language == 'java' 
       name: Build Java
       run: |
-        ./container_build/runInJavaDocker.sh GRADLE_COMPILE
+        ./gradlew \
+          -Dorg.gradle.daemon=false \
+          -Dorg.gradle.parallel=true \
+          -Dorg.gradle.workers.max=${MAX_WORKERS:-6} \
+          -Dorg.gradle.configureondemand=true \
+          --console=plain \
+          compileJava \
+          -x compileTestJava \
+          -x test \
+          -x gwtCompile
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
