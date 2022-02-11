@@ -63,7 +63,7 @@ jobs:
     - if: matrix.language == 'java' 
       name: Build Java
       run: |
-        ./gradlew clean compileJava compileTestJava -x test -x gwtCompile
+        ./container_build/runInJavaDocker.sh GRADLE_COMPILE
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
