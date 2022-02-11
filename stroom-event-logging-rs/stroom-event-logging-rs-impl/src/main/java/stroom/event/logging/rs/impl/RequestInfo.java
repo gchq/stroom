@@ -147,7 +147,7 @@ class RequestInfo {
                         }
                     } else if (resource instanceof FetchWithUuid<?>) {
                         FetchWithUuid<?> docrefReadSupportingResource = (FetchWithUuid<?>) resource;
-                        if (template instanceof HasUuid && template instanceof HasType) {
+                        if (template instanceof HasUuid) {
                             String uuid = ((HasUuid) template).getUuid();
                             result = docrefReadSupportingResource.fetch(uuid);
                         } else {

@@ -49,7 +49,6 @@ public class SearchResponseCreator {
 
     private final SizesProvider sizesProvider;
     private final Store store;
-    private final Duration defaultTimeout;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
 
@@ -63,20 +62,6 @@ public class SearchResponseCreator {
                                  final Store store) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
-        this.defaultTimeout = FALL_BACK_DEFAULT_TIMEOUT;
-    }
-
-    /**
-     * @param store          The underlying store to use for creating the search responses.
-     * @param defaultTimeout The service's default timeout period to use for waiting for the store to complete. This
-     *                       will be used when the search request hasn't specified a timeout period.
-     */
-    SearchResponseCreator(final SizesProvider sizesProvider,
-                          final Store store,
-                          final Duration defaultTimeout) {
-        this.sizesProvider = sizesProvider;
-        this.store = Objects.requireNonNull(store);
-        this.defaultTimeout = Objects.requireNonNull(defaultTimeout);
     }
 
     /**
@@ -151,7 +136,7 @@ public class SearchResponseCreator {
                     // Search didn't complete non-incremental search in time so return a timed out error response
                     return createErrorResponse(
                             store,
-                            new RuntimeException("The search timed out after " + effectiveTimeout));
+                            new RuntimeException(SearchResponse.TIMEOUT_MESSAGE + effectiveTimeout));
                 }
 
             } catch (InterruptedException e) {
@@ -166,7 +151,7 @@ public class SearchResponseCreator {
         }
 
         // We will only get here if the search is complete or it is an incremental search in which case we don't care
-        // about completion state. Therefore assemble whatever results we currently have
+        // about completion state. Therefore, assemble whatever results we currently have
         try {
             // Get completion state before we get results.
             final boolean complete = store.isComplete();
@@ -239,15 +224,13 @@ public class SearchResponseCreator {
                 : Duration.ofMillis(searchRequest.getTimeout());
         if (requestedTimeout != null) {
             return requestedTimeout;
-        } else {
-            if (searchRequest.incremental()) {
-                // No timeout supplied so they want a response immediately
-                return Duration.ZERO;
-            } else {
-                // This is synchronous so just use the service's default
-                return defaultTimeout;
-            }
+        } else if (searchRequest.incremental()) {
+            // No timeout supplied so they want a response immediately
+            return Duration.ZERO;
         }
+
+        // This is synchronous so just use the service's default.
+        return FALL_BACK_DEFAULT_TIMEOUT;
     }
 
     private List<Result> getResults(final SearchRequest searchRequest) {
