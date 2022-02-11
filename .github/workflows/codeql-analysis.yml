@@ -34,7 +34,8 @@ jobs:
     - name: Install Java
       uses: actions/setup-java@v2
       with:
-        distribution: 'temurin' # See 'Supported distributions' for available options
+        #distribution: 'temurin' # See 'Supported distributions' for available options
+        distribution: 'zulu' # See 'Supported distributions' for available options
         java-version: '15'
 
     - name: Checkout repository
