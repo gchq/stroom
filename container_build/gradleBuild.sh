@@ -75,10 +75,12 @@ main() {
   export STROOM_JDBC_DRIVER_HOST="${host_ip}"
   echo -e "${GREEN}Setting STROOM_JDBC_DRIVER_HOST to ${BLUE}${host_ip}${NC}"
 
+  echo "::group::Gradle clean"
   echo -e "${GREEN}Clean${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
     clean
+  echo "::endgroup::"
 
   if [[ "${SKIP_TESTS:-false}" = true ]]; then
     echo -e "${YELLOW}Skipping tests${NC}"
@@ -94,6 +96,7 @@ main() {
   # our docker services as well.
   # Don't clean as this is a fresh clone and clean will wipe the cached
   # content pack zips
+  echo "::group::Basic Java build"
   echo -e "${GREEN}Do the basic java build${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
@@ -108,14 +111,18 @@ main() {
     -x copyFilesForStroomDockerBuild \
     -x copyFilesForProxyDockerBuild \
     -x buildDistribution
+  echo "::endgroup::"
 
-  echo -e "${GREEN}Do the UI build${NC}"
+  echo "::group::React UI build"
+  echo -e "${GREEN}Do the React UI build${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
     --scan \
     --stacktrace \
     stroom-ui:copyYarnBuild
+  echo "::endgroup::"
 
+  echo "::group::GWT UI build"
   echo -e "${GREEN}Do the GWT UI build${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
@@ -123,7 +130,9 @@ main() {
     --stacktrace \
     "${GWT_ARGS[@]}" \
     stroom-app-gwt:gwtCompile
+  echo "::endgroup::"
 
+  echo "::group::Dashboard GWT UI build"
   echo -e "${GREEN}Do the dashboard GWT UI build${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
@@ -131,11 +140,12 @@ main() {
     --stacktrace \
     "${GWT_ARGS[@]}" \
     stroom-dashboard-gwt:gwtCompile
+  echo "::endgroup::"
 
   # Make the distribution.
+  echo "::group::Distribution build"
   echo -e "${GREEN}Build the distribution with version" \
     "${BLUE}${BUILD_VERSION:-SNAPSHOT}${NC}"
-
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
     --scan \
@@ -150,6 +160,7 @@ main() {
     -x stroom-ui:copyYarnBuild \
     -x stroom-app-gwt:gwtCompile \
     -x stroom-dashboard-gwt:gwtCompile
+  echo "::endgroup::"
 
   echo -e "${GREEN}Done${NC}"
 }
