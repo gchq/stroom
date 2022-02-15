@@ -76,7 +76,7 @@ public class SearchRequestMapper {
         }
 
         return SearchRequest.builder()
-                .key(new QueryKey(queryKey.toString()))
+                .key(new QueryKey(queryKey.toUuid()))
                 .query(mapQuery(searchRequest))
                 .resultRequests(mapResultRequests(searchRequest))
                 .dateTimeLocale(searchRequest.getDateTimeLocale())

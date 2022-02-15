@@ -62,6 +62,21 @@ public class DashboardQueryKey {
         return queryInstanceId;
     }
 
+    /**
+     * Create a UUID to be used by the query API.
+     *
+     * @return A UUID.
+     */
+    public String toUuid() {
+        return applicationInstanceId +
+                '_' +
+                dashboardUuid +
+                '_' +
+                componentId +
+                '_' +
+                queryInstanceId;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
