@@ -11,10 +11,6 @@
                 <type>RecordCountFilter</type>
             </element>
             <element>
-                <id>testFilter</id>
-                <type>TestFilter</type>
-            </element>
-            <element>
                 <id>splitFilter</id>
                 <type>SplitFilter</type>
             </element>
@@ -101,10 +97,6 @@
             </link>
             <link>
                 <from>readRecordCountFilter</from>
-                <to>testFilter</to>
-            </link>
-            <link>
-                <from>testFilter</from>
                 <to>splitFilter</to>
             </link>
             <link>
