@@ -56,3 +56,4 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 
 #END OF Gradle stuff
+/stroom-pipeline/src/test/resources/TestXMLTransformer/PERFORMANCE.nxml
