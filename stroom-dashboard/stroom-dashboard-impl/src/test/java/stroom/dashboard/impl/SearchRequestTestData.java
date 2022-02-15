@@ -48,7 +48,8 @@ public class SearchRequestTestData {
 
     static DashboardQueryKey dashboardQueryKey() {
         return new DashboardQueryKey(
-                "queryKeyUuid",
+                "applicationInstanceId",
+                "dashboardUuid",
                 "0",
                 "queryId-1");
     }
@@ -123,7 +124,6 @@ public class SearchRequestTestData {
                 .componentSettingsMap(componentSettingsMap)
                 .params(params)
                 .incremental(true)
-                .storeHistory(false)
                 .build();
 
         final List<ComponentResultRequest> componentResultRequests = new ArrayList<>();
@@ -138,8 +138,12 @@ public class SearchRequestTestData {
             componentResultRequests.add(tableResultRequest);
         }
 
-        return new DashboardSearchRequest(
-                dashboardQueryKey(), search, componentResultRequests, "en-gb");
+        return DashboardSearchRequest
+                .builder()
+                .dashboardQueryKey(dashboardQueryKey())
+                .search(search)
+                .componentResultRequests(componentResultRequests)
+                .build();
     }
 
     private static DateTimeFormatSettings createDateTimeFormat() {

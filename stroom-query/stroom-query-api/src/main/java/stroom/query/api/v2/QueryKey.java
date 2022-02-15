@@ -38,8 +38,6 @@ import javax.xml.bind.annotation.XmlType;
         "identify multiple requests for the same search when running in incremental mode.")
 public final class QueryKey implements Serializable {
 
-    private static final long serialVersionUID = -3222989872764402068L;
-
     @XmlElement
     @Schema(description = "The UUID that makes up the query key",
             example = "7740bcd0-a49e-4c22-8540-044f85770716",
