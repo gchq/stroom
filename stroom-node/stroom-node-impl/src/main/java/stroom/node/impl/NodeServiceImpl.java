@@ -30,6 +30,7 @@ import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -247,7 +248,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         if (queryParams != null) {
             for (final Entry<String, Object> entry : queryParams.entrySet()) {
                 if (entry.getKey() != null) {
-                    webTarget = webTarget.queryParam(entry.getKey(), entry.getValue());
+                    webTarget = UriBuilderUtil.addParam(webTarget, entry.getKey(), entry.getValue());
                 }
             }
         }

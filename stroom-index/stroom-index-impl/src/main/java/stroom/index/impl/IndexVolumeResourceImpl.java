@@ -7,6 +7,7 @@ import stroom.index.shared.IndexVolumeResource;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResourcePaths;
@@ -16,6 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -79,9 +81,9 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
                     IndexVolumeResource.RESCAN_SUB_PATH);
             try {
                 // A different node to make a rest call to the required node
-                final Response response = webTargetFactoryProvider.get()
-                        .create(url)
-                        .queryParam("nodeName", nodeName)
+                WebTarget webTarget = webTargetFactoryProvider.get().create(url);
+                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get();
                 if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
