@@ -14,14 +14,16 @@ public class UriBuilderUtil {
     public static UriBuilder addParam(final UriBuilder uriBuilder,
                                       final String paramName,
                                       final Object value) {
-        return uriBuilder.queryParam(paramName, "{" + paramName + TEMPLATE + "}")
+        final String templateName = paramName + TEMPLATE;
+        return uriBuilder.queryParam(paramName, "{" + templateName + "}")
                 .resolveTemplate(paramName + TEMPLATE, value);
     }
 
     public static WebTarget addParam(final WebTarget webTarget,
                                      final String paramName,
                                      final Object value) {
-        return webTarget.queryParam(paramName, "{" + paramName + TEMPLATE + "}")
+        final String templateName = paramName + TEMPLATE;
+        return webTarget.queryParam(paramName, "{" + templateName + "}")
                 .resolveTemplate(paramName + TEMPLATE, value);
     }
 }
