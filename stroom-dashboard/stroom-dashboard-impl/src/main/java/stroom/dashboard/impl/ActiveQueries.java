@@ -70,7 +70,7 @@ class ActiveQueries {
             } else {
                 // Keep the query alive.
                 if (!activeQuery.keepAlive()) {
-                    LOGGER.error("Unable to keep alive: " + queryKey.toString());
+                    LOGGER.debug("Unable to keep alive: " + queryKey.toString());
                 }
 
                 // Let the UI know this query is still alive.
