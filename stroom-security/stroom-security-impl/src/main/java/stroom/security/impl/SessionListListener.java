@@ -25,6 +25,7 @@ import stroom.security.shared.SessionDetails;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
@@ -44,6 +45,7 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -124,8 +126,9 @@ class SessionListListener implements HttpSessionListener, SessionListService {
 
             try {
                 LOGGER.debug("Sending request to {} for node {}", url, nodeName);
-                final Response response = webTargetFactory.create(url)
-                        .queryParam(SessionResource.NODE_NAME_PARAM, nodeName)
+                WebTarget webTarget = webTargetFactory.create(url);
+                webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.NODE_NAME_PARAM, nodeName);
+                final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get();
 

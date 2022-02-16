@@ -20,9 +20,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
-import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class DashboardSearchRequest {
@@ -36,17 +36,30 @@ public class DashboardSearchRequest {
     @JsonProperty
     private final String dateTimeLocale;
 
+    @Schema(description = "Set the maximum time (in ms) for the server to wait for a complete result set. The " +
+            "timeout applies to both incremental and non incremental queries, though the behaviour is slightly " +
+            "different. The timeout will make the server wait for which ever comes first out of the query " +
+            "completing or the timeout period being reached. If no value is supplied then for an " +
+            "incremental query a default value of 0 will be used (i.e. returning immediately) and for a " +
+            "non-incremental query the server's default timeout period will be used. For an incremental " +
+            "query, if the query has not completed by the end of the timeout period, it will return " +
+            "the currently know results with complete=false, however for a non-incremental query it will " +
+            "return no results, complete=false and details of the timeout in the error field")
+    @JsonProperty
+    private final long timeout;
+
     @JsonCreator
     public DashboardSearchRequest(
             @JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
             @JsonProperty("search") final Search search,
             @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
-            @JsonProperty("dateTimeLocale") final String dateTimeLocale) {
-
+            @JsonProperty("dateTimeLocale") final String dateTimeLocale,
+            @JsonProperty("timeout") final long timeout) {
         this.dashboardQueryKey = dashboardQueryKey;
         this.search = search;
         this.componentResultRequests = componentResultRequests;
         this.dateTimeLocale = dateTimeLocale;
+        this.timeout = timeout;
     }
 
     public DashboardQueryKey getDashboardQueryKey() {
@@ -65,33 +78,18 @@ public class DashboardSearchRequest {
         return dateTimeLocale;
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final DashboardSearchRequest that = (DashboardSearchRequest) o;
-        return Objects.equals(dashboardQueryKey, that.dashboardQueryKey) &&
-                Objects.equals(search, that.search) &&
-                Objects.equals(componentResultRequests, that.componentResultRequests) &&
-                Objects.equals(dateTimeLocale, that.dateTimeLocale);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(dashboardQueryKey, search, componentResultRequests, dateTimeLocale);
+    public long getTimeout() {
+        return timeout;
     }
 
     @Override
     public String toString() {
-        return "SearchRequest{" +
+        return "DashboardSearchRequest{" +
                 "dashboardQueryKey=" + dashboardQueryKey +
                 ", search=" + search +
                 ", componentResultRequests=" + componentResultRequests +
                 ", dateTimeLocale='" + dateTimeLocale + '\'' +
+                ", timeout=" + timeout +
                 '}';
     }
 
@@ -108,7 +106,8 @@ public class DashboardSearchRequest {
         private DashboardQueryKey dashboardQueryKey;
         private Search search;
         private List<ComponentResultRequest> componentResultRequests;
-        private String dateTimeLocale;
+        private String dateTimeLocale = "en-gb";
+        private long timeout = 1000L;
 
         private Builder() {
         }
@@ -118,6 +117,7 @@ public class DashboardSearchRequest {
             this.search = searchRequest.search;
             this.componentResultRequests = searchRequest.componentResultRequests;
             this.dateTimeLocale = searchRequest.dateTimeLocale;
+            this.timeout = searchRequest.timeout;
         }
 
         public Builder dashboardQueryKey(final DashboardQueryKey dashboardQueryKey) {
@@ -140,8 +140,18 @@ public class DashboardSearchRequest {
             return this;
         }
 
+        public Builder timeout(final long timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
         public DashboardSearchRequest build() {
-            return new DashboardSearchRequest(dashboardQueryKey, search, componentResultRequests, dateTimeLocale);
+            return new DashboardSearchRequest(
+                    dashboardQueryKey,
+                    search,
+                    componentResultRequests,
+                    dateTimeLocale,
+                    timeout);
         }
     }
 }

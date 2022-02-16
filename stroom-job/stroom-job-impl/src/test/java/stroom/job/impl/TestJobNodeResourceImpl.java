@@ -8,6 +8,7 @@ import stroom.job.shared.JobNodeResource;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.ResourcePaths;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -74,8 +75,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 subPath,
                 JobNodeListResponse.class,
                 JOB_NODES,
-                webTarget -> webTarget.queryParam("jobName", "myJob"),
-                webTarget -> webTarget.queryParam("nodeName", "node1")
+                webTarget -> UriBuilderUtil.addParam(webTarget, "jobName", "myJob"),
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1")
         );
 
         verify(jobNodeServiceMap.get("node1"), Mockito.only())
@@ -124,7 +125,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 subPath,
                 JobNodeListResponse.class,
                 JOB_NODES,
-                webTarget -> webTarget.queryParam("nodeName", "node1")
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1")
         );
 
         verify(jobNodeServiceMap.get("node1"), Mockito.only())
@@ -148,8 +149,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 subPath,
                 JobNodeInfo.class,
                 expectedResponse,
-                webTarget -> webTarget.queryParam("jobName", "myJob"),
-                webTarget -> webTarget.queryParam("nodeName", "node1")
+                webTarget -> UriBuilderUtil.addParam(webTarget, "jobName", "myJob"),
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1")
         );
 
         assertThat(getRequestEvents("node1"))
@@ -172,8 +173,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 subPath,
                 JobNodeInfo.class,
                 expectedResponse,
-                webTarget -> webTarget.queryParam("jobName", "myJob"),
-                webTarget -> webTarget.queryParam("nodeName", "node2")
+                webTarget -> UriBuilderUtil.addParam(webTarget, "jobName", "myJob"),
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node2")
         );
 
         assertThat(getRequestEvents("node1"))

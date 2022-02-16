@@ -26,6 +26,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -43,6 +44,7 @@ import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -91,10 +93,10 @@ class CacheResourceImpl implements CacheResource {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.INFO_PATH);
             try {
-                final Response response = webTargetFactory
-                        .get().create(url)
-                        .queryParam("cacheName", cacheName)
-                        .queryParam("nodeName", nodeName)
+                WebTarget webTarget = webTargetFactory.get().create(url);
+                webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
+                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get();
                 if (response.getStatus() != 200) {
@@ -195,10 +197,10 @@ class CacheResourceImpl implements CacheResource {
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.BASE_PATH);
 
             try {
-                final Response response = webTargetFactory.get()
-                        .create(url)
-                        .queryParam("cacheName", cacheName)
-                        .queryParam("nodeName", nodeName)
+                WebTarget webTarget = webTargetFactory.get().create(url);
+                webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
+                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .delete();
                 if (response.getStatus() != 200) {

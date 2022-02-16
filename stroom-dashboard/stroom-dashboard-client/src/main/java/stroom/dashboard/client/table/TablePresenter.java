@@ -404,9 +404,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void download() {
         if (currentSearchModel != null) {
-            final Search activeSearch = currentSearchModel.getActiveSearch();
             final DashboardQueryKey queryKey = currentSearchModel.getCurrentQueryKey();
-            if (activeSearch != null && queryKey != null) {
+            final Search currentSearch = currentSearchModel.getCurrentSearch();
+            if (queryKey != null && currentSearch != null) {
                 final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
@@ -424,20 +424,22 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                             final Search search = Search
                                     .builder()
-                                    .dataSourceRef(activeSearch.getDataSourceRef())
-                                    .expression(activeSearch.getExpression())
-                                    .componentSettingsMap(activeSearch.getComponentSettingsMap())
-                                    .params(activeSearch.getParams())
+                                    .dataSourceRef(currentSearch.getDataSourceRef())
+                                    .expression(currentSearch.getExpression())
+                                    .componentSettingsMap(currentSearch.getComponentSettingsMap())
+                                    .params(currentSearch.getParams())
                                     .incremental(true)
                                     .storeHistory(false)
-                                    .queryInfo(activeSearch.getQueryInfo())
+                                    .queryInfo(currentSearch.getQueryInfo())
                                     .build();
 
-                            final DashboardSearchRequest searchRequest = new DashboardSearchRequest(
-                                    queryKey,
-                                    search,
-                                    requests,
-                                    timeZones.getTimeZone());
+                            final DashboardSearchRequest searchRequest = DashboardSearchRequest
+                                    .builder()
+                                    .dashboardQueryKey(queryKey)
+                                    .search(search)
+                                    .componentResultRequests(requests)
+                                    .dateTimeLocale(timeZones.getTimeZone())
+                                    .build();
 
                             final DownloadSearchResultsRequest downloadSearchResultsRequest =
                                     new DownloadSearchResultsRequest(

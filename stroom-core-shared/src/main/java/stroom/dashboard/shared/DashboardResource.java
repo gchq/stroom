@@ -27,7 +27,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
-import java.util.Set;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -84,12 +83,20 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
             @Parameter(description = "request", required = true) DownloadSearchResultsRequest request);
 
     @POST
-    @Path("/poll")
+    @Path("/keepAlive")
     @Operation(
-            summary = "Poll for new search results",
-            operationId = "pollDashboardSearchResults")
-    Set<DashboardSearchResponse> poll(
-            @Parameter(description = "request", required = true) SearchBusPollRequest request);
+            summary = "Keep search results alive for paging/download etc",
+            operationId = "keepAliveDashboardSearchResults")
+    SearchKeepAliveResponse keepAlive(
+            @Parameter(description = "request", required = true) SearchKeepAliveRequest request);
+
+    @POST
+    @Path("/search")
+    @Operation(
+            summary = "Perform a new search or get new results",
+            operationId = "dashboardSearch")
+    DashboardSearchResponse search(
+            @Parameter(description = "request", required = true) DashboardSearchRequest request);
 
     @GET
     @Path("/fetchTimeZones")
