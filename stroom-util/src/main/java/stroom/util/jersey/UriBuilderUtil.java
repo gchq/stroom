@@ -16,7 +16,7 @@ public class UriBuilderUtil {
                                       final Object value) {
         final String templateName = paramName + TEMPLATE;
         return uriBuilder.queryParam(paramName, "{" + templateName + "}")
-                .resolveTemplate(paramName + TEMPLATE, value);
+                .resolveTemplate(templateName, value);
     }
 
     public static WebTarget addParam(final WebTarget webTarget,
@@ -24,6 +24,6 @@ public class UriBuilderUtil {
                                      final Object value) {
         final String templateName = paramName + TEMPLATE;
         return webTarget.queryParam(paramName, "{" + templateName + "}")
-                .resolveTemplate(paramName + TEMPLATE, value);
+                .resolveTemplate(templateName, value);
     }
 }
