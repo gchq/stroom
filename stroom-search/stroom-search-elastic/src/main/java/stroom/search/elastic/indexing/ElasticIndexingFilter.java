@@ -503,8 +503,19 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                                 elasticCluster.getName() + "' in " + response.getTook().getSecondsFrac() +
                                 " seconds");
                     }
-                } catch (final RuntimeException | IOException e) {
+                } catch (final RuntimeException e) {
                     fatalError(e.getMessage(), e);
+                } catch (IOException e) {
+                    final String message = e.getMessage();
+                    // Elasticsearch v8.0.0 breaks the Java High Level REST Client `bulk` API, by sending back a
+                    // response that the API cannot handle, causing an exception.
+                    // This is a workaround, where we inspect the actual HTTP return code and if it's `200`, take
+                    // the request to have succeeded.
+                    // TODO: Review this once a compatible Elasticsearch Java client is released
+                    // @see https://github.com/elastic/elasticsearch/issues/84173
+                    if (message == null || !message.matches("^.+ response=HTTP/1\\.1 200 OK}$")) {
+                        fatalError(message, e);
+                    }
                 } finally {
                     indexRequests.clear();
                 }
