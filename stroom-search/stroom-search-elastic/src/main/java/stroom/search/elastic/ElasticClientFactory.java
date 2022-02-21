@@ -84,7 +84,9 @@ public class ElasticClientFactory {
         final String apiKey = getEncodedApiKey(config);
         if (config.getUseAuthentication() && apiKey != null) {
             final Header[] defaultHeaders = new Header[] {
-                new BasicHeader("Authorization", "ApiKey " + apiKey)
+                new BasicHeader("Authorization", "ApiKey " + apiKey),
+                new BasicHeader("Accept", "application/vnd.elasticsearch+json;compatible-with=7"),
+                new BasicHeader("Content-Type", "application/vnd.elasticsearch+json;compatible-with=7")
             };
 
             restClientBuilder.setDefaultHeaders(defaultHeaders);
