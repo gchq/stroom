@@ -302,7 +302,7 @@ public class GlobalConfigService {
         final String effectiveValueStr = configProperty.getEffectiveValue().orElse(null);
         final Object effectiveValue;
         try {
-            effectiveValue = configMapper.convertValue(propertyPath, effectiveValueStr);
+            effectiveValue = configMapper.validateValueSerialisation(propertyPath, effectiveValueStr);
         } catch (Exception e) {
             throw new ConfigPropertyValidationException(LogUtil.message("Error parsing [{}]: {}",
                     effectiveValueStr, e.getMessage(), e));
