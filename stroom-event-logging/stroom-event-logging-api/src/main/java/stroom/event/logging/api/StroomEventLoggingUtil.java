@@ -299,6 +299,9 @@ public class StroomEventLoggingUtil {
             case LESS_THAN_OR_EQUAL_TO:
                 termCondition = TermCondition.LESS_THAN_EQUAL_TO;
                 break;
+            case MATCHES_REGEX:
+                termCondition = TermCondition.REGEX;
+                break;
             default:
                 throw new RuntimeException("Can't convert condition " + condition);
         }

@@ -5772,6 +5772,7 @@ components:
             - IS_DOC_REF
             - IS_NULL
             - IS_NOT_NULL
+            - MATCHES_REGEX
         name:
           type: string
         queryable:
@@ -7427,6 +7428,7 @@ components:
             - IS_DOC_REF
             - IS_NULL
             - IS_NOT_NULL
+            - MATCHES_REGEX
           docRef:
             $ref: '#/components/schemas/DocRef'
           field:
@@ -10426,6 +10428,7 @@ components:
             - IS_DOC_REF
             - IS_NULL
             - IS_NOT_NULL
+            - MATCHES_REGEX
         termOffsets:
           type: boolean
         termPayloads:

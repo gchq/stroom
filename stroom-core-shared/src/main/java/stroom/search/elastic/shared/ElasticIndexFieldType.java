@@ -124,6 +124,7 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
             conditions.add(Condition.EQUALS);
             conditions.add(Condition.IN);
             conditions.add(Condition.IN_DICTIONARY);
+            conditions.add(Condition.MATCHES_REGEX);
         }
 
         return conditions;

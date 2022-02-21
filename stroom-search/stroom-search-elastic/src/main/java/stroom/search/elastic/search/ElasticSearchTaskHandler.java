@@ -220,6 +220,11 @@ public class ElasticSearchTaskHandler {
             elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
         } catch (final IOException | RuntimeException e) {
             error(errorConsumer, e);
+
+            // Record any inner exceptions from Elasticsearch
+            for (final Throwable ex : e.getSuppressed()) {
+                error(errorConsumer, ex);
+            }
         }
     }
 
