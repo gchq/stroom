@@ -43,13 +43,12 @@ import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import org.elasticsearch.action.DocWriteRequest.OpType;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.StatusLine;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.TermQueryBuilder;
@@ -62,7 +61,6 @@ import org.elasticsearch.search.aggregations.bucket.composite.CompositeAggregati
 import org.elasticsearch.search.aggregations.bucket.composite.CompositeValuesSourceBuilder;
 import org.elasticsearch.search.aggregations.bucket.composite.TermsValuesSourceBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.xcontent.XContentType;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -70,9 +68,12 @@ import org.xml.sax.SAXException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.InvalidParameterException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
@@ -108,8 +109,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private String indexNameDateFormat;
     private String indexNameDateFieldName = "@timestamp";
 
-    private final List<IndexRequest> indexRequests;
-    private final ByteArrayOutputStream currentDocument;
+    private final List<String> indexRequests = new ArrayList<>();
+    private long indexRequestsDocCount = 0;
+    private final ByteArrayOutputStream currentDocument = new ByteArrayOutputStream(INITIAL_JSON_STREAM_SIZE_BYTES);
     private final StringBuilder valueBuffer = new StringBuilder();
     private String currentDocFieldName = null;
     private int currentDocPropertyCount = 0;
@@ -136,9 +138,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         this.elasticClusterStore = elasticClusterStore;
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaHolder = metaHolder;
-
-        indexRequests = new ArrayList<>();
-        currentDocument = new ByteArrayOutputStream(INITIAL_JSON_STREAM_SIZE_BYTES);
     }
 
     /**
@@ -392,28 +391,25 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             if (currentDocPropertyCount > 0) {
                 jsonGenerator.flush();
 
-                final IndexRequest indexRequest = new IndexRequest(formatIndexName())
-                        .opType(OpType.CREATE)
-                        .source(currentDocument.toByteArray(), XContentType.JSON);
-
-                // If an ingest pipeline name is specified, execute it when ingesting the document
-                if (ingestPipelineName != null && !ingestPipelineName.isEmpty()) {
-                    indexRequest.setPipeline(ingestPipelineName);
-                }
-
-                indexRequests.add(indexRequest);
+                final HashMap<String, Object> indexMap = new HashMap<>();
+                indexMap.put("_index", formatIndexName());
+                final HashMap<String, Object> createMap = new HashMap<>();
+                createMap.put("create", indexMap);
+                indexRequests.add(new ObjectMapper().writeValueAsString(createMap));
+                indexRequests.add(currentDocument.toString());
+                indexRequestsDocCount++;
             }
 
-            if (indexRequests.size() >= batchSize) {
+            if (indexRequestsDocCount >= batchSize) {
                 indexDocuments();
             }
         } catch (IOException e) {
             fatalError("Failed to flush JSON to stream", e);
         } catch (Exception e) {
             fatalError(e.getMessage(), e);
+        } finally {
+            clearDocument();
         }
-
-        clearDocument();
     }
 
     private void clearDocument() {
@@ -444,7 +440,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     final BulkByScrollResponse deleteResponse = elasticClient.deleteByQuery(deleteRequest,
                             RequestOptions.DEFAULT);
                     final long deletedCount = deleteResponse.getDeleted();
-
                     LOGGER.info("Deleted {} documents matching StreamId: {} from index: {}, took {} seconds",
                             deletedCount, streamId, indexName, deleteResponse.getTook().getSecondsFrac());
                 }
@@ -508,49 +503,43 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * Index the current batch of documents
      */
     private void indexDocuments() {
-        if (indexRequests.size() > 0) {
+        if (indexRequestsDocCount > 0) {
             final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(clusterRef);
 
             elasticClientCache.context(elasticCluster.getConnection(), elasticClient -> {
                 try {
                     // Create a new bulk indexing request, containing the current batch of documents
-                    final BulkRequest bulkRequest = new BulkRequest();
+                    final Request request = new Request("POST", "/_bulk");
 
                     // For each document, create an indexing request and append to the bulk request
-                    for (IndexRequest indexRequest : indexRequests) {
-                        bulkRequest.add(indexRequest);
+                    final String requestBody = String.join(System.lineSeparator(), indexRequests) +
+                            System.lineSeparator();
+                    request.setJsonEntity(requestBody);
+
+                    // If an ingest pipeline name is specified, execute it when ingesting the document
+                    if (ingestPipelineName != null && !ingestPipelineName.isEmpty()) {
+                        request.addParameter("pipeline", ingestPipelineName);
                     }
 
                     if (refreshAfterEachBatch) {
                         // Refresh upon completion of the batch index request
-                        bulkRequest.setRefreshPolicy(RefreshPolicy.IMMEDIATE);
+                        request.addParameter("refresh", RefreshPolicy.IMMEDIATE.getValue());
                     } else {
                         // Only refresh after all batches have been indexed
-                        bulkRequest.setRefreshPolicy(RefreshPolicy.NONE);
+                        request.addParameter("refresh", RefreshPolicy.NONE.getValue());
                     }
 
-                    final BulkResponse response = elasticClient.bulk(bulkRequest, RequestOptions.DEFAULT);
-                    if (response.hasFailures()) {
-                        throw new IOException("Bulk index request failed: " + response.buildFailureMessage());
-                    } else {
-                        LOGGER.info("Indexed {} documents to Elasticsearch cluster: {}, took {} seconds",
-                                indexRequests.size(), elasticCluster.getName(), response.getTook().getSecondsFrac());
-                    }
-                } catch (final RuntimeException e) {
+                    request.setOptions(RequestOptions.DEFAULT);
+                    final Instant start = Instant.now();
+                    elasticClient.getLowLevelClient().performRequest(request);
+                    final float tookSeconds = Duration.between(start, Instant.now()).toMillis() / 1000.0f;
+                    LOGGER.info("Indexed {} documents to Elasticsearch cluster: {}, took {} seconds",
+                            indexRequestsDocCount, elasticCluster.getName(), tookSeconds);
+                } catch (final RuntimeException | IOException e) {
                     fatalError(e.getMessage(), e);
-                } catch (IOException e) {
-                    final String message = e.getMessage();
-                    // Elasticsearch v8.0.0 breaks the Java High Level REST Client `bulk` API, by sending back a
-                    // response that the API cannot handle, causing an exception.
-                    // This is a workaround, where we inspect the actual HTTP return code and if it's `200`, take
-                    // the request to have succeeded.
-                    // TODO: Review this once a compatible Elasticsearch Java client is released
-                    // @see https://github.com/elastic/elasticsearch/issues/84173
-                    if (message == null || !message.matches("^.+ response=HTTP/1\\.1 200 OK}$")) {
-                        fatalError(message, e);
-                    }
                 } finally {
                     indexRequests.clear();
+                    indexRequestsDocCount = 0;
                 }
             });
         }
