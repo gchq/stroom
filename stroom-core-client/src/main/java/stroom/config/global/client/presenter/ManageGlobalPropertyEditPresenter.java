@@ -56,6 +56,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class ManageGlobalPropertyEditPresenter
         extends MyPresenterWidget<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView>
@@ -68,6 +69,8 @@ public final class ManageGlobalPropertyEditPresenter
     private static final String MULTIPLE_YAML_VALUES_MSG = "[Multiple YAML values exist in the cluster]";
     private static final String MULTIPLE_EFFECTIVE_VALUES_MSG = "[Multiple effective values exist in the cluster]";
     private static final String MULTIPLE_SOURCES_MSG = "[Configured from multiple sources]";
+    private static final String NODE_UNREACHABLE_MSG = "[Node unreachable]";
+    private static final String UNKNOWN_MSG = "[Unknown]";
 
     private final RestFactory restFactory;
     private final NodeManager nodeManager;
@@ -160,9 +163,22 @@ public final class ManageGlobalPropertyEditPresenter
                     getView().asWidget().getElement().getAbsoluteLeft() + 20,
                     getView().asWidget().getElement().getAbsoluteTop() + 10);
 
+
+            final Map<String, Set<NodeSource>> modifiedEffectiveValueToNodeSourcesMap;
+            if (unreachableNodes.isEmpty()) {
+                modifiedEffectiveValueToNodeSourcesMap = effectiveValueToNodeSourcesMap;
+            } else {
+                modifiedEffectiveValueToNodeSourcesMap = new HashMap<>(effectiveValueToNodeSourcesMap);
+                modifiedEffectiveValueToNodeSourcesMap.put(
+                        NODE_UNREACHABLE_MSG,
+                        unreachableNodes.stream()
+                                .map(node -> new NodeSource(node, UNKNOWN_MSG))
+                                .collect(Collectors.toSet()));
+            }
+
             clusterValuesPresenter.show(
                     getEntity(),
-                    effectiveValueToNodeSourcesMap,
+                    modifiedEffectiveValueToNodeSourcesMap,
                     offsetPopupPosition,
                     popupUiHandlers);
         }

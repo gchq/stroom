@@ -16,4 +16,6 @@ public interface ConfigPropertyDao extends HasIntCrud<ConfigProperty> {
     List<ConfigProperty> list();
 
     Optional<ConfigProperty> fetch(final String propertyName);
+
+    Optional<Long> getLatestConfigUpdateTimeMs();
 }

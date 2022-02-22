@@ -62,6 +62,13 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
         return recordToObjectMapper.apply(persistedRecord);
     }
 
+    public T_OBJ_TYPE create(final DSLContext context, final T_OBJ_TYPE object) {
+        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
+        final T_REC_TYPE record = objectToRecord(object);
+        final T_REC_TYPE persistedRecord = createRecord(context, record);
+        return recordToObjectMapper.apply(persistedRecord);
+    }
+
     @Override
     public Optional<T_OBJ_TYPE> fetch(final T_ID_TYPE id) {
         LAMBDA_LOGGER.debug(() -> LogUtil.message("Fetching {} with id {}", table.getName(), id));
@@ -72,9 +79,15 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
         return optional.map(recordToObjectMapper);
     }
 
-    /**
-     * Performs the update of the object using optimistic locking
-     */
+    public T_OBJ_TYPE update(final DSLContext context, final T_OBJ_TYPE object) {
+        final T_REC_TYPE record = objectToRecord(object);
+        LAMBDA_LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
+                table.getName(),
+                record.get(idField)));
+        final T_REC_TYPE persistedRecord = updateRecord(context, record);
+        return recordToObjectMapper.apply(persistedRecord);
+    }
+
     @Override
     public T_OBJ_TYPE update(final T_OBJ_TYPE object) {
         final T_REC_TYPE record = objectToRecord(object);
@@ -104,10 +117,16 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
     @Override
     public boolean delete(final T_ID_TYPE id) {
         LAMBDA_LOGGER.debug(() -> LogUtil.message("Deleting a {} with id {}", table.getName(), id));
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(connectionProvider, context ->
+                delete(context, id));
+    }
+
+    public boolean delete(final DSLContext context, final T_ID_TYPE id) {
+        LAMBDA_LOGGER.debug(() -> LogUtil.message("Deleting a {} with id {}", table.getName(), id));
+        return context
                 .deleteFrom(table)
                 .where(idField.eq(id))
-                .execute() > 0);
+                .execute() > 0;
     }
 
     T_REC_TYPE objectToRecord(final T_OBJ_TYPE object) {
