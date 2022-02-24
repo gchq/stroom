@@ -111,10 +111,10 @@ public class LegacyDbModule extends AbstractModule {
         Optional<Version> optVersion = Optional.empty();
         try {
             try (final Statement statement = connection.createStatement()) {
-                try (final ResultSet resultSet = statement.executeQuery(
-                        "SELECT version " +
-                        "FROM schema_version " +
-                        "ORDER BY installed_rank DESC")) {
+                try (final ResultSet resultSet = statement.executeQuery("""
+                        SELECT version
+                        FROM schema_version
+                        ORDER BY installed_rank DESC""")) {
                     if (resultSet.next()) {
                         final String ver = resultSet.getString(1);
                         final String[] parts = ver.split("\\.");
@@ -148,17 +148,17 @@ public class LegacyDbModule extends AbstractModule {
         Optional<Version> optVersion = Optional.empty();
         try {
             try (final Statement statement = connection.createStatement()) {
-                try (final ResultSet resultSet = statement.executeQuery(
-                        "SELECT " +
-                        "VER_MAJ, " +
-                        "VER_MIN, " +
-                        "VER_PAT " +
-                        "FROM STROOM_VER " +
-                        "ORDER BY " +
-                        "VER_MAJ DESC, " +
-                        "VER_MIN DESC, " +
-                        "VER_PAT DESC " +
-                        "LIMIT 1")) {
+                try (final ResultSet resultSet = statement.executeQuery("""
+                        SELECT
+                            VER_MAJ,
+                            VER_MIN, 
+                            VER_PAT 
+                        FROM STROOM_VER 
+                        ORDER BY 
+                            VER_MAJ DESC, 
+                            VER_MIN DESC, 
+                            VER_PAT DESC 
+                        LIMIT 1""")) {
                     if (resultSet.next()) {
                         final Version version = new Version(
                                 resultSet.getInt(1),
@@ -180,10 +180,10 @@ public class LegacyDbModule extends AbstractModule {
         Optional<Version> optVersion = Optional.empty();
         try {
             try (final Statement statement = connection.createStatement()) {
-                try (final ResultSet resultSet = statement.executeQuery(
-                        "SELECT ID " +
-                        "FROM FD " +
-                        "LIMIT 1")) {
+                try (final ResultSet resultSet = statement.executeQuery("""
+                        SELECT ID
+                        FROM FD
+                        LIMIT 1""")) {
                     if (resultSet.next()) {
                         final Version version = new Version(2, 0, 0);
                         LOGGER.info("Found FD table so version is: " + version);
@@ -202,10 +202,10 @@ public class LegacyDbModule extends AbstractModule {
         Optional<Version> optVersion = Optional.empty();
         try {
             try (final Statement statement = connection.createStatement()) {
-                try (final ResultSet resultSet = statement.executeQuery(
-                        "SELECT ID " +
-                        "FROM FEED " +
-                        "LIMIT 1")) {
+                try (final ResultSet resultSet = statement.executeQuery("""
+                        SELECT ID
+                        FROM FEED
+                        LIMIT 1""")) {
                     if (resultSet.next()) {
                         final Version version = new Version(2, 0, 0);
                         LOGGER.info("Found FEED table so version is: " + version);
