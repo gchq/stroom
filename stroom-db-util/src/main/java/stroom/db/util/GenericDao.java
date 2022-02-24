@@ -46,11 +46,16 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
                       final Table<T_REC_TYPE> table,
                       final TableField<T_REC_TYPE, T_ID_TYPE> idField,
                       final Class<T_OBJ_TYPE> objectTypeClass) {
-        this(connectionProvider, table, idField, (object, record) -> {
-            record.from(object);
-            return record;
-        }, record ->
-                record.into(objectTypeClass));
+        this(
+                connectionProvider,
+                table,
+                idField,
+                (object, record) -> {
+                    record.from(object);
+                    return record;
+                },
+                record ->
+                        record.into(objectTypeClass));
     }
 
     @Override
@@ -59,6 +64,28 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
         final T_REC_TYPE record = objectToRecord(object);
         final T_REC_TYPE persistedRecord = JooqUtil.contextResult(connectionProvider, context ->
                 createRecord(context, record));
+        return recordToObjectMapper.apply(persistedRecord);
+    }
+
+    /**
+     * Will try to
+     *
+     * @param object
+     * @param keyField
+     * @param <T_FIELD>
+     * @return
+     */
+    public <T_FIELD> T_OBJ_TYPE tryCreate(final T_OBJ_TYPE object,
+                                          final TableField<T_REC_TYPE, T_FIELD> keyField) {
+        return tryCreate(object, keyField, null);
+    }
+
+    public <T_FIELD1, T_FIELD2> T_OBJ_TYPE tryCreate(final T_OBJ_TYPE object,
+                                                     final TableField<T_REC_TYPE, T_FIELD1> keyField1,
+                                                     final TableField<T_REC_TYPE, T_FIELD2> keyField2) {
+        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
+        final T_REC_TYPE record = objectToRecord(object);
+        final T_REC_TYPE persistedRecord = JooqUtil.tryCreate(connectionProvider, record, keyField1, keyField2);
         return recordToObjectMapper.apply(persistedRecord);
     }
 

@@ -31,6 +31,23 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
 
     @Override
     protected void performMigration(final DataSource dataSource) {
+        final String lockTableName = "lock_" + getModuleName()
+                .toLowerCase()
+                .replaceAll("[^a-z]", "_");
+
+//        JooqUtil.transaction(dataSource, context -> {
+//
+//            LOGGER.info("Creating lock table " + lockTableName);
+//            context.createTableIfNotExists(lockTableName)
+//                    .column("dummy", SQLDataType.INTEGER)
+//                    .execute();
+//            LOGGER.info("Created lock table " + lockTableName);
+//
+//            LOGGER.info("Acquiring lock for flyway");
+//            context.selectFrom(lockTableName)
+//                    .forUpdate();
+//            LOGGER.info("Got lock for flyway");
+
         final Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .locations(getFlyWayLocation())
@@ -60,5 +77,6 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
                     getModuleName(),
                     getFlyWayLocation());
         }
+//        });
     }
 }

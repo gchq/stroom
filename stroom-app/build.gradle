@@ -191,6 +191,7 @@ dependencies {
     testCompile project(':stroom-importexport:stroom-importexport-api')
     testCompile project(':stroom-index:stroom-index-impl')
     testCompile project(':stroom-index:stroom-index-mock')
+    testCompile project(':stroom-job:stroom-job-impl-db')
     testCompile project(':stroom-meta:stroom-meta-api')
     testCompile project(':stroom-meta:stroom-meta-mock')
     testCompile project(':stroom-node:stroom-node-mock')
