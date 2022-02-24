@@ -290,6 +290,55 @@ public class App extends Application<Config> {
     private <T> T doWithBootstrapLock(final Config config, final Supplier<T> work) {
 
         Objects.requireNonNull(work);
+        final ConnectionConfig connectionConfig = getClusterLockConnectionConfig(config);
+
+        // Wait till the DB is up
+        DbUtil.waitForConnection(connectionConfig, "bootstrap-lock");
+
+        T workOutput;
+
+        try (Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
+            // We want the txn to be held open so we can hold the lock
+            conn.setAutoCommit(false);
+
+            final String bootstrapLockTableName = "bootstrap_lock";
+
+            // Create a table that we can use to get a table lock on
+            final String createTableSql = LogUtil.message("""
+                            CREATE TABLE IF NOT EXISTS {} (
+                              dummy INT,
+                              PRIMARY KEY (dummy)
+                            ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci""",
+                    bootstrapLockTableName);
+
+            PreparedStatement preparedStatement = conn.prepareStatement(createTableSql);
+            LOGGER.debug("Ensuring table {} exists", bootstrapLockTableName);
+            preparedStatement.execute();
+
+            preparedStatement = conn.prepareStatement(
+                    LogUtil.message("LOCK TABLES {} WRITE", bootstrapLockTableName));
+
+            LOGGER.info("Waiting to acquire bootstrap lock on table: {}, user: {}, url: {}",
+                    bootstrapLockTableName, connectionConfig.getUser(), connectionConfig.getUrl());
+            Instant startTime = Instant.now();
+            preparedStatement.execute();
+            LOGGER.info("Waited {} to acquire bootstrap lock", Duration.between(startTime, Instant.now()));
+
+            // Do the work under cluster wide lock
+            startTime = Instant.now();
+            workOutput = work.get();
+
+            LOGGER.info("Completed work under bootstrap lock in " + Duration.between(startTime, Instant.now()));
+            preparedStatement = conn.prepareStatement("UNLOCK TABLES");
+            preparedStatement.execute();
+            LOGGER.info("Bootstrap lock released");
+        } catch (SQLException e) {
+            throw new RuntimeException("Error obtaining bootstrap lock: " + e.getMessage(), e);
+        }
+        return workOutput;
+    }
+
+    private ConnectionConfig getClusterLockConnectionConfig(final Config config) {
         final CommonDbConfig yamlCommonDbConfig = Objects.requireNonNullElse(
                 config.getYamlAppConfig().getCommonDbConfig(),
                 new CommonDbConfig());
@@ -308,49 +357,8 @@ public class App extends Application<Config> {
                 connectionConfig.getClassName()));
 
         DbUtil.validate(connectionConfig);
-        // Wait till the DB is up
-        DbUtil.waitForConnection(connectionConfig, "bootstrap-lock");
 
-        T workOutput;
-
-        try (Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
-            // We want the txn to be held open so we can hold the lock
-            conn.setAutoCommit(false);
-
-            final String bootstrapLockTableName = "bootstrap_lock";
-
-            final String createTableSql = LogUtil.message("""
-                            CREATE TABLE IF NOT EXISTS {} (
-                              dummy INT,
-                              PRIMARY KEY (dummy)
-                            ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;""",
-                    bootstrapLockTableName);
-
-            PreparedStatement preparedStatement = conn.prepareStatement(createTableSql);
-            LOGGER.debug("Ensuring table {} exists", bootstrapLockTableName);
-            preparedStatement.execute();
-
-            preparedStatement = conn.prepareStatement(
-                    LogUtil.message("LOCK TABLES {} WRITE;", bootstrapLockTableName));
-
-            LOGGER.info("Waiting to acquire bootstrap lock on table: {} for user:{}, url: {}",
-                    bootstrapLockTableName, connectionConfig.getUser(), connectionConfig.getUrl());
-            Instant startTime = Instant.now();
-            preparedStatement.execute();
-            LOGGER.info("Waited {} to acquire bootstrap lock", Duration.between(startTime, Instant.now()));
-
-            // Do the work under cluster wide lock
-            startTime = Instant.now();
-            workOutput = work.get();
-
-            LOGGER.info("Completed work under bootstrap lock in " + Duration.between(startTime, Instant.now()));
-            preparedStatement = conn.prepareStatement("UNLOCK TABLES;");
-            preparedStatement.execute();
-            LOGGER.info("Bootstrap lock released");
-        } catch (SQLException e) {
-            throw new RuntimeException("Error obtaining bootstrap lock: " + e.getMessage(), e);
-        }
-        return workOutput;
+        return connectionConfig;
     }
 
     @NotNull
