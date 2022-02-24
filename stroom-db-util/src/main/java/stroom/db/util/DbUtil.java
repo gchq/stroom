@@ -59,11 +59,15 @@ public class DbUtil {
      * If the connection could not be established and the reason for the failure makes a
      * retry pointless, e.g. invalid password, then an exception will be thrown.
      */
-    public static void waitForConnection(ConnectionConfig connectionConfig) {
+    public static void waitForConnection(final ConnectionConfig connectionConfig,
+                                         final String connectionName) {
         final String jdbcUrl = connectionConfig.getUrl();
         final String username = connectionConfig.getUser();
-        LOGGER.info("Ensuring database connection to [{}] with username [{}] and driver class [{}]",
-                jdbcUrl, username, connectionConfig.getClassName());
+        final String nameText = connectionName != null
+                ? connectionName + " "
+                : "";
+        LOGGER.info("Ensuring database connection {}to [{}] with username [{}] and driver class [{}]",
+                nameText, jdbcUrl, username, connectionConfig.getClassName());
 
         long sleepMs = 500;
         Throwable lastThrowable = null;
@@ -74,8 +78,8 @@ public class DbUtil {
                 break;
             } catch (SQLException e) {
                 if (e.getErrorCode() == ACCESS_DENIED_BAD_UNAME_OR_PWORD ||
-                        e.getErrorCode() == ACCESS_DENIED_BAD_DATABASE ||
-                        (e.getMessage() != null && e.getMessage().startsWith("Unsupported"))) {
+                    e.getErrorCode() == ACCESS_DENIED_BAD_DATABASE ||
+                    (e.getMessage() != null && e.getMessage().startsWith("Unsupported"))) {
 
                     // These errors are not due to the DB not being up, so throw it
                     throw new RuntimeException(LogUtil.message(
@@ -87,8 +91,8 @@ public class DbUtil {
                         : e.getMessage();
                 final int vendorCode = e.getErrorCode();
                 LOGGER.warn("Unable to establish database connection due to error: [{}] " +
-                                "and vendorCode [{}], will try again " +
-                                "in {}ms, enable debug to see stack trace",
+                            "and vendorCode [{}], will try again " +
+                            "in {}ms, enable debug to see stack trace",
                         errorMsg, vendorCode, sleepMs);
                 if (LOGGER.isDebugEnabled()) {
                     if (lastThrowable == null || !e.getMessage().equals(lastThrowable.getMessage())) {

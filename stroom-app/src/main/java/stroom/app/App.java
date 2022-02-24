@@ -22,10 +22,16 @@ import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.app.guice.BootStrapModule;
+import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
+import stroom.config.common.AbstractDbConfig;
+import stroom.config.common.CommonDbConfig;
+import stroom.config.common.ConnectionConfig;
 import stroom.config.global.impl.ConfigMapper;
+import stroom.db.util.DbUtil;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -33,6 +39,7 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
+import stroom.util.NullSafe;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
@@ -70,9 +77,15 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -267,46 +280,123 @@ public class App extends Application<Config> {
         showInfo(configuration);
     }
 
+    /**
+     * Use a table lock on a noddy table created just for this purpose to enforce
+     * a cluster wide lock so we can do all the flyway migrations in isolation.
+     * Flyway migrations should work under lock but we have lots of independent flyway
+     * migrations so it is safer to do it this way.
+     * Can't user the cluster lock service as that is not a thing at this point.
+     */
+    private <T> T doWithBootstrapLock(final Config config, final Supplier<T> work) {
+
+        Objects.requireNonNull(work);
+        final CommonDbConfig yamlCommonDbConfig = Objects.requireNonNullElse(
+                config.getYamlAppConfig().getCommonDbConfig(),
+                new CommonDbConfig());
+        final ClusterLockDbConfig yamlClusterLockDbConfig = NullSafe.getAsOptional(
+                config.getYamlAppConfig(),
+                AppConfig::getClusterLockConfig,
+                ClusterLockConfig::getDbConfig)
+                .orElse(new ClusterLockDbConfig());
+
+        final AbstractDbConfig mergedClusterLockDbConfig = yamlCommonDbConfig.mergeConfig(yamlClusterLockDbConfig);
+        final ConnectionConfig connectionConfig = mergedClusterLockDbConfig.getConnectionConfig();
+
+        LOGGER.debug(() -> LogUtil.message("Using connection user: {}, url: {}, class: {}",
+                connectionConfig.getUser(),
+                connectionConfig.getUrl(),
+                connectionConfig.getClassName()));
+
+        DbUtil.validate(connectionConfig);
+        // Wait till the DB is up
+        DbUtil.waitForConnection(connectionConfig, "bootstrap-lock");
+
+        T workOutput;
+
+        try (Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
+            // We want the txn to be held open so we can hold the lock
+            conn.setAutoCommit(false);
+
+            final String bootstrapLockTableName = "bootstrap_lock";
+
+            final String createTableSql = LogUtil.message("""
+                            CREATE TABLE IF NOT EXISTS {} (
+                              dummy INT,
+                              PRIMARY KEY (dummy)
+                            ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;""",
+                    bootstrapLockTableName);
+
+            PreparedStatement preparedStatement = conn.prepareStatement(createTableSql);
+            LOGGER.debug("Ensuring table {} exists", bootstrapLockTableName);
+            preparedStatement.execute();
+
+            preparedStatement = conn.prepareStatement(
+                    LogUtil.message("LOCK TABLES {} WRITE;", bootstrapLockTableName));
+
+            LOGGER.info("Waiting to acquire bootstrap lock on table: {} for user:{}, url: {}",
+                    bootstrapLockTableName, connectionConfig.getUser(), connectionConfig.getUrl());
+            Instant startTime = Instant.now();
+            preparedStatement.execute();
+            LOGGER.info("Waited {} to acquire bootstrap lock", Duration.between(startTime, Instant.now()));
+
+            // Do the work under cluster wide lock
+            startTime = Instant.now();
+            workOutput = work.get();
+
+            LOGGER.info("Completed work under bootstrap lock in " + Duration.between(startTime, Instant.now()));
+            preparedStatement = conn.prepareStatement("UNLOCK TABLES;");
+            preparedStatement.execute();
+            LOGGER.info("Bootstrap lock released");
+        } catch (SQLException e) {
+            throw new RuntimeException("Error obtaining bootstrap lock: " + e.getMessage(), e);
+        }
+        return workOutput;
+    }
+
     @NotNull
     private Injector bootstrapApplication(final Config configuration,
                                           final Environment environment) {
-        LOGGER.info("Initialising database connections and configuration properties");
 
-        final BootStrapModule bootstrapModule = new BootStrapModule(
-                configuration, environment, configFile);
+        return doWithBootstrapLock(configuration, () -> {
+            LOGGER.info("Initialising database connections and configuration properties");
 
-        final Injector bootStrapInjector = Guice.createInjector(bootstrapModule);
+            final BootStrapModule bootstrapModule = new BootStrapModule(
+                    configuration, environment, configFile);
 
-        // Force all datasources to be created so we can force migrations to run.
-        final Set<DataSource> dataSources = bootStrapInjector.getInstance(
-                Key.get(GuiceUtil.setOf(DataSource.class)));
+            final Injector bootStrapInjector = Guice.createInjector(bootstrapModule);
 
-        LOGGER.debug(() -> LogUtil.message("Used {} data sources:\n{}",
-                dataSources.size(),
-                dataSources.stream()
-                        .map(dataSource -> dataSource.getClass().getName())
-                        .map(name -> "  " + name)
-                        .sorted()
-                        .collect(Collectors.joining("\n"))));
+            // Force all datasources to be created so we can force migrations to run.
+            final Set<DataSource> dataSources = bootStrapInjector.getInstance(
+                    Key.get(GuiceUtil.setOf(DataSource.class)));
 
-        this.homeDirProvider = bootStrapInjector.getInstance(HomeDirProvider.class);
-        this.tempDirProvider = bootStrapInjector.getInstance(TempDirProvider.class);
+            LOGGER.debug(() -> LogUtil.message("Used {} data sources:\n{}",
+                    dataSources.size(),
+                    dataSources.stream()
+                            .map(dataSource -> dataSource.getClass().getName())
+                            .map(name -> "  " + name)
+                            .sorted()
+                            .collect(Collectors.joining("\n"))));
 
-        // Ensure we have our home/temp dirs set up
-        FileUtil.ensureDirExists(homeDirProvider.get());
-        FileUtil.ensureDirExists(tempDirProvider.get());
-        return bootStrapInjector;
+            this.homeDirProvider = bootStrapInjector.getInstance(HomeDirProvider.class);
+            this.tempDirProvider = bootStrapInjector.getInstance(TempDirProvider.class);
+
+            // Ensure we have our home/temp dirs set up
+            FileUtil.ensureDirExists(homeDirProvider.get());
+            FileUtil.ensureDirExists(tempDirProvider.get());
+
+            return bootStrapInjector;
+        });
     }
 
     private void showInfo(final Config configuration) {
         Objects.requireNonNull(buildInfo);
 
         LOGGER.info(""
-                + "\n  Build version: " + buildInfo.getBuildVersion()
-                + "\n  Build date:    " + buildInfo.getBuildDate()
-                + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
-                + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig()));
+                    + "\n  Build version: " + buildInfo.getBuildVersion()
+                    + "\n  Build date:    " + buildInfo.getBuildDate()
+                    + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
+                    + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
+                    + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig()));
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {
@@ -314,16 +404,16 @@ public class App extends Application<Config> {
             String propPath = configuration.getYamlAppConfig().getSecurityConfig().getIdentityConfig().getFullPathStr(
                     "useDefaultOpenIdCredentials");
             LOGGER.warn("\n" +
-                    "\n  -----------------------------------------------------------------------------" +
-                    "\n  " +
-                    "\n                                        WARNING!" +
-                    "\n  " +
-                    "\n   Using default and publicly available Open ID authentication credentials. " +
-                    "\n   This is insecure! These should only be used in test/demo environments. " +
-                    "\n   Set " + propPath + " to false for production environments." +
-                    "\n" +
-                    "\n  -----------------------------------------------------------------------------" +
-                    "\n");
+                        "\n  -----------------------------------------------------------------------------" +
+                        "\n  " +
+                        "\n                                        WARNING!" +
+                        "\n  " +
+                        "\n   Using default and publicly available Open ID authentication credentials. " +
+                        "\n   This is insecure! These should only be used in test/demo environments. " +
+                        "\n   Set " + propPath + " to false for production environments." +
+                        "\n" +
+                        "\n  -----------------------------------------------------------------------------" +
+                        "\n");
         }
     }
 
@@ -358,7 +448,7 @@ public class App extends Application<Config> {
 
         if (result.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
-                            "configuration, set {} to false, however this is not advised!",
+                         "configuration, set {} to false, however this is not advised!",
                     appConfig.getFullPathStr(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }

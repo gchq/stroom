@@ -113,8 +113,8 @@ public class LegacyDbModule extends AbstractModule {
             try (final Statement statement = connection.createStatement()) {
                 try (final ResultSet resultSet = statement.executeQuery(
                         "SELECT version " +
-                                "FROM schema_version " +
-                                "ORDER BY installed_rank DESC")) {
+                        "FROM schema_version " +
+                        "ORDER BY installed_rank DESC")) {
                     if (resultSet.next()) {
                         final String ver = resultSet.getString(1);
                         final String[] parts = ver.split("\\.");
@@ -150,15 +150,15 @@ public class LegacyDbModule extends AbstractModule {
             try (final Statement statement = connection.createStatement()) {
                 try (final ResultSet resultSet = statement.executeQuery(
                         "SELECT " +
-                                "VER_MAJ, " +
-                                "VER_MIN, " +
-                                "VER_PAT " +
-                                "FROM STROOM_VER " +
-                                "ORDER BY " +
-                                "VER_MAJ DESC, " +
-                                "VER_MIN DESC, " +
-                                "VER_PAT DESC " +
-                                "LIMIT 1")) {
+                        "VER_MAJ, " +
+                        "VER_MIN, " +
+                        "VER_PAT " +
+                        "FROM STROOM_VER " +
+                        "ORDER BY " +
+                        "VER_MAJ DESC, " +
+                        "VER_MIN DESC, " +
+                        "VER_PAT DESC " +
+                        "LIMIT 1")) {
                     if (resultSet.next()) {
                         final Version version = new Version(
                                 resultSet.getInt(1),
@@ -182,8 +182,8 @@ public class LegacyDbModule extends AbstractModule {
             try (final Statement statement = connection.createStatement()) {
                 try (final ResultSet resultSet = statement.executeQuery(
                         "SELECT ID " +
-                                "FROM FD " +
-                                "LIMIT 1")) {
+                        "FROM FD " +
+                        "LIMIT 1")) {
                     if (resultSet.next()) {
                         final Version version = new Version(2, 0, 0);
                         LOGGER.info("Found FD table so version is: " + version);
@@ -204,8 +204,8 @@ public class LegacyDbModule extends AbstractModule {
             try (final Statement statement = connection.createStatement()) {
                 try (final ResultSet resultSet = statement.executeQuery(
                         "SELECT ID " +
-                                "FROM FEED " +
-                                "LIMIT 1")) {
+                        "FROM FEED " +
+                        "LIMIT 1")) {
                     if (resultSet.next()) {
                         final Version version = new Version(2, 0, 0);
                         LOGGER.info("Found FEED table so version is: " + version);
@@ -228,7 +228,7 @@ public class LegacyDbModule extends AbstractModule {
 
         optVersion.ifPresentOrElse(
                 version -> LOGGER.info("Detected current Stroom version is v" + version.toString()),
-                () -> LOGGER.info("This is a new installation. Legacy migrations won't be applied")
+                () -> LOGGER.info("This is an installation of v7.0 or greater. Legacy migrations won't be applied.")
         );
 
         // Only apply legacy migrations if this is an old DB.
@@ -241,7 +241,7 @@ public class LegacyDbModule extends AbstractModule {
                     } else {
                         final String message =
                                 "The current Stroom version cannot be upgraded to v5+. " +
-                                        "You must be on v4.0.60 or later.";
+                                "You must be on v4.0.60 or later.";
                         LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
                         throw new RuntimeException(message);
                     }
