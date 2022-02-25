@@ -32,6 +32,7 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.db.util.DbUtil;
+import stroom.db.util.JooqUtil;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -39,6 +40,7 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
+import stroom.util.BuildInfoModule;
 import stroom.util.NullSafe;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
@@ -69,21 +71,25 @@ import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.apache.hadoop.util.ThreadUtil;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.jetbrains.annotations.NotNull;
+import org.jooq.Configuration;
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -134,6 +140,8 @@ public class App extends Application<Config> {
     // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
     // injectors running but not sure how else we could do this unless Guice is not used for the validators.
     private final Injector validationOnlyInjector;
+    private static final String BOOTSTRAP_LOCK_TABLE_NAME = "bootstrap_lock";
+    private static final int BOOTSTRAP_LOCK_TABLE_ID = 1;
 
     // Needed for DropwizardExtensionsSupport
     public App() {
@@ -287,7 +295,9 @@ public class App extends Application<Config> {
      * migrations so it is safer to do it this way.
      * Can't user the cluster lock service as that is not a thing at this point.
      */
-    private <T> T doWithBootstrapLock(final Config config, final Supplier<T> work) {
+    private <T> T doWithBootstrapLock(final Config config,
+                                      final String buildVersion,
+                                      final Supplier<T> work) {
 
         Objects.requireNonNull(work);
         final ConnectionConfig connectionConfig = getClusterLockConnectionConfig(config);
@@ -298,44 +308,132 @@ public class App extends Application<Config> {
         T workOutput;
 
         try (Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
-            // We want the txn to be held open so we can hold the lock
-            conn.setAutoCommit(false);
+            final DSLContext context = JooqUtil.createContext(conn);
 
-            final String bootstrapLockTableName = "bootstrap_lock";
+            workOutput = context.transactionResult(txnConfig -> {
+                ensureBootStrapLockTable(txnConfig);
 
-            // Create a table that we can use to get a table lock on
-            final String createTableSql = LogUtil.message("""
-                            CREATE TABLE IF NOT EXISTS {} (
-                              dummy INT,
-                              PRIMARY KEY (dummy)
-                            ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci""",
-                    bootstrapLockTableName);
+                Optional<String> optDbBuildVersion = getBuildVersionFromLockTable(txnConfig);
+                boolean hasBootstrapBeenDone = optDbBuildVersion.filter(buildVersion::equals)
+                        .isPresent();
 
-            PreparedStatement preparedStatement = conn.prepareStatement(createTableSql);
-            LOGGER.debug("Ensuring table {} exists", bootstrapLockTableName);
-            preparedStatement.execute();
+                final T output;
+                if (hasBootstrapBeenDone) {
+                    LOGGER.info("Found expected version {} in {} table, no lock required",
+                            buildVersion,
+                            BOOTSTRAP_LOCK_TABLE_NAME);
+                    output = work.get();
+                } else {
+                    LOGGER.info("{} in {} table.",
+                            optDbBuildVersion
+                                    .map(dbVer -> "Found old version " + dbVer)
+                                    .orElse("Found no version"),
+                            BOOTSTRAP_LOCK_TABLE_NAME);
+                    acquireBootstrapLock(connectionConfig, txnConfig);
 
-            preparedStatement = conn.prepareStatement(
-                    LogUtil.message("LOCK TABLES {} WRITE", bootstrapLockTableName));
+                    // We now hold a cluster wide lock
+                    final Instant startTime = Instant.now();
 
-            LOGGER.info("Waiting to acquire bootstrap lock on table: {}, user: {}, url: {}",
-                    bootstrapLockTableName, connectionConfig.getUser(), connectionConfig.getUrl());
-            Instant startTime = Instant.now();
-            preparedStatement.execute();
-            LOGGER.info("Waited {} to acquire bootstrap lock", Duration.between(startTime, Instant.now()));
+                    // Re-check the lock table state now we are under lock
+                    optDbBuildVersion = getBuildVersionFromLockTable(txnConfig);
+                    hasBootstrapBeenDone = optDbBuildVersion.filter(buildVersion::equals)
+                            .isPresent();
 
-            // Do the work under cluster wide lock
-            startTime = Instant.now();
-            workOutput = work.get();
+                    if (hasBootstrapBeenDone) {
+                        LOGGER.info("Found expected version {} in {} table, releasing lock after {}",
+                                buildVersion, BOOTSTRAP_LOCK_TABLE_NAME, Duration.between(startTime, Instant.now()));
+                        releaseBootstrapLock(txnConfig);
+                    }
 
-            LOGGER.info("Completed work under bootstrap lock in " + Duration.between(startTime, Instant.now()));
-            preparedStatement = conn.prepareStatement("UNLOCK TABLES");
-            preparedStatement.execute();
-            LOGGER.info("Bootstrap lock released");
+                    // Now do the requested work, under lock if we are the first node for this build version
+                    output = work.get();
+
+                    // If anything fails and we don't update/insert these it is fine, it will just get done on next
+                    // successful boot
+                    optDbBuildVersion.ifPresentOrElse(
+                            dbVer -> updateLockTableBuildVersion(buildVersion, txnConfig),
+                            () -> insertLockTableRecord(buildVersion, txnConfig));
+
+                    if (!hasBootstrapBeenDone) {
+                        // We are the first node to get the lock for this build version so now release the lock
+                        LOGGER.info("Completed work under bootstrap lock in "
+                                + Duration.between(startTime, Instant.now()));
+                        releaseBootstrapLock(txnConfig);
+                    }
+                }
+                return output;
+            });
         } catch (SQLException e) {
             throw new RuntimeException("Error obtaining bootstrap lock: " + e.getMessage(), e);
         }
+
         return workOutput;
+    }
+
+    private void insertLockTableRecord(final String buildVersion, final Configuration txnConfig) {
+        LOGGER.info("Inserting current build version {} into {}",
+                buildVersion, BOOTSTRAP_LOCK_TABLE_NAME);
+        DSL.using(txnConfig)
+                .execute(LogUtil.message("""
+                                INSERT INTO {} (
+                                  id,
+                                  build_version)
+                                VALUES (?, ?)
+                                """, BOOTSTRAP_LOCK_TABLE_NAME),
+                        BOOTSTRAP_LOCK_TABLE_ID, buildVersion);
+    }
+
+    private void updateLockTableBuildVersion(final String buildVersion, final Configuration txnConfig) {
+        LOGGER.info("Updating {} table with current build version: {}",
+                BOOTSTRAP_LOCK_TABLE_NAME, buildVersion);
+        DSL.using(txnConfig)
+                .execute(LogUtil.message("""
+                                UPDATE {}
+                                SET build_version = ?
+                                WHERE id = ?
+                                """, BOOTSTRAP_LOCK_TABLE_NAME),
+                        buildVersion, BOOTSTRAP_LOCK_TABLE_ID);
+    }
+
+    private void releaseBootstrapLock(final Configuration txnConfig) {
+        DSL.using(txnConfig)
+                .execute("UNLOCK TABLES");
+        LOGGER.info("Bootstrap lock released");
+    }
+
+    @NotNull
+    private Optional<String> getBuildVersionFromLockTable(final Configuration txnConfig) {
+        return DSL.using(txnConfig)
+                .fetchOptional(LogUtil.message("""
+                                SELECT build_version
+                                FROM {}
+                                WHERE id = ?""", BOOTSTRAP_LOCK_TABLE_NAME),
+                        BOOTSTRAP_LOCK_TABLE_ID)
+                .flatMap(rec -> Optional.of(rec.get(0, String.class)));
+    }
+
+    private void acquireBootstrapLock(final ConnectionConfig connectionConfig, final Configuration txnConfig) {
+        LOGGER.info("Waiting to acquire bootstrap lock on table: {}, user: {}, url: {}",
+                BOOTSTRAP_LOCK_TABLE_NAME, connectionConfig.getUser(), connectionConfig.getUrl());
+        Instant startTime = Instant.now();
+        DSL.using(txnConfig)
+                .execute(LogUtil.message("LOCK TABLES {} WRITE", BOOTSTRAP_LOCK_TABLE_NAME));
+        LOGGER.info("Waited {} to acquire bootstrap lock", Duration.between(startTime, Instant.now()));
+    }
+
+    private void ensureBootStrapLockTable(final Configuration txnConfig) {
+        // Create a table that we can use to get a table lock on
+        final String createTableSql = LogUtil.message("""
+                        CREATE TABLE IF NOT EXISTS {} (
+                          id INT NOT NULL,
+                          build_version VARCHAR(255) NOT NULL,
+                          PRIMARY KEY (id)
+                        ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci""",
+                BOOTSTRAP_LOCK_TABLE_NAME);
+
+        LOGGER.debug("Ensuring table {} exists", BOOTSTRAP_LOCK_TABLE_NAME);
+        DSL.using(txnConfig)
+                .execute(createTableSql);
     }
 
     private ConnectionConfig getClusterLockConnectionConfig(final Config config) {
@@ -365,13 +463,16 @@ public class App extends Application<Config> {
     private Injector bootstrapApplication(final Config configuration,
                                           final Environment environment) {
 
-        return doWithBootstrapLock(configuration, () -> {
+        final Injector rootInjector = Guice.createInjector(new BuildInfoModule());
+        final BuildInfo buildInfo = rootInjector.getInstance(BuildInfo.class);
+
+        return doWithBootstrapLock(configuration, buildInfo.getBuildVersion(), () -> {
             LOGGER.info("Initialising database connections and configuration properties");
 
             final BootStrapModule bootstrapModule = new BootStrapModule(
                     configuration, environment, configFile);
 
-            final Injector bootStrapInjector = Guice.createInjector(bootstrapModule);
+            final Injector bootStrapInjector = rootInjector.createChildInjector(bootstrapModule);
 
             // Force all datasources to be created so we can force migrations to run.
             final Set<DataSource> dataSources = bootStrapInjector.getInstance(
@@ -392,6 +493,8 @@ public class App extends Application<Config> {
             FileUtil.ensureDirExists(homeDirProvider.get());
             FileUtil.ensureDirExists(tempDirProvider.get());
 
+            ThreadUtil.sleepAtLeastIgnoreInterrupts(10_000);
+
             return bootStrapInjector;
         });
     }
@@ -400,11 +503,11 @@ public class App extends Application<Config> {
         Objects.requireNonNull(buildInfo);
 
         LOGGER.info(""
-                    + "\n  Build version: " + buildInfo.getBuildVersion()
-                    + "\n  Build date:    " + buildInfo.getBuildDate()
-                    + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
-                    + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                    + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig()));
+                + "\n  Build version: " + buildInfo.getBuildVersion()
+                + "\n  Build date:    " + buildInfo.getBuildDate()
+                + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
+                + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
+                + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig()));
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {
@@ -412,16 +515,16 @@ public class App extends Application<Config> {
             String propPath = configuration.getYamlAppConfig().getSecurityConfig().getIdentityConfig().getFullPathStr(
                     "useDefaultOpenIdCredentials");
             LOGGER.warn("\n" +
-                        "\n  -----------------------------------------------------------------------------" +
-                        "\n  " +
-                        "\n                                        WARNING!" +
-                        "\n  " +
-                        "\n   Using default and publicly available Open ID authentication credentials. " +
-                        "\n   This is insecure! These should only be used in test/demo environments. " +
-                        "\n   Set " + propPath + " to false for production environments." +
-                        "\n" +
-                        "\n  -----------------------------------------------------------------------------" +
-                        "\n");
+                    "\n  -----------------------------------------------------------------------------" +
+                    "\n  " +
+                    "\n                                        WARNING!" +
+                    "\n  " +
+                    "\n   Using default and publicly available Open ID authentication credentials. " +
+                    "\n   This is insecure! These should only be used in test/demo environments. " +
+                    "\n   Set " + propPath + " to false for production environments." +
+                    "\n" +
+                    "\n  -----------------------------------------------------------------------------" +
+                    "\n");
         }
     }
 
@@ -456,7 +559,7 @@ public class App extends Application<Config> {
 
         if (result.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
-                         "configuration, set {} to false, however this is not advised!",
+                            "configuration, set {} to false, however this is not advised!",
                     appConfig.getFullPathStr(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
