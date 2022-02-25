@@ -57,6 +57,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
                 .isNull();
 
         final Job persistedJob = genericDao.create(job);
+        final int id = persistedJob.getId();
 
         assertThat(persistedJob.getName())
                 .isEqualTo(JOB_NAME);
@@ -65,7 +66,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
         assertThat(persistedJob.getVersion())
                 .isNotNull();
 
-        final Optional<Job> optJob = getGenericDao().fetch(1);
+        final Optional<Job> optJob = getGenericDao().fetch(id);
 
         assertThat(optJob)
                 .isPresent();
