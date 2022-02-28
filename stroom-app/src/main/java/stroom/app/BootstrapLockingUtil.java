@@ -109,8 +109,8 @@ public class BootstrapLockingUtil {
                     if (!hasBootstrapBeenDone) {
                         DbMigrationState.markBootstrapMigrationsComplete();
                         // We are the first node to get the lock for this build version so now release the lock
-                        LOGGER.info(LogUtil.message("Completed work under bootstrap lock in {}. Releasing lock."
-                                + Duration.between(startTime, Instant.now())));
+                        LOGGER.info(LogUtil.message("Completed work under bootstrap lock in {}. Releasing lock.",
+                                Duration.between(startTime, Instant.now())));
                         // The row lock (if we have one) will be released as soon as we exit
                         // the try-with-resources block
                     }
