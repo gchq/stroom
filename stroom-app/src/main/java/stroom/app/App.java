@@ -63,7 +63,6 @@ import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.apache.hadoop.util.ThreadUtil;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
@@ -305,8 +304,6 @@ public class App extends Application<Config> {
                     // Ensure we have our home/temp dirs set up
                     FileUtil.ensureDirExists(homeDirProvider.get());
                     FileUtil.ensureDirExists(tempDirProvider.get());
-
-//                    ThreadUtil.sleepAtLeastIgnoreInterrupts(5_000);
 
                     return bootStrapInjector;
                 });
