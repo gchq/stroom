@@ -23,6 +23,7 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.filter.SplitFilter;
 import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -139,7 +140,21 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
     }
 
     @Test
-    void testPerformance() {
+    void testPerformanceSplitCount1000() {
+        testPerformance(1000);
+    }
+
+    @Test
+    void testPerformanceSplitCount100() {
+        testPerformance(100);
+    }
+
+    @Test
+    void testPerformanceSplitCount1() {
+        testPerformance(1);
+    }
+
+    private void testPerformance(final int splitCount) {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final String name = DIR + "PERFORMANCE.nxml";
             final Path path = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(name);
@@ -155,7 +170,7 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
                 outputStream.write("file://records-v2.0.xsd\" ");
                 outputStream.write("version=\"2.0\">\n");
 
-                for (int fileNo = 1; fileNo <= 1000; fileNo++) {
+                for (int fileNo = 1; fileNo <= 10000; fileNo++) {
                     for (int lineNo = 1; lineNo <= 1000; lineNo++) {
                         outputStream.write("<record>");
                         outputStream.write("<data name=\"Date\" value=\"01/01/2010\"/>");
@@ -203,6 +218,7 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
                 final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                 final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext);
+                pipeline.findFilters(SplitFilter.class).get(0).setSplitCount(splitCount);
 
                 pipeline.startProcessing();
 
