@@ -91,7 +91,7 @@ class BitmapLookup extends AbstractLookup {
                         // Not really sure why as it is not something we are doing explicitly.  May be something to
                         // do with how we call characters() on the TinyBuilder deeper down.
                         // receiver.characters(
-                        // str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
+                        // str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOption.WHOLE_TEXT_NODE);
                         wasFound = sequenceMaker.consume(result.getRefDataValueProxy().get());
 
                         if (trace && wasFound) {

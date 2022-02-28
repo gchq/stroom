@@ -28,6 +28,7 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.errorhandler.LoggerAdaptor;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -50,6 +51,7 @@ import stroom.util.shared.Severity;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.jaxp.TemplatesImpl;
 import net.sf.saxon.jaxp.TransformerImpl;
+import net.sf.saxon.lib.StandardErrorReporter;
 import net.sf.saxon.s9api.XsltExecutable;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
@@ -61,7 +63,6 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.xml.transform.ErrorListener;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.TransformerHandler;
@@ -234,9 +235,16 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     public void startDocument() throws SAXException {
         try {
             if (xsltExecutable != null) {
+                final LoggerAdaptor loggerAdaptor =
+                        new LoggerAdaptor(getElementId(), locationFactory, errorReceiverProxy);
+
                 // Make sure the executable points at the local error handler.
                 final Configuration configuration = xsltExecutable.getUnderlyingCompiledStylesheet().getConfiguration();
-                configuration.setErrorListener(errorListener);
+                configuration.setErrorReporterFactory(config -> {
+                    StandardErrorReporter reporter = new StandardErrorReporter();
+                    reporter.setLogger(loggerAdaptor);
+                    return reporter;
+                });
                 configuration.setLineNumbering(!pipelineContext.isStepping());
 
                 // Create a handler to receive all SAX events.

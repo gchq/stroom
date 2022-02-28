@@ -1,7 +1,7 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -36,8 +36,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -72,8 +72,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -108,8 +108,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -144,8 +144,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -180,8 +180,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -216,8 +216,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -252,8 +252,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -288,8 +288,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -324,8 +324,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -360,8 +360,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -396,8 +396,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -432,8 +432,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -468,8 +468,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -504,8 +504,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -540,8 +540,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -576,8 +576,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -612,8 +612,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -648,8 +648,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -684,8 +684,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -720,8 +720,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -756,8 +756,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -792,8 +792,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -828,8 +828,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -864,8 +864,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -900,8 +900,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -936,8 +936,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -972,8 +972,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1008,8 +1008,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1044,8 +1044,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1080,8 +1080,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1116,8 +1116,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1152,8 +1152,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1188,8 +1188,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1224,8 +1224,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1260,8 +1260,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1296,8 +1296,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1332,8 +1332,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1368,8 +1368,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1404,8 +1404,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1440,8 +1440,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1476,8 +1476,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1512,8 +1512,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1548,8 +1548,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1584,8 +1584,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1620,8 +1620,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1656,8 +1656,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1692,8 +1692,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1728,8 +1728,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1764,8 +1764,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1800,8 +1800,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1836,8 +1836,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1872,8 +1872,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1908,8 +1908,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1944,8 +1944,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -1980,8 +1980,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2016,8 +2016,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2052,8 +2052,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2088,8 +2088,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2124,8 +2124,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2160,8 +2160,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2196,8 +2196,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2232,8 +2232,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2268,8 +2268,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2304,8 +2304,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2340,8 +2340,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2376,8 +2376,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2412,8 +2412,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2448,8 +2448,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2484,8 +2484,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2520,8 +2520,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2556,8 +2556,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2592,8 +2592,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2628,8 +2628,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2664,8 +2664,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2700,8 +2700,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2736,8 +2736,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2772,8 +2772,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2808,8 +2808,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2844,8 +2844,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2880,8 +2880,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2916,8 +2916,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2952,8 +2952,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -2988,8 +2988,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3024,8 +3024,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3060,8 +3060,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3096,8 +3096,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3132,8 +3132,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3168,8 +3168,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3204,8 +3204,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3240,8 +3240,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3276,8 +3276,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3312,8 +3312,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3348,8 +3348,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3384,8 +3384,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3420,8 +3420,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3456,8 +3456,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3492,8 +3492,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3528,8 +3528,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3564,8 +3564,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3600,8 +3600,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3636,8 +3636,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3672,8 +3672,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3708,8 +3708,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3744,8 +3744,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3780,8 +3780,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3816,8 +3816,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3852,8 +3852,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3888,8 +3888,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3924,8 +3924,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3960,8 +3960,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -3996,8 +3996,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -4032,8 +4032,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>
@@ -4068,8 +4068,8 @@
 
 <?xml version="1.1" encoding="UTF-8"?>
 <Events xmlns="event-logging:3"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
    <Event>

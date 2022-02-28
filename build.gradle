@@ -258,7 +258,7 @@ ext.libs = [
         poi                            : "org.apache.poi:poi:4.1.2",
         poi_ooxml                      : "org.apache.poi:poi-ooxml:4.1.2",
         restygwt                       : "org.fusesource.restygwt:restygwt:2.2.7",
-        saxon_he                       : "net.sf.saxon:Saxon-HE:9.9.1-8",
+        saxon_he                       : "net.sf.saxon:Saxon-HE:10.0",
         simple_java_mail               : 'org.simplejavamail:simple-java-mail:4.3.0',
         slf4j_api                      : "org.slf4j:slf4j-api", // version controlled by DW BOM
         solrj                          : "org.apache.solr:solr-solrj:8.2.0",
