@@ -1,15 +1,17 @@
 package stroom.db.util;
 
 import stroom.config.common.AbstractDbConfig;
+import stroom.util.db.DbMigrationState;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,10 +65,29 @@ public abstract class AbstractDataSourceProviderModule<
                 createUniquePool());
 
         // Prevent migrations from being re-run for each test
-        final boolean required = COMPLETED_MIGRATIONS.computeIfAbsent(dataSource, k ->
-                new HashSet<>()).add(getModuleName());
-        if (required) {
-            performMigration(dataSource);
+        final boolean hasModuleBeenMigrated = !COMPLETED_MIGRATIONS.computeIfAbsent(
+                dataSource,
+                k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+                .add(getModuleName());
+
+        final boolean haveBootstrapMigrationsBeenDone = DbMigrationState.haveBootstrapMigrationsBeenDone();
+
+        LOGGER.debug(() ->
+                LogUtil.message("Module {}, hasModuleBeenMigrated: {}, haveBootstrapMigrationsBeenDone: {}",
+                        getModuleName(), hasModuleBeenMigrated, haveBootstrapMigrationsBeenDone));
+
+        // haveBootstrapMigrationsBeenDone gets set as part of the bootstrapping in App, whereas
+        // hasModuleBeenMigrated controls test runs where the app bootstrapping may not have been
+        // done.
+        if (haveBootstrapMigrationsBeenDone) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Stroom has already been migrated to this build version (module: {}).", getModuleName()));
+        } else {
+            if (!hasModuleBeenMigrated) {
+                performMigration(dataSource);
+            } else {
+                LOGGER.debug(() -> LogUtil.message("Module {} has already been migrated.", getModuleName()));
+            }
         }
 
         return createConnectionProvider(dataSource);

@@ -63,6 +63,7 @@ import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.apache.hadoop.util.ThreadUtil;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
@@ -105,8 +106,6 @@ public class App extends Application<Config> {
     @Inject
     private ManagedServices managedServices;
     @Inject
-    private BuildInfo buildInfo;
-    @Inject
     private RestResourceAutoLogger resourceAutoLogger;
     @Inject
     private Provider<Set<DataSource>> dataSourcesProvider;
@@ -114,6 +113,7 @@ public class App extends Application<Config> {
     // Injected manually
     private HomeDirProvider homeDirProvider;
     private TempDirProvider tempDirProvider;
+    private BuildInfo buildInfo;
 
     private final Path configFile;
 
@@ -264,7 +264,7 @@ public class App extends Application<Config> {
 
         warnAboutDefaultOpenIdCreds(configuration);
 
-        showInfo(configuration);
+        showNodeInfo(configuration);
     }
 
 
@@ -273,7 +273,8 @@ public class App extends Application<Config> {
                                           final Environment environment) {
 
         final Injector rootInjector = Guice.createInjector(new BuildInfoModule());
-        final BuildInfo buildInfo = rootInjector.getInstance(BuildInfo.class);
+        buildInfo = rootInjector.getInstance(BuildInfo.class);
+        showBuildInfo();
 
         return BootstrapLockingUtil.doWithBootstrapLock(
                 configuration,
@@ -305,21 +306,29 @@ public class App extends Application<Config> {
                     FileUtil.ensureDirExists(homeDirProvider.get());
                     FileUtil.ensureDirExists(tempDirProvider.get());
 
-//                    ThreadUtil.sleepAtLeastIgnoreInterrupts(8_000);
+//                    ThreadUtil.sleepAtLeastIgnoreInterrupts(5_000);
 
                     return bootStrapInjector;
                 });
     }
 
-    private void showInfo(final Config configuration) {
+    private void showBuildInfo() {
         Objects.requireNonNull(buildInfo);
-
         LOGGER.info(""
+                + "\n********************************************************************************"
                 + "\n  Build version: " + buildInfo.getBuildVersion()
                 + "\n  Build date:    " + buildInfo.getBuildDate()
+                + "\n********************************************************************************");
+    }
+
+    private void showNodeInfo(final Config configuration) {
+        Objects.requireNonNull(buildInfo);
+        LOGGER.info(""
+                + "\n********************************************************************************"
                 + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
                 + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig()));
+                + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig())
+                + "\n********************************************************************************");
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {

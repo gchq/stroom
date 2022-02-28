@@ -20,10 +20,12 @@ import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
 import stroom.legacy.db.LegacyConfig.LegacyDbConfig;
+import stroom.util.db.DbMigrationState;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Version;
 
 import com.google.inject.AbstractModule;
@@ -96,12 +98,29 @@ public class LegacyDbModule extends AbstractModule {
         final DataSource dataSource = dataSourceFactory.create(configProvider.get(), getModuleName(), false);
 
         // Prevent migrations from being re-run for each test
-        final boolean required = COMPLETED_MIGRATIONS
-                .computeIfAbsent(dataSource, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+        final boolean hasModuleBeenMigrated = !COMPLETED_MIGRATIONS.computeIfAbsent(
+                dataSource,
+                k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
                 .add(getModuleName());
 
-        if (required) {
-            performMigration(dataSource);
+        final boolean haveBootstrapMigrationsBeenDone = DbMigrationState.haveBootstrapMigrationsBeenDone();
+
+        LOGGER.debug(() ->
+                LogUtil.message("Module {}, hasModuleBeenMigrated: {}, haveBootstrapMigrationsBeenDone: {}",
+                        getModuleName(), hasModuleBeenMigrated, haveBootstrapMigrationsBeenDone));
+
+        // haveBootstrapMigrationsBeenDone gets set as part of the bootstrapping in App, whereas
+        // hasModuleBeenMigrated controls test runs where the app bootstrapping may not have been
+        // done.
+        if (haveBootstrapMigrationsBeenDone) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Stroom has already been migrated to this build version (module: {}).", getModuleName()));
+        } else {
+            if (!hasModuleBeenMigrated) {
+                performMigration(dataSource);
+            } else {
+                LOGGER.debug(() -> LogUtil.message("Module {} has already been migrated.", getModuleName()));
+            }
         }
 
         return createConnectionProvider(dataSource);
@@ -241,7 +260,7 @@ public class LegacyDbModule extends AbstractModule {
                     } else {
                         final String message =
                                 "The current Stroom version cannot be upgraded to v5+. " +
-                                "You must be on v4.0.60 or later.";
+                                        "You must be on v4.0.60 or later.";
                         LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
                         throw new RuntimeException(message);
                     }

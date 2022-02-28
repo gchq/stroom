@@ -10,6 +10,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.db.util.DbUtil;
 import stroom.db.util.JooqUtil;
 import stroom.util.NullSafe;
+import stroom.util.db.DbMigrationState;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -67,12 +68,14 @@ public class BootstrapLockingUtil {
 
                 final T output;
                 if (hasBootstrapBeenDone) {
-                    LOGGER.info("Found expected version {} in {} table, no lock required",
+                    LOGGER.info("Found required build version '{}' in {} table, no lock or DB migration required.",
                             dbBuildVersion,
                             BOOTSTRAP_LOCK_TABLE_NAME);
+                    DbMigrationState.markBootstrapMigrationsComplete();
                     output = work.get();
                 } else {
-                    LOGGER.info("Found old version {} in {} table.", dbBuildVersion, BOOTSTRAP_LOCK_TABLE_NAME);
+                    LOGGER.info("Found old build version '{}' in {} table.",
+                            dbBuildVersion, BOOTSTRAP_LOCK_TABLE_NAME);
                     acquireBootstrapLock(connectionConfig, txnConfig);
 
                     // We now hold a cluster wide lock
@@ -85,8 +88,11 @@ public class BootstrapLockingUtil {
 
                     if (hasBootstrapBeenDone) {
                         // Another node has done the bootstrap so
-                        LOGGER.info("Found expected version {} in {} table, releasing lock",
+                        LOGGER.info("Found required build version '{}' in {} table, releasing lock. " +
+                                        "No DB migration required.",
                                 buildVersion, BOOTSTRAP_LOCK_TABLE_NAME);
+                        DbMigrationState.markBootstrapMigrationsComplete();
+
                         // Rollback to release the row lock to allow other nodes to start checking
                         conn.rollback();
                     } else {
@@ -101,6 +107,7 @@ public class BootstrapLockingUtil {
                     updateLockTableBuildVersion(buildVersion, txnConfig);
 
                     if (!hasBootstrapBeenDone) {
+                        DbMigrationState.markBootstrapMigrationsComplete();
                         // We are the first node to get the lock for this build version so now release the lock
                         LOGGER.info(LogUtil.message("Completed work under bootstrap lock in {}. Releasing lock."
                                 + Duration.between(startTime, Instant.now())));
