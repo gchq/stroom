@@ -1,5 +1,6 @@
 package stroom.db.util;
 
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -520,11 +521,20 @@ public final class JooqUtil {
                 SQLDataType.INTEGER, date1, date2);
     }
 
+    /**
+     * Convert a checked exception into an unchecked one. Produce useful logging and handling of interrupted exceptions.
+     *
+     * @param e The exception to convert.
+     * @return A runtime exception.
+     */
     private static RuntimeException convertException(final Exception e) {
         if (e.getCause() instanceof InterruptedException) {
             // We expect interruption during searches so don't log the error.
             LOGGER.debug(e::getMessage, e);
-            return new RuntimeException(e.getMessage(), e);
+            // Continue to interrupt the current thread.
+            Thread.currentThread().interrupt();
+            // Throw an unchecked form of the interrupted exception.
+            return new UncheckedInterruptedException((InterruptedException) e);
         } else {
             LOGGER.error(e::getMessage, e);
             if (e instanceof RuntimeException) {
@@ -535,6 +545,16 @@ public final class JooqUtil {
         }
     }
 
+    /**
+     * Check that the datasource is not currently being used by the current thread. The main point of this check is to
+     * ensure that operations on a datasource are not nested as this can lead to exhaustion of connections from a
+     * datasource connection pool and produce a deadlock. It is generally ok for separate threads to get connections
+     * from the datasource as a connection should become available once one thread has released a connection back to the
+     * pool. However, nested calls, particularly recursive ones, will quickly starve a connection pool and lock the
+     * system.
+     *
+     * @param dataSource The datasource to check.
+     */
     private static void checkDataSource(final DataSource dataSource) {
         DataSource currentDataSource = DATA_SOURCE_THREAD_LOCAL.get();
         if (currentDataSource != null && currentDataSource.equals(dataSource)) {
