@@ -18,6 +18,7 @@ package stroom.util.xml;
 
 import stroom.util.io.StreamUtil;
 
+import net.sf.saxon.TransformerFactoryImpl;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -38,7 +39,6 @@ import javax.xml.transform.ErrorListener;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 
@@ -129,12 +129,12 @@ public final class XMLUtil {
     public static TransformerHandler createTransformerHandler(final ErrorListener errorListener,
                                                               final boolean indentOutput)
             throws TransformerConfigurationException {
-        final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactoryFactory.newInstance();
+        final TransformerFactoryImpl transformerFactory = TransformerFactoryFactory.newInstance();
         if (errorListener != null) {
-            stf.setErrorListener(errorListener);
+            transformerFactory.setErrorListener(errorListener);
         }
 
-        final TransformerHandler th = stf.newTransformerHandler();
+        final TransformerHandler th = transformerFactory.newTransformerHandler();
         final Transformer transformer = th.getTransformer();
         setCommonOutputProperties(transformer, indentOutput);
 

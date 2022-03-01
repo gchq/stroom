@@ -49,6 +49,7 @@ import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
 import net.sf.saxon.Configuration;
+import net.sf.saxon.jaxp.SaxonTransformerFactory;
 import net.sf.saxon.jaxp.TemplatesImpl;
 import net.sf.saxon.jaxp.TransformerImpl;
 import net.sf.saxon.lib.StandardErrorReporter;
@@ -64,6 +65,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.TransformerHandler;
 
@@ -248,7 +250,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 configuration.setLineNumbering(!pipelineContext.isStepping());
 
                 // Create a handler to receive all SAX events.
-                final TemplatesImpl templates = new TemplatesImpl(xsltExecutable);
+                final TransformerFactory transformerFactory = new SaxonTransformerFactory(configuration);
+                final TemplatesImpl templates = new TemplatesImpl(transformerFactory, xsltExecutable);
                 final TransformerImpl transformer = (TransformerImpl) templates.newTransformer();
                 transformer.setErrorListener(errorListener);
 

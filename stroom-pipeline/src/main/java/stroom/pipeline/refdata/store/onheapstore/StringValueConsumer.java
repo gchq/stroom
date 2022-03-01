@@ -25,6 +25,7 @@ import stroom.util.logging.LogUtil;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.event.ReceiverOption;
+import net.sf.saxon.str.StringView;
 import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,8 @@ public class StringValueConsumer implements RefDataValueConsumer {
         LOGGER.trace("consuming {}", value);
 
         try {
-            receiver.characters(value, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOption.WHOLE_TEXT_NODE);
+            receiver.characters(
+                    StringView.of(value), RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOption.WHOLE_TEXT_NODE);
         } catch (XPathException e) {
             throw new RuntimeException(LogUtil.message("Error passing string {} to receiver", value), e);
         }

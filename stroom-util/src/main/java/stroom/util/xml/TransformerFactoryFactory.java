@@ -17,9 +17,10 @@
 package stroom.util.xml;
 
 import net.sf.saxon.Configuration;
-import net.sf.saxon.jaxp.SaxonTransformerFactory;
+import net.sf.saxon.TransformerFactoryImpl;
 import net.sf.saxon.lib.SerializerFactory;
 import net.sf.saxon.serialize.Emitter;
+import net.sf.saxon.serialize.XMLEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,15 +62,14 @@ public final class TransformerFactoryFactory {
         // Utility class.
     }
 
-    public static TransformerFactory newInstance() {
-        final TransformerFactory factory = TransformerFactory.newInstance();
-        secureProcessing(factory);
+    public static TransformerFactoryImpl newInstance() {
+        final TransformerFactoryImpl transformerFactory = new net.sf.saxon.TransformerFactoryImpl();
+        secureProcessing(transformerFactory);
 
-        final SaxonTransformerFactory saxonTransformerFactory = (SaxonTransformerFactory) factory;
-        final Configuration configuration = saxonTransformerFactory.getConfiguration();
+        final Configuration configuration = transformerFactory.getConfiguration();
         configuration.setSerializerFactory(new MySerializerFactory(configuration));
 
-        return factory;
+        return transformerFactory;
     }
 
     private static void secureProcessing(final TransformerFactory factory) {

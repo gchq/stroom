@@ -4,6 +4,8 @@ import stroom.util.xml.FatalErrorListener;
 import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
+import net.sf.saxon.serialize.UTF8Writer;
+import net.sf.saxon.serialize.UnicodeWriterResult;
 import net.sf.saxon.serialize.charcode.UTF16CharacterSet;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.InputSource;
@@ -14,7 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
 
 class TestXmlWriter {
 
@@ -35,7 +36,7 @@ class TestXmlWriter {
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final TransformerHandler th = XMLUtil.createTransformerHandler(new FatalErrorListener(), true);
-        th.setResult(new StreamResult(baos));
+        th.setResult(new UnicodeWriterResult(new UTF8Writer(baos), null));
 
         th.startDocument();
         th.startElement("", "test", "test", attributes);

@@ -45,12 +45,13 @@ import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
+import stroom.util.xml.MyXmlEmitter;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
-import net.sf.saxon.serialize.XMLEmitter;
+import net.sf.saxon.str.UnicodeWriterToWriter;
 import net.sf.saxon.trans.XPathException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -474,13 +475,10 @@ class TestReferenceDataFilter extends StroomUnitTest {
         final PipelineConfiguration pipelineConfiguration = new PipelineConfiguration(configuration);
 
         final StringWriter stringWriter = new StringWriter();
-        final XMLEmitter xmlEmitter = new XMLEmitter();
+        final MyXmlEmitter xmlEmitter = new MyXmlEmitter();
         xmlEmitter.setPipelineConfiguration(pipelineConfiguration);
-        try {
-            xmlEmitter.setWriter(stringWriter);
-        } catch (XPathException e) {
-            throw new RuntimeException(e);
-        }
+        xmlEmitter.setUnicodeWriter(new UnicodeWriterToWriter(stringWriter));
+
         final FastInfosetByteBufferConsumer fastInfosetByteBufferConsumer = new FastInfosetByteBufferConsumer(
                 xmlEmitter, pipelineConfiguration);
 

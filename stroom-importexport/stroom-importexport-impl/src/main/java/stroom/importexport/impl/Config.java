@@ -21,6 +21,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.xml.TransformerFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
+import net.sf.saxon.TransformerFactoryImpl;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -40,8 +41,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 
@@ -72,8 +71,8 @@ public class Config {
 
     public void write(final Writer writer, final String entityType) throws IOException {
         try {
-            final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactoryFactory.newInstance();
-            final TransformerHandler th = stf.newTransformerHandler();
+            final TransformerFactoryImpl transformerFactory = TransformerFactoryFactory.newInstance();
+            final TransformerHandler th = transformerFactory.newTransformerHandler();
             final Transformer transformer = th.getTransformer();
 
             writer.write("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n");
@@ -138,7 +137,7 @@ public class Config {
 
         } catch (final IOException e) {
             throw e;
-        } catch (final TransformerConfigurationException | SAXException | RuntimeException e) {
+        } catch (final SAXException | RuntimeException e) {
             throw new IOException(e.getMessage());
         }
     }

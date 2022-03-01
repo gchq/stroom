@@ -20,7 +20,6 @@ import stroom.pipeline.LocationFactory;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.HasElementId;
 import stroom.pipeline.filter.XMLFilterAdaptor;
 import stroom.pipeline.xml.event.simple.StartElement;
@@ -31,6 +30,7 @@ import stroom.util.shared.Severity;
 import stroom.util.xml.TransformerFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
+import net.sf.saxon.TransformerFactoryImpl;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -43,8 +43,6 @@ import java.util.List;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 
@@ -54,8 +52,7 @@ import javax.xml.transform.stream.StreamResult;
  */
 public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
 
-    private final SAXTransformerFactory transformerFactory = (SAXTransformerFactory) TransformerFactoryFactory
-            .newInstance();
+    private final TransformerFactoryImpl transformerFactory = TransformerFactoryFactory.newInstance();
     private final MyWriter outputStreamWriter = new MyWriter(1000);
     private final List<DestinationProvider> appenders;
     private final List<StartPrefixMapping> prefixList = new ArrayList<>();
@@ -79,39 +76,30 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
     }
 
     private ContentHandler createHandler() {
-        ContentHandler handler = null;
+        final ErrorListener errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory,
+                errorReceiver);
+        transformerFactory.setErrorListener(errorListener);
 
-        try {
-            final ErrorListener errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory,
-                    errorReceiver);
-            transformerFactory.setErrorListener(errorListener);
+        final TransformerHandler th = transformerFactory.newTransformerHandler();
+        final Transformer transformer = th.getTransformer();
+        transformer.setErrorListener(errorListener);
+        XMLUtil.setCommonOutputProperties(transformer, indentOutput);
 
-            final TransformerHandler th = transformerFactory.newTransformerHandler();
-            final Transformer transformer = th.getTransformer();
-            transformer.setErrorListener(errorListener);
-            XMLUtil.setCommonOutputProperties(transformer, indentOutput);
-
-            // Set the encoding to use.
-            Charset charset = StreamUtil.DEFAULT_CHARSET;
-            if (encoding != null && !encoding.isEmpty()) {
-                try {
-                    charset = Charset.forName(encoding);
-                } catch (final RuntimeException e) {
-                    errorReceiver.log(Severity.ERROR, null, getElementId(),
-                            "Unsupported encoding '" + encoding + "', defaulting to UTF-8", e);
-                }
+        // Set the encoding to use.
+        Charset charset = StreamUtil.DEFAULT_CHARSET;
+        if (encoding != null && !encoding.isEmpty()) {
+            try {
+                charset = Charset.forName(encoding);
+            } catch (final RuntimeException e) {
+                errorReceiver.log(Severity.ERROR, null, getElementId(),
+                        "Unsupported encoding '" + encoding + "', defaulting to UTF-8", e);
             }
-            transformer.setOutputProperty(OutputKeys.ENCODING, charset.name());
-
-            th.setResult(new StreamResult(outputStreamWriter));
-            th.setDocumentLocator(locator);
-            handler = th;
-        } catch (final TransformerConfigurationException e) {
-            errorReceiver.log(Severity.FATAL_ERROR, null, getElementId(), e.getMessage(), e);
-            throw new LoggedException(e.getMessage(), e);
         }
+        transformer.setOutputProperty(OutputKeys.ENCODING, charset.name());
 
-        return handler;
+        th.setResult(new StreamResult(outputStreamWriter));
+        th.setDocumentLocator(locator);
+        return th;
     }
 
     @Override

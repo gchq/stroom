@@ -13,12 +13,13 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-    
+
     implementation libs.eventLogging
     implementation libs.guice5
     implementation libs.jackson_annotations
     implementation libs.javax_inject
     implementation libs.jaxb_api
+    implementation libs.saxon_he
     implementation libs.restygwt
     implementation libs.slf4j_api
     implementation project(':stroom-docref')

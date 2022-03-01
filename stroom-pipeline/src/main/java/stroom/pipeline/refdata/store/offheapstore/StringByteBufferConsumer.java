@@ -27,6 +27,7 @@ import stroom.util.logging.LogUtil;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.event.ReceiverOption;
+import net.sf.saxon.str.StringView;
 import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,8 +59,9 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
         try {
             // Not sure why we use WHOLE_TEXT_NODE as we are potentially calling characters() multiple times for a
             // bitmap lookup. Maybe that is what is adding the space between bitmaplookup values.
-            receiver.characters(str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOption.WHOLE_TEXT_NODE);
-        } catch (XPathException e) {
+            receiver.characters(
+                    StringView.of(str), RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOption.WHOLE_TEXT_NODE);
+        } catch (final XPathException e) {
             throw new RuntimeException(LogUtil.message("Error passing string {} to receiver", str), e);
         }
     }

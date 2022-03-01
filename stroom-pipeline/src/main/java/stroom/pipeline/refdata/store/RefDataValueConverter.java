@@ -6,6 +6,7 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.serialize.XMLEmitter;
+import net.sf.saxon.str.UnicodeWriterToWriter;
 import net.sf.saxon.trans.XPathException;
 
 import java.io.StringWriter;
@@ -17,7 +18,6 @@ public class RefDataValueConverter {
             return ((StringValue) refDataValue).getValue();
         } else if (refDataValue instanceof FastInfosetValue) {
             final FastInfosetValue fastInfosetValue = (FastInfosetValue) refDataValue;
-
             return convertToString(fastInfosetValue);
         } else {
             throw new RuntimeException("Unknown type " + refDataValue.getTypeId());
@@ -27,13 +27,8 @@ public class RefDataValueConverter {
     public Receiver buildStringReceiver(final StringWriter stringWriter,
                                         final PipelineConfiguration pipelineConfiguration) {
         final XMLEmitter xmlEmitterReceiver = new FragmentXmlEmitter();
-        try {
-            xmlEmitterReceiver.setWriter(stringWriter);
-            xmlEmitterReceiver.setPipelineConfiguration(pipelineConfiguration);
-        } catch (XPathException e) {
-            throw new RuntimeException(e);
-        }
-
+        xmlEmitterReceiver.setUnicodeWriter(new UnicodeWriterToWriter(stringWriter));
+        xmlEmitterReceiver.setPipelineConfiguration(pipelineConfiguration);
         return xmlEmitterReceiver;
     }
 
