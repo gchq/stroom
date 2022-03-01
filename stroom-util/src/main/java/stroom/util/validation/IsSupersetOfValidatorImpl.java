@@ -42,7 +42,10 @@ public class IsSupersetOfValidatorImpl implements IsSupersetOfValidator {
             if (!missingValues.isEmpty()) {
                 // We want the exception details in the message so bin the default constraint
                 // violation and make a new one.
-                String msg = "Set contains missing values ["
+                final String plural = missingValues.size() > 1
+                        ? "s"
+                        : "";
+                final String msg = "Set is missing value" + plural + " ["
                         + String.join(",", missingValues)
                         + "]";
                 context.disableDefaultConstraintViolation();

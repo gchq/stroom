@@ -120,6 +120,8 @@ public class App extends Application<Config> {
     // of the yaml file before our main injector has been created and also so we can use our custom
     // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
     // injectors running but not sure how else we could do this unless Guice is not used for the validators.
+    // TODO 28/02/2022 AT: We could add the validation module to the root injector along with BuildInfo
+    //  then we don't have to bind it twice
     private final Injector validationOnlyInjector;
 
     // Needed for DropwizardExtensionsSupport
@@ -275,7 +277,7 @@ public class App extends Application<Config> {
         buildInfo = rootInjector.getInstance(BuildInfo.class);
         showBuildInfo();
 
-        return BootstrapLockingUtil.doWithBootstrapLock(
+        final Injector bootstrapInjector = BootstrapLockingUtil.doWithBootstrapLock(
                 configuration,
                 buildInfo.getBuildVersion(), () -> {
                     LOGGER.info("Initialising database connections and configuration properties");
@@ -283,11 +285,11 @@ public class App extends Application<Config> {
                     final BootStrapModule bootstrapModule = new BootStrapModule(
                             configuration, environment, configFile);
 
-                    final Injector bootStrapInjector = rootInjector.createChildInjector(
+                    final Injector childInjector = rootInjector.createChildInjector(
                             bootstrapModule);
 
                     // Force all datasources to be created so we can force migrations to run.
-                    final Set<DataSource> dataSources = bootStrapInjector.getInstance(
+                    final Set<DataSource> dataSources = childInjector.getInstance(
                             Key.get(GuiceUtil.setOf(DataSource.class)));
 
                     LOGGER.debug(() -> LogUtil.message("Used {} data sources:\n{}",
@@ -298,15 +300,18 @@ public class App extends Application<Config> {
                                     .sorted()
                                     .collect(Collectors.joining("\n"))));
 
-                    this.homeDirProvider = bootStrapInjector.getInstance(HomeDirProvider.class);
-                    this.tempDirProvider = bootStrapInjector.getInstance(TempDirProvider.class);
 
-                    // Ensure we have our home/temp dirs set up
-                    FileUtil.ensureDirExists(homeDirProvider.get());
-                    FileUtil.ensureDirExists(tempDirProvider.get());
-
-                    return bootStrapInjector;
+                    return childInjector;
                 });
+
+        this.homeDirProvider = bootstrapInjector.getInstance(HomeDirProvider.class);
+        this.tempDirProvider = bootstrapInjector.getInstance(TempDirProvider.class);
+
+        // Ensure we have our home/temp dirs set up
+        FileUtil.ensureDirExists(homeDirProvider.get());
+        FileUtil.ensureDirExists(tempDirProvider.get());
+
+        return bootstrapInjector;
     }
 
     private void showBuildInfo() {

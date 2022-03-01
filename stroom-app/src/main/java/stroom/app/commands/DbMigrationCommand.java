@@ -2,6 +2,7 @@ package stroom.app.commands;
 
 import stroom.app.guice.BootStrapModule;
 import stroom.config.app.Config;
+import stroom.util.BuildInfoModule;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.Guice;
@@ -53,7 +54,9 @@ public class DbMigrationCommand extends ConfiguredCommand<Config> {
 
         LOGGER.debug("Creating injector");
         try {
-            final Injector injector = Guice.createInjector(bootstrapModule);
+            final Injector injector = Guice.createInjector(
+                    new BuildInfoModule(),
+                    bootstrapModule);
 
             // Force guice to get all datasource instances from the multibinder
             // so the migration will be run for each stroom module
