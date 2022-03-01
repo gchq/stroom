@@ -56,6 +56,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class ManageGlobalPropertyEditPresenter
         extends MyPresenterWidget<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView>
@@ -68,6 +69,8 @@ public final class ManageGlobalPropertyEditPresenter
     private static final String MULTIPLE_YAML_VALUES_MSG = "[Multiple YAML values exist in the cluster]";
     private static final String MULTIPLE_EFFECTIVE_VALUES_MSG = "[Multiple effective values exist in the cluster]";
     private static final String MULTIPLE_SOURCES_MSG = "[Configured from multiple sources]";
+    private static final String NODE_UNREACHABLE_MSG = "[Node unreachable]";
+    private static final String UNKNOWN_MSG = "[Unknown]";
 
     private final RestFactory restFactory;
     private final NodeManager nodeManager;
@@ -80,6 +83,8 @@ public final class ManageGlobalPropertyEditPresenter
     private final Map<String, OverrideValue<String>> nodeToYamlOverrideMap = new HashMap<>();
 
     // effectiveValue => (sources)
+    // Allows us to see which nodes have which effective values, e.g. you may have some nodes
+    // with one value and the rest with another.
     private final Map<String, Set<NodeSource>> effectiveValueToNodeSourcesMap = new HashMap<>();
 
     private final Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider;
@@ -158,9 +163,22 @@ public final class ManageGlobalPropertyEditPresenter
                     getView().asWidget().getElement().getAbsoluteLeft() + 20,
                     getView().asWidget().getElement().getAbsoluteTop() + 10);
 
+
+            final Map<String, Set<NodeSource>> modifiedEffectiveValueToNodeSourcesMap;
+            if (unreachableNodes.isEmpty()) {
+                modifiedEffectiveValueToNodeSourcesMap = effectiveValueToNodeSourcesMap;
+            } else {
+                modifiedEffectiveValueToNodeSourcesMap = new HashMap<>(effectiveValueToNodeSourcesMap);
+                modifiedEffectiveValueToNodeSourcesMap.put(
+                        NODE_UNREACHABLE_MSG,
+                        unreachableNodes.stream()
+                                .map(node -> new NodeSource(node, UNKNOWN_MSG))
+                                .collect(Collectors.toSet()));
+            }
+
             clusterValuesPresenter.show(
                     getEntity(),
-                    effectiveValueToNodeSourcesMap,
+                    modifiedEffectiveValueToNodeSourcesMap,
                     offsetPopupPosition,
                     popupUiHandlers);
         }
@@ -263,8 +281,6 @@ public final class ManageGlobalPropertyEditPresenter
                                              final OverrideValue<String> yamlOverride) {
 
         final String effectiveValueFromNode;
-
-
         if (yamlOverride == null) {
             effectiveValueFromNode = "UNKNOWN";
         } else if (yamlOverride.equals(ERROR_VALUE)) {
@@ -280,26 +296,25 @@ public final class ManageGlobalPropertyEditPresenter
                         configProperty.getDatabaseOverrideValue(),
                         yamlOverride).getName());
 
-        // Add our value into the map
+        // Remove this node's value from the map
+        final List<String> keysToRemove = new ArrayList<>();
+        effectiveValueToNodeSourcesMap.forEach((effectiveValue, nodeSources) -> {
+            nodeSources.removeIf(existingNodeSource ->
+                    existingNodeSource.getNodeName().equals(nodeName));
+
+            if (nodeSources.isEmpty()) {
+                keysToRemove.add(effectiveValue);
+            }
+        });
+
+        // Remove entries with no nodes
+        keysToRemove.forEach(effectiveValueToNodeSourcesMap::remove);
+
+        // Now add our new value into the map
         this.effectiveValueToNodeSourcesMap.computeIfAbsent(
                 effectiveValueFromNode,
                 k -> new HashSet<>())
                 .add(newNodeSource);
-
-        final List<String> keysToRemove = new ArrayList<>();
-        effectiveValueToNodeSourcesMap.forEach((effectiveValue, nodeSources) -> {
-
-            if (!effectiveValue.equals(effectiveValueFromNode)) {
-                nodeSources.removeIf(existingNodeSource ->
-                        existingNodeSource.getNodeName().equals(nodeName));
-
-                if (nodeSources.isEmpty()) {
-                    keysToRemove.add(effectiveValue);
-                }
-            }
-        });
-        // Remove entries with no nodes
-        keysToRemove.forEach(effectiveValueToNodeSourcesMap::remove);
     }
 
     private void updateAllNodeEffectiveValues() {

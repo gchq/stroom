@@ -446,22 +446,24 @@ public class ConfigMapper {
      * Verifies that the passed value for the property with fullPath can be converted into
      * the appropriate object type
      */
-    void validateValueSerialisation(final PropertyPath fullPath, final String valueAsString) {
+    Object validateValueSerialisation(final PropertyPath fullPath, final String valueAsString) {
         // If the string form can't be converted then an exception will be thrown
-        convertValue(fullPath, valueAsString);
+        final Prop prop = defaultPropertiesMap.get(fullPath);
+        if (prop != null) {
+            final Type genericType = prop.getValueType();
+            return convertToObject(prop, valueAsString, genericType, NullBehaviourMode.VALIDATE);
+        } else {
+            throw new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath));
+        }
     }
 
     public Object convertValue(final PropertyPath fullPath, final String valueAsString) {
-        if (valueAsString == null || valueAsString.isEmpty()) {
-            return null;
+        final Prop prop = defaultPropertiesMap.get(fullPath);
+        if (prop != null) {
+            final Type genericType = prop.getValueType();
+            return convertToObject(prop, valueAsString, genericType);
         } else {
-            final Prop prop = defaultPropertiesMap.get(fullPath);
-            if (prop != null) {
-                final Type genericType = prop.getValueType();
-                return convertToObject(prop, valueAsString, genericType);
-            } else {
-                throw new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath));
-            }
+            throw new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath));
         }
     }
 
@@ -945,21 +947,37 @@ public class ConfigMapper {
         return null;
     }
 
-    // pkg private for testing
     static Object convertToObject(
             final Prop prop,
             final String value,
             final Type genericType) {
+        return convertToObject(prop, value, genericType, NullBehaviourMode.DEFAULT);
+    }
+
+    // pkg private for testing
+    static Object convertToObject(
+            final Prop prop,
+            final String value,
+            final Type genericType,
+            final NullBehaviourMode nullBehaviourMode) {
         final Class<?> type = PropertyUtil.getDataType(genericType);
 
-        if (value == null) {
-            if (type.isPrimitive()) {
-                return getDefaultValue(type);
-            }
-            return null;
-        }
-
         try {
+            if (value == null || value.isBlank()) {
+                if (type.isPrimitive()) {
+                    if (NullBehaviourMode.DEFAULT.equals(nullBehaviourMode)) {
+                        return getDefaultValue(type);
+                    } else {
+                        throw new RuntimeException(LogUtil.message(
+                                "A null or empty value is not a valid value for this property which has " +
+                                        "a primitive type of {}", type.getName()));
+                    }
+                } else {
+                    return null;
+                }
+            }
+
+            // If we reach here the value is non-null and non-blank
             if (type.equals(String.class)) {
                 return value;
             } else if (type.equals(Byte.class) || type.equals(byte.class)) {
@@ -1024,8 +1042,7 @@ public class ConfigMapper {
                 "Type [{}] is not supported for value [{}]", genericType, value));
     }
 
-    private static Object getDefaultValue(Class<
-            ?> clazz) {
+    private static Object getDefaultValue(Class<?> clazz) {
         if (clazz.equals(boolean.class)) {
             return DEFAULT_BOOLEAN;
         } else if (clazz.equals(byte.class)) {
@@ -1502,5 +1519,12 @@ public class ConfigMapper {
     private interface PropertyConsumer {
 
         void accept(final PropertyPath fullPath, final Prop yamlProp);
+    }
+
+    enum NullBehaviourMode {
+        // throw if the value cannot be parsed, e.g. a null into an int
+        VALIDATE,
+        // default the value if null, eg. a null int becomes 0
+        DEFAULT
     }
 }
