@@ -226,7 +226,11 @@ public final class JooqUtil {
                         // 1062 is a duplicate key exception so someone else has already inserted it
                         LOGGER.debug(e::getMessage, e);
 
+                        // In theory we could get the unique key fields from record.getTable().getKeys()
+                        // but this is a bit fragile if the table has multiple unique keys, so better to let
+                        // the caller make the decision as to which fields to use
                         final List<Condition> conditionList = new ArrayList<>();
+                        // For now support up to two fields in a compound key
                         if (keyField1 != null) {
                             conditionList.add(keyField1.eq(record.get(keyField1)));
                         }
