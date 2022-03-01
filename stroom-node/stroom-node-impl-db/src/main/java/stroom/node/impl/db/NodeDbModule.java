@@ -62,7 +62,7 @@ public class NodeDbModule extends AbstractFlyWayDbModule<NodeDbConfig, NodeDbCon
     private static class DataSourceImpl extends DataSourceProxy implements NodeDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }

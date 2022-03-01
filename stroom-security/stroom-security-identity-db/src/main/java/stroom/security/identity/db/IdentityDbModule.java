@@ -51,7 +51,7 @@ public class IdentityDbModule extends AbstractFlyWayDbModule<IdentityDbConfig, I
     public static class DataSourceImpl extends DataSourceProxy implements IdentityDbConnProvider {
 
         public DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }

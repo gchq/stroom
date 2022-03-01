@@ -352,7 +352,7 @@ public class LegacyDbModule extends AbstractModule {
     private static class DataSourceImpl extends DataSourceProxy implements LegacyDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 

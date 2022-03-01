@@ -50,7 +50,7 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceDbConfig, Me
     private static class DataSourceImpl extends DataSourceProxy implements MetaDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }
