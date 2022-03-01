@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
@@ -46,7 +47,7 @@ public class BootstrapUtil {
 
     private static final String BUILD_VERSION_TABLE_NAME = "build_version";
     private static final int BUILD_VERSION_TABLE_ID = 1;
-    private static final String INITIAL_VERSION = "NO_VERSION";
+    private static final String INITIAL_VERSION = "UNKNOWN_VERSION";
 
     /**
      * Creates an injector with the bare minimum to initialise the DB connections and configuration.
@@ -145,6 +146,7 @@ public class BootstrapUtil {
         DbUtil.waitForConnection(connectionConfig);
         ensureBuildVersionTable(connectionConfig);
 
+        final AtomicBoolean doneWork = new AtomicBoolean(false);
         T workOutput;
 
         try (Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
@@ -155,15 +157,13 @@ public class BootstrapUtil {
 
             workOutput = context.transactionResult(txnConfig -> {
                 String dbBuildVersion = getBuildVersionFromDb(txnConfig);
-                boolean hasBootstrapBeenDone = dbBuildVersion.equals(buildVersion);
+                boolean isDbBuildVersionUpToDate = dbBuildVersion.equals(buildVersion);
 
-                final T output;
-                if (hasBootstrapBeenDone) {
+                T output = null;
+                if (isDbBuildVersionUpToDate) {
                     LOGGER.info("Found required build version '{}' in {} table, no lock or DB migration required.",
                             dbBuildVersion,
                             BUILD_VERSION_TABLE_NAME);
-                    DbMigrationState.markBootstrapMigrationsComplete();
-                    output = work.get();
                 } else {
                     LOGGER.info("Found old build version '{}' in {} table. Bootstrap lock and DB migration required.",
                             dbBuildVersion, BUILD_VERSION_TABLE_NAME);
@@ -175,43 +175,44 @@ public class BootstrapUtil {
                     // Re-check the lock table state now we are under lock
                     // For the first node these should be the same as when checked above
                     dbBuildVersion = getBuildVersionFromDb(txnConfig);
-                    hasBootstrapBeenDone = dbBuildVersion.equals(buildVersion);
+                    isDbBuildVersionUpToDate = dbBuildVersion.equals(buildVersion);
 
-                    if (hasBootstrapBeenDone) {
-                        // Another node has done the bootstrap so
+                    if (isDbBuildVersionUpToDate) {
+                        // Another node has done the bootstrap so we can just drop out of the txn/connection to
+                        // free up the lock
                         LOGGER.info("Found required build version '{}' in {} table, releasing lock. " +
                                         "No DB migration required.",
                                 buildVersion, BUILD_VERSION_TABLE_NAME);
-                        DbMigrationState.markBootstrapMigrationsComplete();
-
-                        // Rollback to release the row lock to allow other nodes to start checking
-                        conn.rollback();
                     } else {
-                        LOGGER.debug("dbBuildVersion: {}", dbBuildVersion);
+                        LOGGER.info("Upgrading stroom from '{}' to '{}' under lock", dbBuildVersion, buildVersion);
+
+                        // We hold the lock and the db version is out of date so perform work under lock
+                        // including doing all the flyway migrations
+                        output = work.get();
+                        doneWork.set(true);
+
+                        // If anything fails and we don't update/insert these it is fine, it will just
+                        // get done on next successful boot
+                        updateDbBuildVersion(buildVersion, txnConfig);
                     }
-
-                    // Now do the requested work (under lock if we are the first node for this build version)
-                    output = work.get();
-
-                    // If anything fails and we don't update/insert these it is fine, it will just get done on next
-                    // successful boot
-                    updateDbBuildVersion(buildVersion, txnConfig);
-
-                    if (!hasBootstrapBeenDone) {
-                        DbMigrationState.markBootstrapMigrationsComplete();
-                        // We are the first node to get the lock for this build version so now release the lock
-                        LOGGER.info(LogUtil.message("Completed work under bootstrap lock in {}. Releasing lock.",
-                                Duration.between(startTime, Instant.now())));
-                        // The row lock (if we have one) will be released as soon as we exit
-                        // the try-with-resources block
-                    }
+                    // We are the first node to get the lock for this build version so now release the lock
+                    LOGGER.info(LogUtil.message("Releasing bootstrap lock after {}",
+                            Duration.between(startTime, Instant.now())));
                 }
+                // Set local state so the db modules know not to run flyway when work.get() is called
+                // below
+                DbMigrationState.markBootstrapMigrationsComplete();
                 return output;
             });
+            LOGGER.debug("Closed connection");
         } catch (SQLException e) {
             throw new RuntimeException("Error obtaining bootstrap lock: " + e.getMessage(), e);
         }
 
+        // If we didn't do it under lock then we need to do it now
+        if (!doneWork.get()) {
+            workOutput = work.get();
+        }
         return workOutput;
     }
 
