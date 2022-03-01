@@ -158,7 +158,6 @@ public class LmdbDataStore implements DataStore {
         limitResultCount = maxResults != null && !hasSort && !compiledDepths.hasGroup();
 
         // Start transfer loop.
-        // TODO : Use provided executor and allow it to be terminated by search termination.
         executorProvider.get().execute(this::transfer);
     }
 
