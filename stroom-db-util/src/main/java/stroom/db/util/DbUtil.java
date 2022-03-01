@@ -52,6 +52,10 @@ public class DbUtil {
                 connectionConfig.getPassword());
     }
 
+    public static void waitForConnection(final ConnectionConfig connectionConfig) {
+        waitForConnection(connectionConfig, null);
+    }
+
     /**
      * Attempts to connect to the database using the passed connection details. If it fails
      * it will log a warning, and keep retrying. The retry interval will steadily increase.
@@ -78,8 +82,8 @@ public class DbUtil {
                 break;
             } catch (SQLException e) {
                 if (e.getErrorCode() == ACCESS_DENIED_BAD_UNAME_OR_PWORD ||
-                    e.getErrorCode() == ACCESS_DENIED_BAD_DATABASE ||
-                    (e.getMessage() != null && e.getMessage().startsWith("Unsupported"))) {
+                        e.getErrorCode() == ACCESS_DENIED_BAD_DATABASE ||
+                        (e.getMessage() != null && e.getMessage().startsWith("Unsupported"))) {
 
                     // These errors are not due to the DB not being up, so throw it
                     throw new RuntimeException(LogUtil.message(
@@ -91,8 +95,8 @@ public class DbUtil {
                         : e.getMessage();
                 final int vendorCode = e.getErrorCode();
                 LOGGER.warn("Unable to establish database connection due to error: [{}] " +
-                            "and vendorCode [{}], will try again " +
-                            "in {}ms, enable debug to see stack trace",
+                                "and vendorCode [{}], will try again " +
+                                "in {}ms, enable debug to see stack trace",
                         errorMsg, vendorCode, sleepMs);
                 if (LOGGER.isDebugEnabled()) {
                     if (lastThrowable == null || !e.getMessage().equals(lastThrowable.getMessage())) {

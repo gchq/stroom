@@ -140,9 +140,9 @@ public class BootstrapUtil {
         // We need to use one of the
         final ConnectionConfig connectionConfig = getClusterLockConnectionConfig(config);
 
-        // Wait till the DB is up
-        DbUtil.waitForConnection(connectionConfig, "bootstrap-lock");
-
+        // Wait till the DB is up then make sure we have a populated build_version table
+        // to check and lock on
+        DbUtil.waitForConnection(connectionConfig);
         ensureBuildVersionTable(connectionConfig);
 
         T workOutput;
@@ -165,7 +165,7 @@ public class BootstrapUtil {
                     DbMigrationState.markBootstrapMigrationsComplete();
                     output = work.get();
                 } else {
-                    LOGGER.info("Found old build version '{}' in {} table. Cluster lock and DB migration required.",
+                    LOGGER.info("Found old build version '{}' in {} table. Bootstrap lock and DB migration required.",
                             dbBuildVersion, BUILD_VERSION_TABLE_NAME);
                     acquireBootstrapLock(connectionConfig, txnConfig);
 
