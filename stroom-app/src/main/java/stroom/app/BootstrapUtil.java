@@ -141,10 +141,7 @@ public class BootstrapUtil {
         // We need to use one of the
         final ConnectionConfig connectionConfig = getClusterLockConnectionConfig(config);
 
-        // Wait till the DB is up then make sure we have a populated build_version table
-        // to check and lock on
         DbUtil.waitForConnection(connectionConfig);
-        ensureBuildVersionTable(connectionConfig);
 
         final AtomicBoolean doneWork = new AtomicBoolean(false);
         T workOutput;
@@ -156,6 +153,9 @@ public class BootstrapUtil {
             final DSLContext context = JooqUtil.createContext(conn);
 
             workOutput = context.transactionResult(txnConfig -> {
+                // make sure we have a populated build_version table to check and lock on
+                ensureBuildVersionTable(txnConfig, conn);
+
                 String dbBuildVersion = getBuildVersionFromDb(txnConfig);
                 boolean isDbBuildVersionUpToDate = dbBuildVersion.equals(buildVersion);
 
@@ -258,13 +258,11 @@ public class BootstrapUtil {
                 Duration.between(startTime, Instant.now()));
     }
 
-    private static void ensureBuildVersionTable(final ConnectionConfig connectionConfig) {
-        try (Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
+    private static void ensureBuildVersionTable(final Configuration txnConfig, final Connection connection) {
+        try {
             // Need read committed so that once we have acquired the lock we can see changes
             // committed by other nodes, e.g. we want to see if another node has inserted the
             // new record.
-            conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-            final DSLContext context = JooqUtil.createContext(conn);
             // Create a table that we can use to get a table lock on
             final String createTableSql = LogUtil.message("""
                             CREATE TABLE IF NOT EXISTS {} (
@@ -275,10 +273,12 @@ public class BootstrapUtil {
                     BUILD_VERSION_TABLE_NAME);
 
             LOGGER.debug("Ensuring table {} exists", BUILD_VERSION_TABLE_NAME);
-            context.execute(createTableSql);
+            // Causes implicit commit
+            DSL.using(txnConfig)
+                    .execute(createTableSql);
 
             // Do a select first to avoid being blocked by the row lock with the insert stmt below
-            final boolean isRecordPresent = context
+            final boolean isRecordPresent = DSL.using(txnConfig)
                     .fetchOptional(LogUtil.message("""
                                     SELECT build_version
                                     FROM {}
@@ -305,12 +305,18 @@ public class BootstrapUtil {
                         BUILD_VERSION_TABLE_NAME,
                         BUILD_VERSION_TABLE_NAME);
 
-                context.execute(insertSql,
-                        BUILD_VERSION_TABLE_ID,
-                        INITIAL_VERSION,
-                        BUILD_VERSION_TABLE_ID);
+                final int result = DSL.using(txnConfig)
+                        .execute(insertSql,
+                                BUILD_VERSION_TABLE_ID,
+                                INITIAL_VERSION,
+                                BUILD_VERSION_TABLE_ID);
+                // Make sure other nodes can see it
+                if (result > 0) {
+                    LOGGER.info("Committing new {} row", BUILD_VERSION_TABLE_NAME);
+                    connection.commit();
+                }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Error ensuring table "
                     + BUILD_VERSION_TABLE_NAME + ": "
                     + e.getMessage(), e);
