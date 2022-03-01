@@ -27,6 +27,7 @@ import stroom.datasource.api.v2.FieldTypes;
 import stroom.datasource.api.v2.FloatField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
+import stroom.datasource.api.v2.IpV4AddressField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -111,6 +112,8 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
                 return new DateField(name);
             case FieldTypes.TEXT:
                 return new TextField(name);
+            case FieldTypes.IPV4_ADDRESS:
+                return new IpV4AddressField(name);
             case FieldTypes.DOC_REF:
                 return new DocRefField(null, name);
             default:

@@ -906,7 +906,7 @@ export interface ElasticIndexDoc {
 export interface ElasticIndexField {
   fieldName?: string;
   fieldType?: string;
-  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT";
+  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT" | "IPV4_ADDRESS";
   stored?: boolean;
 }
 
@@ -1661,6 +1661,8 @@ export interface InfoPopupConfig {
 }
 
 export type IntegerField = AbstractField;
+
+export type IpV4AddressField = AbstractField;
 
 export interface Job {
   advanced?: boolean;

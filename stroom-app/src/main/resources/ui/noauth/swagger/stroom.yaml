@@ -7135,6 +7135,7 @@ components:
           - DOUBLE
           - DATE
           - TEXT
+          - IPV4_ADDRESS
         stored:
           type: boolean
     ElasticIndexTestResponse:
@@ -8388,6 +8389,10 @@ components:
         validationRegex:
           type: string
     IntegerField:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractField'
+    IpV4AddressField:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractField'

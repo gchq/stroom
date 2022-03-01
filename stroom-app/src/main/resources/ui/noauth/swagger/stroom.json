@@ -10305,7 +10305,7 @@
           },
           "fieldUse" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "IPV4_ADDRESS" ]
           },
           "stored" : {
             "type" : "boolean"
@@ -11953,6 +11953,12 @@
         }
       },
       "IntegerField" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractField"
+        } ]
+      },
+      "IpV4AddressField" : {
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractField"

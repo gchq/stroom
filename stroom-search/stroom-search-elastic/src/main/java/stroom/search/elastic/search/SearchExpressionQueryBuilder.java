@@ -28,12 +28,16 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
+import stroom.util.functions.TriFunction;
 
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +56,10 @@ public class SearchExpressionQueryBuilder {
     private static final String DELIMITER = ",";
     private static final Pattern WILDCARD_PATTERN = Pattern.compile(".*[*?].*");
     private static final Pattern QUOTED_PATTERN = Pattern.compile("^\"(.+)\"$");
+    private static final Pattern IPV4_ADDRESS_PATTERN =
+            Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})(?:/\\d{1,2})?$");
+    private static final Pattern IPV4_CIDR_PATTERN =
+            Pattern.compile("^\\d+\\.\\d+\\.\\d+\\.\\d+/\\d{1,2}$");
     private final Map<String, ElasticIndexField> indexFieldsMap;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
@@ -159,6 +167,8 @@ public class SearchExpressionQueryBuilder {
             return buildScalarQuery(condition, indexField, fieldName, value, this::getDouble, docRef);
         } else if (elasticFieldType.equals(ElasticIndexFieldType.DATE)) {
             return buildScalarQuery(condition, indexField, fieldName, value, this::getDate, docRef);
+        } else if (elasticFieldType.equals(ElasticIndexFieldType.IPV4_ADDRESS)) {
+            return buildScalarQuery(condition, indexField, fieldName, value, this::getIpV4Address, docRef);
         } else {
             return buildStringQuery(condition, value, docRef, indexField, fieldName);
         }
@@ -190,7 +200,7 @@ public class SearchExpressionQueryBuilder {
                         return buildKeywordQuery(fieldName, expression);
                     }
                 case IN_DICTIONARY:
-                    return buildDictionaryQuery(fieldName, docRef, indexField);
+                    return buildDictionaryQuery(condition, fieldName, docRef, indexField);
                 default:
                     throw new UnsupportedOperationException("Unsupported condition '" + condition.getDisplayValue() +
                             "' for " + indexField.getFieldUse().getDisplayValue() + " field type");
@@ -211,7 +221,7 @@ public class SearchExpressionQueryBuilder {
                         return buildTextQuery(fieldName, expression);
                     }
                 case IN_DICTIONARY:
-                    return buildDictionaryQuery(fieldName, docRef, indexField);
+                    return buildDictionaryQuery(condition, fieldName, docRef, indexField);
                 default:
                     throw new RuntimeException("Unsupported condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldUse().getDisplayValue() + " field type");
@@ -244,48 +254,49 @@ public class SearchExpressionQueryBuilder {
                 .analyzeWildcard(true);
     }
 
-    private <T extends Number> QueryBuilder buildScalarQuery(
+    private <T> QueryBuilder buildScalarQuery(
             final ExpressionTerm.Condition condition, final ElasticIndexField indexField, final String fieldName,
-            final String fieldValue, BiFunction<String, String, T> valueParser, final DocRef docRef
+            final String fieldValue, TriFunction<Condition, String, String, T> valueParser,
+            final DocRef docRef
     ) {
         T numericValue;
         List<T> numericValues;
 
         switch (condition) {
             case EQUALS:
-                numericValue = valueParser.apply(fieldName, fieldValue);
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .termQuery(fieldName, numericValue);
             case CONTAINS:
             case IN:
                 numericValues = tokenizeExpression(fieldValue)
-                        .map(val -> valueParser.apply(fieldName, val))
+                        .map(val -> valueParser.apply(condition, fieldName, val))
                         .collect(Collectors.toList());
                 return QueryBuilders
                         .termsQuery(fieldName, numericValues);
             case GREATER_THAN:
-                numericValue = valueParser.apply(fieldName, fieldValue);
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .gt(numericValue);
             case GREATER_THAN_OR_EQUAL_TO:
-                numericValue = valueParser.apply(fieldName, fieldValue);
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .gte(numericValue);
             case LESS_THAN:
-                numericValue = valueParser.apply(fieldName, fieldValue);
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .lt(numericValue);
             case LESS_THAN_OR_EQUAL_TO:
-                numericValue = valueParser.apply(fieldName, fieldValue);
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .lte(numericValue);
             case BETWEEN:
                 numericValues = tokenizeExpression(fieldValue)
-                        .map(val -> valueParser.apply(fieldName, val))
+                        .map(val -> valueParser.apply(condition, fieldName, val))
                         .collect(Collectors.toList());
                 if (numericValues.size() != 2) {
                     throw new IllegalArgumentException(
@@ -296,7 +307,7 @@ public class SearchExpressionQueryBuilder {
                         .gte(numericValues.get(0))
                         .lte(numericValues.get(1));
             case IN_DICTIONARY:
-                return buildDictionaryQuery(fieldName, docRef, indexField);
+                return buildDictionaryQuery(condition, fieldName, docRef, indexField);
             default:
                 throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
                         indexField.getFieldUse().getDisplayValue() + " field type");
@@ -320,7 +331,7 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
-    private Long getDate(final String fieldName, final String value) {
+    private Long getDate(final Condition condition, final String fieldName, final String value) {
         try {
             // Empty optional will be caught below
             return DateExpressionParser.parse(value, dateTimeSettings, nowEpochMilli).get().toInstant().toEpochMilli();
@@ -330,7 +341,37 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
-    private Long getNumber(final String fieldName, final String value) {
+    /**
+     * Validates the format of an IPv4 address. CIDR notation is allowed (e.g. 192.168.1.1/24) for equality
+     * conditions (EQUALS, IN and IN_DICTIONARY).
+     */
+    private String getIpV4Address(final Condition condition, final String fieldName, final String value) {
+        final Matcher ipAddressMatcher = IPV4_ADDRESS_PATTERN.matcher(value);
+        try {
+            if (ipAddressMatcher.matches()) {
+                InetAddress.getByAddress(new byte[]{
+                        Integer.valueOf(ipAddressMatcher.group(1)).byteValue(),
+                        Integer.valueOf(ipAddressMatcher.group(2)).byteValue(),
+                        Integer.valueOf(ipAddressMatcher.group(3)).byteValue(),
+                        Integer.valueOf(ipAddressMatcher.group(4)).byteValue()
+                });
+            } else {
+                throw new IllegalArgumentException();
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid IPv4 address format: " + value + " for field \"" +
+                    fieldName + "\"");
+        }
+
+        if (!condition.equals(Condition.EQUALS) && !condition.equals(Condition.IN) &&
+                !condition.equals(Condition.IN_DICTIONARY) && IPV4_CIDR_PATTERN.matcher(value).matches()) {
+            throw new IllegalArgumentException("CIDR notation is only supported for EQUALS and IN operators. " +
+                    "Value provided: \"" + value + "\". Operator: \"" + condition.getDisplayValue() + "\"");
+        }
+        return value;
+    }
+
+    private Long getNumber(final Condition condition, final String fieldName, final String value) {
         try {
             return Long.parseLong(value);
         } catch (final NumberFormatException e) {
@@ -340,7 +381,7 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
-    private Float getFloat(final String fieldName, final String value) {
+    private Float getFloat(final Condition condition, final String fieldName, final String value) {
         try {
             return Float.parseFloat(value);
         } catch (final NumberFormatException e) {
@@ -351,7 +392,7 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
-    private Double getDouble(final String fieldName, final String value) {
+    private Double getDouble(final Condition condition, final String fieldName, final String value) {
         try {
             return Double.parseDouble(value);
         } catch (final NumberFormatException e) {
@@ -366,6 +407,7 @@ public class SearchExpressionQueryBuilder {
      * Loads the specified Dictionary from the doc store. Each line is combined with AND logic.
      */
     private QueryBuilder buildDictionaryQuery(
+            final Condition condition,
             final String fieldName,
             final DocRef docRef,
             final ElasticIndexField indexField
@@ -378,19 +420,19 @@ public class SearchExpressionQueryBuilder {
             final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
 
             if (elasticFieldType.isNumeric()) {
-                mustQueries.must(QueryBuilders.termQuery(fieldName, getNumber(fieldName, line)));
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getNumber(condition, fieldName, line)));
             } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
-                mustQueries.must(QueryBuilders.termQuery(fieldName, getFloat(fieldName, line)));
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getFloat(condition, fieldName, line)));
             } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
-                mustQueries.must(QueryBuilders.termQuery(fieldName, getDouble(fieldName, line)));
-            } else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
-                mustQueries.must(QueryBuilders.termQuery(fieldName, getDate(fieldName, line)));
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getDouble(condition, fieldName, line)));
+            } else if (elasticFieldType.equals(ElasticIndexFieldType.DATE)) {
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getDate(condition, fieldName, line)));
+            } else if (elasticFieldType.equals(ElasticIndexFieldType.IPV4_ADDRESS)) {
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getIpV4Address(condition, fieldName, line)));
+            } else if (indexField.getFieldType().equals("keyword")) {
+                mustQueries.must(buildKeywordQuery(fieldName, line));
             } else {
-                if (indexField.getFieldType().equals("keyword")) {
-                    mustQueries.must(buildKeywordQuery(fieldName, line));
-                } else {
-                    mustQueries.must(buildTextQuery(fieldName, line));
-                }
+                mustQueries.must(buildTextQuery(fieldName, line));
             }
 
             builder.should(mustQueries);
