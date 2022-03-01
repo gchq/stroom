@@ -21,7 +21,6 @@ import stroom.app.commands.DbMigrationCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
-import stroom.app.guice.BootStrapModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
@@ -33,11 +32,9 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
-import stroom.util.BuildInfoModule;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.io.DirProvidersModule;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
@@ -56,7 +53,6 @@ import stroom.util.yaml.YamlUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
@@ -66,7 +62,6 @@ import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -75,7 +70,6 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.DispatcherType;
@@ -194,7 +188,16 @@ public class App extends Application<Config> {
 
         validateAppConfig(configuration, configFile);
 
-        final Injector bootStrapInjector = bootstrapApplication(configuration, environment);
+        final Injector bootStrapInjector = BootstrapUtil.createBootstrapInjector(
+                configuration, environment, configFile);
+
+        this.buildInfo = bootStrapInjector.getInstance(BuildInfo.class);
+        this.homeDirProvider = bootStrapInjector.getInstance(HomeDirProvider.class);
+        this.tempDirProvider = bootStrapInjector.getInstance(TempDirProvider.class);
+
+        // Ensure we have our home/temp dirs set up
+        FileUtil.ensureDirExists(homeDirProvider.get());
+        FileUtil.ensureDirExists(tempDirProvider.get());
 
         LOGGER.info("Completed initialisation of database connections and application configuration");
 
@@ -268,63 +271,7 @@ public class App extends Application<Config> {
         showNodeInfo(configuration);
     }
 
-
-    @NotNull
-    private Injector bootstrapApplication(final Config configuration,
-                                          final Environment environment) {
-
-        final Injector rootInjector = Guice.createInjector(new BuildInfoModule());
-        buildInfo = rootInjector.getInstance(BuildInfo.class);
-        showBuildInfo();
-
-        final Injector bootstrapInjector = BootstrapLockingUtil.doWithBootstrapLock(
-                configuration,
-                buildInfo.getBuildVersion(), () -> {
-                    LOGGER.info("Initialising database connections and configuration properties");
-
-                    final BootStrapModule bootstrapModule = new BootStrapModule(
-                            configuration, environment, configFile);
-
-                    final Injector childInjector = rootInjector.createChildInjector(
-                            bootstrapModule);
-
-                    // Force all datasources to be created so we can force migrations to run.
-                    final Set<DataSource> dataSources = childInjector.getInstance(
-                            Key.get(GuiceUtil.setOf(DataSource.class)));
-
-                    LOGGER.debug(() -> LogUtil.message("Used {} data sources:\n{}",
-                            dataSources.size(),
-                            dataSources.stream()
-                                    .map(dataSource -> dataSource.getClass().getName())
-                                    .map(name -> "  " + name)
-                                    .sorted()
-                                    .collect(Collectors.joining("\n"))));
-
-
-                    return childInjector;
-                });
-
-        this.homeDirProvider = bootstrapInjector.getInstance(HomeDirProvider.class);
-        this.tempDirProvider = bootstrapInjector.getInstance(TempDirProvider.class);
-
-        // Ensure we have our home/temp dirs set up
-        FileUtil.ensureDirExists(homeDirProvider.get());
-        FileUtil.ensureDirExists(tempDirProvider.get());
-
-        return bootstrapInjector;
-    }
-
-    private void showBuildInfo() {
-        Objects.requireNonNull(buildInfo);
-        LOGGER.info(""
-                + "\n********************************************************************************"
-                + "\n  Build version: " + buildInfo.getBuildVersion()
-                + "\n  Build date:    " + buildInfo.getBuildDate()
-                + "\n********************************************************************************");
-    }
-
     private void showNodeInfo(final Config configuration) {
-        Objects.requireNonNull(buildInfo);
         LOGGER.info(""
                 + "\n********************************************************************************"
                 + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()

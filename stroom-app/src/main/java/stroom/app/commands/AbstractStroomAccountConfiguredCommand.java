@@ -1,13 +1,10 @@
 package stroom.app.commands;
 
+import stroom.app.BootstrapUtil;
 import stroom.app.guice.AppModule;
-import stroom.app.guice.BootStrapModule;
 import stroom.config.app.Config;
-import stroom.util.BuildInfoModule;
 import stroom.util.guice.GuiceUtil;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import io.dropwizard.cli.ConfiguredCommand;
@@ -47,35 +44,25 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
         LOGGER.info("Using application configuration file {}",
                 configFile.toAbsolutePath().normalize());
 
-        LOGGER.info("Running all DB migrations");
-
-        LOGGER.debug("Creating dbMigrationModule");
-
-        final AbstractModule module = new AbstractModule() {
-            @Override
-            protected void configure() {
-                // It would be nice to only load the bits we need but the web of dependencies
-                // spreads far and wide
-                install(new BuildInfoModule());
-                install(new BootStrapModule(config, configFile));
-                install(new AppModule());
-            }
-        };
-
-        LOGGER.debug("Creating injector");
         try {
-            final Injector injector = Guice.createInjector(module);
+            LOGGER.debug("Creating bootstrap injector");
+            final Injector bootstrapInjector = BootstrapUtil.createBootstrapInjector(
+                    config, configFile);
+
+            LOGGER.debug("Creating app injector");
+            final Injector appInjector = bootstrapInjector.createChildInjector(
+                    new AppModule());
 
             // Force guice to get all datasource instances from the multibinder
             // so the migration will be run for each stroom module
             // Relies on all db modules adding an entry to the multibinder
-            injector.getInstance(Key.get(GuiceUtil.setOf(DataSource.class)));
+            appInjector.getInstance(Key.get(GuiceUtil.setOf(DataSource.class)));
 
             LOGGER.info("DB migration complete");
 
-            runCommand(bootstrap, namespace, config, injector);
+            runCommand(bootstrap, namespace, config, appInjector);
         } catch (Exception e) {
-            LOGGER.error("Error running DB migrations", e);
+            LOGGER.error("Error initialising application", e);
             System.exit(1);
         }
     }

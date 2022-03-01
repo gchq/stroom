@@ -1,5 +1,6 @@
 package stroom.app;
 
+import stroom.app.guice.BootStrapModule;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
 import stroom.config.app.AppConfig;
@@ -7,33 +8,122 @@ import stroom.config.app.Config;
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
+import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
 import stroom.db.util.JooqUtil;
+import stroom.util.BuildInfoModule;
 import stroom.util.NullSafe;
 import stroom.util.db.DbMigrationState;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.BuildInfo;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import io.dropwizard.setup.Environment;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import javax.sql.DataSource;
 
-public class BootstrapLockingUtil {
+public class BootstrapUtil {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BootstrapLockingUtil.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BootstrapUtil.class);
 
-    private static final String BOOTSTRAP_LOCK_TABLE_NAME = "bootstrap_lock";
-    private static final int BOOTSTRAP_LOCK_TABLE_ID = 1;
+    private static final String BUILD_VERSION_TABLE_NAME = "build_version";
+    private static final int BUILD_VERSION_TABLE_ID = 1;
     private static final String INITIAL_VERSION = "NO_VERSION";
+
+    /**
+     * Creates an injector with the bare minimum to initialise the DB connections and configuration.
+     * You should call {@link Injector#createChildInjector} to build a fully formed injector from it.
+     */
+    public static Injector createBootstrapInjector(final Config configuration,
+                                                   final Environment environment,
+                                                   final Path configFile) {
+        return createBootstrapInjector(
+                configuration,
+                () -> new BootStrapModule(configuration, environment, configFile));
+    }
+
+    /**
+     * Creates an injector with the bare minimum to initialise the DB connections and configuration.
+     * You should call {@link Injector#createChildInjector} to build a fully formed injector from it.
+     */
+    public static Injector createBootstrapInjector(final Config configuration,
+                                                   final Path configFile) {
+        return createBootstrapInjector(
+                configuration,
+                () -> new BootStrapModule(configuration, configFile));
+    }
+
+    private static Injector createBootstrapInjector(
+            final Config configuration,
+            final Supplier<BootStrapModule> bootStrapModuleSupplier) {
+
+        Objects.requireNonNull(configuration);
+        Objects.requireNonNull(bootStrapModuleSupplier);
+
+        // Create a minimalist injector with just the BuildInfo so we can determine
+        // what version the system is at and what we need to do before creating
+        // the bootstrap injector
+        final Injector rootInjector = Guice.createInjector(new BuildInfoModule());
+        final BuildInfo buildInfo = rootInjector.getInstance(BuildInfo.class);
+        showBuildInfo(buildInfo);
+
+        return BootstrapUtil.doWithBootstrapLock(
+                configuration,
+                buildInfo.getBuildVersion(), () -> {
+                    LOGGER.info("Initialising database connections and configuration properties");
+
+                    final BootStrapModule bootstrapModule = bootStrapModuleSupplier.get();
+
+                    final Injector childInjector = rootInjector.createChildInjector(
+                            bootstrapModule);
+
+                    // Force all data sources to be created so we can force migrations to run.
+                    final Set<DataSource> dataSources = childInjector.getInstance(
+                            Key.get(GuiceUtil.setOf(DataSource.class)));
+
+                    LOGGER.debug(() -> LogUtil.message("Used {} data sources:\n{}",
+                            dataSources.size(),
+                            dataSources.stream()
+                                    .map(dataSource -> {
+                                        final String prefix = dataSource instanceof DataSourceProxy
+                                                ? ((DataSourceProxy) dataSource).getName() + " - "
+                                                : "";
+                                        return prefix + dataSource.getClass().getName();
+                                    })
+                                    .map(name -> "  " + name)
+                                    .sorted()
+                                    .collect(Collectors.joining("\n"))));
+
+                    return childInjector;
+                });
+    }
+
+    private static void showBuildInfo(final BuildInfo buildInfo) {
+        Objects.requireNonNull(buildInfo);
+        LOGGER.info(""
+                + "\n********************************************************************************"
+                + "\n  Build version: " + buildInfo.getBuildVersion()
+                + "\n  Build date:    " + buildInfo.getBuildDate()
+                + "\n********************************************************************************");
+    }
 
     /**
      * Use a table lock on a noddy table created just for this purpose to enforce
@@ -47,12 +137,13 @@ public class BootstrapLockingUtil {
                                      final Supplier<T> work) {
 
         Objects.requireNonNull(work);
+        // We need to use one of the
         final ConnectionConfig connectionConfig = getClusterLockConnectionConfig(config);
 
         // Wait till the DB is up
         DbUtil.waitForConnection(connectionConfig, "bootstrap-lock");
 
-        ensureBootStrapLockTable(connectionConfig);
+        ensureBuildVersionTable(connectionConfig);
 
         T workOutput;
 
@@ -63,19 +154,19 @@ public class BootstrapLockingUtil {
             final DSLContext context = JooqUtil.createContext(conn);
 
             workOutput = context.transactionResult(txnConfig -> {
-                String dbBuildVersion = getBuildVersionFromLockTable(txnConfig);
+                String dbBuildVersion = getBuildVersionFromDb(txnConfig);
                 boolean hasBootstrapBeenDone = dbBuildVersion.equals(buildVersion);
 
                 final T output;
                 if (hasBootstrapBeenDone) {
                     LOGGER.info("Found required build version '{}' in {} table, no lock or DB migration required.",
                             dbBuildVersion,
-                            BOOTSTRAP_LOCK_TABLE_NAME);
+                            BUILD_VERSION_TABLE_NAME);
                     DbMigrationState.markBootstrapMigrationsComplete();
                     output = work.get();
                 } else {
-                    LOGGER.info("Found old build version '{}' in {} table.",
-                            dbBuildVersion, BOOTSTRAP_LOCK_TABLE_NAME);
+                    LOGGER.info("Found old build version '{}' in {} table. Cluster lock and DB migration required.",
+                            dbBuildVersion, BUILD_VERSION_TABLE_NAME);
                     acquireBootstrapLock(connectionConfig, txnConfig);
 
                     // We now hold a cluster wide lock
@@ -83,14 +174,14 @@ public class BootstrapLockingUtil {
 
                     // Re-check the lock table state now we are under lock
                     // For the first node these should be the same as when checked above
-                    dbBuildVersion = getBuildVersionFromLockTable(txnConfig);
+                    dbBuildVersion = getBuildVersionFromDb(txnConfig);
                     hasBootstrapBeenDone = dbBuildVersion.equals(buildVersion);
 
                     if (hasBootstrapBeenDone) {
                         // Another node has done the bootstrap so
                         LOGGER.info("Found required build version '{}' in {} table, releasing lock. " +
                                         "No DB migration required.",
-                                buildVersion, BOOTSTRAP_LOCK_TABLE_NAME);
+                                buildVersion, BUILD_VERSION_TABLE_NAME);
                         DbMigrationState.markBootstrapMigrationsComplete();
 
                         // Rollback to release the row lock to allow other nodes to start checking
@@ -104,7 +195,7 @@ public class BootstrapLockingUtil {
 
                     // If anything fails and we don't update/insert these it is fine, it will just get done on next
                     // successful boot
-                    updateLockTableBuildVersion(buildVersion, txnConfig);
+                    updateDbBuildVersion(buildVersion, txnConfig);
 
                     if (!hasBootstrapBeenDone) {
                         DbMigrationState.markBootstrapMigrationsComplete();
@@ -124,56 +215,49 @@ public class BootstrapLockingUtil {
         return workOutput;
     }
 
-    private static void updateLockTableBuildVersion(final String buildVersion, final Configuration txnConfig) {
+    private static void updateDbBuildVersion(final String buildVersion,
+                                             final Configuration txnConfig) {
         LOGGER.info("Updating {} table with current build version: {}",
-                BOOTSTRAP_LOCK_TABLE_NAME, buildVersion);
+                BUILD_VERSION_TABLE_NAME, buildVersion);
         DSL.using(txnConfig)
                 .execute(LogUtil.message("""
                                 UPDATE {}
                                 SET build_version = ?
                                 WHERE id = ?
-                                """, BOOTSTRAP_LOCK_TABLE_NAME),
-                        buildVersion, BOOTSTRAP_LOCK_TABLE_ID);
-    }
-
-    private static void releaseBootstrapLock(final Configuration txnConfig) {
-        DSL.using(txnConfig)
-                .execute("UNLOCK TABLES");
-        LOGGER.info("Bootstrap lock released");
+                                """, BUILD_VERSION_TABLE_NAME),
+                        buildVersion, BUILD_VERSION_TABLE_ID);
     }
 
     @NotNull
-    private static String getBuildVersionFromLockTable(final Configuration txnConfig) {
+    private static String getBuildVersionFromDb(final Configuration txnConfig) {
         return DSL.using(txnConfig)
                 .fetchOne(LogUtil.message("""
                                 SELECT build_version
                                 FROM {}
-                                WHERE id = ?""", BOOTSTRAP_LOCK_TABLE_NAME),
-                        BOOTSTRAP_LOCK_TABLE_ID)
+                                WHERE id = ?""", BUILD_VERSION_TABLE_NAME),
+                        BUILD_VERSION_TABLE_ID)
                 .get(0, String.class);
     }
 
     private static void acquireBootstrapLock(final ConnectionConfig connectionConfig,
                                              final Configuration txnConfig) {
         LOGGER.info("Waiting to acquire bootstrap lock on table: {}, user: {}, url: {}",
-                BOOTSTRAP_LOCK_TABLE_NAME, connectionConfig.getUser(), connectionConfig.getUrl());
+                BUILD_VERSION_TABLE_NAME, connectionConfig.getUser(), connectionConfig.getUrl());
         Instant startTime = Instant.now();
-//        DSL.using(txnConfig)
-//                .execute(LogUtil.message("LOCK TABLES {} WRITE", BOOTSTRAP_LOCK_TABLE_NAME));
 
         final String sql = LogUtil.message("""
                 SELECT *
                 FROM {}
                 WHERE id = ?
-                FOR UPDATE""", BOOTSTRAP_LOCK_TABLE_NAME);
+                FOR UPDATE""", BUILD_VERSION_TABLE_NAME);
         DSL.using(txnConfig)
-                .execute(sql, BOOTSTRAP_LOCK_TABLE_ID);
+                .execute(sql, BUILD_VERSION_TABLE_ID);
 
         LOGGER.info("Waited {} to acquire bootstrap lock",
                 Duration.between(startTime, Instant.now()));
     }
 
-    private static void ensureBootStrapLockTable(final ConnectionConfig connectionConfig) {
+    private static void ensureBuildVersionTable(final ConnectionConfig connectionConfig) {
         try (Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
             // Need read committed so that once we have acquired the lock we can see changes
             // committed by other nodes, e.g. we want to see if another node has inserted the
@@ -187,46 +271,47 @@ public class BootstrapLockingUtil {
                                 build_version VARCHAR(255) NOT NULL,
                                 PRIMARY KEY (id)
                             ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci""",
-                    BOOTSTRAP_LOCK_TABLE_NAME);
+                    BUILD_VERSION_TABLE_NAME);
 
-            LOGGER.debug("Ensuring table {} exists", BOOTSTRAP_LOCK_TABLE_NAME);
-            context
-                    .execute(createTableSql);
+            LOGGER.debug("Ensuring table {} exists", BUILD_VERSION_TABLE_NAME);
+            context.execute(createTableSql);
 
-            // Do a select first to avoid hitting the row lock with the insert stmt below
+            // Do a select first to avoid being blocked by the row lock with the insert stmt below
             final boolean isRecordPresent = context
                     .fetchOptional(LogUtil.message("""
                                     SELECT build_version
                                     FROM {}
-                                    WHERE id = ?""", BOOTSTRAP_LOCK_TABLE_NAME),
-                            BOOTSTRAP_LOCK_TABLE_ID)
+                                    WHERE id = ?""", BUILD_VERSION_TABLE_NAME),
+                            BUILD_VERSION_TABLE_ID)
                     .isPresent();
 
             if (!isRecordPresent) {
                 // Ensure we have a record that we can get a lock on
                 // Done like this in case another node gets in before us.
+                // This may block if another node beat us to it and locked the row but
+                // that is fine.
                 final String insertSql = LogUtil.message("""
-                        INSERT INTO {} (
-                            id,
-                            build_version)
-                        SELECT ?, ?
-                        FROM DUAL
-                        WHERE NOT EXISTS (
-                            SELECT NULL
-                            FROM {}
-                            WHERE ID = ?)
-                        LIMIT 1""", BOOTSTRAP_LOCK_TABLE_NAME, BOOTSTRAP_LOCK_TABLE_NAME);
+                                INSERT INTO {} (
+                                    id,
+                                    build_version)
+                                SELECT ?, ?
+                                FROM DUAL
+                                WHERE NOT EXISTS (
+                                    SELECT NULL
+                                    FROM {}
+                                    WHERE ID = ?)
+                                LIMIT 1""",
+                        BUILD_VERSION_TABLE_NAME,
+                        BUILD_VERSION_TABLE_NAME);
 
-                context
-                        .execute(
-                                insertSql,
-                                BOOTSTRAP_LOCK_TABLE_ID,
-                                INITIAL_VERSION,
-                                BOOTSTRAP_LOCK_TABLE_ID);
+                context.execute(insertSql,
+                        BUILD_VERSION_TABLE_ID,
+                        INITIAL_VERSION,
+                        BUILD_VERSION_TABLE_ID);
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error ensuring table "
-                    + BOOTSTRAP_LOCK_TABLE_NAME + ": "
+                    + BUILD_VERSION_TABLE_NAME + ": "
                     + e.getMessage(), e);
         }
     }
