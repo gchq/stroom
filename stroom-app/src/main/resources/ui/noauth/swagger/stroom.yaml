@@ -7136,7 +7136,7 @@ components:
           - DATE
           - TEXT
           - IPV4_ADDRESS
-        stored:
+        indexed:
           type: boolean
     ElasticIndexTestResponse:
       type: object

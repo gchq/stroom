@@ -907,7 +907,7 @@ export interface ElasticIndexField {
   fieldName?: string;
   fieldType?: string;
   fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT" | "IPV4_ADDRESS";
-  stored?: boolean;
+  indexed?: boolean;
 }
 
 export interface ElasticIndexTestResponse {

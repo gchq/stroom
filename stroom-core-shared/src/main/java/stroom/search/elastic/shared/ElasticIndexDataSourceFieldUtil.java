@@ -23,6 +23,7 @@ import stroom.datasource.api.v2.DoubleField;
 import stroom.datasource.api.v2.FloatField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
+import stroom.datasource.api.v2.IpV4AddressField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -48,21 +49,23 @@ public final class ElasticIndexDataSourceFieldUtil {
         final List<Condition> supportedConditions = fieldType.getSupportedConditions();
         switch (fieldType) {
             case ID:
-                return new IdField(fieldName, true, supportedConditions);
+                return new IdField(fieldName, field.isIndexed(), supportedConditions);
             case BOOLEAN:
-                return new BooleanField(fieldName, true, supportedConditions);
+                return new BooleanField(fieldName, field.isIndexed(), supportedConditions);
             case INTEGER:
-                return new IntegerField(fieldName, true, supportedConditions);
+                return new IntegerField(fieldName, field.isIndexed(), supportedConditions);
             case LONG:
-                return new LongField(fieldName, true, supportedConditions);
+                return new LongField(fieldName, field.isIndexed(), supportedConditions);
             case FLOAT:
-                return new FloatField(fieldName, true, supportedConditions);
+                return new FloatField(fieldName, field.isIndexed(), supportedConditions);
             case DOUBLE:
-                return new DoubleField(fieldName, true, supportedConditions);
+                return new DoubleField(fieldName, field.isIndexed(), supportedConditions);
             case DATE:
-                return new DateField(fieldName, true, supportedConditions);
+                return new DateField(fieldName, field.isIndexed(), supportedConditions);
             case TEXT:
-                return new TextField(fieldName, true, supportedConditions);
+                return new TextField(fieldName, field.isIndexed(), supportedConditions);
+            case IPV4_ADDRESS:
+                return new IpV4AddressField(fieldName, field.isIndexed(), supportedConditions);
         }
         return null;
     }

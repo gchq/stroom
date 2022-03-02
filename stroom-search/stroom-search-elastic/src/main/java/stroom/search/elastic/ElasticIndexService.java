@@ -17,6 +17,4 @@ public interface ElasticIndexService {
     List<ElasticIndexField> getFields(ElasticIndexDoc index);
 
     Map<String, ElasticIndexField> getFieldsMap(ElasticIndexDoc index);
-
-    List<String> getStoredFields(ElasticIndexDoc index);
 }
