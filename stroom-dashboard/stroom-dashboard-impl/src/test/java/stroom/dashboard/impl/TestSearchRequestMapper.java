@@ -94,7 +94,7 @@ class TestSearchRequestMapper {
 
         // When
         SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(
-                new DashboardQueryKey("test", "ttest", "test"),
+                new DashboardQueryKey("test", "test", "test", "test"),
                 dashboardSearchRequest);
 
         // Then

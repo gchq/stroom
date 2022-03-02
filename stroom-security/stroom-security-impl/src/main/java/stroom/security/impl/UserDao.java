@@ -16,6 +16,8 @@ public interface UserDao {
 
     User create(User user);
 
+    User tryCreate(User user);
+
     Optional<User> getById(int id);
 
     Optional<User> getByUuid(String uuid);

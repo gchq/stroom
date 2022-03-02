@@ -50,7 +50,7 @@ public class JobDbModule extends AbstractFlyWayDbModule<JobSystemDbConfig, JobDb
     private static class DataSourceImpl extends DataSourceProxy implements JobDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }

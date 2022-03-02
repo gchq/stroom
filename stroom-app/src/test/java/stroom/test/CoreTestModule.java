@@ -11,6 +11,7 @@ import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.util.BuildInfoModule;
 import stroom.util.io.DirProvidersModule;
 
 import com.google.inject.AbstractModule;
@@ -25,7 +26,7 @@ public class CoreTestModule extends AbstractModule {
         install(new DirProvidersModule());
         install(new DbConnectionsModule());
 
-
+        install(new BuildInfoModule());
         install(new AppConfigTestModule());
         install(new UriFactoryModule());
         install(new CoreModule());

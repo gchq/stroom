@@ -7,6 +7,7 @@ import stroom.cache.shared.CacheResource;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.ResourcePaths;
 
 import org.junit.jupiter.api.Test;
@@ -137,8 +138,8 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 subPath,
                 CacheInfoResponse.class,
                 expectedResponse,
-                webTarget -> webTarget.queryParam("cacheName", "cache1"),
-                webTarget -> webTarget.queryParam("nodeName", "node1"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "cacheName", "cache1"),
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1"));
     }
 
     @Test
@@ -159,8 +160,8 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 subPath,
                 CacheInfoResponse.class,
                 expectedResponse,
-                webTarget -> webTarget.queryParam("cacheName", "cache1"),
-                webTarget -> webTarget.queryParam("nodeName", "node2"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "cacheName", "cache1"),
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node2"));
     }
 
     @Test
@@ -178,8 +179,8 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 subPath,
                 Long.class,
                 expectedResponse,
-                webTarget -> webTarget.queryParam("cacheName", "cache1"),
-                webTarget -> webTarget.queryParam("nodeName", "node1"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "cacheName", "cache1"),
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1"));
 
         verify(cacheManagerServiceMocks.get("node1"))
                 .clear(Mockito.any());
@@ -204,8 +205,8 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 subPath,
                 Long.class,
                 expectedResponse,
-                webTarget -> webTarget.queryParam("cacheName", "cache1"),
-                webTarget -> webTarget.queryParam("nodeName", "node2"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "cacheName", "cache1"),
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node2"));
 
         verify(cacheManagerServiceMocks.get("node1"), Mockito.never())
                 .clear(Mockito.any());

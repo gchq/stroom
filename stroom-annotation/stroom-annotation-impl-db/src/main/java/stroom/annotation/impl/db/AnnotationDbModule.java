@@ -49,7 +49,7 @@ public class AnnotationDbModule extends AbstractFlyWayDbModule<AnnotationDBConfi
     private static class DataSourceImpl extends DataSourceProxy implements AnnotationDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }

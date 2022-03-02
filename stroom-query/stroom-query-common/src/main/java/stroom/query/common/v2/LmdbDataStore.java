@@ -158,7 +158,6 @@ public class LmdbDataStore implements DataStore {
         limitResultCount = maxResults != null && !hasSort && !compiledDepths.hasGroup();
 
         // Start transfer loop.
-        // TODO : Use provided executor and allow it to be terminated by search termination.
         executorProvider.get().execute(this::transfer);
     }
 
@@ -550,20 +549,20 @@ public class LmdbDataStore implements DataStore {
         if (lmdbEnv.isClosed()) {
             // If we query LMDB after the env has been closed then we are likely to crash the JVM
             // see https://github.com/lmdbjava/lmdbjava/issues/185
-            throw new RuntimeException(LogUtil.message(
+            LOGGER.debug(() -> LogUtil.message(
                     "getData() called (queryKey ={}, componentId={}) after store has been shut down",
                     queryKey, componentId));
+        } else {
+            lmdbEnv.doWithReadTxn(readTxn ->
+                    Metrics.measure("getData", () ->
+                            consumer.accept(new LmdbData(
+                                    dbi,
+                                    readTxn,
+                                    compiledFields,
+                                    compiledSorters,
+                                    maxResults,
+                                    queryKey))));
         }
-
-        lmdbEnv.doWithReadTxn(readTxn ->
-                Metrics.measure("getData", () ->
-                        consumer.accept(new LmdbData(
-                                dbi,
-                                readTxn,
-                                compiledFields,
-                                compiledSorters,
-                                maxResults,
-                                queryKey))));
     }
 
     private static class LmdbData implements Data {

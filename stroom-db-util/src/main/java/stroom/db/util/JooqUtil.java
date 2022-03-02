@@ -1,5 +1,6 @@
 package stroom.db.util;
 
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -18,18 +19,22 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SQLDialect;
 import org.jooq.Table;
+import org.jooq.TableField;
 import org.jooq.UpdatableRecord;
 import org.jooq.conf.Settings;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -177,6 +182,12 @@ public final class JooqUtil {
                 context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
     }
 
+    public static <R> R transactionResultWithOptimisticLocking(final DataSource dataSource,
+                                                               final Function<DSLContext, R> function) {
+        return contextResultWithOptimisticLocking(dataSource,
+                context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
+    }
+
     public static <R extends UpdatableRecord<R>> R create(final DataSource dataSource, final R record) {
         LOGGER.debug(() -> "Creating a " + record.getTable() + " record " + record);
         try (final Connection connection = dataSource.getConnection()) {
@@ -192,6 +203,71 @@ public final class JooqUtil {
             throw convertException(e);
         }
         return record;
+    }
+
+    public static <R extends UpdatableRecord<R>, T> R tryCreate(final DataSource dataSource,
+                                                                final R record,
+                                                                final TableField<R, T> keyField) {
+        return tryCreate(dataSource, record, keyField, null);
+    }
+
+    public static <R extends UpdatableRecord<R>, T1, T2> R tryCreate(final DataSource dataSource,
+                                                                     final R record,
+                                                                     final TableField<R, T1> keyField1,
+                                                                     final TableField<R, T2> keyField2) {
+        R persistedRecord;
+        LOGGER.debug(() -> "Creating a " + record.getTable() + " record if it doesn't already exist" + record);
+        try (final Connection connection = dataSource.getConnection()) {
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                record.attach(context.configuration());
+                try {
+                    // Attempt to write the record, which may already be there
+                    record.insert();
+                    persistedRecord = record;
+                } catch (RuntimeException e) {
+                    if (e instanceof DataAccessException
+                            && e.getCause() != null
+                            && e.getCause() instanceof SQLIntegrityConstraintViolationException
+                            && ((SQLIntegrityConstraintViolationException) e.getCause()).getErrorCode() == 1062) {
+                        // 1062 is a duplicate key exception so someone else has already inserted it
+                        LOGGER.debug(e::getMessage, e);
+
+                        // In theory we could get the unique key fields from record.getTable().getKeys()
+                        // but this is a bit fragile if the table has multiple unique keys, so better to let
+                        // the caller make the decision as to which fields to use
+                        final List<Condition> conditionList = new ArrayList<>();
+                        // For now support up to two fields in a compound key
+                        if (keyField1 != null) {
+                            conditionList.add(keyField1.eq(record.get(keyField1)));
+                        }
+                        if (keyField2 != null) {
+                            conditionList.add(keyField2.eq(record.get(keyField2)));
+                        }
+                        if (conditionList.isEmpty()) {
+                            throw new RuntimeException("No key fields supplied");
+                        }
+
+                        final Table<R> table = record.getTable();
+                        LOGGER.debug("Re-fetching existing record from {} with conditions: {}", table, conditionList);
+                        // Now need to re-fetch the record using the key fields so we have the full record with ids
+                        persistedRecord = context.selectFrom(table)
+                                .where(conditionList.toArray(new Condition[0]))
+                                .fetchOne();
+                    } else {
+                        // Some other error so just re-throw
+                        LOGGER.error(e::getMessage, e);
+                        throw e;
+                    }
+                }
+            } finally {
+                releaseDataSource();
+            }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return persistedRecord;
     }
 
     public static <R extends UpdatableRecord<R>> R update(final DataSource dataSource, final R record) {
@@ -383,7 +459,7 @@ public final class JooqUtil {
 
         // Combine conditions.
         final Optional<Condition> condition = fromCondition.map(c1 ->
-                        toCondition.map(c1::and).orElse(c1))
+                toCondition.map(c1::and).orElse(c1))
                 .or(() -> toCondition);
         return convertMatchNull(field, matchNull, condition);
     }
@@ -522,13 +598,30 @@ public final class JooqUtil {
                 SQLDataType.INTEGER, date1, date2);
     }
 
+    /**
+     * Convert a checked exception into an unchecked one. Produce useful logging and handling of interrupted exceptions.
+     *
+     * @param e The exception to convert.
+     * @return A runtime exception.
+     */
     private static RuntimeException convertException(final Exception e) {
+        return convertException(e, true);
+    }
+
+    private static RuntimeException convertException(final Exception e, final boolean logError) {
         if (e.getCause() instanceof InterruptedException) {
             // We expect interruption during searches so don't log the error.
             LOGGER.debug(e::getMessage, e);
-            return new RuntimeException(e.getMessage(), e);
+            // Continue to interrupt the current thread.
+            Thread.currentThread().interrupt();
+            // Throw an unchecked form of the interrupted exception.
+            return new UncheckedInterruptedException((InterruptedException) e);
         } else {
-            LOGGER.error(e::getMessage, e);
+            if (logError) {
+                LOGGER.error(e::getMessage, e);
+            } else {
+                LOGGER.debug(e::getMessage, e);
+            }
             if (e instanceof RuntimeException) {
                 return (RuntimeException) e;
             } else {
@@ -537,6 +630,16 @@ public final class JooqUtil {
         }
     }
 
+    /**
+     * Check that the datasource is not currently being used by the current thread. The main point of this check is to
+     * ensure that operations on a datasource are not nested as this can lead to exhaustion of connections from a
+     * datasource connection pool and produce a deadlock. It is generally ok for separate threads to get connections
+     * from the datasource as a connection should become available once one thread has released a connection back to the
+     * pool. However, nested calls, particularly recursive ones, will quickly starve a connection pool and lock the
+     * system.
+     *
+     * @param dataSource The datasource to check.
+     */
     private static void checkDataSource(final DataSource dataSource) {
         DataSource currentDataSource = DATA_SOURCE_THREAD_LOCAL.get();
         if (currentDataSource != null && currentDataSource.equals(dataSource)) {

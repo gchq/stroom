@@ -218,9 +218,8 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 
         println """
         To run stroom in SuperDevMode:${GREEN}
-          * Set appConfig.security.authenticationRequired to false in local.yml
-          * Vist the code server (link further down) and copy the dev mode buttons to your browser bookmarks
-          * Visit stroom at http://localhost:8080/stroom/ui (NOTE: http, not https)
+          * Visit the 'code server' (link further down) and copy the dev mode buttons to your browser bookmarks
+          * Visit stroom at http://localhost:8080 (NOTE: http, not https), or https://localhost if running Nginx
           * Click 'Dev Mode On'${NC}
         """.stripIndent().trim()
     }

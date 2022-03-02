@@ -24,33 +24,42 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
-public class SearchBusPollRequest {
+public class SearchKeepAliveRequest {
 
     @JsonProperty
     private final String applicationInstanceId;
     @JsonProperty
-    private final Set<DashboardSearchRequest> searchRequests;
+    private final Set<DashboardQueryKey> activeKeys;
+    @JsonProperty
+    private final Set<DashboardQueryKey> deadKeys;
 
     @JsonCreator
-    public SearchBusPollRequest(@JsonProperty("applicationInstanceId") final String applicationInstanceId,
-                                @JsonProperty("searchRequests") final Set<DashboardSearchRequest> searchRequests) {
+    public SearchKeepAliveRequest(@JsonProperty("applicationInstanceId") final String applicationInstanceId,
+                                  @JsonProperty("activeKeys") final Set<DashboardQueryKey> activeKeys,
+                                  @JsonProperty("deadKeys") final Set<DashboardQueryKey> deadKeys) {
         this.applicationInstanceId = applicationInstanceId;
-        this.searchRequests = searchRequests;
+        this.activeKeys = activeKeys;
+        this.deadKeys = deadKeys;
     }
 
     public String getApplicationInstanceId() {
         return applicationInstanceId;
     }
 
-    public Set<DashboardSearchRequest> getSearchRequests() {
-        return searchRequests;
+    public Set<DashboardQueryKey> getActiveKeys() {
+        return activeKeys;
+    }
+
+    public Set<DashboardQueryKey> getDeadKeys() {
+        return deadKeys;
     }
 
     @Override
     public String toString() {
-        return "SearchBusPollRequest{" +
+        return "SearchKeepAliveRequest{" +
                 "applicationInstanceId='" + applicationInstanceId + '\'' +
-                ", searchRequests=" + searchRequests +
+                ", activeKeys=" + activeKeys +
+                ", deadKeys=" + deadKeys +
                 '}';
     }
 }

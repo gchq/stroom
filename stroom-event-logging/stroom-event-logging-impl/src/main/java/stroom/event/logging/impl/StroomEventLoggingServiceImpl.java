@@ -72,6 +72,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -224,20 +225,35 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return copyDevice(storedDevice);
     }
 
+    private Optional<String> getIpFromXForwardedFor(final HttpServletRequest request) {
+        final String forwardedFor = request.getHeader(X_FORWARDED_FOR);
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            final String ip;
+            // X_FORWARD_FOR may contain multiple IPs if it has bee through multiple proxies
+            // for example '1.2.3.4, 9.8.7.6'.  We will take the left most (i.e. most distant) one.
+            if (forwardedFor.contains(",")) {
+                ip = forwardedFor.substring(0, forwardedFor.indexOf(","));
+            } else {
+                ip = forwardedFor;
+            }
+            LOGGER.debug("{}: [{}], ip: [{}]", X_FORWARDED_FOR, forwardedFor, ip);
+            return Optional.of(ip);
+        } else {
+            LOGGER.debug("{} is empty", X_FORWARDED_FOR);
+            return Optional.empty();
+        }
+    }
+
     private Device getClient(final HttpServletRequest request) {
-        Device device = null;
+        final Device device;
         if (request != null) {
             // First try and use the X-FORWARDED-FOR header that provides the originating IP address of the request if
             // behind a proxy.
-            final String forwardedFor = request.getHeader(X_FORWARDED_FOR);
-            if (forwardedFor != null && !forwardedFor.isBlank()) {
-                device = copyDevice(deviceCache.getDeviceForIpAddress(forwardedFor));
-
-            } else {
-                // Either the client is not the other side of a firewall or the X-FORWARDED-FOR header has not been
-                // supplied.
-                device = copyDevice(deviceCache.getDeviceForIpAddress(request.getRemoteAddr()));
-            }
+            final String address = getIpFromXForwardedFor(request)
+                    .orElseGet(request::getRemoteAddr);
+            device = copyDevice(deviceCache.getDeviceForIpAddress(address));
+        } else {
+            device = null;
         }
         return device;
     }

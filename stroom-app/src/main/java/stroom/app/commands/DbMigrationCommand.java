@@ -1,10 +1,10 @@
 package stroom.app.commands;
 
-import stroom.app.guice.BootStrapModule;
+import stroom.app.BootstrapUtil;
 import stroom.config.app.Config;
+import stroom.db.util.DataSourceProxy;
 import stroom.util.guice.GuiceUtil;
 
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import io.dropwizard.cli.ConfiguredCommand;
@@ -46,24 +46,24 @@ public class DbMigrationCommand extends ConfiguredCommand<Config> {
         LOGGER.info("Using application configuration file {}",
                 configFile.toAbsolutePath().normalize());
 
-        LOGGER.info("Running all DB migrations");
-
-        LOGGER.debug("Creating bootstrapModule");
-        final BootStrapModule bootstrapModule = new BootStrapModule(config, configFile);
-
         LOGGER.debug("Creating injector");
         try {
-            final Injector injector = Guice.createInjector(bootstrapModule);
+            LOGGER.debug("Creating bootstrap injector");
+            final Injector bootstrapInjector = BootstrapUtil.createBootstrapInjector(
+                    config, configFile);
 
             // Force guice to get all datasource instances from the multibinder
             // so the migration will be run for each stroom module
             // Relies on all db modules adding an entry to the multibinder
-            final Set<DataSource> dataSources = injector.getInstance(
+            final Set<DataSource> dataSources = bootstrapInjector.getInstance(
                     Key.get(GuiceUtil.setOf(DataSource.class)));
+
             LOGGER.info("Used {} data sources:\n{}",
                     dataSources.size(),
                     dataSources.stream()
-                            .map(dataSource -> dataSource.getClass().getName())
+                            .map(dataSource -> dataSource instanceof DataSourceProxy
+                                    ? ((DataSourceProxy) dataSource).getName()
+                                    : dataSource.getClass().getName())
                             .map(name -> "  " + name)
                             .sorted()
                             .collect(Collectors.joining("\n")));

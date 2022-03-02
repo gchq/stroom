@@ -10,9 +10,11 @@ import javax.sql.DataSource;
 public abstract class DataSourceProxy implements DataSource {
 
     private final DataSource dataSource;
+    private final String name;
 
-    public DataSourceProxy(final DataSource dataSource) {
+    public DataSourceProxy(final DataSource dataSource, final String name) {
         this.dataSource = dataSource;
+        this.name = name;
     }
 
     @Override
@@ -58,5 +60,9 @@ public abstract class DataSourceProxy implements DataSource {
     @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
         return dataSource.getParentLogger();
+    }
+
+    public String getName() {
+        return name;
     }
 }

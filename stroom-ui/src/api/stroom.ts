@@ -568,9 +568,10 @@ export interface DashboardDoc {
 }
 
 export interface DashboardQueryKey {
+  applicationInstanceId?: string;
   componentId?: string;
   dashboardUuid?: string;
-  uuid?: string;
+  queryInstanceId?: string;
 }
 
 export interface DashboardSearchRequest {
@@ -580,6 +581,12 @@ export interface DashboardSearchRequest {
   /** The client date/time settings */
   dateTimeSettings?: DateTimeSettings;
   search?: Search;
+
+  /**
+   * Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field
+   * @format int64
+   */
+  timeout?: number;
 }
 
 export interface DashboardSearchResponse {
@@ -2748,9 +2755,15 @@ export interface SearchApiKeyRequest {
   sortList?: CriteriaFieldSort[];
 }
 
-export interface SearchBusPollRequest {
+export interface SearchKeepAliveRequest {
+  activeKeys?: DashboardQueryKey[];
   applicationInstanceId?: string;
-  searchRequests?: DashboardSearchRequest[];
+  deadKeys?: DashboardQueryKey[];
+}
+
+export interface SearchKeepAliveResponse {
+  activeKeys?: DashboardQueryKey[];
+  deadKeys?: DashboardQueryKey[];
 }
 
 /**
@@ -4991,14 +5004,33 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name PollDashboardSearchResults
-     * @summary Poll for new search results
-     * @request POST:/dashboard/v1/poll
+     * @name KeepAliveDashboardSearchResults
+     * @summary Keep search results alive for paging/download etc
+     * @request POST:/dashboard/v1/keepAlive
      * @secure
      */
-    pollDashboardSearchResults: (data: SearchBusPollRequest, params: RequestParams = {}) =>
-      this.request<any, DashboardSearchResponse[]>({
-        path: `/dashboard/v1/poll`,
+    keepAliveDashboardSearchResults: (data: SearchKeepAliveRequest, params: RequestParams = {}) =>
+      this.request<any, SearchKeepAliveResponse>({
+        path: `/dashboard/v1/keepAlive`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Dashboards
+     * @name DashboardSearch
+     * @summary Perform a new search or get new results
+     * @request POST:/dashboard/v1/search
+     * @secure
+     */
+    dashboardSearch: (data: DashboardSearchRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse>({
+        path: `/dashboard/v1/search`,
         method: "POST",
         body: data,
         secure: true,
