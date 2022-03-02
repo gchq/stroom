@@ -12,6 +12,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.184] - 2022-03-02
+
+* Issue **#2782** : Fix validation of primitive properties, e.g. booleans.
+
+* Issue **#2782** : Fix propety edit screen `Sources` field showing `Multiple Sources` for a single node.
+
+* Issue **#2787** : Add config_update_tracker table to improve the process of updating each node's effective config. Also fix the updating of the effective value/source columns in the properties list view.
+
+* Issue **#2786** : Handle multiple IPs in X-FORWARDED-FOR header.
+
+* Issue **#2789** : Add locking to ensure one node performs the DB migrations and all others wait for it to complete. DB migration checks will not be run on boot if the build version matches that in the bootstrap_lock table.
+
+* Issue **#2789** : Make the creation of the admin and processing users resiliant to multiple nodes doing it at once.
+
+
 ## [v7.0-beta.183] - 2022-02-16
 
 * Issue **#2768** : Suppress unable to keep alive message.
@@ -4203,7 +4218,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.183...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.184...HEAD
+[v7.0-beta.184]: https://github.com/gchq/stroom/compare/v7.0-beta.183...v7.0-beta.184
 [v7.0-beta.183]: https://github.com/gchq/stroom/compare/v7.0-beta.182...v7.0-beta.183
 [v7.0-beta.182]: https://github.com/gchq/stroom/compare/v7.0-beta.181...v7.0-beta.182
 [v7.0-beta.181]: https://github.com/gchq/stroom/compare/v7.0-beta.180...v7.0-beta.181
