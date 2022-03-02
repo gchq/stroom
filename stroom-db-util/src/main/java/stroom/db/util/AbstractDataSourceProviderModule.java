@@ -1,14 +1,20 @@
 package stroom.db.util;
 
 import stroom.config.common.AbstractDbConfig;
+import stroom.util.db.DbMigrationState;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
@@ -27,6 +33,8 @@ public abstract class AbstractDataSourceProviderModule<
     protected abstract Class<T_CONN_PROV> getConnectionProviderType();
 
     protected abstract T_CONN_PROV createConnectionProvider(DataSource dataSource);
+
+    private static final Map<DataSource, Set<String>> COMPLETED_MIGRATIONS = new ConcurrentHashMap<>();
 
     @Override
     protected void configure() {
@@ -55,7 +63,33 @@ public abstract class AbstractDataSourceProviderModule<
                 configProvider.get(),
                 getModuleName(),
                 createUniquePool());
-        performMigration(dataSource);
+
+        // Prevent migrations from being re-run for each test
+        final boolean hasModuleBeenMigrated = !COMPLETED_MIGRATIONS.computeIfAbsent(
+                        dataSource,
+                        k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+                .add(getModuleName());
+
+        final boolean haveBootstrapMigrationsBeenDone = DbMigrationState.haveBootstrapMigrationsBeenDone();
+
+        LOGGER.debug(() ->
+                LogUtil.message("Module {}, hasModuleBeenMigrated: {}, haveBootstrapMigrationsBeenDone: {}",
+                        getModuleName(), hasModuleBeenMigrated, haveBootstrapMigrationsBeenDone));
+
+        // haveBootstrapMigrationsBeenDone gets set as part of the bootstrapping in App, whereas
+        // hasModuleBeenMigrated controls test runs where the app bootstrapping may not have been
+        // done.
+        if (haveBootstrapMigrationsBeenDone) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Stroom has already been migrated to this build version (module: {}).", getModuleName()));
+        } else {
+            if (!hasModuleBeenMigrated) {
+                performMigration(dataSource);
+            } else {
+                LOGGER.debug(() -> LogUtil.message("Module {} has already been migrated.", getModuleName()));
+            }
+        }
+
         return createConnectionProvider(dataSource);
     }
 

@@ -1266,14 +1266,14 @@ paths:
       summary: Fetch all expression functions
       tags:
       - Dashboards
-  /dashboard/v1/poll:
+  /dashboard/v1/keepAlive:
     post:
-      operationId: pollDashboardSearchResults
+      operationId: keepAliveDashboardSearchResults
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SearchBusPollRequest'
+              $ref: '#/components/schemas/SearchKeepAliveRequest'
         description: request
         required: true
       responses:
@@ -1281,12 +1281,29 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DashboardSearchResponse'
-                uniqueItems: true
+                $ref: '#/components/schemas/SearchKeepAliveResponse'
           description: default response
-      summary: Poll for new search results
+      summary: Keep search results alive for paging/download etc
+      tags:
+      - Dashboards
+  /dashboard/v1/search:
+    post:
+      operationId: dashboardSearch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardSearchRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSearchResponse'
+          description: default response
+      summary: Perform a new search or get new results
       tags:
       - Dashboards
   /dashboard/v1/validateExpression:
@@ -6597,11 +6614,13 @@ components:
     DashboardQueryKey:
       type: object
       properties:
+        applicationInstanceId:
+          type: string
         componentId:
           type: string
         dashboardUuid:
           type: string
-        uuid:
+        queryInstanceId:
           type: string
     DashboardSearchRequest:
       type: object
@@ -6616,6 +6635,20 @@ components:
           $ref: '#/components/schemas/DateTimeSettings'
         search:
           $ref: '#/components/schemas/Search'
+        timeout:
+          type: integer
+          format: int64
+          description: Set the maximum time (in ms) for the server to wait for a complete
+            result set. The timeout applies to both incremental and non incremental
+            queries, though the behaviour is slightly different. The timeout will
+            make the server wait for which ever comes first out of the query completing
+            or the timeout period being reached. If no value is supplied then for
+            an incremental query a default value of 0 will be used (i.e. returning
+            immediately) and for a non-incremental query the server's default timeout
+            period will be used. For an incremental query, if the query has not completed
+            by the end of the timeout period, it will return the currently know results
+            with complete=false, however for a non-incremental query it will return
+            no results, complete=false and details of the timeout in the error field
     DashboardSearchResponse:
       type: object
       properties:
@@ -10019,15 +10052,33 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
-    SearchBusPollRequest:
+    SearchKeepAliveRequest:
       type: object
       properties:
-        applicationInstanceId:
-          type: string
-        searchRequests:
+        activeKeys:
           type: array
           items:
-            $ref: '#/components/schemas/DashboardSearchRequest'
+            $ref: '#/components/schemas/DashboardQueryKey'
+          uniqueItems: true
+        applicationInstanceId:
+          type: string
+        deadKeys:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardQueryKey'
+          uniqueItems: true
+    SearchKeepAliveResponse:
+      type: object
+      properties:
+        activeKeys:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardQueryKey'
+          uniqueItems: true
+        deadKeys:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardQueryKey'
           uniqueItems: true
     SearchRequest:
       type: object

@@ -5,6 +5,7 @@ package stroom.config.impl.db.jooq;
 
 
 import stroom.config.impl.db.jooq.tables.Config;
+import stroom.config.impl.db.jooq.tables.ConfigUpdateTracker;
 import stroom.config.impl.db.jooq.tables.Preferences;
 
 
@@ -18,6 +19,11 @@ public class Tables {
      * The table <code>stroom.config</code>.
      */
     public static final Config CONFIG = Config.CONFIG;
+
+    /**
+     * The table <code>stroom.config_update_tracker</code>.
+     */
+    public static final ConfigUpdateTracker CONFIG_UPDATE_TRACKER = ConfigUpdateTracker.CONFIG_UPDATE_TRACKER;
 
     /**
      * The table <code>stroom.preferences</code>.

@@ -32,6 +32,7 @@ import stroom.processor.impl.MockProcessorModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.impl.TaskContextModule;
+import stroom.util.BuildInfoModule;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.DirProvidersModule;
@@ -102,6 +103,7 @@ public class CliModule extends AbstractModule {
 
         bind(PathConfig.class).to(StroomPathConfig.class);
         install(new DirProvidersModule());
+        install(new BuildInfoModule());
     }
 
     @Provides

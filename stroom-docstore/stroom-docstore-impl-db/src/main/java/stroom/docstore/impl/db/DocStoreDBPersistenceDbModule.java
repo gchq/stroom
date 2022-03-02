@@ -61,7 +61,7 @@ public class DocStoreDBPersistenceDbModule extends AbstractFlyWayDbModule<DocSto
     private static class DataSourceImpl extends DataSourceProxy implements DocStoreDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }

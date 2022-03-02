@@ -27,23 +27,27 @@ import java.util.Objects;
 public class DashboardQueryKey {
 
     @JsonProperty
-    private final String uuid;
+    private final String applicationInstanceId;
     @JsonProperty
     private final String dashboardUuid;
     @JsonProperty
     private final String componentId;
+    @JsonProperty
+    private final String queryInstanceId;
 
     @JsonCreator
-    public DashboardQueryKey(@JsonProperty("uuid") final String uuid,
+    public DashboardQueryKey(@JsonProperty("applicationInstanceId") final String applicationInstanceId,
                              @JsonProperty("dashboardUuid") final String dashboardUuid,
-                             @JsonProperty("componentId") final String componentId) {
-        this.uuid = uuid;
+                             @JsonProperty("componentId") final String componentId,
+                             @JsonProperty("queryInstanceId") final String queryInstanceId) {
+        this.applicationInstanceId = applicationInstanceId;
         this.dashboardUuid = dashboardUuid;
         this.componentId = componentId;
+        this.queryInstanceId = queryInstanceId;
     }
 
-    public String getUuid() {
-        return uuid;
+    public String getApplicationInstanceId() {
+        return applicationInstanceId;
     }
 
     public String getDashboardUuid() {
@@ -52,6 +56,25 @@ public class DashboardQueryKey {
 
     public String getComponentId() {
         return componentId;
+    }
+
+    public String getQueryInstanceId() {
+        return queryInstanceId;
+    }
+
+    /**
+     * Create a UUID to be used by the query API.
+     *
+     * @return A UUID.
+     */
+    public String toUuid() {
+        return applicationInstanceId +
+                '_' +
+                dashboardUuid +
+                '_' +
+                componentId +
+                '_' +
+                queryInstanceId;
     }
 
     @Override
@@ -63,22 +86,24 @@ public class DashboardQueryKey {
             return false;
         }
         final DashboardQueryKey that = (DashboardQueryKey) o;
-        return Objects.equals(uuid, that.uuid) &&
+        return Objects.equals(applicationInstanceId, that.applicationInstanceId) &&
                 Objects.equals(dashboardUuid, that.dashboardUuid) &&
-                Objects.equals(componentId, that.componentId);
+                Objects.equals(componentId, that.componentId) &&
+                Objects.equals(queryInstanceId, that.queryInstanceId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid, dashboardUuid, componentId);
+        return Objects.hash(applicationInstanceId, dashboardUuid, componentId, queryInstanceId);
     }
 
     @Override
     public String toString() {
         return "DashboardQueryKey{" +
-                "uuid='" + uuid + '\'' +
+                "applicationInstanceId='" + applicationInstanceId + '\'' +
                 ", dashboardUuid=" + dashboardUuid +
                 ", componentId='" + componentId + '\'' +
+                ", queryInstanceId='" + queryInstanceId + '\'' +
                 '}';
     }
 }

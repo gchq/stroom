@@ -34,6 +34,11 @@ public final class FlywayUtil {
                                final String flywayLocations,
                                final String flywayTableName,
                                final String moduleName) {
+        LOGGER.info(""
+                + "\n-----------------------------------------------------------"
+                + "\n  Migrating database module: " + moduleName
+                + "\n-----------------------------------------------------------");
+
         final Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .locations(flywayLocations)

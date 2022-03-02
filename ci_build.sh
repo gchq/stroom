@@ -121,6 +121,7 @@ start_stroom_all_dbs() {
 }
 
 generate_ddl_dump() {
+  echo "::group::DDL dump"
   mkdir -p "${DDL_DUMP_DIR}"
 
   stop_and_clear_down_stroom_all_dbs
@@ -142,12 +143,16 @@ generate_ddl_dump() {
       -p"my-secret-pw" \
       stroom \
     > "${DDL_DUMP_FILE}"
+  echo "::endgroup::"
 }
 
 generate_entity_rel_diagram() {
+
+  echo "::group::ERD generation"
   # Needs the stroom-all-dbs container to be running and populated with a vanilla
   # database schema for us to generate an ERD from
   "${BUILD_DIR}/container_build/runInJavaDocker.sh" ERD
+  echo "::endgroup::"
 }
 
 copy_release_artefact() {
@@ -177,6 +182,7 @@ copy_release_artefact() {
 # Github releases. Some of them are needed by the stack builds in
 # stroom-resources
 gather_release_artefacts() {
+  echo "::group::Gather release artefacts"
   mkdir -p "${RELEASE_ARTEFACTS_DIR}"
 
   local -r release_config_dir="${BUILD_DIR}/stroom-app/build/release/config"
@@ -271,6 +277,7 @@ gather_release_artefacts() {
   for file in "${RELEASE_ARTEFACTS_DIR}"/*.zip; do
     create_file_hash "${file}"
   done
+  echo "::endgroup::"
 }
 
 format_manifest_file() {
@@ -372,6 +379,7 @@ docker_logout() {
 }
 
 copy_swagger_ui_content() {
+  echo "::group::Copy Swagger content"
   local ghPagesDir=$BUILD_DIR/gh-pages
   local swaggerUiCloneDir=$BUILD_DIR/swagger-ui
   mkdir -p "${ghPagesDir}"
@@ -406,6 +414,7 @@ copy_swagger_ui_content() {
     -i \
     "s#url: \".*\"#url: \"https://gchq.github.io/stroom/${minor_version}/stroom.json\"#g" \
     "${ghPagesDir}/index.html"
+  echo "::endgroup::"
 }
 
 check_for_out_of_date_puml_svgs() {
@@ -413,7 +422,7 @@ check_for_out_of_date_puml_svgs() {
   local convert_cmd=( "./container_build/runInJavaDocker.sh" "SVG" )
 
   echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
-  
+
   # shellcheck disable=SC2068
   ${convert_cmd[@]}
 
@@ -440,7 +449,7 @@ check_for_out_of_date_puml_svgs() {
     fi
   done < <(git status --porcelain \
     | grep -Po "(?<=( M|\?\?) ).*\.svg")
-  
+
   if [[ ${out_of_date_file_count} -gt 0 ]]; then
     echo -e "${RED}ERROR${NC}: ${out_of_date_file_count} PlantUML generated" \
       "file(s) are out of date. Run '${convert_cmd[*]}' to update them," \
@@ -553,7 +562,9 @@ docker_login
 
 check_for_out_of_date_puml_svgs
 
+echo "::group::Start stroom-all-dbs"
 start_stroom_all_dbs
+echo "::endgroup::"
 
 # Ensure we have a local.yml file as the integration tests will need it
 ./local.yml.sh
@@ -572,6 +583,7 @@ export BUILD_VERSION
 # Don't do a docker build for pull requests
 if [ "$doDockerBuild" = true ]; then
 
+  echo "::group::DockerHub release"
   # build and release stroom image to dockerhub
   releaseToDockerHub \
     "${STROOM_DOCKER_REPO}" \
@@ -583,6 +595,7 @@ if [ "$doDockerBuild" = true ]; then
     "${STROOM_PROXY_DOCKER_REPO}" \
     "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
+  echo "::endgroup::"
 fi
 
 # If it is a tagged build copy all the files needed for the github release

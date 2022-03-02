@@ -123,7 +123,7 @@ public class Config extends TableImpl<ConfigRecord> {
 
     @Override
     public Schema getSchema() {
-        return Stroom.STROOM;
+        return aliased() ? null : Stroom.STROOM;
     }
 
     @Override
@@ -137,8 +137,8 @@ public class Config extends TableImpl<ConfigRecord> {
     }
 
     @Override
-    public List<UniqueKey<ConfigRecord>> getKeys() {
-        return Arrays.<UniqueKey<ConfigRecord>>asList(Keys.KEY_CONFIG_PRIMARY, Keys.KEY_CONFIG_NAME);
+    public List<UniqueKey<ConfigRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_CONFIG_NAME);
     }
 
     @Override

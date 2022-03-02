@@ -8,6 +8,7 @@ import stroom.db.util.JooqUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PropertyPath;
 
+import org.jooq.DSLContext;
 import org.jooq.Record;
 
 import java.util.List;
@@ -18,8 +19,11 @@ import java.util.function.Function;
 import javax.inject.Inject;
 
 import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
+import static stroom.config.impl.db.jooq.tables.ConfigUpdateTracker.CONFIG_UPDATE_TRACKER;
 
 class ConfigPropertyDaoImpl implements ConfigPropertyDao {
+
+    private static final int TRACKER_ID = 1;
 
     private static final Function<Record, ConfigProperty> RECORD_TO_CONFIG_PROPERTY_MAPPER = record -> {
         final ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString(record.get(CONFIG.NAME)));
@@ -76,7 +80,11 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
 
     @Override
     public ConfigProperty create(final ConfigProperty configProperty) {
-        return genericDao.create(configProperty);
+        return JooqUtil.transactionResult(globalConfigDbConnProvider, context -> {
+            final ConfigProperty storedConfigProperty = genericDao.create(context, configProperty);
+            updateTracker(context, storedConfigProperty);
+            return storedConfigProperty;
+        });
     }
 
     @Override
@@ -88,28 +96,50 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
     public Optional<ConfigProperty> fetch(final String propertyName) {
         Objects.requireNonNull(propertyName);
         return JooqUtil.contextResult(globalConfigDbConnProvider, context -> context
-                        .selectFrom(CONFIG)
-                        .where(CONFIG.NAME.eq(propertyName))
-                        .fetchOptional())
+                .selectFrom(CONFIG)
+                .where(CONFIG.NAME.eq(propertyName))
+                .fetchOptional())
                 .map(RECORD_TO_CONFIG_PROPERTY_MAPPER);
     }
 
     @Override
+    public Optional<Long> getLatestConfigUpdateTimeMs() {
+        return JooqUtil.contextResult(globalConfigDbConnProvider, context ->
+                context.select(CONFIG_UPDATE_TRACKER.UPDATE_TIME_MS)
+                        .from(CONFIG_UPDATE_TRACKER)
+                        .limit(1)
+                        .fetchOptional(CONFIG_UPDATE_TRACKER.UPDATE_TIME_MS));
+    }
+
+    @Override
     public ConfigProperty update(final ConfigProperty configProperty) {
-        return genericDao.update(configProperty);
+        return JooqUtil.transactionResultWithOptimisticLocking(
+                globalConfigDbConnProvider,
+                context -> {
+                    final ConfigProperty updatedConfigProperty = genericDao.update(
+                            context,
+                            configProperty);
+                    updateTracker(context, updatedConfigProperty);
+                    return updatedConfigProperty;
+                });
     }
 
     @Override
     public boolean delete(final int id) {
-        return genericDao.delete(id);
+        return JooqUtil.transactionResult(globalConfigDbConnProvider, context -> {
+            updateTracker(context, System.currentTimeMillis());
+            return genericDao.delete(context, id);
+        });
     }
 
     @Override
     public boolean delete(final String name) {
-        return JooqUtil.contextResult(globalConfigDbConnProvider, context -> context
-                .deleteFrom(CONFIG)
-                .where(CONFIG.NAME.eq(name))
-                .execute()) > 0;
+        return JooqUtil.transactionResult(globalConfigDbConnProvider, context -> {
+            updateTracker(context, System.currentTimeMillis());
+            return context.deleteFrom(CONFIG)
+                    .where(CONFIG.NAME.eq(name))
+                    .execute() > 0;
+        });
     }
 
     @Override
@@ -120,7 +150,29 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
     @Override
     public List<ConfigProperty> list() {
         return JooqUtil.contextResult(globalConfigDbConnProvider, context -> context
-                        .fetch(CONFIG))
+                .fetch(CONFIG))
                 .map(RECORD_TO_CONFIG_PROPERTY_MAPPER::apply);
+    }
+
+    private void updateTracker(final DSLContext context,
+                               final ConfigProperty configProperty) {
+        final long updateTimeMs = Objects.requireNonNull(configProperty.getUpdateTimeMs());
+        updateTracker(context, updateTimeMs);
+    }
+
+    /**
+     * The tracker table means we have a simple way of checking if any of the DB config has changed
+     * which can include removal of records. ANY mutation of the config table MUST also
+     * call updateTracker
+     */
+    private void updateTracker(final DSLContext context, final long updateTimeMs) {
+        context.insertInto(
+                CONFIG_UPDATE_TRACKER,
+                CONFIG_UPDATE_TRACKER.ID,
+                CONFIG_UPDATE_TRACKER.UPDATE_TIME_MS)
+                .values(TRACKER_ID, updateTimeMs)
+                .onDuplicateKeyUpdate()
+                .set(CONFIG_UPDATE_TRACKER.UPDATE_TIME_MS, updateTimeMs)
+                .execute();
     }
 }

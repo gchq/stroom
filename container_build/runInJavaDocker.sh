@@ -116,6 +116,13 @@ else
       "-c"  \
       "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" GWT_MIN_HEAP=\"${GWT_MIN_HEAP:-50M}\" GWT_MAX_HEAP=\"${GWT_MAX_HEAP:-2G}\" ./container_build/gradleBuild.sh" \
     )
+  elif [[ $# -eq 1 ]] && [[ "$1" = "GRADLE_COMPILE" ]]; then
+    # Run the full CI gradle build
+    run_cmd=( \
+      "bash" \
+      "-c"  \
+      "MAX_WORKERS=\"${MAX_WORKERS:-6}\" ./container_build/gradleCompile.sh" \
+    )
   elif [[ $# -eq 1 ]] && [[ "$1" = "MIGRATE" ]]; then
     # Run the db migration against a running db instance
     # DB is in a sibling container so need to force it to use the IP instead of localhost

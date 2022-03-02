@@ -50,7 +50,7 @@ public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryDbCon
     private static class DataSourceImpl extends DataSourceProxy implements StoredQueryDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }
