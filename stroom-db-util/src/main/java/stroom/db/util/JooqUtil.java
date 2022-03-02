@@ -180,6 +180,12 @@ public final class JooqUtil {
                 context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
     }
 
+    public static <R> R transactionResultWithOptimisticLocking(final DataSource dataSource,
+                                                               final Function<DSLContext, R> function) {
+        return contextResultWithOptimisticLocking(dataSource,
+                context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
+    }
+
     public static <R extends UpdatableRecord<R>> R create(final DataSource dataSource, final R record) {
         LOGGER.debug(() -> "Creating a " + record.getTable() + " record " + record);
         try (final Connection connection = dataSource.getConnection()) {
