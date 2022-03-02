@@ -3,6 +3,7 @@ package stroom.util;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -29,6 +30,27 @@ public class NullSafe {
             return Optional.empty();
         } else {
             return Optional.ofNullable(Objects.requireNonNull(getter).apply(value));
+        }
+    }
+
+    /**
+     * Allows you to test some property of a value without worrying if the value is null, e.g.
+     * <pre><code>
+     *    List<Sting> list = null;
+     *    boolean hasValues = NullSafe.test(list, list -> list.size > 0);
+     * </code></pre>
+     *
+     * @return false if value is null, else return the value of the predicate when applied
+     * to the result of the getter.
+     */
+    public static <T1, R> boolean test(final T1 value,
+                                       final Function<T1, R> getter,
+                                       final Predicate<R> predicate) {
+        if (value == null) {
+            return false;
+        } else {
+            Objects.requireNonNull(predicate);
+            return predicate.test(Objects.requireNonNull(getter).apply(value));
         }
     }
 

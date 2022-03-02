@@ -25,6 +25,7 @@ import javax.inject.Singleton;
 class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessingUserIdentityProvider.class);
+    private static final String LOCK_NAME = "ProcessingUserIdentityProvider";
     private static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
     private static final long ONE_DAY = TimeUnit.DAYS.toMillis(1);
     private static final long THIRTY_DAYS = ONE_DAY * 30;
@@ -55,7 +56,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
         final long now = System.currentTimeMillis();
         // Don't cache the user identity for more than a day in case its token expires.
         if (userIdentity == null || lastFetchTime.get() < now - ONE_DAY) {
-            final Account account = getAccount(now);
+            final Account account = getOrCreateProcUserAccount(now);
             final Token token = getToken(now, account);
             userIdentity = new ProcessingUserIdentity(INTERNAL_PROCESSING_USER, token.getData());
             lastFetchTime.set(now);
@@ -77,33 +78,38 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
         }
     }
 
-    private Account getAccount(final long now) {
-        final Optional<Account> existingAccount = accountDao.get(INTERNAL_PROCESSING_USER);
-        if (existingAccount.isPresent()) {
-            return existingAccount.get();
-        }
+    private Account createProcUserAccount(final long now) {
+        LOGGER.info("Creating internal processing user account");
+        final Account account = new Account();
+        account.setCreateTimeMs(now);
+        account.setCreateUser(INTERNAL_PROCESSING_USER);
+        account.setUpdateTimeMs(now);
+        account.setUpdateUser(INTERNAL_PROCESSING_USER);
+        account.setUserId(INTERNAL_PROCESSING_USER);
+        account.setComments(INTERNAL_PROCESSING_USER);
+        account.setForcePasswordChange(false);
+        account.setNeverExpires(true);
+        account.setProcessingAccount(true);
+        account.setLoginCount(0);
+        account.setEnabled(true);
 
-        try {
-            final Account account = new Account();
-            account.setCreateTimeMs(now);
-            account.setCreateUser(INTERNAL_PROCESSING_USER);
-            account.setUpdateTimeMs(now);
-            account.setUpdateUser(INTERNAL_PROCESSING_USER);
-            account.setUserId(INTERNAL_PROCESSING_USER);
-            account.setComments(INTERNAL_PROCESSING_USER);
-            account.setForcePasswordChange(false);
-            account.setNeverExpires(true);
-            account.setProcessingAccount(true);
-            account.setLoginCount(0);
-            account.setEnabled(true);
-            accountDao.create(account, "");
-        } catch (final RuntimeException e) {
-            // Expected exception if the processing account already exists.
-            LOGGER.debug(e::getMessage, e);
-        }
+        // If we are booting a cluster then all nodes will be piling in trying to create this account.
+        // We can't cluster lock due to circular dependencies so attempt the create
+        // with onDuplicateKeyIgnore so it will fail silently if another node beat us to it.
+        accountDao.tryCreate(account, "");
 
+        // Re-read the record to get it with the DB IDs
         return accountDao.get(INTERNAL_PROCESSING_USER).orElseThrow(() ->
                 new RuntimeException("Unable to retrieve internal processing user"));
+    }
+
+    private Optional<Account> getProcUserAccount() {
+        return accountDao.get(INTERNAL_PROCESSING_USER);
+    }
+
+    private Account getOrCreateProcUserAccount(final long now) {
+        return getProcUserAccount()
+                .orElseGet(() -> createProcUserAccount(now));
     }
 
     private Token getToken(final long now, final Account account) {

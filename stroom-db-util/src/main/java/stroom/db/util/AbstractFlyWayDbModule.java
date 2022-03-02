@@ -31,6 +31,27 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
 
     @Override
     protected void performMigration(final DataSource dataSource) {
+//        final String lockTableName = "lock_" + getModuleName()
+//                .toLowerCase()
+//                .replaceAll("[^a-z]", "_");
+
+//        JooqUtil.transaction(dataSource, context -> {
+//
+//            LOGGER.info("Creating lock table " + lockTableName);
+//            context.createTableIfNotExists(lockTableName)
+//                    .column("dummy", SQLDataType.INTEGER)
+//                    .execute();
+//            LOGGER.info("Created lock table " + lockTableName);
+//
+//            LOGGER.info("Acquiring lock for flyway");
+//            context.selectFrom(lockTableName)
+//                    .forUpdate();
+//            LOGGER.info("Got lock for flyway");
+        LOGGER.info(""
+                + "\n-----------------------------------------------------------"
+                + "\n  Migrating database module: " + getModuleName()
+                + "\n-----------------------------------------------------------");
+
         final Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .locations(getFlyWayLocation())
@@ -38,27 +59,30 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
                 .baselineOnMigrate(true)
                 .load();
 
-        int pendingMigrations = flyway.info().pending().length;
+        int pendingMigrations = flyway.info()
+                .pending()
+                .length;
 
         if (pendingMigrations > 0) {
             try {
-                LOGGER.info("Applying {} Flyway DB migration(s) to {} in table {} from {}",
-                        pendingMigrations,
+                LOGGER.info("{} - Applying {} Flyway DB migration(s) using history table '{}' from path {}",
                         getModuleName(),
+                        pendingMigrations,
                         getFlyWayTableName(),
                         getFlyWayLocation());
                 flyway.migrate();
-                LOGGER.info("Completed Flyway DB migration for {} in table {}",
+                LOGGER.info("{} - Completed Flyway DB migration for using history table '{}'",
                         getModuleName(),
                         getFlyWayTableName());
             } catch (FlywayException e) {
-                LOGGER.error("Error migrating {} database", getModuleName(), e);
+                LOGGER.error("{} - Error migrating database", getModuleName(), e);
                 throw e;
             }
         } else {
-            LOGGER.info("No pending Flyway DB migration(s) for {} in {}",
+            LOGGER.info("{} - No pending Flyway DB migration(s) for in path {}",
                     getModuleName(),
                     getFlyWayLocation());
         }
+//        });
     }
 }

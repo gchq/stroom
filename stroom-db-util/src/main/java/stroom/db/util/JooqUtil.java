@@ -18,18 +18,22 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.SQLDialect;
 import org.jooq.Table;
+import org.jooq.TableField;
 import org.jooq.UpdatableRecord;
 import org.jooq.conf.Settings;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -197,6 +201,71 @@ public final class JooqUtil {
             throw convertException(e);
         }
         return record;
+    }
+
+    public static <R extends UpdatableRecord<R>, T> R tryCreate(final DataSource dataSource,
+                                                                final R record,
+                                                                final TableField<R, T> keyField) {
+        return tryCreate(dataSource, record, keyField, null);
+    }
+
+    public static <R extends UpdatableRecord<R>, T1, T2> R tryCreate(final DataSource dataSource,
+                                                                     final R record,
+                                                                     final TableField<R, T1> keyField1,
+                                                                     final TableField<R, T2> keyField2) {
+        R persistedRecord;
+        LOGGER.debug(() -> "Creating a " + record.getTable() + " record if it doesn't already exist" + record);
+        try (final Connection connection = dataSource.getConnection()) {
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                record.attach(context.configuration());
+                try {
+                    // Attempt to write the record, which may already be there
+                    record.insert();
+                    persistedRecord = record;
+                } catch (RuntimeException e) {
+                    if (e instanceof DataAccessException
+                            && e.getCause() != null
+                            && e.getCause() instanceof SQLIntegrityConstraintViolationException
+                            && ((SQLIntegrityConstraintViolationException) e.getCause()).getErrorCode() == 1062) {
+                        // 1062 is a duplicate key exception so someone else has already inserted it
+                        LOGGER.debug(e::getMessage, e);
+
+                        // In theory we could get the unique key fields from record.getTable().getKeys()
+                        // but this is a bit fragile if the table has multiple unique keys, so better to let
+                        // the caller make the decision as to which fields to use
+                        final List<Condition> conditionList = new ArrayList<>();
+                        // For now support up to two fields in a compound key
+                        if (keyField1 != null) {
+                            conditionList.add(keyField1.eq(record.get(keyField1)));
+                        }
+                        if (keyField2 != null) {
+                            conditionList.add(keyField2.eq(record.get(keyField2)));
+                        }
+                        if (conditionList.isEmpty()) {
+                            throw new RuntimeException("No key fields supplied");
+                        }
+
+                        final Table<R> table = record.getTable();
+                        LOGGER.debug("Re-fetching existing record from {} with conditions: {}", table, conditionList);
+                        // Now need to re-fetch the record using the key fields so we have the full record with ids
+                        persistedRecord = context.selectFrom(table)
+                                .where(conditionList.toArray(new Condition[0]))
+                                .fetchOne();
+                    } else {
+                        // Some other error so just re-throw
+                        LOGGER.error(e::getMessage, e);
+                        throw e;
+                    }
+                }
+            } finally {
+                releaseDataSource();
+            }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return persistedRecord;
     }
 
     public static <R extends UpdatableRecord<R>> R update(final DataSource dataSource, final R record) {
@@ -534,6 +603,10 @@ public final class JooqUtil {
      * @return A runtime exception.
      */
     private static RuntimeException convertException(final Exception e) {
+        return convertException(e, true);
+    }
+
+    private static RuntimeException convertException(final Exception e, final boolean logError) {
         if (e.getCause() instanceof InterruptedException) {
             // We expect interruption during searches so don't log the error.
             LOGGER.debug(e::getMessage, e);
@@ -542,7 +615,11 @@ public final class JooqUtil {
             // Throw an unchecked form of the interrupted exception.
             return new UncheckedInterruptedException((InterruptedException) e);
         } else {
-            LOGGER.error(e::getMessage, e);
+            if (logError) {
+                LOGGER.error(e::getMessage, e);
+            } else {
+                LOGGER.debug(e::getMessage, e);
+            }
             if (e instanceof RuntimeException) {
                 return (RuntimeException) e;
             } else {

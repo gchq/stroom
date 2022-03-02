@@ -66,7 +66,7 @@ public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreService
     private static class DataSourceImpl extends DataSourceProxy implements FsDataStoreDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }

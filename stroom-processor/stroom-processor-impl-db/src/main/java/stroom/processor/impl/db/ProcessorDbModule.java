@@ -50,7 +50,7 @@ public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorDbConfig,
     private static class DataSourceImpl extends DataSourceProxy implements ProcessorDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }

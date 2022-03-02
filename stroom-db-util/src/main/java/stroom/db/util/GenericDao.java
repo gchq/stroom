@@ -46,11 +46,43 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
                       final Table<T_REC_TYPE> table,
                       final TableField<T_REC_TYPE, T_ID_TYPE> idField,
                       final Class<T_OBJ_TYPE> objectTypeClass) {
-        this(connectionProvider, table, idField, (object, record) -> {
-            record.from(object);
-            return record;
-        }, record ->
-                record.into(objectTypeClass));
+        this(
+                connectionProvider,
+                table,
+                idField,
+                (object, record) -> {
+                    record.from(object);
+                    return record;
+                },
+                record ->
+                        record.into(objectTypeClass));
+    }
+
+    /**
+     * Will try to insert the record, but will fail silently if it already exists.
+     * It will use keyField to retrieve the persisted record if it already exists.
+     *
+     * @return The persisted record
+     */
+    public <T_FIELD> T_OBJ_TYPE tryCreate(final T_OBJ_TYPE object,
+                                          final TableField<T_REC_TYPE, T_FIELD> keyField) {
+        return tryCreate(object, keyField, null);
+    }
+
+    /**
+     * Will try to insert the record, but will fail silently if it already exists.
+     * It will use keyField1 and keyField2 (a compound key) to retrieve the persisted
+     * record if it already exists.
+     *
+     * @return The persisted record
+     */
+    public <T_FIELD1, T_FIELD2> T_OBJ_TYPE tryCreate(final T_OBJ_TYPE object,
+                                                     final TableField<T_REC_TYPE, T_FIELD1> keyField1,
+                                                     final TableField<T_REC_TYPE, T_FIELD2> keyField2) {
+        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
+        final T_REC_TYPE record = objectToRecord(object);
+        final T_REC_TYPE persistedRecord = JooqUtil.tryCreate(connectionProvider, record, keyField1, keyField2);
+        return recordToObjectMapper.apply(persistedRecord);
     }
 
     @Override

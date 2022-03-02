@@ -57,7 +57,7 @@ public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockDbCon
     private static class DataSourceImpl extends DataSourceProxy implements ClusterLockDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 

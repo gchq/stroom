@@ -20,10 +20,12 @@ import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
 import stroom.legacy.db.LegacyConfig.LegacyDbConfig;
+import stroom.util.db.DbMigrationState;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Version;
 
 import com.google.inject.AbstractModule;
@@ -96,12 +98,29 @@ public class LegacyDbModule extends AbstractModule {
         final DataSource dataSource = dataSourceFactory.create(configProvider.get(), getModuleName(), false);
 
         // Prevent migrations from being re-run for each test
-        final boolean required = COMPLETED_MIGRATIONS
-                .computeIfAbsent(dataSource, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+        final boolean hasModuleBeenMigrated = !COMPLETED_MIGRATIONS.computeIfAbsent(
+                dataSource,
+                k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
                 .add(getModuleName());
 
-        if (required) {
-            performMigration(dataSource);
+        final boolean haveBootstrapMigrationsBeenDone = DbMigrationState.haveBootstrapMigrationsBeenDone();
+
+        LOGGER.debug(() ->
+                LogUtil.message("Module {}, hasModuleBeenMigrated: {}, haveBootstrapMigrationsBeenDone: {}",
+                        getModuleName(), hasModuleBeenMigrated, haveBootstrapMigrationsBeenDone));
+
+        // haveBootstrapMigrationsBeenDone gets set as part of the bootstrapping in App, whereas
+        // hasModuleBeenMigrated controls test runs where the app bootstrapping may not have been
+        // done.
+        if (haveBootstrapMigrationsBeenDone) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Stroom has already been migrated to this build version (module: {}).", getModuleName()));
+        } else {
+            if (!hasModuleBeenMigrated) {
+                performMigration(dataSource);
+            } else {
+                LOGGER.debug(() -> LogUtil.message("Module {} has already been migrated.", getModuleName()));
+            }
         }
 
         return createConnectionProvider(dataSource);
@@ -111,10 +130,10 @@ public class LegacyDbModule extends AbstractModule {
         Optional<Version> optVersion = Optional.empty();
         try {
             try (final Statement statement = connection.createStatement()) {
-                try (final ResultSet resultSet = statement.executeQuery(
-                        "SELECT version " +
-                                "FROM schema_version " +
-                                "ORDER BY installed_rank DESC")) {
+                try (final ResultSet resultSet = statement.executeQuery("""
+                        SELECT version
+                        FROM schema_version
+                        ORDER BY installed_rank DESC""")) {
                     if (resultSet.next()) {
                         final String ver = resultSet.getString(1);
                         final String[] parts = ver.split("\\.");
@@ -148,17 +167,17 @@ public class LegacyDbModule extends AbstractModule {
         Optional<Version> optVersion = Optional.empty();
         try {
             try (final Statement statement = connection.createStatement()) {
-                try (final ResultSet resultSet = statement.executeQuery(
-                        "SELECT " +
-                                "VER_MAJ, " +
-                                "VER_MIN, " +
-                                "VER_PAT " +
-                                "FROM STROOM_VER " +
-                                "ORDER BY " +
-                                "VER_MAJ DESC, " +
-                                "VER_MIN DESC, " +
-                                "VER_PAT DESC " +
-                                "LIMIT 1")) {
+                try (final ResultSet resultSet = statement.executeQuery("""
+                        SELECT
+                            VER_MAJ,
+                            VER_MIN, 
+                            VER_PAT 
+                        FROM STROOM_VER 
+                        ORDER BY 
+                            VER_MAJ DESC, 
+                            VER_MIN DESC, 
+                            VER_PAT DESC 
+                        LIMIT 1""")) {
                     if (resultSet.next()) {
                         final Version version = new Version(
                                 resultSet.getInt(1),
@@ -180,10 +199,10 @@ public class LegacyDbModule extends AbstractModule {
         Optional<Version> optVersion = Optional.empty();
         try {
             try (final Statement statement = connection.createStatement()) {
-                try (final ResultSet resultSet = statement.executeQuery(
-                        "SELECT ID " +
-                                "FROM FD " +
-                                "LIMIT 1")) {
+                try (final ResultSet resultSet = statement.executeQuery("""
+                        SELECT ID
+                        FROM FD
+                        LIMIT 1""")) {
                     if (resultSet.next()) {
                         final Version version = new Version(2, 0, 0);
                         LOGGER.info("Found FD table so version is: " + version);
@@ -202,10 +221,10 @@ public class LegacyDbModule extends AbstractModule {
         Optional<Version> optVersion = Optional.empty();
         try {
             try (final Statement statement = connection.createStatement()) {
-                try (final ResultSet resultSet = statement.executeQuery(
-                        "SELECT ID " +
-                                "FROM FEED " +
-                                "LIMIT 1")) {
+                try (final ResultSet resultSet = statement.executeQuery("""
+                        SELECT ID
+                        FROM FEED
+                        LIMIT 1""")) {
                     if (resultSet.next()) {
                         final Version version = new Version(2, 0, 0);
                         LOGGER.info("Found FEED table so version is: " + version);
@@ -228,7 +247,7 @@ public class LegacyDbModule extends AbstractModule {
 
         optVersion.ifPresentOrElse(
                 version -> LOGGER.info("Detected current Stroom version is v" + version.toString()),
-                () -> LOGGER.info("This is a new installation. Legacy migrations won't be applied")
+                () -> LOGGER.info("This is an installation of v7.0 or greater. Legacy migrations won't be applied.")
         );
 
         // Only apply legacy migrations if this is an old DB.
@@ -333,7 +352,7 @@ public class LegacyDbModule extends AbstractModule {
     private static class DataSourceImpl extends DataSourceProxy implements LegacyDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 

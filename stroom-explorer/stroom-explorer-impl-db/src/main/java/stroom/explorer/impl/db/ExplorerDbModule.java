@@ -50,7 +50,7 @@ public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerDbConfig, E
     private static class DataSourceImpl extends DataSourceProxy implements ExplorerDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }

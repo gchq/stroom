@@ -52,6 +52,10 @@ public class DbUtil {
                 connectionConfig.getPassword());
     }
 
+    public static void waitForConnection(final ConnectionConfig connectionConfig) {
+        waitForConnection(connectionConfig, null);
+    }
+
     /**
      * Attempts to connect to the database using the passed connection details. If it fails
      * it will log a warning, and keep retrying. The retry interval will steadily increase.
@@ -59,11 +63,15 @@ public class DbUtil {
      * If the connection could not be established and the reason for the failure makes a
      * retry pointless, e.g. invalid password, then an exception will be thrown.
      */
-    public static void waitForConnection(ConnectionConfig connectionConfig) {
+    public static void waitForConnection(final ConnectionConfig connectionConfig,
+                                         final String connectionName) {
         final String jdbcUrl = connectionConfig.getUrl();
         final String username = connectionConfig.getUser();
-        LOGGER.info("Ensuring database connection to [{}] with username [{}] and driver class [{}]",
-                jdbcUrl, username, connectionConfig.getClassName());
+        final String nameText = connectionName != null
+                ? connectionName + " "
+                : "";
+        LOGGER.info("Ensuring database connection {}to [{}] with username [{}] and driver class [{}]",
+                nameText, jdbcUrl, username, connectionConfig.getClassName());
 
         long sleepMs = 500;
         Throwable lastThrowable = null;
