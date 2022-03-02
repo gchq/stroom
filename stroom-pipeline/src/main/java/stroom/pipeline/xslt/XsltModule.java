@@ -24,14 +24,14 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
-
-import javax.xml.transform.URIResolver;
+import net.sf.saxon.lib.ResourceResolver;
 
 public class XsltModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(XsltStore.class).to(XsltStoreImpl.class);
-        bind(URIResolver.class).to(CustomURIResolver.class);
+        bind(ResourceResolver.class).to(CustomResourceResolver.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(XsltStoreImpl.class);

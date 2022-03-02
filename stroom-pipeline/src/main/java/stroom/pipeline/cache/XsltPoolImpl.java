@@ -19,8 +19,8 @@ package stroom.pipeline.cache;
 import stroom.cache.api.CacheManager;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
-import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReporterAdaptor;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.shared.XsltDoc;
@@ -30,6 +30,8 @@ import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
+import net.sf.saxon.lib.ErrorReporter;
+import net.sf.saxon.lib.ResourceResolver;
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XsltCompiler;
@@ -41,8 +43,6 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.xml.transform.ErrorListener;
-import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamSource;
 
 @Singleton
@@ -50,7 +50,7 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XsltPoolImpl.class);
 
-    private final URIResolver uriResolver;
+    private final ResourceResolver resourceResolver;
     private final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider;
 
     @Inject
@@ -58,10 +58,10 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
                  final XsltConfig xsltConfig,
                  final DocumentPermissionCache documentPermissionCache,
                  final SecurityContext securityContext,
-                 final URIResolver uriResolver,
+                 final ResourceResolver resourceResolver,
                  final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider) {
         super(cacheManager, "XSLT Pool", xsltConfig::getCacheConfig, documentPermissionCache, securityContext);
-        this.uriResolver = uriResolver;
+        this.resourceResolver = resourceResolver;
         this.stroomXsltFunctionLibraryProvider = stroomXsltFunctionLibraryProvider;
     }
 
@@ -103,7 +103,7 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
         StroomXsltFunctionLibrary functionLibrary = null;
         final StoredErrorReceiver errorReceiver = new StoredErrorReceiver();
         final LocationFactory locationFactory = new DefaultLocationFactory();
-        final ErrorListener errorListener = new ErrorListenerAdaptor(getClass().getSimpleName(), locationFactory,
+        final ErrorReporter errorReporter = new ErrorReporterAdaptor(getClass().getSimpleName(), locationFactory,
                 errorReceiver);
 
         try {
@@ -115,8 +115,8 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
             functionLibrary.init(processor.getUnderlyingConfiguration());
 
             final XsltCompiler xsltCompiler = processor.newXsltCompiler();
-            xsltCompiler.setErrorListener(errorListener);
-            xsltCompiler.setURIResolver(uriResolver);
+            xsltCompiler.setErrorReporter(errorReporter);
+            xsltCompiler.setResourceResolver(resourceResolver);
 
             xsltExecutable = xsltCompiler.compile(new StreamSource(StreamUtil.stringToStream(xslt.getData())));
 

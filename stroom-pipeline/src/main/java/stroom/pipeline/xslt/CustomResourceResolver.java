@@ -22,13 +22,16 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.io.StreamUtil;
 
+import net.sf.saxon.lib.ResourceRequest;
+import net.sf.saxon.lib.ResourceResolver;
+import net.sf.saxon.trans.XPathException;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.xml.transform.Source;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamSource;
 
 /**
@@ -41,48 +44,66 @@ import javax.xml.transform.stream.StreamSource;
  * We also allow standard common translation includes
  * </p>
  */
-class CustomURIResolver implements URIResolver {
+class CustomResourceResolver implements ResourceResolver {
 
     private final XsltStore xsltStore;
 
     @Inject
-    CustomURIResolver(final XsltStore xsltStore) {
+    CustomResourceResolver(final XsltStore xsltStore) {
         this.xsltStore = xsltStore;
     }
 
     /**
-     * Called by the processor when it encounters an xsl:include, xsl:import, or
-     * document() function.
+     * Process a resource request to deliver a resource
      *
-     * @param href An href attribute, which may be relative or absolute.
-     * @param base The base URI against which the first argument will be made
-     *             absolute if the absolute URI is required.
-     * @return A Source object, or null if the href cannot be resolved, and the
-     * processor should try to resolve the URI itself.
-     * @throws TransformerException Thrown if the referenced resource cannot be found.
+     * @param request the resource request
+     * @return the returned Source; or null to delegate resolution to another resolver. The type of Source
+     * must correspond to the type of resource requested: for non-XML resources, it should generally be a
+     * <code>StreamSource</code>.
+     * @throws XPathException if the request is invalid in some way, or if the identified resource is unsuitable,
+     *                        or if resolution is to fail rather than being delegated to another resolver.
      */
-    public Source resolve(final String href, final String base) throws TransformerException {
+    @Override
+    public Source resolve(final ResourceRequest request) throws XPathException {
+        if (request.relativeUri != null && request.baseUri != null) {
+            try {
+                return resolve(request.relativeUri);
+            } catch (TransformerException e) {
+                throw XPathException.makeXPathException(e);
+            }
+        }
+        if (request.uri != null) {
+            try {
+                return resolve(request.uri);
+            } catch (TransformerException e) {
+                throw XPathException.makeXPathException(e);
+            }
+        }
+        return null;
+    }
+
+    private Source resolve(final String uri) throws TransformerException {
         try {
             // Try and locate a translation by name
-            final List<DocRef> docRefs = xsltStore.findByName(href);
+            final List<DocRef> docRefs = xsltStore.findByName(uri);
 
             if (docRefs == null || docRefs.size() == 0) {
                 // Try loading by UUID or doc ref string, e.g, `uuid='test-uuid', name='test-name'`.
-                final DocRef docRef = parseDocRef(href);
+                final DocRef docRef = parseDocRef(uri);
                 final XsltDoc document = xsltStore.readDocument(docRef);
                 if (document == null) {
-                    throw new IOException("Resource not found: \"" + href + "\"");
+                    throw new IOException("Resource not found: \"" + uri + "\"");
                 }
                 return new StreamSource(StreamUtil.stringToStream(document.getData()));
             }
 
             if (docRefs.size() > 1) {
-                throw new IOException("Found " + docRefs.size() + " resources for: \"" + href + "\"");
+                throw new IOException("Found " + docRefs.size() + " resources for: \"" + uri + "\"");
             }
 
             final XsltDoc document = xsltStore.readDocument(docRefs.get(0));
             if (document == null) {
-                throw new IOException("Error reading: \"" + href + "\"");
+                throw new IOException("Error reading: \"" + uri + "\"");
             }
 
             return new StreamSource(StreamUtil.stringToStream(document.getData()));
