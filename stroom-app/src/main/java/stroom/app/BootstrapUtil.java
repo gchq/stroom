@@ -13,6 +13,7 @@ import stroom.db.util.DbUtil;
 import stroom.db.util.JooqUtil;
 import stroom.util.BuildInfoProvider;
 import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
 import stroom.util.db.DbMigrationState;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
@@ -48,6 +49,10 @@ public class BootstrapUtil {
     private static final String BUILD_VERSION_TABLE_NAME = "build_version";
     private static final int BUILD_VERSION_TABLE_ID = 1;
     private static final String INITIAL_VERSION = "UNKNOWN_VERSION";
+    private static final String SNAPSHOT_VERSION = "SNAPSHOT";
+
+    private BootstrapUtil() {
+    }
 
     /**
      * Creates an injector with the bare minimum to initialise the DB connections and configuration.
@@ -87,9 +92,18 @@ public class BootstrapUtil {
         final BuildInfo buildInfo = BuildInfoProvider.getBuildInfo();
         showBuildInfo(buildInfo);
 
+        // In dev the build ver will always be SNAPSHOT so append the now time to make
+        // it different to force the migrations to always run in dev.
+        String buildVersion = Objects.requireNonNullElse(buildInfo.getBuildVersion(), SNAPSHOT_VERSION);
+        buildVersion = SNAPSHOT_VERSION.equals(buildVersion)
+                ? SNAPSHOT_VERSION + "_" + DateUtil.createNormalDateTimeString()
+                : buildVersion;
+
+        LOGGER.debug("buildVersion: '{}'", buildVersion);
+
         return BootstrapUtil.doWithBootstrapLock(
                 configuration,
-                buildInfo.getBuildVersion(), () -> {
+                buildVersion, () -> {
                     LOGGER.info("Initialising database connections and configuration properties");
 
                     final BootStrapModule bootstrapModule = bootStrapModuleSupplier.get();

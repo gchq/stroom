@@ -79,7 +79,7 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
                 throw e;
             }
         } else {
-            LOGGER.info("{} - No pending Flyway DB migration(s) for in path {}",
+            LOGGER.info("{} - No pending Flyway DB migration(s) in path {}",
                     getModuleName(),
                     getFlyWayLocation());
         }

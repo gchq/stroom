@@ -19,6 +19,7 @@ public class GlobalConfigBootstrapService {
     private final ConfigPropertyDao dao;
     private final ConfigMapper configMapper;
 
+    // This two must be different as they are effectively compared below
     private static final long UNINITIALISED_UPDATE_TIME_MS = -2;
     private static final long UNKNOWN_UPDATE_TIME_MS = -1;
 

@@ -17,10 +17,9 @@
 package stroom.util;
 
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BuildInfo;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -30,8 +29,8 @@ import javax.inject.Singleton;
 @Singleton
 public class BuildInfoProvider implements Provider<BuildInfo> {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildInfoProvider.class);
     private static final String upDate = DateUtil.createNormalDateTimeString();
-    private static final Logger LOGGER = LoggerFactory.getLogger(BuildInfoProvider.class);
     private static final String BUILD_PROPERTIES = "META-INF/stroom-util-build.properties";
 
     private static final BuildInfo BUILD_INFO;
@@ -46,6 +45,14 @@ public class BuildInfoProvider implements Provider<BuildInfo> {
         }
         final String buildVersion = properties.getProperty("buildVersion");
         final String buildDate = properties.getProperty("buildDate");
+
+        if (buildVersion == null || buildVersion.isBlank()) {
+            throw new RuntimeException("Build version is null/blank. It should be set in " + BUILD_PROPERTIES);
+        }
+        if (buildDate == null || buildDate.isBlank()) {
+            throw new RuntimeException("Build date is null/blank. It should be set in " + BUILD_PROPERTIES);
+        }
+
         BUILD_INFO = new BuildInfo(upDate, buildVersion, buildDate);
     }
 

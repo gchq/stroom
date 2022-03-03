@@ -48,7 +48,9 @@ public abstract class AbstractDataSourceProviderModule<
 
     /**
      * We inject {@link ForceLegacyMigration} to ensure that the the core DB migration has happened before all
-     * other migrations
+     * other migrations.
+     * <p>
+     * This provider means the FlyWay migration will be triggered on first use of a datasource.
      */
     @Provides
     @Singleton
