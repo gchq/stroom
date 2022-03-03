@@ -12,7 +12,6 @@ import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
-import stroom.util.BuildInfoModule;
 
 import com.google.inject.AbstractModule;
 
@@ -45,7 +44,6 @@ public class SetupSampleDataModule extends AbstractModule {
         bind(Config.class).toInstance(configuration);
         install(new BootStrapModule(configuration, configHolder.getConfigFile()));
         install(new UriFactoryModule());
-        install(new BuildInfoModule());
         install(new CoreModule());
         install(new ResourceModule());
         install(new stroom.cluster.impl.MockClusterModule());

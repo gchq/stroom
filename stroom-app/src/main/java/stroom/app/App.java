@@ -32,6 +32,7 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
+import stroom.meta.impl.MetaTypeDao;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
@@ -45,7 +46,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.validation.ValidationModule;
 import stroom.util.yaml.YamlUtil;
@@ -106,7 +106,6 @@ public class App extends Application<Config> {
     // Injected manually
     private HomeDirProvider homeDirProvider;
     private TempDirProvider tempDirProvider;
-    private BuildInfo buildInfo;
 
     private final Path configFile;
 
@@ -114,8 +113,6 @@ public class App extends Application<Config> {
     // of the yaml file before our main injector has been created and also so we can use our custom
     // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
     // injectors running but not sure how else we could do this unless Guice is not used for the validators.
-    // TODO 28/02/2022 AT: We could add the validation module to the root injector along with BuildInfo
-    //  then we don't have to bind it twice
     private final Injector validationOnlyInjector;
 
     // Needed for DropwizardExtensionsSupport
@@ -188,10 +185,11 @@ public class App extends Application<Config> {
 
         validateAppConfig(configuration, configFile);
 
-        final Injector bootStrapInjector = BootstrapUtil.createBootstrapInjector(
+        // Initialise all the DB connections and app config; and run all the Flyway migrations
+        // if needed, then return the injector used.
+        final Injector bootStrapInjector = BootstrapUtil.bootstrapApplication(
                 configuration, environment, configFile);
 
-        this.buildInfo = bootStrapInjector.getInstance(BuildInfo.class);
         this.homeDirProvider = bootStrapInjector.getInstance(HomeDirProvider.class);
         this.tempDirProvider = bootStrapInjector.getInstance(TempDirProvider.class);
 
@@ -242,6 +240,11 @@ public class App extends Application<Config> {
         // Inherit all the bindings from the bootStrapInjector
         final Injector appInjector = bootStrapInjector.createChildInjector(new AppModule());
         appInjector.injectMembers(this);
+
+        final MetaTypeDao instance1 = appInjector.getInstance(MetaTypeDao.class);
+        final MetaTypeDao instance2 = appInjector.getInstance(MetaTypeDao.class);
+        LOGGER.info("instance1: {}", System.identityHashCode(instance1));
+        LOGGER.info("instance2: {}", System.identityHashCode(instance2));
 
         //Register REST Resource Auto Logger to automatically log calls to suitably annotated resources/methods
         //Note that if autologger is not required, and the next line removed, then it will be necessary to
