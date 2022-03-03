@@ -46,7 +46,7 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
 
         try {
             LOGGER.debug("Creating bootstrap injector");
-            final Injector bootstrapInjector = BootstrapUtil.createBootstrapInjector(
+            final Injector bootstrapInjector = BootstrapUtil.bootstrapApplication(
                     config, configFile);
 
             LOGGER.debug("Creating app injector");

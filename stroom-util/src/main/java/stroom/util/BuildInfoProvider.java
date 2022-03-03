@@ -34,21 +34,29 @@ public class BuildInfoProvider implements Provider<BuildInfo> {
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildInfoProvider.class);
     private static final String BUILD_PROPERTIES = "META-INF/stroom-util-build.properties";
 
-    private BuildInfo buildInfo;
+    private static final BuildInfo BUILD_INFO;
 
-    public BuildInfo get() {
-        if (buildInfo == null) {
-            Properties properties = new Properties();
-            try {
-                properties.load(
-                        BuildInfoProvider.class.getClassLoader().getResourceAsStream(BUILD_PROPERTIES));
-            } catch (final IOException e) {
-                LOGGER.error("Unable to load {}", BUILD_PROPERTIES, e);
-            }
-            final String buildVersion = properties.getProperty("buildVersion");
-            final String buildDate = properties.getProperty("buildDate");
-            buildInfo = new BuildInfo(upDate, buildVersion, buildDate);
+    static {
+        final Properties properties = new Properties();
+        try {
+            properties.load(
+                    BuildInfoProvider.class.getClassLoader().getResourceAsStream(BUILD_PROPERTIES));
+        } catch (final IOException e) {
+            LOGGER.error("Unable to load {}", BUILD_PROPERTIES, e);
         }
-        return buildInfo;
+        final String buildVersion = properties.getProperty("buildVersion");
+        final String buildDate = properties.getProperty("buildDate");
+        BUILD_INFO = new BuildInfo(upDate, buildVersion, buildDate);
+    }
+
+    // For use by Guice
+    @Override
+    public BuildInfo get() {
+        return BUILD_INFO;
+    }
+
+    // Allows us to get it statically when not using guice
+    public static BuildInfo getBuildInfo() {
+        return BUILD_INFO;
     }
 }

@@ -59,7 +59,6 @@ public class ToolModule extends AbstractModule {
         install(new stroom.meta.impl.MetaModule());
         install(new stroom.meta.impl.db.MetaDaoModule());
         install(new stroom.meta.impl.db.MetaDbModule());
-        install(new stroom.util.BuildInfoModule());
 
         // Not using all the DB modules so just bind to an empty anonymous class
         bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {

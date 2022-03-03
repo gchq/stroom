@@ -49,7 +49,7 @@ public class DbMigrationCommand extends ConfiguredCommand<Config> {
         LOGGER.debug("Creating injector");
         try {
             LOGGER.debug("Creating bootstrap injector");
-            final Injector bootstrapInjector = BootstrapUtil.createBootstrapInjector(
+            final Injector bootstrapInjector = BootstrapUtil.bootstrapApplication(
                     config, configFile);
 
             // Force guice to get all datasource instances from the multibinder

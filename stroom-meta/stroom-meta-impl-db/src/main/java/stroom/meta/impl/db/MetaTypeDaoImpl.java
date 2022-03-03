@@ -23,6 +23,8 @@ import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
 import org.jooq.Condition;
@@ -39,6 +41,8 @@ import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 @Singleton
 class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaTypeDaoImpl.class);
+
     private static final String CACHE_NAME = "Meta Type Cache";
 
     private final ICache<String, Integer> cache;
@@ -48,6 +52,9 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
     MetaTypeDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                     final CacheManager cacheManager,
                     final MetaServiceConfig metaServiceConfig) {
+
+        LOGGER.debug("Initialising MetaTypeDaoImpl");
+
         this.metaDbConnProvider = metaDbConnProvider;
         cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaTypeCache, this::load);
 

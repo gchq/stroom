@@ -43,7 +43,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.User;
 import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
-import stroom.util.BuildInfoModule;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -61,7 +60,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 //@IncludeModule(AppConfigTestModule.class)
 @IncludeModule(UriFactoryModule.class)
 //@IncludeModule(DbConnectionsModule.class)
-@IncludeModule(BuildInfoModule.class)
 @IncludeModule(CoreModule.class)
 @IncludeModule(BootstrapTestModule.class)
 @IncludeModule(ResourceModule.class)
