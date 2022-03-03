@@ -139,111 +139,111 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
         test(pipelineRef, INPUT_FRAGMENT, null);
     }
 
-    @Test
-    void testPerformanceSplitCount1000() {
-        testPerformance(1000);
-    }
-
-    @Test
-    void testPerformanceSplitCount100() {
-        testPerformance(100);
-    }
-
-    @Test
-    void testPerformanceSplitCount1() {
-        testPerformance(1);
-    }
-
-    private void testPerformance(final int splitCount) {
-        pipelineScopeRunnable.scopeRunnable(() -> {
-            final String name = DIR + "PERFORMANCE.nxml";
-            final Path path = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(name);
-            long count = 0L;
-
-            try (final Writer outputStream = Files.newBufferedWriter(path)) {
-
-                outputStream.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-                outputStream.write("<records ");
-                outputStream.write("xmlns=\"records:2\" ");
-                outputStream.write("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
-                outputStream.write("xsi:schemaLocation=\"records:2 ");
-                outputStream.write("file://records-v2.0.xsd\" ");
-                outputStream.write("version=\"2.0\">\n");
-
-                for (int fileNo = 1; fileNo <= 10000; fileNo++) {
-                    for (int lineNo = 1; lineNo <= 1000; lineNo++) {
-                        outputStream.write("<record>");
-                        outputStream.write("<data name=\"Date\" value=\"01/01/2010\"/>");
-                        outputStream.write("<data name=\"Time\" value=\"00:00:00\"/>");
-                        outputStream.write("<data name=\"FileNo\" value=\"");
-                        outputStream.write(String.valueOf(fileNo));
-                        outputStream.write("\"/>");
-                        outputStream.write("<data name=\"LineNo\" value=\"");
-                        outputStream.write(String.valueOf(lineNo));
-                        outputStream.write("\"/>");
-                        outputStream.write("<data name=\"User\" value=\"user");
-                        outputStream.write(String.valueOf(fileNo));
-                        outputStream.write("\"/>");
-                        outputStream.write("<data name=\"Message\" value=\"Some message ");
-                        outputStream.write(String.valueOf(fileNo));
-                        outputStream.write("_");
-                        outputStream.write(String.valueOf(lineNo));
-                        outputStream.write("\"/>");
-                        outputStream.write("</record>");
-                        outputStream.write("\n");
-
-                        count++;
-                    }
-                }
-                outputStream.write("</records>\n");
-
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-
-            final DocRef pipelineRef = createTransformerPipeline();
-
-            try (final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(name)) {
-                // Delete any output file.
-                final Path outputFile = getCurrentTestDir().resolve("TestXMLTransformer.xml");
-                final Path outputLockFile = getCurrentTestDir().resolve("TestXMLTransformer.xml.lock");
-                FileUtil.deleteFile(outputFile);
-                FileUtil.deleteFile(outputLockFile);
-
-                // Setup the error handler.
-                final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
-                errorReceiverProvider.get().setErrorReceiver(loggingErrorReceiver);
-
-                // Create the parser.
-                final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-                final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext);
-                pipeline.findFilters(SplitFilter.class).get(0).setSplitCount(splitCount);
-
-                pipeline.startProcessing();
-
-                pipeline.process(inputStream, "UTF-8");
-
-                pipeline.endProcessing();
-
-                assertThat(recordCountProvider.get().getRead() > 0).isTrue();
-                assertThat(recordCountProvider.get().getWritten() > 0).isTrue();
-                assertThat(recordCountProvider.get().getWritten()).isEqualTo(recordCountProvider.get().getRead());
-                assertThat(recordCountProvider.get().getRead()).isEqualTo(count);
-                assertThat(recordCountProvider.get().getWritten()).isEqualTo(count);
-                assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).isEqualTo(0);
-                assertThat(loggingErrorReceiver.getRecords(Severity.ERROR)).isEqualTo(0);
-                assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).isEqualTo(0);
-
-                if (!loggingErrorReceiver.isAllOk()) {
-                    fail(loggingErrorReceiver.toString());
-                }
-
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
-    }
+//    @Test
+//    void testPerformanceSplitCount1000() {
+//        testPerformance(1000);
+//    }
+//
+//    @Test
+//    void testPerformanceSplitCount100() {
+//        testPerformance(100);
+//    }
+//
+//    @Test
+//    void testPerformanceSplitCount1() {
+//        testPerformance(1);
+//    }
+//
+//    private void testPerformance(final int splitCount) {
+//        pipelineScopeRunnable.scopeRunnable(() -> {
+//            final String name = DIR + "PERFORMANCE.nxml";
+//            final Path path = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(name);
+//            long count = 0L;
+//
+//            try (final Writer outputStream = Files.newBufferedWriter(path)) {
+//
+//                outputStream.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+//                outputStream.write("<records ");
+//                outputStream.write("xmlns=\"records:2\" ");
+//                outputStream.write("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+//                outputStream.write("xsi:schemaLocation=\"records:2 ");
+//                outputStream.write("file://records-v2.0.xsd\" ");
+//                outputStream.write("version=\"2.0\">\n");
+//
+//                for (int fileNo = 1; fileNo <= 10000; fileNo++) {
+//                    for (int lineNo = 1; lineNo <= 1000; lineNo++) {
+//                        outputStream.write("<record>");
+//                        outputStream.write("<data name=\"Date\" value=\"01/01/2010\"/>");
+//                        outputStream.write("<data name=\"Time\" value=\"00:00:00\"/>");
+//                        outputStream.write("<data name=\"FileNo\" value=\"");
+//                        outputStream.write(String.valueOf(fileNo));
+//                        outputStream.write("\"/>");
+//                        outputStream.write("<data name=\"LineNo\" value=\"");
+//                        outputStream.write(String.valueOf(lineNo));
+//                        outputStream.write("\"/>");
+//                        outputStream.write("<data name=\"User\" value=\"user");
+//                        outputStream.write(String.valueOf(fileNo));
+//                        outputStream.write("\"/>");
+//                        outputStream.write("<data name=\"Message\" value=\"Some message ");
+//                        outputStream.write(String.valueOf(fileNo));
+//                        outputStream.write("_");
+//                        outputStream.write(String.valueOf(lineNo));
+//                        outputStream.write("\"/>");
+//                        outputStream.write("</record>");
+//                        outputStream.write("\n");
+//
+//                        count++;
+//                    }
+//                }
+//                outputStream.write("</records>\n");
+//
+//            } catch (final IOException e) {
+//                throw new UncheckedIOException(e);
+//            }
+//
+//            final DocRef pipelineRef = createTransformerPipeline();
+//
+//            try (final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(name)) {
+//                // Delete any output file.
+//                final Path outputFile = getCurrentTestDir().resolve("TestXMLTransformer.xml");
+//                final Path outputLockFile = getCurrentTestDir().resolve("TestXMLTransformer.xml.lock");
+//                FileUtil.deleteFile(outputFile);
+//                FileUtil.deleteFile(outputLockFile);
+//
+//                // Setup the error handler.
+//                final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
+//                errorReceiverProvider.get().setErrorReceiver(loggingErrorReceiver);
+//
+//                // Create the parser.
+//                final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+//                final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
+//                final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext);
+//                pipeline.findFilters(SplitFilter.class).get(0).setSplitCount(splitCount);
+//
+//                pipeline.startProcessing();
+//
+//                pipeline.process(inputStream, "UTF-8");
+//
+//                pipeline.endProcessing();
+//
+//                assertThat(recordCountProvider.get().getRead() > 0).isTrue();
+//                assertThat(recordCountProvider.get().getWritten() > 0).isTrue();
+//                assertThat(recordCountProvider.get().getWritten()).isEqualTo(recordCountProvider.get().getRead());
+//                assertThat(recordCountProvider.get().getRead()).isEqualTo(count);
+//                assertThat(recordCountProvider.get().getWritten()).isEqualTo(count);
+//                assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).isEqualTo(0);
+//                assertThat(loggingErrorReceiver.getRecords(Severity.ERROR)).isEqualTo(0);
+//                assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).isEqualTo(0);
+//
+//                if (!loggingErrorReceiver.isAllOk()) {
+//                    fail(loggingErrorReceiver.toString());
+//                }
+//
+//            } catch (final IOException e) {
+//                throw new UncheckedIOException(e);
+//            }
+//        });
+//    }
 
     private void testXMLTransformer(final String inputResource, final String encoding) {
         final DocRef pipelineRef = createTransformerPipeline();
