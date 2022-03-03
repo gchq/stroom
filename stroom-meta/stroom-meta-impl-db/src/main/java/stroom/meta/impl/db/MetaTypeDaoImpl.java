@@ -31,6 +31,7 @@ import org.jooq.Condition;
 import org.jooq.Field;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
@@ -60,9 +61,11 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
 
         // Ensure some types are preloaded.
         final Set<String> metaTypes = metaServiceConfig.getMetaTypes();
+        LOGGER.debug("metaTypes: {}", metaTypes);
         if (metaTypes != null) {
             metaTypes.stream()
-                    .filter(s -> !s.isEmpty())
+                    .filter(Objects::nonNull)
+                    .filter(s -> !s.isBlank())
                     .forEach(this::load);
         }
     }
