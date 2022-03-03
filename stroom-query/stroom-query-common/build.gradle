@@ -17,10 +17,12 @@
 ext.moduleName = 'stroom.query.common'
 
 dependencies {
+    compile project(':stroom-cache:stroom-cache-api')
     compile project(':stroom-docref')
     compile project(':stroom-lmdb')
     compile project(':stroom-query:stroom-expression')
     compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')

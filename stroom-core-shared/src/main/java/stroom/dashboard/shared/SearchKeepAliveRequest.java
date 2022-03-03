@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.api.v2.QueryKey;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -27,38 +29,29 @@ import java.util.Set;
 public class SearchKeepAliveRequest {
 
     @JsonProperty
-    private final String applicationInstanceId;
+    private final Set<QueryKey> activeKeys;
     @JsonProperty
-    private final Set<DashboardQueryKey> activeKeys;
-    @JsonProperty
-    private final Set<DashboardQueryKey> deadKeys;
+    private final Set<QueryKey> deadKeys;
 
     @JsonCreator
-    public SearchKeepAliveRequest(@JsonProperty("applicationInstanceId") final String applicationInstanceId,
-                                  @JsonProperty("activeKeys") final Set<DashboardQueryKey> activeKeys,
-                                  @JsonProperty("deadKeys") final Set<DashboardQueryKey> deadKeys) {
-        this.applicationInstanceId = applicationInstanceId;
+    public SearchKeepAliveRequest(@JsonProperty("activeKeys") final Set<QueryKey> activeKeys,
+                                  @JsonProperty("deadKeys") final Set<QueryKey> deadKeys) {
         this.activeKeys = activeKeys;
         this.deadKeys = deadKeys;
     }
 
-    public String getApplicationInstanceId() {
-        return applicationInstanceId;
-    }
-
-    public Set<DashboardQueryKey> getActiveKeys() {
+    public Set<QueryKey> getActiveKeys() {
         return activeKeys;
     }
 
-    public Set<DashboardQueryKey> getDeadKeys() {
+    public Set<QueryKey> getDeadKeys() {
         return deadKeys;
     }
 
     @Override
     public String toString() {
         return "SearchKeepAliveRequest{" +
-                "applicationInstanceId='" + applicationInstanceId + '\'' +
-                ", activeKeys=" + activeKeys +
+                "activeKeys=" + activeKeys +
                 ", deadKeys=" + deadKeys +
                 '}';
     }

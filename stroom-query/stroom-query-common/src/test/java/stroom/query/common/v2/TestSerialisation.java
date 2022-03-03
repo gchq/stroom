@@ -31,6 +31,7 @@ import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
@@ -58,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -308,6 +310,7 @@ class TestSerialisation {
                 1,
                 Collections.singletonList("tableResultError"));
         return new SearchResponse(
+                new QueryKey("test_uuid"),
                 Arrays.asList("highlight1", "highlight2"),
                 Arrays.asList(tableResult, getVisResult1()),
                 Collections.singletonList("some error"),

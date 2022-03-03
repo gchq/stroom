@@ -18,10 +18,11 @@ package stroom.dashboard.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
+import stroom.query.api.v2.QueryKey;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
 import stroom.util.shared.Clearable;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -31,30 +32,31 @@ class ActiveQueriesManager implements Clearable {
     private static final String CACHE_NAME = "Active Queries";
 
     private final SecurityContext securityContext;
-    private final ICache<String, ActiveQueries> cache;
+    private final ICache<QueryKey, ActiveQuery> cache;
 
     @Inject
     ActiveQueriesManager(final CacheManager cacheManager,
                          final SecurityContext securityContext,
                          final DashboardConfig dashboardConfig) {
         this.securityContext = securityContext;
-        cache = cacheManager.create(CACHE_NAME, dashboardConfig::getActiveQueriesCache, this::create, this::destroy);
+        cache = cacheManager
+                .create(CACHE_NAME, dashboardConfig::getActiveQueriesCache, null, this::destroy);
     }
 
-    private ActiveQueries create(final String key) {
-        return new ActiveQueries(key, securityContext);
+    private void destroy(final QueryKey key, final ActiveQuery value) {
+        securityContext.asProcessingUser(value::destroy);
     }
 
-    private void destroy(final String key, final ActiveQueries value) {
-        value.destroy();
+    public void put(final QueryKey key, final ActiveQuery activeQuery) {
+        cache.put(key, activeQuery);
     }
 
-    public ActiveQueries get(final UserIdentity userIdentity, final String applicationInstanceId) {
-        return cache.get(createKey(userIdentity, applicationInstanceId));
+    public Optional<ActiveQuery> getOptional(final QueryKey key) {
+        return cache.getOptional(key);
     }
 
-    public String createKey(final UserIdentity userIdentity, final String applicationInstanceId) {
-        return userIdentity.getId() + "_" + userIdentity.getSessionId() + "_" + applicationInstanceId;
+    public void remove(final QueryKey key) {
+        cache.remove(key);
     }
 
     @Override

@@ -23,7 +23,6 @@ public class SearchConfig extends AbstractConfig {
 
     private final int maxStoredDataQueueSize;
     private final int maxBooleanClauseCount;
-    private final String storeSize;
     private final ExtractionConfig extractionConfig;
     private final IndexShardSearchConfig shardConfig;
     private final ResultStoreConfig resultStoreConfig;
@@ -31,7 +30,6 @@ public class SearchConfig extends AbstractConfig {
     public SearchConfig() {
         maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
         maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
-        storeSize = "1000000,100,10,1";
         extractionConfig = new ExtractionConfig();
         shardConfig = new IndexShardSearchConfig();
         resultStoreConfig = new ResultStoreConfig();
@@ -40,13 +38,11 @@ public class SearchConfig extends AbstractConfig {
     @JsonCreator
     public SearchConfig(@JsonProperty("maxStoredDataQueueSize") final int maxStoredDataQueueSize,
                         @JsonProperty("maxBooleanClauseCount") final int maxBooleanClauseCount,
-                        @JsonProperty("storeSize") final String storeSize,
                         @JsonProperty("extraction") final ExtractionConfig extractionConfig,
                         @JsonProperty("shard") final IndexShardSearchConfig shardConfig,
                         @JsonProperty("resultStore") final ResultStoreConfig resultStoreConfig) {
         this.maxStoredDataQueueSize = maxStoredDataQueueSize;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
-        this.storeSize = storeSize;
         this.extractionConfig = extractionConfig;
         this.shardConfig = shardConfig;
         this.resultStoreConfig = resultStoreConfig;
@@ -63,11 +59,6 @@ public class SearchConfig extends AbstractConfig {
         return maxBooleanClauseCount;
     }
 
-    @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")
-    public String getStoreSize() {
-        return storeSize;
-    }
-
     @JsonProperty("extraction")
     public ExtractionConfig getExtractionConfig() {
         return extractionConfig;
@@ -79,7 +70,7 @@ public class SearchConfig extends AbstractConfig {
     }
 
     @JsonProperty("resultStore")
-    public ResultStoreConfig getLmdbConfig() {
+    public ResultStoreConfig getResultStoreConfig() {
         return resultStoreConfig;
     }
 
@@ -88,7 +79,6 @@ public class SearchConfig extends AbstractConfig {
         return "SearchConfig{" +
                 "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
                 ", maxBooleanClauseCount=" + maxBooleanClauseCount +
-                ", storeSize='" + storeSize + '\'' +
                 '}';
     }
 }

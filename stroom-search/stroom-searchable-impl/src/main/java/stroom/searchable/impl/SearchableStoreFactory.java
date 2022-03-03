@@ -6,6 +6,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
@@ -34,7 +35,7 @@ class SearchableStoreFactory implements StoreFactory {
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
-    private final SearchableConfig config;
+    private final ResultStoreConfig config;
     private final UiConfig clientConfig;
     private final SearchableProvider searchableProvider;
     private final CoprocessorsFactory coprocessorsFactory;
@@ -42,7 +43,7 @@ class SearchableStoreFactory implements StoreFactory {
     @Inject
     SearchableStoreFactory(final Executor executor,
                            final TaskContextFactory taskContextFactory,
-                           final SearchableConfig config,
+                           final ResultStoreConfig config,
                            final UiConfig clientConfig,
                            final SearchableProvider searchableProvider,
                            final CoprocessorsFactory coprocessorsFactory) {
@@ -58,10 +59,12 @@ class SearchableStoreFactory implements StoreFactory {
     public Store create(final SearchRequest searchRequest) {
         final DocRef docRef = Preconditions.checkNotNull(
                 Preconditions.checkNotNull(
-                        Preconditions.checkNotNull(searchRequest)
-                                .getQuery())
+                                Preconditions.checkNotNull(searchRequest)
+                                        .getQuery())
                         .getDataSource());
         final Searchable searchable = searchableProvider.get(docRef);
+        Preconditions.checkNotNull(searchable, "Searchable could not be found for uuid " + docRef.getUuid());
+
         final String taskName = SearchableStore.getTaskName(docRef);
 
         return taskContextFactory.contextResult(taskName, taskContext -> {

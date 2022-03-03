@@ -27,55 +27,40 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 
 /**
  * Object describing the response to a {@link SearchRequest searchRequest} which may or may not contains results
  */
-@JsonPropertyOrder({"highlights", "results", "errors", "complete"})
+@JsonPropertyOrder({"queryKey", "highlights", "results", "errors", "complete"})
 @JsonInclude(Include.NON_NULL)
-@XmlRootElement(name = "searchResponse")
-@XmlType(name = "SearchResponse", propOrder = {"highlights", "results", "errors", "complete"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "The response to a search request, that may or may not contain results. The results " +
         "may only be a partial set if an iterative screech was requested")
 public final class SearchResponse {
 
     public static final String TIMEOUT_MESSAGE = "The search timed out after ";
 
-    @XmlElementWrapper(name = "highlights")
-    @XmlElement(name = "highlight")
+    @Schema(description = "The key of the query associated with this response.", required = true)
+    @JsonProperty
+    private final QueryKey queryKey;
+
     @Schema(description = "A list of strings to highlight in the UI that should correlate with the search query.",
             required = true)
     @JsonProperty
     private final List<String> highlights;
 
-    @XmlElementWrapper(name = "results")
-    @XmlElements({
-            @XmlElement(name = "table", type = TableResult.class),
-            @XmlElement(name = "vis", type = FlatResult.class)
-    })
     @JsonProperty
     private final List<Result> results;
 
-    @XmlElementWrapper(name = "errors")
-    @XmlElement(name = "error")
     @JsonPropertyDescription("A list of errors that occurred in running the query")
     @JsonProperty
     private final List<String> errors;
 
-    @XmlElement
     @JsonPropertyDescription("True if the query has returned all known results")
     @JsonProperty
     private final Boolean complete;
 
     /**
+     * @param queryKey   The key of the query associated with this response.
      * @param highlights A list of strings to highlight in the UI that should correlate with the search query.
      * @param results    A list of {@link Result result} objects that each correspond to a
      *                   {@link ResultRequest resultRequest} in the {@link SearchRequest searchRequest}
@@ -83,14 +68,20 @@ public final class SearchResponse {
      * @param complete   Complete means that the search has finished and there are no more results to come.
      */
     @JsonCreator
-    public SearchResponse(@JsonProperty("highlights") final List<String> highlights,
+    public SearchResponse(@JsonProperty("queryKey") final QueryKey queryKey,
+                          @JsonProperty("highlights") final List<String> highlights,
                           @JsonProperty("results") final List<Result> results,
                           @JsonProperty("errors") final List<String> errors,
                           @JsonProperty("complete") final Boolean complete) {
+        this.queryKey = queryKey;
         this.highlights = highlights;
         this.results = results;
         this.errors = errors;
         this.complete = complete;
+    }
+
+    public QueryKey getQueryKey() {
+        return queryKey;
     }
 
     /**
@@ -186,6 +177,7 @@ public final class SearchResponse {
             T_CHILD_CLASS extends Builder<T_RESULT_CLASS, ?>> {
 
         // Mandatory parameters
+        QueryKey queryKey;
         Boolean complete;
 
         // Optional parameters
@@ -197,6 +189,7 @@ public final class SearchResponse {
         }
 
         Builder(final SearchResponse searchResponse) {
+            queryKey = searchResponse.queryKey;
             complete = searchResponse.complete;
             highlights = searchResponse.highlights;
             results = searchResponse.results;
@@ -207,44 +200,19 @@ public final class SearchResponse {
          * @param value are the results considered complete
          * @return The {@link Builder}, enabling method chaining
          */
+        public final T_CHILD_CLASS queryKey(final QueryKey queryKey) {
+            this.queryKey = queryKey;
+            return self();
+        }
+
+        /**
+         * @param value are the results considered complete
+         * @return The {@link Builder}, enabling method chaining
+         */
         public final T_CHILD_CLASS complete(final Boolean value) {
             this.complete = value;
             return self();
         }
-
-//        /**
-//         * Adds zero-many highlights to the search response
-//         *
-//         * @param highlights A set of strings to highlight in the UI that should correlate with the search query.
-//         * @return this builder instance
-//         */
-//        public final CHILD_CLASS addHighlights(String... highlights) {
-//            this.highlights.addAll(Arrays.asList(highlights));
-//            return self();
-//        }
-//
-//        /**
-//         * Adds zero-many
-//         *
-//         * @param results The results that where found
-//         * @return this builder instance
-//         */
-//        @SafeVarargs
-//        public final CHILD_CLASS addResults(ResultClass... results) {
-//            this.results.addAll(Arrays.asList(results));
-//            return self();
-//        }
-//
-//        /**
-//         * Adds zero-many
-//         *
-//         * @param errors The errors that have occurred
-//         * @return this builder instance
-//         */
-//        public final CHILD_CLASS addErrors(String... errors) {
-//            this.errors.addAll(Arrays.asList(errors));
-//            return self();
-//        }
 
         public T_CHILD_CLASS highlights(final List<String> highlights) {
             this.highlights = highlights;
@@ -267,7 +235,7 @@ public final class SearchResponse {
          * @return A populated {@link SearchResponse searchResponse} object
          */
         public SearchResponse build() {
-            return new SearchResponse(highlights, results, errors, complete);
+            return new SearchResponse(queryKey, highlights, results, errors, complete);
         }
 
         protected abstract T_CHILD_CLASS self();

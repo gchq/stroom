@@ -1,7 +1,9 @@
 package stroom.query.common.v2;
 
+import stroom.util.cache.CacheConfig;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,6 +26,9 @@ public class ResultStoreConfig extends AbstractConfig {
 
     private final ResultStoreLmdbConfig lmdbConfig;
 
+    private final CacheConfig searchResultCache;
+    private final String storeSize;
+
     public ResultStoreConfig() {
         maxPutsBeforeCommit = 100_000;
         offHeapResults = true;
@@ -35,6 +40,12 @@ public class ResultStoreConfig extends AbstractConfig {
         maxPayloadSize = ByteSize.ofGibibytes(1);
 
         lmdbConfig = new ResultStoreLmdbConfig();
+
+        searchResultCache = CacheConfig.builder()
+                .maximumSize(10000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+        storeSize = "1000000,100,10,1";
     }
 
     @SuppressWarnings("unused")
@@ -46,7 +57,9 @@ public class ResultStoreConfig extends AbstractConfig {
                              @JsonProperty("minPayloadSize") final ByteSize minPayloadSize,
                              @JsonProperty("maxPayloadSize") final ByteSize maxPayloadSize,
                              @JsonProperty("valueQueueSize") final int valueQueueSize,
-                             @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig) {
+                             @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig,
+                             @JsonProperty("searchResultCache") final CacheConfig searchResultCache,
+                             @JsonProperty("storeSize") final String storeSize) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.offHeapResults = offHeapResults;
         this.minValueSize = minValueSize;
@@ -55,6 +68,8 @@ public class ResultStoreConfig extends AbstractConfig {
         this.maxPayloadSize = maxPayloadSize;
         this.valueQueueSize = valueQueueSize;
         this.lmdbConfig = lmdbConfig;
+        this.searchResultCache = searchResultCache;
+        this.storeSize = storeSize;
     }
 
     @Min(0)
@@ -104,16 +119,29 @@ public class ResultStoreConfig extends AbstractConfig {
         return lmdbConfig;
     }
 
+    @JsonProperty("searchResultCache")
+    public CacheConfig getSearchResultCache() {
+        return searchResultCache;
+    }
+
+    @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")
+    public String getStoreSize() {
+        return storeSize;
+    }
+
     @Override
     public String toString() {
         return "ResultStoreConfig{" +
                 "maxPutsBeforeCommit=" + maxPutsBeforeCommit +
                 ", offHeapResults=" + offHeapResults +
+                ", valueQueueSize=" + valueQueueSize +
                 ", minValueSize=" + minValueSize +
                 ", maxValueSize=" + maxValueSize +
                 ", minPayloadSize=" + minPayloadSize +
                 ", maxPayloadSize=" + maxPayloadSize +
                 ", lmdbConfig=" + lmdbConfig +
+                ", searchResultCache=" + searchResultCache +
+                ", storeSize='" + storeSize + '\'' +
                 '}';
     }
 }

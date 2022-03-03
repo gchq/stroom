@@ -519,18 +519,16 @@ export interface DashboardDoc {
   version?: string;
 }
 
-export interface DashboardQueryKey {
-  applicationInstanceId?: string;
-  componentId?: string;
-  dashboardUuid?: string;
-  queryInstanceId?: string;
-}
-
 export interface DashboardSearchRequest {
+  componentId?: string;
   componentResultRequests?: ComponentResultRequest[];
-  dashboardQueryKey?: DashboardQueryKey;
+  dashboardUuid?: string;
   dateTimeLocale?: string;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
   search?: Search;
+  storeHistory?: boolean;
 
   /**
    * Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field
@@ -543,7 +541,9 @@ export interface DashboardSearchResponse {
   complete?: boolean;
   errors?: string[];
   highlights?: string[];
-  queryKey?: DashboardQueryKey;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
   results?: Result[];
 }
 
@@ -752,15 +752,8 @@ export interface DocumentTypes {
 
 export type DoubleField = AbstractField;
 
-export interface DownloadQueryRequest {
-  dashboardQueryKey?: DashboardQueryKey;
-  searchRequest?: DashboardSearchRequest;
-}
-
 export interface DownloadSearchResultsRequest {
-  applicationInstanceId?: string;
   componentId?: string;
-  dateTimeLocale?: string;
   fileType?: "EXCEL" | "CSV" | "TSV";
 
   /** @format int32 */
@@ -2574,7 +2567,6 @@ export interface Search {
   incremental?: boolean;
   params?: Param[];
   queryInfo?: string;
-  storeHistory?: boolean;
 }
 
 export interface SearchAccountRequest {
@@ -2585,14 +2577,8 @@ export interface SearchAccountRequest {
 }
 
 export interface SearchKeepAliveRequest {
-  activeKeys?: DashboardQueryKey[];
-  applicationInstanceId?: string;
-  deadKeys?: DashboardQueryKey[];
-}
-
-export interface SearchKeepAliveResponse {
-  activeKeys?: DashboardQueryKey[];
-  deadKeys?: DashboardQueryKey[];
+  activeKeys?: QueryKey[];
+  deadKeys?: QueryKey[];
 }
 
 /**
@@ -2628,6 +2614,9 @@ export interface SearchResponse {
 
   /** A list of strings to highlight in the UI that should correlate with the search query. */
   highlights: string[];
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey: QueryKey;
   results?: Result[];
 }
 
@@ -4654,7 +4643,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/dashboard/v1/downloadQuery
      * @secure
      */
-    downloadDashboardQuery: (data: DownloadQueryRequest, params: RequestParams = {}) =>
+    downloadDashboardQuery: (data: DashboardSearchRequest, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/dashboard/v1/downloadQuery`,
         method: "POST",
@@ -4727,7 +4716,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     keepAliveDashboardSearchResults: (data: SearchKeepAliveRequest, params: RequestParams = {}) =>
-      this.request<any, SearchKeepAliveResponse>({
+      this.request<any, boolean>({
         path: `/dashboard/v1/keepAlive`,
         method: "POST",
         body: data,

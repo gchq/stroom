@@ -138,6 +138,7 @@ class TestSearchResultCreation {
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
+                "test_user_id",
                 sizesProvider,
                 collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
@@ -267,7 +268,10 @@ class TestSearchResultCreation {
         // Mark the collector as artificially complete.
         collector.complete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
+        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
+                "test_user_id",
+                sizesProvider,
+                collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
@@ -345,6 +349,7 @@ class TestSearchResultCreation {
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
+                "test_user_id",
                 sizesProvider,
                 collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
@@ -616,8 +621,7 @@ class TestSearchResultCreation {
     }
 
     private SearchRequest createSingleSearchRequest() {
-        final QueryKey key = new QueryKey(
-                "e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|57UG_1605699732322");
+        final QueryKey key = new QueryKey("test_uuid");
         final DocRef dataSource = new DocRef(
                 "Index",
                 "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
@@ -645,8 +649,7 @@ class TestSearchResultCreation {
     }
 
     private SearchRequest createSearchRequest() {
-        final QueryKey key = new QueryKey(
-                "e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|57UG_1605699732322");
+        final QueryKey key = new QueryKey("test_uuid");
         final DocRef dataSource = new DocRef(
                 "Index",
                 "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
