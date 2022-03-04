@@ -65,6 +65,7 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
         if (metaTypes != null) {
             metaTypes.stream()
                     .filter(Objects::nonNull)
+                    .map(String::trim)
                     .filter(s -> !s.isBlank())
                     .forEach(this::load);
         }
