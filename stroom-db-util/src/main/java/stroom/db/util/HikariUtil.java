@@ -33,7 +33,7 @@ public class HikariUtil {
         // Validate the connection details.
         DbUtil.validate(connectionConfig);
         // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
-        DbUtil.waitForConnection(connectionConfig);
+        DbUtil.waitForConnection(connectionConfig, poolName);
 
         return create(
                 connectionConfig,

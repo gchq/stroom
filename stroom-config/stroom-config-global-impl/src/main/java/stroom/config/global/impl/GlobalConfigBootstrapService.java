@@ -19,6 +19,11 @@ public class GlobalConfigBootstrapService {
     private final ConfigPropertyDao dao;
     private final ConfigMapper configMapper;
 
+    private static final long UNINITIALISED_UPDATE_TIME_MS = -2;
+    private static final long UNKNOWN_UPDATE_TIME_MS = -1;
+
+    private volatile long lastConfigUpdateTimeMs = UNINITIALISED_UPDATE_TIME_MS;
+
     @SuppressWarnings("unused")
     @Inject
     public GlobalConfigBootstrapService(final ConfigPropertyDao dao,
@@ -31,10 +36,27 @@ public class GlobalConfigBootstrapService {
         LOGGER.info("Config initialised with all effective values");
     }
 
-    void updateConfigFromDb(final boolean deleteUnknownProps) {
-        final List<ConfigProperty> validDbProps = getValidProperties(deleteUnknownProps);
-        configMapper.decorateAllDbConfigProperties(validDbProps);
-        LOGGER.info("Updated application config with global database properties");
+    synchronized void updateConfigFromDb(final boolean deleteUnknownProps) {
+        // This method gets called every minute and on every refresh of the props screen
+        // on all nodes.
+        // Refreshing all the props is quite involved, especially if there are a lot of props
+        // with DB values so only do the update if something
+        // has changed by checking the tracker table. The tracker table must be updated whenever
+        // there is a change to the config table. The DAO should ensure this.
+        final long latestConfigUpdateTimeMs = dao.getLatestConfigUpdateTimeMs()
+                .orElse(UNKNOWN_UPDATE_TIME_MS);
+
+        if (lastConfigUpdateTimeMs != latestConfigUpdateTimeMs) {
+            final List<ConfigProperty> validDbProps = getValidProperties(deleteUnknownProps);
+            configMapper.decorateAllDbConfigProperties(validDbProps);
+            LOGGER.info("Completed updated of application config with global database properties");
+            lastConfigUpdateTimeMs = latestConfigUpdateTimeMs;
+        } else {
+            LOGGER.debug("Application config is unchanged no update required " +
+                            "(lastConfigUpdateTimeMs {}, latestConfigUpdateTimeMs {}",
+                    lastConfigUpdateTimeMs,
+                    latestConfigUpdateTimeMs);
+        }
     }
 
     private List<ConfigProperty> getValidProperties(final boolean deleteUnknownProps) {

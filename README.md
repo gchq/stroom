@@ -34,18 +34,13 @@ For the releases of the core Stroom product, see [Stroom releases](https://githu
 
 ## Documentation
 
-The Stroom application spans several repositories but we've bundled all the documentation into the [`stroom-docs`](https://gchq.github.io/stroom-docs/) repository. 
-That's where to look if you want any of these:
+The Stroom application spans several repositories but we've bundled all the documentation into one [Stroom Documentation](https://gchq.github.io/stroom-docs/) site. 
 
-- [The main README.md](https://gchq.github.io/stroom-docs/)
-- [The quick-start guide](https://gchq.github.io/stroom-docs/quick-start-guide/quick-start.html)
-- [The developer guide](https://gchq.github.io/stroom-docs/dev-guide/)
-- [The install guide](https://gchq.github.io/stroom-docs/install-guide/stroom-6-installation.html)
-- [The user guide](https://gchq.github.io/stroom-docs/install-guide/stroom-6-installation.html)
 
 ## Contributing
 
 If you'd like to make a contribution then the details for doing all of that are in [CONTRIBUTING.md](https://github.com/gchq/stroom/blob/master/CONTRIBUTING.md).
+
 
 ## Repositories
 

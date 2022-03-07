@@ -76,12 +76,12 @@ public class SearchRequestMapper {
         }
 
         return SearchRequest.builder()
-                .key(new QueryKey(queryKey.getUuid()))
+                .key(new QueryKey(queryKey.toUuid()))
                 .query(mapQuery(searchRequest))
                 .resultRequests(mapResultRequests(searchRequest))
                 .dateTimeSettings(searchRequest.getDateTimeSettings())
                 .incremental(searchRequest.getSearch().isIncremental())
-                .timeout(0L)
+                .timeout(searchRequest.getTimeout())
                 .build();
     }
 

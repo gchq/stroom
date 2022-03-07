@@ -80,7 +80,7 @@ public class ProxyRepoDbModule extends AbstractModule {
 
         private DataSourceImpl(final DataSource dataSource,
                                final RepoDbConfig repoDbConfig) {
-            super(dataSource);
+            super(dataSource, MODULE);
             this.repoDbConfig = repoDbConfig;
 
             for (final String pragma : repoDbConfig.getGlobalPragma()) {

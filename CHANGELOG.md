@@ -12,6 +12,26 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2782** : Fix validation of primitive properties, e.g. booleans.
+
+* Issue **#2782** : Fix propety edit screen `Sources` field showing `Multiple Sources` for a single node.
+
+* Issue **#2787** : Add config_update_tracker table to improve the process of updating each node's effective config. Also fix the updating of the effective value/source columns in the properties list view.
+
+* Issue **#2786** : Handle multiple IPs in X-FORWARDED-FOR header.
+
+* Issue **#2789** : Add locking to ensure one node performs the DB migrations and all others wait for it to complete. DB migration checks will not be run on boot if the build version matches that in the bootstrap_lock table.
+
+* Issue **#2789** : Make the creation of the admin and processing users resiliant to multiple nodes doing it at once.
+
+* Issue **#2768** : Suppress unable to keep alive message.
+
+* Issue **#2775** : Ensure all URL params are encoded.
+
+* Issue **#2768** : Fix auto recurring searches.
+
+* Issue **#2768** : Fix auto recurring searches.
+
 * Issue **gchq/stroom#2578** : Improve logging of Pipeline operations.
 
 * Issue **#2768** : Fix auto recurring searches.

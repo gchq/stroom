@@ -303,11 +303,23 @@ class AccountDaoImpl implements AccountDao {
 
     @Override
     public Account create(final Account account, final String password) {
+        return create(account, password, false);
+    }
+
+    @Override
+    public Account tryCreate(final Account account, final String password) {
+        return create(account, password, true);
+    }
+
+    private Account create(final Account account, final String password, final boolean ignoreDuplicate) {
         final String passwordHash = hashPassword(password);
         final AccountRecord record = ACCOUNT_TO_RECORD_MAPPER.apply(
                 account, ACCOUNT.newRecord());
         record.setPasswordHash(passwordHash);
-        return RECORD_TO_ACCOUNT_MAPPER.apply(JooqUtil.create(identityDbConnProvider, record));
+        final AccountRecord accountRecord = ignoreDuplicate
+                ? JooqUtil.tryCreate(identityDbConnProvider, record, ACCOUNT.USER_ID)
+                : JooqUtil.create(identityDbConnProvider, record);
+        return RECORD_TO_ACCOUNT_MAPPER.apply(accountRecord);
     }
 
     @Override
@@ -348,7 +360,7 @@ class AccountDaoImpl implements AccountDao {
             account.setUpdateTimeMs(now);
             account.setUpdateUser("INTERNAL_PROCESSING_USER");
             account.setEnabled(true);
-            create(account, User.ADMIN_USER_NAME);
+            tryCreate(account, User.ADMIN_USER_NAME);
 
             optionalRecord = JooqUtil.contextResult(identityDbConnProvider, context -> context
                     .selectFrom(ACCOUNT)

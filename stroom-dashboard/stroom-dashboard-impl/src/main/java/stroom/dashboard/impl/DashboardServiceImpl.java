@@ -35,7 +35,8 @@ import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.SearchBusPollRequest;
+import stroom.dashboard.shared.SearchKeepAliveRequest;
+import stroom.dashboard.shared.SearchKeepAliveResponse;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
@@ -82,12 +83,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
@@ -372,67 +372,54 @@ class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    public Set<DashboardSearchResponse> poll(final SearchBusPollRequest request) {
-        LOGGER.trace(() -> "poll() " + request);
+    public SearchKeepAliveResponse keepAlive(final SearchKeepAliveRequest request) {
+        LOGGER.trace(() -> "keepAlive() " + request);
+        return securityContext.secureResult(() -> {
+            final ActiveQueries activeQueries = activeQueriesManager.get(
+                    securityContext.getUserIdentity(),
+                    request.getApplicationInstanceId());
+
+
+            // Kill off any queries that are no longer required by the UI.
+            return activeQueries.keepAlive(request);
+        });
+    }
+
+    @Override
+    public DashboardSearchResponse search(final DashboardSearchRequest request) {
+        LOGGER.trace(() -> "search() " + request);
         return securityContext.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the index if they have
             // 'use' permission.
             return securityContext.useAsReadResult(() -> {
-                if (LOGGER.isDebugEnabled()) {
-                    final StringBuilder sb = new StringBuilder(
-                            "Only the following search queries should be active for session '");
-                    sb.append(activeQueriesManager.createKey(securityContext.getUserIdentity(),
-                            request.getApplicationInstanceId()));
-                    sb.append("'\n");
-                    for (final DashboardSearchRequest searchRequest : request.getSearchRequests()) {
-                        sb.append("\t");
-                        sb.append(searchRequest.getDashboardQueryKey().toString());
-                    }
-                    LOGGER.debug(sb.toString());
-                }
-
-                final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(),
-                        request.getApplicationInstanceId());
-                final Set<DashboardSearchResponse> searchResults = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-                // Kill off any queries that are no longer required by the UI.
-                final Set<DashboardQueryKey> keys = request.getSearchRequests()
-                        .stream()
-                        .map(DashboardSearchRequest::getDashboardQueryKey)
-                        .collect(Collectors.toSet());
-                activeQueries.destroyUnusedQueries(keys);
+                final ActiveQueries activeQueries = activeQueriesManager.get(
+                        securityContext.getUserIdentity(),
+                        request.getDashboardQueryKey().getApplicationInstanceId());
 
                 // Get query results for every active query.
                 final HttpServletRequest httpServletRequest = httpServletRequestHolder.get();
                 final Executor executor = executorProvider.get();
-                final CountDownLatch countDownLatch = new CountDownLatch(request.getSearchRequests().size());
-                for (final DashboardSearchRequest searchRequest : request.getSearchRequests()) {
-                    Runnable runnable = taskContextFactory.context("Dashboard Search Poll", taskContext -> {
-                        try {
-                            taskContext.info(() -> "Polling for new search results");
-                            httpServletRequestHolder.set(httpServletRequest);
-                            final DashboardSearchResponse searchResponse =
-                                    processRequest(activeQueries, searchRequest);
-                            if (searchResponse != null) {
-                                searchResults.add(searchResponse);
-                            }
-                        } finally {
-                            countDownLatch.countDown();
-                            httpServletRequestHolder.set(null);
-                        }
-                    });
-                    executor.execute(runnable);
-                }
 
-                // Wait for all results to come back.
                 try {
-                    countDownLatch.await();
-                } catch (final InterruptedException e) {
-                    // Keep interrupting.
-                    Thread.currentThread().interrupt();
-                }
+                    final Supplier<DashboardSearchResponse> supplier = taskContextFactory.contextResult(
+                            "Dashboard Search",
+                            taskContext -> {
+                                DashboardSearchResponse searchResponse;
+                                try {
+                                    taskContext.info(() -> "Polling for new search results");
+                                    httpServletRequestHolder.set(httpServletRequest);
+                                    searchResponse = processRequest(activeQueries, request);
+                                } finally {
+                                    httpServletRequestHolder.set(null);
+                                }
+                                return searchResponse;
+                            });
+                    return CompletableFuture.supplyAsync(supplier, executor).get();
 
-                return searchResults;
+                } catch (final InterruptedException | ExecutionException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    return null;
+                }
             });
         });
     }
@@ -448,13 +435,7 @@ class DashboardServiceImpl implements DashboardService {
         Search search = updatedSearchRequest.getSearch();
         ActiveQuery activeQuery;
 
-        // Just hit the data source provider to keep results alive.
-        if (search == null) {
-            activeQuery = activeQueries.getExistingQuery(dashboardQueryKey);
-            if (activeQuery != null) {
-                activeQuery.keepAlive();
-            }
-        } else {
+        if (search != null) {
             try {
                 // Add a param for `currentUser()`
                 List<Param> params = search.getParams();

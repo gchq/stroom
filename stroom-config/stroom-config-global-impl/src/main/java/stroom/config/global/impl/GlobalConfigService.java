@@ -125,12 +125,8 @@ public class GlobalConfigService {
 
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
 
-            // We don't need to be updating all the props from the db.
-            // Any updates to props from the UI will trigger updateConfigFromDb, so the only thing
-            // we need to update for is changes to a yaml file. If the yaml is changed on this node
-            // then updateConfigFromDb will be called. If the yaml is updated on another node then
-            // updateConfigFromDb will be called on that node. Thus when list is called on any node
-            // the in memory model should be up to date.
+            // This will only update if something has changed in the db config
+            globalConfigBootstrapService.updateConfigFromDb(false);
 
             final PageRequest pageRequest = criteria.getPageRequest() != null
                     ? criteria.getPageRequest()
@@ -302,7 +298,7 @@ public class GlobalConfigService {
         final String effectiveValueStr = configProperty.getEffectiveValue().orElse(null);
         final Object effectiveValue;
         try {
-            effectiveValue = configMapper.convertValue(propertyPath, effectiveValueStr);
+            effectiveValue = configMapper.validateValueSerialisation(propertyPath, effectiveValueStr);
         } catch (Exception e) {
             throw new ConfigPropertyValidationException(LogUtil.message("Error parsing [{}]: {}",
                     effectiveValueStr, e.getMessage(), e));

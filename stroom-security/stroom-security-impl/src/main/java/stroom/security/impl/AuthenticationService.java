@@ -97,7 +97,7 @@ class AuthenticationService {
         user.setName(name);
         user.setGroup(isGroup);
 
-        return userDao.create(user);
+        return userDao.tryCreate(user);
     }
 
     public Optional<User> getUser(final String username) {

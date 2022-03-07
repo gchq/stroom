@@ -22,7 +22,6 @@ import stroom.app.commands.DbMigrationCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
-import stroom.app.guice.BootStrapModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
@@ -58,7 +57,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import io.dropwizard.Application;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
@@ -75,7 +73,6 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.DispatcherType;
@@ -106,8 +103,6 @@ public class App extends Application<Config> {
     @Inject
     private ManagedServices managedServices;
     @Inject
-    private BuildInfo buildInfo;
-    @Inject
     private RestResourceAutoLogger resourceAutoLogger;
     @Inject
     private Provider<Set<DataSource>> dataSourcesProvider;
@@ -115,6 +110,7 @@ public class App extends Application<Config> {
     // Injected manually
     private HomeDirProvider homeDirProvider;
     private TempDirProvider tempDirProvider;
+    private BuildInfo buildInfo;
 
     private final Path configFile;
 
@@ -122,6 +118,8 @@ public class App extends Application<Config> {
     // of the yaml file before our main injector has been created and also so we can use our custom
     // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
     // injectors running but not sure how else we could do this unless Guice is not used for the validators.
+    // TODO 28/02/2022 AT: We could add the validation module to the root injector along with BuildInfo
+    //  then we don't have to bind it twice
     private final Injector validationOnlyInjector;
 
     // Needed for DropwizardExtensionsSupport
@@ -129,7 +127,6 @@ public class App extends Application<Config> {
         configFile = Paths.get("PATH_NOT_SUPPLIED");
         validationOnlyInjector = createValidationInjector(configFile);
     }
-
 
     App(final Path configFile) {
         this.configFile = configFile;
@@ -199,7 +196,16 @@ public class App extends Application<Config> {
 
         validateAppConfig(configuration, configFile);
 
-        final Injector bootStrapInjector = bootstrapApplication(configuration, environment);
+        final Injector bootStrapInjector = BootstrapUtil.createBootstrapInjector(
+                configuration, environment, configFile);
+
+        this.buildInfo = bootStrapInjector.getInstance(BuildInfo.class);
+        this.homeDirProvider = bootStrapInjector.getInstance(HomeDirProvider.class);
+        this.tempDirProvider = bootStrapInjector.getInstance(TempDirProvider.class);
+
+        // Ensure we have our home/temp dirs set up
+        FileUtil.ensureDirExists(homeDirProvider.get());
+        FileUtil.ensureDirExists(tempDirProvider.get());
 
         LOGGER.info("Completed initialisation of database connections and application configuration");
 
@@ -270,49 +276,16 @@ public class App extends Application<Config> {
 
         warnAboutDefaultOpenIdCreds(configuration);
 
-        showInfo(configuration);
+        showNodeInfo(configuration);
     }
 
-    @NotNull
-    private Injector bootstrapApplication(final Config configuration,
-                                          final Environment environment) {
-        LOGGER.info("Initialising database connections and configuration properties");
-
-        final BootStrapModule bootstrapModule = new BootStrapModule(
-                configuration, environment, configFile);
-
-        final Injector bootStrapInjector = Guice.createInjector(bootstrapModule);
-
-        // Force all datasources to be created so we can force migrations to run.
-        final Set<DataSource> dataSources = bootStrapInjector.getInstance(
-                Key.get(GuiceUtil.setOf(DataSource.class)));
-
-        LOGGER.debug(() -> LogUtil.message("Used {} data sources:\n{}",
-                dataSources.size(),
-                dataSources.stream()
-                        .map(dataSource -> dataSource.getClass().getName())
-                        .map(name -> "  " + name)
-                        .sorted()
-                        .collect(Collectors.joining("\n"))));
-
-        this.homeDirProvider = bootStrapInjector.getInstance(HomeDirProvider.class);
-        this.tempDirProvider = bootStrapInjector.getInstance(TempDirProvider.class);
-
-        // Ensure we have our home/temp dirs set up
-        FileUtil.ensureDirExists(homeDirProvider.get());
-        FileUtil.ensureDirExists(tempDirProvider.get());
-        return bootStrapInjector;
-    }
-
-    private void showInfo(final Config configuration) {
-        Objects.requireNonNull(buildInfo);
-
+    private void showNodeInfo(final Config configuration) {
         LOGGER.info(""
-                + "\n  Build version: " + buildInfo.getBuildVersion()
-                + "\n  Build date:    " + DateUtil.createNormalDateTimeString(buildInfo.getBuildTime())
+                + "\n********************************************************************************"
                 + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
                 + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig()));
+                + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig())
+                + "\n********************************************************************************");
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {

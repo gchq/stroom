@@ -54,12 +54,20 @@ public class BootStrapModule extends AbstractModule {
     public BootStrapModule(final Config configuration,
                            final Environment environment,
                            final Path configFile) {
-        this(configuration, environment, configFile, DbModule::new, AppConfigModule::new);
+        this(configuration,
+                environment,
+                configFile,
+                DbModule::new,
+                AppConfigModule::new);
     }
 
     public BootStrapModule(final Config configuration,
                            final Path configFile) {
-        this(configuration, null, configFile, DbModule::new, AppConfigModule::new);
+        this(configuration,
+                null,
+                configFile,
+                DbModule::new,
+                AppConfigModule::new);
     }
 
     @Override

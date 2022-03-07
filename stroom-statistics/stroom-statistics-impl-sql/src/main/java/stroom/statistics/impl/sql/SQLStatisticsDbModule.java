@@ -66,7 +66,7 @@ public class SQLStatisticsDbModule extends AbstractFlyWayDbModule<SQLStatisticsD
     private static class DataSourceImpl extends DataSourceProxy implements SQLStatisticsDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 

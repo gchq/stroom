@@ -17,7 +17,6 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractFlyWayDbModule.class);
 
-
     protected abstract String getFlyWayTableName();
 
     protected abstract String getFlyWayLocation();

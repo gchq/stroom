@@ -25,7 +25,6 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DateTimeFormatSettings;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
@@ -49,7 +48,8 @@ public class SearchRequestTestData {
 
     static DashboardQueryKey dashboardQueryKey() {
         return new DashboardQueryKey(
-                "queryKeyUuid",
+                "applicationInstanceId",
+                "dashboardUuid",
                 "0",
                 "queryId-1");
     }
@@ -124,7 +124,6 @@ public class SearchRequestTestData {
                 .componentSettingsMap(componentSettingsMap)
                 .params(params)
                 .incremental(true)
-                .storeHistory(false)
                 .build();
 
         final List<ComponentResultRequest> componentResultRequests = new ArrayList<>();
@@ -139,9 +138,12 @@ public class SearchRequestTestData {
             componentResultRequests.add(tableResultRequest);
         }
 
-        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();
-        return new DashboardSearchRequest(
-                dashboardQueryKey(), search, componentResultRequests, dateTimeSettings);
+        return DashboardSearchRequest
+                .builder()
+                .dashboardQueryKey(dashboardQueryKey())
+                .search(search)
+                .componentResultRequests(componentResultRequests)
+                .build();
     }
 
     private static DateTimeFormatSettings createDateTimeFormat() {

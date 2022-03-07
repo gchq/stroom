@@ -51,7 +51,7 @@ public class IndexDbModule extends AbstractFlyWayDbModule<IndexDbConfig, IndexDb
     private static class DataSourceImpl extends DataSourceProxy implements IndexDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }

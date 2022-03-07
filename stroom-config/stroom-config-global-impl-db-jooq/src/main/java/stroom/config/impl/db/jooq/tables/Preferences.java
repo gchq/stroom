@@ -123,7 +123,7 @@ public class Preferences extends TableImpl<PreferencesRecord> {
 
     @Override
     public Schema getSchema() {
-        return Stroom.STROOM;
+        return aliased() ? null : Stroom.STROOM;
     }
 
     @Override
@@ -137,8 +137,8 @@ public class Preferences extends TableImpl<PreferencesRecord> {
     }
 
     @Override
-    public List<UniqueKey<PreferencesRecord>> getKeys() {
-        return Arrays.<UniqueKey<PreferencesRecord>>asList(Keys.KEY_PREFERENCES_PRIMARY, Keys.KEY_PREFERENCES_USER_ID);
+    public List<UniqueKey<PreferencesRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_PREFERENCES_USER_ID);
     }
 
     @Override

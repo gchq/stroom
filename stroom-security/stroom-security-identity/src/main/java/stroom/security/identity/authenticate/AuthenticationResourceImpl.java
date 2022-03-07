@@ -24,6 +24,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.openid.api.OpenId;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.net.UrlUtils;
 import stroom.util.shared.PermissionException;
 
@@ -155,10 +156,10 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
 
         try {
-            final UriBuilder uriBuilder = UriBuilder.fromUri(redirectUri);
+            UriBuilder uriBuilder = UriBuilder.fromUri(redirectUri);
             final String promptParam = UrlUtils.getLastParam(request, OpenId.PROMPT);
             if (!Strings.isNullOrEmpty(promptParam)) {
-                uriBuilder.queryParam(OpenId.PROMPT, promptParam);
+                uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, promptParam);
             }
 
             throw new RedirectionException(Status.SEE_OTHER, uriBuilder.build());
