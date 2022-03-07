@@ -307,7 +307,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
                             fieldBuilder.expression("annotation(formatDate(" + fieldParam + "), ${annotation:Id})");
                         } else {
-                            fieldBuilder.expression("annotation(" + fieldParam + ", ${annotation:Id})");
+                            fieldBuilder.expression("annotation(" +
+                                    fieldParam +
+                                    ", ${annotation:Id}, ${StreamId}, ${EventId})");
                         }
                     } else {
                         fieldBuilder.expression(fieldParam);
