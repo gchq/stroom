@@ -286,6 +286,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                             final String thisNodeName,
                                             final Long maxMetaId,
                                             final boolean reachedLimit,
+                                            final boolean assignNewTasks,
                                             final Consumer<CreatedTasks> consumer) {
 
         // Synchronised to avoid the risk of any table locking when being called concurrently
@@ -347,9 +348,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 bindValues[2] = TaskStatus.UNPROCESSED.getPrimitiveValue(); //stat
                 bindValues[3] = streamTaskCreateMs; //stat_ms
 
-                if (Status.UNLOCKED.equals(meta.getStatus())) {
+                if (assignNewTasks && Status.UNLOCKED.equals(meta.getStatus())) {
                     // If the stream is unlocked then take ownership of the
-                    // task, i.e. set the node to this node.
+                    // task, i.e. set the node to this node and add it to the task queue.
                     bindValues[4] = nodeId; //fk_node_id
                     creationState.availableTasksCreated++;
                 }
