@@ -50,6 +50,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                                final String thisNodeName,
                                final Long maxMetaId,
                                final boolean reachedLimit,
+                               boolean assignNewTasks,
                                final Consumer<CreatedTasks> consumer) {
         final long now = System.currentTimeMillis();
 
