@@ -31,7 +31,6 @@ import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
-import stroom.searchable.impl.SearchableConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -90,7 +89,6 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
     public static final String PROP_NAME_SEARCH = "search";
-    public static final String PROP_NAME_SEARCHABLE = "searchable";
     public static final String PROP_NAME_SECURITY = "security";
     public static final String PROP_NAME_SERVICE_DISCOVERY = "serviceDiscovery";
     public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
@@ -132,7 +130,6 @@ public class AppConfig extends AbstractConfig {
     private final PublicUriConfig publicUri;
     private final ReceiveDataConfig receiveDataConfig;
     private final SearchConfig searchConfig;
-    private final SearchableConfig searchableConfig;
     private final SecurityConfig securityConfig;
     private final ServiceDiscoveryConfig serviceDiscoveryConfig;
     private final SessionCookieConfig sessionCookieConfig;
@@ -179,7 +176,6 @@ public class AppConfig extends AbstractConfig {
                 new PublicUriConfig(),
                 new ReceiveDataConfig(),
                 new SearchConfig(),
-                new SearchableConfig(),
                 new SecurityConfig(),
                 new ServiceDiscoveryConfig(),
                 new SessionCookieConfig(),
@@ -224,7 +220,6 @@ public class AppConfig extends AbstractConfig {
                      @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                      @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
                      @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
-                     @JsonProperty(PROP_NAME_SEARCHABLE) final SearchableConfig searchableConfig,
                      @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                      @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                      @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
@@ -266,7 +261,6 @@ public class AppConfig extends AbstractConfig {
         this.publicUri = publicUri;
         this.receiveDataConfig = receiveDataConfig;
         this.searchConfig = searchConfig;
-        this.searchableConfig = searchableConfig;
         this.securityConfig = securityConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.sessionCookieConfig = sessionCookieConfig;
@@ -461,11 +455,6 @@ public class AppConfig extends AbstractConfig {
     @JsonProperty(PROP_NAME_SEARCH)
     public SearchConfig getSearchConfig() {
         return searchConfig;
-    }
-
-    @JsonProperty(PROP_NAME_SEARCHABLE)
-    public SearchableConfig getSearchableConfig() {
-        return searchableConfig;
     }
 
     @JsonProperty(PROP_NAME_SOLR)

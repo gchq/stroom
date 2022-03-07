@@ -16,13 +16,11 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.SearchKeepAliveRequest;
-import stroom.dashboard.shared.SearchKeepAliveResponse;
-import stroom.dispatch.client.ApplicationInstanceIdProvider;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.query.api.v2.QueryKey;
 import stroom.security.client.api.event.LogoutEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -42,16 +40,13 @@ public class SearchKeepAlive {
     private static final int KEEP_ALIVE_INTERVAL = 10_000;
 
     private final RestFactory restFactory;
-    private final ApplicationInstanceIdProvider applicationInstanceIdProvider;
-    private final Set<DashboardQueryKey> activeKeys = new HashSet<>();
-    private final Set<DashboardQueryKey> deadKeys = new HashSet<>();
+    private final Set<QueryKey> activeKeys = new HashSet<>();
+    private final Set<QueryKey> deadKeys = new HashSet<>();
 
     @Inject
     public SearchKeepAlive(final EventBus eventBus,
-                           final RestFactory restFactory,
-                           final ApplicationInstanceIdProvider applicationInstanceIdProvider) {
+                           final RestFactory restFactory) {
         this.restFactory = restFactory;
-        this.applicationInstanceIdProvider = applicationInstanceIdProvider;
 
         final Timer keepAliveTimer = new Timer() {
             @Override
@@ -74,11 +69,11 @@ public class SearchKeepAlive {
         keepAlive();
     }
 
-    public void add(final DashboardQueryKey key) {
+    public void add(final QueryKey key) {
         activeKeys.add(key);
     }
 
-    public void remove(final DashboardQueryKey key) {
+    public void remove(final QueryKey key) {
         activeKeys.remove(key);
         deadKeys.add(key);
 
@@ -87,13 +82,14 @@ public class SearchKeepAlive {
     }
 
     private void keepAlive() {
-        final Rest<SearchKeepAliveResponse> rest = restFactory.create();
+        final Set<QueryKey> deadKeysCopy = new HashSet<>(deadKeys);
+        final Rest<Boolean> rest = restFactory.create();
         rest
                 .onSuccess(response -> {
                     try {
                         if (response != null) {
                             // We don't need to remember any dead keys that have been removed.
-                            deadKeys.removeAll(response.getDeadKeys());
+                            deadKeys.removeAll(deadKeysCopy);
                             GWT.log(response.toString());
                         }
                     } catch (final RuntimeException e) {
@@ -101,6 +97,6 @@ public class SearchKeepAlive {
                     }
                 })
                 .call(DASHBOARD_RESOURCE)
-                .keepAlive(new SearchKeepAliveRequest(applicationInstanceIdProvider.get(), activeKeys, deadKeys));
+                .keepAlive(new SearchKeepAliveRequest(activeKeys, deadKeysCopy));
     }
 }

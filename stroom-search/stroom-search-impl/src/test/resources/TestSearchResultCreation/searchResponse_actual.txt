@@ -1,4 +1,7 @@
 {
+  "queryKey" : {
+    "uuid" : "test_uuid"
+  },
   "results" : [ {
     "type" : "table",
     "componentId" : "table-BKJT6",

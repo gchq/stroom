@@ -25,8 +25,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class DownloadSearchResultsRequest {
 
     @JsonProperty
-    private final String applicationInstanceId;
-    @JsonProperty
     private final DashboardSearchRequest searchRequest;
     @JsonProperty
     private final String componentId;
@@ -36,28 +34,18 @@ public class DownloadSearchResultsRequest {
     private final boolean sample;
     @JsonProperty
     private final int percent;
-    @JsonProperty
-    private final String dateTimeLocale;
 
     @JsonCreator
-    public DownloadSearchResultsRequest(@JsonProperty("applicationInstanceId") final String applicationInstanceId,
-                                        @JsonProperty("searchRequest") final DashboardSearchRequest searchRequest,
+    public DownloadSearchResultsRequest(@JsonProperty("searchRequest") final DashboardSearchRequest searchRequest,
                                         @JsonProperty("componentId") final String componentId,
                                         @JsonProperty("fileType") final DownloadSearchResultFileType fileType,
                                         @JsonProperty("sample") final boolean sample,
-                                        @JsonProperty("percent") final int percent,
-                                        @JsonProperty("dateTimeLocale") final String dateTimeLocale) {
-        this.applicationInstanceId = applicationInstanceId;
+                                        @JsonProperty("percent") final int percent) {
         this.searchRequest = searchRequest;
         this.componentId = componentId;
         this.fileType = fileType;
         this.sample = sample;
         this.percent = percent;
-        this.dateTimeLocale = dateTimeLocale;
-    }
-
-    public String getApplicationInstanceId() {
-        return applicationInstanceId;
     }
 
     public DashboardSearchRequest getSearchRequest() {
@@ -78,9 +66,5 @@ public class DownloadSearchResultsRequest {
 
     public int getPercent() {
         return percent;
-    }
-
-    public String getDateTimeLocale() {
-        return dateTimeLocale;
     }
 }

@@ -18,7 +18,6 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
@@ -46,21 +45,11 @@ import java.util.Map;
 
 public class SearchRequestTestData {
 
-    static DashboardQueryKey dashboardQueryKey() {
-        return new DashboardQueryKey(
-                "applicationInstanceId",
-                "dashboardUuid",
-                "0",
-                "queryId-1");
-    }
-
     static SearchRequest apiSearchRequest() {
         DashboardSearchRequest dashboardSearchRequest = dashboardSearchRequest();
 
         SearchRequestMapper searchRequestMapper = new SearchRequestMapper(null);
-        return searchRequestMapper.mapRequest(
-                dashboardQueryKey(),
-                dashboardSearchRequest);
+        return searchRequestMapper.mapRequest(dashboardSearchRequest);
     }
 
     static DashboardSearchRequest dashboardSearchRequest() {
@@ -140,9 +129,10 @@ public class SearchRequestTestData {
 
         return DashboardSearchRequest
                 .builder()
-                .dashboardQueryKey(dashboardQueryKey())
                 .search(search)
                 .componentResultRequests(componentResultRequests)
+                .dashboardUuid("dashboardUuid")
+                .componentId(componentId)
                 .build();
     }
 

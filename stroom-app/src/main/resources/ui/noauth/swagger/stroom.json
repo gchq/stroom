@@ -1502,7 +1502,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DownloadQueryRequest"
+                "$ref" : "#/components/schemas/DashboardSearchRequest"
               }
             }
           },
@@ -1618,7 +1618,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/SearchKeepAliveResponse"
+                  "type" : "boolean"
                 }
               }
             },
@@ -9145,40 +9145,32 @@
           }
         }
       },
-      "DashboardQueryKey" : {
-        "type" : "object",
-        "properties" : {
-          "applicationInstanceId" : {
-            "type" : "string"
-          },
-          "componentId" : {
-            "type" : "string"
-          },
-          "dashboardUuid" : {
-            "type" : "string"
-          },
-          "queryInstanceId" : {
-            "type" : "string"
-          }
-        }
-      },
       "DashboardSearchRequest" : {
         "type" : "object",
         "properties" : {
+          "componentId" : {
+            "type" : "string"
+          },
           "componentResultRequests" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ComponentResultRequest"
             }
           },
-          "dashboardQueryKey" : {
-            "$ref" : "#/components/schemas/DashboardQueryKey"
+          "dashboardUuid" : {
+            "type" : "string"
           },
           "dateTimeLocale" : {
             "type" : "string"
           },
+          "queryKey" : {
+            "$ref" : "#/components/schemas/QueryKey"
+          },
           "search" : {
             "$ref" : "#/components/schemas/Search"
+          },
+          "storeHistory" : {
+            "type" : "boolean"
           },
           "timeout" : {
             "type" : "integer",
@@ -9207,7 +9199,7 @@
             "uniqueItems" : true
           },
           "queryKey" : {
-            "$ref" : "#/components/schemas/DashboardQueryKey"
+            "$ref" : "#/components/schemas/QueryKey"
           },
           "results" : {
             "type" : "array",
@@ -9673,27 +9665,10 @@
           "$ref" : "#/components/schemas/AbstractField"
         } ]
       },
-      "DownloadQueryRequest" : {
-        "type" : "object",
-        "properties" : {
-          "dashboardQueryKey" : {
-            "$ref" : "#/components/schemas/DashboardQueryKey"
-          },
-          "searchRequest" : {
-            "$ref" : "#/components/schemas/DashboardSearchRequest"
-          }
-        }
-      },
       "DownloadSearchResultsRequest" : {
         "type" : "object",
         "properties" : {
-          "applicationInstanceId" : {
-            "type" : "string"
-          },
           "componentId" : {
-            "type" : "string"
-          },
-          "dateTimeLocale" : {
             "type" : "string"
           },
           "fileType" : {
@@ -13480,9 +13455,6 @@
           },
           "queryInfo" : {
             "type" : "string"
-          },
-          "storeHistory" : {
-            "type" : "boolean"
           }
         }
       },
@@ -13513,36 +13485,14 @@
           "activeKeys" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/DashboardQueryKey"
-            },
-            "uniqueItems" : true
-          },
-          "applicationInstanceId" : {
-            "type" : "string"
-          },
-          "deadKeys" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/DashboardQueryKey"
-            },
-            "uniqueItems" : true
-          }
-        }
-      },
-      "SearchKeepAliveResponse" : {
-        "type" : "object",
-        "properties" : {
-          "activeKeys" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/DashboardQueryKey"
+              "$ref" : "#/components/schemas/QueryKey"
             },
             "uniqueItems" : true
           },
           "deadKeys" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/DashboardQueryKey"
+              "$ref" : "#/components/schemas/QueryKey"
             },
             "uniqueItems" : true
           }
@@ -13596,13 +13546,7 @@
           "errors" : {
             "type" : "array",
             "items" : {
-              "type" : "string",
-              "xml" : {
-                "name" : "error"
-              }
-            },
-            "xml" : {
-              "wrapped" : true
+              "type" : "string"
             }
           },
           "highlights" : {
@@ -13610,29 +13554,20 @@
             "description" : "A list of strings to highlight in the UI that should correlate with the search query.",
             "items" : {
               "type" : "string",
-              "description" : "A list of strings to highlight in the UI that should correlate with the search query.",
-              "xml" : {
-                "name" : "highlight"
-              }
-            },
-            "xml" : {
-              "wrapped" : true
+              "description" : "A list of strings to highlight in the UI that should correlate with the search query."
             }
+          },
+          "queryKey" : {
+            "$ref" : "#/components/schemas/QueryKey"
           },
           "results" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Result"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           }
         },
-        "required" : [ "highlights" ],
-        "xml" : {
-          "name" : "searchResponse"
-        }
+        "required" : [ "highlights", "queryKey" ]
       },
       "SearchTokenRequest" : {
         "type" : "object",

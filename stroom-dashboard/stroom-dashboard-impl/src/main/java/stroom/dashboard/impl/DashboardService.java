@@ -3,11 +3,9 @@ package stroom.dashboard.impl;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.SearchKeepAliveRequest;
-import stroom.dashboard.shared.SearchKeepAliveResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourceGeneration;
@@ -22,11 +20,11 @@ public interface DashboardService {
 
     ValidateExpressionResult validateExpression(String expressionString);
 
-    ResourceGeneration downloadQuery(DownloadQueryRequest request);
+    ResourceGeneration downloadQuery(DashboardSearchRequest request);
 
     ResourceGeneration downloadSearchResults(DownloadSearchResultsRequest request);
 
-    SearchKeepAliveResponse keepAlive(SearchKeepAliveRequest request);
+    Boolean keepAlive(SearchKeepAliveRequest request);
 
     DashboardSearchResponse search(DashboardSearchRequest request);
 

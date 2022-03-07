@@ -17,7 +17,7 @@ public class DashboardConfig extends AbstractConfig {
 
     public DashboardConfig() {
         activeQueriesCache = CacheConfig.builder()
-                .maximumSize(100L)
+                .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(1))
                 .build();
     }
