@@ -85,15 +85,10 @@ public class RemoteNodeSearch implements NodeSearch {
             // Poll for results until completion.
             boolean complete = false;
             while (!Thread.currentThread().isInterrupted() && !complete) {
-                try {
-                    complete = pollRemoteSearch(targetNode, queryKey, resultCollector);
-                } catch (final RuntimeException | IOException e) {
-                    complete = true;
-                    resultCollector.onFailure(targetNode, e);
-                }
+                complete = pollRemoteSearch(targetNode, queryKey, resultCollector);
             }
 
-        } catch (final RuntimeException e) {
+        } catch (final Throwable e) {
             LOGGER.debug(e::getMessage, e);
             resultCollector.onFailure(sourceNode, e);
 
