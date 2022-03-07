@@ -32,7 +32,6 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
-import stroom.meta.impl.MetaTypeDao;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
@@ -240,11 +239,6 @@ public class App extends Application<Config> {
         // Inherit all the bindings from the bootStrapInjector
         final Injector appInjector = bootStrapInjector.createChildInjector(new AppModule());
         appInjector.injectMembers(this);
-
-        final MetaTypeDao instance1 = appInjector.getInstance(MetaTypeDao.class);
-        final MetaTypeDao instance2 = appInjector.getInstance(MetaTypeDao.class);
-        LOGGER.info("instance1: {}", System.identityHashCode(instance1));
-        LOGGER.info("instance2: {}", System.identityHashCode(instance2));
 
         //Register REST Resource Auto Logger to automatically log calls to suitably annotated resources/methods
         //Note that if autologger is not required, and the next line removed, then it will be necessary to
