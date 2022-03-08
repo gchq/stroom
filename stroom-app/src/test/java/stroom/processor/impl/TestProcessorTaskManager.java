@@ -31,6 +31,8 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +41,8 @@ import javax.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProcessorTaskManager.class);
 
     @Inject
     private ProcessorConfig processorConfig;
@@ -107,7 +111,9 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
 
-        processorTaskManager.createTasks();
+        LOGGER.logDurationIfInfoEnabled(() ->
+                        processorTaskManager.createTasks(),
+                "createTasks");
 
         final QueryData findStreamQueryData = QueryData
                 .builder()
@@ -123,15 +129,19 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 
         commonTestScenarioCreator.createProcessor(findStreamQueryData);
 
-        for (int i = 0; i < 1000; i++) {
-            commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamTypeNames.RAW_EVENTS);
-            commonTestScenarioCreator.createSample2LineRawFile(feedName2, StreamTypeNames.RAW_EVENTS);
-        }
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            for (int i = 0; i < 1000; i++) {
+                commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamTypeNames.RAW_EVENTS);
+                commonTestScenarioCreator.createSample2LineRawFile(feedName2, StreamTypeNames.RAW_EVENTS);
+            }
+        }, "Creation of test files");
 
         final int initialQueueSize = processorConfig.getQueueSize();
         processorConfig.setQueueSize(1000);
 
-        processorTaskManager.createTasks();
+        LOGGER.logDurationIfInfoEnabled(() ->
+                        processorTaskManager.createTasks(),
+                "createTasks");
 
         // Because MySQL continues to create new incremental id's for streams this check will fail as Stroom thinks more
         // streams have been created so recreates recent stream info before this point which means that it doesn't have
@@ -139,13 +149,17 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         // assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
 
         assertThat(getTaskCount()).isEqualTo(1000);
-        ProcessorTaskList tasks = processorTaskManager.assignTasks(nodeName, 1000);
-        assertThat(tasks.getList().size()).isEqualTo(1000);
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            ProcessorTaskList tasks = processorTaskManager.assignTasks(nodeName, 1000);
+            assertThat(tasks.getList().size()).isEqualTo(1000);
+        }, "assignTasks");
 
         processorTaskManager.createTasks();
         assertThat(getTaskCount()).isEqualTo(2000);
-        tasks = processorTaskManager.assignTasks(nodeName, 1000);
-        assertThat(tasks.getList().size()).isEqualTo(1000);
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            final ProcessorTaskList tasks = processorTaskManager.assignTasks(nodeName, 1000);
+            assertThat(tasks.getList().size()).isEqualTo(1000);
+        }, "assignTasks");
 
         processorConfig.setQueueSize(initialQueueSize);
     }
