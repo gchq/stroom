@@ -124,22 +124,17 @@ public class Aggregate extends TableImpl<AggregateRecord> {
 
     @Override
     public Schema getSchema() {
-        return DefaultSchema.DEFAULT_SCHEMA;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.AGGREGATE_FEED_TYPE_INDEX, Indexes.NEW_POSITION_AGGREGATE_INDEX);
+        return Arrays.asList(Indexes.AGGREGATE_FEED_TYPE_INDEX, Indexes.NEW_POSITION_AGGREGATE_INDEX);
     }
 
     @Override
     public UniqueKey<AggregateRecord> getPrimaryKey() {
-        return Keys.PK_AGGREGATE;
-    }
-
-    @Override
-    public List<UniqueKey<AggregateRecord>> getKeys() {
-        return Arrays.<UniqueKey<AggregateRecord>>asList(Keys.PK_AGGREGATE);
+        return Keys.AGGREGATE__;
     }
 
     @Override

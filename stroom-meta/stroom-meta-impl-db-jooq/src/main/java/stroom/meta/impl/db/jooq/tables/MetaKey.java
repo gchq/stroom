@@ -10,18 +10,18 @@ import java.util.List;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Row3;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.meta.impl.db.jooq.Indexes;
 import stroom.meta.impl.db.jooq.Keys;
 import stroom.meta.impl.db.jooq.Stroom;
 import stroom.meta.impl.db.jooq.tables.records.MetaKeyRecord;
@@ -33,7 +33,7 @@ import stroom.meta.impl.db.jooq.tables.records.MetaKeyRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaKey extends TableImpl<MetaKeyRecord> {
 
-    private static final long serialVersionUID = 289219362;
+    private static final long serialVersionUID = 1L;
 
     /**
      * The reference instance of <code>stroom.meta_key</code>
@@ -51,23 +51,24 @@ public class MetaKey extends TableImpl<MetaKeyRecord> {
     /**
      * The column <code>stroom.meta_key.id</code>.
      */
-    public final TableField<MetaKeyRecord, Integer> ID = createField(DSL.name("id"), org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<MetaKeyRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.meta_key.name</code>.
      */
-    public final TableField<MetaKeyRecord, String> NAME = createField(DSL.name("name"), org.jooq.impl.SQLDataType.VARCHAR(100).nullable(false), this, "");
+    public final TableField<MetaKeyRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(100).nullable(false), this, "");
 
     /**
      * The column <code>stroom.meta_key.field_type</code>.
      */
-    public final TableField<MetaKeyRecord, Byte> FIELD_TYPE = createField(DSL.name("field_type"), org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
+    public final TableField<MetaKeyRecord, Byte> FIELD_TYPE = createField(DSL.name("field_type"), SQLDataType.TINYINT.nullable(false), this, "");
 
-    /**
-     * Create a <code>stroom.meta_key</code> table reference
-     */
-    public MetaKey() {
-        this(DSL.name("meta_key"), null);
+    private MetaKey(Name alias, Table<MetaKeyRecord> aliased) {
+        this(alias, aliased, null);
+    }
+
+    private MetaKey(Name alias, Table<MetaKeyRecord> aliased, Field<?>[] parameters) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
     }
 
     /**
@@ -84,12 +85,11 @@ public class MetaKey extends TableImpl<MetaKeyRecord> {
         this(alias, META_KEY);
     }
 
-    private MetaKey(Name alias, Table<MetaKeyRecord> aliased) {
-        this(alias, aliased, null);
-    }
-
-    private MetaKey(Name alias, Table<MetaKeyRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""));
+    /**
+     * Create a <code>stroom.meta_key</code> table reference
+     */
+    public MetaKey() {
+        this(DSL.name("meta_key"), null);
     }
 
     public <O extends Record> MetaKey(Table<O> child, ForeignKey<O, MetaKeyRecord> key) {
@@ -98,17 +98,12 @@ public class MetaKey extends TableImpl<MetaKeyRecord> {
 
     @Override
     public Schema getSchema() {
-        return Stroom.STROOM;
-    }
-
-    @Override
-    public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.META_KEY_META_KEY_NAME, Indexes.META_KEY_PRIMARY);
+        return aliased() ? null : Stroom.STROOM;
     }
 
     @Override
     public Identity<MetaKeyRecord, Integer> getIdentity() {
-        return Keys.IDENTITY_META_KEY;
+        return (Identity<MetaKeyRecord, Integer>) super.getIdentity();
     }
 
     @Override
@@ -117,8 +112,8 @@ public class MetaKey extends TableImpl<MetaKeyRecord> {
     }
 
     @Override
-    public List<UniqueKey<MetaKeyRecord>> getKeys() {
-        return Arrays.<UniqueKey<MetaKeyRecord>>asList(Keys.KEY_META_KEY_PRIMARY, Keys.KEY_META_KEY_META_KEY_NAME);
+    public List<UniqueKey<MetaKeyRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_META_KEY_META_KEY_NAME);
     }
 
     @Override

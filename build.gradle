@@ -28,7 +28,7 @@ plugins {
 
     id "com.github.johnrengelman.shadow" version "7.1.2" apply false
 
-    id 'nu.studer.jooq' version '5.2' apply false
+    id 'nu.studer.jooq' version '7.1.1' apply false
 
     id 'org.flywaydb.flyway' version '7.5.4' apply false
 
@@ -117,7 +117,7 @@ ext.versions = [
         gwt               : '2.9.0',
         hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
-        jooq              : '3.15.5',
+        jooq              : '3.16.4',
         junit_jupiter     : '5.8.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',

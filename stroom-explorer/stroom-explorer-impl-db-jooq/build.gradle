@@ -41,13 +41,14 @@ jooq {
                         excludes = 'explorer_schema_version'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
-                        // Treat tinyint(1) columns as booleans
-                        forcedTypes {
-                            forcedType {
-                                name = 'BOOLEAN'
-                                types = '(?i:TINYINT\\(1\\))'
-                            }
-                        }
+                        // Treat some tinyint columns as booleans
+                        //forcedTypes {
+                            //forcedType {
+                                //name = 'BOOLEAN'
+                                //// see https://github.com/jOOQ/jOOQ/issues/9405
+                                //includeTypes = '(?i:tinyint)'
+                            //}
+                        //}
                     }
                     target {
                         packageName = 'stroom.explorer.impl.db.jooq'

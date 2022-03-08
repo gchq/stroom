@@ -14,7 +14,7 @@ import stroom.meta.impl.db.jooq.tables.MetaVal;
 
 
 /**
- * Convenience access to all tables in stroom
+ * Convenience access to all tables in stroom.
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Tables {

@@ -334,17 +334,17 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         }
     }
 
-    private void release(final ProcessorTask streamTask) {
+    private void release(final ProcessorTask processorTask) {
         try {
-            LOGGER.warn(() -> "release() - " + streamTask);
+            LOGGER.warn("release() - {}", processorTask);
             processorTaskDao.changeTaskStatus(
-                    streamTask,
+                    processorTask,
                     null,
                     TaskStatus.UNPROCESSED,
                     null,
                     null);
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> "release() - " + streamTask, e);
+            LOGGER.error("release() - {}", processorTask, e);
         }
     }
 
@@ -658,6 +658,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                             progressTracker,
                                             queue,
                                             tracker,
+                                            processorConfig,
                                             taskContext);
                                 } else {
                                     // Create tasks from a standard stream filter criteria.
@@ -668,6 +669,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                             nodeName,
                                             progressTracker,
                                             queue,
+                                            processorConfig,
                                             tracker);
                                 }
                             }
@@ -807,6 +809,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                             final TaskCreationProgressTracker progressTracker,
                                             final ProcessorTaskQueue queue,
                                             final ProcessorFilterTracker tracker,
+                                            final ProcessorConfig processorConfig,
                                             final TaskContext taskContext) {
 
         final EventRef minEvent = new EventRef(tracker.getMinMetaId(), tracker.getMinEventId());
@@ -920,6 +923,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                             nodeName,
                             maxMetaId,
                             reachedLimit,
+                            processorConfig.isFillTaskQueue(),
                             createdTasks -> {
                                 // Transfer the newly created (and available) tasks to the queue.
                                 final List<ProcessorTask> availableTaskList = createdTasks.getAvailableTaskList();
@@ -975,6 +979,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                          final String nodeName,
                                          final TaskCreationProgressTracker progressTracker,
                                          final ProcessorTaskQueue queue,
+                                         final ProcessorConfig processorConfig,
                                          final ProcessorFilterTracker tracker) {
         if (termCount(queryData) == 0) {
             throw new RuntimeException("Attempting to create tasks with an unconstrained filter " + filter);
@@ -1019,6 +1024,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                             nodeName,
                             maxMetaId,
                             false,
+                    processorConfig.isFillTaskQueue(),
                             createdTasks -> {
                                 // Transfer the newly created (and available) tasks to the queue.
                                 final List<ProcessorTask> availableTaskList = createdTasks.getAvailableTaskList();

@@ -12,9 +12,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Make application fail to start if there is no build version/date.
+
+* Issue **#2799** : Add protection for null/empty meta types in `stroom.data.meta.metaTypes`.
+
+* Issue **#2795** : Speculative fix for the bind errors on MetaTypeDaoImpl.
+  
 * Issue **#2782** : Fix validation of primitive properties, e.g. booleans.
 
-* Issue **#2782** : Fix propety edit screen `Sources` field showing `Multiple Sources` for a single node.
+* Issue **#2782** : Fix property edit screen `Sources` field showing `Multiple Sources` for a single node.
 
 * Issue **#2787** : Add config_update_tracker table to improve the process of updating each node's effective config. Also fix the updating of the effective value/source columns in the properties list view.
 

@@ -19,7 +19,7 @@ import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaProcessorRecord extends UpdatableRecordImpl<MetaProcessorRecord> implements Record3<Integer, String, String> {
 
-    private static final long serialVersionUID = 1501944995;
+    private static final long serialVersionUID = 1L;
 
     /**
      * Setter for <code>stroom.meta_processor.id</code>.
@@ -174,8 +174,8 @@ public class MetaProcessorRecord extends UpdatableRecordImpl<MetaProcessorRecord
     public MetaProcessorRecord(Integer id, String processorUuid, String pipelineUuid) {
         super(MetaProcessor.META_PROCESSOR);
 
-        set(0, id);
-        set(1, processorUuid);
-        set(2, pipelineUuid);
+        setId(id);
+        setProcessorUuid(processorUuid);
+        setPipelineUuid(pipelineUuid);
     }
 }

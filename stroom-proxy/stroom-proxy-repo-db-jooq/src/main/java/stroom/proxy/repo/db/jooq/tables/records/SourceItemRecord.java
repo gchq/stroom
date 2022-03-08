@@ -5,7 +5,7 @@ package stroom.proxy.repo.db.jooq.tables.records;
 
 
 import org.jooq.Field;
-import org.jooq.Record1;
+import org.jooq.Record3;
 import org.jooq.Record8;
 import org.jooq.Row8;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -138,8 +138,8 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
     // -------------------------------------------------------------------------
 
     @Override
-    public Record1<Long> key() {
-        return (Record1) super.key();
+    public Record3<Long, String, Long> key() {
+        return (Record3) super.key();
     }
 
     // -------------------------------------------------------------------------

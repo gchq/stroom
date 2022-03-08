@@ -50,6 +50,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                                final String thisNodeName,
                                final Long maxMetaId,
                                final boolean reachedLimit,
+                               final boolean assignNewTasks,
                                final Consumer<CreatedTasks> consumer) {
         final long now = System.currentTimeMillis();
 
@@ -60,7 +61,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
             task.setStatus(TaskStatus.UNPROCESSED);
             task.setStartTimeMs(now);
 
-            if (Status.UNLOCKED.equals(meta.getStatus())) {
+            if (assignNewTasks && Status.UNLOCKED.equals(meta.getStatus())) {
                 task.setNodeName(thisNodeName);
 //                availableTasksCreated++;
             }

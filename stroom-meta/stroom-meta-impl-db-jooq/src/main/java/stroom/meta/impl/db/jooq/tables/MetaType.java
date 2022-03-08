@@ -10,18 +10,18 @@ import java.util.List;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Row2;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.meta.impl.db.jooq.Indexes;
 import stroom.meta.impl.db.jooq.Keys;
 import stroom.meta.impl.db.jooq.Stroom;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
@@ -33,7 +33,7 @@ import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaType extends TableImpl<MetaTypeRecord> {
 
-    private static final long serialVersionUID = 1267115623;
+    private static final long serialVersionUID = 1L;
 
     /**
      * The reference instance of <code>stroom.meta_type</code>
@@ -51,18 +51,19 @@ public class MetaType extends TableImpl<MetaTypeRecord> {
     /**
      * The column <code>stroom.meta_type.id</code>.
      */
-    public final TableField<MetaTypeRecord, Integer> ID = createField(DSL.name("id"), org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<MetaTypeRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.meta_type.name</code>.
      */
-    public final TableField<MetaTypeRecord, String> NAME = createField(DSL.name("name"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<MetaTypeRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
-    /**
-     * Create a <code>stroom.meta_type</code> table reference
-     */
-    public MetaType() {
-        this(DSL.name("meta_type"), null);
+    private MetaType(Name alias, Table<MetaTypeRecord> aliased) {
+        this(alias, aliased, null);
+    }
+
+    private MetaType(Name alias, Table<MetaTypeRecord> aliased, Field<?>[] parameters) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
     }
 
     /**
@@ -79,12 +80,11 @@ public class MetaType extends TableImpl<MetaTypeRecord> {
         this(alias, META_TYPE);
     }
 
-    private MetaType(Name alias, Table<MetaTypeRecord> aliased) {
-        this(alias, aliased, null);
-    }
-
-    private MetaType(Name alias, Table<MetaTypeRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""));
+    /**
+     * Create a <code>stroom.meta_type</code> table reference
+     */
+    public MetaType() {
+        this(DSL.name("meta_type"), null);
     }
 
     public <O extends Record> MetaType(Table<O> child, ForeignKey<O, MetaTypeRecord> key) {
@@ -93,17 +93,12 @@ public class MetaType extends TableImpl<MetaTypeRecord> {
 
     @Override
     public Schema getSchema() {
-        return Stroom.STROOM;
-    }
-
-    @Override
-    public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.META_TYPE_NAME, Indexes.META_TYPE_PRIMARY);
+        return aliased() ? null : Stroom.STROOM;
     }
 
     @Override
     public Identity<MetaTypeRecord, Integer> getIdentity() {
-        return Keys.IDENTITY_META_TYPE;
+        return (Identity<MetaTypeRecord, Integer>) super.getIdentity();
     }
 
     @Override
@@ -112,8 +107,8 @@ public class MetaType extends TableImpl<MetaTypeRecord> {
     }
 
     @Override
-    public List<UniqueKey<MetaTypeRecord>> getKeys() {
-        return Arrays.<UniqueKey<MetaTypeRecord>>asList(Keys.KEY_META_TYPE_PRIMARY, Keys.KEY_META_TYPE_NAME);
+    public List<UniqueKey<MetaTypeRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_META_TYPE_NAME);
     }
 
     @Override

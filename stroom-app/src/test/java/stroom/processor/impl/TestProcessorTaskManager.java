@@ -140,7 +140,6 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 
         final int initialQueueSize = processorConfig.getQueueSize();
         processorConfig.setQueueSize(1000);
-        processorConfig.setFillTaskQueue(false);
 
         processorTaskManager.createTasks();
 
@@ -160,7 +159,6 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         assertThat(tasks.getList().size()).isEqualTo(1000);
 
         processorConfig.setQueueSize(initialQueueSize);
-        processorConfig.setFillTaskQueue(true);
     }
 
     @Disabled

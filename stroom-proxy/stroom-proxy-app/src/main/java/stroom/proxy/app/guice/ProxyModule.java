@@ -58,7 +58,7 @@ import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
-import stroom.util.BuildInfoModule;
+import stroom.util.BuildInfoProvider;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -128,8 +128,8 @@ public class ProxyModule extends AbstractModule {
         install(new TaskContextModule());
         install(new LegacyImpexModule());
 
-        install(new BuildInfoModule());
-
+        bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
+//        bind(BufferFactory.class).to(BufferFactoryImpl.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
         bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);
