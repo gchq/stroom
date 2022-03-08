@@ -23,7 +23,7 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DataSourceFieldsMap;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
-import stroom.dashboard.client.main.SearchKeepAlive;
+import stroom.dashboard.client.main.ActiveQueries;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.Automate;
@@ -129,7 +129,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Inject
     public QueryPresenter(final EventBus eventBus,
                           final QueryView view,
-                          final SearchKeepAlive searchKeepAlive,
+                          final ActiveQueries activeQueries,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
                           final ExpressionTreePresenter expressionPresenter,
                           final QueryHistoryPresenter historyPresenter,
@@ -188,7 +188,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         indexLoader = new IndexLoader(getEventBus(), restFactory);
         searchModel = new SearchModel(
                 restFactory,
-                searchKeepAlive,
+                activeQueries,
                 this,
                 indexLoader,
                 timeZones);

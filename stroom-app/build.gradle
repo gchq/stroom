@@ -143,6 +143,7 @@ dependencies {
     compile libs.dropwizard_metrics_healthchecks
     compile libs.dropwizard_servlets
     compile libs.dropwizard_validation
+    compile libs.dropwizard_websockets
     compile libs.flyway_core
     compile libs.guava
     compile libs.guice5
