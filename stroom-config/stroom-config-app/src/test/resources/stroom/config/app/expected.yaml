@@ -111,7 +111,7 @@ appConfig:
         prepStmtCacheSqlLimit: 256
   dashboard:
     activeQueriesCache:
-      expireAfterAccess: "PT1M"
+      expireAfterAccess: "P10D"
       expireAfterWrite: null
       maximumSize: 1000
   data:
