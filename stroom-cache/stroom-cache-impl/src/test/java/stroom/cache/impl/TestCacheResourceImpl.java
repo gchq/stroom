@@ -3,6 +3,7 @@ package stroom.cache.impl;
 
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
+import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -105,7 +106,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
 
     @Test
     void list() {
-        final String subPath = "";
+        final String subPath = ResourcePaths.buildPath(CacheResource.LIST);
 
         final List<String> expectedResponse = List.of("cache1", "cache2");
 
@@ -116,8 +117,9 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
 
         doGetTest(
                 subPath,
-                List.class,
-                expectedResponse);
+                CacheNamesResponse.class,
+                new CacheNamesResponse(expectedResponse),
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1"));
     }
 
     @Test
