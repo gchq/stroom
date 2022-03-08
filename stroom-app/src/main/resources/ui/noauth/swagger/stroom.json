@@ -988,26 +988,6 @@
         },
         "summary" : "Clears a cache",
         "tags" : [ "Caches" ]
-      },
-      "get" : {
-        "operationId" : "listCaches",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Lists caches",
-        "tags" : [ "Caches" ]
       }
     },
     "/cache/v1/info" : {
@@ -1039,6 +1019,32 @@
           }
         },
         "summary" : "Gets cache info",
+        "tags" : [ "Caches" ]
+      }
+    },
+    "/cache/v1/list" : {
+      "get" : {
+        "operationId" : "listCaches",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CacheNamesResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Lists caches",
         "tags" : [ "Caches" ]
       }
     },
@@ -8491,6 +8497,20 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/CacheInfo"
+            }
+          }
+        }
+      },
+      "CacheNamesResponse" : {
+        "type" : "object",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
             }
           }
         }
