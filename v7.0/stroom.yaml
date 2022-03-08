@@ -1032,7 +1032,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DownloadQueryRequest'
+              $ref: '#/components/schemas/DashboardSearchRequest'
         description: downloadQueryRequest
         required: true
       responses:
@@ -1110,7 +1110,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SearchKeepAliveResponse'
+                type: boolean
           description: default response
       summary: Keep search results alive for paging/download etc
       tags:
@@ -6306,30 +6306,25 @@ components:
           type: string
         version:
           type: string
-    DashboardQueryKey:
-      type: object
-      properties:
-        applicationInstanceId:
-          type: string
-        componentId:
-          type: string
-        dashboardUuid:
-          type: string
-        queryInstanceId:
-          type: string
     DashboardSearchRequest:
       type: object
       properties:
+        componentId:
+          type: string
         componentResultRequests:
           type: array
           items:
             $ref: '#/components/schemas/ComponentResultRequest'
-        dashboardQueryKey:
-          $ref: '#/components/schemas/DashboardQueryKey'
+        dashboardUuid:
+          type: string
         dateTimeLocale:
           type: string
+        queryKey:
+          $ref: '#/components/schemas/QueryKey'
         search:
           $ref: '#/components/schemas/Search'
+        storeHistory:
+          type: boolean
         timeout:
           type: integer
           format: int64
@@ -6359,7 +6354,7 @@ components:
             type: string
           uniqueItems: true
         queryKey:
-          $ref: '#/components/schemas/DashboardQueryKey'
+          $ref: '#/components/schemas/QueryKey'
         results:
           type: array
           items:
@@ -6686,21 +6681,10 @@ components:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractField'
-    DownloadQueryRequest:
-      type: object
-      properties:
-        dashboardQueryKey:
-          $ref: '#/components/schemas/DashboardQueryKey'
-        searchRequest:
-          $ref: '#/components/schemas/DashboardSearchRequest'
     DownloadSearchResultsRequest:
       type: object
       properties:
-        applicationInstanceId:
-          type: string
         componentId:
-          type: string
-        dateTimeLocale:
           type: string
         fileType:
           type: string
@@ -9536,8 +9520,6 @@ components:
             $ref: '#/components/schemas/Param'
         queryInfo:
           type: string
-        storeHistory:
-          type: boolean
     SearchAccountRequest:
       type: object
       properties:
@@ -9558,27 +9540,12 @@ components:
         activeKeys:
           type: array
           items:
-            $ref: '#/components/schemas/DashboardQueryKey'
-          uniqueItems: true
-        applicationInstanceId:
-          type: string
-        deadKeys:
-          type: array
-          items:
-            $ref: '#/components/schemas/DashboardQueryKey'
-          uniqueItems: true
-    SearchKeepAliveResponse:
-      type: object
-      properties:
-        activeKeys:
-          type: array
-          items:
-            $ref: '#/components/schemas/DashboardQueryKey'
+            $ref: '#/components/schemas/QueryKey'
           uniqueItems: true
         deadKeys:
           type: array
           items:
-            $ref: '#/components/schemas/DashboardQueryKey'
+            $ref: '#/components/schemas/QueryKey'
           uniqueItems: true
     SearchRequest:
       type: object
@@ -9639,10 +9606,6 @@ components:
           type: array
           items:
             type: string
-            xml:
-              name: error
-          xml:
-            wrapped: true
         highlights:
           type: array
           description: A list of strings to highlight in the UI that should correlate
@@ -9651,20 +9614,15 @@ components:
             type: string
             description: A list of strings to highlight in the UI that should correlate
               with the search query.
-            xml:
-              name: highlight
-          xml:
-            wrapped: true
+        queryKey:
+          $ref: '#/components/schemas/QueryKey'
         results:
           type: array
           items:
             $ref: '#/components/schemas/Result'
-          xml:
-            wrapped: true
       required:
       - highlights
-      xml:
-        name: searchResponse
+      - queryKey
     SearchTokenRequest:
       type: object
       properties:
