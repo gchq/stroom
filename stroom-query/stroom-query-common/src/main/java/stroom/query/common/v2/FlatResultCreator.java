@@ -89,7 +89,9 @@ public class FlatResultCreator implements ResultCreator {
 
         final TableSettings child = tableSettings.get(tableSettings.size() - 1);
 
-        fields = child.getFields();
+        fields = child != null
+                ? child.getFields()
+                : Collections.emptyList();
     }
 
     private List<Object> toNodeKey(final Map<Integer, List<Field>> groupFields, final Key key) {
@@ -175,7 +177,7 @@ public class FlatResultCreator implements ResultCreator {
                         for (final Field field : fields) {
                             if (field.getGroup() != null) {
                                 groupFields.computeIfAbsent(field.getGroup(), k ->
-                                                new ArrayList<>())
+                                        new ArrayList<>())
                                         .add(field);
                             }
                         }
@@ -349,7 +351,10 @@ public class FlatResultCreator implements ResultCreator {
 
             // Extract child fields from expressions.
             final FieldIndex childFieldIndex = new FieldIndex();
-            CompiledFields.create(child.getFields(), childFieldIndex, paramMap);
+            final List<Field> childFields = child != null
+                    ? child.getFields()
+                    : Collections.emptyList();
+            CompiledFields.create(childFields, childFieldIndex, paramMap);
 
             // Create the index mapping.
             parentFieldIndices = new int[childFieldIndex.size()];
@@ -361,7 +366,10 @@ public class FlatResultCreator implements ResultCreator {
 
             // Create a set of max result sizes that are determined by the supplied max results or default to integer
             // max value.
-            final Sizes maxResults = Sizes.create(child.getMaxResults(), Integer.MAX_VALUE);
+            final List<Integer> childMaxResults = child != null
+                    ? child.getMaxResults()
+                    : Collections.emptyList();
+            final Sizes maxResults = Sizes.create(childMaxResults, Integer.MAX_VALUE);
             dataStore = dataStoreFactory.create(
                     queryKey,
                     componentId,
