@@ -26,10 +26,12 @@ import javax.websocket.server.ServerEndpoint;
 @Metered
 @Timed
 @ExceptionMetered
-@ServerEndpoint("/active-queries-ws")
+@ServerEndpoint(ActiveQueriesWebSocket.PATH)
 public class ActiveQueriesWebSocket {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActiveQueriesWebSocket.class);
+
+    public static final String PATH = "/active-queries-ws";
 
     private static ActiveQueriesManager activeQueriesManager;
 
@@ -51,7 +53,9 @@ public class ActiveQueriesWebSocket {
 
     @OnOpen
     public void onOpen(final Session session) throws IOException {
-        LOGGER.debug(() -> "onOpen " + session.getMaxIdleTimeout());
+        LOGGER.debug(() -> "Opening web socket at " + PATH
+                + ", sessionId: " + session.getId()
+                + ", maxIdleTimeout: " + session.getMaxIdleTimeout());
         // Keep alive forever.
         session.setMaxIdleTimeout(0);
         session.getAsyncRemote().sendText("welcome");
@@ -59,7 +63,9 @@ public class ActiveQueriesWebSocket {
 
     @OnMessage
     public void onMessage(final Session session, final String message) {
-        LOGGER.debug("onMessage");
+        LOGGER.debug(() -> "Received message on web socket at " + PATH
+                + ", sessionId: " + session.getId()
+                + ", message: [" + message + "]");
         session.getAsyncRemote().sendText(message.toUpperCase());
 
         if (message.startsWith("add:")) {
@@ -81,7 +87,8 @@ public class ActiveQueriesWebSocket {
 
     @OnClose
     public void onClose(final Session session, final CloseReason cr) {
-        LOGGER.debug("onClose");
+        LOGGER.debug(() -> "Closing web socket at " + PATH
+                + ", sessionId: " + session.getId());
         final Set<String> set = activeQueries.remove(session.getId());
         if (set != null && activeQueriesManager != null) {
             set.forEach(uuid -> activeQueriesManager.remove(new QueryKey(uuid)));

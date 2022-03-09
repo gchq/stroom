@@ -24,7 +24,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
 import com.sksamuel.gwt.websockets.Websocket;
-import com.sksamuel.gwt.websockets.WebsocketListener;
+import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,6 +42,13 @@ public class ActiveQueries {
         eventBus.addHandler(LogoutEvent.getType(), event -> close());
 
         String hostPageBaseUrl = GWT.getHostPageBaseURL();
+        // Decide whether to use secure web sockets or not depending on current http/https.
+        // Default to secure
+        final String scheme = hostPageBaseUrl.startsWith("http:")
+                ? "ws"
+                : "wss";
+
+        GWT.log("hostPageBaseUrl: " + hostPageBaseUrl);
         hostPageBaseUrl = hostPageBaseUrl.substring(0, hostPageBaseUrl.lastIndexOf("/"));
         hostPageBaseUrl = hostPageBaseUrl.substring(0, hostPageBaseUrl.lastIndexOf("/"));
 
@@ -50,21 +57,31 @@ public class ActiveQueries {
             hostPageBaseUrl = hostPageBaseUrl.substring(index + 3);
         }
 
-        socket = new Websocket("ws://" + hostPageBaseUrl + "/active-queries-ws");
-        socket.addListener(new WebsocketListener() {
+        final String url = scheme + "://" + hostPageBaseUrl + "/active-queries-ws";
+
+        socket = new Websocket(url);
+        socket.addListener(new WebsocketListenerExt() {
             @Override
             public void onClose() {
                 // do something on close
+                GWT.log("Closing web socket at " + url);
             }
 
             @Override
             public void onMessage(String msg) {
                 // a message is received
+                GWT.log("Message received on web socket at " + url + " - [" + msg + "]");
             }
 
             @Override
             public void onOpen() {
                 // do something on open
+                GWT.log("Opening web socket at " + url);
+            }
+
+            @Override
+            public void onError() {
+                GWT.log("Error on web socket at " + url);
             }
         });
 
@@ -73,6 +90,7 @@ public class ActiveQueries {
 
     private void open() {
         if (!open) {
+            GWT.log("Opening web socket");
             socket.open();
             open = true;
         }
@@ -80,6 +98,7 @@ public class ActiveQueries {
 
     private void close() {
         if (open) {
+            GWT.log("Opening web socket");
             socket.close();
             open = false;
         }
@@ -87,16 +106,18 @@ public class ActiveQueries {
 
     public void add(final QueryKey key) {
         open();
-
         if (activeKeys.add(key)) {
-            socket.send("add:" + key.getUuid());
+            final String msg = "add:" + key.getUuid();
+            GWT.log("Web socket send: [" + msg + "]");
+            socket.send(msg);
         }
     }
 
     public void remove(final QueryKey key) {
         open();
-
-        socket.send("remove:" + key.getUuid());
+        final String msg = "remove:" + key.getUuid();
+        GWT.log("Web socket send: [" + msg + "]");
+        socket.send(msg);
         activeKeys.remove(key);
     }
 }
