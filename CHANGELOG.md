@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.190] - 2022-03-09
+
+* Issue **#2801** : Add `connect-src 'self' wss:;` to default `contentSecurityPolicy` property, select web sockets ws/wss based on current scheme and improve logging.
+
+
 ## [v7.0-beta.189] - 2022-03-09
 
 * Issue **#2618** : Fix UI to show all caches even ones that only exist on remote nodes.
@@ -4253,7 +4258,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.189...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.190...HEAD
+[v7.0-beta.190]: https://github.com/gchq/stroom/compare/v7.0-beta.189...v7.0-beta.190
 [v7.0-beta.189]: https://github.com/gchq/stroom/compare/v7.0-beta.188...v7.0-beta.189
 [v7.0-beta.188]: https://github.com/gchq/stroom/compare/v7.0-beta.187...v7.0-beta.188
 [v7.0-beta.187]: https://github.com/gchq/stroom/compare/v7.0-beta.186...v7.0-beta.187
