@@ -42,6 +42,7 @@ dependencies {
     compile libs.guice3
     compile libs.gwt_dev
     compile libs.gwt_user
+    compile libs.gwt_websockets
     compile libs.gwtp_mvp_client
     compile libs.jackson_annotations
     compile libs.jaxb_api
@@ -50,6 +51,7 @@ dependencies {
     gwtSourceCompile libs.gin
     gwtSourceCompile libs.gwt_dev
     gwtSourceCompile libs.gwt_user
+    gwtSourceCompile libs.gwt_websockets
     gwtSourceCompile libs.gwtp_mvp_client
     gwtSourceCompile libs.jaxb_api
     gwtSourceCompile libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations

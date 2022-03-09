@@ -248,6 +248,12 @@ export interface CacheInfoResponse {
   values?: CacheInfo[];
 }
 
+export interface CacheNamesResponse {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: string[];
+}
+
 export interface ChangeDocumentPermissionsRequest {
   cascade?: "NO" | "CHANGES_ONLY" | "ALL";
   changes?: Changes;
@@ -4339,23 +4345,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Caches
-     * @name ListCaches
-     * @summary Lists caches
-     * @request GET:/cache/v1
-     * @secure
-     */
-    listCaches: (params: RequestParams = {}) =>
-      this.request<any, string[]>({
-        path: `/cache/v1`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Caches
      * @name GetCacheInfo
      * @summary Gets cache info
      * @request GET:/cache/v1/info
@@ -4364,6 +4353,24 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     getCacheInfo: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, CacheInfoResponse>({
         path: `/cache/v1/info`,
+        method: "GET",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Caches
+     * @name ListCaches
+     * @summary Lists caches
+     * @request GET:/cache/v1/list
+     * @secure
+     */
+    listCaches: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, CacheNamesResponse>({
+        path: `/cache/v1/list`,
         method: "GET",
         query: query,
         secure: true,
