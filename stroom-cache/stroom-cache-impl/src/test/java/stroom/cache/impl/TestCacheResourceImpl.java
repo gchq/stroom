@@ -3,6 +3,7 @@ package stroom.cache.impl;
 
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
+import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -104,20 +105,41 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
     }
 
     @Test
-    void list() {
-        final String subPath = "";
+    void list_sameNode() {
+        final String subPath = ResourcePaths.buildPath(CacheResource.LIST);
 
-        final List<String> expectedResponse = List.of("cache1", "cache2");
+        final List<String> caches = List.of("cache1", "cache2");
+        final CacheNamesResponse expectedResponse = new CacheNamesResponse(caches);
 
         initNodes();
 
         when(cacheManagerServiceMocks.get("node1").getCacheNames())
-                .thenReturn(expectedResponse);
+                .thenReturn(caches);
 
         doGetTest(
                 subPath,
-                List.class,
-                expectedResponse);
+                CacheNamesResponse.class,
+                expectedResponse,
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1"));
+    }
+
+    @Test
+    void list_otherNode() {
+        final String subPath = ResourcePaths.buildPath(CacheResource.LIST);
+
+        final List<String> caches = List.of("cache1", "cache2");
+        final CacheNamesResponse expectedResponse = new CacheNamesResponse(caches);
+
+        initNodes();
+
+        when(cacheManagerServiceMocks.get("node2").getCacheNames())
+                .thenReturn(caches);
+
+        doGetTest(
+                subPath,
+                CacheNamesResponse.class,
+                expectedResponse,
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node2"));
     }
 
     @Test
