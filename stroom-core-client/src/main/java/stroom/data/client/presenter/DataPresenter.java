@@ -27,6 +27,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaResource;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
@@ -78,6 +79,7 @@ import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -88,6 +90,7 @@ import java.util.function.Supplier;
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
 
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
+    private static final MetaResource META_RESOURCE = com.google.gwt.core.shared.GWT.create(MetaResource.class);
 
     private static final SafeStyles META_SECTION_HEAD_STYLES = new SafeStylesBuilder()
             .paddingLeft(0.2, Unit.EM)
@@ -357,19 +360,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         if (lastResult != null && lastResult.hasErrors()) {
-            final String childStreamText = lastResult.getSourceLocation().getOptChildType()
-                    .map(childType -> " (" + childType + ")")
-                    .orElse("");
-            final String title = "Unable to display stream ["
-                    + lastResult.getSourceLocation().getIdentifierString()
-                    + "]"
-                    + childStreamText
-                    + " as "
-                    + (lastResult.getDisplayMode() != null
-                    ? lastResult.getDisplayMode().name().toLowerCase()
-                    : "text");
-            final String errorText = String.join("\n", lastResult.getErrors());
-            textPresenter.setErrorText(title, errorText);
+            showErrors(lastResult);
         } else {
             final boolean shouldFormatData = lastResult != null
                     && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
@@ -485,31 +476,88 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     public void fetchData(final SourceLocation sourceLocation) {
-        if (sourceLocation.getDataRange() != null) {
-            // We are displaying a specific range of the data so hide the
-            // nav controls
-            getView().setNavigatorView(null);
-        }
-        this.highlights = new ArrayList<>();
+        // We know the location but not what type of data we are fetching so first get the meta
 
-        if (sourceLocation.getHighlight() != null) {
-            this.highlights.add(sourceLocation.getHighlight());
-        }
+        final Rest<Meta> rest = restFactory.create();
+        rest
+                .onSuccess(meta -> {
+                    fetchData(meta, sourceLocation, false);
+                })
+                .onFailure(caught -> {
+                    showErrors(
+                            sourceLocation,
+                            sourceLocation.getOptChildType().orElse(null),
+                            null,
+                            Collections.singletonList(caught.getMessage()));
+                })
+                .call(META_RESOURCE)
+                .fetch(sourceLocation.getMetaId());
+    }
 
-        this.highlightMetaId = sourceLocation.getMetaId();
-        this.highlightPartIndex = sourceLocation.getPartIndex();
-        this.highlightChildDataType = sourceLocation.getChildType();
+    public void fetchData(final Meta meta) {
+//        currentSourceLocation = SourceLocation.builder(meta.getId())
+//                .build();
+//        currentStreamType = meta.getTypeName();
+//        markerListPresenter.resetExpandedSeverities();
+//
+////        GWT.log("ID " + getCurrentMetaId()
+////                + " streamType " + currentStreamType
+////                + " part " + getCurrentPartNo()
+////                + " seg " + getCurrentSegmentNo());
+//
+//        update(true, meta.getTypeName());
 
-        // Update the stream source.
-        if (!Objects.equals(currentSourceLocation, sourceLocation)) {
-            // New data location so re-fetch
-            currentSourceLocation = sourceLocation;
-            markerListPresenter.resetExpandedSeverities();
+        fetchData(meta, SourceLocation.builder(meta.getId()).build(), true);
+    }
 
-            update(false, currentStreamType);
+    private void fetchData(final Meta meta,
+                           final SourceLocation sourceLocation,
+                           final boolean fireEvents) {
+        if (meta != null) {
+            if (meta.getId() != sourceLocation.getMetaId()) {
+                showErrors(
+                        sourceLocation,
+                        sourceLocation.getOptChildType().orElse(null),
+                        null,
+                        Collections.singletonList(
+                                "Meta ID mismatch, " + meta.getId() + " vs " + sourceLocation.getMetaId()));
+            } else {
+                currentStreamType = meta.getTypeName();
+
+                if (sourceLocation.getDataRange() != null) {
+                    // We are displaying a specific range of the data so hide the
+                    // nav controls
+                    getView().setNavigatorView(null);
+                }
+                highlights = new ArrayList<>();
+                if (sourceLocation.getHighlight() != null) {
+                    highlights.add(sourceLocation.getHighlight());
+                }
+                highlightMetaId = sourceLocation.getMetaId();
+                highlightPartIndex = sourceLocation.getPartIndex();
+                highlightChildDataType = sourceLocation.getChildType();
+
+                // Update the stream source.
+                if (!Objects.equals(currentSourceLocation, sourceLocation)) {
+                    // New data location so re-fetch
+                    currentSourceLocation = sourceLocation;
+                    markerListPresenter.resetExpandedSeverities();
+
+                    update(fireEvents, currentStreamType);
+                } else {
+                    // Same location as before so just refresh any markers/highlights, e.g. in stepping
+                    refreshHighlights(lastResult);
+                    refreshMarkers(lastResult);
+                }
+            }
         } else {
-            refreshHighlights(lastResult);
-            refreshMarkers(lastResult);
+            // Null meta
+            showErrors(
+                    sourceLocation,
+                    sourceLocation.getOptChildType().orElse(null),
+                    null,
+                    Collections.singletonList(
+                            "Stream does not exist or you do not have permission to view it"));
         }
     }
 
@@ -517,19 +565,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.displayMode = displayMode;
     }
 
-    public void fetchData(final Meta meta) {
-        currentSourceLocation = SourceLocation.builder(meta.getId())
-                .build();
-        currentStreamType = meta.getTypeName();
-        markerListPresenter.resetExpandedSeverities();
-
-//        GWT.log("ID " + getCurrentMetaId()
-//                + " streamType " + currentStreamType
-//                + " part " + getCurrentPartNo()
-//                + " seg " + getCurrentSegmentNo());
-
-        update(true, meta.getTypeName());
-    }
 
     public void update(final boolean fireEvents) {
         update(fireEvents, currentStreamType);
@@ -583,9 +618,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 + currentPartNo
                 + ":"
                 + currentRecordNo, "");
-        showTextPresenter();
         itemNavigatorPresenter.setDisplay(noNavigatorData);
         getView().setSourceLinkVisible(false, false);
+        showTextPresenter();
     }
 
     private void update(final boolean fireEvents,
@@ -1152,6 +1187,41 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         return currentSourceLocation != null
                 ? currentSourceLocation.getRecordIndex()
                 : 0;
+    }
+
+    private void showErrors(final AbstractFetchDataResult result) {
+        showErrors(
+                result.getSourceLocation(),
+                result.getSourceLocation()
+                        .getOptChildType()
+                        .orElse(null),
+                result.getDisplayMode(),
+                result.getErrors());
+    }
+
+    private void showErrors(final SourceLocation sourceLocation,
+                            final String childType,
+                            final FetchDataRequest.DisplayMode displayMode,
+                            final List<String> errors) {
+        final String childStreamText = childType != null
+                ? (" (" + childType + ")")
+                : "";
+        final String displayModeText = displayMode != null
+                ? (" as " + displayMode.name().toLowerCase())
+                : "";
+        final String title = "Unable to display source ["
+                + sourceLocation.getIdentifierString()
+                + "]"
+                + childStreamText
+                + displayModeText;
+
+        final String errorText = errors != null
+                ? String.join("\n", errors)
+                : null;
+        textPresenter.setErrorText(title, errorText);
+        setNavigationControlsVisible(false);
+        getView().setSourceLinkVisible(false, false);
+        showTextPresenter();
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
