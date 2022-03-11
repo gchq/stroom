@@ -60,6 +60,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.SourceConfig;
+import stroom.util.NullSafe;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -113,6 +114,7 @@ public class DataFetcher {
      * How big our buffers are. This should always be a multiple of 8.
      */
     private static final int STREAM_BUFFER_SIZE = 1024 * 100;
+    private static final DisplayMode DEFAULT_DISPLAY_MODE = DisplayMode.TEXT;
 
     private final Long partsToReturn = 1L;
     private final Long segmentsToReturn = 1L;
@@ -290,7 +292,8 @@ public class DataFetcher {
                             // If this is an error stream and the UI is requesting markers then
                             // create a list of markers.
                             if (StreamTypeNames.ERROR.equals(streamTypeName)
-                                    && DisplayMode.MARKER.equals(fetchDataRequest.getDisplayMode())) {
+                                    && (fetchDataRequest.getDisplayMode() == null
+                                    || DisplayMode.MARKER.equals(fetchDataRequest.getDisplayMode()))) {
 
                                 return createErrorMarkerResult(
                                         feedName,
@@ -300,9 +303,11 @@ public class DataFetcher {
                                         availableChildStreamTypes,
                                         fetchDataRequest.getExpandedSeverities());
                             } else if (DisplayMode.MARKER.equals(fetchDataRequest.getDisplayMode())) {
-                                throw new RuntimeException(LogUtil.message(
+                                final String msg = LogUtil.message(
                                         "Invalid display mode {} for stream type {}",
-                                        fetchDataRequest.getDisplayMode(), streamTypeName));
+                                        fetchDataRequest.getDisplayMode(), streamTypeName);
+                                LOGGER.error(msg);
+                                throw new RuntimeException(msg);
                             } else {
                                 return createDataResult(
                                         feedName,
@@ -379,8 +384,12 @@ public class DataFetcher {
                 null,
                 fetchDataRequest.isShowAsHtml(),
                 null,
-                fetchDataRequest.getDisplayMode(),
+                getDisplayModeOrDefault(fetchDataRequest),
                 errors);  // Don't really know segmented state as stream is gone
+    }
+
+    private static DisplayMode getDisplayModeOrDefault(final FetchDataRequest fetchDataRequest) {
+        return NullSafe.getOrElse(fetchDataRequest, FetchDataRequest::getDisplayMode, DEFAULT_DISPLAY_MODE);
     }
 
     private FetchMarkerResult createErrorMarkerResult(final String feedName,
@@ -466,20 +475,21 @@ public class DataFetcher {
 //                segmentInputStream.size() / averageBytesPerChar);
 
         final RawResult rawResult;
+        final DisplayMode displayMode = getDisplayModeOrDefault(fetchDataRequest);
 
         if (DataType.SEGMENTED.equals(dataType)) {
             rawResult = getSegmentedData(
                     sourceLocation,
                     segmentInputStream,
                     encoding,
-                    fetchDataRequest.getDisplayMode());
+                    displayMode);
         } else {
             // Non-segmented data
             rawResult = getNonSegmentedData(
                     sourceLocation,
                     segmentInputStream,
                     encoding,
-                    fetchDataRequest.getDisplayMode());
+                    displayMode);
         }
 
         // Useful for testing the displaying of errors in the UI
