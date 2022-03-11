@@ -680,20 +680,6 @@ paths:
       summary: Clears a cache
       tags:
       - Caches
-    get:
-      operationId: listCaches
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-          description: default response
-      summary: Lists caches
-      tags:
-      - Caches
   /cache/v1/info:
     get:
       operationId: getCacheInfo
@@ -714,6 +700,24 @@ paths:
                 $ref: '#/components/schemas/CacheInfoResponse'
           description: default response
       summary: Gets cache info
+      tags:
+      - Caches
+  /cache/v1/list:
+    get:
+      operationId: listCaches
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheNamesResponse'
+          description: default response
+      summary: Lists caches
       tags:
       - Caches
   /cluster/lock/v1/keepALive/{nodeName}:
@@ -2587,6 +2591,26 @@ paths:
                 format: int32
           description: default response
       summary: Update status on matching meta data
+      tags:
+      - Meta
+  /meta/v1/{id}:
+    get:
+      operationId: fetch
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Meta'
+          description: default response
+      summary: Get a meta record for a given id, if permitted.
       tags:
       - Meta
   /node/v1:
@@ -5854,6 +5878,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CacheInfo'
+    CacheNamesResponse:
+      type: object
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            type: string
     ChangeDocumentPermissionsRequest:
       type: object
       properties:

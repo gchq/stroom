@@ -988,26 +988,6 @@
         },
         "summary" : "Clears a cache",
         "tags" : [ "Caches" ]
-      },
-      "get" : {
-        "operationId" : "listCaches",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Lists caches",
-        "tags" : [ "Caches" ]
       }
     },
     "/cache/v1/info" : {
@@ -1039,6 +1019,32 @@
           }
         },
         "summary" : "Gets cache info",
+        "tags" : [ "Caches" ]
+      }
+    },
+    "/cache/v1/list" : {
+      "get" : {
+        "operationId" : "listCaches",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CacheNamesResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Lists caches",
         "tags" : [ "Caches" ]
       }
     },
@@ -3775,6 +3781,34 @@
           }
         },
         "summary" : "Update status on matching meta data",
+        "tags" : [ "Meta" ]
+      }
+    },
+    "/meta/v1/{id}" : {
+      "get" : {
+        "operationId" : "fetch",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Meta"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get a meta record for a given id, if permitted.",
         "tags" : [ "Meta" ]
       }
     },
@@ -8491,6 +8525,20 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/CacheInfo"
+            }
+          }
+        }
+      },
+      "CacheNamesResponse" : {
+        "type" : "object",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
             }
           }
         }
