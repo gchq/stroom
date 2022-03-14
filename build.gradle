@@ -187,7 +187,6 @@ ext.libs = [
         gwt_dev                        : "com.google.gwt:gwt-dev:$versions.gwt",
         gwt_servlet                    : "com.google.gwt:gwt-servlet:$versions.gwt",
         gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
-        gwt_websockets                 : "com.sksamuel.gwt:gwt-websockets:1.0.4",
         gwtp_mvp_client                : "com.gwtplatform:gwtp-mvp-client:0.7",
         gson                           : 'com.google.code.gson:gson:2.6.2',
         hbase                          : "org.apache.hbase:hbase-common:2.1.5", //should be set to be consistent with CDH version

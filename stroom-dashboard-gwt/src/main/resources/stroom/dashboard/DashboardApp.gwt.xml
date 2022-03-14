@@ -16,8 +16,8 @@
     <!-- RestyGWT -->
     <inherits name="org.fusesource.restygwt.RestyGWT"/>
 
-    <!-- Websockets -->
-    <inherits name="com.sksamuel.gwt.GwtWebsockets" />
+    <!-- Websocket -->
+    <inherits name="stroom.websocket.WebSocket" />
 
     <!-- Other module inherits -->
     <inherits name="stroom.dispatch.Dispatch"/>

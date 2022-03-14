@@ -61,7 +61,7 @@ class SecurityFilter implements Filter {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SecurityFilter.class);
 
     private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(
-            ".js", ".css", ".htm", ".html", ".json", ".png", ".jpg", ".gif", ".ico", ".svg", ".woff", ".woff2");
+            ".js", ".css", ".htm", ".html", ".json", ".png", ".jpg", ".gif", ".ico", ".svg", ".ttf", ".woff", ".woff2");
 
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
     private final UriFactory uriFactory;

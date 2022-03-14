@@ -16,108 +16,122 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.query.api.v2.QueryKey;
 import stroom.security.client.api.event.LogoutEvent;
+import stroom.util.client.Console;
+import stroom.websocket.client.CloseEvent;
+import stroom.websocket.client.ErrorEvent;
+import stroom.websocket.client.MessageEvent;
+import stroom.websocket.client.OpenEvent;
+import stroom.websocket.client.WebSocket;
+import stroom.websocket.client.WebSocket.ReadyState;
+import stroom.websocket.client.WebSocketListener;
+import stroom.websocket.client.WebSocketUtil;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
-import com.sksamuel.gwt.websockets.Websocket;
-import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Singleton
-public class ActiveQueries {
+public class ActiveQueries implements HasHandlers {
 
+    private final EventBus eventBus;
     private final Set<QueryKey> activeKeys = new HashSet<>();
-    private final Websocket socket;
-    private boolean open;
+    private final WebSocket socket;
 
     @Inject
     public ActiveQueries(final EventBus eventBus) {
-        // Listen for logout events.
-        eventBus.addHandler(LogoutEvent.getType(), event -> close());
+        this.eventBus = eventBus;
 
-        String hostPageBaseUrl = GWT.getHostPageBaseURL();
-        // Decide whether to use secure web sockets or not depending on current http/https.
-        // Default to secure
-        final String scheme = hostPageBaseUrl.startsWith("http:")
-                ? "ws"
-                : "wss";
+        try {
+            // Listen for logout events.
+            eventBus.addHandler(LogoutEvent.getType(), event -> close());
+            final String url = WebSocketUtil.createWebSocketUrl("/active-queries-ws");
 
-        GWT.log("hostPageBaseUrl: " + hostPageBaseUrl);
-        hostPageBaseUrl = hostPageBaseUrl.substring(0, hostPageBaseUrl.lastIndexOf("/"));
-        hostPageBaseUrl = hostPageBaseUrl.substring(0, hostPageBaseUrl.lastIndexOf("/"));
+            Console.log("Using Web Socket URL: " + url);
+            socket = new WebSocket(url, new WebSocketListener() {
+                @Override
+                public void onOpen(final OpenEvent event) {
+                    // do something on open
+                    Console.log("Opening web socket at " + url);
+                }
 
-        int index = hostPageBaseUrl.indexOf("://");
-        if (index != -1) {
-            hostPageBaseUrl = hostPageBaseUrl.substring(index + 3);
-        }
+                @Override
+                public void onClose(final CloseEvent event) {
+                    // do something on close
+                    Console.log("Closing web socket at " + url);
+                }
 
-        final String url = scheme + "://" + hostPageBaseUrl + "/active-queries-ws";
+                @Override
+                public void onMessage(final MessageEvent event) {
+                    // a message is received
+                    Console.log("Message received on web socket at " + url + " - [" + event.getData() + "]");
+                }
 
-        socket = new Websocket(url);
-        socket.addListener(new WebsocketListenerExt() {
-            @Override
-            public void onClose() {
-                // do something on close
-                GWT.log("Closing web socket at " + url);
-            }
-
-            @Override
-            public void onMessage(String msg) {
-                // a message is received
-                GWT.log("Message received on web socket at " + url + " - [" + msg + "]");
-            }
-
-            @Override
-            public void onOpen() {
-                // do something on open
-                GWT.log("Opening web socket at " + url);
-            }
-
-            @Override
-            public void onError() {
-                GWT.log("Error on web socket at " + url);
-            }
-        });
-
-        open();
-    }
-
-    private void open() {
-        if (!open) {
-            GWT.log("Opening web socket");
-            socket.open();
-            open = true;
+                @Override
+                public void onError(final ErrorEvent event) {
+                    Console.log("Error on web socket at " + url);
+                    AlertEvent.fireError(ActiveQueries.this,
+                            "Error on web socket at " + url,
+                            event.toString(),
+                            null);
+                }
+            });
+        } catch (final RuntimeException e) {
+            error(e);
+            throw e;
         }
     }
 
     private void close() {
-        if (open) {
-            GWT.log("Opening web socket");
-            socket.close();
-            open = false;
+        try {
+            if (socket.getReadyState() == ReadyState.OPEN) {
+                Console.log("Closing web socket");
+                socket.close();
+            }
+        } catch (final RuntimeException e) {
+            error(e);
         }
     }
 
     public void add(final QueryKey key) {
-        open();
-        if (activeKeys.add(key)) {
-            final String msg = "add:" + key.getUuid();
-            GWT.log("Web socket send: [" + msg + "]");
-            socket.send(msg);
+        try {
+            if (activeKeys.add(key)) {
+                final String msg = "add:" + key.getUuid();
+                Console.log("Web socket send: [" + msg + "]");
+                socket.send(msg);
+            }
+        } catch (final RuntimeException e) {
+            error(e);
         }
     }
 
     public void remove(final QueryKey key) {
-        open();
-        final String msg = "remove:" + key.getUuid();
-        GWT.log("Web socket send: [" + msg + "]");
-        socket.send(msg);
-        activeKeys.remove(key);
+        try {
+            final String msg = "remove:" + key.getUuid();
+            Console.log("Web socket send: [" + msg + "]");
+            socket.send(msg);
+            activeKeys.remove(key);
+        } catch (final RuntimeException e) {
+            error(e);
+        }
+    }
+
+    private void error(final RuntimeException e) {
+        AlertEvent.fireError(ActiveQueries.this,
+                e.getMessage(),
+                e.toString(),
+                null);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEvent(event);
     }
 }

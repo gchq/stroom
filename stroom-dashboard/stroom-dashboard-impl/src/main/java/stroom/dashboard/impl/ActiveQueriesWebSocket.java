@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
+import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
@@ -83,6 +84,11 @@ public class ActiveQueriesWebSocket {
                         Collections.newSetFromMap(new ConcurrentHashMap<>())).remove(uuid);
             }
         }
+    }
+
+    @OnError
+    public void onError(final Session session, final Throwable thr) {
+        LOGGER.error(thr.getMessage(), thr);
     }
 
     @OnClose
