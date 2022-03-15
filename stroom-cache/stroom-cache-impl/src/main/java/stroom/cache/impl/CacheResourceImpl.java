@@ -18,6 +18,7 @@ package stroom.cache.impl;
 
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
+import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
@@ -74,8 +75,34 @@ class CacheResourceImpl implements CacheResource {
 
     @Override
     @AutoLogged(OperationType.VIEW)
-    public List<String> list() {
-        return cacheManagerService.get().getCacheNames();
+    public CacheNamesResponse list(final String nodeName) {
+        CacheNamesResponse result;
+
+        // If this is the node that was contacted then just return our local info.
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
+            result = new CacheNamesResponse(cacheManagerService.get().getCacheNames());
+        } else {
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
+                    + ResourcePaths.buildAuthenticatedApiPath(CacheResource.LIST_PATH);
+            try {
+                WebTarget webTarget = webTargetFactory.get().create(url);
+                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                final Response response = webTarget
+                        .request(MediaType.APPLICATION_JSON)
+                        .get();
+                if (response.getStatus() != 200) {
+                    throw new WebApplicationException(response);
+                }
+                result = response.readEntity(CacheNamesResponse.class);
+                if (result == null) {
+                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
+                }
+            } catch (Exception e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+            }
+        }
+
+        return result;
     }
 
     @Override

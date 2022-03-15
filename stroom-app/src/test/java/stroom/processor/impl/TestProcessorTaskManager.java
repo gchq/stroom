@@ -114,10 +114,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
 
-//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails()).isNull();
         processorTaskManager.createTasks();
-//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails()).isNotNull();
-//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isFalse();
 
         final QueryData findStreamQueryData = QueryData
                 .builder()
@@ -153,7 +150,6 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         assertThat(tasks.getList().size()).isEqualTo(1000);
 
         processorTaskManager.createTasks();
-//        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
         assertThat(getTaskCount()).isEqualTo(2000);
         tasks = processorTaskManager.assignTasks(nodeName, 1000);
         assertThat(tasks.getList().size()).isEqualTo(1000);

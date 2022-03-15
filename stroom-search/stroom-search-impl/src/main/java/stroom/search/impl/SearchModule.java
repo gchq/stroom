@@ -21,6 +21,7 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.EventSearch;
 import stroom.query.common.v2.LmdbDataStoreFactory;
+import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionModule;
 import stroom.util.RunnableWrapper;
@@ -48,7 +49,7 @@ public class SearchModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(StroomIndexQueryService.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(LuceneSearchResponseCreatorManager.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(SearchResponseCreatorManager.class);
 
         RestResourcesBinder.create(binder())
                 .bind(StroomIndexQueryResourceImpl.class)
@@ -77,8 +78,8 @@ public class SearchModule extends AbstractModule {
     private static class EvictExpiredElements extends RunnableWrapper {
 
         @Inject
-        EvictExpiredElements(final LuceneSearchResponseCreatorManager luceneSearchResponseCreatorManager) {
-            super(luceneSearchResponseCreatorManager::evictExpiredElements);
+        EvictExpiredElements(final SearchResponseCreatorManager searchResponseCreatorManager) {
+            super(searchResponseCreatorManager::evictExpiredElements);
         }
     }
 }

@@ -117,7 +117,7 @@ appConfig:
     activeQueriesCache:
       expireAfterAccess: "PT1M"
       expireAfterWrite: null
-      maximumSize: 100
+      maximumSize: 1000
   data:
     filesystemVolume:
       createDefaultStreamVolumesOnStart: true
@@ -571,6 +571,11 @@ appConfig:
       minPayloadSize: "1M"
       minValueSize: "1K"
       offHeapResults: true
+      searchResultCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 10000
+      storeSize: "1000000,100,10,1"
       valueQueueSize: 1000000
     shard:
       indexShardSearcherCache:
@@ -583,17 +588,6 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 100
-      searchResultCache:
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-        maximumSize: 10000
-    storeSize: "1000000,100,10,1"
-  searchable:
-    searchResultCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-      maximumSize: 10000
-    storeSize: "1000000,100,10,1"
   security:
     authentication:
       authenticationRequired: true
@@ -741,11 +735,6 @@ appConfig:
     search:
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
-      searchResultCache:
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-        maximumSize: 10000
-      storeSize: "1000000,100,10,1"
   statistics:
     hbase:
       docRefType: "StroomStatsStore"
@@ -860,11 +849,6 @@ appConfig:
       search:
         fetchSize: 5000
         maxResults: 100000
-        searchResultCache:
-          expireAfterAccess: "PT10M"
-          expireAfterWrite: null
-          maximumSize: 10000
-        storeSize: "1000000,100,10,1"
       statisticAggregationBatchSize: 1000000
   ui:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\

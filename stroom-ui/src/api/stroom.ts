@@ -284,6 +284,12 @@ export interface CacheInfoResponse {
   values?: CacheInfo[];
 }
 
+export interface CacheNamesResponse {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: string[];
+}
+
 export interface ChangeDocumentPermissionsRequest {
   cascade?: "NO" | "CHANGES_ONLY" | "ALL";
   changes?: Changes;
@@ -567,20 +573,18 @@ export interface DashboardDoc {
   version?: string;
 }
 
-export interface DashboardQueryKey {
-  applicationInstanceId?: string;
-  componentId?: string;
-  dashboardUuid?: string;
-  queryInstanceId?: string;
-}
-
 export interface DashboardSearchRequest {
+  componentId?: string;
   componentResultRequests?: ComponentResultRequest[];
-  dashboardQueryKey?: DashboardQueryKey;
+  dashboardUuid?: string;
 
   /** The client date/time settings */
   dateTimeSettings?: DateTimeSettings;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
   search?: Search;
+  storeHistory?: boolean;
 
   /**
    * Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field
@@ -593,7 +597,9 @@ export interface DashboardSearchResponse {
   complete?: boolean;
   errors?: string[];
   highlights?: string[];
-  queryKey?: DashboardQueryKey;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
   results?: Result[];
 }
 
@@ -818,15 +824,8 @@ export interface DocumentTypes {
 
 export type DoubleField = AbstractField;
 
-export interface DownloadQueryRequest {
-  dashboardQueryKey?: DashboardQueryKey;
-  searchRequest?: DashboardSearchRequest;
-}
-
 export interface DownloadSearchResultsRequest {
-  applicationInstanceId?: string;
   componentId?: string;
-  dateTimeLocale?: string;
   fileType?: "EXCEL" | "CSV" | "TSV";
 
   /** @format int32 */
@@ -2738,7 +2737,6 @@ export interface Search {
   incremental?: boolean;
   params?: Param[];
   queryInfo?: string;
-  storeHistory?: boolean;
 }
 
 export interface SearchAccountRequest {
@@ -2756,14 +2754,8 @@ export interface SearchApiKeyRequest {
 }
 
 export interface SearchKeepAliveRequest {
-  activeKeys?: DashboardQueryKey[];
-  applicationInstanceId?: string;
-  deadKeys?: DashboardQueryKey[];
-}
-
-export interface SearchKeepAliveResponse {
-  activeKeys?: DashboardQueryKey[];
-  deadKeys?: DashboardQueryKey[];
+  activeKeys?: QueryKey[];
+  deadKeys?: QueryKey[];
 }
 
 /**
@@ -2799,6 +2791,9 @@ export interface SearchResponse {
 
   /** A list of strings to highlight in the UI that should correlate with the search query. */
   highlights: string[];
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey: QueryKey;
   results?: Result[];
 }
 
@@ -4633,23 +4628,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Caches
-     * @name ListCaches
-     * @summary Lists caches
-     * @request GET:/cache/v1
-     * @secure
-     */
-    listCaches: (params: RequestParams = {}) =>
-      this.request<any, string[]>({
-        path: `/cache/v1`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Caches
      * @name GetCacheInfo
      * @summary Gets cache info
      * @request GET:/cache/v1/info
@@ -4658,6 +4636,24 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     getCacheInfo: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, CacheInfoResponse>({
         path: `/cache/v1/info`,
+        method: "GET",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Caches
+     * @name ListCaches
+     * @summary Lists caches
+     * @request GET:/cache/v1/list
+     * @secure
+     */
+    listCaches: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, CacheNamesResponse>({
+        path: `/cache/v1/list`,
         method: "GET",
         query: query,
         secure: true,
@@ -4937,7 +4933,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/dashboard/v1/downloadQuery
      * @secure
      */
-    downloadDashboardQuery: (data: DownloadQueryRequest, params: RequestParams = {}) =>
+    downloadDashboardQuery: (data: DashboardSearchRequest, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/dashboard/v1/downloadQuery`,
         method: "POST",
@@ -5010,7 +5006,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     keepAliveDashboardSearchResults: (data: SearchKeepAliveRequest, params: RequestParams = {}) =>
-      this.request<any, SearchKeepAliveResponse>({
+      this.request<any, boolean>({
         path: `/dashboard/v1/keepAlive`,
         method: "POST",
         body: data,
@@ -8370,14 +8366,33 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Elasticsearch Queries
-     * @name DestroyElasticIndexSearch
+     * @name DestroyElasticIndexQuery
      * @summary Destroy a running query
      * @request POST:/stroom-elastic-index/v2/destroy
      * @secure
      */
-    destroyElasticIndexSearch: (data: QueryKey, params: RequestParams = {}) =>
+    destroyElasticIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/stroom-elastic-index/v2/destroy`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Elasticsearch Queries
+     * @name KeepAliveElasticIndexQuery
+     * @summary Keep a running query alive
+     * @request POST:/stroom-elastic-index/v2/keepAlive
+     * @secure
+     */
+    keepAliveElasticIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/stroom-elastic-index/v2/keepAlive`,
         method: "POST",
         body: data,
         secure: true,

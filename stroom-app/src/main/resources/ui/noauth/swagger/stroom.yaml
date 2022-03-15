@@ -851,20 +851,6 @@ paths:
       summary: Clears a cache
       tags:
       - Caches
-    get:
-      operationId: listCaches
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-          description: default response
-      summary: Lists caches
-      tags:
-      - Caches
   /cache/v1/info:
     get:
       operationId: getCacheInfo
@@ -885,6 +871,24 @@ paths:
                 $ref: '#/components/schemas/CacheInfoResponse'
           description: default response
       summary: Gets cache info
+      tags:
+      - Caches
+  /cache/v1/list:
+    get:
+      operationId: listCaches
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheNamesResponse'
+          description: default response
+      summary: Lists caches
       tags:
       - Caches
   /cluster/lock/v1/keepALive/{nodeName}:
@@ -1203,7 +1207,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DownloadQueryRequest'
+              $ref: '#/components/schemas/DashboardSearchRequest'
         description: downloadQueryRequest
         required: true
       responses:
@@ -1281,7 +1285,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SearchKeepAliveResponse'
+                type: boolean
           description: default response
       summary: Keep search results alive for paging/download etc
       tags:
@@ -4981,7 +4985,7 @@ paths:
       - Elasticsearch Queries
   /stroom-elastic-index/v2/destroy:
     post:
-      operationId: destroyElasticIndexSearch
+      operationId: destroyElasticIndexQuery
       requestBody:
         content:
           application/json:
@@ -4997,6 +5001,26 @@ paths:
                 type: boolean
           description: default response
       summary: Destroy a running query
+      tags:
+      - Elasticsearch Queries
+  /stroom-elastic-index/v2/keepAlive:
+    post:
+      operationId: keepAliveElasticIndexQuery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryKey'
+        description: QueryKey
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Keep a running query alive
       tags:
       - Elasticsearch Queries
   /stroom-elastic-index/v2/search:
@@ -6147,6 +6171,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CacheInfo'
+    CacheNamesResponse:
+      type: object
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            type: string
     ChangeDocumentPermissionsRequest:
       type: object
       properties:
@@ -6611,30 +6644,25 @@ components:
           type: string
         version:
           type: string
-    DashboardQueryKey:
-      type: object
-      properties:
-        applicationInstanceId:
-          type: string
-        componentId:
-          type: string
-        dashboardUuid:
-          type: string
-        queryInstanceId:
-          type: string
     DashboardSearchRequest:
       type: object
       properties:
+        componentId:
+          type: string
         componentResultRequests:
           type: array
           items:
             $ref: '#/components/schemas/ComponentResultRequest'
-        dashboardQueryKey:
-          $ref: '#/components/schemas/DashboardQueryKey'
+        dashboardUuid:
+          type: string
         dateTimeSettings:
           $ref: '#/components/schemas/DateTimeSettings'
+        queryKey:
+          $ref: '#/components/schemas/QueryKey'
         search:
           $ref: '#/components/schemas/Search'
+        storeHistory:
+          type: boolean
         timeout:
           type: integer
           format: int64
@@ -6664,7 +6692,7 @@ components:
             type: string
           uniqueItems: true
         queryKey:
-          $ref: '#/components/schemas/DashboardQueryKey'
+          $ref: '#/components/schemas/QueryKey'
         results:
           type: array
           items:
@@ -7019,21 +7047,10 @@ components:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractField'
-    DownloadQueryRequest:
-      type: object
-      properties:
-        dashboardQueryKey:
-          $ref: '#/components/schemas/DashboardQueryKey'
-        searchRequest:
-          $ref: '#/components/schemas/DashboardSearchRequest'
     DownloadSearchResultsRequest:
       type: object
       properties:
-        applicationInstanceId:
-          type: string
         componentId:
-          type: string
-        dateTimeLocale:
           type: string
         fileType:
           type: string
@@ -10022,8 +10039,6 @@ components:
             $ref: '#/components/schemas/Param'
         queryInfo:
           type: string
-        storeHistory:
-          type: boolean
     SearchAccountRequest:
       type: object
       properties:
@@ -10058,27 +10073,12 @@ components:
         activeKeys:
           type: array
           items:
-            $ref: '#/components/schemas/DashboardQueryKey'
-          uniqueItems: true
-        applicationInstanceId:
-          type: string
-        deadKeys:
-          type: array
-          items:
-            $ref: '#/components/schemas/DashboardQueryKey'
-          uniqueItems: true
-    SearchKeepAliveResponse:
-      type: object
-      properties:
-        activeKeys:
-          type: array
-          items:
-            $ref: '#/components/schemas/DashboardQueryKey'
+            $ref: '#/components/schemas/QueryKey'
           uniqueItems: true
         deadKeys:
           type: array
           items:
-            $ref: '#/components/schemas/DashboardQueryKey'
+            $ref: '#/components/schemas/QueryKey'
           uniqueItems: true
     SearchRequest:
       type: object
@@ -10136,10 +10136,6 @@ components:
           type: array
           items:
             type: string
-            xml:
-              name: error
-          xml:
-            wrapped: true
         highlights:
           type: array
           description: A list of strings to highlight in the UI that should correlate
@@ -10148,20 +10144,15 @@ components:
             type: string
             description: A list of strings to highlight in the UI that should correlate
               with the search query.
-            xml:
-              name: highlight
-          xml:
-            wrapped: true
+        queryKey:
+          $ref: '#/components/schemas/QueryKey'
         results:
           type: array
           items:
             $ref: '#/components/schemas/Result'
-          xml:
-            wrapped: true
       required:
       - highlights
-      xml:
-        name: searchResponse
+      - queryKey
     SelectionIndexShardStatus:
       type: object
       properties:

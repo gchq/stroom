@@ -534,7 +534,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             // to all volumes and any other data on the filesystem. I.e. once the amount of the filesystem in use
             // is greater than the limit writes to those volumes will be prevented. See Volume.isFull() and
             // this.updateVolumeState()
-            return OptionalLong.of(totalBytes);
+            return OptionalLong.of((long) (totalBytes * volumeConfigProvider.get()
+                    .getDefaultStreamVolumeFilesystemUtilisation()));
         } catch (IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}",
                     FileUtil.getCanonicalPath(path)));

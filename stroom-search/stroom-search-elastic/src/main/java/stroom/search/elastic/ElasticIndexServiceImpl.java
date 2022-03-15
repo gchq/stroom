@@ -20,6 +20,11 @@ package stroom.search.elastic;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.search.elastic.search.ElasticSearchStoreFactory;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
@@ -50,24 +55,29 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ElasticIndexServiceImpl implements ElasticIndexService {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexServiceImpl.class);
 
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
     private final ElasticIndexStore elasticIndexStore;
     private final SecurityContext securityContext;
+    private final SearchResponseCreatorManager searchResponseCreatorManager;
+    private final ElasticSearchStoreFactory storeFactory;
 
     @Inject
-    public ElasticIndexServiceImpl(
-        final ElasticClientCache elasticClientCache,
-        final ElasticClusterStore elasticClusterStore,
-        final ElasticIndexStore elasticIndexStore,
-        final SecurityContext securityContext
-    ) {
+    public ElasticIndexServiceImpl(final ElasticClientCache elasticClientCache,
+                                   final ElasticClusterStore elasticClusterStore,
+                                   final ElasticIndexStore elasticIndexStore,
+                                   final SecurityContext securityContext,
+                                   final SearchResponseCreatorManager searchResponseCreatorManager,
+                                   final ElasticSearchStoreFactory storeFactory) {
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
         this.elasticIndexStore = elasticIndexStore;
         this.securityContext = securityContext;
+        this.searchResponseCreatorManager = searchResponseCreatorManager;
+        this.storeFactory = storeFactory;
     }
 
     @Override
@@ -79,41 +89,49 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
     }
 
     @Override
+    public SearchResponse search(final SearchRequest request) {
+        return searchResponseCreatorManager.search(storeFactory, request);
+    }
+
+    @Override
     public List<AbstractField> getDataSourceFields(ElasticIndexDoc index) {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
 
-        return fieldMappings.entrySet().stream().map(field -> {
-            final String fieldName = field.getKey();
-            final FieldMappingMetadata fieldMeta = field.getValue();
-            String nativeType = getFieldPropertyFromMapping(fieldName, field.getValue(), "type");
+        return fieldMappings
+                .entrySet()
+                .stream()
+                .map(field -> {
+                    final String fieldName = field.getKey();
+                    final FieldMappingMetadata fieldMeta = field.getValue();
+                    String nativeType = getFieldPropertyFromMapping(fieldName, field.getValue(), "type");
 
-            if (nativeType == null) {
-                // If field type is null, this is a system field, so ignore
-                return null;
-            } else if (nativeType.equals("alias")) {
-                // Determine the mapping type of the field the alias is referring to
-                try {
-                    final String aliasPath = getFieldPropertyFromMapping(fieldName, field.getValue(), "path");
-                    final FieldMappingMetadata targetFieldMeta = fieldMappings.get(aliasPath);
-                    nativeType = getFieldPropertyFromMapping(aliasPath, targetFieldMeta, "type");
-                } catch (Exception e) {
-                    LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
-                }
-            }
+                    if (nativeType == null) {
+                        // If field type is null, this is a system field, so ignore
+                        return null;
+                    } else if (nativeType.equals("alias")) {
+                        // Determine the mapping type of the field the alias is referring to
+                        try {
+                            final String aliasPath = getFieldPropertyFromMapping(fieldName, field.getValue(), "path");
+                            final FieldMappingMetadata targetFieldMeta = fieldMappings.get(aliasPath);
+                            nativeType = getFieldPropertyFromMapping(aliasPath, targetFieldMeta, "type");
+                        } catch (Exception e) {
+                            LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
+                        }
+                    }
 
-            try {
-                final String fullName = fieldMeta.fullName();
-                final ElasticIndexFieldType elasticFieldType =
-                        ElasticIndexFieldType.fromNativeType(fullName, nativeType);
+                    try {
+                        final String fullName = fieldMeta.fullName();
+                        final ElasticIndexFieldType elasticFieldType =
+                                ElasticIndexFieldType.fromNativeType(fullName, nativeType);
 
-                return elasticFieldType.toDataSourceField(fieldName, true);
-            } catch (IllegalArgumentException e) {
-                LOGGER.warn(e::getMessage);
-                return null;
-            }
-        })
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+                        return elasticFieldType.toDataSourceField(fieldName, true);
+                    } catch (IllegalArgumentException e) {
+                        LOGGER.warn(e::getMessage);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     private String getFieldPropertyFromMapping(final String fieldName, final FieldMappingMetadata fieldMeta,
@@ -198,6 +216,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
      * Check the index mapping for a field `_source` and if enabled, return TRUE.
      * WARNING: This does NOT check whether fields are excluded from `_source`, which is considered an advanced
      * use case. In this situation, the returned value will be empty.
+     *
      * @see "https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html"
      */
     private boolean sourceFieldIsEnabled(final Map<String, FieldMappingMetadata> fieldMappings) {
@@ -230,6 +249,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndexDoc elasticIndex) {
         try {
             final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
@@ -264,13 +284,11 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                     final HashSet<String> multiFieldMappings = new HashSet<>();
                     allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
                         if (mapping.sourceAsMap().get(fieldName) instanceof Map) {
-                            @SuppressWarnings("unchecked")
-                            final Map<String, Object> source =
+                            @SuppressWarnings("unchecked") final Map<String, Object> source =
                                     (Map<String, Object>) mapping.sourceAsMap().get(fieldName);
                             final Object fields = source.get("fields");
 
                             if (fields instanceof Map) {
-                                @SuppressWarnings("unchecked")
                                 final Map<String, Object> multiFields = (Map<String, Object>) fields;
 
                                 multiFields.forEach((multiFieldName, multiFieldMapping) -> {
@@ -281,13 +299,11 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                         }
                     }));
 
-                    allMappings.values().forEach(indexMappings -> {
-                        indexMappings.forEach((fieldName, mapping) -> {
-                            if (!mappings.containsKey(fieldName) && !multiFieldMappings.contains(mapping.fullName())) {
-                                mappings.put(fieldName, mapping);
-                            }
-                        });
-                    });
+                    allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
+                        if (!mappings.containsKey(fieldName) && !multiFieldMappings.contains(mapping.fullName())) {
+                            mappings.put(fieldName, mapping);
+                        }
+                    }));
 
                     return mappings;
                 } catch (final IOException e) {
@@ -300,5 +316,20 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             LOGGER.error(e::getMessage, e);
             return new TreeMap<>();
         }
+    }
+
+    @Override
+    public Boolean keepAlive(final QueryKey queryKey) {
+        return searchResponseCreatorManager.keepAlive(queryKey);
+    }
+
+    @Override
+    public Boolean destroy(final QueryKey queryKey) {
+        return searchResponseCreatorManager.remove(queryKey);
+    }
+
+    @Override
+    public String getType() {
+        return ElasticIndexDoc.DOCUMENT_TYPE;
     }
 }

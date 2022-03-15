@@ -12,6 +12,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2805** : Fix default annotation expression function.
+
+* Issue **#2778** : Simplify search result store cache and query UUID creation.
+
+* Ensure meta types retrieved from config are trimmed.
+
+* Issue **#2802** : Ensure tasks are created but only queued if fill task queue enabled.
+
+* Issue **#2805** : Fix default annotation expression function.
+
 * Make application fail to start if there is no build version/date.
 
 * Issue **#2799** : Add protection for null/empty meta types in `stroom.data.meta.metaTypes`.

@@ -16,8 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
-import stroom.util.shared.ToStringBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,7 +37,7 @@ public class DashboardSearchResponse {
      * The dashboard component that this search response is for.
      */
     @JsonProperty
-    private final DashboardQueryKey queryKey;
+    private final QueryKey queryKey;
 
     /**
      * A set of strings to highlight in the UI that should correlate with the
@@ -63,7 +63,7 @@ public class DashboardSearchResponse {
     private final List<Result> results;
 
     @JsonCreator
-    public DashboardSearchResponse(@JsonProperty("queryKey") final DashboardQueryKey queryKey,
+    public DashboardSearchResponse(@JsonProperty("queryKey") final QueryKey queryKey,
                                    @JsonProperty("highlights") final Set<String> highlights,
                                    @JsonProperty("errors") final List<String> errors,
                                    @JsonProperty("complete") final boolean complete,
@@ -75,7 +75,7 @@ public class DashboardSearchResponse {
         this.results = results;
     }
 
-    public DashboardQueryKey getQueryKey() {
+    public QueryKey getQueryKey() {
         return queryKey;
     }
 
@@ -96,15 +96,6 @@ public class DashboardSearchResponse {
     }
 
     @Override
-    public String toString() {
-        final ToStringBuilder builder = new ToStringBuilder();
-        builder.append("highlights", highlights);
-        builder.append("errors", errors);
-        builder.append("complete", complete);
-        return builder.toString();
-    }
-
-    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -113,15 +104,25 @@ public class DashboardSearchResponse {
             return false;
         }
         final DashboardSearchResponse that = (DashboardSearchResponse) o;
-        return complete == that.complete &&
-                Objects.equals(queryKey, that.queryKey) &&
-                Objects.equals(highlights, that.highlights) &&
-                Objects.equals(errors, that.errors) &&
-                Objects.equals(results, that.results);
+        return complete == that.complete && Objects.equals(queryKey, that.queryKey) && Objects.equals(
+                highlights,
+                that.highlights) && Objects.equals(errors, that.errors) && Objects.equals(results,
+                that.results);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(queryKey, highlights, errors, complete, results);
+    }
+
+    @Override
+    public String toString() {
+        return "DashboardSearchResponse{" +
+                "queryKey=" + queryKey +
+                ", highlights=" + highlights +
+                ", errors=" + errors +
+                ", complete=" + complete +
+                ", results=" + results +
+                '}';
     }
 }

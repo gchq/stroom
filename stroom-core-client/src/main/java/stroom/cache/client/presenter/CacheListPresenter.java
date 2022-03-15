@@ -16,6 +16,7 @@
 
 package stroom.cache.client.presenter;
 
+import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
@@ -23,8 +24,8 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.util.shared.ResultPage;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.node.client.NodeManager;
+import stroom.util.client.DelayedUpdate;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.ButtonCell;
@@ -35,20 +36,26 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
-    private final RestDataProvider<String, ResultPage<String>> dataProvider;
+    private final RestFactory restFactory;
+    private final Set<String> allNames = new HashSet<>();
+    private DelayedUpdate delayedUpdate;
 
     @Inject
     public CacheListPresenter(final EventBus eventBus,
                               final RestFactory restFactory,
-                              final TooltipPresenter tooltipPresenter) {
+                              final NodeManager nodeManager) {
         super(eventBus, new DataGridViewImpl<>(true));
+        this.restFactory = restFactory;
 
         // Name
         getView().addResizableColumn(new Column<String, String>(new TextCell()) {
@@ -73,20 +80,41 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
 
         getView().addEndColumn(new EndColumn<>());
 
-        dataProvider = new RestDataProvider<String, ResultPage<String>>(eventBus) {
-            @Override
-            protected void exec(final Consumer<ResultPage<String>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
-                final Rest<List<String>> rest = restFactory.create();
-                rest
-                        .onSuccess(list -> {
-                            dataConsumer.accept(new ResultPage<>(list));
-                        })
-                        .onFailure(throwableConsumer)
-                        .call(CACHE_RESOURCE).list();
-            }
-        };
+        final RestDataProvider<String, CacheNamesResponse> dataProvider =
+                new RestDataProvider<String, CacheNamesResponse>(getEventBus()) {
+                    @Override
+                    protected void exec(final Consumer<CacheNamesResponse> dataConsumer,
+                                        final Consumer<Throwable> throwableConsumer) {
+                        if (delayedUpdate == null) {
+                            delayedUpdate = new DelayedUpdate(() -> combineNodeTasks(dataConsumer));
+                        }
+                        delayedUpdate.reset();
+                        nodeManager.listAllNodes(nodeNames -> fetchNamesForNodes(nodeNames), throwableConsumer);
+                    }
+                };
         dataProvider.addDataDisplay(getView().getDataDisplay());
+    }
+
+    private void fetchNamesForNodes(final List<String> nodeNames) {
+        for (final String nodeName : nodeNames) {
+            final Rest<CacheNamesResponse> rest = restFactory.create();
+            rest
+                    .onSuccess(response -> {
+                        allNames.addAll(response.getValues());
+                        delayedUpdate.update();
+                    })
+                    .onFailure(throwable -> {
+                        delayedUpdate.update();
+                    })
+                    .call(CACHE_RESOURCE).list(nodeName);
+        }
+    }
+
+    private void combineNodeTasks(final Consumer<CacheNamesResponse> dataConsumer) {
+        // Combine data from all nodes.
+        final List<String> list = allNames.stream().sorted().collect(Collectors.toList());
+        final CacheNamesResponse response = new CacheNamesResponse(list);
+        dataConsumer.accept(response);
     }
 
     public MultiSelectionModel<String> getSelectionModel() {

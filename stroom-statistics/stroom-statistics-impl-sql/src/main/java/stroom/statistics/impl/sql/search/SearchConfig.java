@@ -1,9 +1,7 @@
 package stroom.statistics.impl.sql.search;
 
-import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
-import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,37 +12,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class SearchConfig extends AbstractConfig implements IsStroomConfig {
 
-    private final String storeSize;
     private final int maxResults;
     private final int fetchSize;
-    private final CacheConfig searchResultCache;
 
     public SearchConfig() {
-        storeSize = "1000000,100,10,1";
         maxResults = 100000;
         fetchSize = 5000;
-
-        searchResultCache = CacheConfig.builder()
-                .maximumSize(10000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
-                .build();
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public SearchConfig(@JsonProperty("storeSize") final String storeSize,
-                        @JsonProperty("maxResults") final int maxResults,
-                        @JsonProperty("fetchSize") final int fetchSize,
-                        @JsonProperty("searchResultCache") final CacheConfig searchResultCache) {
-        this.storeSize = storeSize;
+    public SearchConfig(@JsonProperty("maxResults") final int maxResults,
+                        @JsonProperty("fetchSize") final int fetchSize) {
         this.maxResults = maxResults;
         this.fetchSize = fetchSize;
-        this.searchResultCache = searchResultCache;
-    }
-
-    @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")
-    public String getStoreSize() {
-        return storeSize;
     }
 
     @JsonPropertyDescription("The maximum number of records that can be returned from the statistics DB in a " +
@@ -61,17 +42,11 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
         return fetchSize;
     }
 
-    public CacheConfig getSearchResultCache() {
-        return searchResultCache;
-    }
-
     @Override
     public String toString() {
         return "SearchConfig{" +
-                "storeSize='" + storeSize + '\'' +
                 ", maxResults=" + maxResults +
                 ", fetchSize=" + fetchSize +
-                ", searchResultCache=" + searchResultCache +
                 '}';
     }
 }
