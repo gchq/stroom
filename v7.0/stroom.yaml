@@ -2593,6 +2593,26 @@ paths:
       summary: Update status on matching meta data
       tags:
       - Meta
+  /meta/v1/{id}:
+    get:
+      operationId: fetch
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Meta'
+          description: default response
+      summary: Get a meta record for a given id, if permitted.
+      tags:
+      - Meta
   /node/v1:
     get:
       operationId: findNodes
