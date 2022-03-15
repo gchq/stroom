@@ -8,6 +8,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
@@ -15,6 +16,8 @@ import io.github.classgraph.ScanResult;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -32,10 +35,10 @@ import java.util.stream.Collectors;
 
 /**
  * Generate the content for content/en/docs/user-guide/pipelines/element-reference.md
- * in stroom-docs.
+ * and layouts/shortcodes/pipe-elm.html in stroom-docs.
  * <p>
- * Produces something like this, with a H2 for each category and a H3 for each
- * element in that category.
+ * generatePipelineElementReferenceContent ploduces something like this, with
+ * a H2 for each category and a H3 for each element in that category.
  * <p>
  * Once the doc has been amended with descriptions you will prob need to run this
  * the diff the output against the stroom-docs file to merge new/changed elements
@@ -55,6 +58,9 @@ import java.util.stream.Collectors;
  * * Reader
  * * Stepping
  * </pre>
+ *
+ * <p>
+ * generatePipelineElementReferenceContent ploduces something like this, with
  */
 public class GeneratePipelineElementsDoc {
 
@@ -92,7 +98,9 @@ public class GeneratePipelineElementsDoc {
                     """
     ));
 
-    public static void main(String[] args) {
+    @Disabled // Manual only
+    @Test
+    void generatePipelineElementReferenceContent() {
         try (ScanResult scanResult =
                 new ClassGraph()
                         .enableAllInfo()             // Scan classes, methods, fields, annotations
@@ -110,6 +118,40 @@ public class GeneratePipelineElementsDoc {
                     .stream()
                     .sorted(Entry.comparingByKey())
                     .map(GeneratePipelineElementsDoc::mapCategoryGroup)
+                    .forEach(System.out::println);
+        }
+    }
+
+    /**
+     * The output goes into layouts/shortcodes/pipe-elm.html in stroom-docs
+     */
+    @Disabled // Manual only
+    @Test
+    void generatePipeElmShortcodeContent() {
+        try (ScanResult scanResult =
+                new ClassGraph()
+                        .enableAllInfo()             // Scan classes, methods, fields, annotations
+                        .whitelistPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
+                        .scan()) {                   // Start the scan
+
+            scanResult.getClassesImplementing(Element.class.getName())
+                    .parallelStream()
+                    .map(GeneratePipelineElementsDoc::mapClassInfo)
+                    .filter(Objects::nonNull)
+                    .filter(elementInfo -> !Category.INTERNAL.equals(elementInfo.category))
+                    .sequential()
+                    .sorted(Comparator.comparing(ElementInfo::getType))
+                    .map(elementInfo -> {
+                        final String template = """
+                                  {{ else if eq (lower $elm_name) "{}" }}
+                                    {{ $filename = "{}" }}
+                                    {{ $elm_name = "{}" }}
+                                """.stripTrailing();
+                        return LogUtil.message(template,
+                                elementInfo.type.toLowerCase(),
+                                elementInfo.iconFilename,
+                                ModelStringUtil.toCamelCase(elementInfo.clazz.getSimpleName()));
+                    })
                     .forEach(System.out::println);
         }
     }
@@ -170,9 +212,9 @@ public class GeneratePipelineElementsDoc {
                                 .withColumn(Column.builder("Description", PropertyInfo::getDescription)
                                         .build())
                                 .withColumn(Column.builder("Default Value", (PropertyInfo propInfo) ->
-                                        propInfo.getDefaultValue().isEmpty()
-                                                ? "-"
-                                                : propInfo.getDefaultValue())
+                                                propInfo.getDefaultValue().isEmpty()
+                                                        ? "-"
+                                                        : propInfo.getDefaultValue())
                                         .build())
                                 .build();
                     } else {
@@ -222,7 +264,7 @@ public class GeneratePipelineElementsDoc {
 
     @Nullable
     private static ElementInfo mapClassInfo(final ClassInfo elementClassInfo) {
-        final Class<?> clazz = elementClassInfo.loadClass();
+        final Class<? extends Element> clazz = (Class<? extends Element>) elementClassInfo.loadClass();
         if (!clazz.isInterface()
                 && !Modifier.isAbstract(clazz.getModifiers())
                 && !clazz.getSimpleName().startsWith("Abstract")
@@ -237,7 +279,7 @@ public class GeneratePipelineElementsDoc {
             final Set<String> roles = new HashSet<>(Arrays.asList(elementAnno.roles()));
             final List<PropertyInfo> propertyInfoList = getPropertyInfoList(clazz);
 
-            return new ElementInfo(type, iconFileName, category, description, roles, propertyInfoList);
+            return new ElementInfo(clazz, type, iconFileName, category, description, roles, propertyInfoList);
         } else {
             return null;
         }
@@ -276,6 +318,7 @@ public class GeneratePipelineElementsDoc {
 
     private static class ElementInfo {
 
+        private final Class<? extends Element> clazz;
         private final String type;
         private final String iconFilename;
         private final Category category;
@@ -283,12 +326,14 @@ public class GeneratePipelineElementsDoc {
         private final Set<String> roles;
         private final List<PropertyInfo> propertyInfoList;
 
-        public ElementInfo(final String type,
+        public ElementInfo(final Class<? extends Element> clazz,
+                           final String type,
                            final String iconFilename,
                            final Category category,
                            final String description,
                            final Set<String> roles,
                            final List<PropertyInfo> propertyInfoList) {
+            this.clazz = clazz;
             this.type = type;
             this.iconFilename = iconFilename;
             this.category = category;
