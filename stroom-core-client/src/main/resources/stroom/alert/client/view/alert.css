@@ -19,7 +19,8 @@
 }
 
 .message {
-	width: 300px;
+    /* To match .detail (accounting for the margin-left and border) */
+	width: 512px;
 	padding-left: 10px;
 	word-wrap: break-word;
 }

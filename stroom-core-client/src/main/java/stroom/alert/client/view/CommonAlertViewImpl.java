@@ -140,7 +140,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
             builder.append(html);
             builder.appendHtmlConstant("</div>");
             detail.setHTML(builder.toSafeHtml());
-            showDetail(false);
+            showDetail(true);
         } else {
             showHideDetail.setVisible(false);
             setDetailVisible(false);

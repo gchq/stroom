@@ -443,10 +443,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void showWarnings() {
         if (currentWarnings != null && !currentWarnings.isEmpty()) {
+            final String msg = currentWarnings.size() == 1
+                    ? ("The following warning was created while running this search:")
+                    : ("The following " + currentWarnings.size()
+                            + " warnings have been created while running this search:");
             final String errors = String.join("\n", currentWarnings);
-            AlertEvent.fireWarn(this,
-                    "The following warnings have been created while running this search:",
-                    errors, null);
+            AlertEvent.fireWarn(this, msg, errors, null);
         }
     }
 

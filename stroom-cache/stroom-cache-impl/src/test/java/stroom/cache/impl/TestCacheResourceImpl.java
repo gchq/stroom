@@ -105,21 +105,41 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
     }
 
     @Test
-    void list() {
+    void list_sameNode() {
         final String subPath = ResourcePaths.buildPath(CacheResource.LIST);
 
-        final List<String> expectedResponse = List.of("cache1", "cache2");
+        final List<String> caches = List.of("cache1", "cache2");
+        final CacheNamesResponse expectedResponse = new CacheNamesResponse(caches);
 
         initNodes();
 
         when(cacheManagerServiceMocks.get("node1").getCacheNames())
-                .thenReturn(expectedResponse);
+                .thenReturn(caches);
 
         doGetTest(
                 subPath,
                 CacheNamesResponse.class,
-                new CacheNamesResponse(expectedResponse),
+                expectedResponse,
                 webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1"));
+    }
+
+    @Test
+    void list_otherNode() {
+        final String subPath = ResourcePaths.buildPath(CacheResource.LIST);
+
+        final List<String> caches = List.of("cache1", "cache2");
+        final CacheNamesResponse expectedResponse = new CacheNamesResponse(caches);
+
+        initNodes();
+
+        when(cacheManagerServiceMocks.get("node2").getCacheNames())
+                .thenReturn(caches);
+
+        doGetTest(
+                subPath,
+                CacheNamesResponse.class,
+                expectedResponse,
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node2"));
     }
 
     @Test
