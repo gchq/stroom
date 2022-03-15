@@ -291,6 +291,9 @@ class OpenIdManager {
             } else {
                 LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
             }
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("User identity from jwtContext: [{}]", userIdentity.orElse(null));
+            }
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
         }
@@ -301,6 +304,10 @@ class OpenIdManager {
 
             // Provide identity from the session if we are allowing this to happen.
             userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("User identity from session: [{}]", userIdentity.orElse(null));
+            }
 
         } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
             // Set the user ref in the session.

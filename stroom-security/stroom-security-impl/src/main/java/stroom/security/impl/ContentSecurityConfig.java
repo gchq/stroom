@@ -40,6 +40,7 @@ public class ContentSecurityConfig extends AbstractConfig {
                 "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
                 "img-src 'self' data:; " +
                 "style-src 'self' 'unsafe-inline'; " +
+                "connect-src 'self' wss:; " +
                 "frame-ancestors 'self';";
         contentTypeOptions = "nosniff";
         frameOptions = "sameorigin";

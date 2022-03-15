@@ -35,6 +35,7 @@ dependencies {
     compile libs.jaxb_api
     compile libs.jersey_client
     compile libs.jersey_common
+    compile libs.dropwizard_websockets
     compile libs.poi
     compile libs.poi_ooxml
     compile libs.slf4j_api

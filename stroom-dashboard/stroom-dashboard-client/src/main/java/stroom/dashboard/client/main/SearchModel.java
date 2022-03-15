@@ -48,7 +48,7 @@ public class SearchModel {
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
     private final RestFactory restFactory;
-    private final SearchKeepAlive searchKeepAlive;
+    private final ActiveQueries activeQueries;
     private final QueryPresenter queryPresenter;
     private final IndexLoader indexLoader;
     private final TimeZones timeZones;
@@ -62,12 +62,12 @@ public class SearchModel {
     private boolean searching;
 
     public SearchModel(final RestFactory restFactory,
-                       final SearchKeepAlive searchKeepAlive,
+                       final ActiveQueries activeQueries,
                        final QueryPresenter queryPresenter,
                        final IndexLoader indexLoader,
                        final TimeZones timeZones) {
         this.restFactory = restFactory;
-        this.searchKeepAlive = searchKeepAlive;
+        this.activeQueries = activeQueries;
         this.queryPresenter = queryPresenter;
         this.indexLoader = indexLoader;
         this.timeZones = timeZones;
@@ -238,7 +238,7 @@ public class SearchModel {
     public void destroy() {
         GWT.log("SearchModel - destroy()");
         if (currentQueryKey != null) {
-            searchKeepAlive.remove(currentQueryKey);
+            activeQueries.remove(currentQueryKey);
             currentQueryKey = null;
         }
         setMode(Mode.INACTIVE);
@@ -281,7 +281,7 @@ public class SearchModel {
                     .onSuccess(response -> {
                         if (search == currentSearch) {
                             currentQueryKey = response.getQueryKey();
-                            searchKeepAlive.add(response.getQueryKey());
+                            activeQueries.add(response.getQueryKey());
 
                             try {
                                 update(response);
@@ -295,7 +295,7 @@ public class SearchModel {
 
                         } else {
                             // We have changed the search so just destroy this one.
-                            searchKeepAlive.remove(response.getQueryKey());
+                            activeQueries.remove(response.getQueryKey());
                         }
                     })
                     .onFailure(throwable -> {
