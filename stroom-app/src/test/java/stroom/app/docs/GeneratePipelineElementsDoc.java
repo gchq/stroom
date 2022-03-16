@@ -5,6 +5,7 @@ import stroom.pipeline.factory.Element;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.source.SourceElement;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LogUtil;
@@ -138,15 +139,16 @@ public class GeneratePipelineElementsDoc {
                     .parallelStream()
                     .map(GeneratePipelineElementsDoc::mapClassInfo)
                     .filter(Objects::nonNull)
-                    .filter(elementInfo -> !Category.INTERNAL.equals(elementInfo.category))
+                    .filter(elementInfo ->
+                            !Category.INTERNAL.equals(elementInfo.category)
+                                    || SourceElement.class.equals(elementInfo.clazz))
                     .sequential()
                     .sorted(Comparator.comparing(ElementInfo::getType))
                     .map(elementInfo -> {
                         final String template = """
-                                  {{ else if eq (lower $elm_name) "{}" }}
-                                    {{ $filename = "{}" }}
-                                    {{ $elm_name = "{}" }}
-                                """.stripTrailing();
+                                {{ else if eq (lower $elm_name) "{}" }}
+                                  {{ $filename = "{}" }}
+                                  {{ $elm_name = "{}" }}""";
                         return LogUtil.message(template,
                                 elementInfo.type.toLowerCase(),
                                 elementInfo.iconFilename,
