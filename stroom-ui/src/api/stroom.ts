@@ -6484,6 +6484,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         type: ContentType.Json,
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags Meta
+     * @name Fetch
+     * @summary Get a meta record for a given id, if permitted.
+     * @request GET:/meta/v1/{id}
+     * @secure
+     */
+    fetch: (id: number, params: RequestParams = {}) =>
+      this.request<any, Meta>({
+        path: `/meta/v1/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
   };
   node = {
     /**

@@ -34,6 +34,7 @@ import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.Builder;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort.SortDirection;
@@ -157,10 +158,16 @@ public class SearchRequestMapper {
                 final TableSettings childTableSettings = mapVisSettingsToTableSettings(
                         visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
-                final ResultRequest copy = ResultRequest.builder()
+                final Builder builder = ResultRequest.builder()
                         .componentId(visResultRequest.getComponentId())
-                        .addMappings(parentTableSettings)
-                        .addMappings(childTableSettings)
+                        .addMappings(parentTableSettings);
+
+                if (childTableSettings != null) {
+                    // e.g. the vis has not been specified, i.e. user just added a vis pane and did nothing to it
+                    builder.addMappings(childTableSettings);
+                }
+
+                final ResultRequest copy = builder
                         .requestedRange(visResultRequest.getRequestedRange())
                         .resultStyle(ResultStyle.FLAT)
                         .fetch(visResultRequest.getFetch())

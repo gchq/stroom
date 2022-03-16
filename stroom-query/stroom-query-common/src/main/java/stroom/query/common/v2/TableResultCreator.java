@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,10 +81,16 @@ public class TableResultCreator implements ResultCreator {
             Set<Key> openGroups = OpenGroupsConverter.convertSet(resultRequest.getOpenGroups());
 
             TableSettings tableSettings = resultRequest.getMappings().get(0);
-            latestFields = tableSettings.getFields();
+            latestFields = tableSettings != null
+                    ? tableSettings.getFields()
+                    : Collections.emptyList();
             // Create a set of sizes that are the minimum values for the combination of user provided sizes for
             // the table and the default maximum sizes.
-            final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
+            final Sizes maxResults = Sizes.min(
+                    Sizes.create(tableSettings != null
+                            ? tableSettings.getMaxResults()
+                            : Collections.emptyList()),
+                    defaultMaxResultsSizes);
 
             // Create the row creator.
             Optional<RowCreator> optionalRowCreator =

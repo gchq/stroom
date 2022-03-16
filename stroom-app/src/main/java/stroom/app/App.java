@@ -26,6 +26,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.ConfigMapper;
+import stroom.dashboard.impl.ActiveQueriesWebSocket;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -61,6 +62,7 @@ import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.dropwizard.websockets.WebsocketBundle;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
@@ -147,6 +149,9 @@ public class App extends Application<Config> {
         // This allows us to use env var templating and relative (to stroom home) paths in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(StroomYamlUtil.createConfigurationSourceProvider(
                 bootstrap.getConfigurationSourceProvider(), true));
+
+        // Add websockets.
+        bootstrap.addBundle(new WebsocketBundle(ActiveQueriesWebSocket.class));
 
         // Add the GWT UI assets.
         bootstrap.addBundle(new DynamicAssetsBundle(

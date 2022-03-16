@@ -172,7 +172,8 @@ ext.libs = [
         dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks", // version controlled by DW BOM
         dropwizard_servlets            : "io.dropwizard:dropwizard-servlets", // version controlled by DW BOM
         dropwizard_testing             : "io.dropwizard:dropwizard-testing", // version controlled by DW BOM
-        dropwizard_validation          : "io.dropwizard:dropwizard-validation",//files("libs/dropwizard-validation-2.0.28.jar"),//"io.dropwizard:dropwizard-validation", // version controlled by DW BOM
+        dropwizard_validation          : "io.dropwizard:dropwizard-validation", // version controlled by DW BOM
+        dropwizard_websockets          : "com.liveperson:dropwizard-websockets:1.3.14",
         elasticsearch_rest_high_level_client : "org.elasticsearch.client:elasticsearch-rest-high-level-client:$versions.elasticsearch",
         elasticsearch_rest_client      : "org.elasticsearch.client:elasticsearch-rest-client:$versions.elasticsearch",
         elasticsearch                  : "org.elasticsearch:elasticsearch:$versions.elasticsearch",

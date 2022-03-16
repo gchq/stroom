@@ -12,6 +12,28 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2807** : Show all nodes on Index Volume edit dialog, not just enabled.
+
+* Change the common alert dialog to show the detail by default.
+
+* Change the common alert dialog so the width is the same if detail is shown or not.
+
+* Issue **#2806** : Fix NPEs when a visualisation pane is present but the visualisation is not defined. Show warning about the misconfiguration.
+
+* Add _Dual_ searchable datasource to always return a single column/row.
+
+* Issue **#2810** : Fix display of error streams with the data() link expression.
+
+* Issue **#2801** : Add our own native web socket code to GWT.
+
+* Fix failing test.
+
+* Issue **#2801** : Add `connect-src 'self' wss:;` to default `contentSecurityPolicy` property, select web sockets ws/wss based on current scheme and improve logging.
+
+* Issue **#2618** : Fix UI to show all caches even ones that only exist on remote nodes.
+
+* Issue **#2801** : Add Web Socket mechanism to keep search results active.
+
 * Issue **#2805** : Fix default annotation expression function.
 
 * Issue **#2778** : Simplify search result store cache and query UUID creation.

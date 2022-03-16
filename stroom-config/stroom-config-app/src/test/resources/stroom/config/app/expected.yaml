@@ -115,7 +115,7 @@ appConfig:
         prepStmtCacheSqlLimit: 256
   dashboard:
     activeQueriesCache:
-      expireAfterAccess: "PT1M"
+      expireAfterAccess: "P10D"
       expireAfterWrite: null
       maximumSize: 1000
   data:
@@ -707,7 +707,7 @@ appConfig:
     webContent:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
-        \ frame-ancestors 'self';"
+        \ connect-src 'self' wss:; frame-ancestors 'self';"
       contentTypeOptions: "nosniff"
       frameOptions: "sameorigin"
       xssProtection: "1; mode=block"

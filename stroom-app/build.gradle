@@ -206,6 +206,7 @@ dependencies {
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.dropwizard_servlets
     implementation libs.dropwizard_validation
+    implementation libs.dropwizard_websockets
     implementation libs.eventLogging
     implementation libs.flyway_core
     implementation libs.guava
