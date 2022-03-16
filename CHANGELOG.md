@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.193] - 2022-03-16
+
+* Issue **#2801** : Add Guice support and authorisation to web sockets.
+
+* Issue **#2804** : Ensure unowned tasks are added even when there are many associated locked meta records.
+
+
 ## [v7.0-beta.192] - 2022-03-15
 
 * Issue **#2807** : Show all nodes on Index Volume edit dialog, not just enabled.
@@ -4280,7 +4287,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.192...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.193...HEAD
+[v7.0-beta.193]: https://github.com/gchq/stroom/compare/v7.0-beta.192...v7.0-beta.193
 [v7.0-beta.192]: https://github.com/gchq/stroom/compare/v7.0-beta.191...v7.0-beta.192
 [v7.0-beta.191]: https://github.com/gchq/stroom/compare/v7.0-beta.190...v7.0-beta.191
 [v7.0-beta.190]: https://github.com/gchq/stroom/compare/v7.0-beta.189...v7.0-beta.190
