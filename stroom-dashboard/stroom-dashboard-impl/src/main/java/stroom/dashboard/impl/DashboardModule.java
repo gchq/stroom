@@ -23,6 +23,7 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.guice.WebSocketBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
@@ -49,5 +50,8 @@ public class DashboardModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(DashboardResourceImpl.class);
+
+        WebSocketBinder.create(binder())
+                .bind(ActiveQueriesWebSocket.class);
     }
 }

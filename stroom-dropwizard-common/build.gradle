@@ -15,6 +15,7 @@ dependencies {
     compile libs.dropwizard_jetty
     compile libs.dropwizard_lifecycle
     compile libs.dropwizard_metrics_healthchecks
+    compile libs.dropwizard_websockets
     compile libs.javax_inject
     compile libs.jetty_servlet
     compile libs.javax_servlet_api

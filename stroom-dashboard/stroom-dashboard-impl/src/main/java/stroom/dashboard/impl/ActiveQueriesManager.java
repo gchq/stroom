@@ -41,8 +41,6 @@ class ActiveQueriesManager implements Clearable {
         this.securityContext = securityContext;
         cache = cacheManager
                 .create(CACHE_NAME, dashboardConfig::getActiveQueriesCache, null, this::destroy);
-
-        ActiveQueriesWebSocket.setActiveQueriesManager(this);
     }
 
     private void destroy(final QueryKey key, final ActiveQuery value) {

@@ -25,13 +25,13 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.ConfigMapper;
-import stroom.dashboard.impl.ActiveQueriesWebSocket;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
+import stroom.dropwizard.common.WebSockets;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
@@ -59,7 +59,6 @@ import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import io.dropwizard.websockets.WebsocketBundle;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
@@ -93,6 +92,8 @@ public class App extends Application<Config> {
     private Filters filters;
     @Inject
     private Servlets servlets;
+    @Inject
+    private WebSockets webSockets;
     @Inject
     private SessionListeners sessionListeners;
     @Inject
@@ -142,9 +143,6 @@ public class App extends Application<Config> {
         // This allows us to use env var templating and relative (to stroom home) paths in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(StroomYamlUtil.createConfigurationSourceProvider(
                 bootstrap.getConfigurationSourceProvider(), true));
-
-        // Add websockets.
-        bootstrap.addBundle(new WebsocketBundle(ActiveQueriesWebSocket.class));
 
         // Add the GWT UI assets.
         bootstrap.addBundle(new AssetsBundle(
@@ -259,6 +257,9 @@ public class App extends Application<Config> {
         // Add servlets
         servlets.register();
 
+        // Add web sockets
+        webSockets.register();
+
         // Add session listeners.
         sessionListeners.register();
 
@@ -319,7 +320,7 @@ public class App extends Application<Config> {
         final AppConfigValidator appConfigValidator = validationOnlyInjector.getInstance(AppConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
-                configFile.toAbsolutePath().normalize().toString());
+                configFile.toAbsolutePath().normalize());
 
         final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(appConfig);
 

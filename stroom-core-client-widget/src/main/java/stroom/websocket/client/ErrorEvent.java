@@ -1,5 +1,21 @@
 package stroom.websocket.client;
 
+/**
+ * isTrusted: true
+ * bubbles: false
+ * cancelBubble: false
+ * cancelable: false
+ * composed: false
+ * currentTarget: WebSocket {url: 'ws://localhost:8080/active-queries-ws', readyState: 3, bufferedAmount: 0, onopen: ƒ, onerror: ƒ, …}
+ * defaultPrevented: false
+ * eventPhase: 0
+ * path: []
+ * returnValue: true
+ * srcElement: WebSocket {url: 'ws://localhost:8080/active-queries-ws', readyState: 3, bufferedAmount: 0, onopen: ƒ, onerror: ƒ, …}
+ * target: WebSocket {url: 'ws://localhost:8080/active-queries-ws', readyState: 3, bufferedAmount: 0, onopen: ƒ, onerror: ƒ, …}
+ * timeStamp: 16817.79999999702
+ * type: "error"
+ */
 public final class ErrorEvent extends WebSocketEvent {
 
     /**
