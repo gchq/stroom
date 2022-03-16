@@ -22,6 +22,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
@@ -49,6 +50,10 @@ class MetaResourceImpl implements MetaResource {
         this.eventLoggingServiceProvider = eventLoggingServiceProvider;
     }
 
+    @Override
+    public Meta fetch(final long id) {
+        return metaServiceProvider.get().getMeta(id);
+    }
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
