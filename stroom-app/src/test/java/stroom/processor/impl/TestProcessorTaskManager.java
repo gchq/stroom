@@ -34,9 +34,9 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.util.logging.Metrics;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.Metrics;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
