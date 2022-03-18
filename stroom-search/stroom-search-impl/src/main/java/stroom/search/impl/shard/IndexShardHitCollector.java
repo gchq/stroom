@@ -63,6 +63,12 @@ class IndexShardHitCollector extends SimpleCollector {
 
     @Override
     public void collect(final int doc) {
+        // The interrupt status seems to be cleared somewhere is Lucene code so check here if we should terminate.
+        if (taskContext.isTerminated()) {
+            info(() -> "Quitting...");
+            throw new TaskTerminatedException();
+        }
+
         // Pause the current search if the deque is full.
         final int docId = docBase + doc;
 

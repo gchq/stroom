@@ -190,16 +190,21 @@ public class IndexShardSearchTaskHandler {
                                     docIdQueue.complete();
                                 }
                             });
-                    CompletableFuture.runAsync(runnable, executor);
+                    final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
 
-                    // Start converting found docIds into stored data values
-                    while (true) {
-                        // Take the next item
-                        final int docId = docIdQueue.take();
-                        // If we have a doc id then retrieve the stored data for it.
-                        SearchProgressLog.increment(queryKey,
-                                SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
-                        getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
+                    try {
+                        // Start converting found docIds into stored data values
+                        while (true) {
+                            // Take the next item
+                            final int docId = docIdQueue.take();
+                            // If we have a doc id then retrieve the stored data for it.
+                            SearchProgressLog.increment(queryKey,
+                                    SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
+                            getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
+                        }
+                    } finally {
+                        // Ensure the searcher completes before we exit.
+                        completableFuture.join();
                     }
                 } catch (final InterruptedException e) {
                     LOGGER.trace(e::getMessage, e);

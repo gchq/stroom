@@ -12,6 +12,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2815** : Ensure early termination of Lucene searches when required.
+
 * Issue **#2801** : Add Guice support and authorisation to web sockets.
 
 * Issue **#2804** : Ensure unowned tasks are added even when there are many associated locked meta records.
