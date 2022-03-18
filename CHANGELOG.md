@@ -12,9 +12,53 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2815** : Ensure early termination of Lucene searches when required.
+
+* Issue **#2801** : Add Guice support and authorisation to web sockets.
+
+* Issue **#2804** : Ensure unowned tasks are added even when there are many associated locked meta records.
+
+* Issue **#2807** : Show all nodes on Index Volume edit dialog, not just enabled.
+
+* Change the common alert dialog to show the detail by default.
+
+* Change the common alert dialog so the width is the same if detail is shown or not.
+
+* Issue **#2806** : Fix NPEs when a visualisation pane is present but the visualisation is not defined. Show warning about the misconfiguration.
+
+* Add _Dual_ searchable datasource to always return a single column/row.
+
+* Issue **#2810** : Fix display of error streams with the data() link expression.
+
+* Issue **#2801** : Add our own native web socket code to GWT.
+
+* Fix failing test.
+
+* Issue **#2801** : Add `connect-src 'self' wss:;` to default `contentSecurityPolicy` property, select web sockets ws/wss based on current scheme and improve logging.
+
+* Issue **#2618** : Fix UI to show all caches even ones that only exist on remote nodes.
+
+* Issue **#2801** : Add Web Socket mechanism to keep search results active.
+
+* Issue **#2805** : Fix default annotation expression function.
+
+* Issue **#2778** : Simplify search result store cache and query UUID creation.
+
+* Ensure meta types retrieved from config are trimmed.
+
+* Issue **#2802** : Ensure tasks are created but only queued if fill task queue enabled.
+
+* Issue **#2805** : Fix default annotation expression function.
+
+* Make application fail to start if there is no build version/date.
+
+* Issue **#2799** : Add protection for null/empty meta types in `stroom.data.meta.metaTypes`.
+
+* Issue **#2795** : Speculative fix for the bind errors on MetaTypeDaoImpl.
+  
 * Issue **#2782** : Fix validation of primitive properties, e.g. booleans.
 
-* Issue **#2782** : Fix propety edit screen `Sources` field showing `Multiple Sources` for a single node.
+* Issue **#2782** : Fix property edit screen `Sources` field showing `Multiple Sources` for a single node.
 
 * Issue **#2787** : Add config_update_tracker table to improve the process of updating each node's effective config. Also fix the updating of the effective value/source columns in the properties list view.
 

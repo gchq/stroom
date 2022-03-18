@@ -22,6 +22,7 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
@@ -32,13 +33,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 class TestSearchResponseMapper {
 
     @Test
     void testResponse() {
         final SearchResponseMapper mapper = new SearchResponseMapper();
-        final DashboardSearchResponse result = mapper.mapResponse(null, getSearchResponse());
+        final DashboardSearchResponse result = mapper.mapResponse(getSearchResponse());
         System.out.println(result);
     }
 
@@ -56,7 +58,9 @@ class TestSearchResponseMapper {
                 new OffsetRange(1, 2),
                 1,
                 Collections.singletonList("tableResultError"));
-        return new SearchResponse(Arrays.asList("highlight1", "highlight2"),
+        return new SearchResponse(
+                new QueryKey(UUID.randomUUID().toString()),
+                Arrays.asList("highlight1", "highlight2"),
                 Arrays.asList(tableResult, getVisResult1()),
                 Collections.singletonList("some error"),
                 false);

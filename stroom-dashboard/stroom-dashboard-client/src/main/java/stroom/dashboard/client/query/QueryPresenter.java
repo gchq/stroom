@@ -20,13 +20,13 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.dashboard.client.main.ActiveQueries;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DataSourceFieldsMap;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
-import stroom.dashboard.client.main.SearchKeepAlive;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.Automate;
@@ -34,13 +34,10 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardDoc;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
-import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.dispatch.client.ApplicationInstanceIdProvider;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -70,7 +67,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.RandomId;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -116,7 +112,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final MenuListPresenter menuListPresenter;
     private final RestFactory restFactory;
-    private final ApplicationInstanceIdProvider applicationInstanceIdProvider;
     private final LocationManager locationManager;
 
     private final IndexLoader indexLoader;
@@ -143,7 +138,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Inject
     public QueryPresenter(final EventBus eventBus,
                           final QueryView view,
-                          final SearchKeepAlive searchKeepAlive,
+                          final ActiveQueries activeQueries,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
                           final ExpressionTreePresenter expressionPresenter,
                           final QueryHistoryPresenter historyPresenter,
@@ -153,7 +148,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final ProcessorLimitsPresenter processorLimitsPresenter,
                           final MenuListPresenter menuListPresenter,
                           final RestFactory restFactory,
-                          final ApplicationInstanceIdProvider applicationInstanceIdProvider,
                           final ClientSecurityContext securityContext,
                           final UiConfigCache clientPropertyCache,
                           final LocationManager locationManager,
@@ -168,7 +162,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.menuListPresenter = menuListPresenter;
         this.restFactory = restFactory;
-        this.applicationInstanceIdProvider = applicationInstanceIdProvider;
         this.locationManager = locationManager;
 
         view.setExpressionView(expressionPresenter.getView());
@@ -205,7 +198,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         indexLoader = new IndexLoader(getEventBus(), restFactory);
         searchModel = new SearchModel(
                 restFactory,
-                searchKeepAlive,
+                activeQueries,
                 this,
                 indexLoader,
                 timeZones,
@@ -547,10 +540,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void showWarnings() {
         if (currentWarnings != null && !currentWarnings.isEmpty()) {
+            final String msg = currentWarnings.size() == 1
+                    ? ("The following warning was created while running this search:")
+                    : ("The following " + currentWarnings.size()
+                            + " warnings have been created while running this search:");
             final String errors = String.join("\n", currentWarnings);
-            AlertEvent.fireWarn(this,
-                    "The following warnings have been created while running this search:",
-                    errors, null);
+            AlertEvent.fireWarn(this, msg, errors, null);
         }
     }
 
@@ -637,12 +632,9 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     .build());
         }
 
-        // Create and register the search model.
+        // Set the dashboard UUID for the search model to be able to store query history for this dashboard.
         final DashboardDoc dashboard = getComponents().getDashboard();
-        searchModel.init(
-                applicationInstanceIdProvider.get(),
-                dashboard.getUuid(),
-                getComponentConfig().getId());
+        searchModel.init(dashboard.getUuid(), componentConfig.getId());
 
         // Read data source.
         loadDataSource(getQuerySettings().getDataSource());
@@ -815,19 +807,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     expressionPresenter.write(),
                     params);
 
-            final DashboardDoc dashboard = getComponents().getDashboard();
-            final DashboardQueryKey dashboardQueryKey = new DashboardQueryKey(
-                    applicationInstanceIdProvider.get(),
-                    dashboard.getUuid(),
-                    getComponentConfig().getId(),
-                    RandomId.createDiscrimiator());
-
             final Rest<ResourceGeneration> rest = restFactory.create();
             rest
                     .onSuccess(result ->
                             ExportFileCompleteUtil.onSuccess(locationManager, null, result))
                     .call(DASHBOARD_RESOURCE)
-                    .downloadQuery(new DownloadQueryRequest(dashboardQueryKey, searchRequest));
+                    .downloadQuery(searchRequest);
         }
     }
 

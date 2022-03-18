@@ -129,36 +129,17 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
 
     @Override
     public Schema getSchema() {
-        return DefaultSchema.DEFAULT_SCHEMA;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.NEW_POSITION_FORWARD_SOURCE_INDEX, Indexes.RETRY_POSITION_FORWARD_SOURCE_INDEX);
+        return Arrays.asList(Indexes.NEW_POSITION_FORWARD_SOURCE_INDEX, Indexes.RETRY_POSITION_FORWARD_SOURCE_INDEX);
     }
 
     @Override
     public UniqueKey<ForwardSourceRecord> getPrimaryKey() {
-        return Keys.PK_FORWARD_SOURCE;
-    }
-
-    @Override
-    public List<UniqueKey<ForwardSourceRecord>> getKeys() {
-        return Arrays.<UniqueKey<ForwardSourceRecord>>asList(Keys.PK_FORWARD_SOURCE);
-    }
-
-    @Override
-    public List<ForeignKey<ForwardSourceRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<ForwardSourceRecord, ?>>asList(Keys.FK_FORWARD_SOURCE_FORWARD_URL_1);
-    }
-
-    private transient ForwardUrl _forwardUrl;
-
-    public ForwardUrl forwardUrl() {
-        if (_forwardUrl == null)
-            _forwardUrl = new ForwardUrl(this, Keys.FK_FORWARD_SOURCE_FORWARD_URL_1);
-
-        return _forwardUrl;
+        return Keys.FORWARD_SOURCE__;
     }
 
     @Override

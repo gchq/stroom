@@ -17,10 +17,9 @@
 package stroom.util;
 
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BuildInfo;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -32,39 +31,51 @@ import javax.inject.Singleton;
 public class BuildInfoProvider implements Provider<BuildInfo> {
 
     private static final long upDate = System.currentTimeMillis();
-    private static final Logger LOGGER = LoggerFactory.getLogger(BuildInfoProvider.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildInfoProvider.class);
     private static final String BUILD_PROPERTIES = "META-INF/stroom-util-build.properties";
 
-    private BuildInfo buildInfo;
+    private static final BuildInfo BUILD_INFO;
 
-    public BuildInfo get() {
-        if (buildInfo == null) {
-            Properties properties = new Properties();
-            try {
-                properties.load(
-                        BuildInfoProvider.class.getClassLoader().getResourceAsStream(BUILD_PROPERTIES));
-            } catch (final IOException e) {
-                LOGGER.error("Unable to load {}", BUILD_PROPERTIES, e);
-            }
-            final String buildVersion = properties.getProperty("buildVersion");
-            final String buildDate = properties.getProperty("buildDate");
-
-            long buildTime = 0;
-            if (buildDate != null) {
-                try {
-                    buildTime = ZonedDateTime.parse(buildDate).toInstant().toEpochMilli();
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    try {
-                        buildTime = DateUtil.parseNormalDateTimeString(buildDate);
-                    } catch (final RuntimeException e2) {
-                        LOGGER.debug(e2.getMessage(), e2);
-                    }
-                }
-            }
-
-            buildInfo = new BuildInfo(upDate, buildVersion, buildTime);
+    static {
+        final Properties properties = new Properties();
+        try {
+            properties.load(
+                    BuildInfoProvider.class.getClassLoader().getResourceAsStream(BUILD_PROPERTIES));
+        } catch (final IOException e) {
+            LOGGER.error("Unable to load {}", BUILD_PROPERTIES, e);
         }
-        return buildInfo;
+        final String buildVersion = properties.getProperty("buildVersion");
+        final String buildDate = properties.getProperty("buildDate");
+
+        if (buildVersion == null || buildVersion.isBlank()) {
+            throw new RuntimeException("Build version is null/blank. It should be set in " + BUILD_PROPERTIES);
+        }
+        if (buildDate == null || buildDate.isBlank()) {
+            throw new RuntimeException("Build date is null/blank. It should be set in " + BUILD_PROPERTIES);
+        }
+
+        long buildTime = 0;
+        try {
+            buildTime = ZonedDateTime.parse(buildDate).toInstant().toEpochMilli();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            try {
+                buildTime = DateUtil.parseNormalDateTimeString(buildDate);
+            } catch (final RuntimeException e2) {
+                LOGGER.debug(e2.getMessage(), e2);
+            }
+        }
+        BUILD_INFO = new BuildInfo(upDate, buildVersion, buildTime);
+    }
+
+    // For use by Guice
+    @Override
+    public BuildInfo get() {
+        return BUILD_INFO;
+    }
+
+    // Allows us to get it statically when not using guice
+    public static BuildInfo getBuildInfo() {
+        return BUILD_INFO;
     }
 }

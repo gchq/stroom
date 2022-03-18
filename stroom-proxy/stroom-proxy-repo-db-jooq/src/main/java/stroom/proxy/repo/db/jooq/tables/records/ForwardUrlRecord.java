@@ -5,7 +5,6 @@ package stroom.proxy.repo.db.jooq.tables.records;
 
 
 import org.jooq.Field;
-import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Row2;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -54,8 +53,8 @@ public class ForwardUrlRecord extends UpdatableRecordImpl<ForwardUrlRecord> impl
     // -------------------------------------------------------------------------
 
     @Override
-    public Record1<Integer> key() {
-        return (Record1) super.key();
+    public Record2<Integer, String> key() {
+        return (Record2) super.key();
     }
 
     // -------------------------------------------------------------------------

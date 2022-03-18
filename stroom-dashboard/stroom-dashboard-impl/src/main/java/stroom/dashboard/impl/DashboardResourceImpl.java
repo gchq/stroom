@@ -20,11 +20,9 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.SearchKeepAliveRequest;
-import stroom.dashboard.shared.SearchKeepAliveResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -73,7 +71,7 @@ class DashboardResourceImpl implements DashboardResource {
     }
 
     @Override
-    public ResourceGeneration downloadQuery(final DownloadQueryRequest request) {
+    public ResourceGeneration downloadQuery(final DashboardSearchRequest request) {
         return dashboardServiceProvider.get().downloadQuery(request);
     }
 
@@ -84,7 +82,7 @@ class DashboardResourceImpl implements DashboardResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public SearchKeepAliveResponse keepAlive(final SearchKeepAliveRequest request) {
+    public Boolean keepAlive(final SearchKeepAliveRequest request) {
         return dashboardServiceProvider.get().keepAlive(request);
     }
 

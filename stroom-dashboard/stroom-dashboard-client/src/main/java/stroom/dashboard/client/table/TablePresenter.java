@@ -34,7 +34,6 @@ import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
@@ -49,7 +48,6 @@ import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldTypes;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
-import stroom.dispatch.client.ApplicationInstanceIdProvider;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -69,6 +67,7 @@ import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
@@ -140,7 +139,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
     private final RestFactory restFactory;
-    private final ApplicationInstanceIdProvider applicationInstanceIdProvider;
     private final TimeZones timeZones;
     private final UserPreferencesManager userPreferencesManager;
     private final FieldsManager fieldsManager;
@@ -169,7 +167,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final DownloadPresenter downloadPresenter,
                           final AnnotationManager annotationManager,
                           final RestFactory restFactory,
-                          final ApplicationInstanceIdProvider applicationInstanceIdProvider,
                           final UiConfigCache clientPropertyCache,
                           final TimeZones timeZones,
                           final UserPreferencesManager userPreferencesManager) {
@@ -179,7 +176,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
         this.restFactory = restFactory;
-        this.applicationInstanceIdProvider = applicationInstanceIdProvider;
         this.timeZones = timeZones;
         this.userPreferencesManager = userPreferencesManager;
         this.dataGrid = new DataGridViewImpl<>(true, true);
@@ -318,7 +314,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
                             fieldBuilder.expression("annotation(formatDate(" + fieldParam + "), ${annotation:Id})");
                         } else {
-                            fieldBuilder.expression("annotation(" + fieldParam + ", ${annotation:Id})");
+                            fieldBuilder.expression("annotation(" +
+                                    fieldParam +
+                                    ", ${annotation:Id}, ${StreamId}, ${EventId})");
                         }
                     } else {
                         fieldBuilder.expression(fieldParam);
@@ -412,7 +410,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void download() {
         if (currentSearchModel != null) {
-            final DashboardQueryKey queryKey = currentSearchModel.getCurrentQueryKey();
+            final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
             final Search currentSearch = currentSearchModel.getCurrentSearch();
             if (queryKey != null && currentSearch != null) {
                 final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
@@ -437,13 +435,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     .componentSettingsMap(currentSearch.getComponentSettingsMap())
                                     .params(currentSearch.getParams())
                                     .incremental(true)
-                                    .storeHistory(false)
                                     .queryInfo(currentSearch.getQueryInfo())
                                     .build();
 
                             final DashboardSearchRequest searchRequest = DashboardSearchRequest
                                     .builder()
-                                    .dashboardQueryKey(queryKey)
+                                    .queryKey(queryKey)
                                     .search(search)
                                     .componentResultRequests(requests)
                                     .dateTimeSettings(getDateTimeSettings())
@@ -451,13 +448,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                             final DownloadSearchResultsRequest downloadSearchResultsRequest =
                                     new DownloadSearchResultsRequest(
-                                            applicationInstanceIdProvider.get(),
                                             searchRequest,
                                             getComponentConfig().getId(),
                                             downloadPresenter.getFileType(),
                                             downloadPresenter.isSample(),
-                                            downloadPresenter.getPercent(),
-                                            timeZones.getLocalTimeZoneId());
+                                            downloadPresenter.getPercent());
                             final Rest<ResourceGeneration> rest = restFactory.create();
                             rest
                                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
@@ -1035,9 +1030,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     public Set<String> getHighlights() {
         if (currentSearchModel != null
-                && currentSearchModel.getCurrentResult() != null
-                && currentSearchModel.getCurrentResult().getHighlights() != null) {
-            return currentSearchModel.getCurrentResult().getHighlights();
+                && currentSearchModel.getCurrentResponse() != null
+                && currentSearchModel.getCurrentResponse().getHighlights() != null) {
+            return currentSearchModel.getCurrentResponse().getHighlights();
         }
 
         return null;

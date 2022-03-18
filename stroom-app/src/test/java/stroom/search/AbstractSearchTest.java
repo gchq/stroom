@@ -32,10 +32,9 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.SearchResponseCreator;
-import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.search.impl.LuceneSearchResponseCreatorManager;
+import stroom.query.common.v2.StoreFactory;
+import stroom.search.impl.LuceneSearchStoreFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import java.time.ZoneOffset;
@@ -54,18 +53,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
 
     @Inject
-    private LuceneSearchResponseCreatorManager searchResponseCreatorManager;
+    private SearchResponseCreatorManager searchResponseCreatorManager;
+    @Inject
+    private LuceneSearchStoreFactory storeFactory;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
+                                           final StoreFactory storeFactory,
                                            final SearchResponseCreatorManager searchResponseCreatorManager) {
-        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(
-                new SearchResponseCreatorCache.Key(searchRequest));
-
-        SearchResponse response = searchResponseCreator.create(searchRequest);
+        SearchResponse response = searchResponseCreatorManager.search(storeFactory, searchRequest);
         if (!response.complete()) {
             throw new RuntimeException("NOT COMPLETE");
         }
-        searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(searchRequest.getKey()));
+        searchResponseCreatorManager.remove(searchRequest.getKey());
 
         return response;
     }
@@ -78,6 +77,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore,
+            final StoreFactory storeFactory,
             final SearchResponseCreatorManager searchResponseCreatorManager) {
 
         final DocRef indexRef = indexStore.list().get(0);
@@ -105,7 +105,8 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                 resultRequests,
                 DateTimeSettings.builder().build(),
                 false);
-        final SearchResponse searchResponse = AbstractSearchTest.search(searchRequest, searchResponseCreatorManager);
+        final SearchResponse searchResponse = AbstractSearchTest
+                .search(searchRequest, storeFactory, searchResponseCreatorManager);
 
         assertThat(searchResponse).as("Search response is null").isNotNull();
         if (searchResponse.getErrors() != null && searchResponse.getErrors().size() > 0) {
@@ -142,7 +143,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
     }
 
     protected SearchResponse search(SearchRequest searchRequest) {
-        return search(searchRequest, searchResponseCreatorManager);
+        return search(searchRequest, storeFactory, searchResponseCreatorManager);
     }
 
     public void testInteractive(
@@ -154,6 +155,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore) {
         testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
-                extractValues, resultMapConsumer, indexStore, searchResponseCreatorManager);
+                extractValues, resultMapConsumer, indexStore, storeFactory, searchResponseCreatorManager);
     }
 }

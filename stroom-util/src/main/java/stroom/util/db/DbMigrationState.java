@@ -10,6 +10,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * (i.e. for all modules) have been run. It gets set to true during app startup when the bootstrap_lock
  * table is checked. This means we don't need to run all the Flyway checks on every boot if the build
  * version hasn't changed.
+ * <p>
+ * Is a static variable as it will be used before guice has done all the bindings so can't be
+ * injected.
  */
 public class DbMigrationState {
 

@@ -148,7 +148,7 @@ public class AnnotationEditPresenter
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         final Rest<List<String>> rest = restFactory.create();
         rest
-                .onSuccess(values -> getView().setHasCommentValues(!values.isEmpty()))
+                .onSuccess(values -> getView().setHasCommentValues(values != null && !values.isEmpty()))
                 .call(annotationResource)
                 .getComment(null);
     }

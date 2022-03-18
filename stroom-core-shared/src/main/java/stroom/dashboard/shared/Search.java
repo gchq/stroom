@@ -45,8 +45,6 @@ public class Search {
     @JsonProperty
     private final boolean incremental;
     @JsonProperty
-    private final boolean storeHistory;
-    @JsonProperty
     private final String queryInfo;
 
     @JsonCreator
@@ -55,14 +53,12 @@ public class Search {
                   @JsonProperty("componentSettingsMap") final Map<String, ComponentSettings> componentSettingsMap,
                   @JsonProperty("params") final List<Param> params,
                   @JsonProperty("incremental") final boolean incremental,
-                  @JsonProperty("storeHistory") final boolean storeHistory,
                   @JsonProperty("queryInfo") final String queryInfo) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
         this.params = params;
         this.incremental = incremental;
-        this.storeHistory = storeHistory;
         this.queryInfo = queryInfo;
     }
 
@@ -86,10 +82,6 @@ public class Search {
         return incremental;
     }
 
-    public boolean isStoreHistory() {
-        return storeHistory;
-    }
-
     public String getQueryInfo() {
         return queryInfo;
     }
@@ -104,7 +96,6 @@ public class Search {
         }
         final Search search = (Search) o;
         return incremental == search.incremental &&
-                storeHistory == search.storeHistory &&
                 Objects.equals(dataSourceRef, search.dataSourceRef) &&
                 Objects.equals(expression, search.expression) &&
                 Objects.equals(componentSettingsMap, search.componentSettingsMap) &&
@@ -120,7 +111,6 @@ public class Search {
                 componentSettingsMap,
                 params,
                 incremental,
-                storeHistory,
                 queryInfo);
     }
 
@@ -132,7 +122,6 @@ public class Search {
                 ", componentSettingsMap=" + componentSettingsMap +
                 ", params=" + params +
                 ", incremental=" + incremental +
-                ", storeHistory=" + storeHistory +
                 ", queryInfo='" + queryInfo + '\'' +
                 '}';
     }
@@ -152,7 +141,6 @@ public class Search {
         private Map<String, ComponentSettings> componentSettingsMap;
         private List<Param> params;
         private boolean incremental;
-        private boolean storeHistory;
         private String queryInfo;
 
         private Builder() {
@@ -164,7 +152,6 @@ public class Search {
             this.componentSettingsMap = search.componentSettingsMap;
             this.params = search.params;
             this.incremental = search.incremental;
-            this.storeHistory = search.storeHistory;
             this.queryInfo = search.queryInfo;
         }
 
@@ -193,11 +180,6 @@ public class Search {
             return this;
         }
 
-        public Builder storeHistory(final boolean storeHistory) {
-            this.storeHistory = storeHistory;
-            return this;
-        }
-
         public Builder queryInfo(final String queryInfo) {
             this.queryInfo = queryInfo;
             return this;
@@ -210,7 +192,6 @@ public class Search {
                     componentSettingsMap,
                     params,
                     incremental,
-                    storeHistory,
                     queryInfo);
         }
     }

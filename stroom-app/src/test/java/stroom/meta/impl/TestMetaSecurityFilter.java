@@ -37,7 +37,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.User;
 import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
-import stroom.util.BuildInfoModule;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -62,7 +61,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
 @IncludeModule(MockIndexShardWriterExecutorModule.class)
-@IncludeModule(BuildInfoModule.class)
 class TestMetaSecurityFilter extends StroomIntegrationTest {
 
     private static final String TEST_USER = "test_user";

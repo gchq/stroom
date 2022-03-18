@@ -19,7 +19,6 @@ package stroom.dashboard.impl;
 
 
 import stroom.dashboard.shared.ComponentResultRequest;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
@@ -93,9 +92,7 @@ class TestSearchRequestMapper {
         DashboardSearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
 
         // When
-        SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(
-                new DashboardQueryKey("test", "test", "test", "test"),
-                dashboardSearchRequest);
+        SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(dashboardSearchRequest);
 
         // Then
         verify_Search_to_Query_mapping(

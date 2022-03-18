@@ -37,6 +37,7 @@ import com.gwtplatform.mvp.client.HandlerContainerImpl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 
 @Singleton
@@ -138,8 +139,8 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
     private void openAnnotation(final String href) {
         final Long annotationId = getLongParam(href, "annotationId");
-        final Long streamId = getLongParam(href, "streamId");
-        final Long eventId = getLongParam(href, "eventId");
+        final Long streamId = getLongParam(href.toLowerCase(Locale.ROOT), "streamId".toLowerCase(Locale.ROOT));
+        final Long eventId = getLongParam(href.toLowerCase(Locale.ROOT), "eventId".toLowerCase(Locale.ROOT));
         final String title = getParam(href, "title");
         final String subject = getParam(href, "subject");
         final String status = getParam(href, "status");

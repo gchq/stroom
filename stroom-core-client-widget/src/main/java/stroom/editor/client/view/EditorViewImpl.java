@@ -344,12 +344,14 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
                 .append(SafeHtmlUtils.fromString(title))
                 .appendHtmlConstant("</p>");
 
-        final String[] errorTextLines = errorText.split("\n");
-        for (final String line : errorTextLines) {
-            safeHtmlBuilder
-                    .appendHtmlConstant("<p>")
-                    .append(SafeHtmlUtils.fromString(line))
-                    .appendHtmlConstant("</p>");
+        if (errorText != null) {
+            final String[] errorTextLines = errorText.split("\n");
+            for (final String line : errorTextLines) {
+                safeHtmlBuilder
+                        .appendHtmlConstant("<p>")
+                        .append(SafeHtmlUtils.fromString(line))
+                        .appendHtmlConstant("</p>");
+            }
         }
 
         safeHtmlBuilder

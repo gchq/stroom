@@ -17,7 +17,6 @@
 package stroom.dashboard.impl;
 
 import stroom.dashboard.impl.download.TypeConverter;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format.Type;
@@ -49,8 +48,7 @@ public class SearchResponseMapper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchResponseMapper.class);
 
-    public DashboardSearchResponse mapResponse(final DashboardQueryKey queryKey,
-                                               final stroom.query.api.v2.SearchResponse searchResponse) {
+    public DashboardSearchResponse mapResponse(final stroom.query.api.v2.SearchResponse searchResponse) {
         if (searchResponse == null) {
             return null;
         }
@@ -77,7 +75,7 @@ public class SearchResponseMapper {
                     .collect(Collectors.toList());
         }
 
-        return new DashboardSearchResponse(queryKey,
+        return new DashboardSearchResponse(searchResponse.getQueryKey(),
                 highlights,
                 errors,
                 searchResponse.complete(),
