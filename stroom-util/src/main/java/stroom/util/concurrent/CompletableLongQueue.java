@@ -39,7 +39,15 @@ public class CompletableLongQueue {
         }
     }
 
+    public void clear() {
+        queue.clear();
+    }
+
     public int size() {
         return queue.size();
+    }
+
+    public boolean isEmpty() {
+        return queue.isEmpty();
     }
 }

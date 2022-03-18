@@ -202,19 +202,21 @@ public class IndexShardSearchTaskHandler {
                                     SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
                             getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
                         }
+                    } catch (final InterruptedException e) {
+                        LOGGER.trace(e::getMessage, e);
+                        // Clear the doc id queue to ensure the search code is not blocked from completing.
+                        docIdQueue.clear();
+                        // Keep interrupting this thread.
+                        Thread.currentThread().interrupt();
+                    } catch (final CompleteException e) {
+                        LOGGER.debug(() -> "Complete");
+                        LOGGER.trace(e::getMessage, e);
+                    } catch (final RuntimeException e) {
+                        error(errorConsumer, e);
                     } finally {
                         // Ensure the searcher completes before we exit.
                         completableFuture.join();
                     }
-                } catch (final InterruptedException e) {
-                    LOGGER.trace(e::getMessage, e);
-                    // Keep interrupting this thread.
-                    Thread.currentThread().interrupt();
-                } catch (final CompleteException e) {
-                    LOGGER.debug(() -> "Complete");
-                    LOGGER.trace(e::getMessage, e);
-                } catch (final RuntimeException e) {
-                    error(errorConsumer, e);
                 } finally {
                     searcherManager.release(searcher);
                 }
