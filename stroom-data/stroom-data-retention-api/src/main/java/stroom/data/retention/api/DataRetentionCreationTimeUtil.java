@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.data.retention.impl;
+package stroom.data.retention.api;
 
 import stroom.data.retention.shared.DataRetentionRule;
 
@@ -26,7 +26,7 @@ import java.time.ZoneOffset;
 /**
  * A utility class to calculate times from supplied retention ages.
  */
-final class DataRetentionCreationTimeUtil {
+public final class DataRetentionCreationTimeUtil {
 
     private DataRetentionCreationTimeUtil() {
         // Utility class.
@@ -35,7 +35,7 @@ final class DataRetentionCreationTimeUtil {
     /**
      * Subtracts the rule's age from the instant, e.g. now() - 30d
      */
-    static Instant minus(final Instant instant, final DataRetentionRule rule) {
+    public static Instant minus(final Instant instant, final DataRetentionRule rule) {
         if (rule.isForever()) {
             return Instant.EPOCH;
         }
@@ -72,7 +72,7 @@ final class DataRetentionCreationTimeUtil {
         return age.toInstant(ZoneOffset.UTC);
     }
 
-    static Instant plus(final Instant instant, final DataRetentionRule rule) {
+    public static Instant plus(final Instant instant, final DataRetentionRule rule) {
         if (rule.isForever()) {
             return Instant.EPOCH;
         }

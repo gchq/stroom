@@ -29,6 +29,7 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.collections.BatchingCollector;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
@@ -38,6 +39,8 @@ import stroom.util.time.TimePeriod;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Module;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -45,8 +48,12 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.inject.Inject;
 
@@ -61,6 +68,7 @@ class TestMetaServiceImpl {
     private static final String FEED_3 = "FEED3";
     private static final String FEED_4 = "FEED4";
     private static final String FEED_5 = "FEED5";
+    protected static final String TEST_STREAM_TYPE = "TEST_STREAM_TYPE";
 
     @Inject
     private Cleanup cleanup;
@@ -75,27 +83,30 @@ class TestMetaServiceImpl {
     void setup() {
         dataRetentionConfig = new DataRetentionConfig();
 
+        final Module dataRetentionConfigModule = new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(DataRetentionConfig.class)
+                        .toProvider(() ->
+                                getDataRetentionConfig());
+            }
+        };
+
         Guice.createInjector(
-                new MetaModule(),
-                new MetaDbModule(),
-                new MetaDaoModule(),
-                new MockClusterLockModule(),
-                new MockSecurityContextModule(),
-                new MockCollectionModule(),
-                new MockDocRefInfoModule(),
-                new MockWordListProviderModule(),
-                new CacheModule(),
-                new DbTestModule(),
-                new MetaTestModule(),
-                new MockTaskModule(),
-                new MockStroomEventLoggingModule(),
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(DataRetentionConfig.class)
-                                .toProvider(() -> getDataRetentionConfig());
-                    }
-                })
+                        new MetaModule(),
+                        new MetaDbModule(),
+                        new MetaDaoModule(),
+                        new MockClusterLockModule(),
+                        new MockSecurityContextModule(),
+                        new MockCollectionModule(),
+                        new MockDocRefInfoModule(),
+                        new MockWordListProviderModule(),
+                        new CacheModule(),
+                        new DbTestModule(),
+                        new MetaTestModule(),
+                        new MockTaskModule(),
+                        new MockStroomEventLoggingModule(),
+                        dataRetentionConfigModule)
                 .injectMembers(this);
         // Delete everything
         cleanup.cleanup();
@@ -505,22 +516,17 @@ class TestMetaServiceImpl {
                 buildRule(1, FEED_1, 1, TimeUnit.DAYS),
                 buildRule(2, FEED_2, 2, TimeUnit.DAYS),
                 buildRule(3, FEED_3, 1, TimeUnit.WEEKS),
-                buildRule(4, FEED_4, 2, TimeUnit.MONTHS),
-                buildRule(5, FEED_5, 1, TimeUnit.YEARS)
+                buildForeverRule(4, FEED_4)
         );
+        final Map<Integer, DataRetentionRule> ruleNoToRuleMap = rules.stream()
+                .collect(Collectors.toMap(
+                        DataRetentionRule::getRuleNumber,
+                        Function.identity()));
 
         final Instant now = Instant.now();
-        // The following will load 1k rows then delete 60
         final int totalDays = 10;
-        final int rowsPerFeedPerDay = 10;
-        final int feedCount = 10;
-        final int daysToDelete = 2;
-
-        // The following will load 1mil rows then delete 1500
-//        final int totalDays = 100;
-//        final int rowsPerFeedPerDay = 100;
-//        final int feedCount = 100;
-//        final int daysToDelete = 5;
+        final int rowsPerFeedPerDay = 2;
+        final int feedCount = 3;
 
         final int insertBatchSize = 10_000;
         final int totalRows = totalDays * feedCount * rowsPerFeedPerDay;
@@ -550,45 +556,69 @@ class TestMetaServiceImpl {
                     LOGGER.info("Processed {} of {}", counter.get(), totalRows);
                 }));
 
+
         assertTotalRowCount(totalRows, Status.UNLOCKED);
 
-        final Instant deletionDay = now
-                .minus(totalDays / 2, ChronoUnit.DAYS)
-                .plus(1, ChronoUnit.HOURS);
-
-
-        // Period should cover set of data
-        final TimePeriod period = TimePeriod.between(
-                deletionDay.minus(daysToDelete, ChronoUnit.DAYS),
-                deletionDay);
-
-        // Use a batch size smaller than the expected number of deletes to ensure we exercise
-        // batching
-
-        final List<DataRetentionDeleteSummary> summary = metaDao.getRetentionDeletionSummary(
+        final List<DataRetentionDeleteSummary> summaries = metaDao.getRetentionDeletionSummary(
                 new DataRetentionRules(rules),
                 new FindDataRetentionImpactCriteria());
 
-        LOGGER.info("Period {}", period);
-        LOGGER.info("deletionDay {}", deletionDay);
-        LOGGER.info("daysToDelete {}", daysToDelete);
         LOGGER.info("totalRows {}", totalRows);
 
         assertTotalRowCount(totalRows);
 
-        LOGGER.info("result:\n\n{}\n", AsciiTable.builder(summary)
+        final List<Meta> metaList = metaDao.find(new FindMetaCriteria())
+                .getValues()
+                .stream()
+                .sorted(Comparator.comparing(Meta::getCreateMs))
+                .collect(Collectors.toList());
+
+        LOGGER.info("meta:\n\n{}\n", AsciiTable.builder(metaList)
+                .withColumn(Column.of("ID", Meta::getId))
+                .withColumn(Column.of("Feed", Meta::getFeedName))
+                .withColumn(Column.of("Create Time", meta -> DateUtil.createNormalDateTimeString(meta.getCreateMs())))
+                .build());
+
+        LOGGER.info("result:\n\n{}\n", AsciiTable.builder(summaries)
                 .withColumn(Column.of("Feed", DataRetentionDeleteSummary::getFeed))
                 .withColumn(Column.of("Type", DataRetentionDeleteSummary::getType))
                 .withColumn(Column.builder("Rule No.", DataRetentionDeleteSummary::getRuleNumber)
                         .rightAligned()
                         .build())
                 .withColumn(Column.of("Rule Name", DataRetentionDeleteSummary::getRuleName))
+                .withColumn(Column.of("Rule Age", summary2 ->
+                        ruleNoToRuleMap.get(summary2.getRuleNumber()).getAgeString()))
                 .withColumn(Column.builder("Stream Delete Count", DataRetentionDeleteSummary::getCount)
                         .rightAligned()
                         .build())
                 .build());
 
+        // Rule 1 has age 1 day so all other days' records should be in line for deletion and thus
+        // in the summary count.
+        Assertions.assertThat(getCount(FEED_1, TEST_STREAM_TYPE, 1, summaries))
+                .isEqualTo((totalDays - 1) * rowsPerFeedPerDay);
+        // Rule 2 has age 2 days
+        Assertions.assertThat(getCount(FEED_2, TEST_STREAM_TYPE, 2, summaries))
+                .isEqualTo((totalDays - 2) * rowsPerFeedPerDay);
+        // Rule 2 has age 1 week
+        Assertions.assertThat(getCount(FEED_3, TEST_STREAM_TYPE, 3, summaries))
+                .isEqualTo((totalDays - 7) * rowsPerFeedPerDay);
+
         LOGGER.info("Done");
+    }
+
+    private int getCount(final String feedName,
+                         final String type,
+                         final int ruleNo,
+                         final List<DataRetentionDeleteSummary> summaries) {
+        return summaries.stream()
+                .filter(summary ->
+                        summary.getRuleNumber() == ruleNo
+                                && summary.getFeed().equals(feedName)
+                                && summary.getType().equals(type))
+                .findAny()
+                .orElseThrow()
+                .getCount();
     }
 
     /**
@@ -669,7 +699,7 @@ class TestMetaServiceImpl {
                 .feedName(feedName)
                 .processorUuid("12345")
                 .pipelineUuid("PIPELINE_UUID")
-                .typeName("TEST_STREAM_TYPE")
+                .typeName(TEST_STREAM_TYPE)
                 .build();
     }
 
@@ -687,7 +717,7 @@ class TestMetaServiceImpl {
 
         final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addTerm(MetaFields.FIELD_FEED, Condition.EQUALS, feedName)
-                .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, "TEST_STREAM_TYPE")
+                .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, TEST_STREAM_TYPE)
                 .build();
 
         // The age on the rule doesn't matter for the dao tests
@@ -701,11 +731,27 @@ class TestMetaServiceImpl {
 
         final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addTerm(MetaFields.FIELD_FEED, Condition.EQUALS, feedName)
-                .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, "TEST_STREAM_TYPE")
+                .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, TEST_STREAM_TYPE)
                 .build();
 
         // The age on the rule doesn't matter for the dao tests
         return buildRule(ruleNo, expressionOperator, age, timeUnit);
+    }
+
+    private DataRetentionRule buildForeverRule(final int ruleNo,
+                                               final String feedName) {
+
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                .addTerm(MetaFields.FIELD_FEED, Condition.EQUALS, feedName)
+                .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, TEST_STREAM_TYPE)
+                .build();
+
+        // The age on the rule doesn't matter for the dao tests
+        return DataRetentionRule.foreverRule(ruleNo,
+                Instant.now().toEpochMilli(),
+                "Rule" + ruleNo,
+                true,
+                expressionOperator);
     }
 
     private DataRetentionRuleAction buildRuleAction(final int ruleNo,
