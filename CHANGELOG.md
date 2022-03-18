@@ -12,6 +12,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2801** : Add Guice support and authorisation to web sockets.
+
+* Issue **#2804** : Ensure unowned tasks are added even when there are many associated locked meta records.
+
 * Issue **#2807** : Show all nodes on Index Volume edit dialog, not just enabled.
 
 * Change the common alert dialog to show the detail by default.

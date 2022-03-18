@@ -84,6 +84,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -723,80 +724,114 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                  final ProcessorFilter filter,
                                  final ProcessorTaskQueue queue,
                                  final TaskCreationProgressTracker progressTracker) {
-        int tasksToCreate = getTaskCountToCreate(queue, progressTracker);
+        int totalTasks = 0;
+        int totalAddedTasks = 0;
+        int tasksToAdd = getTaskCountToCreate(queue, progressTracker);
+        final int batchSize = Math.max(1000, tasksToAdd);
+        long minTaskId = 0;
 
         try {
-            // First look for any items that are no-longer locked etc
-            final ExpressionOperator findProcessorTaskExpression = ExpressionOperator.builder()
-                    .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.UNPROCESSED.getDisplayValue())
-                    .addTerm(ProcessorTaskFields.NODE_NAME, Condition.IS_NULL, null)
-                    .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID, Condition.EQUALS, filter.getId())
-                    .build();
-            final ExpressionCriteria findProcessorTaskCriteria = new ExpressionCriteria(findProcessorTaskExpression);
-            findProcessorTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
+            // Keep adding tasks until we have reached the requested number.
+            while (tasksToAdd > 0) {
 
-            final List<ProcessorTask> processorTasks = processorTaskDao.find(findProcessorTaskCriteria).getValues();
-            final int size = processorTasks.size();
-
-            taskStatusTraceLog.addUnownedTasks(ProcessorTaskManagerImpl.class, processorTasks);
-
-            if (processorTasks.size() > 0) {
-                // Find unlocked meta corresponding to this list of unowned tasks.
-                final ExpressionOperator.Builder metaIdExpressionBuilder = ExpressionOperator.builder().op(Op.OR);
-                processorTasks.forEach(task -> metaIdExpressionBuilder.addTerm(MetaFields.ID,
-                        Condition.EQUALS,
-                        task.getMetaId()));
-
-                final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
-                        .addOperator(metaIdExpressionBuilder.build())
-                        .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                // First look for any items that are no-longer locked etc
+                final ExpressionOperator findProcessorTaskExpression = ExpressionOperator.builder()
+                        .addTerm(ProcessorTaskFields.TASK_ID, Condition.GREATER_THAN, minTaskId)
+                        .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.UNPROCESSED.getDisplayValue())
+                        .addTerm(ProcessorTaskFields.NODE_NAME, Condition.IS_NULL, null)
+                        .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID, Condition.EQUALS, filter.getId())
                         .build();
+                final ExpressionCriteria findProcessorTaskCriteria =
+                        new ExpressionCriteria(findProcessorTaskExpression);
+                findProcessorTaskCriteria.obtainPageRequest().setLength(batchSize);
+                findProcessorTaskCriteria.addSort(ProcessorTaskFields.FIELD_ID);
 
-                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
-                findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
-                final List<Meta> metaList = metaService.find(findMetaCriteria).getValues();
+                final List<ProcessorTask> processorTasks = processorTaskDao.find(findProcessorTaskCriteria).getValues();
+                taskStatusTraceLog.addUnownedTasks(ProcessorTaskManagerImpl.class, processorTasks);
 
-                if (metaList.size() > 0) {
-                    // Add tasks to the queue for meta that is unlocked.
-                    Map<Long, List<ProcessorTask>> processorTaskByMetaId = processorTasks
-                            .stream()
-                            .collect(Collectors.groupingBy(ProcessorTask::getMetaId));
-                    final ExpressionOperator.Builder taskIdExpressionBuilder = ExpressionOperator.builder().op(Op.OR);
-                    metaList.forEach(meta -> {
-                        final List<ProcessorTask> processorTaskList = processorTaskByMetaId.get(meta.getId());
-                        if (processorTaskList != null) {
-                            processorTaskList.forEach(processorTask ->
-                                    taskIdExpressionBuilder.addTerm(ProcessorTaskFields.TASK_ID,
-                                            Condition.EQUALS,
-                                            processorTask.getId()));
+                // If we got fewer tasks returned than we asked for then we won't need to ask for more.
+                if (processorTasks.size() < batchSize) {
+                    tasksToAdd = 0;
+                }
+
+                // If we have some processor tasks then see if we can find unlocked meta for them so we can process.
+                if (processorTasks.size() > 0) {
+                    // Increment the total number of unowned tasks.
+                    totalTasks += processorTasks.size();
+
+                    // Find unlocked meta corresponding to this list of unowned tasks.
+                    final ExpressionOperator.Builder metaIdExpressionBuilder = ExpressionOperator.builder().op(Op.OR);
+                    for (final ProcessorTask task : processorTasks) {
+                        metaIdExpressionBuilder.addTerm(MetaFields.ID, Condition.EQUALS, task.getMetaId());
+                        // Ensure we don't see this task again in the next attempt.
+                        minTaskId = Math.max(minTaskId, task.getId());
+                    }
+
+                    // Find all unlocked meta entries for the selected processor tasks.
+                    final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
+                            .addOperator(metaIdExpressionBuilder.build())
+                            .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                            .build();
+                    final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
+                    findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
+                    final List<Meta> metaList = metaService.find(findMetaCriteria).getValues();
+
+                    if (metaList.size() > 0) {
+                        final ExpressionOperator.Builder taskIdExpressionBuilder =
+                                ExpressionOperator.builder().op(Op.OR);
+
+                        // Create a map of meta items keyed by id.
+                        final Map<Long, Meta> metaMap = metaList
+                                .stream()
+                                .collect(Collectors.toMap(Meta::getId, Function.identity()));
+                        // For each processor task see if we have received meta and if so modify the task and add it to
+                        // the queue.
+                        for (final ProcessorTask processorTask : processorTasks) {
+                            final Meta meta = metaMap.get(processorTask.getMetaId());
+                            if (meta != null) {
+                                taskIdExpressionBuilder.addTerm(
+                                        ProcessorTaskFields.TASK_ID,
+                                        Condition.EQUALS,
+                                        processorTask.getId());
+
+                                tasksToAdd--;
+                                if (tasksToAdd == 0) {
+                                    break;
+                                }
+                            }
                         }
-                    });
-                    final ExpressionCriteria updateProcessorTaskCriteria = new ExpressionCriteria(
-                            taskIdExpressionBuilder.build());
-                    updateProcessorTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
-                    // Modify matching processor tasks.
-                    final ResultPage<ProcessorTask> modifiedTasks = processorTaskDao.changeTaskStatus(
-                            updateProcessorTaskCriteria,
-                            nodeName,
-                            TaskStatus.UNPROCESSED,
-                            null,
-                            null);
+                        final ExpressionCriteria updateProcessorTaskCriteria =
+                                new ExpressionCriteria(taskIdExpressionBuilder.build());
+                        // Modify matching processor tasks.
+                        final ResultPage<ProcessorTask> modifiedTasks = processorTaskDao.changeTaskStatus(
+                                updateProcessorTaskCriteria,
+                                nodeName,
+                                TaskStatus.UNPROCESSED,
+                                null,
+                                null);
 
-                    // Add modified tasks to the queue.
-                    if (modifiedTasks != null && modifiedTasks.size() > 0) {
-                        queue.addAll(modifiedTasks.getValues());
+                        // Add modified tasks to the queue.
+                        if (modifiedTasks != null && modifiedTasks.size() > 0) {
+                            queue.addAll(modifiedTasks.getValues());
 
-                        taskContext.info(() -> LogUtil.message("Adding {}/{} non owned Tasks",
-                                modifiedTasks.size(),
-                                size));
-                        progressTracker.incrementTaskCreationCount(filter, modifiedTasks.size());
-                        LOGGER.debug(() -> "doCreateTasks() - Added " +
-                                modifiedTasks.size() +
-                                " tasks that are no longer locked");
+                            totalAddedTasks += modifiedTasks.size();
+
+                            final int finalTotalAddedTasks = totalAddedTasks;
+                            final int finalTotalTasks = totalTasks;
+                            taskContext.info(() -> LogUtil.message("Adding {}/{} non owned Tasks",
+                                    finalTotalAddedTasks,
+                                    finalTotalTasks));
+                        }
                     }
                 }
             }
+
+            if (totalAddedTasks > 0) {
+                progressTracker.incrementTaskCreationCount(filter, totalAddedTasks);
+                LOGGER.debug("doCreateTasks() - Added {} tasks that are no longer locked", totalAddedTasks);
+            }
+
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
@@ -1024,7 +1059,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                             nodeName,
                             maxMetaId,
                             false,
-                    processorConfig.isFillTaskQueue(),
+                            processorConfig.isFillTaskQueue(),
                             createdTasks -> {
                                 // Transfer the newly created (and available) tasks to the queue.
                                 final List<ProcessorTask> availableTaskList = createdTasks.getAvailableTaskList();
