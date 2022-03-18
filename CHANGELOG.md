@@ -12,6 +12,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.10] - 2022-03-18
+
+* Issue **#2725** : Support multiple levels of nesting in Elasticsearch indexing.
+
+* Issue **#2730** : Fix folder presenter Processors tab always being empty.
+
+* Issue **#2759** : Normalise Windows line endings () to Unix-style () when pasting into the ACE text editor.
+
 * Issue **#2815** : Ensure early termination of Lucene searches when required.
 
 * Issue **#2801** : Add Guice support and authorisation to web sockets.
@@ -56,6 +64,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#2795** : Speculative fix for the bind errors on MetaTypeDaoImpl.
   
+
 * Issue **#2782** : Fix validation of primitive properties, e.g. booleans.
 
 * Issue **#2782** : Fix property edit screen `Sources` field showing `Multiple Sources` for a single node.
@@ -4108,7 +4117,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.10...HEAD
+[v7.1-beta.10]: https://github.com/gchq/stroom/compare/v7.1-beta.9...v7.1-beta.10
 [v7.1-beta.9]: https://github.com/gchq/stroom/compare/v7.1-beta.8...v7.1-beta.9
 [v7.1-beta.8]: https://github.com/gchq/stroom/compare/v7.1-beta.7...v7.1-beta.8
 [v7.1-beta.7]: https://github.com/gchq/stroom/compare/v7.1-beta.6...v7.1-beta.7
