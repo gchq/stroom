@@ -119,6 +119,10 @@ class OpenIdManager {
             // Provide identity from the session if we are allowing this to happen.
             result = UserIdentitySessionUtil.get(request.getSession(false));
 
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("User identity from session: [{}]", userIdentity.orElse(null));
+            }
+
         } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
             // Set the user ref in the session.
             UserIdentitySessionUtil.set(request.getSession(true), userIdentity.get());

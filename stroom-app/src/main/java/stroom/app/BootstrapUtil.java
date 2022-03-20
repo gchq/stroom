@@ -11,7 +11,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
 import stroom.db.util.JooqUtil;
-import stroom.util.BuildInfoModule;
+import stroom.util.BuildInfoProvider;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.db.DbMigrationState;
@@ -48,31 +48,37 @@ public class BootstrapUtil {
     private static final String BUILD_VERSION_TABLE_NAME = "build_version";
     private static final int BUILD_VERSION_TABLE_ID = 1;
     private static final String INITIAL_VERSION = "UNKNOWN_VERSION";
+    private static final String SNAPSHOT_VERSION = "SNAPSHOT";
+
+    private BootstrapUtil() {
+    }
 
     /**
      * Creates an injector with the bare minimum to initialise the DB connections and configuration.
+     * The initialisation of the DB datasources will trigger the FlyWay DB migration to run.
      * You should call {@link Injector#createChildInjector} to build a fully formed injector from it.
      */
-    public static Injector createBootstrapInjector(final Config configuration,
-                                                   final Environment environment,
-                                                   final Path configFile) {
-        return createBootstrapInjector(
+    public static Injector bootstrapApplication(final Config configuration,
+                                                final Environment environment,
+                                                final Path configFile) {
+        return bootstrapApplication(
                 configuration,
                 () -> new BootStrapModule(configuration, environment, configFile));
     }
 
     /**
      * Creates an injector with the bare minimum to initialise the DB connections and configuration.
+     * The initialisation of the DB datasources will trigger the FlyWay DB migration to run.
      * You should call {@link Injector#createChildInjector} to build a fully formed injector from it.
      */
-    public static Injector createBootstrapInjector(final Config configuration,
-                                                   final Path configFile) {
-        return createBootstrapInjector(
+    public static Injector bootstrapApplication(final Config configuration,
+                                                final Path configFile) {
+        return bootstrapApplication(
                 configuration,
                 () -> new BootStrapModule(configuration, configFile));
     }
 
-    private static Injector createBootstrapInjector(
+    private static Injector bootstrapApplication(
             final Config configuration,
             final Supplier<BootStrapModule> bootStrapModuleSupplier) {
 
@@ -82,22 +88,29 @@ public class BootstrapUtil {
         // Create a minimalist injector with just the BuildInfo so we can determine
         // what version the system is at and what we need to do before creating
         // the bootstrap injector
-        final Injector rootInjector = Guice.createInjector(new BuildInfoModule());
-        final BuildInfo buildInfo = rootInjector.getInstance(BuildInfo.class);
+        final BuildInfo buildInfo = BuildInfoProvider.getBuildInfo();
         showBuildInfo(buildInfo);
+
+        // In dev the build ver will always be SNAPSHOT so append the now time to make
+        // it different to force the migrations to always run in dev.
+        String buildVersion = Objects.requireNonNullElse(buildInfo.getBuildVersion(), SNAPSHOT_VERSION);
+        buildVersion = SNAPSHOT_VERSION.equals(buildVersion)
+                ? SNAPSHOT_VERSION + "_" + DateUtil.createNormalDateTimeString()
+                : buildVersion;
+
+        LOGGER.debug("buildVersion: '{}'", buildVersion);
 
         return BootstrapUtil.doWithBootstrapLock(
                 configuration,
-                buildInfo.getBuildVersion(), () -> {
+                buildVersion, () -> {
                     LOGGER.info("Initialising database connections and configuration properties");
 
                     final BootStrapModule bootstrapModule = bootStrapModuleSupplier.get();
 
-                    final Injector childInjector = rootInjector.createChildInjector(
-                            bootstrapModule);
+                    final Injector injector = Guice.createInjector(bootstrapModule);
 
                     // Force all data sources to be created so we can force migrations to run.
-                    final Set<DataSource> dataSources = childInjector.getInstance(
+                    final Set<DataSource> dataSources = injector.getInstance(
                             Key.get(GuiceUtil.setOf(DataSource.class)));
 
                     LOGGER.debug(() -> LogUtil.message("Used {} data sources:\n{}",
@@ -113,7 +126,7 @@ public class BootstrapUtil {
                                     .sorted()
                                     .collect(Collectors.joining("\n"))));
 
-                    return childInjector;
+                    return injector;
                 });
     }
 

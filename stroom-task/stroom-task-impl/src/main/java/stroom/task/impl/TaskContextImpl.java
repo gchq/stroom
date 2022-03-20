@@ -152,15 +152,15 @@ public class TaskContextImpl implements TaskContext {
         return "";
     }
 
-    synchronized void addChild(final TaskContextImpl taskState) {
-        children.add(taskState);
+    synchronized void addChild(final TaskContextImpl taskContext) {
+        children.add(taskContext);
         if (terminate) {
-            taskState.terminate();
+            taskContext.terminate();
         }
     }
 
-    void removeChild(final TaskContextImpl taskState) {
-        children.remove(taskState);
+    void removeChild(final TaskContextImpl taskContext) {
+        children.remove(taskContext);
     }
 
     Set<TaskContextImpl> getChildren() {

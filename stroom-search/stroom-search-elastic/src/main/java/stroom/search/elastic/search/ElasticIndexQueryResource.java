@@ -17,6 +17,7 @@
 package stroom.search.elastic.search;
 
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -38,7 +39,7 @@ import javax.ws.rs.core.MediaType;
 @Path("/stroom-elastic-index" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface ElasticIndexQueryResource extends RestResource {
+public interface ElasticIndexQueryResource extends DataSourceResource, RestResource {
 
     @POST
     @Path("/dataSource")
@@ -56,9 +57,17 @@ public interface ElasticIndexQueryResource extends RestResource {
             @Parameter(description = "SearchRequest", required = true) SearchRequest request);
 
     @POST
+    @Path("/keepAlive")
+    @Operation(
+            summary = "Keep a running query alive",
+            operationId = "keepAliveElasticIndexQuery")
+    @Override
+    Boolean keepAlive(@Parameter(description = "QueryKey", required = true) QueryKey queryKey);
+
+    @POST
     @Path("/destroy")
     @Operation(
             summary = "Destroy a running query",
-            operationId = "destroyElasticIndexSearch")
+            operationId = "destroyElasticIndexQuery")
     Boolean destroy(@Parameter(description = "QueryKey", required = true) QueryKey queryKey);
 }

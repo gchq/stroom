@@ -24,7 +24,6 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Map.Entry;

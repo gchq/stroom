@@ -41,13 +41,19 @@ jooq {
                         excludes = 'meta_schema_history'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
-                        // Treat tinyint(1) columns as booleans
-                        forcedTypes {
-                            forcedType {
-                                name = 'BOOLEAN'
-                                types = '(?i:TINYINT\\(1\\))'
-                            }
-                        }
+
+                        // meta.status is non-boolean tinyint
+                        // meta_key.field_type is non-boolean tinyint
+
+                        // Treat some tinyint columns as booleans
+                        //forcedTypes {
+                            //forcedType {
+                                //name = 'BOOLEAN'
+                                //includeExpression = ''
+                                //// see https://github.com/jOOQ/jOOQ/issues/9405
+                                //includeTypes = '(?i:tinyint)(\\(1\\))?'
+                            //}
+                        //}
                     }
                     target {
                         packageName = 'stroom.meta.impl.db.jooq'

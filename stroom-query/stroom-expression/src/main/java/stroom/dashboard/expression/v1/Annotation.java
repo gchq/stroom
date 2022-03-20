@@ -67,14 +67,14 @@ package stroom.dashboard.expression.v1;
                                                 "if no " + Annotation.ARG_ANNOTATION_ID + " is provided.",
                                         isOptional = true,
                                         argType = ValString.class,
-                                        defaultValue = "${streamId}"),
+                                        defaultValue = "${StreamId}"),
                                 @FunctionArg(
                                         name = Annotation.ARG_EVENT_ID,
                                         description = "The ID of the of the linked event. Must be provided " +
                                                 "if no " + Annotation.ARG_ANNOTATION_ID + " is provided.",
                                         isOptional = true,
                                         argType = ValString.class,
-                                        defaultValue = "${eventId}"),
+                                        defaultValue = "${EventId}"),
                                 @FunctionArg(
                                         name = Annotation.ARG_TITLE,
                                         description = "The title of the annotation",
@@ -109,8 +109,8 @@ class Annotation extends AbstractLink {
     static final String NAME = "annotation";
 
     protected static final String ARG_ANNOTATION_ID = "annotationId";
-    protected static final String ARG_STREAM_ID = "streamId";
-    protected static final String ARG_EVENT_ID = "eventId";
+    protected static final String ARG_STREAM_ID = "StreamId";
+    protected static final String ARG_EVENT_ID = "EventId";
     protected static final String ARG_TITLE = "title";
     protected static final String ARG_SUBJECT = "subject";
     protected static final String ARG_STATUS = "status";

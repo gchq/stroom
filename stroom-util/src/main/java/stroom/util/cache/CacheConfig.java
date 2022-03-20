@@ -23,9 +23,9 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_EXPIRE_AFTER_ACCESS = "expireAfterAccess";
     public static final String PROP_NAME_EXPIRE_AFTER_WRITE = "expireAfterWrite";
 
-    private final Long maximumSize;
-    private final StroomDuration expireAfterAccess;
-    private final StroomDuration expireAfterWrite;
+    protected final Long maximumSize;
+    protected final StroomDuration expireAfterAccess;
+    protected final StroomDuration expireAfterWrite;
 
     public CacheConfig() {
         maximumSize = null;

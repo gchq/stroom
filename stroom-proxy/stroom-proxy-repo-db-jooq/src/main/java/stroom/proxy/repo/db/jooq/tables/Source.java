@@ -124,22 +124,17 @@ public class Source extends TableImpl<SourceRecord> {
 
     @Override
     public Schema getSchema() {
-        return DefaultSchema.DEFAULT_SCHEMA;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.NEW_POSITION_SOURCE_INDEX, Indexes.SOURCE_PATH_INDEX);
+        return Arrays.asList(Indexes.NEW_POSITION_SOURCE_INDEX, Indexes.SOURCE_PATH_INDEX);
     }
 
     @Override
     public UniqueKey<SourceRecord> getPrimaryKey() {
-        return Keys.PK_SOURCE;
-    }
-
-    @Override
-    public List<UniqueKey<SourceRecord>> getKeys() {
-        return Arrays.<UniqueKey<SourceRecord>>asList(Keys.PK_SOURCE);
+        return Keys.SOURCE__;
     }
 
     @Override

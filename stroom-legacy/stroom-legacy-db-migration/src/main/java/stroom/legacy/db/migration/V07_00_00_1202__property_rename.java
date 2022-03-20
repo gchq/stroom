@@ -294,6 +294,7 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
 
             ignoredMappings.add("stroom.search.extraction.maxThreads");
             ignoredMappings.add("stroom.search.shard.maxThreads");
+            ignoredMappings.add("stroom.search.storeSize");
 
             ignoredMappings.add("stroom.services.authentication.docRefType");
             ignoredMappings.add("stroom.services.authentication.name");

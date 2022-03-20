@@ -31,6 +31,7 @@ dependencies {
     implementation libs.hikari
     implementation libs.jackson_annotations
     implementation libs.jakarta_validation_api
+    implementation libs.jaxb_api
     implementation libs.jooq
     implementation libs.slf4j_api
 

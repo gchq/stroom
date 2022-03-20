@@ -1,5 +1,6 @@
 package stroom.search.impl;
 
+import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.ui.config.shared.UiConfig;
@@ -16,11 +17,11 @@ public class SizesProviderImpl implements SizesProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(SizesProviderImpl.class);
 
     private final UiConfig uiConfig;
-    private final SearchConfig searchConfig;
+    private final ResultStoreConfig searchConfig;
 
     @Inject
     public SizesProviderImpl(final UiConfig uiConfig,
-                             final SearchConfig searchConfig) {
+                             final ResultStoreConfig searchConfig) {
         this.uiConfig = uiConfig;
         this.searchConfig = searchConfig;
     }

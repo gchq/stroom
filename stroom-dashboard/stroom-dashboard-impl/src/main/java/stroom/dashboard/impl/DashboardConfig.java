@@ -18,8 +18,8 @@ public class DashboardConfig extends AbstractConfig implements IsStroomConfig {
 
     public DashboardConfig() {
         activeQueriesCache = CacheConfig.builder()
-                .maximumSize(100L)
-                .expireAfterAccess(StroomDuration.ofMinutes(1))
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofDays(10))
                 .build();
     }
 

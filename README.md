@@ -28,7 +28,7 @@ cd stroom_core_test/stroom_core_test*
 ./start.sh
 ```
 
-For more details on the commands above and any prerequisites see [Running Stroom in Docker Containers](https://gchq.github.io/stroom-docs/dev-guide/docker-running.html).
+For more details on the commands above and any prerequisites see [Single Node Docker Installation](https://gchq.github.io/stroom-docs/7.0/docs/install-guide/single-node-docker/).
 
 For the releases of the core Stroom product, see [Stroom releases](https://github.com/gchq/stroom/releases). For the releases of the docker application stacks, see [Stroom-Resources releases](https://github.com/gchq/stroom-resources/releases).
 

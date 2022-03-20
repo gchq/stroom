@@ -4,9 +4,6 @@
 package stroom.proxy.repo.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Name;
@@ -92,17 +89,12 @@ public class ForwardUrl extends TableImpl<ForwardUrlRecord> {
 
     @Override
     public Schema getSchema() {
-        return DefaultSchema.DEFAULT_SCHEMA;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public UniqueKey<ForwardUrlRecord> getPrimaryKey() {
-        return Keys.PK_FORWARD_URL;
-    }
-
-    @Override
-    public List<UniqueKey<ForwardUrlRecord>> getKeys() {
-        return Arrays.<UniqueKey<ForwardUrlRecord>>asList(Keys.PK_FORWARD_URL, Keys.SQLITE_AUTOINDEX_FORWARD_URL_1);
+        return Keys.FORWARD_URL__;
     }
 
     @Override

@@ -24,7 +24,6 @@ import stroom.dashboard.impl.vis.VisSettings.Structure;
 import stroom.dashboard.impl.vis.VisSettings.Tab;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.dashboard.shared.ComponentResultRequest;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.VisComponentSettings;
@@ -34,8 +33,8 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.Builder;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort.SortDirection;
@@ -69,14 +68,13 @@ public class SearchRequestMapper {
         this.visualisationStore = visualisationStore;
     }
 
-    public SearchRequest mapRequest(final DashboardQueryKey queryKey,
-                                    final DashboardSearchRequest searchRequest) {
+    public SearchRequest mapRequest(final DashboardSearchRequest searchRequest) {
         if (searchRequest == null) {
             return null;
         }
 
         return SearchRequest.builder()
-                .key(new QueryKey(queryKey.toUuid()))
+                .key(searchRequest.getQueryKey())
                 .query(mapQuery(searchRequest))
                 .resultRequests(mapResultRequests(searchRequest))
                 .dateTimeSettings(searchRequest.getDateTimeSettings())
@@ -160,10 +158,16 @@ public class SearchRequestMapper {
                 final TableSettings childTableSettings = mapVisSettingsToTableSettings(
                         visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
-                final ResultRequest copy = ResultRequest.builder()
+                final Builder builder = ResultRequest.builder()
                         .componentId(visResultRequest.getComponentId())
-                        .addMappings(parentTableSettings)
-                        .addMappings(childTableSettings)
+                        .addMappings(parentTableSettings);
+
+                if (childTableSettings != null) {
+                    // e.g. the vis has not been specified, i.e. user just added a vis pane and did nothing to it
+                    builder.addMappings(childTableSettings);
+                }
+
+                final ResultRequest copy = builder
                         .requestedRange(visResultRequest.getRequestedRange())
                         .resultStyle(ResultStyle.FLAT)
                         .fetch(visResultRequest.getFetch())

@@ -33,17 +33,19 @@ public interface ProcessorTaskDao {
      * @param reachedLimit  For search based task creation this indicates if we have reached the limit of tasks
      *                      created for a single search. This limit is imposed to stop search based task
      *                      creation running forever.
+     * @param assignNewTasks Should the newly created tasks ought to be added to the task queue immediately.
      * @return A list of tasks that we have created and that are owned by this
      * node and available to be handed to workers (i.e. their associated meta data is not locked).
      */
-    void createNewTasks(final ProcessorFilter filter,
-                        final ProcessorFilterTracker tracker,
-                        final long metaQueryTime,
-                        final Map<Meta, InclusiveRanges> metaMap,
-                        final String thisNodeName,
-                        final Long maxMetaId,
-                        final boolean reachedLimit,
-                        final Consumer<CreatedTasks> consumer);
+    void createNewTasks(ProcessorFilter filter,
+                        ProcessorFilterTracker tracker,
+                        long metaQueryTime,
+                        Map<Meta, InclusiveRanges> metaMap,
+                        String thisNodeName,
+                        Long maxMetaId,
+                        boolean reachedLimit,
+                        boolean assignNewTasks,
+                        Consumer<CreatedTasks> consumer);
 
     ResultPage<ProcessorTask> changeTaskStatus(ExpressionCriteria criteria,
                                                String nodeName,

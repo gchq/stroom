@@ -1,12 +1,15 @@
 package stroom.db.util;
 
+import stroom.util.db.DbMigrationState;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import javax.sql.DataSource;
 
@@ -14,20 +17,47 @@ public final class FlywayUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FlywayUtil.class);
 
-    private static final ThreadLocal<Set<String>> COMPLETED_MIGRATIONS = new ThreadLocal<>();
+    private static final ThreadLocal<Set<String>> THREAD_LOCAL_COMPLETED_MIGRATIONS = new ThreadLocal<>();
 
     private FlywayUtil() {
         // Utility class.
     }
 
     public static boolean migrationRequired(final String moduleName) {
+        final Set<String> set = Objects.requireNonNullElseGet(
+                THREAD_LOCAL_COMPLETED_MIGRATIONS.get(),
+                () -> {
+                    final Set<String> emptySet = new HashSet<>();
+                    THREAD_LOCAL_COMPLETED_MIGRATIONS.set(emptySet);
+                    return emptySet;
+                });
+
         // Prevent migrations from being re-run for each test
-        Set<String> set = COMPLETED_MIGRATIONS.get();
-        if (set == null) {
-            set = new HashSet<>();
-            COMPLETED_MIGRATIONS.set(set);
+        final boolean hasModuleBeenMigrated = !set.add(moduleName);
+
+        final boolean haveBootstrapMigrationsBeenDone = DbMigrationState.haveBootstrapMigrationsBeenDone();
+
+        LOGGER.debug(() ->
+                LogUtil.message("Module {}, hasModuleBeenMigrated: {}, haveBootstrapMigrationsBeenDone: {}",
+                        moduleName, hasModuleBeenMigrated, haveBootstrapMigrationsBeenDone));
+
+        // haveBootstrapMigrationsBeenDone gets set as part of the bootstrapping in App, whereas
+        // hasModuleBeenMigrated controls test runs where the app bootstrapping may not have been
+        // done.
+        final boolean isMigrationRequired;
+        if (haveBootstrapMigrationsBeenDone) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Stroom has already been migrated to this build version (module: {}).", moduleName));
+            isMigrationRequired = false;
+        } else {
+            if (hasModuleBeenMigrated) {
+                LOGGER.debug(() -> LogUtil.message("Module {} has already been migrated.", moduleName));
+                isMigrationRequired = false;
+            } else {
+                isMigrationRequired = true;
+            }
         }
-        return set.add(moduleName);
+        return isMigrationRequired;
     }
 
     public static void migrate(final DataSource dataSource,
@@ -58,7 +88,9 @@ public final class FlywayUtil {
                         flywayTableName +
                         " from " +
                         flywayLocations);
+
                 flyway.migrate();
+
                 LOGGER.info(() -> "Completed Flyway DB migration for " +
                         moduleName +
                         " in table " +

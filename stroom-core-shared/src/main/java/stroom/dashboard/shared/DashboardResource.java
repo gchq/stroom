@@ -72,7 +72,7 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
             operationId = "downloadDashboardQuery")
     ResourceGeneration downloadQuery(
             @Parameter(description = "downloadQueryRequest", required = true)
-                    DownloadQueryRequest downloadQueryRequest);
+                    DashboardSearchRequest request);
 
     @POST
     @Path("/downloadSearchResults")
@@ -87,7 +87,7 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
     @Operation(
             summary = "Keep search results alive for paging/download etc",
             operationId = "keepAliveDashboardSearchResults")
-    SearchKeepAliveResponse keepAlive(
+    Boolean keepAlive(
             @Parameter(description = "request", required = true) SearchKeepAliveRequest request);
 
     @POST

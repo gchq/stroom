@@ -19,7 +19,10 @@ public class GlobalConfigBootstrapService {
     private final ConfigPropertyDao dao;
     private final ConfigMapper configMapper;
 
+    // This two must be different as they are effectively compared below
+    // This is the initial value of our in memory variable
     private static final long UNINITIALISED_UPDATE_TIME_MS = -2;
+    // This value is used when the record doesn't exit
     private static final long UNKNOWN_UPDATE_TIME_MS = -1;
 
     private volatile long lastConfigUpdateTimeMs = UNINITIALISED_UPDATE_TIME_MS;
@@ -43,6 +46,7 @@ public class GlobalConfigBootstrapService {
         // with DB values so only do the update if something
         // has changed by checking the tracker table. The tracker table must be updated whenever
         // there is a change to the config table. The DAO should ensure this.
+
         final long latestConfigUpdateTimeMs = dao.getLatestConfigUpdateTimeMs()
                 .orElse(UNKNOWN_UPDATE_TIME_MS);
 

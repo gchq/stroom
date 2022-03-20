@@ -53,7 +53,7 @@ public @interface FunctionArg {
     /**
      * If the argument has a default value set it here. It can then be used as a default value
      * for completion snippets and displayed in the menu help.
-     * Default value is a string as it may be another expression, e.g. 'null()' or a field '${eventId}'.
+     * Default value is a string as it may be another expression, e.g. 'null()' or a field '${EventId}'.
      */
     String defaultValue() default "";
 }

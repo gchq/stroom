@@ -83,13 +83,14 @@ public class DefaultSchema extends SchemaImpl {
 
     @Override
     public final List<Table<?>> getTables() {
-        return Arrays.<Table<?>>asList(
+        return Arrays.asList(
             Aggregate.AGGREGATE,
             ForwardAggregate.FORWARD_AGGREGATE,
             ForwardSource.FORWARD_SOURCE,
             ForwardUrl.FORWARD_URL,
             Source.SOURCE,
             SourceEntry.SOURCE_ENTRY,
-            SourceItem.SOURCE_ITEM);
+            SourceItem.SOURCE_ITEM
+        );
     }
 }

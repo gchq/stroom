@@ -4,9 +4,6 @@
 package stroom.proxy.repo.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Name;
@@ -107,31 +104,12 @@ public class SourceEntry extends TableImpl<SourceEntryRecord> {
 
     @Override
     public Schema getSchema() {
-        return DefaultSchema.DEFAULT_SCHEMA;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public UniqueKey<SourceEntryRecord> getPrimaryKey() {
-        return Keys.PK_SOURCE_ENTRY;
-    }
-
-    @Override
-    public List<UniqueKey<SourceEntryRecord>> getKeys() {
-        return Arrays.<UniqueKey<SourceEntryRecord>>asList(Keys.PK_SOURCE_ENTRY);
-    }
-
-    @Override
-    public List<ForeignKey<SourceEntryRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<SourceEntryRecord, ?>>asList(Keys.FK_SOURCE_ENTRY_SOURCE_ITEM_1);
-    }
-
-    private transient SourceItem _sourceItem;
-
-    public SourceItem sourceItem() {
-        if (_sourceItem == null)
-            _sourceItem = new SourceItem(this, Keys.FK_SOURCE_ENTRY_SOURCE_ITEM_1);
-
-        return _sourceItem;
+        return Keys.SOURCE_ENTRY__;
     }
 
     @Override

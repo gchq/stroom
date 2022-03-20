@@ -23,7 +23,6 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.search.elastic.indexing.ElasticIndexingElementModule;
 import stroom.search.elastic.search.ElasticIndexQueryResourceImpl;
-import stroom.search.elastic.search.ElasticSearchResponseCreatorManager;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.RunnableWrapper;
@@ -37,7 +36,6 @@ import com.google.inject.AbstractModule;
 import javax.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.CRON;
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class ElasticSearchModule extends AbstractModule {
 
@@ -47,7 +45,7 @@ public class ElasticSearchModule extends AbstractModule {
 
         // Services
 
-        bind(ElasticIndexService.class).to(ElasticIndexServiceImpl.class);
+        bind(stroom.search.elastic.ElasticIndexService.class).to(ElasticIndexServiceImpl.class);
 
         // Caches
 
@@ -93,7 +91,7 @@ public class ElasticSearchModule extends AbstractModule {
                 .bind(ElasticIndexQueryResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
-                .addBinding(ElasticIndexQueryResourceImpl.class);
+                .addBinding(ElasticIndexServiceImpl.class);
 
         // Server tasks
 
@@ -102,11 +100,7 @@ public class ElasticSearchModule extends AbstractModule {
                         .name("Elastic Index Retention")
                         .description("Logically delete indexed documents in Elasticsearch indexes based on the " +
                                 "specified deletion query")
-                        .schedule(CRON, "0 2 *"))
-                .bindJobTo(EvictExpiredElements.class, builder -> builder
-                        .name("Evict expired elements")
-                        .schedule(PERIODIC, "10s")
-                        .managed(false));
+                        .schedule(CRON, "0 2 *"));
     }
 
     private static class DataRetention extends RunnableWrapper {
@@ -114,14 +108,6 @@ public class ElasticSearchModule extends AbstractModule {
         @Inject
         DataRetention(final ElasticIndexRetentionExecutor dataRetentionExecutor) {
             super(dataRetentionExecutor::exec);
-        }
-    }
-
-    private static class EvictExpiredElements extends RunnableWrapper {
-
-        @Inject
-        EvictExpiredElements(final ElasticSearchResponseCreatorManager manager) {
-            super(manager::evictExpiredElements);
         }
     }
 }

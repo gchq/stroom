@@ -124,22 +124,17 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
 
     @Override
     public Schema getSchema() {
-        return DefaultSchema.DEFAULT_SCHEMA;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.NEW_POSITION_SOURCE_ITEM_INDEX);
+        return Arrays.asList(Indexes.NEW_POSITION_SOURCE_ITEM_INDEX);
     }
 
     @Override
     public UniqueKey<SourceItemRecord> getPrimaryKey() {
-        return Keys.PK_SOURCE_ITEM;
-    }
-
-    @Override
-    public List<UniqueKey<SourceItemRecord>> getKeys() {
-        return Arrays.<UniqueKey<SourceItemRecord>>asList(Keys.PK_SOURCE_ITEM, Keys.SQLITE_AUTOINDEX_SOURCE_ITEM_2);
+        return Keys.SOURCE_ITEM__;
     }
 
     @Override

@@ -87,6 +87,7 @@ class TestSearchResponseCreator {
 
     private SearchResponseCreator createSearchResponseCreator() {
         return new SearchResponseCreator(
+                "test_user_id",
                 sizesProvider,
                 mockStore);
     }

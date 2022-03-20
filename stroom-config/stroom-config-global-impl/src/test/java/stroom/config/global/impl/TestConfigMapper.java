@@ -44,7 +44,6 @@ import stroom.processor.impl.ProcessorConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
-import stroom.searchable.impl.SearchableConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -945,7 +944,6 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                 @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
                 @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
-                @JsonProperty(PROP_NAME_SEARCHABLE) final SearchableConfig searchableConfig,
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                 @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
@@ -1004,7 +1002,6 @@ class TestConfigMapper {
                     publicUri,
                     receiveDataConfig,
                     searchConfig,
-                    searchableConfig,
                     securityConfig,
                     serviceDiscoveryConfig,
                     sessionCookieConfig,

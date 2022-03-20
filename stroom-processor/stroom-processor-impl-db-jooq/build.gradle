@@ -47,11 +47,21 @@ jooq {
                         excludes = 'processor_schema_history'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
-                        // Treat tinyint(1) columns as booleans
+
+                        // processor_task.status is non-boolean tinyint
+
+                        // Treat some tinyint columns as booleans
                         forcedTypes {
                             forcedType {
                                 name = 'BOOLEAN'
-                                types = '(?i:TINYINT\\(1\\))'
+                                includeExpression = '' +
+                                    '.*\\.processor\\.enabled|' +
+                                    '.*\\.processor\\.deleted|' +
+                                    '.*\\.processor_filter\\.enabled|' +
+                                    '.*\\.processor_filter\\.deleted|' +
+                                    '.*\\.processor_filter\\.reprocess'
+                                // see https://github.com/jOOQ/jOOQ/issues/9405
+                                includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }
                         }
                     }
