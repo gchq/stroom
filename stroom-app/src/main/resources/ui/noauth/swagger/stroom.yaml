@@ -5833,6 +5833,7 @@ components:
             - IS_DOC_REF
             - IS_NULL
             - IS_NOT_NULL
+            - MATCHES_REGEX
         name:
           type: string
         queryable:
@@ -7204,7 +7205,8 @@ components:
           - DOUBLE
           - DATE
           - TEXT
-        stored:
+          - IPV4_ADDRESS
+        indexed:
           type: boolean
     ElasticIndexTestResponse:
       type: object
@@ -7497,6 +7499,7 @@ components:
             - IS_DOC_REF
             - IS_NULL
             - IS_NOT_NULL
+            - MATCHES_REGEX
           docRef:
             $ref: '#/components/schemas/DocRef'
           field:
@@ -8456,6 +8459,10 @@ components:
         validationRegex:
           type: string
     IntegerField:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractField'
+    IpV4AddressField:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractField'
@@ -10488,6 +10495,7 @@ components:
             - IS_DOC_REF
             - IS_NULL
             - IS_NOT_NULL
+            - MATCHES_REGEX
         termOffsets:
           type: boolean
         termPayloads:

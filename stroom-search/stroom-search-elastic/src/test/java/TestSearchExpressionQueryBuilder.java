@@ -44,6 +44,7 @@ public class TestSearchExpressionQueryBuilder {
     public void testBuildQuery() {
         ElasticIndexField answerField = new ElasticIndexField();
         answerField.setFieldName("answer");
+        answerField.setFieldType("long");
         answerField.setFieldUse(ElasticIndexFieldType.LONG);
         indexFieldsMap.put(answerField.getFieldName(), answerField);
         final Long answerFieldValue = 42L;
@@ -65,28 +66,15 @@ public class TestSearchExpressionQueryBuilder {
 
         ElasticIndexField nameField = new ElasticIndexField();
         nameField.setFieldName("name");
+        nameField.setFieldType("text");
         nameField.setFieldUse(ElasticIndexFieldType.TEXT);
         indexFieldsMap.put(nameField.getFieldName(), nameField);
-        final String nameFieldValue = "one,two, three";
-
-        expressionBuilder.addTerm(nameField.getFieldName(), Condition.CONTAINS, nameFieldValue);
-        queryBuilder = builder.buildQuery(expressionBuilder.build());
-
-        boolQuery = (BoolQueryBuilder) queryBuilder;
-        Assertions.assertEquals(2, boolQuery.must().size(), "Bool query contains exactly two items");
-        // Inner bool query, with a `MUST` condition for each term in the list
-        BoolQueryBuilder innerBoolQuery = (BoolQueryBuilder) boolQuery.must().get(1);
-        Assertions.assertEquals(3, innerBoolQuery.must().size(), "Inner bool query contains exactly three items");
-
-        TermQueryBuilder firstTermQuery = (TermQueryBuilder) innerBoolQuery.must().get(0);
-        Assertions.assertEquals(nameField.getFieldName(), firstTermQuery.fieldName(),
-                "Field name of first term query is correct");
-        Assertions.assertEquals("one", firstTermQuery.value(), "Field value of first term query is correct");
 
         // Add a nested NOT GREATER THAN date condition
 
         ElasticIndexField dateField = new ElasticIndexField();
         dateField.setFieldName("date");
+        dateField.setFieldType("date");
         dateField.setFieldUse(ElasticIndexFieldType.DATE);
         indexFieldsMap.put(dateField.getFieldName(), dateField);
         final String nowStr = "2021-02-17T01:23:34.000";
@@ -109,9 +97,10 @@ public class TestSearchExpressionQueryBuilder {
         queryBuilder = builder.buildQuery(expressionBuilder.build());
 
         boolQuery = (BoolQueryBuilder) queryBuilder;
-        Assertions.assertEquals(3, boolQuery.must().size(), "Bool query contains exactly three items");
-        innerBoolQuery = (BoolQueryBuilder) boolQuery.must().get(2);
-        Assertions.assertEquals(1, innerBoolQuery.mustNot().size(), "Inner bool query contains one item");
+        Assertions.assertEquals(2, boolQuery.must().size(), "Bool query contains exactly two items");
+        BoolQueryBuilder innerBoolQuery = (BoolQueryBuilder) boolQuery.must().get(1);
+        Assertions.assertEquals(1, innerBoolQuery.mustNot().size(),
+                "Inner bool query contains one item");
 
         RangeQueryBuilder firstRangeQuery = (RangeQueryBuilder) innerBoolQuery.mustNot().get(0);
         Assertions.assertEquals(dateField.getFieldName(), firstRangeQuery.fieldName(),

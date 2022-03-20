@@ -40,6 +40,7 @@ export interface AbstractField {
     | "IS_DOC_REF"
     | "IS_NULL"
     | "IS_NOT_NULL"
+    | "MATCHES_REGEX"
   )[];
   name?: string;
   queryable?: boolean;
@@ -911,8 +912,8 @@ export interface ElasticIndexDoc {
 export interface ElasticIndexField {
   fieldName?: string;
   fieldType?: string;
-  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT";
-  stored?: boolean;
+  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT" | "IPV4_ADDRESS";
+  indexed?: boolean;
 }
 
 export interface ElasticIndexTestResponse {
@@ -1091,7 +1092,8 @@ export type ExpressionTerm = ExpressionItem & {
     | "IN_FOLDER"
     | "IS_DOC_REF"
     | "IS_NULL"
-    | "IS_NOT_NULL";
+    | "IS_NOT_NULL"
+    | "MATCHES_REGEX";
   docRef?: DocRef;
   field?: string;
   value?: string;
@@ -1665,6 +1667,8 @@ export interface InfoPopupConfig {
 }
 
 export type IntegerField = AbstractField;
+
+export type IpV4AddressField = AbstractField;
 
 export interface Job {
   advanced?: boolean;
@@ -2985,6 +2989,7 @@ export interface SolrIndexField {
     | "IS_DOC_REF"
     | "IS_NULL"
     | "IS_NOT_NULL"
+    | "MATCHES_REGEX"
   )[];
   termOffsets?: boolean;
   termPayloads?: boolean;

@@ -124,7 +124,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                         final ElasticIndexFieldType elasticFieldType =
                                 ElasticIndexFieldType.fromNativeType(fullName, nativeType);
 
-                        return elasticFieldType.toDataSourceField(fieldName, true);
+                        return elasticFieldType.toDataSourceField(fieldName, fieldIsIndexed(field.getValue()));
                     } catch (IllegalArgumentException e) {
                         LOGGER.warn(e::getMessage);
                         return null;
@@ -169,8 +169,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             try {
                 String nativeType = getFieldPropertyFromMapping(key, fieldMeta, "type");
                 final String fieldName = fieldMeta.fullName();
-                final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
-                final boolean stored = fieldIsStored(key, fieldMeta);
+                final boolean indexed = fieldIsIndexed(fieldMeta);
 
                 if (nativeType == null) {
                     return;
@@ -189,7 +188,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                         ElasticIndexFieldType.fromNativeType(fieldName, nativeType),
                         fieldName,
                         nativeType,
-                        sourceFieldEnabled || stored));
+                        indexed));
             } catch (Exception e) {
                 LOGGER.error(e::getMessage, e);
             }
@@ -199,51 +198,20 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
     }
 
     /**
-     * Get a filtered list of any field mappings with `stored` equal to `true`
+     * Tests whether a field has the mapping property `index` set to `true`.
+     * This determines whether it is searchable.
      */
-    @Override
-    public List<String> getStoredFields(final ElasticIndexDoc index) {
-        final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
-        final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
-
-        return fieldMappings.entrySet().stream()
-                .filter(mapping -> sourceFieldEnabled || fieldIsStored(mapping.getKey(), mapping.getValue()))
-                .map(mapping -> mapping.getValue().fullName())
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Check the index mapping for a field `_source` and if enabled, return TRUE.
-     * WARNING: This does NOT check whether fields are excluded from `_source`, which is considered an advanced
-     * use case. In this situation, the returned value will be empty.
-     *
-     * @see "https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html"
-     */
-    private boolean sourceFieldIsEnabled(final Map<String, FieldMappingMetadata> fieldMappings) {
-        final FieldMappingMetadata sourceField = fieldMappings.get("_source");
-
-        // If the `_source` field is enabled, treat all fields as "stored", as the source data is stored in the index
+    private boolean fieldIsIndexed(final FieldMappingMetadata field) {
         try {
-            if (!((Boolean) sourceField.sourceAsMap().get("enabled"))) {
+            final Map<String, Object> fieldMap = field.sourceAsMap();
+            final Optional<String> fieldKey = fieldMap.keySet().stream().findFirst();
+            if (fieldKey.isPresent()) {
+                @SuppressWarnings("unchecked") // Need to get at the field mapping properties
+                final Map<String, Object> mappingProperties = (Map<String, Object>) fieldMap.get(fieldKey.get());
+                return mappingProperties.containsKey("index") ? (Boolean) fieldMap.get("index") : true;
+            } else {
                 return false;
             }
-        } catch (Exception ignored) {
-            // Source field mapping does not exist, so _source field is enabled
-        }
-
-        return true;
-    }
-
-    /**
-     * Tests whether a field is a "stored", as per its mapping metadata
-     */
-    private boolean fieldIsStored(final String fieldName, final FieldMappingMetadata field) {
-        try {
-            @SuppressWarnings("unchecked") // Need to get at the field mapping properties
-            final Map<String, Object> propertiesMap = (Map<String, Object>) field.sourceAsMap().get(fieldName);
-            final Boolean stored = (Boolean) propertiesMap.get("store");
-
-            return stored != null && stored;
         } catch (Exception e) {
             return false;
         }

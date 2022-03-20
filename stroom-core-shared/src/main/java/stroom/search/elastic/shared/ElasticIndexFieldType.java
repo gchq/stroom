@@ -24,6 +24,7 @@ import stroom.datasource.api.v2.FieldTypes;
 import stroom.datasource.api.v2.FloatField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
+import stroom.datasource.api.v2.IpV4AddressField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.HasDisplayValue;
@@ -43,13 +44,15 @@ import java.util.Set;
 public enum ElasticIndexFieldType implements HasDisplayValue {
     ID(FieldTypes.ID, "Id", true, null),
     BOOLEAN(FieldTypes.BOOLEAN, "Boolean", false, new String[]{ "boolean" }),
-    INTEGER(FieldTypes.INTEGER, "Integer", true, new String[]{ "integer", "short", "byte" }),
+    INTEGER(FieldTypes.INTEGER, "Integer", true,
+            new String[]{ "integer", "short", "byte", "version" }),
     LONG(FieldTypes.LONG, "Long", true, new String[]{ "long", "unsigned_long" }),
     FLOAT(FieldTypes.FLOAT, "Float", false, new String[]{ "float", "half_float", "scaled_float" }),
     DOUBLE(FieldTypes.DOUBLE, "Double", false, new String[]{ "double" }),
     DATE(FieldTypes.DATE, "Date", false, new String[]{ "date" }),
     TEXT(FieldTypes.TEXT, "Text", false,
-            new String[]{ "text", "keyword", "ip", "version", "constant_keyword", "wildcard" });
+            new String[]{ "text", "keyword", "constant_keyword", "wildcard" }),
+    IPV4_ADDRESS(FieldTypes.IPV4_ADDRESS, "IpV4Address", false, new String[]{ "ip" });
 
     private static Map<String, ElasticIndexFieldType> nativeTypeRegistry = new HashMap<>();
 
@@ -111,7 +114,9 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     private List<Condition> getConditions() {
         final List<Condition> conditions = new ArrayList<>();
 
-        if (dataSourceFieldType.equals(FieldTypes.DATE) || numeric) {
+        if (dataSourceFieldType.equals(FieldTypes.DATE) ||
+                dataSourceFieldType.equals(FieldTypes.IPV4_ADDRESS) ||
+                numeric) {
             conditions.add(Condition.EQUALS);
             conditions.add(Condition.GREATER_THAN);
             conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
@@ -124,6 +129,7 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
             conditions.add(Condition.EQUALS);
             conditions.add(Condition.IN);
             conditions.add(Condition.IN_DICTIONARY);
+            conditions.add(Condition.MATCHES_REGEX);
         }
 
         return conditions;
@@ -163,6 +169,8 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
                 return new DateField(fieldName, isIndexed, supportedConditions);
             case FieldTypes.TEXT:
                 return new TextField(fieldName, isIndexed, supportedConditions);
+            case FieldTypes.IPV4_ADDRESS:
+                return new IpV4AddressField(fieldName, isIndexed, supportedConditions);
             default:
                 return null;
         }
