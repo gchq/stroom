@@ -51,12 +51,6 @@ plugins {
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
-def javaVersion = JavaVersion.VERSION_17;
-if (JavaVersion.current() != javaVersion) {
-    throw new GradleException(
-        "This build must be run with Java " + javaVersion + " (current = " + JavaVersion.current() + ")")
-}
-
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
 ext.getPropertyOrDefault = { propName, defaultValue ->
@@ -329,8 +323,14 @@ subprojects {
 ////        rules +=  'all-dependency'
 //    }
 
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
+    java {
+        toolchain {
+            // Set the version of java to build with
+            languageVersion = JavaLanguageVersion.of(17)
+            // Adoptium also covers Temurin
+            vendor = JvmVendorSpec.ADOPTIUM
+        }
+    }
 
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
