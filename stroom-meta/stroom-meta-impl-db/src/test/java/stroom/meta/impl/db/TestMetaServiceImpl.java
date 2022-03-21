@@ -526,7 +526,7 @@ class TestMetaServiceImpl {
         final Instant now = Instant.now();
         final int totalDays = 10;
         final int rowsPerFeedPerDay = 2;
-        final int feedCount = 3;
+        final int feedCount = 5;
 
         final int insertBatchSize = 10_000;
         final int totalRows = totalDays * feedCount * rowsPerFeedPerDay;
