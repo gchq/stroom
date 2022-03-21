@@ -127,6 +127,7 @@ public class ForwardAggregateDao {
 
                     try (Stream<Record1<Long>> stream = context
                             .select(AGGREGATE.ID)
+                            .from(AGGREGATE)
                             .where(DELETE_AGGREGATE_CONDITION)
                             .stream()) {
                         stream.forEach(r -> deleteAggregate(context, r.get(AGGREGATE.ID)));
