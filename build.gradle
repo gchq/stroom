@@ -306,6 +306,10 @@ allprojects {
 // substitution with log4j
 def dropwizardBomSlf4jVersion = null
 
+ext.javaLanguageVersion = 17
+// Adoptium also covers Temurin
+ext.javaVendor = JvmVendorSpec.ADOPTIUM
+
 //Configuration applicable to all sub projects
 subprojects {
     //println "Configuring subproject ${project.name}"
@@ -326,9 +330,8 @@ subprojects {
     java {
         toolchain {
             // Set the version of java to build with
-            languageVersion = JavaLanguageVersion.of(17)
-            // Adoptium also covers Temurin
-            vendor = JvmVendorSpec.ADOPTIUM
+            languageVersion = JavaLanguageVersion.of(javaLanguageVersion)
+            vendor = javaVendor
         }
     }
 

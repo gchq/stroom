@@ -381,6 +381,21 @@ task migrate(type: JavaExec) {
     args 'migrate', '../local.yml'
 }
 
+compileJava {
+    doLast {
+        def compiler = javaToolchains.compilerFor {
+            languageVersion = JavaLanguageVersion.of(javaLanguageVersion)
+            vendor = javaVendor
+        }
+
+        println "============================================================="
+        println "Compiling with JDK: " + compiler.get().metadata.vendor +
+        ", " + compiler.get().metadata.javaRuntimeVersion +
+        ", " + compiler.get().metadata.installationPath
+        println "============================================================="
+    }
+}
+
 
 clean {
     delete stroomDockerBuildDir
