@@ -16,6 +16,8 @@
 
 package stroom.receive.common;
 
+import stroom.util.io.ByteCountInputStream;
+import stroom.util.io.StreamUtil;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.Unauthenticated;
 
@@ -27,6 +29,7 @@ import java.util.Enumeration;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -38,6 +41,7 @@ import javax.servlet.http.HttpServletResponse;
  * </p>
  */
 @Unauthenticated
+@Singleton
 public class ReceiveDataServlet extends HttpServlet implements IsServlet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataServlet.class);
@@ -57,7 +61,16 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
     @Override
     public void doPost(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
-        handleRequest(request, response);
+        try {
+            try (final ByteCountInputStream inputStream = new ByteCountInputStream(request.getInputStream())) {
+                StreamUtil.streamToString(inputStream);
+            }
+            response.setStatus(HttpServletResponse.SC_OK);
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+//        handleRequest(request, response);
     }
 
     /**

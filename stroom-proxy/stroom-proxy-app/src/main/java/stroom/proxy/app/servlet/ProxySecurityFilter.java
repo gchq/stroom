@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -50,6 +51,7 @@ import javax.ws.rs.core.Response;
  * Filter to avoid posts to the wrong place (e.g. the root of the app)
  * </p>
  */
+@Singleton
 public class ProxySecurityFilter implements Filter {
 
     private static final String IGNORE_URI_REGEX = "ignoreUri";
@@ -87,22 +89,24 @@ public class ProxySecurityFilter implements Filter {
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
-        if (!(response instanceof HttpServletResponse)) {
-            final String message = "Unexpected response type: " + response.getClass().getName();
-            LOGGER.error(message);
-            return;
-        }
-        final HttpServletResponse httpServletResponse = (HttpServletResponse) response;
+        chain.doFilter(request, response);
 
-        if (!(request instanceof HttpServletRequest)) {
-            final String message = "Unexpected request type: " + request.getClass().getName();
-            LOGGER.error(message);
-            httpServletResponse.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, message);
-            return;
-        }
-        final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-
-        filter(httpServletRequest, httpServletResponse, chain);
+//        if (!(response instanceof HttpServletResponse)) {
+//            final String message = "Unexpected response type: " + response.getClass().getName();
+//            LOGGER.error(message);
+//            return;
+//        }
+//        final HttpServletResponse httpServletResponse = (HttpServletResponse) response;
+//
+//        if (!(request instanceof HttpServletRequest)) {
+//            final String message = "Unexpected request type: " + request.getClass().getName();
+//            LOGGER.error(message);
+//            httpServletResponse.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, message);
+//            return;
+//        }
+//        final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+//
+//        filter(httpServletRequest, httpServletResponse, chain);
     }
 
     private void filter(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain)

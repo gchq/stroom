@@ -61,6 +61,7 @@ dependencies {
     implementation libs.jetty_server
     implementation libs.jose4j
     implementation libs.slf4j_api
+    implementation 'io.vertx:vertx-core:4.2.6'
     
     testImplementation project(':stroom-test-common')
 

@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 public class Metrics {
 
     private static final Map<String, Metric> map = new ConcurrentHashMap<>();
-    private static boolean enabled;
+    private static boolean enabled = true;
     private static AtomicBoolean periodicReport = new AtomicBoolean();
 
     public static <R> R measure(final String name, final Supplier<R> runnable) {
@@ -55,12 +55,18 @@ public class Metrics {
     }
 
     public static void report() {
+        final StringBuilder sb = new StringBuilder();
         map
                 .entrySet()
                 .stream()
                 .sorted(Entry.comparingByKey())
-                .forEach(e ->
-                        System.out.println(e.getKey() + " in: " + e.getValue().toString()));
+                .forEach(e -> {
+                    sb.append(e.getKey());
+                    sb.append(" in: ");
+                    sb.append(e.getValue());
+                    sb.append("\n");
+                });
+        System.out.println(sb);
     }
 
     public static void reset() {

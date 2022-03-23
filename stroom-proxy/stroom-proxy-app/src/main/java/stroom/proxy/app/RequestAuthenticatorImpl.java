@@ -4,6 +4,7 @@ import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.UserIdentity;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.Metrics;
 
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -44,23 +45,25 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
 
     @Override
     public Optional<UserIdentity> authenticate(final HttpServletRequest request) {
-        Optional<UserIdentity> userIdentity = Optional.empty();
+        return Metrics.measure("RequestAuthenticatorImpl - authenticate", () -> {
+            Optional<UserIdentity> userIdentity = Optional.empty();
 
-        if (receiveDataConfig.getPublicKey() != null && !receiveDataConfig.getPublicKey().isEmpty()) {
-            // See if we can login with a token if one is supplied.
-            try {
-                final Optional<JwtContext> optionalJwtContext = getJwtContext(request);
-                if (optionalJwtContext.isPresent()) {
-                    userIdentity = optionalJwtContext.flatMap(jwtContext -> getUserIdentity(jwtContext));
-                } else {
-                    LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
+            if (receiveDataConfig.getPublicKey() != null && !receiveDataConfig.getPublicKey().isEmpty()) {
+                // See if we can login with a token if one is supplied.
+                try {
+                    final Optional<JwtContext> optionalJwtContext = getJwtContext(request);
+                    if (optionalJwtContext.isPresent()) {
+                        userIdentity = optionalJwtContext.flatMap(jwtContext -> getUserIdentity(jwtContext));
+                    } else {
+                        LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
+                    }
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e::getMessage, e);
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
             }
-        }
 
-        return userIdentity;
+            return userIdentity;
+        });
     }
 
     private Optional<JwtContext> getJwtContext(final HttpServletRequest request) {
