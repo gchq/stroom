@@ -5,7 +5,6 @@ import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
-import stroom.dashboard.shared.SearchKeepAliveRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourceGeneration;
@@ -23,8 +22,6 @@ public interface DashboardService {
     ResourceGeneration downloadQuery(DashboardSearchRequest request);
 
     ResourceGeneration downloadSearchResults(DownloadSearchResultsRequest request);
-
-    Boolean keepAlive(SearchKeepAliveRequest request);
 
     DashboardSearchResponse search(DashboardSearchRequest request);
 

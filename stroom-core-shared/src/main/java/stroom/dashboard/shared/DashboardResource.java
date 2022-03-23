@@ -83,14 +83,6 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
             @Parameter(description = "request", required = true) DownloadSearchResultsRequest request);
 
     @POST
-    @Path("/keepAlive")
-    @Operation(
-            summary = "Keep search results alive for paging/download etc",
-            operationId = "keepAliveDashboardSearchResults")
-    Boolean keepAlive(
-            @Parameter(description = "request", required = true) SearchKeepAliveRequest request);
-
-    @POST
     @Path("/search")
     @Operation(
             summary = "Perform a new search or get new results",

@@ -244,10 +244,8 @@ class DashboardServiceImpl implements DashboardService {
             try {
                 final Optional<ActiveQuery> optionalActiveQuery = activeQueriesManager
                         .getOptional(request.getSearchRequest().getQueryKey());
-                if (optionalActiveQuery.isEmpty()) {
-                    throw new EntityServiceException("The requested search data is not available");
-                }
-                final ActiveQuery activeQuery = optionalActiveQuery.get();
+                final ActiveQuery activeQuery = optionalActiveQuery.orElseThrow(() ->
+                        new EntityServiceException("The requested search data is not available"));
                 SearchRequest mappedRequest = searchRequestMapper.mapRequest(searchRequest);
                 SearchResponse searchResponse = activeQuery.search(mappedRequest);
 
@@ -343,27 +341,6 @@ class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    public Boolean keepAlive(final SearchKeepAliveRequest request) {
-        LOGGER.trace(() -> "keepAlive() " + request);
-        return securityContext.secureResult(() -> {
-            LOGGER.trace(() -> "keepAlive() " + request);
-
-            request.getDeadKeys().forEach(activeQueriesManager::remove);
-            request.getActiveKeys().forEach(key -> {
-                final Optional<ActiveQuery> optionalActiveQuery = activeQueriesManager.getOptional(key);
-                optionalActiveQuery.ifPresent(activeQuery -> {
-                    // Keep the query alive.
-                    if (!activeQuery.keepAlive()) {
-                        LOGGER.debug("Unable to keep alive: " + key.toString());
-                    }
-                });
-            });
-
-            return true;
-        });
-    }
-
-    @Override
     public DashboardSearchResponse search(final DashboardSearchRequest request) {
         LOGGER.trace(() -> "search() " + request);
         return securityContext.secureResult(() -> {
@@ -402,7 +379,11 @@ class DashboardServiceImpl implements DashboardService {
         LOGGER.trace(() -> "processRequest() " + searchRequest);
         DashboardSearchResponse result = null;
 
-        QueryKey queryKey = searchRequest.getQueryKey();
+        final QueryKey queryKey = searchRequest.getQueryKey();
+        if (queryKey == null || queryKey.getUuid() == null) {
+            throw new RuntimeException("Null query key");
+        }
+
         boolean newSearch = false;
         DashboardSearchRequest updatedSearchRequest = searchRequest;
         Search search = updatedSearchRequest.getSearch();
@@ -423,20 +404,20 @@ class DashboardServiceImpl implements DashboardService {
                 SearchRequest mappedRequest = searchRequestMapper.mapRequest(updatedSearchRequest);
 
                 synchronized (DashboardServiceImpl.class) {
-                    // Make sure we have active queries for all current UI queries.
-                    // Note: This also ensures that the active query cache is kept alive
-                    // for all open UI components.
-                    if (queryKey != null) {
-                        final Optional<ActiveQuery> optionalActiveQuery = activeQueriesManager.getOptional(queryKey);
-                        final String message = "No active search found for key = " + queryKey;
-                        activeQuery = optionalActiveQuery.orElseThrow(() ->
-                                new RuntimeException(message));
-                        // Check user identity.
-                        if (!activeQuery.getUserId().equals(securityContext.getUserId())) {
-                            throw new RuntimeException("Query belongs to different user");
-                        }
+                    final Optional<ActiveQuery> optionalActiveQuery = activeQueriesManager.getOptional(queryKey);
+                    final String message = "No active search found for key = " + queryKey;
+                    activeQuery = optionalActiveQuery.orElseThrow(() ->
+                            new RuntimeException(message));
 
-                    } else {
+                    // Check user identity.
+                    if (!activeQuery.getUserId().equals(securityContext.getUserId())) {
+                        throw new RuntimeException("Query belongs to different user");
+                    }
+                    if (activeQuery.isDestroy()) {
+                        throw new EntityServiceException("The requested search has been destroyed.");
+                    }
+
+                    if (!activeQuery.started()) {
                         // If the query doesn't have a key then this is new.
                         LOGGER.debug(() -> "New query");
                         newSearch = true;
@@ -454,18 +435,10 @@ class DashboardServiceImpl implements DashboardService {
                                                 "No search provider found for '" +
                                                         dataSourceRef.getType() +
                                                         "' data source"));
-
-                        // Create a brand new query key and give it to the request.
-                        queryKey = new QueryKey(UUID.randomUUID().toString());
                         mappedRequest = mappedRequest.copy().key(queryKey).build();
 
                         // Store the new active query for this query.
-                        activeQuery = new ActiveQuery(
-                                mappedRequest.getKey(),
-                                dataSourceRef,
-                                dataSourceProvider,
-                                securityContext.getUserId());
-                        activeQueriesManager.put(queryKey, activeQuery);
+                        activeQuery.startNewSearch(dataSourceRef, dataSourceProvider);
 
                         // Add this search to the history so the user can get back to this
                         // search again.

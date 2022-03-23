@@ -12,13 +12,7 @@ import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
@@ -36,7 +30,7 @@ public class ActiveQueriesWebSocket extends AuthenticatedWebSocket implements Is
 
     private final SecurityContext securityContext;
     private final ActiveQueriesManager activeQueriesManager;
-    private final Map<String, Set<String>> activeQueries = new ConcurrentHashMap<>();
+    private QueryKey queryKey;
 
     @Inject
     public ActiveQueriesWebSocket(final SecurityContext securityContext,
@@ -44,18 +38,6 @@ public class ActiveQueriesWebSocket extends AuthenticatedWebSocket implements Is
         super(securityContext);
         this.securityContext = securityContext;
         this.activeQueriesManager = activeQueriesManager;
-
-        Executors.newScheduledThreadPool(1).schedule(() -> {
-            if (activeQueriesManager != null) {
-                activeQueries.values().forEach(set -> {
-                    set.forEach(uuid -> {
-                        final Optional<ActiveQuery> optionalActiveQuery =
-                                activeQueriesManager.getOptional(new QueryKey(uuid));
-                        optionalActiveQuery.ifPresent(ActiveQuery::keepAlive);
-                    });
-                });
-            }
-        }, 1, TimeUnit.MINUTES);
     }
 
     public void onOpen(final Session session) throws IOException {
@@ -68,7 +50,12 @@ public class ActiveQueriesWebSocket extends AuthenticatedWebSocket implements Is
 
         // Keep alive forever.
         session.setMaxIdleTimeout(0);
-        session.getAsyncRemote().sendText("welcome");
+
+        // Create a new search UUID.
+        final String uuid = UUID.randomUUID().toString();
+        queryKey = new QueryKey(uuid);
+        activeQueriesManager.put(queryKey, new ActiveQuery(queryKey, securityContext.getUserId()));
+        session.getAsyncRemote().sendText(uuid);
     }
 
     public void onMessage(final Session session, final String message) {
@@ -80,22 +67,6 @@ public class ActiveQueriesWebSocket extends AuthenticatedWebSocket implements Is
         checkLogin();
 
         session.getAsyncRemote().sendText(message.toUpperCase());
-
-        if (message.startsWith("add:")) {
-            if (activeQueriesManager != null) {
-                final String uuid = message.substring("add:".length());
-                activeQueries.computeIfAbsent(session.getId(), k ->
-                        Collections.newSetFromMap(new ConcurrentHashMap<>())).add(uuid);
-//                activeQueriesManager.remove(new QueryKey(uuid));
-            }
-        } else if (message.startsWith("remove:")) {
-            if (activeQueriesManager != null) {
-                final String uuid = message.substring("remove:".length());
-                activeQueriesManager.remove(new QueryKey(uuid));
-                activeQueries.computeIfAbsent(session.getId(), k ->
-                        Collections.newSetFromMap(new ConcurrentHashMap<>())).remove(uuid);
-            }
-        }
     }
 
     public void onError(final Session session, final Throwable thr) {
@@ -105,9 +76,10 @@ public class ActiveQueriesWebSocket extends AuthenticatedWebSocket implements Is
     public void onClose(final Session session, final CloseReason cr) {
         LOGGER.debug(() -> "Closing web socket at " + PATH
                 + ", sessionId: " + session.getId());
-        final Set<String> set = activeQueries.remove(session.getId());
-        if (set != null && activeQueriesManager != null) {
-            set.forEach(uuid -> activeQueriesManager.remove(new QueryKey(uuid)));
+        if (queryKey != null) {
+            activeQueriesManager.destroy(queryKey);
+        } else {
+            LOGGER.error("UUID is null");
         }
     }
 

@@ -16,51 +16,59 @@
 
 package stroom.dashboard.impl;
 
-import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
 import stroom.query.api.v2.QueryKey;
-import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 class ActiveQueriesManager implements Clearable {
 
-    private static final String CACHE_NAME = "Active Queries";
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActiveQueriesManager.class);
 
-    private final SecurityContext securityContext;
-    private final ICache<QueryKey, ActiveQuery> cache;
+    private final Map<QueryKey, ActiveQuery> cache = new ConcurrentHashMap<>();
 
     @Inject
-    ActiveQueriesManager(final CacheManager cacheManager,
-                         final SecurityContext securityContext,
-                         final DashboardConfig dashboardConfig) {
-        this.securityContext = securityContext;
-        cache = cacheManager
-                .create(CACHE_NAME, dashboardConfig::getActiveQueriesCache, null, this::destroy);
-    }
-
-    private void destroy(final QueryKey key, final ActiveQuery value) {
-        securityContext.asProcessingUser(value::destroy);
+    public ActiveQueriesManager() {
+        // Keep active queries alive.
+        Executors.newScheduledThreadPool(1).schedule(() ->
+                cache.values().forEach(ActiveQuery::keepAlive), 1, TimeUnit.MINUTES);
     }
 
     public void put(final QueryKey key, final ActiveQuery activeQuery) {
+        LOGGER.trace(() -> "put() " + key);
         cache.put(key, activeQuery);
+        LOGGER.debug(() -> "ActiveQuery count = " + cache.size());
     }
 
     public Optional<ActiveQuery> getOptional(final QueryKey key) {
-        return cache.getOptional(key);
+        return Optional.ofNullable(cache.get(key));
     }
 
-    public void remove(final QueryKey key) {
-        cache.remove(key);
+    public void destroy(final QueryKey key) {
+        LOGGER.trace(() -> "destroy() " + key);
+        final ActiveQuery activeQuery = cache.remove(key);
+        if (activeQuery != null) {
+            activeQuery.destroy();
+        } else {
+            LOGGER.error("No active query");
+        }
+        LOGGER.debug(() -> "ActiveQuery count = " + cache.size());
     }
 
     @Override
     public void clear() {
-        cache.clear();
+        cache.forEach((k, v) -> {
+            v.destroy();
+            cache.remove(k);
+        });
     }
 }
