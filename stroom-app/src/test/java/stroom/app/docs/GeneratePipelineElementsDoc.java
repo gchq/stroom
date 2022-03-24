@@ -152,7 +152,7 @@ public class GeneratePipelineElementsDoc {
                         return LogUtil.message(template,
                                 elementInfo.type.toLowerCase(),
                                 elementInfo.iconFilename,
-                                ModelStringUtil.toCamelCase(elementInfo.clazz.getSimpleName()));
+                                ModelStringUtil.toCamelCase(elementInfo.type));
                     })
                     .forEach(System.out::println);
         }
@@ -187,13 +187,11 @@ public class GeneratePipelineElementsDoc {
                             ? elementInfo.description
                             : "> TODO - Add description";
 
+                    // Add the &nbsp; at the end so the markdown processor treats the line as a <p>
                     final String iconText = elementInfo.iconFilename != null
                             ? LogUtil.message("""
-
-
-                                    **Icon:** {{< stroom-icon "pipeline/{}" "{}" >}}""",
-                            elementInfo.iconFilename,
-                            elementInfo.type)
+                                    {{< pipe-elm "{}" >}}&nbsp;""",
+                            ModelStringUtil.toCamelCase(elementInfo.type))
                             : "";
 
                     final String rolesText = buildRolesText(elementInfo.roles);
@@ -235,9 +233,9 @@ public class GeneratePipelineElementsDoc {
                     return LogUtil.message(
                             template,
                             elementInfo.getType(),
+                            iconText,
                             descriptionText,
 //                            elementInfo.category.getDisplayValue(),
-                            iconText,
 //                            rolesText,
                             propsText
                     );
