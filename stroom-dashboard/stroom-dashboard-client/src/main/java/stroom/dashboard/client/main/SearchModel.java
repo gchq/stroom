@@ -179,7 +179,7 @@ public class SearchModel implements HasHandlers {
                 Console.log("Error on web socket at " + url);
                 AlertEvent.fireError(SearchModel.this,
                         "Error on web socket at " + url,
-                        event.toString(),
+                        event.getReason(),
                         null);
             }
         });

@@ -95,7 +95,7 @@ public final class ErrorEvent extends WebSocketEvent {
             reason = "The connection was closed due to a failure to perform a TLS handshake (e.g., the server " +
                     "certificate can't be verified) {.";
         } else {
-            reason = "Unknown reason";
+            reason = "Unknown reason (code: " + code + ")";
         }
 
         return reason;
