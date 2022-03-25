@@ -89,6 +89,7 @@ class DashboardResourceImpl implements DashboardResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public Boolean destroy(final DestroySearchRequest request) {
+        System.out.println("DESTROY - " + request.getQueryKey());
         return dashboardServiceProvider.get().destroy(request);
     }
 

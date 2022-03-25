@@ -366,6 +366,9 @@ class DashboardServiceImpl implements DashboardService {
                                 } finally {
                                     httpServletRequestHolder.set(null);
                                 }
+                                if (LOGGER.isDebugEnabled()) {
+                                    logErrorsToDebug(request, searchResponse);
+                                }
                                 return searchResponse;
                             });
                     return CompletableFuture.supplyAsync(supplier, executor).get();
@@ -404,6 +407,16 @@ class DashboardServiceImpl implements DashboardService {
             throw new EntityServiceException("Attempt to use application instance for a different user.");
         }
         return applicationInstance;
+    }
+
+    private void logErrorsToDebug(final DashboardSearchRequest request, final DashboardSearchResponse searchResponse) {
+        if (searchResponse != null
+                && searchResponse.getErrors() != null
+                && !searchResponse.getErrors().isEmpty()) {
+            LOGGER.debug("Search {} has errors: \n{}",
+                    request.getQueryKey(),
+                    String.join("\n", searchResponse.getErrors()));
+        }
     }
 
     private DashboardSearchResponse processRequest(final DashboardSearchRequest searchRequest) {
@@ -500,7 +513,7 @@ class DashboardServiceImpl implements DashboardService {
                 result = new DashboardSearchResponse(
                         queryKey,
                         null,
-                        Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        Collections.singletonList("Exception during search: " + ExceptionStringUtil.getMessage(e)),
                         true,
                         null);
             }

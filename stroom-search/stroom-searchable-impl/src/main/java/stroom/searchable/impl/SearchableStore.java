@@ -123,6 +123,7 @@ class SearchableStore implements Store {
             // Terminate the search
             terminate.set(true);
             if (thread != null) {
+                System.out.println("Searchable INTERRUPTING " + thread.getId());
                 thread.interrupt();
             }
 

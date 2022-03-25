@@ -38,6 +38,7 @@ import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.apache.hadoop.util.ThreadUtil;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexableField;
@@ -196,6 +197,7 @@ public class IndexShardSearchTaskHandler {
                         // Start converting found docIds into stored data values
                         while (true) {
                             // Take the next item
+                            ThreadUtil.sleepAtLeastIgnoreInterrupts(3);
                             final int docId = docIdQueue.take();
                             // If we have a doc id then retrieve the stored data for it.
                             SearchProgressLog.increment(queryKey,

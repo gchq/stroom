@@ -7,14 +7,21 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public class ExceptionStringUtil {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExceptionStringUtil.class);
 
     public static String getMessage(final Throwable throwable) {
         LOGGER.debug(throwable::getMessage, throwable);
         if (throwable.getMessage() == null) {
-            return throwable.getClass().getName();
+            if (throwable.getCause() != null) {
+                return throwable.getClass().getName()
+                        + "\nCaused by: "
+                        + getMessage(throwable.getCause());
+            } else {
+                return Thread.currentThread().getId() + " - " + throwable.getClass().getName();
+            }
         }
-        return throwable.getMessage();
+        return Thread.currentThread().getId() + " - " + throwable.getMessage();
     }
 
     private static String getMessageAndClassName(final Throwable throwable) {

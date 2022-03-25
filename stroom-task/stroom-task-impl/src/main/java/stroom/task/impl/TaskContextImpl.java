@@ -87,11 +87,13 @@ public class TaskContextImpl implements TaskContext {
     }
 
     synchronized void terminate() {
-        this.terminate = true;
-        children.forEach(TaskContextImpl::terminate);
+        if (!terminate) {
+            this.terminate = true;
+            children.forEach(TaskContextImpl::terminate);
 
-        if (terminateHandler != null) {
-            terminateHandler.onTerminate();
+            if (terminateHandler != null) {
+                terminateHandler.onTerminate();
+            }
         }
     }
 

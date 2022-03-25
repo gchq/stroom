@@ -177,6 +177,8 @@ public class LmdbDataStore implements DataStore {
         Key key = Key.root();
         LmdbKey parentRowKey = rootParentRowKey;
 
+//        ThreadUtil.sleepAtLeastIgnoreInterrupts(10);
+
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final LmdbKey.Builder rowKeyBuilder = new LmdbKey.Builder();
             final Generator[] generators = new Generator[compiledFields.length];
