@@ -19,6 +19,7 @@ package stroom.dashboard.client.query;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.instance.client.ClientApplicationInstance;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DataSourceFieldsMap;
 import stroom.dashboard.client.main.IndexLoader;
@@ -74,6 +75,8 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -82,8 +85,6 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
         implements QueryUiHandlers, HasDirtyHandlers, Queryable {
@@ -128,6 +129,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Inject
     public QueryPresenter(final EventBus eventBus,
                           final QueryView view,
+                          final ClientApplicationInstance applicationInstance,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
                           final ExpressionTreePresenter expressionPresenter,
                           final QueryHistoryPresenter historyPresenter,
@@ -185,8 +187,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         indexLoader = new IndexLoader(getEventBus(), restFactory);
         searchModel = new SearchModel(
-                eventBus,
                 restFactory,
+                applicationInstance,
                 this,
                 indexLoader,
                 timeZones);

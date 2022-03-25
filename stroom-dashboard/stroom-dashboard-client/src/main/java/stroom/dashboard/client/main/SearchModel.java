@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -24,10 +23,12 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.DestroySearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.instance.client.ClientApplicationInstance;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
@@ -35,18 +36,8 @@ import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.util.client.Console;
-import stroom.websocket.client.CloseEvent;
-import stroom.websocket.client.ErrorEvent;
-import stroom.websocket.client.MessageEvent;
-import stroom.websocket.client.OpenEvent;
-import stroom.websocket.client.WebSocket;
-import stroom.websocket.client.WebSocketListener;
-import stroom.websocket.client.WebSocketUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,12 +46,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class SearchModel implements HasHandlers {
+public class SearchModel {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
-    private final EventBus eventBus;
     private final RestFactory restFactory;
+    private final ClientApplicationInstance applicationInstance;
     private final QueryPresenter queryPresenter;
     private final IndexLoader indexLoader;
     private final TimeZones timeZones;
@@ -68,21 +59,18 @@ public class SearchModel implements HasHandlers {
     private String componentId;
     private Map<String, ResultComponent> componentMap = new HashMap<>();
     private DashboardSearchResponse currentResponse;
+    private QueryKey currentQueryKey;
     private Search currentSearch;
     private Mode mode = Mode.INACTIVE;
     private boolean searching;
 
-    private int currentSearchCount;
-    private WebSocket webSocket;
-    private QueryKey currentQueryKey;
-
-    public SearchModel(final EventBus eventBus,
-                       final RestFactory restFactory,
+    public SearchModel(final RestFactory restFactory,
+                       final ClientApplicationInstance applicationInstance,
                        final QueryPresenter queryPresenter,
                        final IndexLoader indexLoader,
                        final TimeZones timeZones) {
-        this.eventBus = eventBus;
         this.restFactory = restFactory;
+        this.applicationInstance = applicationInstance;
         this.queryPresenter = queryPresenter;
         this.indexLoader = indexLoader;
         this.timeZones = timeZones;
@@ -140,59 +128,6 @@ public class SearchModel implements HasHandlers {
 
         GWT.log("SearchModel - startNewSearch()");
 
-        final String url = WebSocketUtil.createWebSocketUrl("/active-queries-ws");
-        Console.log("Using Web Socket URL: " + url);
-        final int searchCount = currentSearchCount + 1;
-        currentSearchCount = searchCount;
-
-        final WebSocket webSocket = new WebSocket(url, new WebSocketListener() {
-            @Override
-            public void onOpen(final OpenEvent event) {
-                // do something on open
-                Console.log("Opening web socket at " + url);
-            }
-
-            @Override
-            public void onClose(final CloseEvent event) {
-                // do something on close
-                Console.log("Closing web socket at " + url);
-            }
-
-            @Override
-            public void onMessage(final MessageEvent event) {
-                if (searchCount == currentSearchCount) {
-                    // a message is received
-                    Console.log("Message received on web socket at " + url + " - [" + event.getData() + "]");
-                    Console.log("Starting new search with UUID: " + event.getData());
-
-                    startSearch(event.getData(),
-                            expression,
-                            params,
-                            incremental,
-                            storeHistory,
-                            queryInfo);
-                }
-            }
-
-            @Override
-            public void onError(final ErrorEvent event) {
-                Console.log("Error on web socket at " + url);
-                AlertEvent.fireError(SearchModel.this,
-                        "Error on web socket at " + url,
-                        event.getReason(),
-                        null);
-            }
-        });
-        this.webSocket = webSocket;
-    }
-
-    private void startSearch(final String uuid,
-                             final ExpressionOperator expression,
-                             final String params,
-                             final boolean incremental,
-                             final boolean storeHistory,
-                             final String queryInfo) {
-        currentQueryKey = new QueryKey(uuid);
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
@@ -270,6 +205,7 @@ public class SearchModel implements HasHandlers {
                             .search(search)
                             .componentResultRequests(requests)
                             .dateTimeLocale(timeZones.getTimeZone())
+                            .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                             .dashboardUuid(dashboardUuid)
                             .componentId(componentId)
                             .build();
@@ -305,11 +241,23 @@ public class SearchModel implements HasHandlers {
      */
     public void destroy() {
         GWT.log("SearchModel - destroy()");
-        if (webSocket != null) {
-            webSocket.close();
-            webSocket = null;
-        }
         if (currentQueryKey != null) {
+            final DestroySearchRequest request = DestroySearchRequest
+                    .builder()
+                    .queryKey(currentQueryKey)
+                    .applicationInstanceUuid(applicationInstance.getInstanceUuid())
+                    .dashboardUuid(dashboardUuid)
+                    .componentId(componentId)
+                    .build();
+            final Rest<Boolean> rest = restFactory.create();
+            rest
+                    .onSuccess(response -> {
+                        if (!response) {
+                            Console.log("Unable to destroy search: " + request);
+                        }
+                    })
+                    .call(DASHBOARD_RESOURCE)
+                    .destroy(request);
             currentQueryKey = null;
         }
         setMode(Mode.INACTIVE);
@@ -342,6 +290,7 @@ public class SearchModel implements HasHandlers {
                     .search(search)
                     .componentResultRequests(requests)
                     .dateTimeLocale(timeZones.getTimeZone())
+                    .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                     .dashboardUuid(dashboardUuid)
                     .componentId(componentId)
                     .storeHistory(storeHistory)
@@ -350,8 +299,9 @@ public class SearchModel implements HasHandlers {
             final Rest<DashboardSearchResponse> rest = restFactory.create();
             rest
                     .onSuccess(response -> {
-                        if (currentQueryKey != null &&
-                                currentQueryKey.getUuid().equals(response.getQueryKey().getUuid())) {
+                        if (search == currentSearch) {
+                            currentQueryKey = response.getQueryKey();
+
                             try {
                                 update(response);
                             } catch (final RuntimeException e) {
@@ -514,6 +464,7 @@ public class SearchModel implements HasHandlers {
                 .search(search)
                 .componentResultRequests(requests)
                 .dateTimeLocale(timeZones.getTimeZone())
+                .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                 .dashboardUuid(dashboardUuid)
                 .componentId(componentId)
                 .build();
@@ -551,11 +502,6 @@ public class SearchModel implements HasHandlers {
         final Map<String, ResultComponent> componentMap = new HashMap<>(this.componentMap);
         componentMap.remove(componentId);
         this.componentMap = componentMap;
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEvent(event);
     }
 
     public enum Mode {

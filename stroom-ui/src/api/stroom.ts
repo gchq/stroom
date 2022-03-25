@@ -2582,11 +2582,6 @@ export interface SearchAccountRequest {
   sortList?: CriteriaFieldSort[];
 }
 
-export interface SearchKeepAliveRequest {
-  activeKeys?: QueryKey[];
-  deadKeys?: QueryKey[];
-}
-
 /**
  * A request for new search or a follow up request for more data for an existing iterative search
  */
@@ -4710,25 +4705,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/dashboard/v1/functions`,
         method: "GET",
         secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Dashboards
-     * @name KeepAliveDashboardSearchResults
-     * @summary Keep search results alive for paging/download etc
-     * @request POST:/dashboard/v1/keepAlive
-     * @secure
-     */
-    keepAliveDashboardSearchResults: (data: SearchKeepAliveRequest, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/dashboard/v1/keepAlive`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
         ...params,
       }),
 

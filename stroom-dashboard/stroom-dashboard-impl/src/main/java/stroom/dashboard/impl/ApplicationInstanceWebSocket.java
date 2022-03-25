@@ -1,6 +1,5 @@
 package stroom.dashboard.impl;
 
-import stroom.query.api.v2.QueryKey;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -12,7 +11,9 @@ import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 
 import java.io.IOException;
-import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
@@ -21,23 +22,23 @@ import javax.websocket.server.ServerEndpoint;
 @Metered
 @Timed
 @ExceptionMetered
-@ServerEndpoint(ActiveQueriesWebSocket.PATH)
-public class ActiveQueriesWebSocket extends AuthenticatedWebSocket implements IsWebSocket {
+@ServerEndpoint(ApplicationInstanceWebSocket.PATH)
+public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket implements IsWebSocket {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActiveQueriesWebSocket.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApplicationInstanceWebSocket.class);
 
-    public static final String PATH = "/active-queries-ws";
+    public static final String PATH = "/application-instance-ws";
 
     private final SecurityContext securityContext;
-    private final ActiveQueriesManager activeQueriesManager;
-    private QueryKey queryKey;
+    private final ApplicationInstanceManager applicationInstanceManager;
+    private volatile ScheduledExecutorService executorService;
 
     @Inject
-    public ActiveQueriesWebSocket(final SecurityContext securityContext,
-                                  final ActiveQueriesManager activeQueriesManager) {
+    public ApplicationInstanceWebSocket(final SecurityContext securityContext,
+                                        final ApplicationInstanceManager applicationInstanceManager) {
         super(securityContext);
         this.securityContext = securityContext;
-        this.activeQueriesManager = activeQueriesManager;
+        this.applicationInstanceManager = applicationInstanceManager;
     }
 
     public void onOpen(final Session session) throws IOException {
@@ -45,20 +46,11 @@ public class ActiveQueriesWebSocket extends AuthenticatedWebSocket implements Is
                 + ", sessionId: " + session.getId()
                 + ", maxIdleTimeout: " + session.getMaxIdleTimeout());
 
-        // Ensure a user is logged in.
-        checkLogin();
-
         // Keep alive forever.
         session.setMaxIdleTimeout(0);
-
-        // Create a new search UUID.
-        final String uuid = UUID.randomUUID().toString();
-        queryKey = new QueryKey(uuid);
-        activeQueriesManager.put(queryKey, new ActiveQuery(queryKey, securityContext.getUserId()));
-        session.getAsyncRemote().sendText(uuid);
     }
 
-    public void onMessage(final Session session, final String message) {
+    public synchronized void onMessage(final Session session, final String message) {
         LOGGER.debug(() -> "Received message on web socket at " + PATH
                 + ", sessionId: " + session.getId()
                 + ", message: [" + message + "]");
@@ -66,20 +58,37 @@ public class ActiveQueriesWebSocket extends AuthenticatedWebSocket implements Is
         // Ensure a user is logged in.
         checkLogin();
 
-        session.getAsyncRemote().sendText(message.toUpperCase());
+        if (executorService == null) {
+            final String uuid = message;
+            if (refresh(uuid)) {
+                executorService = Executors.newScheduledThreadPool(1);
+                executorService.scheduleWithFixedDelay(() -> {
+                    if (!refresh(uuid)) {
+                        executorService.shutdown();
+                    }
+                }, 1, 1, TimeUnit.SECONDS);
+            }
+        }
+    }
+
+    private boolean refresh(final String uuid) {
+        LOGGER.debug(() -> "Refreshing application instance with uuid = " + uuid);
+        final boolean ok = applicationInstanceManager.refresh(uuid);
+        if (!ok) {
+            LOGGER.error(() -> "Unable to refresh application instance with uuid = " + uuid);
+        }
+        return ok;
     }
 
     public void onError(final Session session, final Throwable thr) {
         LOGGER.error(thr.getMessage(), thr);
     }
 
-    public void onClose(final Session session, final CloseReason cr) {
+    public synchronized void onClose(final Session session, final CloseReason cr) {
         LOGGER.debug(() -> "Closing web socket at " + PATH
                 + ", sessionId: " + session.getId());
-        if (queryKey != null) {
-            activeQueriesManager.destroy(queryKey);
-        } else {
-            LOGGER.error("UUID is null");
+        if (executorService != null) {
+            executorService.shutdown();
         }
     }
 

@@ -20,6 +20,7 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.DestroySearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.ValidateExpressionResult;
@@ -83,6 +84,12 @@ class DashboardResourceImpl implements DashboardResource {
     @AutoLogged(OperationType.UNLOGGED)
     public DashboardSearchResponse search(final DashboardSearchRequest request) {
         return dashboardServiceProvider.get().search(request);
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public Boolean destroy(final DestroySearchRequest request) {
+        return dashboardServiceProvider.get().destroy(request);
     }
 
     @Override

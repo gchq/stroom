@@ -23,24 +23,25 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.EntityServiceException;
 
 class ActiveQuery {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActiveQuery.class);
 
     private final QueryKey queryKey;
+    private final DocRef docRef;
+    private final DataSourceProvider dataSourceProvider;
     private final String userId;
     private final long creationTime;
 
-    private volatile boolean destroy;
-    private volatile DocRef docRef;
-    private volatile DataSourceProvider dataSourceProvider;
-
     ActiveQuery(final QueryKey queryKey,
+                final DocRef docRef,
+                final DataSourceProvider dataSourceProvider,
                 final String userId) {
         LOGGER.trace(() -> "New ActiveQuery " + queryKey);
         this.queryKey = queryKey;
+        this.docRef = docRef;
+        this.dataSourceProvider = dataSourceProvider;
         this.userId = userId;
         this.creationTime = System.currentTimeMillis();
     }
@@ -49,46 +50,16 @@ class ActiveQuery {
         return userId;
     }
 
-    public boolean started() {
-        return dataSourceProvider != null && queryKey != null;
-    }
-
-    public synchronized void startNewSearch(final DocRef docRef, final DataSourceProvider dataSourceProvider) {
-        if (destroy) {
-            throw new RuntimeException("Destroyed");
-        }
-        this.docRef = docRef;
-        this.dataSourceProvider = dataSourceProvider;
-    }
-
-    public synchronized SearchResponse search(final SearchRequest request) {
-        if (!started()) {
-            throw new EntityServiceException("The requested search has not started.");
-        }
-        if (destroy) {
-            throw new EntityServiceException("The requested search has been destroyed.");
-        }
+    public SearchResponse search(final SearchRequest request) {
         return dataSourceProvider.search(request);
     }
 
     public boolean keepAlive() {
-        if (!destroy && started()) {
-            LOGGER.trace(() -> "keepAlive: " + queryKey);
-            return dataSourceProvider.keepAlive(queryKey);
-        }
-        return false;
+        return dataSourceProvider.keepAlive(queryKey);
     }
 
-    public synchronized boolean destroy() {
-        this.destroy = true;
-        if (dataSourceProvider != null && queryKey != null) {
-            return dataSourceProvider.destroy(queryKey);
-        }
-        return false;
-    }
-
-    public boolean isDestroy() {
-        return destroy;
+    public boolean destroy() {
+        return dataSourceProvider.destroy(queryKey);
     }
 
     @Override
