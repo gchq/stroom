@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.197] - 2022-03-28
+
+* Issue **#2822** : Add application instance management to keep track of active queries.
+
+* Issue **#2824** : Fix to stop SearchableStore interrupting threads that it is no longer using.
+
+
 ## [v7.0-beta.196] - 2022-03-23
 
 * Issue **#2822** : Create a managed search UUID in the web socket before starting search.
@@ -4302,7 +4309,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.196...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.197...HEAD
+[v7.0-beta.197]: https://github.com/gchq/stroom/compare/v7.0-beta.196...v7.0-beta.197
 [v7.0-beta.196]: https://github.com/gchq/stroom/compare/v7.0-beta.195...v7.0-beta.196
 [v7.0-beta.195]: https://github.com/gchq/stroom/compare/v7.0-beta.194...v7.0-beta.195
 [v7.0-beta.194]: https://github.com/gchq/stroom/compare/v7.0-beta.193...v7.0-beta.194
