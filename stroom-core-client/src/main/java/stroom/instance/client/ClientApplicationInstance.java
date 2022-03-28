@@ -1,5 +1,6 @@
 package stroom.instance.client;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.instance.shared.ApplicationInstanceInfo;
@@ -17,30 +18,33 @@ import stroom.websocket.client.WebSocketUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Timer;
 import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class ClientApplicationInstance {
+public class ClientApplicationInstance implements HasHandlers {
 
     private static final ApplicationInstanceResource APPLICATION_INSTANCE_RESOURCE =
             GWT.create(ApplicationInstanceResource.class);
 
+    private final EventBus eventBus;
     private final RestFactory restFactory;
-    private final ClientError clientError;
 
     private ApplicationInstanceInfo applicationInstanceInfo;
     private WebSocket webSocket;
     private boolean destroy;
+    private boolean showingError;
 
     @Inject
-    public ClientApplicationInstance(final RestFactory restFactory,
-                                     final EventBus eventBus,
-                                     final ClientError clientError) {
+    public ClientApplicationInstance(final EventBus eventBus,
+                                     final RestFactory restFactory) {
+        this.eventBus = eventBus;
         this.restFactory = restFactory;
-        this.clientError = clientError;
 
         eventBus.addHandler(CurrentUserChangedEvent.getType(), event -> register());
         eventBus.addHandler(LogoutEvent.getType(), event -> destroy());
@@ -48,7 +52,7 @@ public class ClientApplicationInstance {
 
     public String getInstanceUuid() {
         if (applicationInstanceInfo == null) {
-            clientError.error("Null application instance uuid");
+            error("Null application instance uuid");
             return null;
         }
         return applicationInstanceInfo.getUuid();
@@ -65,7 +69,7 @@ public class ClientApplicationInstance {
                     tryWebSocket();
                 })
                 .onFailure(throwable ->
-                        clientError.error("Unable to register application instance", throwable.getMessage()))
+                        error("Unable to register application instance", throwable.getMessage()))
                 .call(APPLICATION_INSTANCE_RESOURCE)
                 .register();
     }
@@ -77,11 +81,11 @@ public class ClientApplicationInstance {
                     if (result) {
                         Scheduler.get().scheduleDeferred(this::refresh);
                     } else {
-                        clientError.error("Unable to keep application instance alive");
+                        error("Unable to keep application instance alive");
                     }
                 })
                 .onFailure(throwable ->
-                        clientError.error("Unable to keep application instance alive", throwable.getMessage()))
+                        error("Unable to keep application instance alive", throwable.getMessage()))
                 .call(APPLICATION_INSTANCE_RESOURCE)
                 .refresh(applicationInstanceInfo);
     }
@@ -94,11 +98,11 @@ public class ClientApplicationInstance {
                     if (result) {
                         Scheduler.get().scheduleDeferred(this::refresh);
                     } else {
-                        clientError.error("Unable to destroy application instance");
+                        error("Unable to destroy application instance");
                     }
                 })
                 .onFailure(throwable ->
-                        clientError.error("Unable to destroy application instance", throwable.getMessage()))
+                        error("Unable to destroy application instance", throwable.getMessage()))
                 .call(APPLICATION_INSTANCE_RESOURCE)
                 .destroy(applicationInstanceInfo);
         webSocket.close();
@@ -115,7 +119,7 @@ public class ClientApplicationInstance {
                     Console.log("Opening web socket at " + url);
                     if (!destroy && webSocket != null) {
                         if (applicationInstanceInfo == null) {
-                            clientError.error("No application instance is registered");
+                            error("No application instance is registered");
                         } else {
                             webSocket.send(applicationInstanceInfo.getUuid());
                         }
@@ -128,7 +132,12 @@ public class ClientApplicationInstance {
                     Console.log("Closing web socket at " + url);
 
                     // Try to reopen the web socket if closing it was unexpected.
-                    tryWebSocket();
+                    new Timer() {
+                        @Override
+                        public void run() {
+                            tryWebSocket();
+                        }
+                    }.schedule(10000);
                 }
 
                 @Override
@@ -138,9 +147,38 @@ public class ClientApplicationInstance {
                 @Override
                 public void onError(final ErrorEvent event) {
                     Console.log("Error on web socket at " + url);
-                    clientError.error("Error on web socket at " + url, event.getReason());
+                    if (!showingError) {
+                        showingError = true;
+                        error("Error on web socket at " + url, event.getReason());
+                    }
                 }
             });
         }
+    }
+
+    public void error(final String message) {
+        Console.log("Error: " + message);
+        if (!showingError) {
+            showingError = true;
+            AlertEvent.fireError(this,
+                    message,
+                    () -> showingError = false);
+        }
+    }
+
+    public void error(final String message, final String detail) {
+        Console.log("Error: " + message + "\n" + detail);
+        if (!showingError) {
+            showingError = true;
+            AlertEvent.fireError(this,
+                    message,
+                    detail,
+                    () -> showingError = false);
+        }
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEvent(event);
     }
 }

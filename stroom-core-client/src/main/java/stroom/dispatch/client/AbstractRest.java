@@ -1,7 +1,9 @@
 package stroom.dispatch.client;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.GwtStringBuilderOutputStream;
 import stroom.util.client.JSONUtil;
+import stroom.util.shared.EntityServiceException;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
@@ -13,6 +15,7 @@ import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 import org.fusesource.restygwt.client.REST;
 
+import java.io.PrintStream;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -66,27 +69,10 @@ public abstract class AbstractRest<R> implements Rest<R> {
                     if (errorConsumer != null) {
                         errorConsumer.accept(throwable);
                     } else {
-                        GWT.log(throwable.getMessage(), throwable);
-
-                        if (throwable instanceof ResponseException) {
-                            final ResponseException responseException = (ResponseException) throwable;
-                            String details = responseException.getDetails();
-                            if (details != null && details.trim().length() > 0) {
-                                AlertEvent.fireError(hasHandlers,
-                                        throwable.getMessage(),
-                                        details.trim(),
-                                        null);
-                            } else {
-                                AlertEvent.fireError(hasHandlers, throwable.getMessage(), null);
-                            }
-                        } else {
-                            AlertEvent.fireError(hasHandlers, throwable.getMessage(), null);
-                        }
+                        showError(hasHandlers, method, throwable);
                     }
                 } catch (final Throwable t) {
-                    GWT.log(method.getRequest().toString());
-                    GWT.log(t.getMessage(), t);
-                    AlertEvent.fireErrorFromException(hasHandlers, t, null);
+                    showError(hasHandlers, method, t);
                 } finally {
                     decrementTaskCount();
                 }
@@ -99,15 +85,70 @@ public abstract class AbstractRest<R> implements Rest<R> {
                         resultConsumer.accept(response);
                     }
                 } catch (final Throwable t) {
-                    GWT.log(method.getRequest().toString());
-                    GWT.log(t.getMessage(), t);
-                    AlertEvent.fireErrorFromException(hasHandlers, t, null);
+                    showError(hasHandlers, method, t);
                 } finally {
                     decrementTaskCount();
                 }
             }
         };
         rest = REST.withCallback(methodCallback);
+    }
+
+    private void showError(final HasHandlers hasHandlers,
+                           final Method method,
+                           final Throwable throwable) {
+        if (method != null && method.getRequest() != null) {
+            GWT.log(method.getRequest().toString());
+        }
+        GWT.log(throwable.getMessage(), throwable);
+
+        String message = throwable.getMessage();
+        String details = null;
+
+        if (throwable instanceof ResponseException) {
+            final ResponseException responseException = (ResponseException) throwable;
+            details = responseException.getDetails();
+            if (details != null) {
+                details = details.trim();
+            }
+
+        } else if (throwable instanceof EntityServiceException) {
+            final StringBuilder detail = new StringBuilder();
+            final String detailMessage = ((EntityServiceException) throwable).getDetail();
+            if (detailMessage != null) {
+                detail.append(detailMessage);
+                detail.append("\n\n");
+            }
+            final String callStack = ((EntityServiceException) throwable).getCallStack();
+
+            if (callStack != null) {
+                detail.append(callStack);
+                detail.append("\n\n");
+            }
+            details = detail.toString();
+        }
+
+        if ((message == null || message.trim().length() <= 1) &&
+                (details == null || details.trim().length() == 0)) {
+
+            final StringBuilder detail = new StringBuilder();
+            if (method != null && method.builder != null) {
+                detail.append(method.builder.getUrl());
+                detail.append("\n\n");
+            }
+            try {
+                throwable.printStackTrace(new PrintStream(new GwtStringBuilderOutputStream(detail)));
+            } catch (final RuntimeException e) {
+                detail.append(e.getMessage());
+            }
+            details = detail.toString();
+        }
+
+        if (message == null || message.trim().length() <= 1) {
+            message = throwable.getClass().getName();
+        }
+
+        AlertEvent.fireError(hasHandlers, message, details, null);
     }
 
     private Throwable getThrowableFromStringResponse(final Method method,
