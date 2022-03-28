@@ -110,7 +110,7 @@ public class ClientApplicationInstance implements HasHandlers {
 
     private void tryWebSocket() {
         if (!destroy) {
-            final String url = WebSocketUtil.createWebSocketUrl("/application-instance-ws");
+            final String url = WebSocketUtil.createWebSocketUrl("/application-instance");
             Console.log("Using Web Socket URL: " + url);
             webSocket = new WebSocket(url, new WebSocketListener() {
                 @Override

@@ -17,6 +17,11 @@ public interface ResourcePaths {
     String API_ROOT_PATH = "/api";
 
     /**
+     * Used as the root path for all web socket traffic
+     */
+    String WEB_SOCKET_ROOT_PATH = "/web-socket";
+
+    /**
      * All static React paths containing "/s/" will be served as root and be handled by the React BrowserRouter
      */
     String SINGLE_PAGE_PREFIX = "/s/";
@@ -83,6 +88,18 @@ public interface ResourcePaths {
         return new Builder()
                 .addPathPart(API_ROOT_PATH)
                 .addPathPart(NO_AUTH)
+                .addPathParts(parts)
+                .build();
+    }
+
+    /**
+     * @param parts The path or parts of a path to append onto the base path
+     *              {@link ResourcePaths#WEB_SOCKET_ROOT_PATH}.
+     * @return The full path to the authenticated resource, e.g. /web-socket/application-instance
+     */
+    static String buildAuthenticatedWebSocketPath(final String... parts) {
+        return new Builder()
+                .addPathPart(WEB_SOCKET_ROOT_PATH)
                 .addPathParts(parts)
                 .build();
     }
