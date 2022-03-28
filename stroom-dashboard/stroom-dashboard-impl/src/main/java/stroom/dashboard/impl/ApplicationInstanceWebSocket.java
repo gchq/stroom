@@ -5,6 +5,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.IsWebSocket;
+import stroom.util.shared.ResourcePaths;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Metered;
@@ -27,7 +28,7 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApplicationInstanceWebSocket.class);
 
-    public static final String PATH = "/application-instance-ws";
+    public static final String PATH = ResourcePaths.WEB_SOCKET_ROOT_PATH + "/application-instance";
 
     private final SecurityContext securityContext;
     private final ApplicationInstanceManager applicationInstanceManager;
