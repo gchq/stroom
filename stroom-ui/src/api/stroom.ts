@@ -186,6 +186,13 @@ export interface AnnotationEntry {
   version?: number;
 }
 
+export interface ApplicationInstanceInfo {
+  /** @format int64 */
+  createTime?: number;
+  userId?: string;
+  uuid?: string;
+}
+
 export interface Arg {
   allowedValues?: string[];
   argType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
@@ -526,6 +533,7 @@ export interface DashboardDoc {
 }
 
 export interface DashboardSearchRequest {
+  applicationInstanceUuid?: string;
   componentId?: string;
   componentResultRequests?: ComponentResultRequest[];
   dashboardUuid?: string;
@@ -667,6 +675,15 @@ export interface DependencyCriteria {
   partialName?: string;
   sort?: string;
   sortList?: CriteriaFieldSort[];
+}
+
+export interface DestroySearchRequest {
+  applicationInstanceUuid?: string;
+  componentId?: string;
+  dashboardUuid?: string;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
 }
 
 export interface DictionaryDoc {
@@ -2582,11 +2599,6 @@ export interface SearchAccountRequest {
   sortList?: CriteriaFieldSort[];
 }
 
-export interface SearchKeepAliveRequest {
-  activeKeys?: QueryKey[];
-  deadKeys?: QueryKey[];
-}
-
 /**
  * A request for new search or a follow up request for more data for an existing iterative search
  */
@@ -4158,6 +4170,62 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
+  applicationInstance = {
+    /**
+     * No description
+     *
+     * @tags Application
+     * @name ApplicationInstanceRefresh
+     * @summary Refresh an application instance
+     * @request POST:/application-instance/v1/refresh
+     * @secure
+     */
+    applicationInstanceRefresh: (data: ApplicationInstanceInfo, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/application-instance/v1/refresh`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Application
+     * @name ApplicationInstanceRegister
+     * @summary Register a new application instance
+     * @request GET:/application-instance/v1/register
+     * @secure
+     */
+    applicationInstanceRegister: (params: RequestParams = {}) =>
+      this.request<any, ApplicationInstanceInfo>({
+        path: `/application-instance/v1/register`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Application
+     * @name ApplicationInstanceRemove
+     * @summary Remove an application instance
+     * @request POST:/application-instance/v1/remove
+     * @secure
+     */
+    applicationInstanceRemove: (data: ApplicationInstanceInfo, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/application-instance/v1/remove`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
   authentication = {
     /**
      * No description
@@ -4645,6 +4713,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
+     * @name DashboardDestroySearch
+     * @summary Destroy a running search
+     * @request POST:/dashboard/v1/destroy
+     * @secure
+     */
+    dashboardDestroySearch: (data: DestroySearchRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/dashboard/v1/destroy`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Dashboards
      * @name DownloadDashboardQuery
      * @summary Download a query
      * @request POST:/dashboard/v1/downloadQuery
@@ -4710,25 +4797,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/dashboard/v1/functions`,
         method: "GET",
         secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Dashboards
-     * @name KeepAliveDashboardSearchResults
-     * @summary Keep search results alive for paging/download etc
-     * @request POST:/dashboard/v1/keepAlive
-     * @secure
-     */
-    keepAliveDashboardSearchResults: (data: SearchKeepAliveRequest, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/dashboard/v1/keepAlive`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
         ...params,
       }),
 

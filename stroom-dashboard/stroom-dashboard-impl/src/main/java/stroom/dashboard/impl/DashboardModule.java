@@ -37,7 +37,7 @@ public class DashboardModule extends AbstractModule {
         bind(FunctionFactory.class).asEagerSingleton();
         bind(FunctionService.class).to(FunctionServiceImpl.class).asEagerSingleton();
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ActiveQueriesManager.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ApplicationInstanceManager.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(DashboardStoreImpl.class);
@@ -49,9 +49,11 @@ public class DashboardModule extends AbstractModule {
                 .bind(DashboardDoc.DOCUMENT_TYPE, DashboardStoreImpl.class);
 
         RestResourcesBinder.create(binder())
+                .bind(ApplicationInstanceResourceImpl.class);
+        RestResourcesBinder.create(binder())
                 .bind(DashboardResourceImpl.class);
 
         WebSocketBinder.create(binder())
-                .bind(ActiveQueriesWebSocket.class);
+                .bind(ApplicationInstanceWebSocket.class);
     }
 }

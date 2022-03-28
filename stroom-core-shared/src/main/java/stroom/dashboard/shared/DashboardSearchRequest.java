@@ -51,6 +51,8 @@ public class DashboardSearchRequest {
     private final long timeout;
 
     @JsonProperty
+    private final String applicationInstanceUuid;
+    @JsonProperty
     private final String dashboardUuid;
     @JsonProperty
     private final String componentId;
@@ -64,6 +66,7 @@ public class DashboardSearchRequest {
             @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
             @JsonProperty("dateTimeLocale") final String dateTimeLocale,
             @JsonProperty("timeout") final long timeout,
+            @JsonProperty("applicationInstanceUuid") final String applicationInstanceUuid,
             @JsonProperty("dashboardUuid") final String dashboardUuid,
             @JsonProperty("componentId") final String componentId,
             @JsonProperty("storeHistory") final boolean storeHistory) {
@@ -72,6 +75,7 @@ public class DashboardSearchRequest {
         this.componentResultRequests = componentResultRequests;
         this.dateTimeLocale = dateTimeLocale;
         this.timeout = timeout;
+        this.applicationInstanceUuid = applicationInstanceUuid;
         this.dashboardUuid = dashboardUuid;
         this.componentId = componentId;
         this.storeHistory = storeHistory;
@@ -97,6 +101,10 @@ public class DashboardSearchRequest {
         return timeout;
     }
 
+    public String getApplicationInstanceUuid() {
+        return applicationInstanceUuid;
+    }
+
     public String getDashboardUuid() {
         return dashboardUuid;
     }
@@ -117,6 +125,7 @@ public class DashboardSearchRequest {
                 ", componentResultRequests=" + componentResultRequests +
                 ", dateTimeLocale='" + dateTimeLocale + '\'' +
                 ", timeout=" + timeout +
+                ", applicationInstanceUuid='" + applicationInstanceUuid + '\'' +
                 ", dashboardUuid='" + dashboardUuid + '\'' +
                 ", componentId='" + componentId + '\'' +
                 ", storeHistory=" + storeHistory +
@@ -138,6 +147,7 @@ public class DashboardSearchRequest {
         private List<ComponentResultRequest> componentResultRequests;
         private String dateTimeLocale = "en-gb";
         private long timeout = 1000L;
+        private String applicationInstanceUuid;
         private String dashboardUuid;
         private String componentId;
         private boolean storeHistory;
@@ -151,6 +161,7 @@ public class DashboardSearchRequest {
             this.componentResultRequests = searchRequest.componentResultRequests;
             this.dateTimeLocale = searchRequest.dateTimeLocale;
             this.timeout = searchRequest.timeout;
+            this.applicationInstanceUuid = searchRequest.applicationInstanceUuid;
             this.dashboardUuid = searchRequest.dashboardUuid;
             this.storeHistory = searchRequest.storeHistory;
             this.componentId = searchRequest.componentId;
@@ -181,6 +192,11 @@ public class DashboardSearchRequest {
             return this;
         }
 
+        public Builder applicationInstanceUuid(final String applicationInstanceUuid) {
+            this.applicationInstanceUuid = applicationInstanceUuid;
+            return this;
+        }
+
         public Builder dashboardUuid(final String dashboardUuid) {
             this.dashboardUuid = dashboardUuid;
             return this;
@@ -203,6 +219,7 @@ public class DashboardSearchRequest {
                     componentResultRequests,
                     dateTimeLocale,
                     timeout,
+                    applicationInstanceUuid,
                     dashboardUuid,
                     componentId,
                     storeHistory);

@@ -23,16 +23,19 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.DestroySearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.instance.client.ClientApplicationInstance;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.util.client.Console;
 
 import com.google.gwt.core.client.GWT;
 
@@ -48,7 +51,7 @@ public class SearchModel {
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
     private final RestFactory restFactory;
-    private final ActiveQueries activeQueries;
+    private final ClientApplicationInstance applicationInstance;
     private final QueryPresenter queryPresenter;
     private final IndexLoader indexLoader;
     private final TimeZones timeZones;
@@ -62,12 +65,12 @@ public class SearchModel {
     private boolean searching;
 
     public SearchModel(final RestFactory restFactory,
-                       final ActiveQueries activeQueries,
+                       final ClientApplicationInstance applicationInstance,
                        final QueryPresenter queryPresenter,
                        final IndexLoader indexLoader,
                        final TimeZones timeZones) {
         this.restFactory = restFactory;
-        this.activeQueries = activeQueries;
+        this.applicationInstance = applicationInstance;
         this.queryPresenter = queryPresenter;
         this.indexLoader = indexLoader;
         this.timeZones = timeZones;
@@ -202,6 +205,7 @@ public class SearchModel {
                             .search(search)
                             .componentResultRequests(requests)
                             .dateTimeLocale(timeZones.getTimeZone())
+                            .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                             .dashboardUuid(dashboardUuid)
                             .componentId(componentId)
                             .build();
@@ -238,7 +242,22 @@ public class SearchModel {
     public void destroy() {
         GWT.log("SearchModel - destroy()");
         if (currentQueryKey != null) {
-            activeQueries.remove(currentQueryKey);
+            final DestroySearchRequest request = DestroySearchRequest
+                    .builder()
+                    .queryKey(currentQueryKey)
+                    .applicationInstanceUuid(applicationInstance.getInstanceUuid())
+                    .dashboardUuid(dashboardUuid)
+                    .componentId(componentId)
+                    .build();
+            final Rest<Boolean> rest = restFactory.create();
+            rest
+                    .onSuccess(response -> {
+                        if (!response) {
+                            Console.log("Unable to destroy search: " + request);
+                        }
+                    })
+                    .call(DASHBOARD_RESOURCE)
+                    .destroy(request);
             currentQueryKey = null;
         }
         setMode(Mode.INACTIVE);
@@ -271,6 +290,7 @@ public class SearchModel {
                     .search(search)
                     .componentResultRequests(requests)
                     .dateTimeLocale(timeZones.getTimeZone())
+                    .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                     .dashboardUuid(dashboardUuid)
                     .componentId(componentId)
                     .storeHistory(storeHistory)
@@ -281,7 +301,6 @@ public class SearchModel {
                     .onSuccess(response -> {
                         if (search == currentSearch) {
                             currentQueryKey = response.getQueryKey();
-                            activeQueries.add(response.getQueryKey());
 
                             try {
                                 update(response);
@@ -292,10 +311,6 @@ public class SearchModel {
                             if (searching) {
                                 poll(false);
                             }
-
-                        } else {
-                            // We have changed the search so just destroy this one.
-                            activeQueries.remove(response.getQueryKey());
                         }
                     })
                     .onFailure(throwable -> {
@@ -449,6 +464,7 @@ public class SearchModel {
                 .search(search)
                 .componentResultRequests(requests)
                 .dateTimeLocale(timeZones.getTimeZone())
+                .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                 .dashboardUuid(dashboardUuid)
                 .componentId(componentId)
                 .build();

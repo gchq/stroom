@@ -719,6 +719,85 @@
         "tags" : [ "Annotations" ]
       }
     },
+    "/application-instance/v1/refresh" : {
+      "post" : {
+        "operationId" : "applicationInstanceRefresh",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ApplicationInstanceInfo"
+              }
+            }
+          },
+          "description" : "applicationInstanceInfo",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Refresh an application instance",
+        "tags" : [ "Application" ]
+      }
+    },
+    "/application-instance/v1/register" : {
+      "get" : {
+        "operationId" : "applicationInstanceRegister",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationInstanceInfo"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Register a new application instance",
+        "tags" : [ "Application" ]
+      }
+    },
+    "/application-instance/v1/remove" : {
+      "post" : {
+        "operationId" : "applicationInstanceRemove",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ApplicationInstanceInfo"
+              }
+            }
+          },
+          "description" : "applicationInstanceInfo",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Remove an application instance",
+        "tags" : [ "Application" ]
+      }
+    },
     "/authentication/v1/needsPasswordChange" : {
       "get" : {
         "operationId" : "needsPasswordChange",
@@ -1501,6 +1580,36 @@
         "tags" : [ "Content" ]
       }
     },
+    "/dashboard/v1/destroy" : {
+      "post" : {
+        "operationId" : "dashboardDestroySearch",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DestroySearchRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Destroy a running search",
+        "tags" : [ "Dashboards" ]
+      }
+    },
     "/dashboard/v1/downloadQuery" : {
       "post" : {
         "operationId" : "downloadDashboardQuery",
@@ -1602,36 +1711,6 @@
           }
         },
         "summary" : "Fetch all expression functions",
-        "tags" : [ "Dashboards" ]
-      }
-    },
-    "/dashboard/v1/keepAlive" : {
-      "post" : {
-        "operationId" : "keepAliveDashboardSearchResults",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/SearchKeepAliveRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Keep search results alive for paging/download etc",
         "tags" : [ "Dashboards" ]
       }
     },
@@ -8379,6 +8458,21 @@
           }
         }
       },
+      "ApplicationInstanceInfo" : {
+        "type" : "object",
+        "properties" : {
+          "createTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "userId" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "Arg" : {
         "type" : "object",
         "properties" : {
@@ -9196,6 +9290,9 @@
       "DashboardSearchRequest" : {
         "type" : "object",
         "properties" : {
+          "applicationInstanceUuid" : {
+            "type" : "string"
+          },
           "componentId" : {
             "type" : "string"
           },
@@ -9513,6 +9610,23 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
+          }
+        }
+      },
+      "DestroySearchRequest" : {
+        "type" : "object",
+        "properties" : {
+          "applicationInstanceUuid" : {
+            "type" : "string"
+          },
+          "componentId" : {
+            "type" : "string"
+          },
+          "dashboardUuid" : {
+            "type" : "string"
+          },
+          "queryKey" : {
+            "$ref" : "#/components/schemas/QueryKey"
           }
         }
       },
@@ -13524,25 +13638,6 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
-          }
-        }
-      },
-      "SearchKeepAliveRequest" : {
-        "type" : "object",
-        "properties" : {
-          "activeKeys" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/QueryKey"
-            },
-            "uniqueItems" : true
-          },
-          "deadKeys" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/QueryKey"
-            },
-            "uniqueItems" : true
           }
         }
       },
