@@ -51,9 +51,9 @@ class ApplicationInstanceResourceImpl implements ApplicationInstanceResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public Boolean refresh(final ApplicationInstanceInfo applicationInstanceInfo) {
-        LOGGER.trace(() -> "refresh() - " + applicationInstanceInfo);
-        final Boolean result = provider.get().refresh(applicationInstanceInfo.getUuid());
+    public Boolean keepAlive(final ApplicationInstanceInfo applicationInstanceInfo) {
+        LOGGER.trace(() -> "keepAlive() - " + applicationInstanceInfo);
+        final Boolean result = provider.get().keepAlive(applicationInstanceInfo.getUuid());
         if (result) {
             try {
                 Thread.sleep(1000);

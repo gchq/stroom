@@ -79,13 +79,13 @@ class ApplicationInstanceManager implements Clearable {
         return applicationInstance;
     }
 
-    public boolean refresh(final String uuid) {
+    public boolean keepAlive(final String uuid) {
         final Optional<ApplicationInstance> optional = cache.getOptional(uuid);
         if (optional.isEmpty()) {
             LOGGER.error("Expected application instance not found: " + uuid);
             return false;
         }
-        LOGGER.debug(() -> "Refresh application instance: " + optional.get());
+        LOGGER.debug(() -> "Keep application instance alive: " + optional.get());
         return true;
     }
 

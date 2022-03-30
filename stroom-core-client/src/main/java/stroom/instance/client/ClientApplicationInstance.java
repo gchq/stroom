@@ -63,8 +63,8 @@ public class ClientApplicationInstance implements HasHandlers {
         rest
                 .onSuccess(result -> {
                     applicationInstanceInfo = result;
-                    // Start long poll refresh loop.
-                    refresh();
+                    // Start long poll keep alive loop.
+                    keepAlive();
                     // Also try using a web socket to keep the instance alive.
                     tryWebSocket();
                 })
@@ -74,12 +74,12 @@ public class ClientApplicationInstance implements HasHandlers {
                 .register();
     }
 
-    private void refresh() {
+    private void keepAlive() {
         final Rest<Boolean> rest = restFactory.createQuiet();
         rest
                 .onSuccess(result -> {
                     if (result) {
-                        Scheduler.get().scheduleDeferred(this::refresh);
+                        Scheduler.get().scheduleDeferred(this::keepAlive);
                     } else {
                         error("Unable to keep application instance alive");
                     }
@@ -87,7 +87,7 @@ public class ClientApplicationInstance implements HasHandlers {
                 .onFailure(throwable ->
                         error("Unable to keep application instance alive", throwable.getMessage()))
                 .call(APPLICATION_INSTANCE_RESOURCE)
-                .refresh(applicationInstanceInfo);
+                .keepAlive(applicationInstanceInfo);
     }
 
     private void destroy() {
@@ -96,7 +96,7 @@ public class ClientApplicationInstance implements HasHandlers {
         rest
                 .onSuccess(result -> {
                     if (result) {
-                        Scheduler.get().scheduleDeferred(this::refresh);
+                        Scheduler.get().scheduleDeferred(this::keepAlive);
                     } else {
                         error("Unable to destroy application instance");
                     }
