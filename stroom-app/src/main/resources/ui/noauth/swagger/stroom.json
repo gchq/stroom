@@ -719,9 +719,9 @@
         "tags" : [ "Annotations" ]
       }
     },
-    "/application-instance/v1/refresh" : {
+    "/application-instance/v1/keepAlive" : {
       "post" : {
-        "operationId" : "applicationInstanceRefresh",
+        "operationId" : "applicationInstanceKeepAlive",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -745,7 +745,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Refresh an application instance",
+        "summary" : "Keep an application instance alive",
         "tags" : [ "Application" ]
       }
     },
