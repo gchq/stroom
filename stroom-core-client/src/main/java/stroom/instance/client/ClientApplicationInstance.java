@@ -147,10 +147,7 @@ public class ClientApplicationInstance implements HasHandlers {
                 @Override
                 public void onError(final ErrorEvent event) {
                     Console.log("Error on web socket at " + url);
-                    if (!showingError) {
-                        showingError = true;
-                        error("Error on web socket at " + url, event.getReason());
-                    }
+                    error("Error on web socket at " + url, event.getReason());
                 }
             });
         }
