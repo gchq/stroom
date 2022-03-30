@@ -147,7 +147,8 @@ public class ClientApplicationInstance implements HasHandlers {
                 @Override
                 public void onError(final ErrorEvent event) {
                     Console.log("Error on web socket at " + url);
-                    error("Error on web socket at " + url, event.getReason());
+                    error("Error on web socket trying to keep application instance alive",
+                            "Error on web socket at " + url + "\n" + event.getReason());
                 }
             });
         }
