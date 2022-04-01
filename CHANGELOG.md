@@ -12,6 +12,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2822** : Add application instance management to keep track of active queries.
+
+* Issue **#2822** : Add application instance management to keep track of active queries.
+
+* Issue **#2824** : Fix to stop SearchableStore interrupting threads that it is no longer using.
+
+* Issue **#2822** : Create a managed search UUID in the web socket before starting search.
+
+* Issue **#2817** : Change data retention impact summary to show the counts of records that would be deleted now rather than at some point in the future.
+
+
 ## [v7.1-beta.10] - 2022-03-18
 
 * Issue **#2725** : Support multiple levels of nesting in Elasticsearch indexing.

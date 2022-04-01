@@ -1,5 +1,7 @@
 package stroom.websocket.client;
 
+import stroom.util.shared.ResourcePaths;
+
 import com.google.gwt.core.client.GWT;
 
 public final class WebSocketUtil {
@@ -8,7 +10,11 @@ public final class WebSocketUtil {
         // Utility class.
     }
 
-    public static String createWebSocketUrl(final String path) {
+    /**
+     * @param subPath The sub path relative to {@link ResourcePaths#WEB_SOCKET_ROOT_PATH}
+     * @return The full url for the web socket
+     */
+    public static String createWebSocketUrl(final String subPath) {
         String hostPageBaseUrl = GWT.getHostPageBaseURL();
         // Decide whether to use secure web sockets or not depending on current http/https.
         // Default to secure
@@ -25,7 +31,9 @@ public final class WebSocketUtil {
             hostPageBaseUrl = hostPageBaseUrl.substring(index + 3);
         }
 
-        return scheme + "://" + hostPageBaseUrl + path;
+        final String path = ResourcePaths.buildAuthenticatedWebSocketPath(subPath);
+        final String url = scheme + "://" + hostPageBaseUrl + path;
+        GWT.log("url: " + url);
+        return url;
     }
-
 }

@@ -7,6 +7,7 @@ import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionConfig;
+import stroom.data.retention.api.DataRetentionCreationTimeUtil;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
@@ -58,6 +59,7 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
+import org.jooq.Record4;
 import org.jooq.Result;
 import org.jooq.Select;
 import org.jooq.SelectJoinStep;
@@ -535,6 +537,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 .orElse(Collections.emptyList());
 
         if (!activeRules.isEmpty()) {
+
             CaseConditionStep<Integer> ruleNoCaseConditionStep = null;
             final Map<Integer, DataRetentionRule> numberToRuleMap = new HashMap<>();
             // Order is critical here as we are building a case statement
@@ -570,53 +573,61 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
-            final String ruleNoFieldName = "rule_no";
-            final String feedNameFieldName = "feed_name";
-            final String typeNameFieldName = "type_name";
+            final Field<Integer> ruleNoField = DSL.field("rule_no", Integer.class);
+            final Field<String> feedNameField = DSL.field("feed_name", String.class);
+            final Field<String> typeNameField = DSL.field("type_name", String.class);
+            final Field<Long> metaCreateTimeField = DSL.field("meta_create_time_ms", Long.class);
 
             return JooqUtil.contextResult(metaDbConnProvider,
                             context -> {
                                 // Get all meta records that are impacted by a rule and for each determine
                                 // which rule wins and get its rule number, along with feed and type
                                 // The OR condition is here to try and help the DB use indexes.
-                                // TODO Should maybe move the ruleNoCaseField into a sub select so we don't need
-                                //   to compute it for the select and the where
                                 final var detailTable = context
                                         .select(
-                                                metaFeed.NAME.as(feedNameFieldName),
-                                                metaType.NAME.as(typeNameFieldName),
-                                                ruleNoCaseField.as(ruleNoFieldName))
+                                                metaFeed.NAME.as(feedNameField),
+                                                metaType.NAME.as(typeNameField),
+                                                ruleNoCaseField.as(ruleNoField),
+                                                meta.CREATE_TIME.as(metaCreateTimeField))
                                         .from(meta)
                                         .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                                         .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                         .where(meta.STATUS.notEqual(statusIdDeleted))
-                                        .and(ruleNoCaseField.isNotNull()) // only want data that WILL be deleted
+//                                        .and(ruleNoCaseField.isNotNull()) // only want data that WILL be deleted
                                         .and(DSL.or(orConditions)) // Here to help use indexes
                                         .and(getFilterCriteriaCondition(criteria)) // UI filtering
                                         .asTable("detail");
 
+                                final List<Condition> ruleAgeConditions = getRuleAgeConditions(
+                                        activeRules,
+                                        ruleNoField,
+                                        metaCreateTimeField,
+                                        detailTable);
+
                                 // Now get counts grouped by feed, type and rule
                                 return context
                                         .select(
-                                                detailTable.field(feedNameFieldName),
-                                                detailTable.field(typeNameFieldName),
-                                                detailTable.field(ruleNoFieldName),
+                                                detailTable.field(feedNameField),
+                                                detailTable.field(typeNameField),
+                                                detailTable.field(ruleNoField),
                                                 DSL.count())
                                         .from(detailTable)
-                                        // ignore rows not hit by a rule
-                                        .where(detailTable.field(ruleNoFieldName).isNotNull())
+                                        // Ignore rows where the effective rule is a forever one as they
+                                        // will never be deleted
+                                        .where(detailTable.field(ruleNoField).isNotNull())
+                                        // Only include rows that are beyond the rules' retention period
+                                        .and(DSL.or(ruleAgeConditions))
                                         .groupBy(
-                                                detailTable.field(ruleNoFieldName),
-                                                detailTable.field(feedNameFieldName),
-                                                detailTable.field(typeNameFieldName))
+                                                detailTable.field(ruleNoField),
+                                                detailTable.field(feedNameField),
+                                                detailTable.field(typeNameField))
                                         .fetch();
                             })
                     .map(record -> {
-                        int ruleNo = (int) record.get(ruleNoFieldName);
-
+                        int ruleNo = record.get(ruleNoField);
                         return new DataRetentionDeleteSummary(
-                                (String) record.get(feedNameFieldName),
-                                (String) record.get(typeNameFieldName),
+                                record.get(feedNameField),
+                                record.get(typeNameField),
                                 ruleNo,
                                 numberToRuleMap.get(ruleNo).getName(),
                                 (int) record.get(DSL.count().getName()));
@@ -626,6 +637,38 @@ class MetaDaoImpl implements MetaDao, Clearable {
             result = Collections.emptyList();
         }
         return result;
+    }
+
+    private List<Condition> getRuleAgeConditions(final List<DataRetentionRule> activeRules,
+                                                 final Field<Integer> ruleNoField,
+                                                 final Field<Long> metaCreateTimeField,
+                                                 final Table<Record4<String, String, Integer, Long>> detailTable) {
+
+        final Instant now = Instant.now();
+        LOGGER.debug("now: {}", now);
+
+        return activeRules.stream()
+                // We already exclude meta rows where the effective rule is a forever one
+                // so no need to add an age condition for forever rules
+                .filter(rule -> !rule.isForever())
+                .map(rule -> {
+                    // Any meta record with a creation time older than this is a candidate for deletion
+                    final Instant oldestRetainedCreateTime = DataRetentionCreationTimeUtil.minus(
+                            now, rule);
+                    LOGGER.debug(() -> LogUtil.message("RuleNo: {}, ageStr: {}, latestCreateTime: {}",
+                            rule.getRuleNumber(),
+                            rule.getAgeString(),
+                            oldestRetainedCreateTime));
+
+                    // Each meta row in the detailTable will have an effective rule and the meta creation time
+                    // so include the ones where the meta is older than the delete cut off for the rule.
+                    return DSL.and(
+                            detailTable.field(ruleNoField)
+                                    .eq(rule.getRuleNumber()),
+                            detailTable.field(metaCreateTimeField)
+                                    .lessThan(oldestRetainedCreateTime.toEpochMilli()));
+                })
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -20,9 +20,9 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.DestroySearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
-import stroom.dashboard.shared.SearchKeepAliveRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -82,14 +82,14 @@ class DashboardResourceImpl implements DashboardResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public Boolean keepAlive(final SearchKeepAliveRequest request) {
-        return dashboardServiceProvider.get().keepAlive(request);
+    public DashboardSearchResponse search(final DashboardSearchRequest request) {
+        return dashboardServiceProvider.get().search(request);
     }
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public DashboardSearchResponse search(final DashboardSearchRequest request) {
-        return dashboardServiceProvider.get().search(request);
+    public Boolean destroy(final DestroySearchRequest request) {
+        return dashboardServiceProvider.get().destroy(request);
     }
 
     @Override
