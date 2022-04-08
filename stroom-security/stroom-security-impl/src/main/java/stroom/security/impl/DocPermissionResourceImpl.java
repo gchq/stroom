@@ -406,7 +406,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                         .withId(user.get().getUuid()).build());
             }
 
-            final OtherObject object = OtherObject.builder()
+            final OtherObject objectWithPermission = OtherObject.builder()
                     .withDescription(docRefModified.toInfoString())
                     .withId(docRefModified.getUuid())
                     .withName(docRefModified.getName())
@@ -417,11 +417,21 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                     .build())
                     .build();
 
+            final OtherObject objectWithoutPermission = objectWithPermission.newCopyBuilder()
+                    .withPermissions(objectWithPermission.getPermissions()
+                            .newCopyBuilder()
+                            .withPermissions(new Permission[0])
+                            .build())
+                    .build();
+
             final UpdateEventAction.Builder<Void> actionBuilder = UpdateEventAction.builder();
+
             if (add) {
-                actionBuilder.withAfter(MultiObject.builder().addObject(object).build());
+                actionBuilder.withBefore(MultiObject.builder().addObject(objectWithoutPermission).build());
+                actionBuilder.withAfter(MultiObject.builder().addObject(objectWithPermission).build());
             } else {
-                actionBuilder.withBefore(MultiObject.builder().addObject(object).build());
+                actionBuilder.withBefore(MultiObject.builder().addObject(objectWithPermission).build());
+                actionBuilder.withAfter(MultiObject.builder().addObject(objectWithoutPermission).build());
             }
 
             final Event event = stroomEventLoggingServiceProvider.get().createEvent(
