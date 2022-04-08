@@ -61,10 +61,10 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
 
         if (executorService == null) {
             final String uuid = message;
-            if (refresh(uuid)) {
+            if (keepAlive(uuid)) {
                 executorService = Executors.newScheduledThreadPool(1);
                 executorService.scheduleWithFixedDelay(() -> {
-                    if (!refresh(uuid)) {
+                    if (!keepAlive(uuid)) {
                         executorService.shutdown();
                     }
                 }, 1, 1, TimeUnit.SECONDS);
@@ -72,11 +72,11 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
         }
     }
 
-    private boolean refresh(final String uuid) {
-        LOGGER.debug(() -> "Refreshing application instance with uuid = " + uuid);
-        final boolean ok = applicationInstanceManager.refresh(uuid);
+    private boolean keepAlive(final String uuid) {
+        LOGGER.debug(() -> "Keeping application instance alive with uuid = " + uuid);
+        final boolean ok = applicationInstanceManager.keepAlive(uuid);
         if (!ok) {
-            LOGGER.error(() -> "Unable to refresh application instance with uuid = " + uuid);
+            LOGGER.error(() -> "Unable to keep application instance alive with uuid = " + uuid);
         }
         return ok;
     }

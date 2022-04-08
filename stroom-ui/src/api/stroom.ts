@@ -4175,14 +4175,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Application
-     * @name ApplicationInstanceRefresh
-     * @summary Refresh an application instance
-     * @request POST:/application-instance/v1/refresh
+     * @name ApplicationInstanceKeepAlive
+     * @summary Keep an application instance alive
+     * @request POST:/application-instance/v1/keepAlive
      * @secure
      */
-    applicationInstanceRefresh: (data: ApplicationInstanceInfo, params: RequestParams = {}) =>
+    applicationInstanceKeepAlive: (data: ApplicationInstanceInfo, params: RequestParams = {}) =>
       this.request<any, boolean>({
-        path: `/application-instance/v1/refresh`,
+        path: `/application-instance/v1/keepAlive`,
         method: "POST",
         body: data,
         secure: true,

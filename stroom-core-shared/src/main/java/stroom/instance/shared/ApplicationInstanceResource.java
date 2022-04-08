@@ -45,11 +45,11 @@ public interface ApplicationInstanceResource extends RestResource, DirectRestSer
     ApplicationInstanceInfo register();
 
     @POST
-    @Path("/refresh")
+    @Path("/keepAlive")
     @Operation(
-            summary = "Refresh an application instance",
-            operationId = "applicationInstanceRefresh")
-    Boolean refresh(@Parameter(description = "applicationInstanceInfo", required = true)
+            summary = "Keep an application instance alive",
+            operationId = "applicationInstanceKeepAlive")
+    Boolean keepAlive(@Parameter(description = "applicationInstanceInfo", required = true)
                             ApplicationInstanceInfo applicationInstanceInfo);
 
     @POST
