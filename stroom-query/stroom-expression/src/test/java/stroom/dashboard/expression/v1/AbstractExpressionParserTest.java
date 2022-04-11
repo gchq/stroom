@@ -11,8 +11,10 @@ import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,23 +25,117 @@ public class AbstractExpressionParserTest {
 
     protected final ExpressionParser parser = new ExpressionParser(new ParamFactory());
 
+    protected static Supplier<ChildData> createChildDataSupplier(final List<Val> values) {
+        return () -> new ChildData() {
+            @Override
+            public Val first() {
+                return values.get(0);
+            }
+
+            @Override
+            public Val last() {
+                return values.get(values.size() - 1);
+            }
+
+            @Override
+            public Val nth(final int pos) {
+                return values.get(pos);
+            }
+
+            @Override
+            public Val top(final String delimiter, final int limit) {
+                return join(delimiter, limit, false);
+            }
+
+            @Override
+            public Val bottom(final String delimiter, final int limit) {
+                return join(delimiter, limit, true);
+            }
+
+            @Override
+            public Val count() {
+                return ValLong.create(values.size());
+            }
+
+            private Val join(final String delimiter, final int limit, final boolean trimTop) {
+                int start;
+                int end;
+                if (trimTop) {
+                    end = values.size() - 1;
+                    start = Math.max(0, values.size() - limit);
+                } else {
+                    end = Math.min(limit, values.size()) - 1;
+                    start = 0;
+                }
+
+                final StringBuilder sb = new StringBuilder();
+                for (int i = start; i <= end; i++) {
+                    final Val val = values.get(i);
+                    if (val.type().isValue()) {
+                        if (sb.length() > 0) {
+                            sb.append(delimiter);
+                        }
+                        sb.append(val);
+                    }
+                }
+                return ValString.create(sb.toString());
+            }
+        };
+    }
+
+    protected static void testKryo(final Generator inputGenerator, final Generator outputGenerator) {
+        final Val val = inputGenerator.eval(null);
+
+        ByteBuffer buffer = ByteBuffer.allocateDirect(1000);
+
+        try (final Output output = new Output(new ByteBufferOutputStream(buffer))) {
+            inputGenerator.write(output);
+        }
+
+        buffer.flip();
+        print(buffer);
+
+        try (final Input input = new Input(new ByteBufferInputStream(buffer))) {
+            outputGenerator.read(input);
+        }
+
+        final Val newVal = outputGenerator.eval(null);
+
+        assertThat(newVal).isEqualTo(val);
+    }
+
+    protected static void print(final ByteBuffer byteBuffer) {
+        final ByteBuffer copy = byteBuffer.duplicate();
+        byte[] bytes = new byte[copy.limit()];
+        for (int i = 0; i < copy.limit(); i++) {
+            bytes[i] = copy.get();
+        }
+        LOGGER.info(Arrays.toString(bytes));
+    }
+
+    protected static String valToString(final Val val) {
+        return val.getClass().getSimpleName() + "(" + val + ")";
+    }
+
+    protected static Val[] getVals(final String... str) {
+        final Val[] result = new Val[str.length];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = ValString.create(str[i]);
+        }
+        return result;
+    }
+
+    protected static Val[] getVals(final double... d) {
+        final Val[] result = new Val[d.length];
+        for (int i = 0; i < d.length; i++) {
+            result[i] = ValDouble.create(d[i]);
+        }
+        return result;
+    }
+
     protected void test(final String expression) {
         createExpression(expression, exp ->
                 System.out.println(exp.toString()));
-    }
-
-    protected static Selection<Val> createSelection(final Generator[] generators) {
-        return new Selection<>() {
-            @Override
-            public int size() {
-                return generators.length;
-            }
-
-            @Override
-            public Val get(final int pos) {
-                return generators[pos].eval();
-            }
-        };
     }
 
     protected void createGenerator(final String expression, final Consumer<Generator> consumer) {
@@ -92,7 +188,7 @@ public class AbstractExpressionParserTest {
     protected void assertThatItEvaluatesToValErr(final String expression, final Val... values) {
         createGenerator(expression, gen -> {
             gen.set(values);
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             System.out.println(expression + " - " +
                     out.getClass().getSimpleName() + ": " +
                     out.toString() +
@@ -110,7 +206,7 @@ public class AbstractExpressionParserTest {
             if (inputValues != null && inputValues.length > 0) {
                 gen.set(inputValues);
             }
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             System.out.println(expression + " - " +
                     out.getClass().getSimpleName() + ": " +
                     out.toString() +
@@ -129,7 +225,7 @@ public class AbstractExpressionParserTest {
         final String expression = String.format("(${val1}%s${val2})", operator);
         createGenerator(expression, 2, gen -> {
             gen.set(new Val[]{val1, val2});
-            Val out = gen.eval();
+            Val out = gen.eval(null);
 
             System.out.printf("[%s: %s] %s [%s: %s] => [%s: %s%s]%n",
                     val1.getClass().getSimpleName(), val1.toString(),
@@ -149,7 +245,7 @@ public class AbstractExpressionParserTest {
 
     protected void assertTypeOf(final String expression, final String expectedType) {
         createGenerator(expression, gen -> {
-            Val out = gen.eval();
+            Val out = gen.eval(null);
 
             System.out.printf("%s => [%s:%s%s]%n",
                     expression,
@@ -170,7 +266,7 @@ public class AbstractExpressionParserTest {
         final String expression = "typeOf(${val1})";
         createGenerator(expression, gen -> {
             gen.set(new Val[]{val1});
-            Val out = gen.eval();
+            Val out = gen.eval(null);
 
             System.out.printf("%s - [%s:%s] => [%s:%s%s]%n",
                     expression,
@@ -192,7 +288,7 @@ public class AbstractExpressionParserTest {
         final String expression = String.format("%s(${val1})", function);
         createGenerator(expression, 2, gen -> {
             gen.set(new Val[]{val1});
-            Val out = gen.eval();
+            Val out = gen.eval(null);
 
             System.out.printf("%s([%s: %s]) => [%s: %s%s]%n",
                     function,
@@ -207,56 +303,6 @@ public class AbstractExpressionParserTest {
             }
             assertThat(out.getClass()).isEqualTo(expectedOutput.getClass());
         });
-    }
-
-    protected static void testKryo(final Generator inputGenerator, final Generator outputGenerator) {
-        final Val val = inputGenerator.eval();
-
-        ByteBuffer buffer = ByteBuffer.allocateDirect(1000);
-
-        try (final Output output = new Output(new ByteBufferOutputStream(buffer))) {
-            inputGenerator.write(output);
-        }
-
-        buffer.flip();
-        print(buffer);
-
-        try (final Input input = new Input(new ByteBufferInputStream(buffer))) {
-            outputGenerator.read(input);
-        }
-
-        final Val newVal = outputGenerator.eval();
-
-        assertThat(newVal).isEqualTo(val);
-    }
-
-    protected static void print(final ByteBuffer byteBuffer) {
-        final ByteBuffer copy = byteBuffer.duplicate();
-        byte[] bytes = new byte[copy.limit()];
-        for (int i = 0; i < copy.limit(); i++) {
-            bytes[i] = copy.get();
-        }
-        LOGGER.info(Arrays.toString(bytes));
-    }
-
-    protected static String valToString(final Val val) {
-        return val.getClass().getSimpleName() + "(" + val + ")";
-    }
-
-    protected static Val[] getVals(final String... str) {
-        final Val[] result = new Val[str.length];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = ValString.create(str[i]);
-        }
-        return result;
-    }
-
-    protected static Val[] getVals(final double... d) {
-        final Val[] result = new Val[d.length];
-        for (int i = 0; i < d.length; i++) {
-            result[i] = ValDouble.create(d[i]);
-        }
-        return result;
     }
 
     protected static class TestCase {

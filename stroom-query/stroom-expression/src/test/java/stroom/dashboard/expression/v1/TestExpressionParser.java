@@ -23,8 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,46 +39,44 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SuppressWarnings("checkstyle:localvariablename")
 class TestExpressionParser extends AbstractExpressionParserTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionParser.class);
-
     @TestFactory
     Stream<DynamicTest> testBasic() {
         return List.of(
-                "1+1",
-                "-1+2",
-                "${val1}",
-                "max(${val1})",
-                "sum(${val1})",
-                "min(round(${val1}, 4))",
-                "min(roundDay(${val1}))",
-                "min(roundMinute(${val1}))",
-                "ceiling(${val1})",
-                "floor(${val1})",
-                "ceiling(floor(min(roundMinute(${val1}))))",
-                "ceiling(floor(min(round(${val1}))))",
-                "max(${val1})-min(${val1})",
-                "max(${val1})/count()",
-                "round(${val1})/(min(${val1})+max(${val1}))",
-                "concat('this is', 'it')",
-                "concat('it''s a string', 'with a quote')",
-                "'it''s a string'",
-                "50",
-                "stringLength('it''s a string')",
-                "upperCase('it''s a string')",
-                "lowerCase('it''s a string')",
-                "encodeUrl('http://www.example.com')",
-                "decodeUrl('http://www.example.com')",
-                "substring('Hello', 0, 1)",
-                "equals(${val1}, ${val1})",
-                "greaterThan(1, 0)",
-                "lessThan(1, 0)",
-                "greaterThanOrEqualTo(1, 0)",
-                "lessThanOrEqualTo(1, 0)",
-                "1=0",
-                "decode('fred', 'fr.+', 'freda', 'freddy')",
-                "extractHostFromUri('http://www.example.com:1234/this/is/a/path')",
-                "link('title', 'http://www.somehost.com/somepath', 'target')",
-                "dashboard('title', 'someuuid', 'param1=value1')")
+                        "1+1",
+                        "-1+2",
+                        "${val1}",
+                        "max(${val1})",
+                        "sum(${val1})",
+                        "min(round(${val1}, 4))",
+                        "min(roundDay(${val1}))",
+                        "min(roundMinute(${val1}))",
+                        "ceiling(${val1})",
+                        "floor(${val1})",
+                        "ceiling(floor(min(roundMinute(${val1}))))",
+                        "ceiling(floor(min(round(${val1}))))",
+                        "max(${val1})-min(${val1})",
+                        "max(${val1})/count()",
+                        "round(${val1})/(min(${val1})+max(${val1}))",
+                        "concat('this is', 'it')",
+                        "concat('it''s a string', 'with a quote')",
+                        "'it''s a string'",
+                        "50",
+                        "stringLength('it''s a string')",
+                        "upperCase('it''s a string')",
+                        "lowerCase('it''s a string')",
+                        "encodeUrl('http://www.example.com')",
+                        "decodeUrl('http://www.example.com')",
+                        "substring('Hello', 0, 1)",
+                        "equals(${val1}, ${val1})",
+                        "greaterThan(1, 0)",
+                        "lessThan(1, 0)",
+                        "greaterThanOrEqualTo(1, 0)",
+                        "lessThanOrEqualTo(1, 0)",
+                        "1=0",
+                        "decode('fred', 'fr.+', 'freda', 'freddy')",
+                        "extractHostFromUri('http://www.example.com:1234/this/is/a/path')",
+                        "link('title', 'http://www.somehost.com/somepath', 'target')",
+                        "dashboard('title', 'someuuid', 'param1=value1')")
                 .stream()
                 .map(expr ->
                         DynamicTest.dynamicTest(expr, () ->
@@ -89,7 +86,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testMatch1() {
         createGenerator("match('this', 'this')", gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toBoolean()).isTrue();
         });
     }
@@ -97,7 +94,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testMatch2() {
         createGenerator("match('this', 'that')", gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toBoolean()).isFalse();
         });
     }
@@ -107,7 +104,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("match(${val1}, 'this')", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toBoolean()).isTrue();
         });
     }
@@ -117,7 +114,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("match(${val1}, 'that')", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toBoolean()).isFalse();
         });
     }
@@ -125,7 +122,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testTrue() {
         createGenerator("true()", gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toBoolean()).isTrue();
         });
     }
@@ -133,7 +130,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testFalse() {
         createGenerator("false()", gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toBoolean()).isFalse();
         });
     }
@@ -141,7 +138,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testNull() {
         createGenerator("null()", gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out).isInstanceOf(ValNull.class);
         });
     }
@@ -149,7 +146,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testErr() {
         createGenerator("err()", gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out).isInstanceOf(ValErr.class);
         });
     }
@@ -157,7 +154,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testNotTrue() {
         createGenerator("not(true())", gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toBoolean()).isFalse();
         });
     }
@@ -165,7 +162,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testNotFalse() {
         createGenerator("not(false())", gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toBoolean()).isTrue();
         });
     }
@@ -173,7 +170,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testIf1() {
         createGenerator("if(true(), 'this', 'that')", gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("this");
         });
     }
@@ -181,7 +178,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testIf2() {
         createGenerator("if(false(), 'this', 'that')", gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("that");
         });
     }
@@ -191,7 +188,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("if(${val1}, 'this', 'that')", gen -> {
             gen.set(getVals("true"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("this");
         });
     }
@@ -201,7 +198,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("if(${val1}, 'this', 'that')", gen -> {
             gen.set(getVals("false"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("that");
         });
     }
@@ -211,7 +208,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("if(match(${val1}, 'foo'), 'this', 'that')", gen -> {
             gen.set(getVals("foo"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("this");
         });
     }
@@ -221,7 +218,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("if(match(${val1}, 'foo'), 'this', 'that')", gen -> {
             gen.set(getVals("bar"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("that");
         });
     }
@@ -231,7 +228,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("if(not(${val1}), 'this', 'that')", gen -> {
             gen.set(getVals("false"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("this");
         });
     }
@@ -241,7 +238,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("if(${val1}=null(), true(), false())", gen -> {
             gen.set(new Val[]{ValNull.INSTANCE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.type().isError()).isTrue();
         });
     }
@@ -251,7 +248,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("replace('this', 'is', 'at')", gen -> {
             gen.set(getVals(3D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("that");
         });
     }
@@ -261,7 +258,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("replace(${val1}, 'is', 'at')", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("that");
         });
     }
@@ -271,7 +268,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("concat('this', ' is ', 'it')", gen -> {
             gen.set(getVals(3D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("this is it");
         });
     }
@@ -282,7 +279,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("'this'+' is '+'it'", gen -> {
             gen.set(getVals(3D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("this is it");
         });
     }
@@ -292,7 +289,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("concat(${val1}, ' is ', 'it')", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("this is it");
         });
     }
@@ -302,7 +299,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("concat(${val1})", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("this");
         });
     }
@@ -312,7 +309,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("concat('hello')", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("hello");
         });
     }
@@ -322,7 +319,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("concat(${val1}, ${val2})", 2, gen -> {
             gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("");
         });
     }
@@ -332,7 +329,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("${val1}+${val2}", 2, gen -> {
             gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out).isEqualTo(ValNull.INSTANCE);
         });
     }
@@ -342,7 +339,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("${val1}+${val2}+'test'", 2, gen -> {
             gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("test");
         });
     }
@@ -352,7 +349,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("${val1}+${val2}+''", 2, gen -> {
             gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("");
         });
     }
@@ -362,7 +359,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("${val1}+${val2}", 2, gen -> {
             gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("2");
         });
     }
@@ -372,7 +369,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("${val1}+${val2}+''", 2, gen -> {
             gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("2");
         });
     }
@@ -383,7 +380,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("${val1}+${val2}+'test'", 2, gen -> {
             gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("2test");
         });
     }
@@ -393,7 +390,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("${val1}+'test'+${val2}", 2, gen -> {
             gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("truetesttrue");
         });
     }
@@ -404,7 +401,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("'hello'", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("hello");
         });
     }
@@ -414,7 +411,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("'[Click Here](http://www.somehost.com/somepath){DIALOG}'", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("[Click Here](http://www.somehost.com/somepath){DIALOG}");
         });
     }
@@ -424,7 +421,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("50", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("50");
         });
     }
@@ -434,7 +431,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("stringLength(${val1})", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
         });
     }
@@ -444,7 +441,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, 1, 2)", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("h");
         });
     }
@@ -454,7 +451,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, 2, 99)", gen -> {
             gen.set(getVals("his"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("s");
         });
     }
@@ -464,7 +461,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, 1+1, 99-1)", gen -> {
             gen.set(getVals("his"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("s");
         });
     }
@@ -474,7 +471,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, 2+5, 99-1)", gen -> {
             gen.set(getVals("his"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEmpty();
         });
     }
@@ -484,7 +481,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substringBefore(${val1}, '-')", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("aa");
         });
     }
@@ -494,7 +491,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substringBefore(${val1}, 'a')", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEmpty();
         });
     }
@@ -504,7 +501,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substringBefore(${val1}, 'b')", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("aa-");
         });
     }
@@ -514,7 +511,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substringBefore(${val1}, 'q')", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEmpty();
         });
     }
@@ -524,7 +521,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substringAfter(${val1}, '-')", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("bb");
         });
     }
@@ -534,7 +531,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substringAfter(${val1}, 'a')", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("a-bb");
         });
     }
@@ -544,7 +541,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substringAfter(${val1}, 'b')", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("b");
         });
     }
@@ -554,7 +551,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substringAfter(${val1}, 'q')", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEmpty();
         });
     }
@@ -564,7 +561,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("indexOf(${val1}, '-')", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toInteger().intValue()).isEqualTo(2);
         });
     }
@@ -574,7 +571,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, indexOf(${val1}, '-'), stringLength(${val1}))", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("-bb");
         });
     }
@@ -584,7 +581,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, indexOf(${val1}, 'a'), stringLength(${val1}))", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("aa-bb");
         });
     }
@@ -594,7 +591,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, indexOf(${val1}, 'b'), stringLength(${val1}))", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("bb");
         });
     }
@@ -604,7 +601,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, indexOf(${val1}, 'q'), stringLength(${val1}))", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.type().isError()).isTrue();
         });
     }
@@ -614,7 +611,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, lastIndexOf(${val1}, '-'), stringLength(${val1}))", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("-bb");
         });
     }
@@ -624,7 +621,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, lastIndexOf(${val1}, 'a'), stringLength(${val1}))", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("a-bb");
         });
     }
@@ -634,7 +631,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, lastIndexOf(${val1}, 'b'), stringLength(${val1}))", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("b");
         });
     }
@@ -644,7 +641,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, lastIndexOf(${val1}, 'q'), stringLength(${val1}))", gen -> {
             gen.set(getVals("aa-bb"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.type().isError()).isTrue();
         });
     }
@@ -654,7 +651,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("decode(${val1}, 'hullo', 'hello', 'goodbye')", gen -> {
             gen.set(getVals("hullo"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("hello");
         });
     }
@@ -664,7 +661,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("decode(${val1}, 'h.+o', 'hello', 'goodbye')", gen -> {
             gen.set(getVals("hullo"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("hello");
         });
     }
@@ -673,7 +670,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testInclude1() {
         createGenerator("include(${val1}, 'this', 'that')", gen -> {
             gen.set(getVals("this"));
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("this");
         });
     }
@@ -682,7 +679,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testInclude2() {
         createGenerator("include(${val1}, 'this', 'that')", gen -> {
             gen.set(getVals("that"));
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("that");
         });
     }
@@ -691,7 +688,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testInclude3() {
         createGenerator("include(${val1}, 'this', 'that')", gen -> {
             gen.set(getVals("other"));
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isNull();
         });
     }
@@ -700,7 +697,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testExclude1() {
         createGenerator("exclude(${val1}, 'this', 'that')", gen -> {
             gen.set(getVals("this"));
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isNull();
         });
     }
@@ -709,7 +706,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testExclude2() {
         createGenerator("exclude(${val1}, 'this', 'that')", gen -> {
             gen.set(getVals("that"));
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isNull();
         });
     }
@@ -718,7 +715,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testExclude3() {
         createGenerator("exclude(${val1}, 'this', 'that')", gen -> {
             gen.set(getVals("other"));
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("other");
         });
     }
@@ -727,7 +724,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testEncodeUrl() {
         createGenerator("encodeUrl('https://www.somesite.com:8080/this/path?query=string')", gen -> {
             gen.set(getVals(""));
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring");
         });
     }
@@ -736,7 +733,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testDecodeUrl() {
         createGenerator("decodeUrl('https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring')", gen -> {
             gen.set(getVals(""));
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("https://www.somesite.com:8080/this/path?query=string");
         });
     }
@@ -746,7 +743,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("equals(${val1}, 'plop')", gen -> {
             gen.set(getVals("plop"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -756,7 +753,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("equals(${val1}, ${val1})", gen -> {
             gen.set(getVals("plop"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -766,7 +763,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("equals(${val1}, 'plip')", gen -> {
             gen.set(getVals("plop"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("false");
         });
     }
@@ -776,7 +773,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("equals(${val1}, ${val2})", 2, gen -> {
             gen.set(getVals("plop", "plip"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("false");
         });
     }
@@ -786,7 +783,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("equals(${val1}, ${val2})", 2, gen -> {
             gen.set(getVals("plop", "plop"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -796,7 +793,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("${val1}=${val2}", 2, gen -> {
             gen.set(getVals("plop", "plop"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -806,7 +803,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("${val1}=null()", gen -> {
             gen.set(new Val[]{ValNull.INSTANCE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.type().isError()).isTrue();
         });
     }
@@ -816,7 +813,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("${val1}=null()", gen -> {
             gen.set(getVals("plop"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.type().isError()).isTrue();
         });
     }
@@ -826,7 +823,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("null()=null()", gen -> {
             gen.set(getVals("plop"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.type().isError()).isTrue();
         });
     }
@@ -836,7 +833,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("if(${val1}=null(), true(), false())", gen -> {
             gen.set(new Val[]{ValNull.INSTANCE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.type().isError()).isTrue();
         });
     }
@@ -846,7 +843,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("isNull(${val1})", gen -> {
             gen.set(new Val[]{ValNull.INSTANCE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -856,7 +853,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("isNull(${val1})", gen -> {
             gen.set(getVals("plop"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("false");
         });
     }
@@ -866,7 +863,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("isNull(null())", gen -> {
             gen.set(getVals("plop"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -876,7 +873,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("if(isNull(${val1}), true(), false())", gen -> {
             gen.set(new Val[]{ValNull.INSTANCE});
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -885,7 +882,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testLessThan1() {
         createGenerator("lessThan(1, 0)", 2, gen -> {
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("false");
         });
     }
@@ -893,7 +890,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testLessThan2() {
         createGenerator("lessThan(1, 1)", 2, gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("false");
         });
     }
@@ -903,7 +900,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
             gen.set(getVals(1D, 2D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -913,7 +910,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
             gen.set(getVals("fred", "fred"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("false");
         });
     }
@@ -923,7 +920,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
             gen.set(getVals("fred", "fred1"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -933,7 +930,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
             gen.set(getVals("fred1", "fred"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("false");
         });
     }
@@ -941,7 +938,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testLessThanOrEqualTo1() {
         createGenerator("lessThanOrEqualTo(1, 0)", 2, gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("false");
         });
     }
@@ -949,7 +946,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testLessThanOrEqualTo2() {
         createGenerator("lessThanOrEqualTo(1, 1)", 2, gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -959,7 +956,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
             gen.set(getVals(1D, 2D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -969,7 +966,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("(${val1}<=${val2})", 2, gen -> {
             gen.set(getVals(1D, 2D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -979,7 +976,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
             gen.set(getVals("fred", "fred"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -989,7 +986,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
             gen.set(getVals("fred", "fred1"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -999,7 +996,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
             gen.set(getVals("fred1", "fred"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("false");
         });
     }
@@ -1009,7 +1006,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("greaterThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
             gen.set(getVals(2D, 1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -1019,7 +1016,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("(${val1}>=${val2})", 2, gen -> {
             gen.set(getVals(2D, 1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
         });
     }
@@ -1316,7 +1313,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("substring(${val1}, 0, 99)", gen -> {
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("this");
         });
     }
@@ -1326,7 +1323,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("hash(${val1})", gen -> {
             gen.set(getVals("test"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
         });
     }
@@ -1336,7 +1333,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("hash(${val1}, 'SHA-512')", gen -> {
             gen.set(getVals("test"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo(
                     "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff");
         });
@@ -1347,7 +1344,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("hash(${val1}, 'SHA-512', 'mysalt')", gen -> {
             gen.set(getVals("test"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo(
                     "af2910d4d8acf3fcf9683d3ca4425327cb1b4b48bc690f566e27b0e0144c17af82066cf6af14d3a30312ed9df671e0e24b1c66ed3973d1a7836899d75c4d6bb8");
         });
@@ -1360,7 +1357,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals("two"));
             gen.set(getVals("three"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("one,two,three");
         });
     }
@@ -1372,7 +1369,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals("two"));
             gen.set(getVals("three"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("onetwothree");
         });
     }
@@ -1383,13 +1380,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(122D));
             gen.set(getVals(133D));
 
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
 
             gen.set(getVals(11D));
             gen.set(getVals(122D));
 
-            out = gen.eval();
+            out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
         });
     }
@@ -1400,14 +1397,10 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(122D));
             gen.set(getVals(133D));
 
-            final GroupKey parent = new GroupKey(null, ValSerialiser.toBytes(new Val[]{ValString.create("parent")}));
-            final byte[] parentBytes = GroupKeySerialiser.toBytes(parent);
-            gen.addChildKey(new GroupKey(parentBytes, ValSerialiser.toBytes(new Val[]{ValString.create("val1")})));
-            gen.addChildKey(new GroupKey(parentBytes, ValSerialiser.toBytes(new Val[]{ValString.create("val1")})));
-            gen.addChildKey(new GroupKey(parentBytes, ValSerialiser.toBytes(new Val[]{ValString.create("val2")})));
-            gen.addChildKey(new GroupKey(parentBytes, ValSerialiser.toBytes(new Val[]{ValString.create("val2")})));
+            final Supplier<ChildData> childDataSupplier =
+                    createChildDataSupplier(List.of(ValString.create("val1"), ValString.create("val2")));
 
-            Val out = gen.eval();
+            Val out = gen.eval(childDataSupplier);
             assertThat(out.toInteger()).isEqualTo(2);
         });
     }
@@ -1418,13 +1411,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(122D));
             gen.set(getVals(133D));
 
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
 
             gen.set(getVals(11D));
             gen.set(getVals(122D));
 
-            out = gen.eval();
+            out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
         });
     }
@@ -1435,13 +1428,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(122D));
             gen.set(getVals(133D));
 
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
 
             gen.set(getVals(11D));
             gen.set(getVals(122D));
 
-            out = gen.eval();
+            out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
         });
     }
@@ -1451,7 +1444,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("3+4", gen -> {
             gen.set(getVals(1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(7D, Offset.offset(0D));
         });
     }
@@ -1461,7 +1454,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("3+4+5", gen -> {
             gen.set(getVals(1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D));
         });
     }
@@ -1472,13 +1465,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1D));
             gen.set(getVals(1D));
 
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
 
             gen.set(getVals(1D));
             gen.set(getVals(1D));
 
-            out = gen.eval();
+            out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(6D, Offset.offset(0D));
         });
     }
@@ -1488,7 +1481,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("3-4", gen -> {
             gen.set(getVals(1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(-1D, Offset.offset(0D));
         });
     }
@@ -1499,13 +1492,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1D));
             gen.set(getVals(1D));
 
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(0D, Offset.offset(0D));
 
             gen.set(getVals(1D));
             gen.set(getVals(1D));
 
-            out = gen.eval();
+            out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(-2D, Offset.offset(0D));
         });
     }
@@ -1515,7 +1508,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("3*4", gen -> {
             gen.set(getVals(1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D));
         });
     }
@@ -1526,13 +1519,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1D));
             gen.set(getVals(1D));
 
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
 
             gen.set(getVals(1D));
             gen.set(getVals(1D));
 
-            out = gen.eval();
+            out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
         });
     }
@@ -1542,7 +1535,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("8/4", gen -> {
 //        gen.set(getVal(1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
         });
     }
@@ -1553,13 +1546,13 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1D));
             gen.set(getVals(1D));
 
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
 
             gen.set(getVals(1D));
             gen.set(getVals(1D));
 
-            out = gen.eval();
+            out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
         });
     }
@@ -1567,7 +1560,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testDivide_byZero() {
         createGenerator("8/0", gen -> {
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out instanceof ValErr).isTrue();
             System.out.println("Error message: " + ((ValErr) out).getMessage());
         });
@@ -1578,7 +1571,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("floor(8.4234)", gen -> {
             gen.set(getVals(1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
         });
     }
@@ -1588,7 +1581,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("floor(8.5234)", gen -> {
             gen.set(getVals(1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
         });
     }
@@ -1598,7 +1591,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("floor(${val1})", gen -> {
             gen.set(getVals(1.34D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
         });
     }
@@ -1609,7 +1602,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1.34D));
             gen.set(getVals(1.8655D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
         });
     }
@@ -1620,7 +1613,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1.34D));
             gen.set(getVals(1.8655D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(3.8D, Offset.offset(0D));
         });
     }
@@ -1631,7 +1624,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1.34D));
             gen.set(getVals(1.8655D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(3.86D, Offset.offset(0D));
         });
     }
@@ -1641,7 +1634,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("ceiling(8.4234)", gen -> {
             gen.set(getVals(1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
         });
     }
@@ -1651,7 +1644,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("ceiling(8.5234)", gen -> {
             gen.set(getVals(1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
         });
     }
@@ -1661,7 +1654,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("ceiling(${val1})", gen -> {
             gen.set(getVals(1.34D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
         });
     }
@@ -1672,7 +1665,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1.34D));
             gen.set(getVals(1.8655D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
         });
     }
@@ -1684,7 +1677,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1.34D));
             gen.set(getVals(1.8655D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(3.9D, Offset.offset(0D));
         });
     }
@@ -1695,7 +1688,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1.34D));
             gen.set(getVals(1.8655D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(3.87D, Offset.offset(0D));
         });
     }
@@ -1705,7 +1698,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("round(8.4234)", gen -> {
             gen.set(getVals(1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
         });
     }
@@ -1715,7 +1708,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         createGenerator("round(8.5234)", gen -> {
             gen.set(getVals(1D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
         });
     }
@@ -1726,7 +1719,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
 
             gen.set(getVals(1.34D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
         });
     }
@@ -1737,7 +1730,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1.34D));
             gen.set(getVals(1.8655D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
         });
     }
@@ -1748,7 +1741,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1.34D));
             gen.set(getVals(1.8655D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(3.9D, Offset.offset(0D));
         });
     }
@@ -1759,7 +1752,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             gen.set(getVals(1.34D));
             gen.set(getVals(1.8655D));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(3.87D, Offset.offset(0D));
         });
     }
@@ -1793,7 +1786,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         final String expression = expr + "(${val1})";
         createGenerator(expression, gen -> {
             gen.set(getVals(input));
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(expectedMs, Offset.offset(0D));
         });
     }
@@ -1801,17 +1794,17 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @TestFactory
     Stream<DynamicTest> testBODMAS() {
         return List.of(
-                TestCase.of("4+4/2+2", ValDouble.create(8)),
-                TestCase.of("(4+4)/2+2", ValDouble.create(6)),
-                TestCase.of("(4+4)/(2+2)", ValDouble.create(2)),
-                TestCase.of("4+4/2+2*3", ValDouble.create(12)),
-                TestCase.of("8%3", ValDouble.create(2))
-        )
+                        TestCase.of("4+4/2+2", ValDouble.create(8)),
+                        TestCase.of("(4+4)/2+2", ValDouble.create(6)),
+                        TestCase.of("(4+4)/(2+2)", ValDouble.create(2)),
+                        TestCase.of("4+4/2+2*3", ValDouble.create(12)),
+                        TestCase.of("8%3", ValDouble.create(2))
+                )
                 .stream()
                 .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
                         createGenerator(testCase.expression, gen -> {
                             gen.set(testCase.inputValues);
-                            assertThat(gen.eval().toDouble())
+                            assertThat(gen.eval(null).toDouble())
                                     .isEqualTo(testCase.expectedResult.toDouble(), Offset.offset(0D));
                         })));
     }
@@ -1819,24 +1812,24 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @TestFactory
     Stream<DynamicTest> testParseDate() {
         return List.of(
-                TestCase.of(
-                        "parseDate(${val1})",
-                        ValLong.create(1393071132888L),
-                        getVals("2014-02-22T12:12:12.888Z")),
-                TestCase.of(
-                        "parseDate(${val1}, 'yyyy MM dd')",
-                        ValLong.create(1393027200000L),
-                        getVals("2014 02 22")),
-                TestCase.of(
-                        "parseDate(${val1}, 'yyyy MM dd', '+0400')",
-                        ValLong.create(1393012800000L),
-                        getVals("2014 02 22"))
-        )
+                        TestCase.of(
+                                "parseDate(${val1})",
+                                ValLong.create(1393071132888L),
+                                getVals("2014-02-22T12:12:12.888Z")),
+                        TestCase.of(
+                                "parseDate(${val1}, 'yyyy MM dd')",
+                                ValLong.create(1393027200000L),
+                                getVals("2014 02 22")),
+                        TestCase.of(
+                                "parseDate(${val1}, 'yyyy MM dd', '+0400')",
+                                ValLong.create(1393012800000L),
+                                getVals("2014 02 22"))
+                )
                 .stream()
                 .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
                         createGenerator(testCase.expression, gen -> {
                             gen.set(testCase.inputValues);
-                            assertThat(gen.eval())
+                            assertThat(gen.eval(null))
                                     .isEqualTo(testCase.expectedResult);
                         })));
     }
@@ -1844,24 +1837,24 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @TestFactory
     Stream<DynamicTest> testFormatDate() {
         return List.of(
-                TestCase.of(
-                        "formatDate(${val1})",
-                        ValString.create("2014-02-22T12:12:12.888Z"),
-                        ValLong.create(1393071132888L)),
-                TestCase.of(
-                        "formatDate(${val1}, 'yyyy MM dd')",
-                        ValString.create("2014 02 22"),
-                        ValLong.create(1393071132888L)),
-                TestCase.of(
-                        "formatDate(${val1}, 'yyyy MM dd', '+1200')",
-                        ValString.create("2014 02 23"),
-                        ValLong.create(1393071132888L))
-        )
+                        TestCase.of(
+                                "formatDate(${val1})",
+                                ValString.create("2014-02-22T12:12:12.888Z"),
+                                ValLong.create(1393071132888L)),
+                        TestCase.of(
+                                "formatDate(${val1}, 'yyyy MM dd')",
+                                ValString.create("2014 02 22"),
+                                ValLong.create(1393071132888L)),
+                        TestCase.of(
+                                "formatDate(${val1}, 'yyyy MM dd', '+1200')",
+                                ValString.create("2014 02 23"),
+                                ValLong.create(1393071132888L))
+                )
                 .stream()
                 .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
                         createGenerator(testCase.expression, gen -> {
                             gen.set(testCase.inputValues);
-                            assertThat(gen.eval())
+                            assertThat(gen.eval(null))
                                     .isEqualTo(testCase.expectedResult);
                         })));
     }
@@ -1869,27 +1862,27 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @TestFactory
     Stream<DynamicTest> testCasts() {
         return List.of(
-                TestCase.of("toBoolean('true')", ValBoolean.TRUE),
-                TestCase.of("toBoolean(${val1})", ValBoolean.TRUE, getVals("true")),
+                        TestCase.of("toBoolean('true')", ValBoolean.TRUE),
+                        TestCase.of("toBoolean(${val1})", ValBoolean.TRUE, getVals("true")),
 
-                TestCase.of("toDouble('100')", ValDouble.create(100)),
-                TestCase.of("toDouble(${val1})", ValDouble.create(100), getVals("100")),
+                        TestCase.of("toDouble('100')", ValDouble.create(100)),
+                        TestCase.of("toDouble(${val1})", ValDouble.create(100), getVals("100")),
 
-                TestCase.of("toInteger('100')", ValInteger.create(100)),
-                TestCase.of("toInteger(${val1})", ValInteger.create(100), getVals("100")),
+                        TestCase.of("toInteger('100')", ValInteger.create(100)),
+                        TestCase.of("toInteger(${val1})", ValInteger.create(100), getVals("100")),
 
-                TestCase.of("toLong('100')", ValLong.create(100)),
-                TestCase.of("toLong(${val1})", ValLong.create(100), getVals("100")),
+                        TestCase.of("toLong('100')", ValLong.create(100)),
+                        TestCase.of("toLong(${val1})", ValLong.create(100), getVals("100")),
 
-                TestCase.of("toString('100')", ValString.create("100")),
-                TestCase.of("toString(100)", ValString.create("100")),
-                TestCase.of("toString(${val1})", ValString.create("100"), getVals("100"))
-        )
+                        TestCase.of("toString('100')", ValString.create("100")),
+                        TestCase.of("toString(100)", ValString.create("100")),
+                        TestCase.of("toString(${val1})", ValString.create("100"), getVals("100"))
+                )
                 .stream()
                 .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
                         createGenerator(testCase.expression, gen -> {
                             gen.set(testCase.inputValues);
-                            assertThat(gen.eval())
+                            assertThat(gen.eval(null))
                                     .isEqualTo(testCase.expectedResult);
                         })));
     }
@@ -1898,7 +1891,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testMappedValues1() {
         createGenerator("param('testkey')", gen -> {
             gen.set(getVals("100"));
-            assertThat(gen.eval()).isEqualTo(ValString.create("testvalue"));
+            assertThat(gen.eval(null)).isEqualTo(ValString.create("testvalue"));
         });
     }
 
@@ -1906,7 +1899,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testMappedValues2() {
         createGenerator("params()", gen -> {
             gen.set(getVals("100"));
-            assertThat(gen.eval()).isEqualTo(ValString.create("testkey=\"testvalue\""));
+            assertThat(gen.eval(null)).isEqualTo(ValString.create("testkey=\"testvalue\""));
         });
     }
 
@@ -1974,14 +1967,14 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @TestFactory
     Stream<DynamicTest> testTypeOf_2() {
         return List.of(
-                Tuple.of(ValBoolean.TRUE, "boolean"),
-                Tuple.of(ValBoolean.FALSE, "boolean"),
-                Tuple.of(ValNull.INSTANCE, "null"),
-                Tuple.of(ValErr.create("Expecting an error"), "error"),
-                Tuple.of(ValLong.create(0L), "long"),
-                Tuple.of(ValInteger.create(1), "integer"),
-                Tuple.of(ValDouble.create(1.1), "double"),
-                Tuple.of(ValString.create("abc"), "string"))
+                        Tuple.of(ValBoolean.TRUE, "boolean"),
+                        Tuple.of(ValBoolean.FALSE, "boolean"),
+                        Tuple.of(ValNull.INSTANCE, "null"),
+                        Tuple.of(ValErr.create("Expecting an error"), "error"),
+                        Tuple.of(ValLong.create(0L), "long"),
+                        Tuple.of(ValInteger.create(1), "integer"),
+                        Tuple.of(ValDouble.create(1.1), "double"),
+                        Tuple.of(ValString.create("abc"), "string"))
                 .stream()
                 .map(tuple2 -> {
                     final Val inputVal = tuple2._1;

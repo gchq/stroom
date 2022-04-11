@@ -16,7 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import java.util.function.Supplier;
+
 abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
+
     private static final ValErr CHILD_ERROR = ValErr.create("Error evaluating child generator");
     private static final ValErr MISSING_VALUE = ValErr.create("Both values must have a value to test equality");
 
@@ -61,7 +64,6 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
-        private static final long serialVersionUID = 217968020285584214L;
 
         private final Evaluator evaluator;
 
@@ -78,13 +80,13 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             final Val[] values = new Val[childGenerators.length];
 
             for (int i = 0; i < childGenerators.length; i++) {
                 Val val;
                 try {
-                    val = childGenerators[i].eval();
+                    val = childGenerators[i].eval(childDataSupplier);
                 } catch (final RuntimeException e) {
                     return CHILD_ERROR;
                 }

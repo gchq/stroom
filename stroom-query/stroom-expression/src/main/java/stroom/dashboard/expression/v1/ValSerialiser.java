@@ -9,6 +9,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public final class ValSerialiser {
+
     public static final Val[] EMPTY_VALUES = new Val[0];
     private static final Serialiser[] SERIALISERS = new Serialiser[20];
 
@@ -226,6 +227,7 @@ public final class ValSerialiser {
 //    }
 
     private static class Serialiser {
+
         final Function<Input, Val> reader;
         final BiConsumer<Output, Val> writer;
 

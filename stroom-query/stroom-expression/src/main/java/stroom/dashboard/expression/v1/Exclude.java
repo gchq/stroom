@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -38,10 +37,9 @@ import java.io.Serializable;
                                 argType = ValString.class,
                                 isVarargs = true,
                                 minVarargsCount = 1)}))
-class Exclude extends AbstractIncludeExclude implements Serializable {
+class Exclude extends AbstractIncludeExclude {
 
     static final String NAME = "exclude";
-    private static final long serialVersionUID = -305845496003936297L;
 
     public Exclude(final String name) {
         super(name);

@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import java.util.function.Supplier;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Add.NAME,
@@ -54,8 +56,6 @@ class Add extends NumericFunction {
 
     static class Calc extends Calculator {
 
-        private static final long serialVersionUID = 1099553839843710283L;
-
         @Override
         protected double op(final double cur, final double val) {
             return cur + val;
@@ -63,8 +63,6 @@ class Add extends NumericFunction {
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
-
-        private static final long serialVersionUID = 217968020285584214L;
 
         private final Calculator calculator;
 
@@ -81,11 +79,11 @@ class Add extends NumericFunction {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             boolean concat = false;
             final Val[] vals = new Val[childGenerators.length];
             for (int i = 0; i < vals.length; i++) {
-                final Val val = childGenerators[i].eval();
+                final Val val = childGenerators[i].eval(childDataSupplier);
                 if (val.type().isError()) {
                     return val;
                 } else if (val instanceof ValString) {
@@ -100,7 +98,7 @@ class Add extends NumericFunction {
                 final StringBuilder sb = new StringBuilder();
                 for (final Val val : vals) {
                     if (val.type().isValue()) {
-                        sb.append(val.toString());
+                        sb.append(val);
                     }
                 }
                 return ValString.create(sb.toString());

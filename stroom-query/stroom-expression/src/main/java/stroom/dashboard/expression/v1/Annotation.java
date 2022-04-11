@@ -19,6 +19,8 @@ package stroom.dashboard.expression.v1;
 // TODO @AT Confirm behavior of annotation link in the app, i.e. can you have a link with no anno id and/or no linked
 //   event. Need to confirm which args are opt.
 
+import java.util.function.Supplier;
+
 /**
  * See also HyperlinkEventHandlerImpl
  */
@@ -106,8 +108,6 @@ package stroom.dashboard.expression.v1;
         })
 class Annotation extends AbstractLink {
 
-    static final String NAME = "annotation";
-
     protected static final String ARG_ANNOTATION_ID = "annotationId";
     protected static final String ARG_STREAM_ID = "StreamId";
     protected static final String ARG_EVENT_ID = "EventId";
@@ -116,6 +116,7 @@ class Annotation extends AbstractLink {
     protected static final String ARG_STATUS = "status";
     protected static final String ARG_ASSIGNED_TO = "assignedTo";
     protected static final String ARG_COMMENT = "comment";
+    static final String NAME = "annotation";
 
     public Annotation(final String name) {
         super(name, 2, 9);
@@ -127,8 +128,6 @@ class Annotation extends AbstractLink {
     }
 
     private static final class Gen extends AbstractLinkGen {
-
-        private static final long serialVersionUID = 217968020285584214L;
 
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
@@ -142,7 +141,7 @@ class Annotation extends AbstractLink {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             final StringBuilder sb = new StringBuilder();
             append(sb, 1, ARG_ANNOTATION_ID);
             append(sb, 2, ARG_STREAM_ID);
@@ -154,14 +153,14 @@ class Annotation extends AbstractLink {
             append(sb, 8, ARG_COMMENT);
 
             return makeLink(getEscapedString(
-                    childGenerators[0].eval()),
+                            childGenerators[0].eval(childDataSupplier)),
                     EncodingUtil.encodeUrl(sb.toString()),
                     "annotation");
         }
 
         private void append(final StringBuilder sb, final int index, final String key) {
             if (index < childGenerators.length) {
-                final Val val = childGenerators[index].eval();
+                final Val val = childGenerators[index].eval(null);
                 if (val.type().isValue()) {
                     if (sb.length() > 0) {
                         sb.append("&");

@@ -17,12 +17,12 @@
 package stroom.dashboard.expression.v1;
 
 abstract class AbstractLink extends AbstractManyChildFunction {
+
     AbstractLink(final String name, final int minParams, final int maxParams) {
         super(name, minParams, maxParams);
     }
 
     abstract static class AbstractLinkGen extends AbstractManyChildGenerator {
-        private static final long serialVersionUID = 217968020285584214L;
 
         AbstractLinkGen(final Generator[] childGenerators) {
             super(childGenerators);
