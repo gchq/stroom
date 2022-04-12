@@ -105,6 +105,7 @@ jobs:
         if: always()
         run: |
           pushd "${BUILD_DIR}" > /dev/null
+          ls
           find ./**/test-results/**/*.xml -type f -print0 | tar -czf test-results.tar.gz --null -T -
 
       - name: Upload Test Results
