@@ -105,16 +105,7 @@ jobs:
         if: always()
         run: |
           pushd "${BUILD_DIR}" > /dev/null
-          ls
-          cd stroom-app
-          ls
-          cd build
-          ls
-          cd test-results
-          ls
-          cd test
-          ls
-          cd "${BUILD_DIR}"
+          shopt -s globstar
           find ./**/test-results/**/*.xml -type f -print0 | tar -czf test-results.tar.gz --null -T -
 
       - name: Upload Test Results
