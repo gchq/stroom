@@ -24,7 +24,10 @@ import stroom.util.io.TempDirProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Objects;
 import javax.inject.Inject;
@@ -33,6 +36,8 @@ import javax.inject.Inject;
  * This class should be common to all component and integration tests.
  */
 public abstract class StroomIntegrationTest implements StroomTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomIntegrationTest.class);
 
     private Path testTempDir;
 
@@ -52,7 +57,14 @@ public abstract class StroomIntegrationTest implements StroomTest {
      */
     @BeforeEach
     final void setup(final TestInfo testInfo) {
-        if (setupBetweenTests() || !Objects.equals(testInfo.getTestClass().orElse(null), currentTestClass)) {
+        LOGGER.info("setup called for {}#{}",
+                testInfo.getTestClass().orElse(null),
+                testInfo.getTestMethod().map(Method::getName)
+                        .orElse(null));
+
+        if (setupBetweenTests()
+                || !Objects.equals(testInfo.getTestClass().orElse(null), currentTestClass)) {
+            LOGGER.info("Doing setup");
             currentTestClass = testInfo.getTestClass().orElse(null);
 
             tempDir = tempDirProvider.get();
@@ -64,15 +76,26 @@ public abstract class StroomIntegrationTest implements StroomTest {
                 commonTestControl.cleanup();
                 commonTestControl.setup(tempDir);
             });
+        } else {
+            LOGGER.info("Skipping setup");
         }
     }
 
     @AfterEach
     final void cleanup(final TestInfo testInfo) {
-        if (setupBetweenTests() || !Objects.equals(testInfo.getTestClass().orElse(null), currentTestClass)) {
+        LOGGER.info("cleanup called for {}#{}",
+                testInfo.getTestClass().orElse(null),
+                testInfo.getTestMethod().map(Method::getName)
+                        .orElse(null));
+
+        if (setupBetweenTests()
+                || !Objects.equals(testInfo.getTestClass().orElse(null), currentTestClass)) {
+            LOGGER.info("Doing cleanup");
             securityContext.asProcessingUser(() -> commonTestControl.cleanup());
             // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
             FileUtil.deleteContents(tempDir);
+        } else {
+            LOGGER.info("Skipping cleanup");
         }
     }
 
