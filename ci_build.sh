@@ -534,7 +534,7 @@ export BUILD_VERSION
 
 # MAX_WORKERS env var should be set in travis/github actions settings to
 # control max gradle/gwt workers
-./container_build/runInJavaDocker.sh GRADLE_BUILD
+./container_build/runInJavaDocker.sh GRADLE_COMPILE
 
 # Don't do a docker build for pull requests
 if [ "$doDockerBuild" = true ]; then

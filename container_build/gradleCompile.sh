@@ -69,14 +69,22 @@ main() {
   export STROOM_JDBC_DRIVER_HOST="${host_ip}"
   echo -e "${GREEN}Setting STROOM_JDBC_DRIVER_HOST to ${BLUE}${host_ip}${NC}"
 
+#  echo "::group::Java compile"
+#  echo -e "${GREEN}Do the Jave compile${NC}"
+#  ./gradlew \
+#    "${GRADLE_ARGS[@]}" \
+#    compileJava \
+#    compileTestJava \
+#    -x test \
+#    -x gwtCompile
+#  echo "::endgroup::"
+
   echo "::group::Java compile"
   echo -e "${GREEN}Do the Jave compile${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
-    compileJava \
-    compileTestJava \
-    -x test \
-    -x gwtCompile
+    stroom-app:test \
+    --tests TestFullTranslationTaskAndStepping
   echo "::endgroup::"
 
   echo -e "${GREEN}Done${NC}"
