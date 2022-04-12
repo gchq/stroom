@@ -97,6 +97,12 @@ jobs:
           ./ci_build.sh
           echo -e "${GREEN}Finished running build script${NC}"
 
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: "test-results/**/*.xml"
+
       - name: Release to GitHub
         id: create_release
         if: ${{ env.BUILD_IS_RELEASE == 'true' }}
@@ -118,4 +124,3 @@ jobs:
           #   https://github.com/<namespace>/<repo>/settings/secrets/actions/new
           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
         run: "${ACTIONS_SCRIPTS_DIR}/update_gh_pages.sh"
-
