@@ -97,16 +97,20 @@ jobs:
           ./ci_build.sh
           echo -e "${GREEN}Finished running build script${NC}"
 
+#      - name: Tar Test Results
+#        if: always()
+#        run: tar -cvf test-results.tar "**/test-results/**/*.xml"
+
       - name: Tar Test Results
         if: always()
-        run: tar -cvf test-results.tar "**/test-results/**/*.xml"
+        run: find ./**/test-results/** \( -type f -o -name '*.xml' \) -print0 | tar -czf test-results.tar.gz --null -T -
 
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: Unit Test Results
-          path: test-results.tar
+          path: test-results.tar.gz
           retention-days: 5
 
       - name: Publish Unit Test Results
