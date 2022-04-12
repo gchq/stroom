@@ -101,7 +101,7 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
-          files: "test-results/**/*.xml"
+          files: "**/test-results/**/*.xml"
 
       - name: Release to GitHub
         id: create_release
