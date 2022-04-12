@@ -103,7 +103,7 @@ jobs:
 
       - name: Tar Test Results
         if: always()
-        run: find ./**/test-results/** \( -type f -o -name '*.xml' \) -print0 | tar -czf test-results.tar.gz --null -T -
+        run: find ./**/test-results/**/*.xml -type f -print0 | tar -czf test-results.tar.gz --null -T -
 
       - name: Upload Test Results
         if: always()
