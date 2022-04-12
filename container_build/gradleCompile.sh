@@ -83,6 +83,8 @@ main() {
   echo -e "${GREEN}Do the Jave compile${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
+    --scan \
+    --stacktrace \
     stroom-app:test \
     --tests TestFullTranslationTaskAndStepping
   echo "::endgroup::"
