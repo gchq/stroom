@@ -218,10 +218,19 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                              final boolean compareOutput,
                              final List<Exception> exceptions) {
         // Create a stream processor for each pipeline.
+        LOGGER.info("Finding pipeline: " + name);
         final List<DocRef> pipelines = pipelineStore.findByName(name);
 
-        assertThat(pipelines)
-                .hasSize(1);
+        if (pipelines.size() == 0) {
+            LOGGER.error("Pipeline not found");
+            LOGGER.error("Only have: " + pipelineStore
+                    .list()
+                    .stream()
+                    .map(DocRef::getDisplayValue)
+                    .collect(Collectors.joining(",")));
+        }
+
+        assertThat(pipelines).hasSize(1);
 
         final DocRef pipelineRef = pipelines.get(0);
 

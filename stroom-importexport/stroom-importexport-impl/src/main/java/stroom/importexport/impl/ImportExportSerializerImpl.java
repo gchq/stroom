@@ -32,6 +32,7 @@ import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.io.AbstractFileVisitor;
+import stroom.util.io.FileUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
@@ -110,6 +111,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 .collect(Collectors.toMap(ImportState::getDocRef, Function.identity()));
 
         // Find all of the paths to import.
+        LOGGER.info("Importing data from " + FileUtil.getCanonicalPath(dir));
         final Set<DocRef> result = processDir(dir, confirmMap, importMode);
 
         // Rebuild the list
