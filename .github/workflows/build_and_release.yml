@@ -104,6 +104,7 @@ jobs:
       - name: Tar Test Results
         if: always()
         run: |
+          bash --version
           pushd "${BUILD_DIR}" > /dev/null
           shopt -s globstar
           find ./**/test-results/**/*.xml -type f -print0 | tar -czf test-results.tar.gz --null -T -
