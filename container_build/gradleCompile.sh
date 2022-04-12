@@ -85,8 +85,9 @@ main() {
     "${GRADLE_ARGS[@]}" \
     --scan \
     --stacktrace \
-    stroom-app:test \
-    --tests TestFullTranslationTaskAndStepping
+    test
+#    stroom-app:test \
+#    --tests TestFullTranslationTaskAndStepping
   echo "::endgroup::"
 
   echo -e "${GREEN}Done${NC}"
