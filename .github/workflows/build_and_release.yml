@@ -97,21 +97,24 @@ jobs:
           ./ci_build.sh
           echo -e "${GREEN}Finished running build script${NC}"
 
+      - name: Tar Test Results
+        if: always()
+        run: tar -cvf test-results.tar "**/test-results/**/*.xml"
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: Unit Test Results
+          path: test-results.tar
+          retention-days: 5
+
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
           files: "**/test-results/**/*.xml"
 
-      - name: Tar Test Results
-        run: tar -cvf test-results.tar "**/test-results/**/*.xml"
-
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v3
-        with:
-          name: Unit Test Results
-          path: test-results.tar
-          retention-days: 5
 
 #      - name: Upload Test Results
 #        if: always()
