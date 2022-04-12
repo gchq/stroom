@@ -48,10 +48,10 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
 //    }
     }
 
-    @Override
-    protected boolean setupBetweenTests() {
-        return false;
-    }
+//    @Override
+//    protected boolean setupBetweenTests() {
+//        return false;
+//    }
 
     @Test
     void testBOMXMLEvents() throws IOException {
