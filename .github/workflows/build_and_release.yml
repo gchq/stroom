@@ -112,6 +112,8 @@ jobs:
           ls
           cd test-results
           ls
+          cd test
+          ls
           cd "${BUILD_DIR}"
           find ./**/test-results/**/*.xml -type f -print0 | tar -czf test-results.tar.gz --null -T -
 
