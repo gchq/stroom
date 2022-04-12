@@ -62,9 +62,11 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -199,52 +201,53 @@ public final class SetupSampleDataBean {
 
     private void createProcessorFilters(final List<DocRef> feeds) {
         // Create stream processors for all feeds.
-        for (final DocRef feed : feeds) {
-            // Find the pipeline for this feed.
-            final List<DocRef> pipelines = pipelineStore.list().stream()
-                    .filter(docRef -> feed.getName()
-                            .equals(docRef.getName()))
-                    .collect(Collectors.toList());
+        feeds.parallelStream()
+                .forEach(feed -> {
+                    // Find the pipeline for this feed.
+                    final List<DocRef> pipelines = pipelineStore.list().stream()
+                            .filter(docRef -> feed.getName()
+                                    .equals(docRef.getName()))
+                            .collect(Collectors.toList());
 
-            if (pipelines == null || pipelines.size() == 0) {
-                LOGGER.warn("No pipeline found for feed '" + feed.getName() + "'");
-            } else if (pipelines.size() > 1) {
-                LOGGER.warn("More than 1 pipeline found for feed '" + feed.getName() + "'");
-            } else {
-                final DocRef pipeline = pipelines.get(0);
+                    if (pipelines == null || pipelines.size() == 0) {
+                        LOGGER.warn("No pipeline found for feed '" + feed.getName() + "'");
+                    } else if (pipelines.size() > 1) {
+                        LOGGER.warn("More than 1 pipeline found for feed '" + feed.getName() + "'");
+                    } else {
+                        final DocRef pipeline = pipelines.get(0);
 
-                // Create a processor for this feed.
-                final QueryData criteria = QueryData.builder()
-                        .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                        .expression(ExpressionOperator.builder()
-                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
-                                .addOperator(ExpressionOperator.builder().op(Op.OR)
-                                        .addTerm(MetaFields.TYPE,
-                                                ExpressionTerm.Condition.EQUALS,
-                                                StreamTypeNames.RAW_EVENTS)
-                                        .addTerm(MetaFields.TYPE,
-                                                ExpressionTerm.Condition.EQUALS,
-                                                StreamTypeNames.RAW_REFERENCE)
+                        // Create a processor for this feed.
+                        final QueryData criteria = QueryData.builder()
+                                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                                .expression(ExpressionOperator.builder()
+                                        .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                        .addOperator(ExpressionOperator.builder().op(Op.OR)
+                                                .addTerm(MetaFields.TYPE,
+                                                        ExpressionTerm.Condition.EQUALS,
+                                                        StreamTypeNames.RAW_EVENTS)
+                                                .addTerm(MetaFields.TYPE,
+                                                        ExpressionTerm.Condition.EQUALS,
+                                                        StreamTypeNames.RAW_REFERENCE)
+                                                .build())
                                         .build())
-                                .build())
-                        .build();
-                final Processor processor = processorService.create(pipeline, true);
-                LOGGER.info("Creating processor filter on {} for feed {}", pipeline.getName(), feed.getName());
-                final ProcessorFilter processorFilter = processorFilterService.create(
-                        processor,
-                        CreateProcessFilterRequest
-                                .builder()
-                                .pipeline(pipeline)
-                                .queryData(criteria)
-                                .build());
-                LOGGER.debug(processorFilter.toString());
-            }
-        }
+                                .build();
+                        final Processor processor = processorService.create(pipeline, true);
+                        LOGGER.info("Creating processor filter on {} for feed {}", pipeline.getName(), feed.getName());
+                        final ProcessorFilter processorFilter = processorFilterService.create(
+                                processor,
+                                CreateProcessFilterRequest
+                                        .builder()
+                                        .pipeline(pipeline)
+                                        .queryData(criteria)
+                                        .build());
+                        LOGGER.debug(processorFilter.toString());
+                    }
+                });
     }
 
     private void checkVolumesExist() {
         final List<IndexVolume> indexVolumes = indexVolumeGroupService.getNames()
-                .stream()
+                .parallelStream()
                 .flatMap(groupName -> indexVolumeService.find(new ExpressionCriteria()).stream())
                 .collect(Collectors.toList());
 
@@ -323,9 +326,10 @@ public final class SetupSampleDataBean {
             final String feedName = "DATA_SPLITTER-EVENTS";
             final CompletableFuture[] futures = new CompletableFuture[LOAD_CYCLES];
             for (int i = 0; i < LOAD_CYCLES; i++) {
-                LOGGER.info("Loading data from {}, iteration {}",
-                        dataDir.toAbsolutePath().normalize(), i);
+                final int finalI = i;
                 futures[i] = CompletableFuture.runAsync(() -> {
+                    LOGGER.info("Loading data from {}, iteration {}",
+                            dataDir.toAbsolutePath().normalize(), finalI);
                     long startTime = System.currentTimeMillis() - (14 * dayMs);
 
                     // Load reference data first.
@@ -404,49 +408,65 @@ public final class SetupSampleDataBean {
         final long startTime = System.currentTimeMillis();
 
         //keep the big and small feeds apart in terms of their event times
-        Instant startOfToday = Instant.now().truncatedTo(ChronoUnit.DAYS);
-        Instant startOfAWeekAgo = startOfToday.minus(7, ChronoUnit.DAYS);
+        final Instant startOfToday = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        final Instant startOfAWeekAgo = startOfToday.minus(7, ChronoUnit.DAYS);
 
-        loadStatsData(
-                dataLoader,
-                STATS_COUNT_FEED_LARGE_NAME,
-                STATS_ITERATIONS_LARGE,
-                startOfAWeekAgo,
-                GenerateSampleStatisticsData::generateCountData);
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        loadStatsData(
-                dataLoader,
-                STATS_COUNT_FEED_SMALL_NAME,
-                STATS_ITERATIONS_SMALL,
-                startOfToday,
-                GenerateSampleStatisticsData::generateCountData);
+        futures.add(CompletableFuture.runAsync(() -> {
+            loadStatsData(
+                    dataLoader,
+                    STATS_COUNT_FEED_LARGE_NAME,
+                    STATS_ITERATIONS_LARGE,
+                    startOfAWeekAgo,
+                    GenerateSampleStatisticsData::generateCountData);
+        }));
 
-        loadStatsData(
-                dataLoader,
-                STATS_VALUE_FEED_LARGE_NAME,
-                STATS_ITERATIONS_LARGE,
-                startOfAWeekAgo,
-                GenerateSampleStatisticsData::generateValueData);
+        futures.add(CompletableFuture.runAsync(() -> {
+            loadStatsData(
+                    dataLoader,
+                    STATS_COUNT_FEED_SMALL_NAME,
+                    STATS_ITERATIONS_SMALL,
+                    startOfToday,
+                    GenerateSampleStatisticsData::generateCountData);
+        }));
 
-        loadStatsData(
-                dataLoader,
-                STATS_VALUE_FEED_SMALL_NAME,
-                STATS_ITERATIONS_SMALL,
-                startOfToday,
-                GenerateSampleStatisticsData::generateValueData);
+        futures.add(CompletableFuture.runAsync(() -> {
+            loadStatsData(
+                    dataLoader,
+                    STATS_VALUE_FEED_LARGE_NAME,
+                    STATS_ITERATIONS_LARGE,
+                    startOfAWeekAgo,
+                    GenerateSampleStatisticsData::generateValueData);
+        }));
 
-        try {
-            final String sampleData = new String(Files.readAllBytes(Paths.get(STATS_COUNT_API_DATA_FILE)));
-            dataLoader.loadInputStream(
-                    STATS_COUNT_API_FEED_NAME,
-                    "Sample statistics count data for export to API",
-                    StreamUtil.stringToStream(sampleData),
-                    false,
-                    startTime);
-        } catch (final RuntimeException | IOException e) {
-            LOGGER.warn("Feed {} does not exist so cannot load the sample count for export to API statistics data.",
-                    STATS_COUNT_API_FEED_NAME);
-        }
+        futures.add(CompletableFuture.runAsync(() -> {
+            loadStatsData(
+                    dataLoader,
+                    STATS_VALUE_FEED_SMALL_NAME,
+                    STATS_ITERATIONS_SMALL,
+                    startOfToday,
+                    GenerateSampleStatisticsData::generateValueData);
+        }));
+
+        futures.add(CompletableFuture.runAsync(() -> {
+            try {
+                final String sampleData = new String(Files.readAllBytes(Paths.get(STATS_COUNT_API_DATA_FILE)));
+                dataLoader.loadInputStream(
+                        STATS_COUNT_API_FEED_NAME,
+                        "Sample statistics count data for export to API",
+                        StreamUtil.stringToStream(sampleData),
+                        false,
+                        startTime);
+            } catch (final RuntimeException | IOException e) {
+                LOGGER.warn("Feed {} does not exist so cannot load the sample count for export to API statistics data.",
+                        STATS_COUNT_API_FEED_NAME);
+            }
+        }));
+
+        LOGGER.info("Waiting for {} async tasks to complete", futures.size());
+        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+        LOGGER.info("Completed generation");
     }
 
     private String createRandomData() {
@@ -474,7 +494,7 @@ public final class SetupSampleDataBean {
     }
 
     private String createNum(final int max) {
-        return String.valueOf((int) (Math.random() * max) + 1);
+        return String.valueOf((int) (ThreadLocalRandom.current().nextInt() * max) + 1);
     }
 
     // private Folder get(String name) {
