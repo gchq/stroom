@@ -1,27 +1,32 @@
 #!/bin/bash
 
-# This is the CI build script that is run by travis/Github and does the following:
-# * Start up a DB to run tests against
-# * Compile the app and run all the tests
-# * Build the app jars and distribution zips
-# * Build the docker images
-# If this is a push on a release branch, e.g. '7.0':
-# * Push the docker images with floating tags, e.g.  '7-LATEST' '7.0-LATEST'
-# If this is a tagged release it will also:
-# * Build an entity relationship diagram
-# * Build a SQL DDL script for the DB
-# * Gather all release artefacts into one place
-# * Push the docker images
-# * Create a Github release and add all the artefacts
+# This is the CI build script that is run by Github Actions and does the
+# following:
+#   * Start up a DB to run tests against
+#   * Compile the app and run all the tests
+#   * Build the app jars and distribution zips
+#   * Build the docker images
+#   If this is a push on a release branch, e.g. '7.0':
+#     * Push the docker images with floating tags, e.g.  '7-LATEST' '7.0-LATEST'
+#   If this is a tagged release it will also:
+#     * Build an entity relationship diagram
+#     * Build a SQL DDL script for the DB
+#     * Gather all release artefacts into one place
+#     * Push the docker images
+#     * Create a Github release and add all the artefacts
 
 # Depoendencies for this script:
-# * bash + standard shell tools (sed, grep, etc.)
-# * docker
-# * docker-compose
+#   * bash + standard shell tools (sed, grep, etc.)
+#   * docker
+#   * docker-compose
 
 # The actual build is run inside a docker container which has all the
 # dependencies for performing the build and will spawn other docker
 # containers to perform sub parts of the build, e.g. the UI build.
+
+# Lines like:
+# echo "::group::DDL dump"
+# are to group/collapse shell output in the Github actions console
 
 # exit script on any error
 set -eo pipefail
