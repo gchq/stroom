@@ -45,16 +45,21 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     static Path tempDir; // Static makes the temp dir remain constant for the life of the test class.
 
-    private static Class<?> currentTestClass;
+    private static final ThreadLocal<Class<?>> CURRENT_TEST_CLASS_THREAD_LOCAL = new ThreadLocal<>();
+
+    private boolean performSetupOrCleanup(final TestInfo testInfo) {
+        final Class<?> testClass = testInfo.getTestClass().orElse(null);
+        final Class<?> currentTestClass = CURRENT_TEST_CLASS_THREAD_LOCAL.get();
+        CURRENT_TEST_CLASS_THREAD_LOCAL.set(testClass);
+        return setupBetweenTests() || testClass == null || !Objects.equals(testClass, currentTestClass);
+    }
 
     /**
      * Initialise required database entities.
      */
     @BeforeEach
     final void setup(final TestInfo testInfo) {
-        if (setupBetweenTests() || !Objects.equals(testInfo.getTestClass().orElse(null), currentTestClass)) {
-            currentTestClass = testInfo.getTestClass().orElse(null);
-
+        if (performSetupOrCleanup(testInfo)) {
             tempDir = tempDirProvider.get();
             if (tempDir == null) {
                 throw new NullPointerException("Temp dir is null");
@@ -69,7 +74,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     @AfterEach
     final void cleanup(final TestInfo testInfo) {
-        if (setupBetweenTests() || !Objects.equals(testInfo.getTestClass().orElse(null), currentTestClass)) {
+        if (performSetupOrCleanup(testInfo)) {
             securityContext.asProcessingUser(() -> commonTestControl.cleanup());
             // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
             FileUtil.deleteContents(tempDir);

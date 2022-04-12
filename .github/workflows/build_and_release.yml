@@ -161,3 +161,4 @@ jobs:
           #   https://github.com/<namespace>/<repo>/settings/secrets/actions/new
           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
         run: "${ACTIONS_SCRIPTS_DIR}/update_gh_pages.sh"
+

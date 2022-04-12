@@ -128,8 +128,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTranslationTestHelper commonTranslationTestHelper;
 
-    private static boolean HAVE_IMPORTED_CONTENT = false;
-    private static boolean HAVE_LOADED_REF_DATA = false;
+    private static final ThreadLocal<Boolean> HAVE_IMPORTED_CONTENT = ThreadLocal.withInitial(() -> false);
+    private static final ThreadLocal<Boolean> HAVE_LOADED_REF_DATA = ThreadLocal.withInitial(() -> false);
 
     /**
      * NOTE some of the input data for this test is buried in the following zip file so you will need
@@ -177,7 +177,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     protected void loadAllRefData() {
-        if (!HAVE_LOADED_REF_DATA) {
+        if (!HAVE_LOADED_REF_DATA.get()) {
             final Path samplesDir = getSamplesDir();
             final Path inputDir = samplesDir.resolve("input");
             final Path outputDir = samplesDir.resolve("output");
@@ -190,19 +190,19 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             if (exceptions.size() > 0) {
                 fail(exceptions.get(0).getMessage());
             }
-            HAVE_LOADED_REF_DATA = true;
+            HAVE_LOADED_REF_DATA.set(true);
         }
     }
 
     protected void importConfig() {
-        if (!HAVE_IMPORTED_CONTENT) {
+        if (!HAVE_IMPORTED_CONTENT.get()) {
             final Path samplesDir = getSamplesDir();
             final Path configDir = samplesDir.resolve("config");
 
             importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
             contentImportService.importStandardPacks();
-            HAVE_IMPORTED_CONTENT = true;
+            HAVE_IMPORTED_CONTENT.set(true);
         }
     }
 

@@ -37,4 +37,9 @@ class TestNodeService extends AbstractCoreIntegrationTest {
     void testBasic() {
         assertThat(nodeService.findNodeNames(new FindNodeCriteria()).size() > 0).isTrue();
     }
+
+    @Test
+    void testAgain() {
+        assertThat(nodeService.findNodeNames(new FindNodeCriteria()).size() > 0).isTrue();
+    }
 }

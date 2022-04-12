@@ -322,8 +322,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                                                                  final Map<String, byte[]> dataMap,
                                                                  final ImportState importState,
                                                                  final ImportMode importMode) {
-        LOGGER.info("Importing " + docRef.getDisplayValue());
-
         // Convert legacy import format to the new format if necessary.
         final Map<String, byte[]> convertedDataMap = importConverter.convert(
                 docRef,

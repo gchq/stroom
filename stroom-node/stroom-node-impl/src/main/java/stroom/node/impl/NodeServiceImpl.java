@@ -87,7 +87,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         this.webTargetFactory = webTargetFactory;
 
         // Ensure the node record for this node is in the DB
-        securityContext.asProcessingUser(this::ensureNodeCreated);
+        ensureNodeCreated();
     }
 
     Node update(final Node node) {
@@ -258,12 +258,10 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     }
 
     Node getNode(final String nodeName) {
-        return securityContext.secureResult(() -> {
-            return nodeDao.getNode(nodeName);
-        });
+        return securityContext.secureResult(() -> nodeDao.getNode(nodeName));
     }
 
-    private void ensureNodeCreated() {
+    public void ensureNodeCreated() {
         // Ensure we have created a node for ourselves.
         getThisNode();
     }
@@ -279,41 +277,40 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                     throw new RuntimeException("Default node not set");
                 }
             }
-        } else {
-            if (!uriFactory.nodeUri("").toString().equals(thisNode.getUrl())) {
-                // Endpoint url has changed in config so update the node record
-                refreshNode();
-            }
+        } else if (!uriFactory.nodeUri("").toString().equals(thisNode.getUrl())) {
+            // Endpoint url has changed in config so update the node record
+            refreshNode();
         }
 
         return thisNode;
     }
 
     private synchronized void refreshNode() {
+        securityContext.asProcessingUser(() -> {
+            final String nodeName = nodeInfo.getThisNodeName();
+            if (nodeName == null || nodeName.isEmpty()) {
+                throw new RuntimeException("Node name is not configured");
+            }
+            // See if we have a node record in the DB, we won't on first boot
+            thisNode = nodeDao.getNode(nodeName);
 
-        final String nodeName = nodeInfo.getThisNodeName();
-        if (nodeName == null || nodeName.isEmpty()) {
-            throw new RuntimeException("Node name is not configured");
-        }
-        // See if we have a node record in the DB, we won't on first boot
-        thisNode = nodeDao.getNode(nodeName);
-
-        // Get the node endpoint URL from config or determine it
-        final String endpointUrl = uriFactory.nodeUri("").toString();
-        if (thisNode == null) {
-            // This will start a new mini transaction to create the node record
-            final Node node = new Node();
-            node.setName(nodeName);
-            node.setUrl(endpointUrl);
-            LOGGER.info("Creating node record for {} with endpoint url {}",
-                    node.getName(), node.getUrl());
-            thisNode = nodeDao.create(node);
-        } else if (!endpointUrl.equals(thisNode.getUrl())) {
-            // Endpoint URL in the DB is out of date so update it
-            thisNode.setUrl(endpointUrl);
-            LOGGER.info("Updating node endpoint url to {} for node {}", endpointUrl, thisNode.getName());
-            update(thisNode);
-        }
+            // Get the node endpoint URL from config or determine it
+            final String endpointUrl = uriFactory.nodeUri("").toString();
+            if (thisNode == null) {
+                // This will start a new mini transaction to create the node record
+                final Node node = new Node();
+                node.setName(nodeName);
+                node.setUrl(endpointUrl);
+                LOGGER.info("Creating node record for {} with endpoint url {}",
+                        node.getName(), node.getUrl());
+                thisNode = nodeDao.create(node);
+            } else if (!endpointUrl.equals(thisNode.getUrl())) {
+                // Endpoint URL in the DB is out of date so update it
+                thisNode.setUrl(endpointUrl);
+                LOGGER.info("Updating node endpoint url to {} for node {}", endpointUrl, thisNode.getName());
+                update(thisNode);
+            }
+        });
     }
 
     @Override

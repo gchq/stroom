@@ -32,26 +32,26 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
-//    private static boolean doneSetup;
+    private static final ThreadLocal<Boolean> DONE_SETUP = ThreadLocal.withInitial(() -> false);
 
     @BeforeEach
     void setup() {
         LOGGER.info("Entering setup");
-//        if (!doneSetup) {
-        // Import all the schemas/pipes/xslts/etc.
-        LOGGER.info("Importing config");
-        importConfig();
-        // Some of the tests rely on ref data lookups so ensure all ref data is loaded first
-        LOGGER.info("Loading reference data");
-        loadAllRefData();
-//            doneSetup = true;
-//    }
+        if (!DONE_SETUP.get()) {
+            // Import all the schemas/pipes/xslts/etc.
+            LOGGER.info("Importing config");
+            importConfig();
+            // Some of the tests rely on ref data lookups so ensure all ref data is loaded first
+            LOGGER.info("Loading reference data");
+            loadAllRefData();
+            DONE_SETUP.set(true);
+        }
     }
 
-//    @Override
-//    protected boolean setupBetweenTests() {
-//        return false;
-//    }
+    @Override
+    protected boolean setupBetweenTests() {
+        return false;
+    }
 
     @Test
     void testBOMXMLEvents() throws IOException {

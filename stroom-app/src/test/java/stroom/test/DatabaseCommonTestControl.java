@@ -22,6 +22,7 @@ import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.selection.VolumeConfig;
+import stroom.node.impl.NodeServiceImpl;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.Clearable;
@@ -52,6 +53,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final VolumeCreator volumeCreator;
     private final ProcessorTaskManager processorTaskManager;
     private final Set<Clearable> clearables;
+    private final NodeServiceImpl nodeService;
     private final FsVolumeConfig fsVolumeConfig;
     private final VolumeConfig volumeConfig;
     private final FsVolumeService fsVolumeService;
@@ -66,6 +68,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final VolumeCreator volumeCreator,
                               final ProcessorTaskManager processorTaskManager,
                               final Set<Clearable> clearables,
+                              final NodeServiceImpl nodeService,
                               final VolumeConfig volumeConfig,
                               final FsVolumeConfig fsVolumeConfig,
                               final FsVolumeService fsVolumeService,
@@ -76,6 +79,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.volumeCreator = volumeCreator;
         this.processorTaskManager = processorTaskManager;
         this.clearables = clearables;
+        this.nodeService = nodeService;
         this.volumeConfig = volumeConfig;
         this.fsVolumeConfig = fsVolumeConfig;
         this.fsVolumeService = fsVolumeService;
@@ -98,6 +102,9 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             fsVolDir = tempDir.resolve("volumes/defaultStreamVolume").toAbsolutePath();
             indexVolDir = tempDir;
         }
+
+        LOGGER.debug("Creating node record");
+        nodeService.ensureNodeCreated();
 
         LOGGER.debug("Creating stream volumes in {}", fsVolDir.toAbsolutePath().normalize().toString());
         fsVolumeConfig.setDefaultStreamVolumePaths(List.of(fsVolDir.toString()));
