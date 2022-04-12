@@ -100,20 +100,29 @@ jobs:
 #      - name: Tar Test Results
 #        if: always()
 #        run: tar -cvf test-results.tar "**/test-results/**/*.xml"
-
-      - name: Tar Test Results
-        if: always()
-        run: |
-          pushd "${BUILD_DIR}" > /dev/null
-          ls
-          find ./**/test-results/**/*.xml -type f -print0 | tar -czf test-results.tar.gz --null -T -
+#
+#      - name: Tar Test Results
+#        if: always()
+#        run: |
+#          bash --version
+#          pushd "${BUILD_DIR}" > /dev/null
+#          shopt -s globstar
+#          find ./**/test-results/**/*.xml -type f -print0 | tar -czf test-results.tar.gz --null -T -
+#
+#      - name: Upload Test Results
+#        if: always()
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: Unit Test Results
+#          path: test-results.tar.gz
+#          retention-days: 5
 
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: Unit Test Results
-          path: test-results.tar.gz
+          path: "**/test-results/**/*.xml"
           retention-days: 5
 
       - name: Publish Unit Test Results
