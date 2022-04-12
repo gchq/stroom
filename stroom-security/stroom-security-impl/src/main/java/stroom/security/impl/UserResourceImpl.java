@@ -98,16 +98,23 @@ public class UserResourceImpl implements UserResource {
     }
 
     private User createUser(final String name) {
-        CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
+        final CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
         try {
-            User newUser = userServiceProvider.get().createUser(name);
+            // This method is essentially getOrCreateUser. We won't log anything
+            // as this
+            User newUser = userServiceProvider.get()
+                    .getOrCreateUser(name, user -> {
 
-            builder.withObjects(
-                    event.logging.User.builder()
-                            .withName(name)
-                            .withId(newUser.getUuid())
-                            .build());
+                        builder.withObjects(
+                                event.logging.User.builder()
+                                        .withName(name)
+                                        .withId(user.getUuid())
+                                        .build());
+
+                        stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createUser",
+                                "Creating new Stroom user " + name, builder.build());
+                    });
 
             return newUser;
         } catch (Exception ex) {
@@ -120,26 +127,29 @@ public class UserResourceImpl implements UserResource {
                     .withDescription(ex.getMessage())
                     .build());
 
-            throw ex;
-        } finally {
             stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createUser",
-                    "Creating new user " + name, builder.build());
+                    "Creating new Stroom user " + name, builder.build());
+
+            throw ex;
         }
     }
 
     private User createGroup(final String name) {
-        CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
+        final CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
         try {
-            User newUser = userServiceProvider.get().createUserGroup(name);
+            final User newUserGroup = userServiceProvider.get()
+                    .getOrCreateUserGroup(name, userGroup -> {
+                        builder.withObjects(
+                                event.logging.Group.builder()
+                                        .withName(name)
+                                        .withId(userGroup.getUuid())
+                                        .build());
+                        stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createGroup",
+                                "Creating new user group " + name, builder.build());
+                    });
 
-            builder.withObjects(
-                    event.logging.Group.builder()
-                            .withName(name)
-                            .withId(newUser.getUuid())
-                            .build());
-
-            return newUser;
+            return newUserGroup;
         } catch (Exception ex) {
             builder.withObjects(
                     event.logging.Group.builder()
@@ -150,10 +160,10 @@ public class UserResourceImpl implements UserResource {
                     .withDescription(ex.getMessage())
                     .build());
 
-            throw ex;
-        } finally {
             stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createGroup",
                     "Creating new user group " + name, builder.build());
+
+            throw ex;
         }
     }
 

@@ -13,6 +13,7 @@ import org.jooq.UpdatableRecord;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.sql.DataSource;
 
@@ -66,7 +67,19 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
      */
     public <T_FIELD> T_OBJ_TYPE tryCreate(final T_OBJ_TYPE object,
                                           final TableField<T_REC_TYPE, T_FIELD> keyField) {
-        return tryCreate(object, keyField, null);
+        return tryCreate(object, keyField, null, null);
+    }
+
+    /**
+     * Will try to insert the record, but will fail silently if it already exists.
+     * It will use keyField to retrieve the persisted record if it already exists.
+     *
+     * @return The persisted record
+     */
+    public <T_FIELD> T_OBJ_TYPE tryCreate(final T_OBJ_TYPE object,
+                                          final TableField<T_REC_TYPE, T_FIELD> keyField,
+                                          final Consumer<T_OBJ_TYPE> onCreateAction) {
+        return tryCreate(object, keyField, null, onCreateAction);
     }
 
     /**
@@ -79,9 +92,39 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
     public <T_FIELD1, T_FIELD2> T_OBJ_TYPE tryCreate(final T_OBJ_TYPE object,
                                                      final TableField<T_REC_TYPE, T_FIELD1> keyField1,
                                                      final TableField<T_REC_TYPE, T_FIELD2> keyField2) {
+        return tryCreate(object, keyField1, keyField2, null);
+    }
+
+    /**
+     * Will try to insert the record, but will fail silently if it already exists.
+     * It will use keyField1 and keyField2 (a compound key) to retrieve the persisted
+     * record if it already exists.
+     *
+     * @return The persisted record
+     */
+    public <T_FIELD1, T_FIELD2> T_OBJ_TYPE tryCreate(final T_OBJ_TYPE object,
+                                                     final TableField<T_REC_TYPE, T_FIELD1> keyField1,
+                                                     final TableField<T_REC_TYPE, T_FIELD2> keyField2,
+                                                     final Consumer<T_OBJ_TYPE> onCreateAction) {
         LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
         final T_REC_TYPE record = objectToRecord(object);
-        final T_REC_TYPE persistedRecord = JooqUtil.tryCreate(connectionProvider, record, keyField1, keyField2);
+
+        final Consumer<T_REC_TYPE> onCreateRecAction;
+        if (onCreateAction != null) {
+            onCreateRecAction = rec -> {
+                final T_OBJ_TYPE obj = recordToObjectMapper.apply(rec);
+                onCreateAction.accept(obj);
+            };
+        } else {
+            onCreateRecAction = null;
+        }
+
+        final T_REC_TYPE persistedRecord = JooqUtil.tryCreate(
+                connectionProvider,
+                record,
+                keyField1,
+                keyField2,
+                onCreateRecAction);
         return recordToObjectMapper.apply(persistedRecord);
     }
 
