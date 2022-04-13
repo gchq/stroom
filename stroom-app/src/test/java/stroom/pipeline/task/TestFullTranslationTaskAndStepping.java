@@ -36,13 +36,10 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
 
     @BeforeEach
     void setup() {
-        LOGGER.info("Entering setup");
         if (!DONE_SETUP.get()) {
             // Import all the schemas/pipes/xslts/etc.
-            LOGGER.info("Importing config");
             importConfig();
             // Some of the tests rely on ref data lookups so ensure all ref data is loaded first
-            LOGGER.info("Loading reference data");
             loadAllRefData();
             DONE_SETUP.set(true);
         }

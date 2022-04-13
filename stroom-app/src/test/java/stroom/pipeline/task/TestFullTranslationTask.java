@@ -18,20 +18,15 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Component test class for <code>TransDevServiceImpl</code>.
  */
 class TestFullTranslationTask extends TranslationTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTask.class);
-
     @Test
     void test() {
         // Import all the schemas/pipes/xslts/etc.
-        LOGGER.info("Importing config");
         importConfig();
         testTranslationTask(false, true);
     }

@@ -20,10 +20,13 @@ import stroom.security.api.SecurityContext;
 import stroom.test.common.util.test.StroomTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 
 import java.nio.file.Path;
 import javax.inject.Inject;
@@ -32,6 +35,10 @@ import javax.inject.Inject;
  * This class should be common to all component and integration tests.
  */
 public abstract class StroomIntegrationTest implements StroomTest {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomIntegrationTest.class);
+
+    private static final ThreadLocal<StroomIntegrationTest> CURRENT_TEST_CLASS_THREAD_LOCAL = new ThreadLocal<>();
 
     @Inject
     private CommonTestControl commonTestControl;
@@ -42,13 +49,14 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     private Path testTempDir;
 
-    private static final ThreadLocal<StroomIntegrationTest> CURRENT_TEST_CLASS_THREAD_LOCAL = new ThreadLocal<>();
-
     /**
      * Initialise required database entities.
+     * <p>
+     * Note this method is public to prevent subclasses from hiding.
      */
     @BeforeEach
-    final void setup() {
+    public final void setup(final TestInfo testInfo) {
+        debug("setup", testInfo);
         if (CURRENT_TEST_CLASS_THREAD_LOCAL.get() == null) {
             testTempDir = tempDirProvider.get();
             if (testTempDir == null) {
@@ -59,9 +67,17 @@ public abstract class StroomIntegrationTest implements StroomTest {
         }
     }
 
+    /**
+     * Cleanup the database and caches
+     * <p>
+     * Note this method is public to prevent subclasses from hiding.
+     */
     @AfterEach
-    final void cleanup() {
-        if (cleanupBetweenTests()) {
+    public final void cleanup(final TestInfo testInfo) {
+        debug("cleanup", testInfo);
+        if (CURRENT_TEST_CLASS_THREAD_LOCAL.get() == null) {
+            throw new IllegalStateException("Cleanup called without setup");
+        } else if (cleanupBetweenTests()) {
             cleanup(securityContext, commonTestControl, testTempDir);
         }
     }
@@ -70,13 +86,23 @@ public abstract class StroomIntegrationTest implements StroomTest {
      * Ensure final cleanup even if we aren't clearing between tests.
      */
     @AfterAll
-    static void finalCleanup() {
+    public static void finalCleanup() {
         final StroomIntegrationTest stroomIntegrationTest = CURRENT_TEST_CLASS_THREAD_LOCAL.get();
         if (stroomIntegrationTest != null) {
             cleanup(stroomIntegrationTest.securityContext,
                     stroomIntegrationTest.commonTestControl,
                     stroomIntegrationTest.testTempDir);
         }
+    }
+
+    private void debug(final String message,
+                       final TestInfo testInfo) {
+        LOGGER.debug(() -> message + " " +
+                testInfo.getTestClass()
+                        .map(Class::getSimpleName)
+                        .orElse("") +
+                " " +
+                testInfo.getDisplayName());
     }
 
     private static void cleanup(final SecurityContext securityContext,
@@ -89,7 +115,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
     }
 
     @Override
-    public Path getCurrentTestDir() {
+    public final Path getCurrentTestDir() {
         return testTempDir;
     }
 

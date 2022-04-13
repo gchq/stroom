@@ -172,7 +172,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     protected void loadAllRefData() {
-        LOGGER.info("Loading reference data");
         final Path samplesDir = getSamplesDir();
         final Path inputDir = samplesDir.resolve("input");
         final Path outputDir = samplesDir.resolve("output");
@@ -185,19 +184,15 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         if (exceptions.size() > 0) {
             fail(exceptions.get(0).getMessage());
         }
-        LOGGER.info("Loaded reference data");
     }
 
     protected void importConfig() {
-        LOGGER.info("Importing config");
         final Path samplesDir = getSamplesDir();
         final Path configDir = samplesDir.resolve("config");
 
-        LOGGER.info("Importing config from: " + FileUtil.getCanonicalPath(configDir));
         importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
         contentImportService.importStandardPacks();
-        LOGGER.info("Imported config");
     }
 
     @NotNull
@@ -212,19 +207,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                              final boolean compareOutput,
                              final List<Exception> exceptions) {
         // Create a stream processor for each pipeline.
-        LOGGER.info("Finding pipeline: " + name);
         final List<DocRef> pipelines = pipelineStore.findByName(name);
 
-        if (pipelines.size() == 0) {
-            LOGGER.error("Pipeline not found");
-            LOGGER.error("Only have: " + pipelineStore
-                    .list()
-                    .stream()
-                    .map(DocRef::getDisplayValue)
-                    .collect(Collectors.joining(",")));
-        }
-
-        assertThat(pipelines).hasSize(1);
+        assertThat(pipelines)
+                .hasSize(1);
 
         final DocRef pipelineRef = pipelines.get(0);
 
