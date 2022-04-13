@@ -79,6 +79,8 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                     final UriFactory uriFactory,
                     final EntityEventBus entityEventBus,
                     final WebTargetFactory webTargetFactory) {
+        LOGGER.info("NodeServiceImpl - constructor");
+
         this.securityContext = securityContext;
         this.nodeDao = nodeDao;
         this.nodeInfo = nodeInfo;
@@ -258,10 +260,13 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     }
 
     Node getNode(final String nodeName) {
-        return securityContext.secureResult(() -> nodeDao.getNode(nodeName));
+        return securityContext.secureResult(() -> {
+            return nodeDao.getNode(nodeName);
+        });
     }
 
     public void ensureNodeCreated() {
+        LOGGER.info("ensureNodeCreated");
         // Ensure we have created a node for ourselves.
         getThisNode();
     }
@@ -326,6 +331,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     @Override
     public void clear() {
+        LOGGER.info("clear");
         thisNode = null;
     }
 }

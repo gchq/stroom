@@ -88,6 +88,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
     @Override
     public void setup(final Path tempDir) {
+        LOGGER.info("Setup");
+
         LOGGER.debug("temp dir: {}", tempDir);
         final Instant startTime = Instant.now();
         Path fsVolDir;
@@ -103,8 +105,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             indexVolDir = tempDir;
         }
 
-        LOGGER.debug("Creating node record");
-        nodeService.ensureNodeCreated();
+//        LOGGER.debug("Creating node record");
+//        nodeService.ensureNodeCreated();
 
         LOGGER.debug("Creating stream volumes in {}", fsVolDir.toAbsolutePath().normalize().toString());
         fsVolumeConfig.setDefaultStreamVolumePaths(List.of(fsVolDir.toString()));
@@ -134,6 +136,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
      */
     @Override
     public void clear() {
+        LOGGER.info("Clear");
+
         final Instant startTime = Instant.now();
         // Make sure we are no longer creating tasks.
         processorTaskManager.shutdown();
