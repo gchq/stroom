@@ -128,9 +128,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTranslationTestHelper commonTranslationTestHelper;
 
-    private static boolean HAVE_IMPORTED_CONTENT = false;
-    private static boolean HAVE_LOADED_REF_DATA = false;
-
     /**
      * NOTE some of the input data for this test is buried in the following zip file so you will need
      * to crack it open to see what is being loaded.
@@ -144,8 +141,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final Path outputDir = samplesDir.resolve("output");
 
         FileUtil.mkdirs(outputDir);
-
-        importConfig();
 
         // Process reference data.
         processData(inputDir, outputDir, true, compareOutput, exceptions);
@@ -177,33 +172,27 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     protected void loadAllRefData() {
-        if (!HAVE_LOADED_REF_DATA) {
-            final Path samplesDir = getSamplesDir();
-            final Path inputDir = samplesDir.resolve("input");
-            final Path outputDir = samplesDir.resolve("output");
-            FileUtil.mkdirs(outputDir);
+        final Path samplesDir = getSamplesDir();
+        final Path inputDir = samplesDir.resolve("input");
+        final Path outputDir = samplesDir.resolve("output");
+        FileUtil.mkdirs(outputDir);
 
-            LOGGER.info("Processing ref data in {}", inputDir.toAbsolutePath().normalize());
-            // Process reference data.
-            final List<Exception> exceptions = new ArrayList<>();
-            processData(inputDir, outputDir, true, false, exceptions);
-            if (exceptions.size() > 0) {
-                fail(exceptions.get(0).getMessage());
-            }
-            HAVE_LOADED_REF_DATA = true;
+        LOGGER.info("Processing ref data in {}", inputDir.toAbsolutePath().normalize());
+        // Process reference data.
+        final List<Exception> exceptions = new ArrayList<>();
+        processData(inputDir, outputDir, true, false, exceptions);
+        if (exceptions.size() > 0) {
+            fail(exceptions.get(0).getMessage());
         }
     }
 
     protected void importConfig() {
-        if (!HAVE_IMPORTED_CONTENT) {
-            final Path samplesDir = getSamplesDir();
-            final Path configDir = samplesDir.resolve("config");
+        final Path samplesDir = getSamplesDir();
+        final Path configDir = samplesDir.resolve("config");
 
-            importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-            contentImportService.importStandardPacks();
-            HAVE_IMPORTED_CONTENT = true;
-        }
+        contentImportService.importStandardPacks();
     }
 
     @NotNull

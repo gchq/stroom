@@ -32,21 +32,21 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
-    private static boolean doneSetup;
+    private static final ThreadLocal<Boolean> DONE_SETUP = ThreadLocal.withInitial(() -> false);
 
     @BeforeEach
     void setup() {
-        if (!doneSetup) {
+        if (!DONE_SETUP.get()) {
             // Import all the schemas/pipes/xslts/etc.
             importConfig();
             // Some of the tests rely on ref data lookups so ensure all ref data is loaded first
             loadAllRefData();
-            doneSetup = true;
+            DONE_SETUP.set(true);
         }
     }
 
     @Override
-    protected boolean setupBetweenTests() {
+    protected boolean cleanupBetweenTests() {
         return false;
     }
 
