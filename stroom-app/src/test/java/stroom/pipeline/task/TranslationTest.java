@@ -177,7 +177,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     protected void loadAllRefData() {
+        LOGGER.info("loadAllRefData");
         if (!HAVE_LOADED_REF_DATA.get()) {
+            LOGGER.info("Loading reference data");
             final Path samplesDir = getSamplesDir();
             final Path inputDir = samplesDir.resolve("input");
             final Path outputDir = samplesDir.resolve("output");
@@ -190,19 +192,28 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             if (exceptions.size() > 0) {
                 fail(exceptions.get(0).getMessage());
             }
+            LOGGER.info("Loaded reference data");
             HAVE_LOADED_REF_DATA.set(true);
+        } else {
+            LOGGER.info("Skipping loading reference data");
         }
     }
 
     protected void importConfig() {
+        LOGGER.info("importConfig");
         if (!HAVE_IMPORTED_CONTENT.get()) {
+            LOGGER.info("Importing config");
             final Path samplesDir = getSamplesDir();
             final Path configDir = samplesDir.resolve("config");
 
+            LOGGER.info("Importing config from: " + FileUtil.getCanonicalPath(configDir));
             importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
             contentImportService.importStandardPacks();
+            LOGGER.info("Imported config");
             HAVE_IMPORTED_CONTENT.set(true);
+        } else {
+            LOGGER.info("Skipping Importing config");
         }
     }
 
