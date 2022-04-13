@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
-# This script aims to mimic the travis/github build on a local machine, with
+# This script aims to mimic the github build on a local machine, with
 # the exception of releasing artefacts to github and pushing to dockerhub.
 # It does the following:
-# - sets up various env vars that the build scripts expect
-# - creates a build dir in /tmp
-# - clones the stroom repo on your current branch into the build dir
-# - runs the ci_build.sh script
+# - Sets up various env vars that the build scripts expect
+# - Creates a build dir in /tmp
+# - Clones the stroom repo on your current branch into the build dir.
+#   NOTE: You MUST have committed and pushed any changes you want to
+#   the remote as it is doing a fresh clone from the remote.
+# - Runs the ci_build.sh script that would be run by GitHub Actions
 #
 # This script and the ci_build script run on this host but all parts
 # of the build that need anything more than bash and standard shell tools
