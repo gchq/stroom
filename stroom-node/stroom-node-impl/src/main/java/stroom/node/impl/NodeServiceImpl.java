@@ -293,6 +293,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     private synchronized void refreshNode() {
         securityContext.asProcessingUser(() -> {
             final String nodeName = nodeInfo.getThisNodeName();
+            LOGGER.info("Creating node in DB with name: " + nodeName);
             if (nodeName == null || nodeName.isEmpty()) {
                 throw new RuntimeException("Node name is not configured");
             }
