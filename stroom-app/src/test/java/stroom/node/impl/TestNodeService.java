@@ -21,8 +21,6 @@ package stroom.node.impl;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeService;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.Test;
 
@@ -32,24 +30,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestNodeService extends AbstractCoreIntegrationTest {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestNodeService.class);
-
     @Inject
     private NodeService nodeService;
 
     @Test
     void testBasic() {
-        LOGGER.info("Before test");
-        LOGGER.info("nodeService = " + nodeService);
         assertThat(nodeService.findNodeNames(new FindNodeCriteria()).size() > 0).isTrue();
-        LOGGER.info("After test");
-    }
-
-    @Test
-    void testAgain() {
-        LOGGER.info("Before test 2");
-        LOGGER.info("nodeService = " + nodeService);
-        assertThat(nodeService.findNodeNames(new FindNodeCriteria()).size() > 0).isTrue();
-        LOGGER.info("After test 2");
     }
 }
