@@ -128,9 +128,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTranslationTestHelper commonTranslationTestHelper;
 
-    private static final ThreadLocal<Boolean> HAVE_IMPORTED_CONTENT = ThreadLocal.withInitial(() -> false);
-    private static final ThreadLocal<Boolean> HAVE_LOADED_REF_DATA = ThreadLocal.withInitial(() -> false);
-
     /**
      * NOTE some of the input data for this test is buried in the following zip file so you will need
      * to crack it open to see what is being loaded.
@@ -144,8 +141,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final Path outputDir = samplesDir.resolve("output");
 
         FileUtil.mkdirs(outputDir);
-
-        importConfig();
 
         // Process reference data.
         processData(inputDir, outputDir, true, compareOutput, exceptions);
@@ -177,44 +172,32 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     protected void loadAllRefData() {
-        LOGGER.info("loadAllRefData");
-        if (!HAVE_LOADED_REF_DATA.get()) {
-            LOGGER.info("Loading reference data");
-            final Path samplesDir = getSamplesDir();
-            final Path inputDir = samplesDir.resolve("input");
-            final Path outputDir = samplesDir.resolve("output");
-            FileUtil.mkdirs(outputDir);
+        LOGGER.info("Loading reference data");
+        final Path samplesDir = getSamplesDir();
+        final Path inputDir = samplesDir.resolve("input");
+        final Path outputDir = samplesDir.resolve("output");
+        FileUtil.mkdirs(outputDir);
 
-            LOGGER.info("Processing ref data in {}", inputDir.toAbsolutePath().normalize());
-            // Process reference data.
-            final List<Exception> exceptions = new ArrayList<>();
-            processData(inputDir, outputDir, true, false, exceptions);
-            if (exceptions.size() > 0) {
-                fail(exceptions.get(0).getMessage());
-            }
-            LOGGER.info("Loaded reference data");
-            HAVE_LOADED_REF_DATA.set(true);
-        } else {
-            LOGGER.info("Skipping loading reference data");
+        LOGGER.info("Processing ref data in {}", inputDir.toAbsolutePath().normalize());
+        // Process reference data.
+        final List<Exception> exceptions = new ArrayList<>();
+        processData(inputDir, outputDir, true, false, exceptions);
+        if (exceptions.size() > 0) {
+            fail(exceptions.get(0).getMessage());
         }
+        LOGGER.info("Loaded reference data");
     }
 
     protected void importConfig() {
-        LOGGER.info("importConfig");
-        if (!HAVE_IMPORTED_CONTENT.get()) {
-            LOGGER.info("Importing config");
-            final Path samplesDir = getSamplesDir();
-            final Path configDir = samplesDir.resolve("config");
+        LOGGER.info("Importing config");
+        final Path samplesDir = getSamplesDir();
+        final Path configDir = samplesDir.resolve("config");
 
-            LOGGER.info("Importing config from: " + FileUtil.getCanonicalPath(configDir));
-            importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
+        LOGGER.info("Importing config from: " + FileUtil.getCanonicalPath(configDir));
+        importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-            contentImportService.importStandardPacks();
-            LOGGER.info("Imported config");
-            HAVE_IMPORTED_CONTENT.set(true);
-        } else {
-            LOGGER.info("Skipping Importing config");
-        }
+        contentImportService.importStandardPacks();
+        LOGGER.info("Imported config");
     }
 
     @NotNull

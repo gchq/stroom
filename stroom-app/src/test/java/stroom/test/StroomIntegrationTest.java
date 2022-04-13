@@ -65,10 +65,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
                 throw new NullPointerException("Temp dir is null");
             }
             this.testTempDir = tempDir;
-            securityContext.asProcessingUser(() -> {
-                commonTestControl.cleanup();
-                commonTestControl.setup(tempDir);
-            });
+            securityContext.asProcessingUser(() -> commonTestControl.setup(tempDir));
         }
     }
 
