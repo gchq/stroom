@@ -73,18 +73,11 @@ main() {
   echo -e "${GREEN}Do the Jave compile${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
-    stroom-app:test
+    compileJava \
+    compileTestJava \
+    -x test \
+    -x gwtCompile
   echo "::endgroup::"
-
-#  echo "::group::Java compile"
-#  echo -e "${GREEN}Do the Jave compile${NC}"
-#  ./gradlew \
-#    "${GRADLE_ARGS[@]}" \
-#    compileJava \
-#    compileTestJava \
-#    -x test \
-#    -x gwtCompile
-#  echo "::endgroup::"
 
   echo -e "${GREEN}Done${NC}"
 }
