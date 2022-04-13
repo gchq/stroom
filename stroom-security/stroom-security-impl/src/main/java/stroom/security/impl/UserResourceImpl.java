@@ -101,15 +101,13 @@ public class UserResourceImpl implements UserResource {
         final CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
         try {
-            // This method is essentially getOrCreateUser. We won't log anything
-            // as this
+            // Need to do the logging as a lambda so we only log if the creation actually happens
             User newUser = userServiceProvider.get()
                     .getOrCreateUser(name, user -> {
 
                         builder.withObjects(
                                 event.logging.User.builder()
-                                        .withName(name)
-                                        .withId(user.getUuid())
+                                        .withId(user.getName())
                                         .build());
 
                         stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createUser",
@@ -120,7 +118,7 @@ public class UserResourceImpl implements UserResource {
         } catch (Exception ex) {
             builder.withObjects(
                     event.logging.User.builder()
-                            .withName(name)
+                            .withId(name)
                             .build());
             builder.withOutcome(Outcome.builder()
                     .withSuccess(false)
@@ -138,6 +136,7 @@ public class UserResourceImpl implements UserResource {
         final CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
         try {
+            // Need to do the logging as a lambda so we only log if the creation actually happens
             final User newUserGroup = userServiceProvider.get()
                     .getOrCreateUserGroup(name, userGroup -> {
                         builder.withObjects(
