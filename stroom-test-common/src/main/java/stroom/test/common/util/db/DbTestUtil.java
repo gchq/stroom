@@ -177,7 +177,6 @@ public class DbTestUtil {
             LOGGER.info("Connecting to DB as root connection with URL: " + rootConnectionConfig.getUrl());
 
             final String dbName = DbTestUtil.createTestDbName();
-            LOGGER.info("Creating DB schema with name " + dbName + " (" + Thread.currentThread().getId() + ")");
             try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
                     connectionProps)) {
                 try (final Statement statement = connection.createStatement()) {
@@ -422,8 +421,6 @@ public class DbTestUtil {
             for (final DataSource dataSource : dataSources) {
                 // Clear the database.
                 try (final Connection connection = dataSource.getConnection()) {
-                    LOGGER.info("Clearing all tables for DB (" + Thread.currentThread().getId() + ")");
-
                     DbTestUtil.clearAllTables(connection);
                 } catch (final SQLException e) {
                     throw new RuntimeException(e.getMessage(), e);

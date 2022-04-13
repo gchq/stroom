@@ -188,8 +188,6 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
             // Create a doc ref.
             final DocRef docRef = new DocRef(type, uuid, name);
-            LOGGER.info("Importing: " + name);
-
             // Create or get the import state.
             final ImportState importState = confirmMap.computeIfAbsent(
                     docRef,

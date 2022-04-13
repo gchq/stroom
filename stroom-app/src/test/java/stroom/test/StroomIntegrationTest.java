@@ -21,6 +21,7 @@ import stroom.test.common.util.test.StroomTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -46,6 +47,8 @@ public abstract class StroomIntegrationTest implements StroomTest {
     static Path tempDir; // Static makes the temp dir remain constant for the life of the test class.
 
     private static final ThreadLocal<Class<?>> CURRENT_TEST_CLASS_THREAD_LOCAL = new ThreadLocal<>();
+    private static CommonTestControl currentCommonTestControl;
+    private static SecurityContext currentSecurityContext;
 
     private boolean performSetupOrCleanup(final TestInfo testInfo) {
         final Class<?> testClass = testInfo.getTestClass().orElse(null);
@@ -59,6 +62,9 @@ public abstract class StroomIntegrationTest implements StroomTest {
      */
     @BeforeEach
     final void setup(final TestInfo testInfo) {
+        currentCommonTestControl = commonTestControl;
+        currentSecurityContext = securityContext;
+
         if (performSetupOrCleanup(testInfo)) {
             tempDir = tempDirProvider.get();
             if (tempDir == null) {
@@ -73,6 +79,17 @@ public abstract class StroomIntegrationTest implements StroomTest {
     final void cleanup(final TestInfo testInfo) {
         if (performSetupOrCleanup(testInfo)) {
             securityContext.asProcessingUser(() -> commonTestControl.cleanup());
+            // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
+            FileUtil.deleteContents(tempDir);
+        }
+    }
+
+    @AfterAll
+    static void cleanupAll() {
+        final SecurityContext securityContext = currentSecurityContext;
+        final CommonTestControl commonTestControl = currentCommonTestControl;
+        if (securityContext != null && commonTestControl != null) {
+            securityContext.asProcessingUser(commonTestControl::cleanup);
             // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
             FileUtil.deleteContents(tempDir);
         }

@@ -25,11 +25,8 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.pipeline.writer.ExtendedPathCreator;
 import stroom.util.RunnableWrapper;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.io.PathCreator;
-import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 
@@ -43,11 +40,6 @@ public class NodeModule extends AbstractModule {
         bind(NodeService.class).to(NodeServiceImpl.class);
         bind(NodeResource.class).to(NodeResourceImpl.class);
         bind(PathCreator.class).to(ExtendedPathCreator.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(NodeServiceImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(NodeServiceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(NodeResourceImpl.class);
