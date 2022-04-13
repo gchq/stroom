@@ -24,18 +24,14 @@ import stroom.util.io.TempDirProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInfo;
 
 import java.nio.file.Path;
-import java.util.Objects;
 import javax.inject.Inject;
 
 /**
  * This class should be common to all component and integration tests.
  */
 public abstract class StroomIntegrationTest implements StroomTest {
-
-    private Path testTempDir;
 
     @Inject
     private CommonTestControl commonTestControl;
@@ -44,55 +40,52 @@ public abstract class StroomIntegrationTest implements StroomTest {
     @Inject
     private TempDirProvider tempDirProvider;
 
-    static Path tempDir; // Static makes the temp dir remain constant for the life of the test class.
+    private Path testTempDir;
 
-    private static final ThreadLocal<Class<?>> CURRENT_TEST_CLASS_THREAD_LOCAL = new ThreadLocal<>();
-    private static CommonTestControl currentCommonTestControl;
-    private static SecurityContext currentSecurityContext;
-
-    private boolean performSetupOrCleanup(final TestInfo testInfo) {
-        final Class<?> testClass = testInfo.getTestClass().orElse(null);
-        final Class<?> currentTestClass = CURRENT_TEST_CLASS_THREAD_LOCAL.get();
-        CURRENT_TEST_CLASS_THREAD_LOCAL.set(testClass);
-        return setupBetweenTests() || testClass == null || !Objects.equals(testClass, currentTestClass);
-    }
+    private static final ThreadLocal<StroomIntegrationTest> CURRENT_TEST_CLASS_THREAD_LOCAL = new ThreadLocal<>();
 
     /**
      * Initialise required database entities.
      */
     @BeforeEach
-    final void setup(final TestInfo testInfo) {
-        currentCommonTestControl = commonTestControl;
-        currentSecurityContext = securityContext;
-
-        if (performSetupOrCleanup(testInfo)) {
-            tempDir = tempDirProvider.get();
-            if (tempDir == null) {
+    final void setup() {
+        if (CURRENT_TEST_CLASS_THREAD_LOCAL.get() == null) {
+            testTempDir = tempDirProvider.get();
+            if (testTempDir == null) {
                 throw new NullPointerException("Temp dir is null");
             }
-            this.testTempDir = tempDir;
-            securityContext.asProcessingUser(() -> commonTestControl.setup(tempDir));
+            securityContext.asProcessingUser(() -> commonTestControl.setup(testTempDir));
+            CURRENT_TEST_CLASS_THREAD_LOCAL.set(this);
         }
     }
 
     @AfterEach
-    final void cleanup(final TestInfo testInfo) {
-        if (performSetupOrCleanup(testInfo)) {
-            securityContext.asProcessingUser(() -> commonTestControl.cleanup());
-            // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
-            FileUtil.deleteContents(tempDir);
+    final void cleanup() {
+        if (cleanupBetweenTests()) {
+            cleanup(securityContext, commonTestControl, testTempDir);
         }
     }
 
+    /**
+     * Ensure final cleanup even if we aren't clearing between tests.
+     */
     @AfterAll
-    static void cleanupAll() {
-        final SecurityContext securityContext = currentSecurityContext;
-        final CommonTestControl commonTestControl = currentCommonTestControl;
-        if (securityContext != null && commonTestControl != null) {
-            securityContext.asProcessingUser(commonTestControl::cleanup);
-            // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
-            FileUtil.deleteContents(tempDir);
+    static void finalCleanup() {
+        final StroomIntegrationTest stroomIntegrationTest = CURRENT_TEST_CLASS_THREAD_LOCAL.get();
+        if (stroomIntegrationTest != null) {
+            cleanup(stroomIntegrationTest.securityContext,
+                    stroomIntegrationTest.commonTestControl,
+                    stroomIntegrationTest.testTempDir);
         }
+    }
+
+    private static void cleanup(final SecurityContext securityContext,
+                                final CommonTestControl commonTestControl,
+                                final Path tempDir) {
+        securityContext.asProcessingUser(commonTestControl::cleanup);
+        // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
+        FileUtil.deleteContents(tempDir);
+        CURRENT_TEST_CLASS_THREAD_LOCAL.set(null);
     }
 
     @Override
@@ -100,7 +93,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
         return testTempDir;
     }
 
-    protected boolean setupBetweenTests() {
+    protected boolean cleanupBetweenTests() {
         return true;
     }
 }

@@ -49,7 +49,7 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
     }
 
     @Override
-    protected boolean setupBetweenTests() {
+    protected boolean cleanupBetweenTests() {
         return false;
     }
 
