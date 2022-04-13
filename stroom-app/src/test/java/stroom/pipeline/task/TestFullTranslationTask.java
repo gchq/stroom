@@ -26,6 +26,8 @@ class TestFullTranslationTask extends TranslationTest {
 
     @Test
     void test() {
+        // Import all the schemas/pipes/xslts/etc.
+        importConfig();
         testTranslationTask(false, true);
     }
 }

@@ -85,7 +85,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
     }
 
     @Override
-    protected boolean setupBetweenTests() {
+    protected boolean cleanupBetweenTests() {
         return false;
     }
 
