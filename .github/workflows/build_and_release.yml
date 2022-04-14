@@ -125,13 +125,13 @@ jobs:
           path: "**/test-results/**/*.xml"
           retention-days: 5
 
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          files: "**/test-results/**/*.xml"
-
-
+#      - name: Publish Unit Test Results
+#        uses: EnricoMi/publish-unit-test-result-action@v1
+#        if: always()
+#        with:
+#          files: "**/test-results/**/*.xml"
+#
+#
 #      - name: Upload Test Results
 #        if: always()
 #        uses: actions/upload-artifact@v3
