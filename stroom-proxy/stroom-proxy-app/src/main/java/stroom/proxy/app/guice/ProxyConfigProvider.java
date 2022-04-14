@@ -8,6 +8,7 @@ import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.logging.Metrics;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.PropertyPath;
@@ -23,12 +24,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * This is sort of the equivalent to stroom's ConfigMapper class.
  * It holds the de-serialised config objects in a map that is then used to
  * provide them for guice injection.
  */
+@Singleton
 public class ProxyConfigProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyConfigProvider.class);
@@ -48,16 +51,18 @@ public class ProxyConfigProvider {
     }
 
     <T extends AbstractConfig> T getConfigObject(final Class<T> clazz) {
-        final AbstractConfig config = configInstanceMap.get(clazz);
-        Objects.requireNonNull(config, "No config instance found for class " + clazz.getName());
-        try {
-            return clazz.cast(config);
-        } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message(
-                    "Error casting config object to {}, found {}",
-                    clazz.getName(),
-                    config.getClass().getName()), e);
-        }
+        return Metrics.measure("ProxyConfigProvider - getConfigObject", () -> {
+            final AbstractConfig config = configInstanceMap.get(clazz);
+            Objects.requireNonNull(config, "No config instance found for class " + clazz.getName());
+            try {
+                return clazz.cast(config);
+            } catch (Exception e) {
+                throw new RuntimeException(LogUtil.message(
+                        "Error casting config object to {}, found {}",
+                        clazz.getName(),
+                        config.getClass().getName()), e);
+            }
+        });
     }
 
     Set<Class<? extends AbstractConfig>> getInjectableClasses() {

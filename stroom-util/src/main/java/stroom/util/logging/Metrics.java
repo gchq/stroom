@@ -7,13 +7,13 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
 public class Metrics {
 
     private static final Map<String, Metric> map = new ConcurrentHashMap<>();
-    private static boolean enabled;
+    private static boolean enabled = true;
     private static AtomicBoolean periodicReport = new AtomicBoolean();
 
     public static <R> R measure(final String name, final Supplier<R> runnable) {
@@ -55,12 +55,18 @@ public class Metrics {
     }
 
     public static void report() {
+        final StringBuilder sb = new StringBuilder();
         map
                 .entrySet()
                 .stream()
                 .sorted(Entry.comparingByKey())
-                .forEach(e ->
-                        System.out.println(e.getKey() + " in: " + e.getValue().toString()));
+                .forEach(e -> {
+                    sb.append(e.getKey());
+                    sb.append(" in: ");
+                    sb.append(e.getValue());
+                    sb.append("\n");
+                });
+        System.out.println(sb);
     }
 
     public static void reset() {
@@ -73,17 +79,17 @@ public class Metrics {
 
     private static class Metric {
 
-        private final AtomicLong elapsedNanos = new AtomicLong();
-        private final AtomicLong calls = new AtomicLong();
+        private final LongAdder elapsedNanos = new LongAdder();
+        private final LongAdder calls = new LongAdder();
 
         public void increment(final long nanos) {
-            elapsedNanos.addAndGet(nanos);
-            calls.incrementAndGet();
+            elapsedNanos.add(nanos);
+            calls.increment();
         }
 
         @Override
         public String toString() {
-            return ModelStringUtil.formatDurationString(elapsedNanos.get() / 1000000) + " (" + calls.get() + ")";
+            return ModelStringUtil.formatDurationString(elapsedNanos.longValue() / 1000000) + " (" + calls.longValue() + ")";
         }
     }
 }
