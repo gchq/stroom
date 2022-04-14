@@ -155,7 +155,7 @@ class TestAppPermissionServiceImpl {
     }
 
     private User createUser(final String name) {
-        final User userRef = userService.createUser(name);
+        final User userRef = userService.getOrCreateUser(name);
         assertThat(userRef).isNotNull();
         final Optional<User> user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isPresent();
@@ -163,7 +163,7 @@ class TestAppPermissionServiceImpl {
     }
 
     private User createUserGroup(final String name) {
-        final User userRef = userService.createUserGroup(name);
+        final User userRef = userService.getOrCreateUserGroup(name);
         assertThat(userRef).isNotNull();
         final Optional<User> user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isPresent();

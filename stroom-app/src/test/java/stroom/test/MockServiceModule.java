@@ -91,7 +91,7 @@ public class MockServiceModule extends AbstractModule {
             }
             return null;
         });
-        when(mockUserService.createUser(any())).then((Answer<User>) invocation -> {
+        when(mockUserService.getOrCreateUser(any())).then((Answer<User>) invocation -> {
             final String name = invocation.getArgument(0);
             final User user = User.builder()
                     .uuid(UUID.randomUUID().toString())
@@ -99,7 +99,7 @@ public class MockServiceModule extends AbstractModule {
                     .build();
             return mockUserService.update(user);
         });
-        when(mockUserService.createUserGroup(any())).then((Answer<User>) invocation -> {
+        when(mockUserService.getOrCreateUserGroup(any())).then((Answer<User>) invocation -> {
             final String name = invocation.getArgument(0);
             final User user = User.builder()
                     .uuid(UUID.randomUUID().toString())

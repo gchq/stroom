@@ -14,6 +14,8 @@ public interface DocumentPermissionDao {
 
     void removePermission(String docRefUuid, String userUuid, String permission);
 
+    void removePermissions(String docRefUuid, String userUuid, Set<String> permissions);
+
     void clearDocumentPermissionsForUser(String docRefUuid, String userUuid);
 
     void clearDocumentPermissions(String docRefUuid);

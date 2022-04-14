@@ -98,7 +98,7 @@ class TestMetaService extends StroomIntegrationTest {
     @Test
     void testFindWithMetaSecurityFilter() {
         securityContext.asProcessingUser(() -> {
-            final User user = userService.createUser(TEST_USER);
+            final User user = userService.getOrCreateUser(TEST_USER);
 
             final DocRef docref1 = feedStore.createDocument(FEED_NO_PERMISSION);
             final DocRef docref2 = feedStore.createDocument(FEED_USE_PERMISSION);
@@ -150,7 +150,7 @@ class TestMetaService extends StroomIntegrationTest {
     @Test
     void testGetSelectionSummaryWithMetaSecurityFilter() {
         securityContext.asProcessingUser(() -> {
-            final User user = userService.createUser(TEST_USER);
+            final User user = userService.getOrCreateUser(TEST_USER);
 
             final DocRef docref1 = feedStore.createDocument(FEED_NO_PERMISSION);
             final DocRef docref2 = feedStore.createDocument(FEED_USE_PERMISSION);
@@ -206,7 +206,7 @@ class TestMetaService extends StroomIntegrationTest {
     @Test
     void testFindReprocessWithMetaSecurityFilter() {
         securityContext.asProcessingUser(() -> {
-            final User user = userService.createUser(TEST_USER);
+            final User user = userService.getOrCreateUser(TEST_USER);
 
             final DocRef feedNoPermission = feedStore.createDocument(FEED_NO_PERMISSION);
             final DocRef feedReadPermission = feedStore.createDocument(FEED_READ_PERMISSION);
@@ -252,7 +252,7 @@ class TestMetaService extends StroomIntegrationTest {
     @Test
     void testGetReprocessSelectionSummaryWithMetaSecurityFilter() {
         securityContext.asProcessingUser(() -> {
-            final User user = userService.createUser(TEST_USER);
+            final User user = userService.getOrCreateUser(TEST_USER);
 
             final DocRef feedNoPermission = feedStore.createDocument(FEED_NO_PERMISSION);
             final DocRef feedReadPermission = feedStore.createDocument(FEED_READ_PERMISSION);

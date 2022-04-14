@@ -9,6 +9,7 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
+import stroom.security.shared.ChangeDocumentPermissionsRequest.Cascade;
 import stroom.security.shared.Changes;
 import stroom.security.shared.CheckDocumentPermissionRequest;
 import stroom.security.shared.CopyPermissionsFromParentRequest;
@@ -23,9 +24,13 @@ import stroom.security.shared.User;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PermissionException;
 
+import event.logging.ComplexLoggedOutcome;
+import event.logging.Data;
+import event.logging.Data.Builder;
 import event.logging.Event;
 import event.logging.Group;
 import event.logging.MultiObject;
@@ -43,6 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -96,8 +102,14 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
             // Change the permissions of the document.
             final Changes changes = request.getChanges();
-            changeDocPermissions("DocPermissionResourceImpl.changeDocumentPermissions",
-                    docRef, changes, affectedDocRefs, affectedUserUuids, false);
+            changeDocPermissionsWithLogging(
+                    "DocPermissionResourceImpl.changeDocumentPermissions",
+                    docRef,
+                    changes,
+                    affectedDocRefs,
+                    affectedUserUuids,
+                    false,
+                    request.getCascade());
 
             // Cascade changes if this is a folder and we have been asked to do so.
             if (request.getCascade() != null) {
@@ -172,37 +184,198 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             // Not ideal calling the back end to filter some users but this is the only way to do the filtering
             // consistently across the app.
             return QuickFilterPredicateFactory.filterStream(
-                    filterUsersRequest.getQuickFilterInput(),
-                    SIMPLE_USERS_FILTER_FIELD_MAPPERS,
-                    filterUsersRequest.getUsers().stream())
+                            filterUsersRequest.getQuickFilterInput(),
+                            SIMPLE_USERS_FILTER_FIELD_MAPPERS,
+                            filterUsersRequest.getUsers().stream())
                     .collect(Collectors.toList());
         }
     }
 
-    private void changeDocPermissions(final String eventTypeId,
-                                      final DocRef docRef,
+    private void changeDocPermissionsWithLogging(final String eventTypeId,
+                                                 final DocRef docRef,
+                                                 final Changes changes,
+                                                 final Set<DocRef> affectedDocRefs,
+                                                 final Set<String> affectedUserUuids,
+                                                 final boolean clear,
+                                                 final Cascade cascade) {
+
+        final DocumentPermissions documentPermissionsBefore = documentPermissionServiceProvider.get()
+                .getPermissionsForDocument(docRef.getUuid());
+
+//        changes.getRemove()
+//                .forEach((uuid, perms) ->
+//                        LOGGER.info("Remove: " + uuid + " " + perms.size() + " " + String.join(", ", perms)));
+//        changes.getAdd()
+//                .forEach((uuid, perms) ->
+//                        LOGGER.info("Add: " + uuid + " " + perms.size() + " " + String.join(", ", perms)));
+
+        final int removeCount;
+        if (clear) {
+            removeCount = documentPermissionsBefore.getPermissions()
+                    .values()
+                    .stream()
+                    .mapToInt(Set::size)
+                    .sum();
+        } else {
+            removeCount = changes.getRemove()
+                    .values()
+                    .stream()
+                    .mapToInt(Set::size)
+                    .sum();
+        }
+        final int addCount = changes.getAdd()
+                .values()
+                .stream()
+                .mapToInt(Set::size)
+                .sum();
+
+        final String cascadeText = switch (Objects.requireNonNullElse(cascade, Cascade.NO)) {
+            case ALL -> ", cascade all";
+            case CHANGES_ONLY -> ", cascade changes";
+            default -> "";
+        };
+
+        final String description = LogUtil.message("Changing permissions (removing {}, adding {}) on {} {}{}.",
+                removeCount,
+                addCount,
+                docRef.getType(),
+                docRef.getName(),
+                cascadeText);
+
+        // It is possible in future that we could use Delta rather than Before/After
+        // See https://github.com/gchq/event-logging-schema/issues/75
+        stroomEventLoggingServiceProvider.get()
+                .loggedWorkBuilder()
+                .withTypeId(eventTypeId)
+                .withDescription(description)
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withBefore(buildPermissionState(docRef, changes, documentPermissionsBefore))
+                        .build())
+                .withComplexLoggedAction(updateEventAction -> {
+
+                    // Do the actual change
+                    changeDocPermissions(
+                            docRef,
+                            changes,
+                            affectedDocRefs,
+                            affectedUserUuids,
+                            clear,
+                            documentPermissionsBefore);
+
+                    final DocumentPermissions documentPermissionsAfter = documentPermissionServiceProvider.get()
+                            .getPermissionsForDocument(docRef.getUuid());
+
+                    // Add in the after state
+                    UpdateEventAction modifiedEventAction = updateEventAction.newCopyBuilder()
+                            .withAfter(buildPermissionState(docRef, changes, documentPermissionsAfter))
+                            .build();
+                    return ComplexLoggedOutcome.success(modifiedEventAction);
+                })
+                .runActionAndLog();
+    }
+
+    private MultiObject buildPermissionState(final DocRef docRef,
+                                             final Changes changes,
+                                             final DocumentPermissions documentPermissions) {
+
+        final Permissions.Builder<Void> permissionsBuilder = Permissions.builder();
+
+        final Builder<Void> rootDataBuilder = Data.builder()
+                .withName("createPermissionsByUser");
+        documentPermissions.getPermissions().forEach((userUuid, permissions) -> {
+            final Optional<User> user = securityContextProvider.get().asProcessingUserResult(() ->
+                    userServiceProvider.get().loadByUuid(userUuid));
+
+            final Permission.Builder<Void> permissionBuilder = Permission.builder();
+
+            if (user.isEmpty()) {
+                LOGGER.warn("Unable to locate user for permission change " + userUuid);
+                permissionBuilder.withUser(event.logging.User.builder()
+                        .withId(docRef.getUuid())
+                        .build());
+            } else if (user.get().isGroup()) {
+                permissionBuilder.withGroup(Group.builder()
+                        .withId(user.get().getName())
+                        .build());
+            } else {
+                permissionBuilder.withUser(event.logging.User.builder()
+                        .withId(user.get().getName())
+                        .build());
+            }
+
+            // Have to use Data elements to hold the Create perms as the schema currently has no support
+            // for custom perms. Waiting for https://github.com/gchq/event-logging-schema/issues/76
+            user.ifPresent(userOrGroup -> {
+                final Data userData = Data.builder()
+                        .withName(userOrGroup.getName())
+                        .withValue(userOrGroup.isGroup()
+                                ? "group"
+                                : "user")
+                        .addData(documentPermissions.getPermissions().get(userUuid)
+                                .stream()
+                                .filter(perm -> perm != null && perm.startsWith(DocumentPermissionNames.CREATE))
+                                .map(perm -> Data.builder()
+                                        .withName(perm)
+                                        .build())
+                                .collect(Collectors.toSet()))
+                        .build();
+
+                if (!userData.getData().isEmpty()) {
+                    rootDataBuilder
+                            .addData(userData)
+                            .build();
+                }
+            });
+
+            permissionBuilder.withAllowAttributes(mapChangeItemsToPermissions(permissions));
+
+            permissionsBuilder.addPermissions(permissionBuilder.build());
+        });
+
+        final OtherObject.Builder<Void> otherObjectBuilder = OtherObject.builder()
+                .withDescription(docRef.toInfoString())
+                .withId(docRef.getUuid())
+                .withName(docRef.getName())
+                .withType(docRef.getType())
+                .withPermissions(permissionsBuilder.build());
+
+        final Data rootData = rootDataBuilder.build();
+
+        if (!rootData.getData().isEmpty()) {
+            otherObjectBuilder.withData(rootDataBuilder.build());
+        }
+
+        return MultiObject.builder()
+                .withObjects(otherObjectBuilder.build())
+                .build();
+    }
+
+    private void changeDocPermissions(final DocRef docRef,
                                       final Changes changes,
                                       final Set<DocRef> affectedDocRefs,
                                       final Set<String> affectedUserUuids,
-                                      final boolean clear) {
+                                      final boolean clear,
+                                      final DocumentPermissions documentPermissionsBefore) {
+        final DocumentPermissions currentDocumentPermissions = Objects.requireNonNullElseGet(
+                documentPermissionsBefore,
+                () -> documentPermissionServiceProvider.get()
+                        .getPermissionsForDocument(docRef.getUuid()));
+
         if (clear) {
-            // If we are asked to clear all permissions then get them for this document and then remove them.
-            final DocumentPermissions documentPermissions = documentPermissionServiceProvider.get()
-                    .getPermissionsForDocument(docRef.getUuid());
-            for (final Map.Entry<String, Set<String>> entry : documentPermissions.getPermissions().entrySet()) {
+            // If we are asked to clear all permissions then use all the current perms for
+            // this document and then remove them.
+            for (final Map.Entry<String, Set<String>> entry : currentDocumentPermissions.getPermissions().entrySet()) {
                 final String userUUid = entry.getKey();
-                for (final String permission : entry.getValue()) {
-                    try {
-                        documentPermissionServiceProvider.get()
-                                .removePermission(docRef.getUuid(), userUUid, permission);
-                        logPermissionChange(eventTypeId, userUUid, docRef, permission, false);
-                        // Remember the affected documents and users so we can clear the relevant caches.
-                        affectedDocRefs.add(docRef);
-                        affectedUserUuids.add(userUUid);
-                    } catch (final RuntimeException e) {
-                        // Expected.
-                        LOGGER.debug(e.getMessage());
-                    }
+                final Set<String> permissions = entry.getValue();
+                try {
+                    documentPermissionServiceProvider.get()
+                            .removePermissions(docRef.getUuid(), userUUid, permissions);
+                    // Remember the affected documents and users so we can clear the relevant caches.
+                    affectedDocRefs.add(docRef);
+                    affectedUserUuids.add(userUUid);
+                } catch (final RuntimeException e) {
+                    // Expected.
+                    LOGGER.debug(e.getMessage());
                 }
             }
 
@@ -210,18 +383,16 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             // Otherwise remove permissions specified by the change set.
             for (final Entry<String, Set<String>> entry : changes.getRemove().entrySet()) {
                 final String userUuid = entry.getKey();
-                for (final String permission : entry.getValue()) {
-                    try {
-                        documentPermissionServiceProvider.get()
-                                .removePermission(docRef.getUuid(), userUuid, permission);
-                        logPermissionChange(eventTypeId, userUuid, docRef, permission, false);
-                        // Remember the affected documents and users so we can clear the relevant caches.
-                        affectedDocRefs.add(docRef);
-                        affectedUserUuids.add(userUuid);
-                    } catch (final RuntimeException e) {
-                        // Expected.
-                        LOGGER.debug(e.getMessage());
-                    }
+                final Set<String> permissions = entry.getValue();
+                try {
+                    documentPermissionServiceProvider.get()
+                            .removePermissions(docRef.getUuid(), userUuid, permissions);
+                    // Remember the affected documents and users so we can clear the relevant caches.
+                    affectedDocRefs.add(docRef);
+                    affectedUserUuids.add(userUuid);
+                } catch (final RuntimeException e) {
+                    // Expected.
+                    LOGGER.debug(e.getMessage());
                 }
             }
         }
@@ -230,13 +401,11 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         for (final Entry<String, Set<String>> entry : changes.getAdd().entrySet()) {
             final String userUuid = entry.getKey();
             for (final String permission : entry.getValue()) {
-                // Don't add create permissions to items that aren't folders as it makes no sense.
                 if (DocumentTypes.isFolder(docRef.getType())
                         || !permission.startsWith(DocumentPermissionNames.CREATE)) {
                     try {
                         documentPermissionServiceProvider.get()
                                 .addPermission(docRef.getUuid(), userUuid, permission);
-                        logPermissionChange(eventTypeId, userUuid, docRef, permission, true);
                         // Remember the affected documents and users so we can clear the relevant caches.
                         affectedDocRefs.add(docRef);
                         affectedUserUuids.add(userUuid);
@@ -371,8 +540,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 // Ensure that the user has permission to change the permissions of this child.
                 if (securityContextProvider.get().hasDocumentPermission(descendant.getUuid(),
                         DocumentPermissionNames.OWNER)) {
-                    changeDocPermissions(eventTypeId, descendant.getDocRef(),
-                            changes, affectedDocRefs, affectedUserUuids, clear);
+                    changeDocPermissions(descendant.getDocRef(),
+                            changes, affectedDocRefs, affectedUserUuids, clear, null);
                 } else {
                     LOGGER.debug("User does not have permission to change permissions on " + descendant.toString());
                 }
@@ -384,64 +553,6 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         return securityContextProvider.get().getUserId();
     }
 
-    private void logPermissionChange(final String typeId,
-                                     final String userUuid,
-                                     final DocRef docRefModified,
-                                     final String permission,
-                                     final boolean add) {
-        try {
-            final Optional<User> user = securityContextProvider.get().asProcessingUserResult(() ->
-                    userServiceProvider.get().loadByUuid(userUuid));
-
-            final Permission.Builder<Void> permissionBuilder = Permission.builder()
-                    .addAllowAttributes(mapChangeItemToPermission(permission));
-            if (user.isEmpty()) {
-                LOGGER.warn("Unable to locate user for permission change " + userUuid);
-                permissionBuilder.withUser(event.logging.User.builder().withId(docRefModified.getUuid()).build());
-            } else if (user.get().isGroup()) {
-                permissionBuilder.withGroup(Group.builder().withName(user.get().getName())
-                        .withId(user.get().getUuid()).build());
-            } else {
-                permissionBuilder.withUser(event.logging.User.builder().withName(user.get().getName())
-                        .withId(user.get().getUuid()).build());
-            }
-
-            final OtherObject object = OtherObject.builder()
-                    .withDescription(docRefModified.toInfoString())
-                    .withId(docRefModified.getUuid())
-                    .withName(docRefModified.getName())
-                    .withType(docRefModified.getType())
-                    .withPermissions(
-                            Permissions.builder().addPermissions(
-                                    permissionBuilder.build())
-                                    .build())
-                    .build();
-
-            final UpdateEventAction.Builder<Void> actionBuilder = UpdateEventAction.builder();
-            if (add) {
-                actionBuilder.withAfter(MultiObject.builder().addObject(object).build());
-            } else {
-                actionBuilder.withBefore(MultiObject.builder().addObject(object).build());
-            }
-
-            final Event event = stroomEventLoggingServiceProvider.get().createEvent(
-                    typeId,
-                    (add
-                            ? "Adding"
-                            : "Removing") +
-                            " permission " + permission +
-                            (add
-                                    ? " to "
-                                    : " from ") +
-                            docRefModified.getType(),
-                    actionBuilder.build());
-
-            stroomEventLoggingServiceProvider.get().log(event);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to create authorisation event!", e);
-        }
-    }
-
     private void logPermissionChangeError(final String typeId,
                                           final DocRef docRefModified,
                                           final String outcomeDescription) {
@@ -449,16 +560,16 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 typeId,
                 "Modify permission attempt failed",
                 UpdateEventAction.builder().withBefore(
-                        MultiObject.builder()
-                                .addObject(
-                                        OtherObject.builder()
-                                                .withDescription(docRefModified.toInfoString())
-                                                .withId(docRefModified.getUuid())
-                                                .withName(docRefModified.getName())
-                                                .withType(docRefModified.getType())
-                                                .build()
-                                )
-                                .build())
+                                MultiObject.builder()
+                                        .addObject(
+                                                OtherObject.builder()
+                                                        .withDescription(docRefModified.toInfoString())
+                                                        .withId(docRefModified.getUuid())
+                                                        .withName(docRefModified.getName())
+                                                        .withType(docRefModified.getType())
+                                                        .build()
+                                        )
+                                        .build())
                         .withOutcome(
                                 Outcome.builder()
                                         .withSuccess(false)
@@ -467,6 +578,12 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                         .build());
 
         stroomEventLoggingServiceProvider.get().log(event);
+    }
+
+    private Set<PermissionAttribute> mapChangeItemsToPermissions(final Set<String> perms) {
+        return perms.stream()
+                .map(this::mapChangeItemToPermission)
+                .collect(Collectors.toSet());
     }
 
     private PermissionAttribute mapChangeItemToPermission(final String perm) {

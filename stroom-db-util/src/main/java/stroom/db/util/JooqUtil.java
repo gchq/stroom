@@ -206,13 +206,28 @@ public final class JooqUtil {
     public static <R extends UpdatableRecord<R>, T> R tryCreate(final DataSource dataSource,
                                                                 final R record,
                                                                 final TableField<R, T> keyField) {
-        return tryCreate(dataSource, record, keyField, null);
+        return tryCreate(dataSource, record, keyField, null, null);
+    }
+
+    public static <R extends UpdatableRecord<R>, T> R tryCreate(final DataSource dataSource,
+                                                                final R record,
+                                                                final TableField<R, T> keyField,
+                                                                final Consumer<R> onCreateAction) {
+        return tryCreate(dataSource, record, keyField, null, onCreateAction);
     }
 
     public static <R extends UpdatableRecord<R>, T1, T2> R tryCreate(final DataSource dataSource,
                                                                      final R record,
                                                                      final TableField<R, T1> keyField1,
                                                                      final TableField<R, T2> keyField2) {
+        return tryCreate(dataSource, record, keyField1, keyField2, null);
+    }
+
+    public static <R extends UpdatableRecord<R>, T1, T2> R tryCreate(final DataSource dataSource,
+                                                                     final R record,
+                                                                     final TableField<R, T1> keyField1,
+                                                                     final TableField<R, T2> keyField2,
+                                                                     final Consumer<R> onCreateAction) {
         R persistedRecord;
         LOGGER.debug(() -> "Creating a " + record.getTable() + " record if it doesn't already exist" + record);
         try (final Connection connection = dataSource.getConnection()) {
@@ -224,6 +239,9 @@ public final class JooqUtil {
                     // Attempt to write the record, which may already be there
                     record.insert();
                     persistedRecord = record;
+                    if (onCreateAction != null) {
+                        onCreateAction.accept(persistedRecord);
+                    }
                 } catch (RuntimeException e) {
                     if (e instanceof DataAccessException
                             && e.getCause() != null
@@ -457,7 +475,7 @@ public final class JooqUtil {
 
         // Combine conditions.
         final Optional<Condition> condition = fromCondition.map(c1 ->
-                toCondition.map(c1::and).orElse(c1))
+                        toCondition.map(c1::and).orElse(c1))
                 .or(() -> toCondition);
         return convertMatchNull(field, matchNull, condition);
     }
