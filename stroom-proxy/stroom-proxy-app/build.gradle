@@ -70,10 +70,11 @@ dependencies {
     testImplementation libs.guice_extension
     testImplementation libs.guice_grapher
     testImplementation libs.jinjava
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
     testImplementation libs.mbknor_jackson_jsonSchema
     testImplementation libs.mockito_junit_jupiter
-
-    testImplementation libs.junit_jupiter_api
+    testImplementation libs.wiremock
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation
