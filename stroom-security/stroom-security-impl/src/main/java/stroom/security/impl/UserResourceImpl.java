@@ -98,48 +98,57 @@ public class UserResourceImpl implements UserResource {
     }
 
     private User createUser(final String name) {
-        CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
+        final CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
         try {
-            User newUser = userServiceProvider.get().createUser(name);
+            // Need to do the logging as a lambda so we only log if the creation actually happens
+            User newUser = userServiceProvider.get()
+                    .getOrCreateUser(name, user -> {
 
-            builder.withObjects(
-                    event.logging.User.builder()
-                            .withName(name)
-                            .withId(newUser.getUuid())
-                            .build());
+                        builder.withObjects(
+                                event.logging.User.builder()
+                                        .withId(user.getName())
+                                        .build());
+
+                        stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createUser",
+                                "Creating new Stroom user " + name, builder.build());
+                    });
 
             return newUser;
         } catch (Exception ex) {
             builder.withObjects(
                     event.logging.User.builder()
-                            .withName(name)
+                            .withId(name)
                             .build());
             builder.withOutcome(Outcome.builder()
                     .withSuccess(false)
                     .withDescription(ex.getMessage())
                     .build());
 
-            throw ex;
-        } finally {
             stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createUser",
-                    "Creating new user " + name, builder.build());
+                    "Creating new Stroom user " + name, builder.build());
+
+            throw ex;
         }
     }
 
     private User createGroup(final String name) {
-        CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
+        final CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
         try {
-            User newUser = userServiceProvider.get().createUserGroup(name);
+            // Need to do the logging as a lambda so we only log if the creation actually happens
+            final User newUserGroup = userServiceProvider.get()
+                    .getOrCreateUserGroup(name, userGroup -> {
+                        builder.withObjects(
+                                event.logging.Group.builder()
+                                        .withName(name)
+                                        .withId(userGroup.getUuid())
+                                        .build());
+                        stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createGroup",
+                                "Creating new user group " + name, builder.build());
+                    });
 
-            builder.withObjects(
-                    event.logging.Group.builder()
-                            .withName(name)
-                            .withId(newUser.getUuid())
-                            .build());
-
-            return newUser;
+            return newUserGroup;
         } catch (Exception ex) {
             builder.withObjects(
                     event.logging.Group.builder()
@@ -150,10 +159,10 @@ public class UserResourceImpl implements UserResource {
                     .withDescription(ex.getMessage())
                     .build());
 
-            throw ex;
-        } finally {
             stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createGroup",
                     "Creating new user group " + name, builder.build());
+
+            throw ex;
         }
     }
 

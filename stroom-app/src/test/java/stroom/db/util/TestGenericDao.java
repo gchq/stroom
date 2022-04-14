@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -110,6 +111,51 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
         // The job exists so it should just re-fetch the db record.
         assertThat(persistedJob2)
                 .isEqualTo(persistedJob);
+    }
+
+    @Test
+    void testTryCreate_withOnCreateAction() {
+
+        final var genericDao = getGenericDao();
+
+        assertThat(isJobPresent())
+                .isFalse();
+
+        final Job job = new Job();
+        job.setName(JOB_NAME);
+        job.setEnabled(true);
+        AuditUtil.stamp("TestUser", job);
+
+        assertThat(job.getId())
+                .isNull();
+        assertThat(job.getVersion())
+                .isNull();
+
+        final AtomicBoolean didCreateHappen = new AtomicBoolean(false);
+
+        final Job persistedJob = genericDao.tryCreate(job, JOB.NAME, rec -> didCreateHappen.set(true));
+
+        assertThat(persistedJob.getId())
+                .isNotNull();
+        assertThat(persistedJob.getVersion())
+                .isNotNull();
+        assertThat(didCreateHappen)
+                .isTrue();
+
+        final Job job2 = new Job();
+        job2.setName(JOB_NAME);
+        job2.setEnabled(true);
+        AuditUtil.stamp("TestUser", job2);
+
+        didCreateHappen.set(false);
+
+        final Job persistedJob2 = genericDao.tryCreate(job2, JOB.NAME, rec -> didCreateHappen.set(true));
+
+        // The job exists so it should just re-fetch the db record.
+        assertThat(persistedJob2)
+                .isEqualTo(persistedJob);
+        assertThat(didCreateHappen)
+                .isFalse();
     }
 
     @Test
