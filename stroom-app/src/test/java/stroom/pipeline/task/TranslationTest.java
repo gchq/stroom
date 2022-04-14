@@ -138,8 +138,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         FileUtil.mkdirs(outputDir);
 
-        importConfig();
-
         // Process reference data.
         processData(inputDir, outputDir, true, compareOutput, exceptions);
         // Process event data.
@@ -185,14 +183,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     protected void importConfig() {
-        if (pipelineStore.list().size() == 0) {
-            final Path samplesDir = getSamplesDir();
-            final Path configDir = samplesDir.resolve("config");
+        final Path samplesDir = getSamplesDir();
+        final Path configDir = samplesDir.resolve("config");
 
-            importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-            contentImportService.importStandardPacks();
-        }
+        contentImportService.importStandardPacks();
     }
 
     @NotNull
