@@ -4,6 +4,7 @@ import stroom.util.shared.ResourcePaths;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import org.apache.hadoop.util.ThreadUtil;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -19,16 +20,17 @@ public class TestEndToEnd extends AbstractEndToEndTest {
     @Test
     void testBasicEndToEnd() {
         LOGGER.info("Hello");
-//        ThreadUtil.sleepAtLeastIgnoreInterrupts(500_000);
 
         setupStroomStubs(mappingBuilder -> mappingBuilder.willReturn(WireMock.ok()));
 
-        postToDatafeed(
+        postToProxyDatafeed(
                 "TEST-EVENTS",
                 "TEST SYSTEM",
                 "DEV",
                 Collections.emptyMap(),
                 "Hello");
+
+        ThreadUtil.sleepAtLeastIgnoreInterrupts(30_000);
 
         final int expectedRequestCount = 1;
 

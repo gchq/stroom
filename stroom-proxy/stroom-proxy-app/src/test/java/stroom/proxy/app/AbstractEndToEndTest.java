@@ -83,16 +83,14 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         waitForHealthyProxyApp(Duration.ofSeconds(30));
     }
 
-    int postToDatafeed(final String feed,
-                       final String system,
-                       final String environment,
-                       final Map<String, String> extraHeaders,
-                       final String data) {
+    int postToProxyDatafeed(final String feed,
+                            final String system,
+                            final String environment,
+                            final Map<String, String> extraHeaders,
+                            final String data) {
         int status = -1;
         // URL on wiremocked stroom
-        final String url = "http://localhost:"
-                + DEFAULT_STROOM_PORT
-                + ResourcePaths.buildUnauthenticatedServletPath("datafeed");
+        final String url = buildProxyAppPath(ResourcePaths.buildUnauthenticatedServletPath("datafeed"));
         try {
 
             final Builder builder = client.target(url)
