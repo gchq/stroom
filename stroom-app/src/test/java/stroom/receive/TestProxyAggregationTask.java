@@ -117,7 +117,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
      * Stop the proxy repo DB being deleted between tests as we will delete table contents manually.
      */
     @Override
-    protected boolean setupBetweenTests() {
+    protected boolean cleanupBetweenTests() {
         return false;
     }
 

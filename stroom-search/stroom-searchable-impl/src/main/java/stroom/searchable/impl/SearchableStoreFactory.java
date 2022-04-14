@@ -14,6 +14,7 @@ import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskManager;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -34,6 +35,7 @@ class SearchableStoreFactory implements StoreFactory {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SearchableStoreFactory.class);
 
     private final Executor executor;
+    private final TaskManager taskManager;
     private final TaskContextFactory taskContextFactory;
     private final ResultStoreConfig config;
     private final UiConfig clientConfig;
@@ -42,12 +44,14 @@ class SearchableStoreFactory implements StoreFactory {
 
     @Inject
     SearchableStoreFactory(final Executor executor,
+                           final TaskManager taskManager,
                            final TaskContextFactory taskContextFactory,
                            final ResultStoreConfig config,
                            final UiConfig clientConfig,
                            final SearchableProvider searchableProvider,
                            final CoprocessorsFactory coprocessorsFactory) {
         this.executor = executor;
+        this.taskManager = taskManager;
         this.taskContextFactory = taskContextFactory;
         this.config = config;
         this.clientConfig = clientConfig;
@@ -108,6 +112,7 @@ class SearchableStoreFactory implements StoreFactory {
                 searchable,
                 taskContextFactory,
                 taskContext,
+                taskManager,
                 searchRequest,
                 executor,
                 coprocessors,

@@ -114,10 +114,10 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
   dashboard:
-    activeQueriesCache:
-      expireAfterAccess: "P10D"
+    applicationInstanceCache:
+      expireAfterAccess: "PT1M"
       expireAfterWrite: null
-      maximumSize: 1000
+      maximumSize: null
   data:
     filesystemVolume:
       createDefaultStreamVolumesOnStart: true

@@ -12,6 +12,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.11] - 2022-04-01
+
+* Issue **#2749** : Improve support for  and  fields when searching an Elasticsearch index.
+
+* Issue **#2822** : Add application instance management to keep track of active queries.
+
+* Issue **#2822** : Add application instance management to keep track of active queries.
+
+* Issue **#2824** : Fix to stop SearchableStore interrupting threads that it is no longer using.
+
+* Issue **#2822** : Create a managed search UUID in the web socket before starting search.
+
+* Issue **#2817** : Change data retention impact summary to show the counts of records that would be deleted now rather than at some point in the future.
+
+
 ## [v7.1-beta.10] - 2022-03-18
 
 * Issue **#2725** : Support multiple levels of nesting in Elasticsearch indexing.
@@ -4117,7 +4132,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.11...HEAD
+[v7.1-beta.11]: https://github.com/gchq/stroom/compare/v7.1-beta.10...v7.1-beta.11
 [v7.1-beta.10]: https://github.com/gchq/stroom/compare/v7.1-beta.9...v7.1-beta.10
 [v7.1-beta.9]: https://github.com/gchq/stroom/compare/v7.1-beta.8...v7.1-beta.9
 [v7.1-beta.8]: https://github.com/gchq/stroom/compare/v7.1-beta.7...v7.1-beta.8

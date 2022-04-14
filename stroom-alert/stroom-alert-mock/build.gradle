@@ -4,5 +4,7 @@ dependencies {
     implementation project(':stroom-alert:stroom-alert-api')
     implementation project(':stroom-docref')
 
+    implementation libs.jackson_annotations
     implementation libs.guice5
+    implementation libs.jaxb_api
 }

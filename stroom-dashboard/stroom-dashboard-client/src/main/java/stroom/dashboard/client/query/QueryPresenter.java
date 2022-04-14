@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
-import stroom.dashboard.client.main.ActiveQueries;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.Components;
@@ -46,6 +45,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
+import stroom.instance.client.ClientApplicationInstance;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.preferences.client.UserPreferencesManager;
@@ -138,7 +138,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Inject
     public QueryPresenter(final EventBus eventBus,
                           final QueryView view,
-                          final ActiveQueries activeQueries,
+                          final ClientApplicationInstance applicationInstance,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
                           final ExpressionTreePresenter expressionPresenter,
                           final QueryHistoryPresenter historyPresenter,
@@ -198,7 +198,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         indexLoader = new IndexLoader(getEventBus(), restFactory);
         searchModel = new SearchModel(
                 restFactory,
-                activeQueries,
+                applicationInstance,
                 this,
                 indexLoader,
                 timeZones,

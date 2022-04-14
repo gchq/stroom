@@ -328,7 +328,7 @@ public class LmdbEnvFactory {
                     envFlags.add(EnvFlags.MDB_NORDAHEAD);
                 }
 
-                LOGGER.info("Creating LMDB environment in dir {}, maxSize: {}, maxDbs {}, maxReaders {}, "
+                LOGGER.debug("Creating LMDB environment in dir {}, maxSize: {}, maxDbs {}, maxReaders {}, "
                                 + "isReadAheadEnabled {}, isReaderBlockedByWriter {}, envFlags {}",
                         envDir.toAbsolutePath().normalize(),
                         maxStoreSize,
