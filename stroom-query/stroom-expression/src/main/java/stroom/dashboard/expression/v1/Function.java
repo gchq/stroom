@@ -16,11 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Map;
 
-public interface Function extends Param, Serializable {
+public interface Function extends Param {
 
     /**
      * Set the parameters that this function will use.
@@ -66,7 +65,8 @@ public interface Function extends Param, Serializable {
 
     /**
      * If the function selects a child row return true.
+     *
      * @return True is the function selects a child row.
      */
-    boolean isChildSelector();
+    boolean requiresChildData();
 }

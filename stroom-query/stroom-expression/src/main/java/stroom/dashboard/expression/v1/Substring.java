@@ -19,8 +19,8 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.io.Serializable;
 import java.text.ParseException;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -44,10 +44,9 @@ import java.text.ParseException;
                                 description = "The index of the end of the sub-string range (zero based, exclusive).",
                                 argType = ValInteger.class),
                 }))
-class Substring extends AbstractFunction implements Serializable {
+class Substring extends AbstractFunction {
 
     static final String NAME = "substring";
-    private static final long serialVersionUID = -305845496003936297L;
     private Function startFunction;
     private Function endFunction;
 
@@ -77,8 +76,8 @@ class Substring extends AbstractFunction implements Serializable {
             // Optimise replacement of static input in case user does something stupid.
             if (startFunction instanceof StaticValueFunction && endFunction instanceof StaticValueFunction) {
                 final String value = param.toString();
-                final Double startPos = startFunction.createGenerator().eval().toDouble();
-                final Double endPos = endFunction.createGenerator().eval().toDouble();
+                final Double startPos = startFunction.createGenerator().eval(null).toDouble();
+                final Double endPos = endFunction.createGenerator().eval(null).toDouble();
 
                 if (value == null || startPos == null || endPos == null) {
                     gen = new StaticValueFunction(ValString.EMPTY).createGenerator();
@@ -133,7 +132,6 @@ class Substring extends AbstractFunction implements Serializable {
 
     private static final class Gen extends AbstractSingleChildGenerator {
 
-        private static final long serialVersionUID = 8153777070911899616L;
 
         private final Generator startPosGenerator;
         private final Generator endPosGenerator;
@@ -152,16 +150,16 @@ class Substring extends AbstractFunction implements Serializable {
         }
 
         @Override
-        public Val eval() {
-            final Val val = childGenerator.eval();
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerator.eval(childDataSupplier);
             if (!val.type().isValue()) {
                 return ValErr.wrap(val);
             }
-            final Val startVal = startPosGenerator.eval();
+            final Val startVal = startPosGenerator.eval(childDataSupplier);
             if (!startVal.type().isValue()) {
                 return ValErr.wrap(startVal);
             }
-            final Val endVal = endPosGenerator.eval();
+            final Val endVal = endPosGenerator.eval(childDataSupplier);
             if (!endVal.type().isValue()) {
                 return ValErr.wrap(endVal);
             }

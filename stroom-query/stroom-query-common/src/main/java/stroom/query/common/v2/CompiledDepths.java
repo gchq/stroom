@@ -50,7 +50,7 @@ class CompiledDepths {
                 maxDepth = maxGroupDepth + 1;
             } else {
                 final boolean requireChildren = Arrays.stream(compiledFields).anyMatch(field ->
-                        field.getExpression().isChildSelector());
+                        field.getExpression().requiresChildData());
                 if (requireChildren) {
                     maxDepth = maxGroupDepth + 1;
                 } else {

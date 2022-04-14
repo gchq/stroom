@@ -17,4 +17,5 @@
 package stroom.dashboard.expression.v1;
 
 interface AggregateFunction {
+
 }

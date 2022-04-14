@@ -39,6 +39,7 @@ import java.net.URISyntaxException;
                                 argType = ValString.class)
                 }))
 class ExtractFragmentFromUri extends ExtractionFunction {
+
     static final String NAME = "extractFragmentFromUri";
     private static final Extractor EXTRACTOR = new ExtractorImpl();
 
@@ -52,7 +53,6 @@ class ExtractFragmentFromUri extends ExtractionFunction {
     }
 
     static class ExtractorImpl implements Extractor {
-        private static final long serialVersionUID = -5893918049538006730L;
 
         private static final Logger LOGGER = LoggerFactory.getLogger(ExtractorImpl.class);
 

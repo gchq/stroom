@@ -410,23 +410,23 @@ class ExpressionTokeniser {
     static class Token implements Param {
 
         // refuses to compile if I create the reverse comparator in one step, who knows why
-        private static Comparator<Type> IDENTIFIER_LENGTH_COMPARATOR = Comparator.comparing(t -> t.identifier.length);
-        private static Comparator<Type> IDENTIFIER_LENGTH_COMPARATOR_REVERSED = IDENTIFIER_LENGTH_COMPARATOR.reversed();
+        private static final Comparator<Type> IDENTIFIER_LENGTH_COMPARATOR = Comparator.comparing(t -> t.identifier.length);
+        private static final Comparator<Type> IDENTIFIER_LENGTH_COMPARATOR_REVERSED = IDENTIFIER_LENGTH_COMPARATOR.reversed();
 
         // array of simple tokens reverse sorted on identifier length
         static final Type[] SIMPLE_TOKENS = Stream.of(
-                Type.COMMA,
-                Type.ORDER,
-                Type.DIVISION,
-                Type.MULTIPLICATION,
-                Type.MODULUS,
-                Type.ADDITION,
-                Type.SUBTRACTION,
-                Type.EQUALS,
-                Type.GREATER_THAN,
-                Type.GREATER_THAN_OR_EQUAL_TO,
-                Type.LESS_THAN,
-                Type.LESS_THAN_OR_EQUAL_TO)
+                        Type.COMMA,
+                        Type.ORDER,
+                        Type.DIVISION,
+                        Type.MULTIPLICATION,
+                        Type.MODULUS,
+                        Type.ADDITION,
+                        Type.SUBTRACTION,
+                        Type.EQUALS,
+                        Type.GREATER_THAN,
+                        Type.GREATER_THAN_OR_EQUAL_TO,
+                        Type.LESS_THAN,
+                        Type.LESS_THAN_OR_EQUAL_TO)
                 .sorted(IDENTIFIER_LENGTH_COMPARATOR_REVERSED)
                 .toArray(Type[]::new);
 
@@ -446,6 +446,13 @@ class ExpressionTokeniser {
             this.end = end;
         }
 
+        static Token merge(final Type newType, final Token token1, final Token token2) {
+            if (token2.start != token1.end + 1) {
+                throw new RuntimeException("Tokens being merged must be contiguous");
+            }
+            return new Token(newType, token1.expression, token1.start, token2.end);
+        }
+
         Type getType() {
             return type;
         }
@@ -456,13 +463,6 @@ class ExpressionTokeniser {
 
         Token asNewType(final Type type) {
             return new Token(type, expression, start, end);
-        }
-
-        static Token merge(final Type newType, final Token token1, final Token token2) {
-            if (token2.start != token1.end + 1) {
-                throw new RuntimeException("Tokens being merged must be contiguous");
-            }
-            return new Token(newType, token1.expression, token1.start, token2.end);
         }
 
         @Override

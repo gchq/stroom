@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
                                 "formatted using the default date format.",
                         argType = Val.class)))
 class CeilingMonth extends RoundDate {
+
     static final String NAME = "ceilingMonth";
     private static final Calc CALC = new Calc();
 
@@ -46,7 +47,6 @@ class CeilingMonth extends RoundDate {
     }
 
     static class Calc extends RoundDateCalculator {
-        private static final long serialVersionUID = -5893918049538006730L;
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {

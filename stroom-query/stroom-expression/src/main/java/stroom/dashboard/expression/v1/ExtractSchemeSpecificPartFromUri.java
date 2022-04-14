@@ -57,7 +57,6 @@ class ExtractSchemeSpecificPartFromUri extends ExtractionFunction {
 
     static class ExtractorImpl implements Extractor {
 
-        private static final long serialVersionUID = -5893918049538006730L;
 
         private static final Logger LOGGER = LoggerFactory.getLogger(ExtractorImpl.class);
 

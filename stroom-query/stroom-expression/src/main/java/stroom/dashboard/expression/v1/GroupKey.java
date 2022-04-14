@@ -16,13 +16,12 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 
-final class GroupKey implements Serializable {
+final class GroupKey {
 
     private final byte[] parent;
     private final byte[] values;

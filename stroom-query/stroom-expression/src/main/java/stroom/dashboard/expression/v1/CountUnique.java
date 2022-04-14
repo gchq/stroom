@@ -22,6 +22,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -100,8 +101,6 @@ class CountUnique extends AbstractFunction {
 
     private static final class Gen extends AbstractSingleChildGenerator {
 
-        private static final long serialVersionUID = -6770724151493320673L;
-
         private final Set<Val> uniqueValues = new HashSet<>();
 
         Gen(final Generator childGenerator) {
@@ -111,14 +110,14 @@ class CountUnique extends AbstractFunction {
         @Override
         public void set(final Val[] values) {
             childGenerator.set(values);
-            final Val value = childGenerator.eval();
+            final Val value = childGenerator.eval(null);
             if (value.type().isValue()) {
                 uniqueValues.add(value);
             }
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             return ValInteger.create(uniqueValues.size());
         }
 

@@ -16,11 +16,11 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
+import java.util.function.Supplier;
 
-abstract class AbstractIsFunction extends AbstractFunction implements Serializable {
-    private static final long serialVersionUID = -305145496413936297L;
+abstract class AbstractIsFunction extends AbstractFunction {
+
     private Generator gen;
     private Function function;
     private boolean hasAggregate;
@@ -62,12 +62,12 @@ abstract class AbstractIsFunction extends AbstractFunction implements Serializab
         return hasAggregate;
     }
 
-    interface Test extends Serializable {
+    interface Test {
+
         Val test(Val val);
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
-        private static final long serialVersionUID = 8153777070911893616L;
 
         private final Test test;
 
@@ -82,8 +82,8 @@ abstract class AbstractIsFunction extends AbstractFunction implements Serializab
         }
 
         @Override
-        public Val eval() {
-            return test.test(childGenerator.eval());
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            return test.test(childGenerator.eval(childDataSupplier));
         }
     }
 }

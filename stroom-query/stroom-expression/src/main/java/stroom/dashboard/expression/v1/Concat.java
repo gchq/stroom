@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import java.util.function.Supplier;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Concat.NAME,
@@ -47,8 +49,6 @@ class Concat extends AbstractManyChildFunction {
 
     private static final class Gen extends AbstractManyChildGenerator {
 
-        private static final long serialVersionUID = 217968020285584214L;
-
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
         }
@@ -61,10 +61,10 @@ class Concat extends AbstractManyChildFunction {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             final StringBuilder sb = new StringBuilder();
             for (final Generator gen : childGenerators) {
-                final Val val = gen.eval();
+                final Val val = gen.eval(childDataSupplier);
                 if (val.type().isError()) {
                     return val;
                 }

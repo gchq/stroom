@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -31,10 +30,9 @@ import java.io.Serializable;
                                 name = "value",
                                 description = "The string to convert to lower case.",
                                 argType = ValString.class)}))
-class LowerCase extends AbstractStringFunction implements Serializable {
+class LowerCase extends AbstractStringFunction {
 
     static final String NAME = "lowerCase";
-    private static final long serialVersionUID = -305845496003936297L;
 
     private static final Operation OPERATION = String::toLowerCase;
 

@@ -19,8 +19,8 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.io.Serializable;
 import java.text.ParseException;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -41,9 +41,9 @@ import java.text.ParseException;
                                 description = "The string to find in input",
                                 argType = ValString.class),
                 }))
-class SubstringBefore extends AbstractFunction implements Serializable {
+class SubstringBefore extends AbstractFunction {
+
     static final String NAME = "substringBefore";
-    private static final long serialVersionUID = -305845496003936297L;
     private Function beforeFunction;
 
     private Generator gen;
@@ -70,7 +70,7 @@ class SubstringBefore extends AbstractFunction implements Serializable {
 
             // Optimise replacement of static input in case user does something stupid.
             if (beforeFunction instanceof StaticValueFunction) {
-                final String before = beforeFunction.createGenerator().eval().toString();
+                final String before = beforeFunction.createGenerator().eval(null).toString();
                 if (before != null) {
                     final String value = param.toString();
                     final int index = value.indexOf(before);
@@ -103,7 +103,6 @@ class SubstringBefore extends AbstractFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
-        private static final long serialVersionUID = 8153777070911899616L;
 
         private final Generator stringGenerator;
 
@@ -119,14 +118,14 @@ class SubstringBefore extends AbstractFunction implements Serializable {
         }
 
         @Override
-        public Val eval() {
-            final Val val = childGenerator.eval();
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerator.eval(childDataSupplier);
             if (!val.type().isValue()) {
                 return ValErr.wrap(val);
             }
             final String value = val.toString();
 
-            final Val strVal = stringGenerator.eval();
+            final Val strVal = stringGenerator.eval(childDataSupplier);
             if (!strVal.type().isValue()) {
                 return ValErr.wrap(strVal);
             }

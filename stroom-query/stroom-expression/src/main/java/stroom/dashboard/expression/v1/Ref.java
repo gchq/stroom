@@ -19,6 +19,8 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.util.function.Supplier;
+
 @ArchitecturalFunction
 class Ref extends AbstractFunction {
 
@@ -55,7 +57,6 @@ class Ref extends AbstractFunction {
 
     private static final class NullGen extends AbstractNoChildGenerator {
 
-        private static final long serialVersionUID = 8153777070911899616L;
 
         @Override
         public void set(final Val[] values) {
@@ -63,14 +64,13 @@ class Ref extends AbstractFunction {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             return ValNull.INSTANCE;
         }
     }
 
     private static final class Gen extends AbstractNoChildGenerator {
 
-        private static final long serialVersionUID = 8153777070911899616L;
 
         private final int fieldIndex;
         private Val current;
@@ -88,7 +88,7 @@ class Ref extends AbstractFunction {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             return current;
         }
 

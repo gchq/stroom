@@ -16,8 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -42,10 +42,9 @@ import java.text.ParseException;
                                 name = "valueIfFalse",
                                 description = "Field, the result of another function or a constant.",
                                 argType = Val.class)}))
-class If extends AbstractManyChildFunction implements Serializable {
+class If extends AbstractManyChildFunction {
 
     static final String NAME = "if";
-    private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
     private boolean simple;
 
@@ -107,7 +106,6 @@ class If extends AbstractManyChildFunction implements Serializable {
 
     private static final class Gen extends AbstractManyChildGenerator {
 
-        private static final long serialVersionUID = 8153777070911899616L;
 
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
@@ -121,8 +119,8 @@ class If extends AbstractManyChildFunction implements Serializable {
         }
 
         @Override
-        public Val eval() {
-            final Val val = childGenerators[0].eval();
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerators[0].eval(childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }
@@ -133,9 +131,9 @@ class If extends AbstractManyChildFunction implements Serializable {
                     return ValErr.create("Expecting a condition");
                 }
                 if (condition) {
-                    return childGenerators[1].eval();
+                    return childGenerators[1].eval(childDataSupplier);
                 } else {
-                    return childGenerators[2].eval();
+                    return childGenerators[2].eval(childDataSupplier);
                 }
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());

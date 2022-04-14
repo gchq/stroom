@@ -64,8 +64,6 @@ class Ceiling extends AbstractRoundingFunction {
 
     private static class NumericCeiling implements RoundCalculator {
 
-        private static final long serialVersionUID = -2414316545075369054L;
-
         @Override
         public Val calc(final Val value) {
             final Double val = value.toDouble();
@@ -78,8 +76,6 @@ class Ceiling extends AbstractRoundingFunction {
     }
 
     private static class DecimalPlaceCeiling implements RoundCalculator {
-
-        private static final long serialVersionUID = -5893918049538006730L;
 
         private final double multiplier;
 
