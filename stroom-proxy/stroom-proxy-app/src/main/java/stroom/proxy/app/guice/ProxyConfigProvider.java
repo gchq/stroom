@@ -23,12 +23,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * This is sort of the equivalent to stroom's ConfigMapper class.
  * It holds the de-serialised config objects in a map that is then used to
  * provide them for guice injection.
  */
+@Singleton
 public class ProxyConfigProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyConfigProvider.class);
