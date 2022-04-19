@@ -8,7 +8,6 @@ import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.logging.Metrics;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.PropertyPath;
@@ -51,18 +50,16 @@ public class ProxyConfigProvider {
     }
 
     <T extends AbstractConfig> T getConfigObject(final Class<T> clazz) {
-        return Metrics.measure("ProxyConfigProvider - getConfigObject", () -> {
-            final AbstractConfig config = configInstanceMap.get(clazz);
-            Objects.requireNonNull(config, "No config instance found for class " + clazz.getName());
-            try {
-                return clazz.cast(config);
-            } catch (Exception e) {
-                throw new RuntimeException(LogUtil.message(
-                        "Error casting config object to {}, found {}",
-                        clazz.getName(),
-                        config.getClass().getName()), e);
-            }
-        });
+        final AbstractConfig config = configInstanceMap.get(clazz);
+        Objects.requireNonNull(config, "No config instance found for class " + clazz.getName());
+        try {
+            return clazz.cast(config);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error casting config object to {}, found {}",
+                    clazz.getName(),
+                    config.getClass().getName()), e);
+        }
     }
 
     Set<Class<? extends AbstractConfig>> getInjectableClasses() {
