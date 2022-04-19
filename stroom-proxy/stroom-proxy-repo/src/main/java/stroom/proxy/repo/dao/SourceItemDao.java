@@ -1,5 +1,6 @@
 package stroom.proxy.repo.dao;
 
+import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.RepoSourceEntry;
 import stroom.proxy.repo.RepoSourceItem;
 import stroom.proxy.repo.RepoSourceItemRef;
@@ -62,94 +63,97 @@ public class SourceItemDao {
     }
 
     private void init() {
-        newQueue = WorkQueue.createWithJooq(jooq, SOURCE_ITEM, SOURCE_ITEM.NEW_POSITION);
+        jooq.readOnlyTransaction(context -> {
+            newQueue = WorkQueue.createWithJooq(context, SOURCE_ITEM, SOURCE_ITEM.NEW_POSITION);
 
-        final long maxSourceItemRecordId = jooq.getMaxId(SOURCE_ITEM, SOURCE_ITEM.ID).orElse(0L);
-        sourceItemRecordId.set(maxSourceItemRecordId);
+            final long maxSourceItemRecordId = JooqUtil.getMaxId(context, SOURCE_ITEM, SOURCE_ITEM.ID)
+                    .orElse(0L);
+            sourceItemRecordId.set(maxSourceItemRecordId);
 
-        final long maxSourceEntryRecordId = jooq.getMaxId(SOURCE_ENTRY, SOURCE_ENTRY.ID).orElse(0L);
-        sourceEntryRecordId.set(maxSourceEntryRecordId);
+            final long maxSourceEntryRecordId = JooqUtil.getMaxId(context, SOURCE_ENTRY, SOURCE_ENTRY.ID)
+                    .orElse(0L);
+            sourceEntryRecordId.set(maxSourceEntryRecordId);
+        });
     }
 
     public void clear() {
-        jooq.deleteAll(SOURCE_ENTRY);
-        jooq.deleteAll(SOURCE_ITEM);
-        jooq.checkEmpty(SOURCE_ENTRY);
-        jooq.checkEmpty(SOURCE_ITEM);
+        jooq.transaction(context -> {
+            JooqUtil.deleteAll(context, SOURCE_ENTRY);
+            JooqUtil.deleteAll(context, SOURCE_ITEM);
+            JooqUtil.checkEmpty(context, SOURCE_ENTRY);
+            JooqUtil.checkEmpty(context, SOURCE_ITEM);
+        });
         init();
     }
 
     public int countItems() {
-        return jooq.count(SOURCE_ITEM);
+        return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, SOURCE_ITEM));
     }
 
     public int countEntries() {
-        return jooq.count(SOURCE_ENTRY);
+        return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, SOURCE_ENTRY));
     }
 
     public void addItems(final Path fullPath,
                          final long sourceId,
                          final Collection<RepoSourceItem> items) {
-        jooq.underLock(() -> {
-            newQueue.put(writePos -> {
-                final List<Object[]> sourceItems = new ArrayList<>(items.size());
-                final List<Object[]> sourceEntries = new ArrayList<>();
-                for (final RepoSourceItem sourceItemRecord : items) {
-                    if (sourceItemRecord.getFeedName() == null) {
-                        LOGGER.error(() ->
-                                "Source item has no feed name: " +
-                                        fullPath +
-                                        " - " +
-                                        sourceItemRecord.getName());
-                    } else {
-                        final long itemRecordId = sourceItemRecordId.incrementAndGet();
+        newQueue.put(writePos -> {
+            final List<Object[]> sourceItems = new ArrayList<>(items.size());
+            final List<Object[]> sourceEntries = new ArrayList<>();
+            for (final RepoSourceItem sourceItemRecord : items) {
+                if (sourceItemRecord.getFeedName() == null) {
+                    LOGGER.error(() ->
+                            "Source item has no feed name: " +
+                                    fullPath +
+                                    " - " +
+                                    sourceItemRecord.getName());
+                } else {
+                    final long itemRecordId = sourceItemRecordId.incrementAndGet();
 
-                        final Object[] sourceItem = new Object[SOURCE_ITEM_COLUMNS.length];
-                        sourceItem[0] = itemRecordId;
-                        sourceItem[1] = sourceItemRecord.getName();
-                        sourceItem[2] = sourceItemRecord.getFeedName();
-                        sourceItem[3] = sourceItemRecord.getTypeName();
-                        sourceItem[4] = sourceItemRecord.getTotalByteSize();
-                        sourceItem[5] = sourceItemRecord.getSource().getId();
-                        sourceItem[6] = sourceItemRecord.getAggregateId();
-                        sourceItem[7] = writePos.incrementAndGet();
-                        sourceItems.add(sourceItem);
+                    final Object[] sourceItem = new Object[SOURCE_ITEM_COLUMNS.length];
+                    sourceItem[0] = itemRecordId;
+                    sourceItem[1] = sourceItemRecord.getName();
+                    sourceItem[2] = sourceItemRecord.getFeedName();
+                    sourceItem[3] = sourceItemRecord.getTypeName();
+                    sourceItem[4] = sourceItemRecord.getTotalByteSize();
+                    sourceItem[5] = sourceItemRecord.getSource().getId();
+                    sourceItem[6] = sourceItemRecord.getAggregateId();
+                    sourceItem[7] = writePos.incrementAndGet();
+                    sourceItems.add(sourceItem);
 
-                        final List<RepoSourceEntry> entries = sourceItemRecord.getEntries();
-                        for (final RepoSourceEntry entry : entries) {
-                            final long entryRecordId = sourceEntryRecordId.incrementAndGet();
+                    final List<RepoSourceEntry> entries = sourceItemRecord.getEntries();
+                    for (final RepoSourceEntry entry : entries) {
+                        final long entryRecordId = sourceEntryRecordId.incrementAndGet();
 
-                            final Object[] sourceEntry = new Object[SOURCE_ENTRY_COLUMNS.length];
-                            sourceEntry[0] = entryRecordId;
-                            sourceEntry[1] = entry.getExtension();
-                            sourceEntry[2] = entry.getType().getId();
-                            sourceEntry[3] = entry.getByteSize();
-                            sourceEntry[4] = itemRecordId;
-                            sourceEntries.add(sourceEntry);
-                        }
+                        final Object[] sourceEntry = new Object[SOURCE_ENTRY_COLUMNS.length];
+                        sourceEntry[0] = entryRecordId;
+                        sourceEntry[1] = entry.getExtension();
+                        sourceEntry[2] = entry.getType().getId();
+                        sourceEntry[3] = entry.getByteSize();
+                        sourceEntry[4] = itemRecordId;
+                        sourceEntries.add(sourceEntry);
                     }
                 }
+            }
 
-                jooq.transaction(context -> {
-                    insertItems(context, sourceItems);
-                    insertEntries(context, sourceEntries);
+            jooq.transaction(context -> {
+                insertItems(context, sourceItems);
+                insertEntries(context, sourceEntries);
 
-                    // Mark the source as having been examined.
-                    setSourceExamined(context, sourceId);
-                });
+                // Mark the source as having been examined.
+                setSourceExamined(context, sourceId);
             });
-            return null;
         });
     }
 
     private void insertItems(final DSLContext context, final List<Object[]> sourceItems) {
         if (sourceItems.size() > 0) {
-            final BatchBindStep batchBindStep = context.batch(context
+            BatchBindStep batchBindStep = context.batch(context
                     .insertInto(SOURCE_ITEM)
                     .columns(SOURCE_ITEM_COLUMNS)
                     .values(SOURCE_ITEM_VALUES));
             for (final Object[] sourceItem : sourceItems) {
-                batchBindStep.bind(sourceItem);
+                batchBindStep = batchBindStep.bind(sourceItem);
             }
             batchBindStep.execute();
         }
@@ -157,12 +161,12 @@ public class SourceItemDao {
 
     private void insertEntries(final DSLContext context, final List<Object[]> sourceEntries) {
         if (sourceEntries.size() > 0) {
-            final BatchBindStep batchBindStep = context.batch(context
+            BatchBindStep batchBindStep = context.batch(context
                     .insertInto(SOURCE_ENTRY)
                     .columns(SOURCE_ENTRY_COLUMNS)
                     .values(SOURCE_ENTRY_VALUES));
             for (final Object[] sourceEntry : sourceEntries) {
-                batchBindStep.bind(sourceEntry);
+                batchBindStep = batchBindStep.bind(sourceEntry);
             }
             batchBindStep.execute();
         }
@@ -187,7 +191,7 @@ public class SourceItemDao {
     }
 
     public Optional<RepoSourceItemRef> getSourceItemAtQueuePosition(final long position) {
-        return jooq.contextResult(context -> context
+        return jooq.readOnlyTransactionResult(context -> context
                         .select(SOURCE_ITEM.ID,
                                 SOURCE_ITEM.FEED_NAME,
                                 SOURCE_ITEM.TYPE_NAME,

@@ -21,7 +21,7 @@ import java.sql.SQLException;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
-public class ProxyRepoDbModule extends AbstractModule {
+public class ProxyDbModule extends AbstractModule {
 
     private static final String MODULE = "stroom-proxy-repo";
     private static final String FLYWAY_LOCATIONS = "stroom/proxy/repo/db/sqlite";

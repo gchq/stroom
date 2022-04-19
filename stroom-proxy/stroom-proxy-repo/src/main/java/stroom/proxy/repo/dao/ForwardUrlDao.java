@@ -16,6 +16,7 @@
 
 package stroom.proxy.repo.dao;
 
+import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.ForwardUrl;
 
 import java.util.List;
@@ -40,18 +41,23 @@ public class ForwardUrlDao {
     }
 
     private void init() {
-        final int maxForwardUrlRecordId = jooq.getMaxId(FORWARD_URL, FORWARD_URL.ID).orElse(0);
-        forwardUrlRecordId.set(maxForwardUrlRecordId);
+        jooq.readOnlyTransaction(context -> {
+            final int maxForwardUrlRecordId = JooqUtil.getMaxId(context, FORWARD_URL, FORWARD_URL.ID)
+                    .orElse(0);
+            forwardUrlRecordId.set(maxForwardUrlRecordId);
+        });
     }
 
     public void clear() {
-        jooq.deleteAll(FORWARD_URL);
-        jooq.checkEmpty(FORWARD_URL);
+        jooq.transaction(context -> {
+            JooqUtil.deleteAll(context, FORWARD_URL);
+            JooqUtil.checkEmpty(context, FORWARD_URL);
+        });
         init();
     }
 
     public List<ForwardUrl> getAllForwardUrls() {
-        return jooq.contextResult(context -> context
+        return jooq.readOnlyTransactionResult(context -> context
                         .select(FORWARD_URL.ID, FORWARD_URL.URL)
                         .from(FORWARD_URL)
                         .fetch())
@@ -60,7 +66,7 @@ public class ForwardUrlDao {
 
     public int getForwardUrlId(final String forwardUrl) {
         Objects.requireNonNull(forwardUrl, "The forward URL is null");
-        return jooq.contextResult(context -> {
+        return jooq.transactionResult(context -> {
             final Optional<Integer> optionalId = context
                     .select(FORWARD_URL.ID)
                     .from(FORWARD_URL)
@@ -79,6 +85,6 @@ public class ForwardUrlDao {
     }
 
     public int countForwardUrl() {
-        return jooq.count(FORWARD_URL);
+        return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, FORWARD_URL));
     }
 }

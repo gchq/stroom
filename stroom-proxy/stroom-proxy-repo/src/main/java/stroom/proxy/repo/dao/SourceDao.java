@@ -1,5 +1,6 @@
 package stroom.proxy.repo.dao;
 
+import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.WorkQueue;
 import stroom.util.logging.Metrics;
@@ -43,24 +44,27 @@ public class SourceDao {
     }
 
     private void init() {
-        Metrics.measure("SourceDao - init()", () -> {
-            newQueue = WorkQueue.createWithJooq(jooq, SOURCE, SOURCE.NEW_POSITION);
-            final long maxSourceRecordId = jooq.getMaxId(SOURCE, SOURCE.ID).orElse(0L);
-            sourceRecordId.set(maxSourceRecordId);
-        });
+        Metrics.measure("SourceDao - init()", () ->
+                jooq.readOnlyTransaction(context -> {
+                    newQueue = WorkQueue.createWithJooq(context, SOURCE, SOURCE.NEW_POSITION);
+                    final long maxSourceRecordId = JooqUtil.getMaxId(context, SOURCE, SOURCE.ID).orElse(0L);
+                    sourceRecordId.set(maxSourceRecordId);
+                }));
     }
 
     public void clear() {
         Metrics.measure("SourceDao - clear()", () -> {
-            jooq.deleteAll(SOURCE);
-            jooq.checkEmpty(SOURCE);
+            jooq.transaction(context -> {
+                JooqUtil.deleteAll(context, SOURCE);
+                JooqUtil.checkEmpty(context, SOURCE);
+            });
             init();
         });
     }
 
     public boolean pathExists(final String path) {
         return Metrics.measure("SourceDao - pathExists()", () ->
-                jooq.contextResult(context -> context
+                jooq.readOnlyTransactionResult(context -> context
                         .fetchExists(
                                 context
                                         .selectFrom(SOURCE)
@@ -86,76 +90,71 @@ public class SourceDao {
                           final String typeName,
                           final long lastModifiedTimeMs) {
         Metrics.measure("SourceDao - addSource()", () -> {
-            jooq.underLock(() -> {
-                // If a source already exists for the supplied path then return an empty optional.
-                if (!pathExists(path)) {
-                    newQueue.put(writePos -> {
-                        final long sourceId = sourceRecordId.incrementAndGet();
-                        jooq.context(context -> context
-                                .insertInto(
-                                        SOURCE,
-                                        SOURCE.ID,
-                                        SOURCE.PATH,
-                                        SOURCE.FEED_NAME,
-                                        SOURCE.TYPE_NAME,
-                                        SOURCE.LAST_MODIFIED_TIME_MS,
-                                        SOURCE.NEW_POSITION
-                                )
-                                .values(
-                                        sourceId,
-                                        path,
-                                        feedName,
-                                        typeName,
-                                        lastModifiedTimeMs,
-                                        writePos.incrementAndGet()
-                                )
-                                .execute());
-                    });
-                }
-                return null;
-            });
+            // If a source already exists for the supplied path then return an empty optional.
+            if (!pathExists(path)) {
+                newQueue.put(writePos ->
+                        jooq.transaction(context -> {
+                            final long sourceId = sourceRecordId.incrementAndGet();
+                            context
+                                    .insertInto(
+                                            SOURCE,
+                                            SOURCE.ID,
+                                            SOURCE.PATH,
+                                            SOURCE.FEED_NAME,
+                                            SOURCE.TYPE_NAME,
+                                            SOURCE.LAST_MODIFIED_TIME_MS,
+                                            SOURCE.NEW_POSITION
+                                    )
+                                    .values(
+                                            sourceId,
+                                            path,
+                                            feedName,
+                                            typeName,
+                                            lastModifiedTimeMs,
+                                            writePos.incrementAndGet()
+                                    )
+                                    .execute();
+                        }));
+            }
         });
     }
 
     public Optional<RepoSource> getNewSource() {
-        return Metrics.measure("SourceDao - getNewSource()", () -> {
-            return newQueue.get(this::getSourceAtPosition);
-        });
+        return Metrics.measure("SourceDao - getNewSource()", () ->
+                newQueue.get(this::getSourceAtPosition));
     }
 
     public Optional<RepoSource> getNewSource(final long timeout,
                                              final TimeUnit timeUnit) {
-        return Metrics.measure("SourceDao - getNewSource2()", () -> {
-            return newQueue.get(this::getSourceAtPosition, timeout, timeUnit);
-        });
+        return Metrics.measure("SourceDao - getNewSource2()", () ->
+                newQueue.get(this::getSourceAtPosition, timeout, timeUnit));
     }
 
     public Optional<RepoSource> getSourceAtPosition(final long position) {
-        return Metrics.measure("SourceDao - getSourceAtPosition()", () -> {
-            return jooq.contextResult(context -> context
-                            .select(SOURCE.ID,
-                                    SOURCE.PATH,
-                                    SOURCE.FEED_NAME,
-                                    SOURCE.TYPE_NAME,
-                                    SOURCE.LAST_MODIFIED_TIME_MS)
-                            .from(SOURCE)
-                            .where(SOURCE.NEW_POSITION.eq(position))
-                            .orderBy(SOURCE.ID)
-                            .fetchOptional())
-                    .map(r -> new RepoSource(
-                            r.get(SOURCE.ID),
-                            r.get(SOURCE.PATH),
-                            r.get(SOURCE.FEED_NAME),
-                            r.get(SOURCE.TYPE_NAME),
-                            r.get(SOURCE.LAST_MODIFIED_TIME_MS)
-                    ));
-        });
+        return Metrics.measure("SourceDao - getSourceAtPosition()", () ->
+                jooq.readOnlyTransactionResult(context -> context
+                                .select(SOURCE.ID,
+                                        SOURCE.PATH,
+                                        SOURCE.FEED_NAME,
+                                        SOURCE.TYPE_NAME,
+                                        SOURCE.LAST_MODIFIED_TIME_MS)
+                                .from(SOURCE)
+                                .where(SOURCE.NEW_POSITION.eq(position))
+                                .orderBy(SOURCE.ID)
+                                .fetchOptional())
+                        .map(r -> new RepoSource(
+                                r.get(SOURCE.ID),
+                                r.get(SOURCE.PATH),
+                                r.get(SOURCE.FEED_NAME),
+                                r.get(SOURCE.TYPE_NAME),
+                                r.get(SOURCE.LAST_MODIFIED_TIME_MS)
+                        )));
     }
 
     public int countSources() {
-        return Metrics.measure("SourceDao - countSources()", () -> {
-            return jooq.count(SOURCE);
-        });
+        return Metrics.measure("SourceDao - countSources()", () ->
+                jooq.readOnlyTransactionResult(context ->
+                        JooqUtil.count(context, SOURCE)));
     }
 
     /**
@@ -166,24 +165,24 @@ public class SourceDao {
      * @return A list of sources that are ready to be deleted.
      */
     public List<RepoSource> getDeletableSources() {
-        return Metrics.measure("SourceDao - getDeletableSources()", () -> {
-            return jooq.contextResult(context -> context
-                            .select(SOURCE.ID,
-                                    SOURCE.PATH,
-                                    SOURCE.FEED_NAME,
-                                    SOURCE.TYPE_NAME,
-                                    SOURCE.LAST_MODIFIED_TIME_MS)
-                            .from(SOURCE)
-                            .where(DELETE_SOURCE_CONDITION)
-                            .fetch())
-                    .map(r -> new RepoSource(
-                            r.get(SOURCE.ID),
-                            r.get(SOURCE.PATH),
-                            r.get(SOURCE.FEED_NAME),
-                            r.get(SOURCE.TYPE_NAME),
-                            r.get(SOURCE.LAST_MODIFIED_TIME_MS)
-                    ));
-        });
+        return Metrics.measure("SourceDao - getDeletableSources()", () ->
+                jooq.readOnlyTransactionResult(context -> context
+                                .select(SOURCE.ID,
+                                        SOURCE.PATH,
+                                        SOURCE.FEED_NAME,
+                                        SOURCE.TYPE_NAME,
+                                        SOURCE.LAST_MODIFIED_TIME_MS)
+                                .from(SOURCE)
+                                .where(DELETE_SOURCE_CONDITION)
+                                .limit(1000)
+                                .fetch())
+                        .map(r -> new RepoSource(
+                                r.get(SOURCE.ID),
+                                r.get(SOURCE.PATH),
+                                r.get(SOURCE.FEED_NAME),
+                                r.get(SOURCE.TYPE_NAME),
+                                r.get(SOURCE.LAST_MODIFIED_TIME_MS)
+                        )));
     }
 
     /**
@@ -193,22 +192,18 @@ public class SourceDao {
      * @return The number of rows changed.
      */
     public int deleteSource(final long sourceId) {
-        return Metrics.measure("SourceDao - deleteSource()", () -> {
-            return jooq.underLock(() ->
-                    jooq.contextResult(context -> context
-                            .deleteFrom(SOURCE)
-                            .where(SOURCE.ID.eq(sourceId))
-                            .execute()));
-        });
+        return Metrics.measure("SourceDao - deleteSource()", () ->
+                jooq.transactionResult(context -> context
+                        .deleteFrom(SOURCE)
+                        .where(SOURCE.ID.eq(sourceId))
+                        .execute()));
     }
 
     public void resetExamined() {
-        Metrics.measure("SourceDao - resetExamined()", () -> {
-            jooq.underLock(() ->
-                    jooq.contextResult(context -> context
-                            .update(SOURCE)
-                            .set(SOURCE.EXAMINED, false)
-                            .execute()));
-        });
+        Metrics.measure("SourceDao - resetExamined()", () ->
+                jooq.transaction(context -> context
+                        .update(SOURCE)
+                        .set(SOURCE.EXAMINED, false)
+                        .execute()));
     }
 }

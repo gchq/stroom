@@ -22,7 +22,7 @@ import stroom.proxy.repo.MockForwardDestinations;
 import stroom.proxy.repo.MockSender;
 import stroom.proxy.repo.ProgressLog;
 import stroom.proxy.repo.ProgressLogImpl;
-import stroom.proxy.repo.ProxyRepoDbModule;
+import stroom.proxy.repo.ProxyDbModule;
 import stroom.proxy.repo.RepoDbDirProvider;
 import stroom.proxy.repo.RepoDbDirProviderImpl;
 import stroom.proxy.repo.RepoDirProvider;
@@ -71,7 +71,7 @@ public class StoreAndForwardTestModule extends AbstractModule {
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new DbModule());
-        install(new ProxyRepoDbModule());
+        install(new ProxyDbModule());
         install(new MockCollectionModule());
 
         install(new DictionaryModule());

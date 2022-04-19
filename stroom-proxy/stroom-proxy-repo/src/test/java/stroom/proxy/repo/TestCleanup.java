@@ -1,5 +1,6 @@
 package stroom.proxy.repo;
 
+import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.dao.SqliteJooqHelper;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -35,9 +36,7 @@ public class TestCleanup {
     @Inject
     private MockForwardDestinations mockForwardDestinations;
     @Inject
-    private ProxyRepoDbConnProvider connProvider;
-    @Inject
-    private SqliteJooqHelper jooqHelper;
+    private SqliteJooqHelper jooq;
 
     @BeforeEach
     void beforeEach() {
@@ -50,8 +49,7 @@ public class TestCleanup {
 
     @Test
     void testCleanup() {
-        final SqliteJooqHelper jooq = new SqliteJooqHelper(connProvider);
-        jooq.context(context -> {
+        jooq.transaction(context -> {
             long sourceId = 0;
             long sourceItemId = 0;
             long sourceEntryId = 0;
@@ -180,44 +178,50 @@ public class TestCleanup {
         });
 
         // Make sure we can't delete any sources.
-        jooqHelper.printAllTables();
+        jooq.printAllTables();
         assertThat(proxyRepoSources.getDeletableSources().size()).isZero();
 
         // Now pretend we forwarded the first aggregates.
-        jooqHelper.printAllTables();
+        jooq.printAllTables();
         forward(1);
 
         // Make sure we can delete source entries and items but not data.
-        jooqHelper.printAllTables();
+        jooq.printAllTables();
         assertThat(proxyRepoSources.getDeletableSources().size()).isZero();
 
         // Now forward some more.
-        jooqHelper.printAllTables();
+        jooq.printAllTables();
         forward(2);
 
         // Check we can now delete the first source.
-        jooqHelper.printAllTables();
+        jooq.printAllTables();
         assertThat(proxyRepoSources.getDeletableSources().size()).isOne();
 
         // Forward remaining.
-        jooqHelper.printAllTables();
+        jooq.printAllTables();
 
-        final long minId = jooq.getMinId(FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID).orElse(0L);
-        final long maxId = jooq.getMaxId(FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID).orElse(0L);
+        final long minId = jooq.readOnlyTransactionResult(context ->
+                JooqUtil.getMinId(context, FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID)
+                        .orElse(0L));
+        final long maxId = jooq.readOnlyTransactionResult(context ->
+                JooqUtil.getMaxId(context, FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID)
+                        .orElse(0L));
         for (long i = minId; i <= maxId; i++) {
             forward(i);
         }
 
         // Check everything is deleted.
-        jooqHelper.printAllTables();
+        jooq.printAllTables();
         assertThat(proxyRepoSources.getDeletableSources().size()).isEqualTo(12);
 
         cleanup.cleanupSources();
 
         // Check we have no source left
-        assertThat(jooq.count(SOURCE_ENTRY)).isZero();
-        assertThat(jooq.count(SOURCE_ITEM)).isZero();
-        assertThat(jooq.count(SOURCE)).isZero();
+        jooq.readOnlyTransaction(context -> {
+            assertThat(JooqUtil.count(context, SOURCE_ENTRY)).isZero();
+            assertThat(JooqUtil.count(context, SOURCE_ITEM)).isZero();
+            assertThat(JooqUtil.count(context, SOURCE)).isZero();
+        });
     }
 
     private void forward(long aggregateId) {

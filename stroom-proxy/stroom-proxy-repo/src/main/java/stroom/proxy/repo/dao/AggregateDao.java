@@ -1,6 +1,7 @@
 package stroom.proxy.repo.dao;
 
 import stroom.data.zip.StroomZipFileType;
+import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.Aggregate;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceEntry;
@@ -48,14 +49,18 @@ public class AggregateDao {
     }
 
     private void init() {
-        completedAggregateQueue = WorkQueue.createWithJooq(jooq, AGGREGATE, AGGREGATE.NEW_POSITION);
-        final long maxAggregateRecordId = jooq.getMaxId(AGGREGATE, AGGREGATE.ID).orElse(0L);
-        aggregateRecordId.set(maxAggregateRecordId);
+        jooq.readOnlyTransaction(context -> {
+            completedAggregateQueue = WorkQueue.createWithJooq(context, AGGREGATE, AGGREGATE.NEW_POSITION);
+            final long maxAggregateRecordId = JooqUtil.getMaxId(context, AGGREGATE, AGGREGATE.ID).orElse(0L);
+            aggregateRecordId.set(maxAggregateRecordId);
+        });
     }
 
     public void clear() {
-        jooq.deleteAll(AGGREGATE);
-        jooq.checkEmpty(AGGREGATE);
+        jooq.transaction(context -> {
+            JooqUtil.deleteAll(context, AGGREGATE);
+            JooqUtil.checkEmpty(context, AGGREGATE);
+        });
         init();
     }
 
@@ -74,8 +79,7 @@ public class AggregateDao {
                                         AGGREGATE.CREATE_TIME_MS.lessOrEqual(oldestMs)
                                 )
                         );
-
-        return jooq.contextResult(context -> context
+        return jooq.readOnlyTransactionResult(context -> context
                         .select(AGGREGATE.ID, AGGREGATE.FEED_NAME, AGGREGATE.TYPE_NAME)
                         .from(AGGREGATE)
                         .where(condition)
@@ -83,21 +87,17 @@ public class AggregateDao {
                 .map(r -> new Aggregate(
                         r.value1(),
                         r.value2(),
-                        r.value3()
-                ));
+                        r.value3()));
     }
 
     public void closeAggregate(final Aggregate aggregate) {
-        jooq.underLock(() -> {
-            completedAggregateQueue.put(writePos ->
-                    jooq.context(context -> context
-                            .update(AGGREGATE)
-                            .set(AGGREGATE.COMPLETE, true)
-                            .set(AGGREGATE.NEW_POSITION, writePos.incrementAndGet())
-                            .where(AGGREGATE.ID.eq(aggregate.getId()))
-                            .execute()));
-            return null;
-        });
+        completedAggregateQueue.put(writePos ->
+                jooq.transaction(context -> context
+                        .update(AGGREGATE)
+                        .set(AGGREGATE.COMPLETE, true)
+                        .set(AGGREGATE.NEW_POSITION, writePos.incrementAndGet())
+                        .where(AGGREGATE.ID.eq(aggregate.getId()))
+                        .execute()));
     }
 
     public Optional<Aggregate> getNewAggregate() {
@@ -110,7 +110,7 @@ public class AggregateDao {
     }
 
     private Optional<Aggregate> getAggregateAtQueuePosition(final long position) {
-        return jooq.contextResult(context -> context
+        return jooq.readOnlyTransactionResult(context -> context
                         .select(AGGREGATE.ID, AGGREGATE.FEED_NAME, AGGREGATE.TYPE_NAME)
                         .from(AGGREGATE)
                         .where(AGGREGATE.NEW_POSITION.eq(position))
@@ -126,90 +126,86 @@ public class AggregateDao {
     public void addItem(final RepoSourceItemRef sourceItem,
                         final int maxItemsPerAggregate,
                         final long maxUncompressedByteSize) {
-        jooq.underLock(() -> {
-            final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - sourceItem.getTotalByteSize());
+        final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - sourceItem.getTotalByteSize());
 
-            LOGGER.debug(() -> "addItem - " +
-                    "feed=" +
-                    sourceItem.getFeedName() +
-                    ", type=" +
-                    sourceItem.getTypeName() +
-                    ", maxAggregateSize=" +
-                    maxAggregateSize +
-                    ", maxItemsPerAggregate=" +
-                    maxItemsPerAggregate);
+        LOGGER.debug(() -> "addItem - " +
+                "feed=" +
+                sourceItem.getFeedName() +
+                ", type=" +
+                sourceItem.getTypeName() +
+                ", maxAggregateSize=" +
+                maxAggregateSize +
+                ", maxItemsPerAggregate=" +
+                maxItemsPerAggregate);
 
-            final Condition condition = DSL
-                    .and(sourceItem.getFeedName() == null
-                            ? AGGREGATE.FEED_NAME.isNull()
-                            : AGGREGATE.FEED_NAME.equal(sourceItem.getFeedName()))
-                    .and(sourceItem.getTypeName() == null
-                            ? AGGREGATE.TYPE_NAME.isNull()
-                            : AGGREGATE.TYPE_NAME.equal(sourceItem.getTypeName()))
-                    .and(AGGREGATE.BYTE_SIZE.lessOrEqual(maxAggregateSize))
-                    .and(AGGREGATE.ITEMS.lessThan(maxItemsPerAggregate))
-                    .and(AGGREGATE.COMPLETE.isFalse());
+        final Condition condition = DSL
+                .and(sourceItem.getFeedName() == null
+                        ? AGGREGATE.FEED_NAME.isNull()
+                        : AGGREGATE.FEED_NAME.equal(sourceItem.getFeedName()))
+                .and(sourceItem.getTypeName() == null
+                        ? AGGREGATE.TYPE_NAME.isNull()
+                        : AGGREGATE.TYPE_NAME.equal(sourceItem.getTypeName()))
+                .and(AGGREGATE.BYTE_SIZE.lessOrEqual(maxAggregateSize))
+                .and(AGGREGATE.ITEMS.lessThan(maxItemsPerAggregate))
+                .and(AGGREGATE.COMPLETE.isFalse());
 
-            jooq.transaction(context -> {
-                // See if we can get an existing aggregate that will fit this data collection.
+        jooq.transaction(context -> {
+            // See if we can get an existing aggregate that will fit this data collection.
 
-                // Note that there may be more than one aggregate that can fit the record as we may have built more than
-                // one as a previous one may not have had enough room for a new item so another aggregate might have
-                // been started.
-                Long aggregateId;
-                try (final Cursor<AggregateRecord> cursor = context
-                        .selectFrom(AGGREGATE)
-                        .where(condition)
-                        .orderBy(AGGREGATE.CREATE_TIME_MS)
-                        .fetchLazy()) {
-                    aggregateId = cursor
-                            .fetchNextOptional()
-                            .map(AggregateRecord::getId)
-                            .orElse(null);
-                }
+            // Note that there may be more than one aggregate that can fit the record as we may have built more than
+            // one as a previous one may not have had enough room for a new item so another aggregate might have
+            // been started.
+            Long aggregateId;
+            try (final Cursor<AggregateRecord> cursor = context
+                    .selectFrom(AGGREGATE)
+                    .where(condition)
+                    .orderBy(AGGREGATE.CREATE_TIME_MS)
+                    .fetchLazy()) {
+                aggregateId = cursor
+                        .fetchNextOptional()
+                        .map(AggregateRecord::getId)
+                        .orElse(null);
+            }
 
-                if (aggregateId != null) {
-                    // We have somewhere we can add the data collection so add it to the aggregate.
-                    context
-                            .update(AGGREGATE)
-                            .set(AGGREGATE.BYTE_SIZE, AGGREGATE.BYTE_SIZE.plus(sourceItem.getTotalByteSize()))
-                            .set(AGGREGATE.ITEMS, AGGREGATE.ITEMS.plus(1))
-                            .where(AGGREGATE.ID.eq(aggregateId))
-                            .execute();
-
-                } else {
-                    // Create a new aggregate to add this data collection to.
-                    aggregateId = aggregateRecordId.incrementAndGet();
-                    context
-                            .insertInto(
-                                    AGGREGATE,
-                                    AGGREGATE.ID,
-                                    AGGREGATE.FEED_NAME,
-                                    AGGREGATE.TYPE_NAME,
-                                    AGGREGATE.BYTE_SIZE,
-                                    AGGREGATE.ITEMS,
-                                    AGGREGATE.CREATE_TIME_MS,
-                                    AGGREGATE.COMPLETE)
-                            .values(aggregateId,
-                                    sourceItem.getFeedName(),
-                                    sourceItem.getTypeName(),
-                                    sourceItem.getTotalByteSize(),
-                                    1,
-                                    System.currentTimeMillis(),
-                                    false)
-                            .execute();
-                }
-
-                // Mark the item as added by setting the aggregate id.
+            if (aggregateId != null) {
+                // We have somewhere we can add the data collection so add it to the aggregate.
                 context
-                        .update(SOURCE_ITEM)
-                        .set(SOURCE_ITEM.AGGREGATE_ID, aggregateId)
-                        .setNull(SOURCE_ITEM.NEW_POSITION)
-                        .where(SOURCE_ITEM.ID.eq(sourceItem.getId()))
+                        .update(AGGREGATE)
+                        .set(AGGREGATE.BYTE_SIZE, AGGREGATE.BYTE_SIZE.plus(sourceItem.getTotalByteSize()))
+                        .set(AGGREGATE.ITEMS, AGGREGATE.ITEMS.plus(1))
+                        .where(AGGREGATE.ID.eq(aggregateId))
                         .execute();
-            });
 
-            return null;
+            } else {
+                // Create a new aggregate to add this data collection to.
+                aggregateId = aggregateRecordId.incrementAndGet();
+                context
+                        .insertInto(
+                                AGGREGATE,
+                                AGGREGATE.ID,
+                                AGGREGATE.FEED_NAME,
+                                AGGREGATE.TYPE_NAME,
+                                AGGREGATE.BYTE_SIZE,
+                                AGGREGATE.ITEMS,
+                                AGGREGATE.CREATE_TIME_MS,
+                                AGGREGATE.COMPLETE)
+                        .values(aggregateId,
+                                sourceItem.getFeedName(),
+                                sourceItem.getTypeName(),
+                                sourceItem.getTotalByteSize(),
+                                1,
+                                System.currentTimeMillis(),
+                                false)
+                        .execute();
+            }
+
+            // Mark the item as added by setting the aggregate id.
+            context
+                    .update(SOURCE_ITEM)
+                    .set(SOURCE_ITEM.AGGREGATE_ID, aggregateId)
+                    .setNull(SOURCE_ITEM.NEW_POSITION)
+                    .where(SOURCE_ITEM.ID.eq(sourceItem.getId()))
+                    .execute();
         });
     }
 
@@ -221,10 +217,11 @@ public class AggregateDao {
      */
     public Map<RepoSource, List<RepoSourceItem>> fetchSourceItems(final long aggregateId) {
         final Map<Long, RepoSourceItem> items = new HashMap<>();
-        final Map<RepoSource, List<RepoSourceItem>> resultMap = new TreeMap<>(Comparator.comparing(RepoSource::getId));
+        final Map<RepoSource, List<RepoSourceItem>> resultMap =
+                new TreeMap<>(Comparator.comparing(RepoSource::getId));
 
         // Get all of the source zip entries that we want to write to the forwarding location.
-        jooq.contextResult(context -> context
+        jooq.readOnlyTransactionResult(context -> context
                         .select(
                                 SOURCE_ENTRY.ID,
                                 SOURCE_ENTRY.EXTENSION,
@@ -286,6 +283,6 @@ public class AggregateDao {
     }
 
     public int countAggregates() {
-        return jooq.count(AGGREGATE);
+        return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, AGGREGATE));
     }
 }

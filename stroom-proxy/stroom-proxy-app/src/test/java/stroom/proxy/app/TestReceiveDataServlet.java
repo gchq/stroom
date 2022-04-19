@@ -1,5 +1,7 @@
 package stroom.proxy.app;
 
+import stroom.util.shared.ModelStringUtil;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -28,13 +30,16 @@ public class TestReceiveDataServlet {
         for (int i = 0; i < threadCount; i++) {
             arr[i] = CompletableFuture.runAsync(() -> {
                 while (true) {
-                    count.increment();
-                    post(httpClient);
+                    if (post(httpClient)) {
+                        count.increment();
+                    }
                 }
             });
         }
 
         CompletableFuture.runAsync(() -> {
+            long lastTime = startTime;
+            long lastCount = 0;
             while (true) {
                 try {
                     Thread.sleep(10000);
@@ -42,15 +47,34 @@ public class TestReceiveDataServlet {
                     System.err.println(e.getMessage());
                 }
 
-                final double seconds = (System.currentTimeMillis() - startTime) / 1000D;
-                final double num = count.longValue();
-                System.out.println("Posts per second = " + (long) (num / seconds) + " (" + num + ")");
+                final long now = System.currentTimeMillis();
+                final long totalCount = count.longValue();
+                final long deltaCount = totalCount - lastCount;
+                final double totalSeconds = (now - startTime) / 1000D;
+                final double deltaSeconds = (now - lastTime) / 1000D;
+
+                System.out.println("Posts " +
+                        "Delta: " +
+                        deltaCount +
+                        " in " +
+                        ModelStringUtil.formatDurationString(now - lastTime) +
+                        " " +
+                        (long) (deltaCount / deltaSeconds) + "pps" +
+                        " " +
+                        "Total: " + totalCount +
+                        " in " +
+                        ModelStringUtil.formatDurationString(now - startTime) +
+                        " " +
+                        (long) (totalCount / totalSeconds) + "pps");
+
+                lastTime = now;
+                lastCount = totalCount;
             }
         });
         CompletableFuture.allOf(arr).join();
     }
 
-    private static void post(final HttpClient httpClient) {
+    private static boolean post(final HttpClient httpClient) {
         try {
             final HttpPost httpPost = new HttpPost("http://127.0.0.1:8090/stroom/noauth/datafeed");
             httpPost.addHeader("Feed", "TEST-EVENTS");
@@ -69,8 +93,11 @@ public class TestReceiveDataServlet {
                     // do something useful
                 }
             }
+
+            return response.getStatusLine().getStatusCode() == 200;
         } catch (final Exception e) {
             System.err.println(e.getMessage());
         }
+        return false;
     }
 }

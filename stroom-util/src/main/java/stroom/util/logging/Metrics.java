@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
@@ -14,15 +15,11 @@ public class Metrics {
 
     private static final Map<String, Metric> map = new ConcurrentHashMap<>();
     private static boolean enabled = true;
-    private static AtomicBoolean periodicReport = new AtomicBoolean();
+    private static final AtomicBoolean periodicReport = new AtomicBoolean();
 
     public static <R> R measure(final String name, final Supplier<R> runnable) {
         if (enabled) {
-            long start = System.nanoTime();
-            R result = runnable.get();
-            long elapsed = System.nanoTime() - start;
-            map.computeIfAbsent(name, k -> new Metric()).increment(elapsed);
-            return result;
+            return map.computeIfAbsent(name, k -> new Metric()).call(runnable);
         } else {
             return runnable.get();
         }
@@ -30,10 +27,10 @@ public class Metrics {
 
     public static void measure(final String name, final Runnable runnable) {
         if (enabled) {
-            long start = System.nanoTime();
-            runnable.run();
-            long elapsed = System.nanoTime() - start;
-            map.computeIfAbsent(name, k -> new Metric()).increment(elapsed);
+            map.computeIfAbsent(name, k -> new Metric()).call(() -> {
+                runnable.run();
+                return null;
+            });
         } else {
             runnable.run();
         }
@@ -62,7 +59,7 @@ public class Metrics {
                 .sorted(Entry.comparingByKey())
                 .forEach(e -> {
                     sb.append(e.getKey());
-                    sb.append(" in: ");
+                    sb.append(": ");
                     sb.append(e.getValue());
                     sb.append("\n");
                 });
@@ -79,17 +76,87 @@ public class Metrics {
 
     private static class Metric {
 
-        private final LongAdder elapsedNanos = new LongAdder();
-        private final LongAdder calls = new LongAdder();
 
-        public void increment(final long nanos) {
-            elapsedNanos.add(nanos);
-            calls.increment();
+        private final AtomicLong lastElapsed = new AtomicLong();
+        private final AtomicLong lastCalls = new AtomicLong();
+        private final ThreadLocal<Call> localCall = new ThreadLocal<>();
+        private final Map<Thread, Call> currentCalls = new ConcurrentHashMap<>();
+
+        public <R> R call(final Supplier<R> supplier) {
+            Call call = localCall.get();
+            if (call == null) {
+                call = currentCalls.computeIfAbsent(Thread.currentThread(), k -> new Call());
+                localCall.set(call);
+            }
+            return call.call(supplier);
         }
+
+//        public void increment(final long nanos) {
+//            elapsedNanos.add(nanos);
+//            calls.increment();
+//        }
 
         @Override
         public String toString() {
-            return ModelStringUtil.formatDurationString(elapsedNanos.longValue() / 1000000) + " (" + calls.longValue() + ")";
+            final LongAdder totalElapsedNanos = new LongAdder();
+            final LongAdder totalCalls = new LongAdder();
+            currentCalls.values().forEach(call -> {
+                totalElapsedNanos.add(call.getElapsedNanos());
+                totalCalls.add(call.getCalls());
+            });
+
+            final long lastCalls = this.lastCalls.get();
+            final long lastElapsed = this.lastElapsed.get();
+            final long calls = totalCalls.longValue();
+            final long elapsed = totalElapsedNanos.longValue();
+            final long deltaCalls = calls - lastCalls;
+            final long deltaElapsed = elapsed - lastElapsed;
+            this.lastCalls.set(calls);
+            this.lastElapsed.set(elapsed);
+            long deltaCallsPerSecond = 0;
+            if (deltaElapsed > 0) {
+                deltaCallsPerSecond = (long) (deltaCalls / (deltaElapsed / 1000000000D));
+            }
+            long callsPerSecond = 0;
+            if (elapsed > 0) {
+                callsPerSecond = (long) (calls / (elapsed / 1000000000D));
+            }
+            final String elapsedString = ModelStringUtil.formatDurationString(elapsed / 1000000);
+            final String deltaElapsedString = ModelStringUtil.formatDurationString(deltaElapsed / 1000000);
+            return "Delta " + deltaCalls + " in " + deltaElapsedString + " " + deltaCallsPerSecond + "cps " +
+                    "Total " + calls + " in " + elapsedString + " " + callsPerSecond + "cps";
+        }
+    }
+
+    private static class Call {
+
+        private volatile long calls = 0;
+        private volatile long elapsed = 0;
+        private long startTime = -1;
+
+        public <R> R call(final Supplier<R> supplier) {
+            synchronized (this) {
+                calls++;
+                startTime = System.nanoTime();
+            }
+            R r = supplier.get();
+            final long delta = System.nanoTime() - startTime;
+            synchronized (this) {
+                elapsed += delta;
+                startTime = -1;
+            }
+            return r;
+        }
+
+        public synchronized long getCalls() {
+            return calls;
+        }
+
+        public synchronized long getElapsedNanos() {
+            if (startTime != -1) {
+                return elapsed + (System.nanoTime() - startTime);
+            }
+            return elapsed;
         }
     }
 }

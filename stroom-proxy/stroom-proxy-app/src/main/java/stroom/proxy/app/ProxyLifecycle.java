@@ -10,6 +10,7 @@ import stroom.proxy.repo.FrequencyExecutor;
 import stroom.proxy.repo.ParallelExecutor;
 import stroom.proxy.repo.ProxyRepo;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.proxy.repo.ProxyRepoDbMaintenance;
 import stroom.proxy.repo.ProxyRepoFileScanner;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.proxy.repo.RepoSourceItems;
@@ -33,6 +34,7 @@ public class ProxyLifecycle implements Managed {
 
     @Inject
     public ProxyLifecycle(final ProxyRepoConfig proxyRepoConfig,
+                          final ProxyRepoDbMaintenance proxyRepoDbMaintenance,
                           final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig,
                           final AggregatorConfig aggregatorConfig,
                           final ForwarderConfig forwarderConfig,
@@ -141,6 +143,9 @@ public class ProxyLifecycle implements Managed {
                         () -> cleanup::cleanupSources,
                         proxyRepoConfig.getCleanupFrequency().toMillis());
             }
+
+            // Add DB maintenance tasks.
+            services.addAll(proxyRepoDbMaintenance.getServices());
         }
     }
 

@@ -1,5 +1,6 @@
 package stroom.proxy.repo.dao;
 
+import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.ForwardSource;
 import stroom.proxy.repo.ForwardUrl;
 import stroom.proxy.repo.RepoSource;
@@ -47,16 +48,20 @@ public class ForwardSourceDao {
     }
 
     private void init() {
-        newQueue = WorkQueue.createWithJooq(jooq, FORWARD_SOURCE, FORWARD_SOURCE.NEW_POSITION);
-        retryQueue = WorkQueue.createWithJooq(jooq, FORWARD_SOURCE, FORWARD_SOURCE.RETRY_POSITION);
-        final long maxForwardSourceRecordId = jooq
-                .getMaxId(FORWARD_SOURCE, FORWARD_SOURCE.ID).orElse(0L);
-        forwardSourceId.set(maxForwardSourceRecordId);
+        jooq.readOnlyTransaction(context -> {
+            newQueue = WorkQueue.createWithJooq(context, FORWARD_SOURCE, FORWARD_SOURCE.NEW_POSITION);
+            retryQueue = WorkQueue.createWithJooq(context, FORWARD_SOURCE, FORWARD_SOURCE.RETRY_POSITION);
+            final long maxForwardSourceRecordId = JooqUtil.getMaxId(context, FORWARD_SOURCE, FORWARD_SOURCE.ID)
+                    .orElse(0L);
+            forwardSourceId.set(maxForwardSourceRecordId);
+        });
     }
 
     public void clear() {
-        jooq.deleteAll(FORWARD_SOURCE);
-        jooq.checkEmpty(FORWARD_SOURCE);
+        jooq.transaction(context -> {
+            JooqUtil.deleteAll(context, FORWARD_SOURCE);
+            JooqUtil.checkEmpty(context, FORWARD_SOURCE);
+        });
         init();
     }
 
@@ -66,11 +71,10 @@ public class ForwardSourceDao {
      * @return The number of rows deleted.
      */
     public int deleteFailedForwards() {
-        return jooq.underLock(() ->
-                jooq.contextResult(context -> context
-                        .deleteFrom(FORWARD_SOURCE)
-                        .where(FORWARD_SOURCE.SUCCESS.isFalse())
-                        .execute()));
+        return jooq.transactionResult(context -> context
+                .deleteFrom(FORWARD_SOURCE)
+                .where(FORWARD_SOURCE.SUCCESS.isFalse())
+                .execute());
     }
 
     /**
@@ -80,7 +84,7 @@ public class ForwardSourceDao {
      * @return A map of forward URL ids to success state.
      */
     public Map<Integer, Boolean> getForwardingState(final long sourceId) {
-        return jooq.contextResult(context -> context
+        return jooq.readOnlyTransactionResult(context -> context
                 .select(FORWARD_SOURCE.FK_FORWARD_URL_ID, FORWARD_SOURCE.SUCCESS)
                 .from(FORWARD_SOURCE)
                 .where(FORWARD_SOURCE.SOURCE_ID.eq(sourceId))
@@ -91,13 +95,13 @@ public class ForwardSourceDao {
 
     public void addNewForwardSources(final List<ForwardUrl> newForwardUrls) {
         if (newForwardUrls.size() > 0) {
-            jooq.context(context -> {
+            jooq.transaction(context -> {
                 try (Stream<Record1<Long>> stream = context
                         .select(SOURCE.ID)
                         .from(SOURCE)
                         .where(NEW_SOURCE_CONDITION)
                         .stream()) {
-                    stream.forEach(r -> createForwardSources(r.get(SOURCE.ID), newForwardUrls));
+                    stream.forEach(r -> createForwardSources(context, r.get(SOURCE.ID), newForwardUrls));
                 }
             });
         }
@@ -110,13 +114,10 @@ public class ForwardSourceDao {
                     .map(ForwardUrl::getId)
                     .collect(Collectors.toList());
 
-            jooq.underLock(() -> {
-                jooq.transaction(context -> context
-                        .deleteFrom(FORWARD_SOURCE)
-                        .where(FORWARD_SOURCE.FK_FORWARD_URL_ID.in(oldIdList))
-                        .execute());
-                return null;
-            });
+            jooq.transaction(context -> context
+                    .deleteFrom(FORWARD_SOURCE)
+                    .where(FORWARD_SOURCE.FK_FORWARD_URL_ID.in(oldIdList))
+                    .execute());
         }
     }
 
@@ -125,37 +126,40 @@ public class ForwardSourceDao {
      */
     public void createForwardSources(final long sourceId,
                                      final List<ForwardUrl> forwardUrls) {
-        jooq.underLock(() -> {
-            newQueue.put(writePos ->
-                    jooq.transaction(context -> {
-                        for (final ForwardUrl forwardUrl : forwardUrls) {
-                            final long id = forwardSourceId.incrementAndGet();
-                            context
-                                    .insertInto(
-                                            FORWARD_SOURCE,
-                                            FORWARD_SOURCE.ID,
-                                            FORWARD_SOURCE.UPDATE_TIME_MS,
-                                            FORWARD_SOURCE.FK_FORWARD_URL_ID,
-                                            FORWARD_SOURCE.SOURCE_ID,
-                                            FORWARD_SOURCE.SUCCESS,
-                                            FORWARD_SOURCE.NEW_POSITION)
-                                    .values(id,
-                                            System.currentTimeMillis(),
-                                            forwardUrl.getId(),
-                                            sourceId,
-                                            false,
-                                            writePos.incrementAndGet())
-                                    .execute();
-                        }
+        jooq.transaction(context -> createForwardSources(context, sourceId, forwardUrls));
+    }
 
-                        // Remove the queue position from the aggregate, so we don't try and create forwarders again.
-                        context
-                                .update(SOURCE)
-                                .setNull(SOURCE.NEW_POSITION)
-                                .where(SOURCE.ID.eq(sourceId))
-                                .execute();
-                    }));
-            return null;
+    private void createForwardSources(final DSLContext context,
+                                      final long sourceId,
+                                      final List<ForwardUrl> forwardUrls) {
+        newQueue.put(writePos -> {
+            for (final ForwardUrl forwardUrl : forwardUrls) {
+                final long id = forwardSourceId.incrementAndGet();
+                context
+                        .insertInto(
+                                FORWARD_SOURCE,
+                                FORWARD_SOURCE.ID,
+                                FORWARD_SOURCE.UPDATE_TIME_MS,
+                                FORWARD_SOURCE.FK_FORWARD_URL_ID,
+                                FORWARD_SOURCE.SOURCE_ID,
+                                FORWARD_SOURCE.SUCCESS,
+                                FORWARD_SOURCE.NEW_POSITION)
+                        .values(id,
+                                System.currentTimeMillis(),
+                                forwardUrl.getId(),
+                                sourceId,
+                                false,
+                                writePos.incrementAndGet())
+                        .execute();
+            }
+
+            // Remove the queue position from the aggregate, so we don't try and create forwarders
+            // again.
+            context
+                    .update(SOURCE)
+                    .setNull(SOURCE.NEW_POSITION)
+                    .where(SOURCE.ID.eq(sourceId))
+                    .execute();
         });
     }
 
@@ -193,7 +197,7 @@ public class ForwardSourceDao {
 
     private Optional<ForwardSource> getForwardSourceAtQueuePosition(final long position,
                                                                     final Field<Long> positionField) {
-        return jooq.contextResult(context -> context
+        return jooq.readOnlyTransactionResult(context -> context
                         .select(FORWARD_SOURCE.ID,
                                 FORWARD_SOURCE.UPDATE_TIME_MS,
                                 FORWARD_SOURCE.FK_FORWARD_URL_ID,
@@ -238,42 +242,35 @@ public class ForwardSourceDao {
             final long sourceId = forwardSource.getSource().getId();
 
             // Mark success and see if we can delete this record and cascade.
-            jooq.underLock(() -> {
-                jooq.transaction(context -> {
-                    // We finished forwarding a source so delete all related forward aggregate records.
-                    updateForwardSource(context, forwardSource, null);
+            jooq.transaction(context -> {
+                // We finished forwarding a source so delete all related forward aggregate records.
+                updateForwardSource(context, forwardSource, null);
 
-                    final Condition condition = FORWARD_SOURCE.SOURCE_ID
-                            .eq(forwardSource.getSource().getId())
-                            .and(FORWARD_SOURCE.SUCCESS.ne(true));
-                    final int remainingForwards = context.fetchCount(FORWARD_SOURCE, condition);
-                    if (remainingForwards == 0) {
-                        // Delete forward records.
-                        context
-                                .delete(FORWARD_SOURCE)
-                                .where(FORWARD_SOURCE.SOURCE_ID.eq(sourceId))
-                                .execute();
+                final Condition condition = FORWARD_SOURCE.SOURCE_ID
+                        .eq(forwardSource.getSource().getId())
+                        .and(FORWARD_SOURCE.SUCCESS.ne(true));
+                final int remainingForwards = context.fetchCount(FORWARD_SOURCE, condition);
+                if (remainingForwards == 0) {
+                    // Delete forward records.
+                    context
+                            .delete(FORWARD_SOURCE)
+                            .where(FORWARD_SOURCE.SOURCE_ID.eq(sourceId))
+                            .execute();
 
-                        // Mark source as forwarded.
-                        context
-                                .update(SOURCE)
-                                .set(SOURCE.FORWARDED, true)
-                                .where(SOURCE.ID.eq(sourceId))
-                                .execute();
-                    }
-                });
-                return null;
+                    // Mark source as forwarded.
+                    context
+                            .update(SOURCE)
+                            .set(SOURCE.FORWARDED, true)
+                            .where(SOURCE.ID.eq(sourceId))
+                            .execute();
+                }
             });
 
         } else {
             // Update and schedule for retry.
-            jooq.underLock(() -> {
-                newQueue.put(writePos ->
-                        jooq.context(context ->
-                                updateForwardSource(context, forwardSource, writePos.incrementAndGet())));
-
-                return null;
-            });
+            newQueue.put(writePos ->
+                    jooq.transaction(context ->
+                            updateForwardSource(context, forwardSource, writePos.incrementAndGet())));
         }
     }
 
@@ -293,6 +290,6 @@ public class ForwardSourceDao {
     }
 
     public int countForwardSource() {
-        return jooq.count(FORWARD_SOURCE);
+        return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, FORWARD_SOURCE));
     }
 }

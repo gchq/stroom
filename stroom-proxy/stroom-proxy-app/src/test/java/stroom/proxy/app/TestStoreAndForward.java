@@ -15,7 +15,6 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProgressHandler;
 import stroom.proxy.repo.ProgressLog;
 import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.proxy.repo.ProxyRepoDbConnProvider;
 import stroom.proxy.repo.ProxyRepoFileNames;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.proxy.repo.RepoSource;
@@ -72,8 +71,6 @@ class TestStoreAndForward {
     private SourceDao sourceDao;
     @Inject
     private SourceItemDao sourceItemDao;
-    @Inject
-    private ProxyRepoDbConnProvider proxyRepoDbConnProvider;
     @Inject
     private ProgressLog progressLog;
 

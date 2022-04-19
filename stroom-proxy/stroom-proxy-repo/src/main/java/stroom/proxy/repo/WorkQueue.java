@@ -1,7 +1,8 @@
 package stroom.proxy.repo;
 
-import stroom.db.util.JooqHelper;
+import stroom.db.util.JooqUtil;
 
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Table;
 
@@ -27,9 +28,11 @@ public class WorkQueue {
         this.writePos = new AtomicLong(writePos);
     }
 
-    public static WorkQueue createWithJooq(final JooqHelper jooq, final Table<?> table, final Field<Long> idField) {
-        final long minId = jooq.getMinId(table, idField).orElse(0L);
-        final long maxId = jooq.getMaxId(table, idField).orElse(-1L);
+    public static WorkQueue createWithJooq(final DSLContext context,
+                                           final Table<?> table,
+                                           final Field<Long> idField) {
+        final long minId = JooqUtil.getMinId(context, table, idField).orElse(0L);
+        final long maxId = JooqUtil.getMaxId(context, table, idField).orElse(-1L);
         return new WorkQueue(minId, maxId);
     }
 
