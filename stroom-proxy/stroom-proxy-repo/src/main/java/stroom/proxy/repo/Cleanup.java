@@ -43,6 +43,7 @@ public class Cleanup {
     private final AggregateDao aggregateDao;
     private final ForwardSourceDao forwardSourceDao;
     private final ForwardAggregateDao forwardAggregateDao;
+    private final RepoDbConfig dbConfig;
 
     private final RepoSources sources;
     private final Path repoDir;
@@ -54,7 +55,8 @@ public class Cleanup {
             final SourceItemDao sourceItemDao,
             final AggregateDao aggregateDao,
             final ForwardSourceDao forwardSourceDao,
-            final ForwardAggregateDao forwardAggregateDao) {
+            final ForwardAggregateDao forwardAggregateDao,
+            final RepoDbConfig dbConfig) {
         this.sources = sources;
         this.repoDir = repoDirProvider.get();
         this.sourceDao = sourceDao;
@@ -62,27 +64,32 @@ public class Cleanup {
         this.aggregateDao = aggregateDao;
         this.forwardSourceDao = forwardSourceDao;
         this.forwardAggregateDao = forwardAggregateDao;
+        this.dbConfig = dbConfig;
     }
 
     public void cleanupSources() {
-        final List<RepoSource> list = sources.getDeletableSources();
-        for (final RepoSource source : list) {
-            try {
-                // Source path is the zip.
-                final Path sourceFile = repoDir.resolve(ProxyRepoFileNames.getZip(source.getSourcePath()));
-                LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(sourceFile));
-                Files.deleteIfExists(sourceFile);
+        final int batchSize = dbConfig.getBatchSize();
+        List<RepoSource> list;
+        do {
+            list = sources.getDeletableSources(batchSize);
+            for (final RepoSource source : list) {
+                try {
+                    // Source path is the zip.
+                    final Path sourceFile = repoDir.resolve(ProxyRepoFileNames.getZip(source.getSourcePath()));
+                    LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(sourceFile));
+                    Files.deleteIfExists(sourceFile);
 
-                final Path metaFile = repoDir.resolve(ProxyRepoFileNames.getMeta(source.getSourcePath()));
-                LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(metaFile));
-                Files.deleteIfExists(metaFile);
+                    final Path metaFile = repoDir.resolve(ProxyRepoFileNames.getMeta(source.getSourcePath()));
+                    LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(metaFile));
+                    Files.deleteIfExists(metaFile);
 
-                sources.deleteSource(source);
+                    sources.deleteSource(source);
 
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
+                } catch (final IOException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
             }
-        }
+        } while (list.size() == batchSize);
     }
 
     public void resetAggregateForwarder() {

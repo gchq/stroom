@@ -64,16 +64,16 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
     }
 
     /**
-     * Setter for <code>forward_source.source_id</code>.
+     * Setter for <code>forward_source.fk_source_id</code>.
      */
-    public void setSourceId(Long value) {
+    public void setFkSourceId(Long value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>forward_source.source_id</code>.
+     * Getter for <code>forward_source.fk_source_id</code>.
      */
-    public Long getSourceId() {
+    public Long getFkSourceId() {
         return (Long) get(3);
     }
 
@@ -187,7 +187,7 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
 
     @Override
     public Field<Long> field4() {
-        return ForwardSource.FORWARD_SOURCE.SOURCE_ID;
+        return ForwardSource.FORWARD_SOURCE.FK_SOURCE_ID;
     }
 
     @Override
@@ -232,7 +232,7 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
 
     @Override
     public Long component4() {
-        return getSourceId();
+        return getFkSourceId();
     }
 
     @Override
@@ -277,7 +277,7 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
 
     @Override
     public Long value4() {
-        return getSourceId();
+        return getFkSourceId();
     }
 
     @Override
@@ -325,7 +325,7 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
 
     @Override
     public ForwardSourceRecord value4(Long value) {
-        setSourceId(value);
+        setFkSourceId(value);
         return this;
     }
 
@@ -387,13 +387,13 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
     /**
      * Create a detached, initialised ForwardSourceRecord
      */
-    public ForwardSourceRecord(Long id, Long updateTimeMs, Integer fkForwardUrlId, Long sourceId, Boolean success, String error, Long tries, Long newPosition, Long retryPosition) {
+    public ForwardSourceRecord(Long id, Long updateTimeMs, Integer fkForwardUrlId, Long fkSourceId, Boolean success, String error, Long tries, Long newPosition, Long retryPosition) {
         super(ForwardSource.FORWARD_SOURCE);
 
         setId(id);
         setUpdateTimeMs(updateTimeMs);
         setFkForwardUrlId(fkForwardUrlId);
-        setSourceId(sourceId);
+        setFkSourceId(fkSourceId);
         setSuccess(success);
         setError(error);
         setTries(tries);

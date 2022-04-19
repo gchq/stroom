@@ -73,7 +73,7 @@ public class TestSourceEntryDao {
         }
 
         sourceItemDao.addItems(Paths.get("test"), source.getId(), itemNameMap.values());
-        assertThat(sourceDao.getDeletableSources().size()).isZero();
+        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
 
         sourceDao.deleteSource(source.getId());
         assertThat(sourceDao.countSources()).isZero();

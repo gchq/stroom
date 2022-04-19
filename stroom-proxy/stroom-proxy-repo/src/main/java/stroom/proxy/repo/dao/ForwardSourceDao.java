@@ -3,13 +3,13 @@ package stroom.proxy.repo.dao;
 import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.ForwardSource;
 import stroom.proxy.repo.ForwardUrl;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.WorkQueue;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
-import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.impl.DSL;
 
@@ -19,10 +19,10 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardSource.FORWARD_SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardUrl.FORWARD_URL;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
@@ -34,16 +34,19 @@ public class ForwardSourceDao {
             SOURCE.NEW_POSITION.isNull().andExists(DSL
                     .select(FORWARD_SOURCE.ID)
                     .from(FORWARD_SOURCE)
-                    .where(FORWARD_SOURCE.SOURCE_ID.eq(SOURCE.ID)));
+                    .where(FORWARD_SOURCE.FK_SOURCE_ID.eq(SOURCE.ID)));
 
     private final SqliteJooqHelper jooq;
+    private final RepoDbConfig dbConfig;
     private final AtomicLong forwardSourceId = new AtomicLong();
     private WorkQueue newQueue;
     private WorkQueue retryQueue;
 
     @Inject
-    ForwardSourceDao(final SqliteJooqHelper jooq) {
+    ForwardSourceDao(final SqliteJooqHelper jooq,
+                     final RepoDbConfig dbConfig) {
         this.jooq = jooq;
+        this.dbConfig = dbConfig;
         init();
     }
 
@@ -85,25 +88,36 @@ public class ForwardSourceDao {
      */
     public Map<Integer, Boolean> getForwardingState(final long sourceId) {
         return jooq.readOnlyTransactionResult(context -> context
-                .select(FORWARD_SOURCE.FK_FORWARD_URL_ID, FORWARD_SOURCE.SUCCESS)
-                .from(FORWARD_SOURCE)
-                .where(FORWARD_SOURCE.SOURCE_ID.eq(sourceId))
-                .fetch()
+                        .select(FORWARD_SOURCE.FK_FORWARD_URL_ID, FORWARD_SOURCE.SUCCESS)
+                        .from(FORWARD_SOURCE)
+                        .where(FORWARD_SOURCE.FK_SOURCE_ID.eq(sourceId))
+                        .fetch())
                 .stream()
-                .collect(Collectors.toMap(Record2::value1, Record2::value2)));
+                .collect(Collectors.toMap(Record2::value1, Record2::value2));
     }
 
     public void addNewForwardSources(final List<ForwardUrl> newForwardUrls) {
         if (newForwardUrls.size() > 0) {
-            jooq.transaction(context -> {
-                try (Stream<Record1<Long>> stream = context
-                        .select(SOURCE.ID)
-                        .from(SOURCE)
-                        .where(NEW_SOURCE_CONDITION)
-                        .stream()) {
-                    stream.forEach(r -> createForwardSources(context, r.get(SOURCE.ID), newForwardUrls));
-                }
-            });
+            final AtomicLong minId = new AtomicLong();
+            final AtomicLong count = new AtomicLong();
+            final int batchSize = dbConfig.getBatchSize();
+            do {
+                count.set(0);
+                jooq.readOnlyTransactionResult(context -> context
+                                .select(SOURCE.ID)
+                                .from(SOURCE)
+                                .where(NEW_SOURCE_CONDITION)
+                                .and(AGGREGATE.ID.gt(minId.get()))
+                                .orderBy(AGGREGATE.ID)
+                                .limit(batchSize)
+                                .fetch())
+                        .forEach(r -> {
+                            final long id = r.get(SOURCE.ID);
+                            minId.set(id);
+                            createForwardSources(id, newForwardUrls);
+                            count.incrementAndGet();
+                        });
+            } while (count.get() == batchSize);
         }
     }
 
@@ -126,41 +140,36 @@ public class ForwardSourceDao {
      */
     public void createForwardSources(final long sourceId,
                                      final List<ForwardUrl> forwardUrls) {
-        jooq.transaction(context -> createForwardSources(context, sourceId, forwardUrls));
-    }
+        newQueue.put(writePos ->
+                jooq.transaction(context -> {
+                    for (final ForwardUrl forwardUrl : forwardUrls) {
+                        final long id = forwardSourceId.incrementAndGet();
+                        context
+                                .insertInto(
+                                        FORWARD_SOURCE,
+                                        FORWARD_SOURCE.ID,
+                                        FORWARD_SOURCE.UPDATE_TIME_MS,
+                                        FORWARD_SOURCE.FK_FORWARD_URL_ID,
+                                        FORWARD_SOURCE.FK_SOURCE_ID,
+                                        FORWARD_SOURCE.SUCCESS,
+                                        FORWARD_SOURCE.NEW_POSITION)
+                                .values(id,
+                                        System.currentTimeMillis(),
+                                        forwardUrl.getId(),
+                                        sourceId,
+                                        false,
+                                        writePos.incrementAndGet())
+                                .execute();
+                    }
 
-    private void createForwardSources(final DSLContext context,
-                                      final long sourceId,
-                                      final List<ForwardUrl> forwardUrls) {
-        newQueue.put(writePos -> {
-            for (final ForwardUrl forwardUrl : forwardUrls) {
-                final long id = forwardSourceId.incrementAndGet();
-                context
-                        .insertInto(
-                                FORWARD_SOURCE,
-                                FORWARD_SOURCE.ID,
-                                FORWARD_SOURCE.UPDATE_TIME_MS,
-                                FORWARD_SOURCE.FK_FORWARD_URL_ID,
-                                FORWARD_SOURCE.SOURCE_ID,
-                                FORWARD_SOURCE.SUCCESS,
-                                FORWARD_SOURCE.NEW_POSITION)
-                        .values(id,
-                                System.currentTimeMillis(),
-                                forwardUrl.getId(),
-                                sourceId,
-                                false,
-                                writePos.incrementAndGet())
-                        .execute();
-            }
-
-            // Remove the queue position from the aggregate, so we don't try and create forwarders
-            // again.
-            context
-                    .update(SOURCE)
-                    .setNull(SOURCE.NEW_POSITION)
-                    .where(SOURCE.ID.eq(sourceId))
-                    .execute();
-        });
+                    // Remove the queue position from the aggregate, so we don't try and create forwarders
+                    // again.
+                    context
+                            .update(SOURCE)
+                            .setNull(SOURCE.NEW_POSITION)
+                            .where(SOURCE.ID.eq(sourceId))
+                            .execute();
+                }));
     }
 
     public Optional<ForwardSource> getNewForwardSource() {
@@ -206,13 +215,13 @@ public class ForwardSourceDao {
                                 SOURCE.FEED_NAME,
                                 SOURCE.TYPE_NAME,
                                 SOURCE.LAST_MODIFIED_TIME_MS,
-                                FORWARD_SOURCE.SOURCE_ID,
+                                FORWARD_SOURCE.FK_SOURCE_ID,
                                 FORWARD_SOURCE.SUCCESS,
                                 FORWARD_SOURCE.ERROR,
                                 FORWARD_SOURCE.TRIES)
                         .from(FORWARD_SOURCE)
                         .join(FORWARD_URL).on(FORWARD_URL.ID.eq(FORWARD_SOURCE.FK_FORWARD_URL_ID))
-                        .join(SOURCE).on(SOURCE.ID.eq(FORWARD_SOURCE.SOURCE_ID))
+                        .join(SOURCE).on(SOURCE.ID.eq(FORWARD_SOURCE.FK_SOURCE_ID))
                         .where(positionField.eq(position))
                         .orderBy(FORWARD_SOURCE.ID)
                         .fetchOptional())
@@ -220,7 +229,7 @@ public class ForwardSourceDao {
                     final ForwardUrl forwardUrl = new ForwardUrl(r.get(FORWARD_SOURCE.FK_FORWARD_URL_ID),
                             r.get(FORWARD_URL.URL));
                     final RepoSource source = new RepoSource(
-                            r.get(FORWARD_SOURCE.SOURCE_ID),
+                            r.get(FORWARD_SOURCE.FK_SOURCE_ID),
                             r.get(SOURCE.PATH),
                             r.get(SOURCE.FEED_NAME),
                             r.get(SOURCE.TYPE_NAME),
@@ -246,7 +255,7 @@ public class ForwardSourceDao {
                 // We finished forwarding a source so delete all related forward aggregate records.
                 updateForwardSource(context, forwardSource, null);
 
-                final Condition condition = FORWARD_SOURCE.SOURCE_ID
+                final Condition condition = FORWARD_SOURCE.FK_SOURCE_ID
                         .eq(forwardSource.getSource().getId())
                         .and(FORWARD_SOURCE.SUCCESS.ne(true));
                 final int remainingForwards = context.fetchCount(FORWARD_SOURCE, condition);
@@ -254,7 +263,7 @@ public class ForwardSourceDao {
                     // Delete forward records.
                     context
                             .delete(FORWARD_SOURCE)
-                            .where(FORWARD_SOURCE.SOURCE_ID.eq(sourceId))
+                            .where(FORWARD_SOURCE.FK_SOURCE_ID.eq(sourceId))
                             .execute();
 
                     // Mark source as forwarded.

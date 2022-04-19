@@ -102,11 +102,11 @@ public class TestAggregator {
         assertThat(sourceItemDao.countItems()).isZero();
         assertThat(sourceItemDao.countEntries()).isZero();
         assertThat(aggregateDao.countAggregates()).isZero();
-        assertThat(sourceDao.getDeletableSources().size()).isOne();
+        assertThat(sourceDao.getDeletableSources(1000).size()).isOne();
     }
 
     private void ensureNonDeletable() {
-        assertThat(sourceDao.getDeletableSources().size()).isZero();
+        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
     }
 
     @Test

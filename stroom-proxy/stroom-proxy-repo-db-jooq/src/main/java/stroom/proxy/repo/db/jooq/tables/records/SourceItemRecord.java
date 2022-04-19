@@ -5,7 +5,7 @@ package stroom.proxy.repo.db.jooq.tables.records;
 
 
 import org.jooq.Field;
-import org.jooq.Record3;
+import org.jooq.Record1;
 import org.jooq.Record8;
 import org.jooq.Row8;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -92,30 +92,30 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
     }
 
     /**
-     * Setter for <code>source_item.source_id</code>.
+     * Setter for <code>source_item.fk_source_id</code>.
      */
-    public void setSourceId(Long value) {
+    public void setFkSourceId(Long value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>source_item.source_id</code>.
+     * Getter for <code>source_item.fk_source_id</code>.
      */
-    public Long getSourceId() {
+    public Long getFkSourceId() {
         return (Long) get(5);
     }
 
     /**
-     * Setter for <code>source_item.aggregate_id</code>.
+     * Setter for <code>source_item.fk_aggregate_id</code>.
      */
-    public void setAggregateId(Long value) {
+    public void setFkAggregateId(Long value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>source_item.aggregate_id</code>.
+     * Getter for <code>source_item.fk_aggregate_id</code>.
      */
-    public Long getAggregateId() {
+    public Long getFkAggregateId() {
         return (Long) get(6);
     }
 
@@ -138,8 +138,8 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
     // -------------------------------------------------------------------------
 
     @Override
-    public Record3<Long, String, Long> key() {
-        return (Record3) super.key();
+    public Record1<Long> key() {
+        return (Record1) super.key();
     }
 
     // -------------------------------------------------------------------------
@@ -183,12 +183,12 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
 
     @Override
     public Field<Long> field6() {
-        return SourceItem.SOURCE_ITEM.SOURCE_ID;
+        return SourceItem.SOURCE_ITEM.FK_SOURCE_ID;
     }
 
     @Override
     public Field<Long> field7() {
-        return SourceItem.SOURCE_ITEM.AGGREGATE_ID;
+        return SourceItem.SOURCE_ITEM.FK_AGGREGATE_ID;
     }
 
     @Override
@@ -223,12 +223,12 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
 
     @Override
     public Long component6() {
-        return getSourceId();
+        return getFkSourceId();
     }
 
     @Override
     public Long component7() {
-        return getAggregateId();
+        return getFkAggregateId();
     }
 
     @Override
@@ -263,12 +263,12 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
 
     @Override
     public Long value6() {
-        return getSourceId();
+        return getFkSourceId();
     }
 
     @Override
     public Long value7() {
-        return getAggregateId();
+        return getFkAggregateId();
     }
 
     @Override
@@ -308,13 +308,13 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
 
     @Override
     public SourceItemRecord value6(Long value) {
-        setSourceId(value);
+        setFkSourceId(value);
         return this;
     }
 
     @Override
     public SourceItemRecord value7(Long value) {
-        setAggregateId(value);
+        setFkAggregateId(value);
         return this;
     }
 
@@ -351,7 +351,7 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
     /**
      * Create a detached, initialised SourceItemRecord
      */
-    public SourceItemRecord(Long id, String name, String feedName, String typeName, Long byteSize, Long sourceId, Long aggregateId, Long newPosition) {
+    public SourceItemRecord(Long id, String name, String feedName, String typeName, Long byteSize, Long fkSourceId, Long fkAggregateId, Long newPosition) {
         super(SourceItem.SOURCE_ITEM);
 
         setId(id);
@@ -359,8 +359,8 @@ public class SourceItemRecord extends UpdatableRecordImpl<SourceItemRecord> impl
         setFeedName(feedName);
         setTypeName(typeName);
         setByteSize(byteSize);
-        setSourceId(sourceId);
-        setAggregateId(aggregateId);
+        setFkSourceId(fkSourceId);
+        setFkAggregateId(fkAggregateId);
         setNewPosition(newPosition);
     }
 }

@@ -33,10 +33,12 @@ CREATE TABLE IF NOT EXISTS source_item (
   feed_name                 VARCHAR(255) DEFAULT NULL,
   type_name                 VARCHAR(255) DEFAULT NULL,
   byte_size                 BIGINT DEFAULT 0,
-  source_id                 BIGINT NOT NULL,
-  aggregate_id              BIGINT NULL,
+  fk_source_id              BIGINT NOT NULL,
+  fk_aggregate_id           BIGINT NULL,
   new_position              BIGINT NULL,
-  UNIQUE                    (name, source_id)
+  UNIQUE                    (name, fk_source_id),
+  FOREIGN KEY               (fk_source_id) REFERENCES source (id),
+  FOREIGN KEY               (fk_aggregate_id) REFERENCES aggregate (id)
 );
 CREATE UNIQUE INDEX new_position_source_item_index ON source_item(new_position);
 
@@ -72,13 +74,14 @@ CREATE TABLE IF NOT EXISTS forward_source (
   id                        BIGINT PRIMARY KEY,
   update_time_ms            BIGINT NOT NULL,
   fk_forward_url_id         INTEGER NOT NULL,
-  source_id                 BIGINT NOT NULL,
+  fk_source_id              BIGINT NOT NULL,
   success                   BOOLEAN NOT NULL,
   error                     VARCHAR(255),
   tries                     BIGINT DEFAULT 0,
   new_position              BIGINT NULL,
   retry_position            BIGINT NULL,
-  FOREIGN KEY               (fk_forward_url_id) REFERENCES forward_url (id)
+  FOREIGN KEY               (fk_forward_url_id) REFERENCES forward_url (id),
+  FOREIGN KEY               (fk_source_id) REFERENCES source (id)
 );
 CREATE UNIQUE INDEX new_position_forward_source_index ON forward_source(new_position);
 CREATE UNIQUE INDEX retry_position_forward_source_index ON forward_source(retry_position);

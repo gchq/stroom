@@ -40,7 +40,7 @@ public class TestForwardSourceDao {
         assertThat(sourceDao.pathExists("test")).isFalse();
 
         sourceDao.addSource("test", "test", "test", System.currentTimeMillis());
-        assertThat(sourceDao.getDeletableSources().size()).isZero();
+        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
 
         // Create forward sources.
         forwardUrlDao.getForwardUrlId("test");
@@ -57,7 +57,7 @@ public class TestForwardSourceDao {
                 forwardSource -> forwardSourceDao.update(forwardSource.copy().tries(1).success(true).build())
         );
 
-        sourceDao.getDeletableSources().forEach(s -> sourceDao.deleteSource(s.getId()));
+        sourceDao.getDeletableSources(1000).forEach(s -> sourceDao.deleteSource(s.getId()));
 
         assertThat(forwardSourceDao.countForwardSource()).isZero();
         assertThat(sourceDao.countSources()).isZero();

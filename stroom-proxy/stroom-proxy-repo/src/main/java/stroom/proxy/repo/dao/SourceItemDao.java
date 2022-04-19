@@ -37,8 +37,8 @@ public class SourceItemDao {
             SOURCE_ITEM.FEED_NAME,
             SOURCE_ITEM.TYPE_NAME,
             SOURCE_ITEM.BYTE_SIZE,
-            SOURCE_ITEM.SOURCE_ID,
-            SOURCE_ITEM.AGGREGATE_ID,
+            SOURCE_ITEM.FK_SOURCE_ID,
+            SOURCE_ITEM.FK_AGGREGATE_ID,
             SOURCE_ITEM.NEW_POSITION};
     private static final Object[] SOURCE_ITEM_VALUES = new Object[SOURCE_ITEM_COLUMNS.length];
 

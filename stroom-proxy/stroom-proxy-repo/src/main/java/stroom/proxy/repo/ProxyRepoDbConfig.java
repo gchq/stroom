@@ -15,37 +15,34 @@ import java.util.List;
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyRepoDbConfig extends AbstractRepoDbConfig implements IsProxyConfig {
 
-    private static final List<ScheduledPragma> DEFAULT_SCHEDULED_PRAGMA = List.of(
-//            ScheduledPragma.builder()
-//                    .statement("pragma vacuum;")
-//                    .frequency(StroomDuration.ofMinutes(1))
-//                    .build(),
-//            ScheduledPragma.builder()
-//                    .statement("pragma optimize;")
-//                    .frequency(StroomDuration.ofMinutes(1))
-//                    .build(),
-//            ScheduledPragma.builder()
-//                    .statement("pragma wal_checkpoint(truncate);")
-//                    .frequency(StroomDuration.ofMinutes(1))
-//                    .build()
-    );
+    private static final List<String> DEFAULT_MAINTENANCE_PRAGMA = List.of(
+            "pragma wal_checkpoint(truncate);",
+            "pragma vacuum;",
+            "pragma optimize;");
 
+//    "pragma incremental_vacuum;""
 
-    //            DBMaintenanceTask.builder().statement("pragma incremental_vacuum;").frequency(StroomDuration.ofMinutes(1)).build(),
+    private static final StroomDuration DEFAULT_MAINTENANCE_PRAGMA_FREQUENCY = StroomDuration.ofMinutes(1);
 
-    private final List<ScheduledPragma> scheduledPragma;
+    private final List<String> maintenancePragma;
+    private final StroomDuration maintenancePragmaFrequency;
 
     public ProxyRepoDbConfig() {
-        this.scheduledPragma = DEFAULT_SCHEDULED_PRAGMA;
+        this.maintenancePragma = DEFAULT_MAINTENANCE_PRAGMA;
+        this.maintenancePragmaFrequency = DEFAULT_MAINTENANCE_PRAGMA_FREQUENCY;
     }
 
     @JsonCreator
-    public ProxyRepoDbConfig(@JsonProperty("dbDir") final String dbDir,
-                             @JsonProperty("globalPragma") final List<String> globalPragma,
-                             @JsonProperty("connectionPragma") final List<String> connectionPragma,
-                             @JsonProperty("scheduledPragma") final List<ScheduledPragma> scheduledPragma) {
-        super(dbDir, globalPragma, connectionPragma);
-        this.scheduledPragma = scheduledPragma;
+    public ProxyRepoDbConfig(
+            @JsonProperty("dbDir") final String dbDir,
+            @JsonProperty("globalPragma") final List<String> globalPragma,
+            @JsonProperty("connectionPragma") final List<String> connectionPragma,
+            @JsonProperty("maintenancePragma") final List<String> maintenancePragma,
+            @JsonProperty("maintenancePragmaFrequency") final StroomDuration maintenancePragmaFrequency,
+            @JsonProperty("batchSize") final int batchSize) {
+        super(dbDir, globalPragma, connectionPragma, batchSize);
+        this.maintenancePragma = maintenancePragma;
+        this.maintenancePragmaFrequency = maintenancePragmaFrequency;
     }
 
     @Override
@@ -74,8 +71,15 @@ public class ProxyRepoDbConfig extends AbstractRepoDbConfig implements IsProxyCo
 
     @RequiresRestart(value = RestartScope.SYSTEM)
     @JsonProperty
-    @JsonPropertyDescription("A list of statements to run on the database according to the provided schedule")
-    public List<ScheduledPragma> getScheduledPragma() {
-        return scheduledPragma;
+    @JsonPropertyDescription("A list of statements to run on the database according to the provided frequency")
+    public List<String> getMaintenancePragma() {
+        return maintenancePragma;
+    }
+
+    @RequiresRestart(value = RestartScope.SYSTEM)
+    @JsonProperty
+    @JsonPropertyDescription("A frequency that maintenance statements should be executed")
+    public StroomDuration getMaintenancePragmaFrequency() {
+        return maintenancePragmaFrequency;
     }
 }

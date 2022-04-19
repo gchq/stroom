@@ -65,9 +65,9 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
     public final TableField<ForwardSourceRecord, Integer> FK_FORWARD_URL_ID = createField(DSL.name("fk_forward_url_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>forward_source.source_id</code>.
+     * The column <code>forward_source.fk_source_id</code>.
      */
-    public final TableField<ForwardSourceRecord, Long> SOURCE_ID = createField(DSL.name("source_id"), SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<ForwardSourceRecord, Long> FK_SOURCE_ID = createField(DSL.name("fk_source_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>forward_source.success</code>.

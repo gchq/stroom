@@ -42,5 +42,5 @@ public class Keys {
     public static final UniqueKey<ForwardUrlRecord> FORWARD_URL__ = Internal.createUniqueKey(ForwardUrl.FORWARD_URL, DSL.name(""), new TableField[] { ForwardUrl.FORWARD_URL.ID, ForwardUrl.FORWARD_URL.URL }, true);
     public static final UniqueKey<SourceRecord> SOURCE__ = Internal.createUniqueKey(Source.SOURCE, DSL.name(""), new TableField[] { Source.SOURCE.ID }, true);
     public static final UniqueKey<SourceEntryRecord> SOURCE_ENTRY__ = Internal.createUniqueKey(SourceEntry.SOURCE_ENTRY, DSL.name(""), new TableField[] { SourceEntry.SOURCE_ENTRY.ID }, true);
-    public static final UniqueKey<SourceItemRecord> SOURCE_ITEM__ = Internal.createUniqueKey(SourceItem.SOURCE_ITEM, DSL.name(""), new TableField[] { SourceItem.SOURCE_ITEM.ID, SourceItem.SOURCE_ITEM.NAME, SourceItem.SOURCE_ITEM.SOURCE_ID }, true);
+    public static final UniqueKey<SourceItemRecord> SOURCE_ITEM__ = Internal.createUniqueKey(SourceItem.SOURCE_ITEM, DSL.name(""), new TableField[] { SourceItem.SOURCE_ITEM.ID }, true);
 }

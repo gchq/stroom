@@ -55,8 +55,8 @@ public class RepoSources implements Clearable {
         return sourceDao.getNewSource(timeout, timeUnit);
     }
 
-    public List<RepoSource> getDeletableSources() {
-        return sourceDao.getDeletableSources();
+    public List<RepoSource> getDeletableSources(final int limit) {
+        return sourceDao.getDeletableSources(limit);
     }
 
     @Override

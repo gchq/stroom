@@ -4,12 +4,12 @@ import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.Aggregate;
 import stroom.proxy.repo.ForwardAggregate;
 import stroom.proxy.repo.ForwardUrl;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.proxy.repo.WorkQueue;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
-import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.impl.DSL;
 
@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -45,13 +44,16 @@ public class ForwardAggregateDao {
                     .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.eq(AGGREGATE.ID)));
 
     private final SqliteJooqHelper jooq;
+    private final RepoDbConfig dbConfig;
     private final AtomicLong forwardAggregateId = new AtomicLong();
     private WorkQueue newQueue;
     private WorkQueue retryQueue;
 
     @Inject
-    ForwardAggregateDao(final SqliteJooqHelper jooq) {
+    ForwardAggregateDao(final SqliteJooqHelper jooq,
+                        final RepoDbConfig dbConfig) {
         this.jooq = jooq;
+        this.dbConfig = dbConfig;
         init();
     }
 
@@ -96,22 +98,38 @@ public class ForwardAggregateDao {
                         .select(FORWARD_AGGREGATE.FK_FORWARD_URL_ID, FORWARD_AGGREGATE.SUCCESS)
                         .from(FORWARD_AGGREGATE)
                         .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.eq(aggregateId))
-                        .fetch()
-                        .stream())
+                        .fetch())
+                .stream()
                 .collect(Collectors.toMap(Record2::value1, Record2::value2));
     }
 
+    /**
+     * Add forward aggregates for any new URLs that have been added since the application last ran.
+     *
+     * @param newForwardUrls New urls to add forward aggregate entries for.
+     */
     public void addNewForwardAggregates(final List<ForwardUrl> newForwardUrls) {
         if (newForwardUrls.size() > 0) {
-            jooq.transaction(context -> {
-                try (Stream<Record1<Long>> stream = context
-                        .select(AGGREGATE.ID)
-                        .from(AGGREGATE)
-                        .where(NEW_AGGREGATE_CONDITION)
-                        .stream()) {
-                    stream.forEach(r -> createForwardAggregates(context, r.get(AGGREGATE.ID), newForwardUrls));
-                }
-            });
+            final AtomicLong minId = new AtomicLong();
+            final AtomicLong count = new AtomicLong();
+            final int batchSize = dbConfig.getBatchSize();
+            do {
+                count.set(0);
+                jooq.readOnlyTransactionResult(context -> context
+                                .select(AGGREGATE.ID)
+                                .from(AGGREGATE)
+                                .where(NEW_AGGREGATE_CONDITION)
+                                .and(AGGREGATE.ID.gt(minId.get()))
+                                .orderBy(AGGREGATE.ID)
+                                .limit(batchSize)
+                                .fetch())
+                        .forEach(r -> {
+                            final long id = r.get(AGGREGATE.ID);
+                            minId.set(id);
+                            createForwardAggregates(id, newForwardUrls);
+                            count.incrementAndGet();
+                        });
+            } while (count.get() == batchSize);
         }
     }
 
@@ -122,20 +140,31 @@ public class ForwardAggregateDao {
                     .map(ForwardUrl::getId)
                     .collect(Collectors.toList());
 
-            jooq.transaction(context -> {
-                context
-                        .deleteFrom(FORWARD_AGGREGATE)
-                        .where(FORWARD_AGGREGATE.FK_FORWARD_URL_ID.in(oldIdList))
-                        .execute();
+            jooq.transaction(context -> context
+                    .deleteFrom(FORWARD_AGGREGATE)
+                    .where(FORWARD_AGGREGATE.FK_FORWARD_URL_ID.in(oldIdList))
+                    .execute());
 
-                try (Stream<Record1<Long>> stream = context
-                        .select(AGGREGATE.ID)
-                        .from(AGGREGATE)
-                        .where(DELETE_AGGREGATE_CONDITION)
-                        .stream()) {
-                    stream.forEach(r -> deleteAggregate(context, r.get(AGGREGATE.ID)));
-                }
-            });
+            final AtomicLong minId = new AtomicLong();
+            final AtomicLong count = new AtomicLong();
+            final int batchSize = dbConfig.getBatchSize();
+            do {
+                count.set(0);
+                jooq.readOnlyTransactionResult(context -> context
+                                .select(AGGREGATE.ID)
+                                .from(AGGREGATE)
+                                .where(DELETE_AGGREGATE_CONDITION)
+                                .and(AGGREGATE.ID.gt(minId.get()))
+                                .orderBy(AGGREGATE.ID)
+                                .limit(batchSize)
+                                .fetch())
+                        .forEach(r -> {
+                            final long id = r.get(AGGREGATE.ID);
+                            minId.set(id);
+                            deleteAggregate(id);
+                            count.incrementAndGet();
+                        });
+            } while (count.get() == batchSize);
         }
     }
 
@@ -144,40 +173,35 @@ public class ForwardAggregateDao {
      */
     public void createForwardAggregates(final long aggregateId,
                                         final List<ForwardUrl> forwardUrls) {
-        jooq.transaction(context -> createForwardAggregates(context, aggregateId, forwardUrls));
-    }
+        newQueue.put(writePos ->
+                jooq.transaction(context -> {
+                    for (final ForwardUrl forwardUrl : forwardUrls) {
+                        final long id = forwardAggregateId.incrementAndGet();
+                        context
+                                .insertInto(
+                                        FORWARD_AGGREGATE,
+                                        FORWARD_AGGREGATE.ID,
+                                        FORWARD_AGGREGATE.UPDATE_TIME_MS,
+                                        FORWARD_AGGREGATE.FK_FORWARD_URL_ID,
+                                        FORWARD_AGGREGATE.FK_AGGREGATE_ID,
+                                        FORWARD_AGGREGATE.SUCCESS,
+                                        FORWARD_AGGREGATE.NEW_POSITION)
+                                .values(id,
+                                        System.currentTimeMillis(),
+                                        forwardUrl.getId(),
+                                        aggregateId,
+                                        false,
+                                        writePos.incrementAndGet())
+                                .execute();
+                    }
 
-    private void createForwardAggregates(final DSLContext context,
-                                         final long aggregateId,
-                                         final List<ForwardUrl> forwardUrls) {
-        newQueue.put(writePos -> {
-            for (final ForwardUrl forwardUrl : forwardUrls) {
-                final long id = forwardAggregateId.incrementAndGet();
-                context
-                        .insertInto(
-                                FORWARD_AGGREGATE,
-                                FORWARD_AGGREGATE.ID,
-                                FORWARD_AGGREGATE.UPDATE_TIME_MS,
-                                FORWARD_AGGREGATE.FK_FORWARD_URL_ID,
-                                FORWARD_AGGREGATE.FK_AGGREGATE_ID,
-                                FORWARD_AGGREGATE.SUCCESS,
-                                FORWARD_AGGREGATE.NEW_POSITION)
-                        .values(id,
-                                System.currentTimeMillis(),
-                                forwardUrl.getId(),
-                                aggregateId,
-                                false,
-                                writePos.incrementAndGet())
-                        .execute();
-            }
-
-            // Remove the queue position from the aggregate so we don't try and create forwarders again.
-            context
-                    .update(AGGREGATE)
-                    .setNull(AGGREGATE.NEW_POSITION)
-                    .where(AGGREGATE.ID.eq(aggregateId))
-                    .execute();
-        });
+                    // Remove the queue position from the aggregate so we don't try and create forwarders again.
+                    context
+                            .update(AGGREGATE)
+                            .setNull(AGGREGATE.NEW_POSITION)
+                            .where(AGGREGATE.ID.eq(aggregateId))
+                            .execute();
+                }));
     }
 
     public Optional<ForwardAggregate> getNewForwardAggregate() {
@@ -290,6 +314,10 @@ public class ForwardAggregateDao {
                 .execute();
     }
 
+    private void deleteAggregate(final long aggregateId) {
+        jooq.transaction(context -> deleteAggregate(context, aggregateId));
+    }
+
     private void deleteAggregate(final DSLContext context, final long aggregateId) {
         // Delete forward records.
         context
@@ -304,14 +332,14 @@ public class ForwardAggregateDao {
                         context
                                 .select(SOURCE_ITEM.ID)
                                 .from(SOURCE_ITEM)
-                                .where(SOURCE_ITEM.AGGREGATE_ID.eq(aggregateId)))
+                                .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId)))
                 )
                 .execute();
 
         // Delete source items.
         context
                 .deleteFrom(SOURCE_ITEM)
-                .where(SOURCE_ITEM.AGGREGATE_ID.eq(aggregateId))
+                .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId))
                 .execute();
 
         // Delete aggregate.

@@ -129,8 +129,8 @@ public class TestCleanup {
                                             SOURCE_ITEM.NAME,
                                             SOURCE_ITEM.FEED_NAME,
                                             SOURCE_ITEM.TYPE_NAME,
-                                            SOURCE_ITEM.SOURCE_ID,
-                                            SOURCE_ITEM.AGGREGATE_ID)
+                                            SOURCE_ITEM.FK_SOURCE_ID,
+                                            SOURCE_ITEM.FK_AGGREGATE_ID)
                                     .values(
                                             ++sourceItemId,
                                             i + "_" + j + "_" + k + "_" + l,
@@ -179,7 +179,7 @@ public class TestCleanup {
 
         // Make sure we can't delete any sources.
         jooq.printAllTables();
-        assertThat(proxyRepoSources.getDeletableSources().size()).isZero();
+        assertThat(proxyRepoSources.getDeletableSources(1000).size()).isZero();
 
         // Now pretend we forwarded the first aggregates.
         jooq.printAllTables();
@@ -187,7 +187,7 @@ public class TestCleanup {
 
         // Make sure we can delete source entries and items but not data.
         jooq.printAllTables();
-        assertThat(proxyRepoSources.getDeletableSources().size()).isZero();
+        assertThat(proxyRepoSources.getDeletableSources(1000).size()).isZero();
 
         // Now forward some more.
         jooq.printAllTables();
@@ -195,7 +195,7 @@ public class TestCleanup {
 
         // Check we can now delete the first source.
         jooq.printAllTables();
-        assertThat(proxyRepoSources.getDeletableSources().size()).isOne();
+        assertThat(proxyRepoSources.getDeletableSources(1000).size()).isOne();
 
         // Forward remaining.
         jooq.printAllTables();
@@ -212,7 +212,7 @@ public class TestCleanup {
 
         // Check everything is deleted.
         jooq.printAllTables();
-        assertThat(proxyRepoSources.getDeletableSources().size()).isEqualTo(12);
+        assertThat(proxyRepoSources.getDeletableSources(1000).size()).isEqualTo(12);
 
         cleanup.cleanupSources();
 

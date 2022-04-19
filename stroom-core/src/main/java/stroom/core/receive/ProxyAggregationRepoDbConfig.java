@@ -24,8 +24,9 @@ public class ProxyAggregationRepoDbConfig extends AbstractRepoDbConfig implement
     @JsonCreator
     public ProxyAggregationRepoDbConfig(@JsonProperty("dbDir") final String dbDir,
                                         @JsonProperty("globalPragma") final List<String> globalPragma,
-                                        @JsonProperty("connectionPragma") final List<String> connectionPragma) {
-        super(dbDir, globalPragma, connectionPragma);
+                                        @JsonProperty("connectionPragma") final List<String> connectionPragma,
+                                        @JsonProperty("batchSize") final int batchSize) {
+        super(dbDir, globalPragma, connectionPragma, batchSize);
     }
 
     @Override

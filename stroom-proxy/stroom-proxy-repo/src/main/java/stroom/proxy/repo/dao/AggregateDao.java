@@ -202,7 +202,7 @@ public class AggregateDao {
             // Mark the item as added by setting the aggregate id.
             context
                     .update(SOURCE_ITEM)
-                    .set(SOURCE_ITEM.AGGREGATE_ID, aggregateId)
+                    .set(SOURCE_ITEM.FK_AGGREGATE_ID, aggregateId)
                     .setNull(SOURCE_ITEM.NEW_POSITION)
                     .where(SOURCE_ITEM.ID.eq(sourceItem.getId()))
                     .execute();
@@ -228,11 +228,11 @@ public class AggregateDao {
                                 SOURCE_ENTRY.EXTENSION_TYPE,
                                 SOURCE_ENTRY.BYTE_SIZE,
                                 SOURCE_ITEM.ID,
-                                SOURCE_ITEM.SOURCE_ID,
+                                SOURCE_ITEM.FK_SOURCE_ID,
                                 SOURCE_ITEM.NAME,
                                 SOURCE_ITEM.FEED_NAME,
                                 SOURCE_ITEM.TYPE_NAME,
-                                SOURCE_ITEM.AGGREGATE_ID,
+                                SOURCE_ITEM.FK_AGGREGATE_ID,
                                 SOURCE.ID,
                                 SOURCE.PATH,
                                 SOURCE.FEED_NAME,
@@ -241,8 +241,8 @@ public class AggregateDao {
                                 SOURCE.EXAMINED)
                         .from(SOURCE_ENTRY)
                         .join(SOURCE_ITEM).on(SOURCE_ITEM.ID.eq(SOURCE_ENTRY.FK_SOURCE_ITEM_ID))
-                        .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.SOURCE_ID))
-                        .where(SOURCE_ITEM.AGGREGATE_ID.eq(aggregateId))
+                        .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
+                        .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId))
                         .orderBy(SOURCE.ID, SOURCE_ITEM.ID, SOURCE_ENTRY.EXTENSION_TYPE, SOURCE_ENTRY.EXTENSION)
                         .fetch())
                 .forEach(r -> {
@@ -262,7 +262,7 @@ public class AggregateDao {
                                 .name(r.get(SOURCE_ITEM.NAME))
                                 .feedName(r.get(SOURCE_ITEM.FEED_NAME))
                                 .typeName(r.get(SOURCE_ITEM.TYPE_NAME))
-                                .aggregateId(r.get(SOURCE_ITEM.AGGREGATE_ID))
+                                .aggregateId(r.get(SOURCE_ITEM.FK_AGGREGATE_ID))
                                 .build();
 
                         resultMap.computeIfAbsent(source, s -> new ArrayList<>()).add(item);

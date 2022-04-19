@@ -88,7 +88,7 @@ public class TestForwardAggregateDao {
         }
 
         sourceItemDao.addItems(Paths.get("test"), source.getId(), itemNameMap.values());
-        assertThat(sourceDao.getDeletableSources().size()).isZero();
+        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
 
         QueueUtil.consumeAll(
                 () -> sourceItemDao.getNewSourceItem(0, TimeUnit.MILLISECONDS),
@@ -124,7 +124,7 @@ public class TestForwardAggregateDao {
                 forwardAggregate -> forwardAggregateDao.update(forwardAggregate.copy().tries(1).success(true).build())
         );
 
-        sourceDao.getDeletableSources().forEach(s -> sourceDao.deleteSource(s.getId()));
+        sourceDao.getDeletableSources(1000).forEach(s -> sourceDao.deleteSource(s.getId()));
 
         assertThat(forwardAggregateDao.countForwardAggregates()).isZero();
         assertThat(aggregateDao.countAggregates()).isZero();

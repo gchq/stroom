@@ -73,9 +73,7 @@ public class ProxyRequestHandler implements RequestHandler {
     }
 
     private ReceiveDataConfig getConfig() {
-        return Metrics.measure("ProxyRequestHandler - getConfig", () -> {
-            return receiveDataConfigProvider.get();
-        });
+        return receiveDataConfigProvider.get();
     }
 
     private void stream(final HttpServletRequest request, final HttpServletResponse response) {

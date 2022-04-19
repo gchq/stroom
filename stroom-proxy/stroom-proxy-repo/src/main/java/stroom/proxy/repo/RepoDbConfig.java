@@ -11,4 +11,6 @@ public interface RepoDbConfig extends HasPropertyPath {
     List<String> getGlobalPragma();
 
     List<String> getConnectionPragma();
+
+    int getBatchSize();
 }

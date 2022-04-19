@@ -80,7 +80,7 @@ public class TestAggregateDao {
         }
 
         sourceItemDao.addItems(Paths.get("test"), source.getId(), itemNameMap.values());
-        assertThat(sourceDao.getDeletableSources().size()).isZero();
+        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
         aggregator.aggregateAll();
         aggregator.closeOldAggregates(System.currentTimeMillis());
 

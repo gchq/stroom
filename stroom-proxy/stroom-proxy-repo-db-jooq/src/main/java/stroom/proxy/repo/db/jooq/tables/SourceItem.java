@@ -75,14 +75,14 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     public final TableField<SourceItemRecord, Long> BYTE_SIZE = createField(DSL.name("byte_size"), SQLDataType.BIGINT.defaultValue(DSL.field("0", SQLDataType.BIGINT)), this, "");
 
     /**
-     * The column <code>source_item.source_id</code>.
+     * The column <code>source_item.fk_source_id</code>.
      */
-    public final TableField<SourceItemRecord, Long> SOURCE_ID = createField(DSL.name("source_id"), SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<SourceItemRecord, Long> FK_SOURCE_ID = createField(DSL.name("fk_source_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>source_item.aggregate_id</code>.
+     * The column <code>source_item.fk_aggregate_id</code>.
      */
-    public final TableField<SourceItemRecord, Long> AGGREGATE_ID = createField(DSL.name("aggregate_id"), SQLDataType.BIGINT, this, "");
+    public final TableField<SourceItemRecord, Long> FK_AGGREGATE_ID = createField(DSL.name("fk_aggregate_id"), SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>source_item.new_position</code>.
