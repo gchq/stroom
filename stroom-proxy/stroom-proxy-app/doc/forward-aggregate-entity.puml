@@ -11,8 +11,8 @@ entity source {
   *type_name : varchar(255)
   *last_modified_time_ms : bigint
   *examined : boolean
-  forwarded : boolean
-  forward_error : boolean
+  *forwarded : boolean
+  *new_position : bigint
 }
 
 entity source_item {
@@ -21,8 +21,10 @@ entity source_item {
   *name : varchar(255)
   *feed_name : varchar(255)
   *type_name : varchar(255)
+  *byte_size : bigint
   *fk_source_id : bigint
-  *aggregated : boolean
+  *fk_aggregate_id : bigint
+  *new_position : bigint
 }
 
 entity source_entry {
@@ -43,14 +45,7 @@ entity aggregate {
   *byte_size : bigint
   *items : int
   *complete : boolean
-  *forward_error : boolean
-}
-
-entity aggregate_item {
-  *id : bigint
-  --
-  *fk_aggregate_id : bigint
-  *fk_source_item_id : bigint
+  *new_position : bigint
 }
 
 entity forward_url {
@@ -62,16 +57,19 @@ entity forward_url {
 entity forward_aggregate {
   *id : bigint
   --
+  *update_time_ms : bigint
   *fk_forward_url_id : int
   *fk_aggregate_id : bigint
   *success : boolean
   *error : varchar(255)
+  *tries : bigint
+  *new_position : bigint
+  *retry_position : bigint
 }
 
 source ||..o{ source_item
 source_item ||--|{ source_entry
-aggregate ||--|{ aggregate_item
-source_item ||..o| aggregate_item
+aggregate ||--|{ source_item
 forward_aggregate }o--|| forward_url
 forward_aggregate }o--|| aggregate
 
