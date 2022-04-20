@@ -19,6 +19,8 @@ public class ProxyId {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyId.class);
     private static final String PROXY_ID_FILE = "proxy-id.txt";
+    private static final String PROXY_ID = "ProxyId-";
+    private static final String LOCALHOST = "localhost";
 
     private final HomeDirProvider homeDirProvider;
     private final String id;
@@ -77,11 +79,11 @@ public class ProxyId {
         final String hostName = HostNameUtil.determineHostName();
         if (hostName != null && !hostName.isBlank()) {
             final String safe = createSafeString(hostName);
-            if (!"localhost".equalsIgnoreCase(safe) && Character.isAlphabetic(safe.charAt(0))) {
-                return "Proxy_" + safe;
+            if (!LOCALHOST.equalsIgnoreCase(safe) && Character.isAlphabetic(safe.charAt(0))) {
+                return PROXY_ID + safe;
             }
         }
-        return "Proxy_" + UUID.randomUUID();
+        return PROXY_ID + UUID.randomUUID();
     }
 
     private String createSafeString(final String in) {
