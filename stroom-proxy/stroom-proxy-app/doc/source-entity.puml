@@ -10,9 +10,9 @@ entity source {
   *feed_name : varchar(255)
   *type_name : varchar(255)
   *last_modified_time_ms : bigint
-  examined : boolean
-  forwarded : boolean
-  forward_error : boolean
+  *examined : boolean
+  *forwarded : boolean
+  *new_position : bigint
 }
 
 @enduml

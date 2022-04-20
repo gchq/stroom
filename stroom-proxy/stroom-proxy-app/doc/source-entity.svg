@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="171px" preserveAspectRatio="none" style="width:193px;height:171px;" version="1.1" viewBox="0 0 193 171" width="193px" zoomAndPan="magnify"><defs><filter height="300%" id="f3fsc67g6e3yz" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[fb94403e3d3521d383fd6507b67b3642]
-class source--><rect codeLine="5" fill="#FEFECE" filter="url(#f3fsc67g6e3yz)" height="150.4375" id="source" style="stroke:#A80036;stroke-width:1.5;" width="172" x="7" y="7"/><ellipse cx="70.25" cy="23" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M73.2656,29 L66.2813,29 L66.2813,16.8594 L73.2656,16.8594 L73.2656,18.9688 L68.8438,18.9688 L68.8438,21.6406 L72.9531,21.6406 L72.9531,23.75 L68.8438,23.75 L68.8438,26.875 L73.2656,26.875 L73.2656,29 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="37" x="90.75" y="27.1543">source</text><line style="stroke:#A80036;stroke-width:1.5;" x1="8" x2="178" y1="39" y2="39"/><ellipse cx="18" cy="50" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="43" x="27" y="53.2104">id : bigint</text><line style="stroke:#A80036;stroke-width:1.0;" x1="8" x2="178" y1="59.8047" y2="59.8047"/><ellipse cx="18" cy="70.8047" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="134" x="27" y="74.0151">path : varchar(255) - unique</text><ellipse cx="18" cy="83.6094" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="27" y="86.8198">feed_name : varchar(255)</text><ellipse cx="18" cy="96.4141" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="27" y="99.6245">type_name : varchar(255)</text><ellipse cx="18" cy="109.2188" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="146" x="27" y="112.4292">last_modified_time_ms : bigint</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="95" x="27" y="125.2339">examined : boolean</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="97" x="27" y="138.0386">forwarded : boolean</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="114" x="27" y="150.8433">forward_error : boolean</text><!--MD5=[dea1b73c422825448d7cdaff3caa6e86]
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="188px" preserveAspectRatio="none" style="width:205px;height:188px;background:#FFFFFF;" version="1.1" viewBox="0 0 205 188" width="205px" zoomAndPan="magnify"><defs><filter height="300%" id="fpnyeltk08ujw" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[fb94403e3d3521d383fd6507b67b3642]
+class source--><rect codeLine="5" fill="#FEFECE" filter="url(#fpnyeltk08ujw)" height="167.8551" id="source" style="stroke:#A80036;stroke-width:1.5;" width="184" x="7" y="7"/><ellipse cx="75.75" cy="23" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M72.1094,29.5 L72.1094,17.3594 L79.7656,17.3594 L79.7656,19.4844 L74.4844,19.4844 L74.4844,22.1406 L79.5,22.1406 L79.5,24.2656 L74.4844,24.2656 L74.4844,27.375 L79.7656,27.375 L79.7656,29.5 L72.1094,29.5 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="38" x="96.25" y="27.656">source</text><line style="stroke:#A80036;stroke-width:1.5;" x1="8" x2="190" y1="39" y2="39"/><ellipse cx="18" cy="50" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="50" x="27" y="54.7589">id : bigint</text><line style="stroke:#A80036;stroke-width:1.0;" x1="8" x2="190" y1="61.9819" y2="61.9819"/><ellipse cx="18" cy="72.9819" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="144" x="27" y="77.7408">path : varchar(255) - unique</text><ellipse cx="18" cy="87.9638" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="130" x="27" y="92.7227">feed_name : varchar(255)</text><ellipse cx="18" cy="102.9457" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="130" x="27" y="107.7046">type_name : varchar(255)</text><ellipse cx="18" cy="117.9276" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="158" x="27" y="122.6865">last_modified_time_ms : bigint</text><ellipse cx="18" cy="132.9094" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="103" x="27" y="137.6684">examined : boolean</text><ellipse cx="18" cy="147.8913" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="108" x="27" y="152.6502">forwarded : boolean</text><ellipse cx="18" cy="162.8732" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="110" x="27" y="167.6321">new_position : bigint</text><!--MD5=[08d67f41f736e7f2516cbe76486dab5a]
 @startuml
 
 ' avoid problems with angled crows feet
@@ -12,9 +12,9 @@ entity source {
   *feed_name : varchar(255)
   *type_name : varchar(255)
   *last_modified_time_ms : bigint
-  examined : boolean
-  forwarded : boolean
-  forward_error : boolean
+  *examined : boolean
+  *forwarded : boolean
+  *new_position : bigint
 }
 
 @enduml
@@ -30,18 +30,18 @@ entity source {
   *feed_name : varchar(255)
   *type_name : varchar(255)
   *last_modified_time_ms : bigint
-  examined : boolean
-  forwarded : boolean
-  forward_error : boolean
+  *examined : boolean
+  *forwarded : boolean
+  *new_position : bigint
 }
 
 @enduml
 
-PlantUML version 1.2021.5(Sun Apr 25 11:20:28 GMT 2021)
+PlantUML version 1.2021.16(Wed Dec 08 17:25:22 GMT 2021)
 (GPL source distribution)
 Java Runtime: OpenJDK Runtime Environment
 JVM: OpenJDK 64-Bit Server VM
 Default Encoding: UTF-8
 Language: en
-Country: US
+Country: GB
 --></g></svg>

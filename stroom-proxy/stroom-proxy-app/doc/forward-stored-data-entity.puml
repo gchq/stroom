@@ -12,7 +12,7 @@ entity source {
   *last_modified_time_ms : bigint
   examined : boolean
   *forwarded : boolean
-  *forward_error : boolean
+  *new_position : bigint
 }
 
 entity forward_url {
@@ -24,10 +24,14 @@ entity forward_url {
 entity forward_source {
   *id : bigint
   --
+  *update_time_ms : bigint
   *fk_forward_url_id : int
   *fk_source_id : bigint
   *success : boolean
   *error : varchar(255)
+  *tries : bigint
+  *new_position : bigint
+  *retry_position : bigint
 }
 
 forward_source }o--|| forward_url
