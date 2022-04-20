@@ -26,6 +26,7 @@ import stroom.proxy.app.RequestAuthenticatorImpl;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.RestClientConfigConverter;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
+import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
@@ -115,6 +116,7 @@ public class ProxyModule extends AbstractModule {
     protected void configure() {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        bind(ProxyId.class).asEagerSingleton();
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new DbModule());

@@ -32,6 +32,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     private final boolean useDefaultOpenIdCredentials;
     private final boolean haltBootOnConfigValidationFailure;
+    private final String proxyId;
     private final String contentDir;
 
     private final ProxyPathConfig pathConfig;
@@ -50,6 +51,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public ProxyConfig() {
         useDefaultOpenIdCredentials = DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS;
         haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
+        proxyId = null;
         contentDir = DEFAULT_CONTENT_DIR;
 
         pathConfig = new ProxyPathConfig();
@@ -70,6 +72,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public ProxyConfig(
             @JsonProperty("useDefaultOpenIdCredentials") final boolean useDefaultOpenIdCredentials,
             @JsonProperty("haltBootOnConfigValidationFailure") final boolean haltBootOnConfigValidationFailure,
+            @JsonProperty("proxyId") final String proxyId,
             @JsonProperty("contentDir") final String contentDir,
             @JsonProperty("path") final ProxyPathConfig pathConfig,
             @JsonProperty("db") final ProxyRepoDbConfig proxyDbConfig,
@@ -86,6 +89,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+        this.proxyId = proxyId;
         this.contentDir = contentDir;
         this.pathConfig = pathConfig;
         this.proxyDbConfig = proxyDbConfig;
@@ -120,6 +124,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             "If API keys are set elsewhere in config then they will override this setting.")
     public boolean isUseDefaultOpenIdCredentials() {
         return useDefaultOpenIdCredentials;
+    }
+
+    @JsonProperty
+    public String getProxyId() {
+        return proxyId;
     }
 
     @JsonProperty
@@ -195,6 +204,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         private Boolean useDefaultOpenIdCredentials = DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS;
         private Boolean haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
+        private String proxyId;
         private String contentDir = DEFAULT_CONTENT_DIR;
 
         private ProxyPathConfig pathConfig = new ProxyPathConfig();
@@ -214,77 +224,82 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         }
 
-        public Builder withUseDefaultOpenIdCredentials(final Boolean useDefaultOpenIdCredentials) {
+        public Builder useDefaultOpenIdCredentials(final Boolean useDefaultOpenIdCredentials) {
             this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
             return this;
         }
 
-        public Builder withHaltBootOnConfigValidationFailure(final Boolean haltBootOnConfigValidationFailure) {
+        public Builder haltBootOnConfigValidationFailure(final Boolean haltBootOnConfigValidationFailure) {
             this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
             return this;
         }
 
-        public Builder withContentDir(final String contentDir) {
+        public Builder proxyId(final String proxyId) {
+            this.proxyId = proxyId;
+            return this;
+        }
+
+        public Builder contentDir(final String contentDir) {
             this.contentDir = contentDir;
             return this;
         }
 
-        public Builder withPathConfig(final ProxyPathConfig pathConfig) {
+        public Builder pathConfig(final ProxyPathConfig pathConfig) {
             this.pathConfig = pathConfig;
             return this;
         }
 
-        public Builder withProxyDbConfig(final ProxyRepoDbConfig proxyDbConfig) {
+        public Builder proxyDbConfig(final ProxyRepoDbConfig proxyDbConfig) {
             this.proxyDbConfig = proxyDbConfig;
             return this;
         }
 
-        public Builder withReceiveDataConfig(final ReceiveDataConfig receiveDataConfig) {
+        public Builder receiveDataConfig(final ReceiveDataConfig receiveDataConfig) {
             this.receiveDataConfig = receiveDataConfig;
             return this;
         }
 
-        public Builder withProxyRepoConfig(final ProxyRepoConfig proxyRepoConfig) {
+        public Builder proxyRepoConfig(final ProxyRepoConfig proxyRepoConfig) {
             this.proxyRepoConfig = proxyRepoConfig;
             return this;
         }
 
-        public Builder withProxyRepoFileScannerConfig(final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig) {
+        public Builder proxyRepoFileScannerConfig(final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig) {
             this.proxyRepoFileScannerConfig = proxyRepoFileScannerConfig;
             return this;
         }
 
-        public Builder withAggregatorConfig(final AggregatorConfig aggregatorConfig) {
+        public Builder aggregatorConfig(final AggregatorConfig aggregatorConfig) {
             this.aggregatorConfig = aggregatorConfig;
             return this;
         }
 
-        public Builder withForwarderConfig(final ForwarderConfig forwarderConfig) {
+        public Builder forwarderConfig(final ForwarderConfig forwarderConfig) {
             this.forwarderConfig = forwarderConfig;
             return this;
         }
 
-        public Builder withLogStreamConfig(final LogStreamConfig logStreamConfig) {
+        public Builder logStreamConfig(final LogStreamConfig logStreamConfig) {
             this.logStreamConfig = logStreamConfig;
             return this;
         }
 
-        public Builder withContentSyncConfig(final ContentSyncConfig contentSyncConfig) {
+        public Builder contentSyncConfig(final ContentSyncConfig contentSyncConfig) {
             this.contentSyncConfig = contentSyncConfig;
             return this;
         }
 
-        public Builder withFeedStatusConfig(final FeedStatusConfig feedStatusConfig) {
+        public Builder feedStatusConfig(final FeedStatusConfig feedStatusConfig) {
             this.feedStatusConfig = feedStatusConfig;
             return this;
         }
 
-        public Builder withRestClientConfig(final RestClientConfig restClientConfig) {
+        public Builder restClientConfig(final RestClientConfig restClientConfig) {
             this.restClientConfig = restClientConfig;
             return this;
         }
 
-        public Builder withThreadConfig(final ThreadConfig threadConfig) {
+        public Builder threadConfig(final ThreadConfig threadConfig) {
             this.threadConfig = threadConfig;
             return this;
         }
@@ -293,6 +308,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return new ProxyConfig(
                     useDefaultOpenIdCredentials,
                     haltBootOnConfigValidationFailure,
+                    proxyId,
                     contentDir,
                     pathConfig,
                     proxyDbConfig,

@@ -17,13 +17,17 @@ import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.UserIdentity;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -39,7 +43,7 @@ import javax.ws.rs.core.HttpHeaders;
  */
 public class ProxyRequestHandler implements RequestHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRequestHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyRequestHandler.class);
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
     private static final AtomicInteger concurrentRequestCount = new AtomicInteger(0);
 
@@ -48,18 +52,21 @@ public class ProxyRequestHandler implements RequestHandler {
     private final LogStream logStream;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final RequestAuthenticator requestAuthenticator;
+    private final ProxyId proxyId;
 
     @Inject
     public ProxyRequestHandler(final ReceiveStreamHandlers receiveStreamHandlerProvider,
                                final AttributeMapFilterFactory attributeMapFilterFactory,
                                final LogStream logStream,
                                final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-                               final RequestAuthenticator requestAuthenticator) {
+                               final RequestAuthenticator requestAuthenticator,
+                               final ProxyId proxyId) {
         this.receiveStreamHandlerProvider = receiveStreamHandlerProvider;
         this.logStream = logStream;
         attributeMapFilter = attributeMapFilterFactory.create();
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.requestAuthenticator = requestAuthenticator;
+        this.proxyId = proxyId;
     }
 
     @Override
@@ -83,6 +90,17 @@ public class ProxyRequestHandler implements RequestHandler {
             final long startTimeMs = System.currentTimeMillis();
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
             final String authorisationHeader = attributeMap.get(HttpHeaders.AUTHORIZATION);
+
+            // Create a new proxy id for the stream and report it back to the sender,
+            final String attributeKey = proxyId.getId();
+            final String attributeName = UUID.randomUUID().toString();
+            attributeMap.put(attributeKey, attributeName);
+            LOGGER.debug(() -> "Adding proxy id attribute: " + attributeKey + ": " + attributeName);
+            try (final PrintWriter writer = response.getWriter()) {
+                writer.println(attributeKey + ": " + attributeName);
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
 
             // If token authentication is required but no token is supplied then error.
             if (receiveDataConfig.isRequireTokenAuthentication() &&
