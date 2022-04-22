@@ -29,6 +29,7 @@ import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.db.jooq.tables.records.AccountRecord;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.shared.User;
+import stroom.util.NullSafe;
 import stroom.util.ResultPageFactory;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
@@ -71,7 +72,12 @@ class AccountDaoImpl implements AccountDao {
     /**
      * Create a derived field that represents the account state.
      */
-    private static final Field<String> ACCOUNT_STATUS = DSL.field("status", String.class);
+    private static final Field<String> ACCOUNT_STATUS = DSL
+            .when(ACCOUNT.LOCKED.eq(true), "Locked")
+            .when(ACCOUNT.INACTIVE.eq(true), "Inactive")
+            .when(ACCOUNT.ENABLED.eq(true), "Enabled")
+            .otherwise("Disabled")
+            .as(DSL.field("status", String.class));
 
     private static final Function<Record, Account> RECORD_TO_ACCOUNT_MAPPER = record -> {
         final Account account = new Account();
@@ -132,6 +138,8 @@ class AccountDaoImpl implements AccountDao {
     protected static final String FIELD_NAME_EMAIL = "email";
     protected static final String FIELD_NAME_STATUS = "status";
     protected static final String FIELD_NAME_LAST_LOGIN_MS = "lastLoginMs";
+    protected static final String FIELD_NAME_LOGIN_FAILURES = "loginFailures";
+    protected static final String FIELD_NAME_COMMENTS = "comments";
     private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
             entry("id", ACCOUNT.ID),
             entry("version", ACCOUNT.VERSION),
@@ -143,9 +151,9 @@ class AccountDaoImpl implements AccountDao {
             entry(FIELD_NAME_EMAIL, ACCOUNT.EMAIL),
             entry("firstName", ACCOUNT.FIRST_NAME),
             entry("lastName", ACCOUNT.LAST_NAME),
-            entry("comments", ACCOUNT.COMMENTS),
+            entry(FIELD_NAME_COMMENTS, ACCOUNT.COMMENTS),
             entry("loginCount", ACCOUNT.LOGIN_COUNT),
-            entry("loginFailures", ACCOUNT.LOGIN_FAILURES),
+            entry(FIELD_NAME_LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
             entry(FIELD_NAME_LAST_LOGIN_MS, ACCOUNT.LAST_LOGIN_MS),
             entry("reactivatedMs", ACCOUNT.REACTIVATED_MS),
             entry("forcePasswordChange", ACCOUNT.FORCE_PASSWORD_CHANGE),
@@ -164,7 +172,11 @@ class AccountDaoImpl implements AccountDao {
             FIELD_NAME_STATUS,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getStatus),
             FIELD_NAME_LAST_LOGIN_MS,
-            Comparator.nullsFirst(Comparator.comparingLong(Account::getLastLoginMs)));
+            CompareUtil.getNullSafeComparator(Account::getLastLoginMs), // nullable
+            FIELD_NAME_LOGIN_FAILURES,
+            Comparator.comparingInt(Account::getLoginFailures), // not null
+            FIELD_NAME_COMMENTS,
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getComments));
 
     private final Provider<IdentityConfig> identityConfigProvider;
     private final IdentityDbConnProvider identityDbConnProvider;
@@ -188,10 +200,10 @@ class AccountDaoImpl implements AccountDao {
         final TableField<AccountRecord, String> orderByUserIdField =
                 ACCOUNT.USER_ID;
         final List<Account> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .selectFrom(ACCOUNT)
-                .where(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
-                .orderBy(orderByUserIdField)
-                .fetch())
+                        .selectFrom(ACCOUNT)
+                        .where(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
+                        .orderBy(orderByUserIdField)
+                        .fetch())
                 .map(RECORD_TO_ACCOUNT_MAPPER::apply);
         return ResultPageFactory.createUnboundedList(list, (accounts, pageResponse) ->
                 new AccountResultPage(accounts, pageResponse, null));
@@ -222,34 +234,8 @@ class AccountDaoImpl implements AccountDao {
                 final int offset = JooqUtil.getOffset(request.getPageRequest(), limit, count);
 
                 final List<Account> list = context
-                        .select(ACCOUNT.ID,
-                                ACCOUNT.VERSION,
-                                ACCOUNT.CREATE_TIME_MS,
-                                ACCOUNT.CREATE_USER,
-                                ACCOUNT.UPDATE_TIME_MS,
-                                ACCOUNT.UPDATE_USER,
-                                ACCOUNT.USER_ID,
-                                ACCOUNT.EMAIL,
-                                ACCOUNT.PASSWORD_HASH,
-                                ACCOUNT.PASSWORD_LAST_CHANGED_MS,
-                                ACCOUNT.FIRST_NAME,
-                                ACCOUNT.LAST_NAME,
-                                ACCOUNT.COMMENTS,
-                                ACCOUNT.LOGIN_COUNT,
-                                ACCOUNT.LOGIN_FAILURES,
-                                ACCOUNT.LAST_LOGIN_MS,
-                                ACCOUNT.REACTIVATED_MS,
-                                ACCOUNT.FORCE_PASSWORD_CHANGE,
-                                ACCOUNT.NEVER_EXPIRES,
-                                ACCOUNT.ENABLED,
-                                ACCOUNT.INACTIVE,
-                                ACCOUNT.LOCKED,
-                                ACCOUNT.PROCESSING_ACCOUNT,
-                                DSL.when(ACCOUNT.LOCKED.eq(true), "Locked")
-                                        .when(ACCOUNT.INACTIVE.eq(true), "Inactive")
-                                        .when(ACCOUNT.ENABLED.eq(true), "Enabled")
-                                        .otherwise("Disabled")
-                                        .as(ACCOUNT_STATUS))
+                        .select(ACCOUNT.asterisk(),
+                                ACCOUNT_STATUS)
                         .from(ACCOUNT)
                         .where(condition)
                         .orderBy(orderFields)
@@ -269,8 +255,10 @@ class AccountDaoImpl implements AccountDao {
                         fullyQualifyFilterInput);
 
             } else {
-                try (final Stream<AccountRecord> stream = context
-                        .selectFrom(ACCOUNT)
+                try (final Stream<Record> stream = context
+                        .select(ACCOUNT.asterisk(),
+                                ACCOUNT_STATUS)
+                        .from(ACCOUNT)
                         .where(condition)
                         .orderBy(orderFields)
                         .stream()) {
@@ -278,10 +266,10 @@ class AccountDaoImpl implements AccountDao {
                     final Comparator<Account> comparator = buildComparator(request).orElse(null);
 
                     return QuickFilterPredicateFactory.filterStream(
-                            request.getQuickFilter(),
-                            AccountDao.FIELD_MAPPERS,
-                            stream.map(RECORD_TO_ACCOUNT_MAPPER),
-                            comparator)
+                                    request.getQuickFilter(),
+                                    AccountDao.FIELD_MAPPERS,
+                                    stream.map(RECORD_TO_ACCOUNT_MAPPER),
+                                    comparator)
                             .collect(AccountResultPage.collector(
                                     request.getPageRequest(),
                                     (accounts, pageResponse) ->
@@ -292,9 +280,7 @@ class AccountDaoImpl implements AccountDao {
     }
 
     private Optional<Comparator<Account>> buildComparator(final SearchAccountRequest searchAccountRequest) {
-        if (searchAccountRequest != null
-                && searchAccountRequest.getSortList() != null
-                && !searchAccountRequest.getSortList().isEmpty()) {
+        if (NullSafe.hasItems(searchAccountRequest, SearchAccountRequest::getSortList)) {
             return Optional.of(CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, searchAccountRequest));
         } else {
             return Optional.empty();
@@ -419,10 +405,10 @@ class AccountDaoImpl implements AccountDao {
 
             // Query the field back to find out if we locked.
             locked = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                    .select(ACCOUNT.LOCKED)
-                    .from(ACCOUNT)
-                    .where(ACCOUNT.USER_ID.eq(userId))
-                    .fetchOptional())
+                            .select(ACCOUNT.LOCKED)
+                            .from(ACCOUNT)
+                            .where(ACCOUNT.USER_ID.eq(userId))
+                            .fetchOptional())
                     .map(Record1::value1)
                     .orElse(false);
         } else {
@@ -466,19 +452,19 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public Optional<Account> get(final String userId) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .selectFrom(ACCOUNT)
-                .where(ACCOUNT.USER_ID.eq(userId))
-                .fetchOptional())
+                        .selectFrom(ACCOUNT)
+                        .where(ACCOUNT.USER_ID.eq(userId))
+                        .fetchOptional())
                 .map(RECORD_TO_ACCOUNT_MAPPER);
     }
 
     @Override
     public Optional<Integer> getId(final String userId) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .select(ACCOUNT.ID)
-                .from(ACCOUNT)
-                .where(ACCOUNT.USER_ID.eq(userId))
-                .fetchOptional())
+                        .select(ACCOUNT.ID)
+                        .from(ACCOUNT)
+                        .where(ACCOUNT.USER_ID.eq(userId))
+                        .fetchOptional())
                 .map(r -> r.getValue(ACCOUNT.ID));
     }
 

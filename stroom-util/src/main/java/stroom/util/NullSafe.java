@@ -19,9 +19,23 @@ public class NullSafe {
     }
 
     /**
+     * @return True if str is null or blank
+     */
+    public static boolean isBlankString(final String str) {
+        return str == null || str.isBlank();
+    }
+
+    /**
+     * @return True if str is null or empty
+     */
+    public static boolean isEmptyString(final String str) {
+        return str == null || str.isEmpty();
+    }
+
+    /**
      * @return True if the collection is null or empty
      */
-    public static <T> boolean isEmpty(final Collection<T> collection) {
+    public static <T> boolean isEmptyCollection(final Collection<T> collection) {
         return collection == null || collection.isEmpty();
     }
 
@@ -33,10 +47,36 @@ public class NullSafe {
     }
 
     /**
+     * @return True if value is null or the string property is null or empty
+     */
+    public static <T> boolean isEmptyString(final T value,
+                                            final Function<T, String> stringGetter) {
+        if (value == null) {
+            return true;
+        } else {
+            final String str = Objects.requireNonNull(stringGetter).apply(value);
+            return str == null || str.isEmpty();
+        }
+    }
+
+    /**
+     * @return True if value is null or the string property is null or empty
+     */
+    public static <T> boolean isBlankString(final T value,
+                                            final Function<T, String> stringGetter) {
+        if (value == null) {
+            return true;
+        } else {
+            final String str = Objects.requireNonNull(stringGetter).apply(value);
+            return str == null || str.isBlank();
+        }
+    }
+
+    /**
      * @return True if value is null or the collection is null or empty
      */
-    public static <T1, T2> boolean isEmpty(final T1 value,
-                                           final Function<T1, Collection<T2>> collectionGetter) {
+    public static <T1, T2> boolean isEmptyCollection(final T1 value,
+                                                     final Function<T1, Collection<T2>> collectionGetter) {
         if (value == null) {
             return true;
         } else {
@@ -427,6 +467,7 @@ public class NullSafe {
         return Objects.requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
     }
 
+    @SuppressWarnings("unused")
     public static <T1, T2, T3, T4, R> Optional<R> getAsOptional(final T1 value,
                                                                 final Function<T1, T2> getter1,
                                                                 final Function<T2, T3> getter2,

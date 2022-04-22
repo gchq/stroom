@@ -47,8 +47,8 @@ import javax.ws.rs.core.MediaType;
 @Tag(name = "Api Keys")
 public interface TokenResource extends RestResource, FetchWithIntegerId<Token> {
 
-    FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("User Id");
-    FilterFieldDefinition FIELD_DEF_STATUS = FilterFieldDefinition.qualifiedField("Status");
+    FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("userId");
+    FilterFieldDefinition FIELD_DEF_STATUS = FilterFieldDefinition.qualifiedField("enabled");
 
     @GET
     @Path("/")
