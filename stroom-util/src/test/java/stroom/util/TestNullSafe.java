@@ -267,7 +267,7 @@ class TestNullSafe {
     @Test
     void testIsEmpty_Null() {
         final List<String> list = null;
-        Assertions.assertThat(NullSafe.isEmpty(list))
+        Assertions.assertThat(NullSafe.isEmptyCollection(list))
                 .isTrue();
         Assertions.assertThat(NullSafe.hasItems(list))
                 .isFalse();
@@ -276,7 +276,7 @@ class TestNullSafe {
     @Test
     void testIsEmpty_Empty() {
         final List<String> list = Collections.emptyList();
-        Assertions.assertThat(NullSafe.isEmpty(list))
+        Assertions.assertThat(NullSafe.isEmptyCollection(list))
                 .isTrue();
         Assertions.assertThat(NullSafe.hasItems(list))
                 .isFalse();
@@ -285,7 +285,7 @@ class TestNullSafe {
     @Test
     void testIsEmpty_NotEmpty() {
         final List<String> list = List.of("X");
-        Assertions.assertThat(NullSafe.isEmpty(list))
+        Assertions.assertThat(NullSafe.isEmptyCollection(list))
                 .isFalse();
         Assertions.assertThat(NullSafe.hasItems(list))
                 .isTrue();
@@ -294,13 +294,13 @@ class TestNullSafe {
     @Test
     void testIsEmpty2_Null() {
         final ListWrapper nullListWrapper = null;
-        Assertions.assertThat(NullSafe.isEmpty(nullListWrapper, ListWrapper::getNonNullNonEmptyList))
+        Assertions.assertThat(NullSafe.isEmptyCollection(nullListWrapper, ListWrapper::getNonNullNonEmptyList))
                 .isTrue();
         Assertions.assertThat(NullSafe.hasItems(nullListWrapper, ListWrapper::getNonNullNonEmptyList))
                 .isFalse();
 
         final ListWrapper nonNullListWrapper = new ListWrapper();
-        Assertions.assertThat(NullSafe.isEmpty(nonNullListWrapper, ListWrapper::getNullList))
+        Assertions.assertThat(NullSafe.isEmptyCollection(nonNullListWrapper, ListWrapper::getNullList))
                 .isTrue();
         Assertions.assertThat(NullSafe.hasItems(nonNullListWrapper, ListWrapper::getNullList))
                 .isFalse();
@@ -364,6 +364,72 @@ class TestNullSafe {
                 .isFalse();
         Assertions.assertThat(NullSafe.hasEntries(nonNullMapWrapper, MapWrapper::getNonNullNonEmptyMap))
                 .isTrue();
+    }
+
+    @Test
+    void testIsEmptyString_Null() {
+        final String str = null;
+        Assertions.assertThat(NullSafe.isEmptyString(str))
+                .isTrue();
+        Assertions.assertThat(NullSafe.isBlankString(str))
+                .isTrue();
+    }
+
+    @Test
+    void testIsEmptyString_Empty() {
+        final String str = "";
+        Assertions.assertThat(NullSafe.isEmptyString(str))
+                .isTrue();
+        Assertions.assertThat(NullSafe.isBlankString(str))
+                .isTrue();
+    }
+
+    @Test
+    void testIsEmptyString_Blank() {
+        final String str = " ";
+        Assertions.assertThat(NullSafe.isEmptyString(str))
+                .isFalse();
+        Assertions.assertThat(NullSafe.isBlankString(str))
+                .isTrue();
+    }
+
+    @Test
+    void testIsEmptyString_NotEmpty() {
+        final String str = "foobar";
+        Assertions.assertThat(NullSafe.isEmptyString(str))
+                .isFalse();
+        Assertions.assertThat(NullSafe.isBlankString(str))
+                .isFalse();
+    }
+
+    @Test
+    void testIsEmptyString2() {
+        final StringWrapper nullStringWrapper = null;
+        Assertions.assertThat(NullSafe.isEmptyString(nullStringWrapper, StringWrapper::getNonNullNonEmptyString))
+                .isTrue();
+        Assertions.assertThat(NullSafe.isBlankString(nullStringWrapper, StringWrapper::getNonNullNonEmptyString))
+                .isTrue();
+
+        final StringWrapper nonNullStringWrapper = new StringWrapper();
+        Assertions.assertThat(NullSafe.isEmptyString(nonNullStringWrapper, StringWrapper::getNullString))
+                .isTrue();
+        Assertions.assertThat(NullSafe.isBlankString(nonNullStringWrapper, StringWrapper::getNullString))
+                .isTrue();
+
+        Assertions.assertThat(NullSafe.isEmptyString(nonNullStringWrapper, StringWrapper::getNonNullEmptyString))
+                .isTrue();
+        Assertions.assertThat(NullSafe.isBlankString(nonNullStringWrapper, StringWrapper::getNonNullEmptyString))
+                .isTrue();
+
+        Assertions.assertThat(NullSafe.isEmptyString(nonNullStringWrapper, StringWrapper::getNonNullBlankString))
+                .isFalse();
+        Assertions.assertThat(NullSafe.isBlankString(nonNullStringWrapper, StringWrapper::getNonNullBlankString))
+                .isTrue();
+
+        Assertions.assertThat(NullSafe.isEmptyString(nonNullStringWrapper, StringWrapper::getNonNullNonEmptyString))
+                .isFalse();
+        Assertions.assertThat(NullSafe.isBlankString(nonNullStringWrapper, StringWrapper::getNonNullNonEmptyString))
+                .isFalse();
     }
 
     @Test
@@ -609,6 +675,30 @@ class TestNullSafe {
 
         public Map<Integer, Integer> getNonNullNonEmptyMap() {
             return nonNullNonEmptyMap;
+        }
+    }
+
+    private static class StringWrapper {
+
+        private final String nullString = null;
+        private final String nonNullEmptyString = "";
+        private final String nonNullBlankString = " ";
+        private final String nonNullNonEmptyString = "foobar";
+
+        public String getNullString() {
+            return nullString;
+        }
+
+        public String getNonNullEmptyString() {
+            return nonNullEmptyString;
+        }
+
+        public String getNonNullBlankString() {
+            return nonNullBlankString;
+        }
+
+        public String getNonNullNonEmptyString() {
+            return nonNullNonEmptyString;
         }
     }
 }
