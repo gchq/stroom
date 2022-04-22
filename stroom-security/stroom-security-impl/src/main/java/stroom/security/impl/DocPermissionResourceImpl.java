@@ -21,6 +21,7 @@ import stroom.security.shared.FilterUsersRequest;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.SimpleUser;
 import stroom.security.shared.User;
+import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
@@ -249,7 +250,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 .withTypeId(eventTypeId)
                 .withDescription(description)
                 .withDefaultEventAction(UpdateEventAction.builder()
-                        .withBefore(buildPermissionState(docRef, changes, documentPermissionsBefore))
+                        .withBefore(buildPermissionState(docRef, documentPermissionsBefore))
                         .build())
                 .withComplexLoggedAction(updateEventAction -> {
 
@@ -267,7 +268,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
                     // Add in the after state
                     UpdateEventAction modifiedEventAction = updateEventAction.newCopyBuilder()
-                            .withAfter(buildPermissionState(docRef, changes, documentPermissionsAfter))
+                            .withAfter(buildPermissionState(docRef, documentPermissionsAfter))
                             .build();
                     return ComplexLoggedOutcome.success(modifiedEventAction);
                 })
@@ -275,73 +276,77 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     }
 
     private MultiObject buildPermissionState(final DocRef docRef,
-                                             final Changes changes,
                                              final DocumentPermissions documentPermissions) {
 
         final Permissions.Builder<Void> permissionsBuilder = Permissions.builder();
-
         final Builder<Void> rootDataBuilder = Data.builder()
                 .withName("createPermissionsByUser");
-        documentPermissions.getPermissions().forEach((userUuid, permissions) -> {
-            final Optional<User> user = securityContextProvider.get().asProcessingUserResult(() ->
-                    userServiceProvider.get().loadByUuid(userUuid));
 
-            final Permission.Builder<Void> permissionBuilder = Permission.builder();
+        if (NullSafe.hasEntries(documentPermissions, DocumentPermissions::getPermissions)) {
+            documentPermissions.getPermissions().forEach((userUuid, permissions) -> {
+                final Optional<User> user = securityContextProvider.get().asProcessingUserResult(() ->
+                        userServiceProvider.get().loadByUuid(userUuid));
 
-            if (user.isEmpty()) {
-                LOGGER.warn("Unable to locate user for permission change " + userUuid);
-                permissionBuilder.withUser(event.logging.User.builder()
-                        .withId(docRef.getUuid())
-                        .build());
-            } else if (user.get().isGroup()) {
-                permissionBuilder.withGroup(Group.builder()
-                        .withId(user.get().getName())
-                        .build());
-            } else {
-                permissionBuilder.withUser(event.logging.User.builder()
-                        .withId(user.get().getName())
-                        .build());
-            }
+                final Permission.Builder<Void> permissionBuilder = Permission.builder();
 
-            // Have to use Data elements to hold the Create perms as the schema currently has no support
-            // for custom perms. Waiting for https://github.com/gchq/event-logging-schema/issues/76
-            user.ifPresent(userOrGroup -> {
-                final Data userData = Data.builder()
-                        .withName(userOrGroup.getName())
-                        .withValue(userOrGroup.isGroup()
-                                ? "group"
-                                : "user")
-                        .addData(documentPermissions.getPermissions().get(userUuid)
-                                .stream()
-                                .filter(perm -> perm != null && perm.startsWith(DocumentPermissionNames.CREATE))
-                                .map(perm -> Data.builder()
-                                        .withName(perm)
-                                        .build())
-                                .collect(Collectors.toSet()))
-                        .build();
-
-                if (!userData.getData().isEmpty()) {
-                    rootDataBuilder
-                            .addData(userData)
-                            .build();
+                if (user.isEmpty()) {
+                    LOGGER.warn("Unable to locate user for permission change " + userUuid);
+                    permissionBuilder.withUser(event.logging.User.builder()
+                            .withId(docRef.getUuid())
+                            .build());
+                } else if (user.get().isGroup()) {
+                    permissionBuilder.withGroup(Group.builder()
+                            .withId(user.get().getName())
+                            .build());
+                } else {
+                    permissionBuilder.withUser(event.logging.User.builder()
+                            .withId(user.get().getName())
+                            .build());
                 }
+
+                // Have to use Data elements to hold the Create perms as the schema currently has no support
+                // for custom perms. Waiting for https://github.com/gchq/event-logging-schema/issues/76
+                user.ifPresent(userOrGroup -> {
+                    final Data userData = Data.builder()
+                            .withName(userOrGroup.getName())
+                            .withValue(userOrGroup.isGroup()
+                                    ? "group"
+                                    : "user")
+                            .addData(documentPermissions.getPermissions().get(userUuid)
+                                    .stream()
+                                    .filter(perm -> perm != null && perm.startsWith(DocumentPermissionNames.CREATE))
+                                    .map(perm -> Data.builder()
+                                            .withName(perm)
+                                            .build())
+                                    .collect(Collectors.toSet()))
+                            .build();
+
+                    if (!userData.getData().isEmpty()) {
+                        rootDataBuilder
+                                .addData(userData)
+                                .build();
+                    }
+                });
+
+                permissionBuilder.withAllowAttributes(mapChangeItemsToPermissions(permissions));
+
+                permissionsBuilder.addPermissions(permissionBuilder.build());
             });
-
-            permissionBuilder.withAllowAttributes(mapChangeItemsToPermissions(permissions));
-
-            permissionsBuilder.addPermissions(permissionBuilder.build());
-        });
+        }
 
         final OtherObject.Builder<Void> otherObjectBuilder = OtherObject.builder()
                 .withDescription(docRef.toInfoString())
                 .withId(docRef.getUuid())
                 .withName(docRef.getName())
-                .withType(docRef.getType())
-                .withPermissions(permissionsBuilder.build());
+                .withType(docRef.getType());
+
+        final Permissions permissions = permissionsBuilder.build();
+        if (NullSafe.hasItems(permissions, Permissions::getPermissions)) {
+            otherObjectBuilder.withPermissions(permissions);
+        }
 
         final Data rootData = rootDataBuilder.build();
-
-        if (!rootData.getData().isEmpty()) {
+        if (NullSafe.hasItems(rootData, Data::getData)) {
             otherObjectBuilder.withData(rootDataBuilder.build());
         }
 
