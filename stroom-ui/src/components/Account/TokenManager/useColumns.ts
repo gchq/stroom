@@ -14,7 +14,8 @@ const useColumns = (): Column<Token>[] => {
       {
         Header: "User Id",
         accessor: "userId",
-        maxWidth: 150,
+        width: 190,
+        maxWidth: 250,
       },
       {
         id: "enabled",
