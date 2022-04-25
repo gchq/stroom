@@ -494,7 +494,7 @@ public final class SetupSampleDataBean {
     }
 
     private String createNum(final int max) {
-        return String.valueOf((int) (ThreadLocalRandom.current().nextInt() * max) + 1);
+        return String.valueOf(ThreadLocalRandom.current().nextInt(max) + 1);
     }
 
     // private Folder get(String name) {
