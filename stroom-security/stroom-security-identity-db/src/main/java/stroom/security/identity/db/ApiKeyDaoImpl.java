@@ -135,7 +135,7 @@ class ApiKeyDaoImpl implements ApiKeyDao {
                     ApiKeyResource.FIELD_DEF_USER_ID,
                     ApiKey::getUserId),
             FilterFieldMapper.of(
-                    TokenResource.FIELD_DEF_STATUS,
+                    ApiKeyResource.FIELD_DEF_STATUS,
                     ENABLED_STATE_FUNCTION));
 
     private static final Map<String, Comparator<ApiKey>> FIELD_COMPARATORS = Map.of(
