@@ -140,7 +140,7 @@ class TestUserServiceImpl {
     }
 
     private User createUser(final String baseName) {
-        User userRef = userService.createUser(String.format("%s_%s", baseName, UUID.randomUUID()));
+        User userRef = userService.getOrCreateUser(String.format("%s_%s", baseName, UUID.randomUUID()));
         assertThat(userRef).isNotNull();
         final Optional<User> user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isPresent();
@@ -148,7 +148,7 @@ class TestUserServiceImpl {
     }
 
     private User createUserGroup(final String baseName) {
-        User userRef = userService.createUserGroup(String.format("%s_%s", baseName, UUID.randomUUID()));
+        User userRef = userService.getOrCreateUserGroup(String.format("%s_%s", baseName, UUID.randomUUID()));
         assertThat(userRef).isNotNull();
         final Optional<User> user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isPresent();

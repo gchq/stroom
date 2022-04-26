@@ -110,9 +110,7 @@ class TestDocumentPermissionsServiceImpl {
     }
 
     private void removePermissions(final DocRef docRef, final User user, final String... permissions) {
-        for (final String permission : permissions) {
-            documentPermissionService.removePermission(docRef.getUuid(), user.getUuid(), permission);
-        }
+        documentPermissionService.removePermissions(docRef.getUuid(), user.getUuid(), Set.of(permissions));
     }
 
     private void checkDocumentPermissions(final DocRef docRef, final User user, final String... permissions) {
@@ -174,7 +172,7 @@ class TestDocumentPermissionsServiceImpl {
     }
 
     private User createUser(final String name) {
-        User userRef = userService.createUser(name);
+        User userRef = userService.getOrCreateUser(name);
         assertThat(userRef).isNotNull();
         final Optional<User> user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isPresent();
@@ -182,7 +180,7 @@ class TestDocumentPermissionsServiceImpl {
     }
 
     private User createUserGroup(final String name) {
-        User userRef = userService.createUserGroup(name);
+        User userRef = userService.getOrCreateUserGroup(name);
         assertThat(userRef).isNotNull();
         final Optional<User> user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isPresent();

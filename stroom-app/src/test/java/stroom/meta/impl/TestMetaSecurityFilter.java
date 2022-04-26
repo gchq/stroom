@@ -84,7 +84,7 @@ class TestMetaSecurityFilter extends StroomIntegrationTest {
     @Test
     void testSecurityFilter() {
         securityContext.asProcessingUser(() -> {
-            final User user = userService.createUser(TEST_USER);
+            final User user = userService.getOrCreateUser(TEST_USER);
 
             final DocRef docref1 = feedStore.createDocument(FEED_NO_PERMISSION);
             final DocRef docref2 = feedStore.createDocument(FEED_USE_PERMISSION);

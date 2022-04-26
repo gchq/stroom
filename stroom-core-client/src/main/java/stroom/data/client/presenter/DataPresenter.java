@@ -1212,7 +1212,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 ? String.join("\n", errors)
                 : null;
         textPresenter.setErrorText(title, errorText);
-        setNavigationControlsVisible(false);
         getView().setSourceLinkVisible(false, false);
         showTextPresenter();
     }

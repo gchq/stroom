@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -81,8 +82,8 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public User tryCreate(final User user) {
-        return genericDao.tryCreate(user, STROOM_USER.NAME, STROOM_USER.IS_GROUP);
+    public User tryCreate(final User user, final Consumer<User> onUserCreateAction) {
+        return genericDao.tryCreate(user, STROOM_USER.NAME, STROOM_USER.IS_GROUP, onUserCreateAction);
     }
 
     @Override

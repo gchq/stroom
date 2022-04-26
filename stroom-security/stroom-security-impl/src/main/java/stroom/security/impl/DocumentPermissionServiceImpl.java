@@ -101,11 +101,13 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         AddPermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, permission);
     }
 
-    public void removePermission(final String docUuid,
-                                 final String userUuid,
-                                 final String permission) {
-        documentPermissionDao.removePermission(docUuid, userUuid, permission);
-        RemovePermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, permission);
+    public void removePermissions(final String docUuid,
+                                  final String userUuid,
+                                  final Set<String> permissions) {
+        documentPermissionDao.removePermissions(docUuid, userUuid, permissions);
+        permissions.forEach(permission ->
+                RemovePermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, permission)
+        );
     }
 
     void clearDocumentPermissionsForUser(final String docUuid,
