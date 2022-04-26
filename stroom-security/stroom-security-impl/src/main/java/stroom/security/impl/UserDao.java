@@ -8,6 +8,7 @@ import stroom.util.filter.FilterFieldMappers;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public interface UserDao {
 
@@ -16,7 +17,11 @@ public interface UserDao {
 
     User create(User user);
 
-    User tryCreate(User user);
+    default User tryCreate(User user) {
+        return tryCreate(user, null);
+    }
+
+    User tryCreate(User user, final Consumer<User> onUserCreateAction);
 
     Optional<User> getById(int id);
 

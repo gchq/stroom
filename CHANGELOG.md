@@ -12,6 +12,18 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2827** : Fix Format feature in editor when comment contains unmatched double quote.
+
+* Issue **#2830** : Change logging of document permission changes to log a single event containing the full before/after state of the doc's perms.
+
+* Issue **#2830** : Ensure the creation of a stroom user record is only logged once.
+
+* Issue **#2830** : When cascading document permissions, only log the change for the top level but mark it with the cascade setting.
+
+* Issue **#2816** : Fix missing navigation controls when viewing a multi part stream where a middle part is binary and the rest are text.
+
+* Add missing Singlton annotation to ProxyConfigProvider.
+
 * Issue **#2822** : Add application instance management to keep track of active queries.
 
 * Issue **#2822** : Add application instance management to keep track of active queries.

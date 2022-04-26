@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -54,16 +55,16 @@ class UserServiceImpl implements UserService, UserNameProvider {
     }
 
     @Override
-    public User createUser(final String name) {
-        return create(name, false);
+    public User getOrCreateUser(final String name, final Consumer<User> onCreateAction) {
+        return getOrCreate(name, false, onCreateAction);
     }
 
     @Override
-    public User createUserGroup(final String name) {
-        return create(name, true);
+    public User getOrCreateUserGroup(final String name, final Consumer<User> onCreateAction) {
+        return getOrCreate(name, true, onCreateAction);
     }
 
-    private User create(final String name, final boolean isGroup) {
+    private User getOrCreate(final String name, final boolean isGroup, final Consumer<User> onCreateAction) {
         final Optional<User> optional = userDao.getByName(name, isGroup);
         return optional.orElseGet(() -> {
             User user = new User();
@@ -73,8 +74,12 @@ class UserServiceImpl implements UserService, UserNameProvider {
             user.setGroup(isGroup);
 
             return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-                final User newUser = userDao.create(user);
-                fireEntityChangeEvent(newUser, EntityAction.CREATE);
+                final User newUser = userDao.tryCreate(user, persistedUser -> {
+                    fireEntityChangeEvent(persistedUser, EntityAction.CREATE);
+                    if (onCreateAction != null) {
+                        onCreateAction.accept(persistedUser);
+                    }
+                });
                 return newUser;
             });
         });

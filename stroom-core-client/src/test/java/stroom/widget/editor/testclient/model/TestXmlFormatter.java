@@ -19,7 +19,7 @@ package stroom.widget.editor.testclient.model;
 
 import stroom.editor.client.model.XmlFormatter;
 import stroom.test.StroomCoreClientTestFileUtil;
-import stroom.test.common.ComparisonHelper;
+import stroom.util.io.DiffUtil;
 import stroom.util.io.StreamUtil;
 
 import org.junit.jupiter.api.Test;
@@ -87,8 +87,10 @@ class TestXmlFormatter {
 
         // Compare styled marked up output.
         final Path outFile = testDir.resolve(name + ".out");
-        final String outXML = StreamUtil.fileToString(outFile);
-        ComparisonHelper.compareStrings(outXML, tmpXML, "The output does not match reference at index: ");
+//        final String outXML = StreamUtil.fileToString(outFile);
+        if (DiffUtil.unifiedDiff(outFile, tmpFile, true, 3)) {
+            throw new RuntimeException("Files do not match");
+        }
     }
 
     public String getText(String html) {

@@ -59,7 +59,7 @@ const useColumns = (): Column<Account>[] => {
       {
         Header: "Sign In Failures",
         accessor: "loginFailures",
-        maxWidth: 100,
+        maxWidth: 120,
       },
       {
         Header: "Comments",

@@ -477,7 +477,9 @@ public class SearchModel {
 
         return DashboardSearchRequest
                 .builder()
+                .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                 .search(search)
+                .queryKey(currentQueryKey)
                 .componentResultRequests(requests)
                 .dateTimeSettings(getDateTimeSettings())
                 .applicationInstanceUuid(applicationInstance.getInstanceUuid())

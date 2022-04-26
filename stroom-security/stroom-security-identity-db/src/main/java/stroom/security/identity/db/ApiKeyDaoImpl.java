@@ -125,28 +125,28 @@ class ApiKeyDaoImpl implements ApiKeyDao {
             entry("comments", stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS),
             entry("enabled", stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED));
 
+    private static final Function<ApiKey, String> ENABLED_STATE_FUNCTION = token ->
+            token.isEnabled()
+                    ? "Enabled"
+                    : "Disabled";
+
     private static final FilterFieldMappers<ApiKey> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(
                     ApiKeyResource.FIELD_DEF_USER_ID,
                     ApiKey::getUserId),
             FilterFieldMapper.of(
-                    ApiKeyResource.FIELD_DEF_STATUS,
-                    token -> token.isEnabled()
-                            ? "Enabled"
-                            : "Disabled"));
+                    TokenResource.FIELD_DEF_STATUS,
+                    ENABLED_STATE_FUNCTION));
 
     private static final Map<String, Comparator<ApiKey>> FIELD_COMPARATORS = Map.of(
             ApiKeyResource.FIELD_DEF_USER_ID.getDisplayName(),
             CompareUtil.getNullSafeCaseInsensitiveComparator(ApiKey::getUserId),
             ApiKeyResource.FIELD_DEF_STATUS.getDisplayName(),
-            CompareUtil.getNullSafeCaseInsensitiveComparator(token ->
-                    token.isEnabled()
-                            ? "Enabled"
-                            : "Disabled"),
+            CompareUtil.getNullSafeCaseInsensitiveComparator(ENABLED_STATE_FUNCTION),
             "expiresOnMs",
-            Comparator.nullsFirst(Comparator.comparingLong(ApiKey::getExpiresOnMs)),
+            CompareUtil.getNullSafeComparator(ApiKey::getExpiresOnMs), // nullable
             "createTimeMs",
-            Comparator.nullsFirst(Comparator.comparingLong(ApiKey::getCreateTimeMs)));
+            Comparator.comparingLong(ApiKey::getCreateTimeMs)); // non null
 
     private final IdentityDbConnProvider identityDbConnProvider;
     private final KeyTypeDao keyTypeDao;
