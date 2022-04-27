@@ -17,7 +17,7 @@ public class DashboardConfig extends AbstractConfig {
 
     public DashboardConfig() {
         applicationInstanceCache = CacheConfig.builder()
-                .expireAfterAccess(StroomDuration.ofMinutes(1))
+                .expireAfterAccess(StroomDuration.ofMinutes(5))
                 .build();
     }
 

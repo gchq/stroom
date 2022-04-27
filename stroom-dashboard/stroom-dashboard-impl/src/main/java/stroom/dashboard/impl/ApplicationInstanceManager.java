@@ -19,6 +19,7 @@ package stroom.dashboard.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -26,7 +27,10 @@ import stroom.util.shared.Clearable;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -130,7 +134,32 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
 
                 detailMap.put("applicationInstanceId", appInst.getUuid());
                 detailMap.put("createTime", DateUtil.createNormalDateTimeString(appInst.getCreateTime()));
-                detailMap.put("activeQueries", appInst.getActiveQueries().count());
+                detailMap.put("age", Duration.between(Instant.ofEpochMilli(appInst.getCreateTime()), Instant.now())
+                        .toString());
+                detailMap.put("activeQueryCount", appInst.getActiveQueries().count());
+                detailMap.put("activeQueries", NullSafe.getOrElse(
+                                appInst,
+                                ApplicationInstance::getActiveQueries,
+                                ActiveQueries::asList,
+                                Collections.<ActiveQuery>emptyList())
+                        .stream()
+                        .map(activeQuery -> {
+                            final Map<String, Object> activeQueryDetailMap = new HashMap<>();
+                            activeQueryDetailMap.put("queryKey", activeQuery.getQueryKey().toString());
+                            activeQueryDetailMap.put(
+                                    "datasourceProviderType",
+                                    activeQuery.getDataSourceProvider().getType());
+                            activeQueryDetailMap.put("docref", activeQuery.getDocRef());
+                            activeQueryDetailMap.put(
+                                    "createTime",
+                                    DateUtil.createNormalDateTimeString(activeQuery.getCreationTime()));
+                            activeQueryDetailMap.put(
+                                    "age",
+                                    Duration.between(Instant.ofEpochMilli(activeQuery.getCreationTime()), Instant.now())
+                                            .toString());
+                            return activeQueryDetailMap;
+                        })
+                        .collect(Collectors.toList()));
 
                 detailMaps.add(detailMap);
             });
