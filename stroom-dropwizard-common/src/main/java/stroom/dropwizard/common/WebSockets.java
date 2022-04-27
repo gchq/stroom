@@ -64,7 +64,10 @@ public class WebSockets {
                             environment.getApplicationContext(),
                             environment.metrics());
 
+            LOGGER.debug("defaultMaxSessionIdleTimeout (ms): {}", wsContainer.getDefaultMaxSessionIdleTimeout());
+            LOGGER.debug("defaultAsyncSendTimeout (ms): {}", wsContainer.getDefaultAsyncSendTimeout());
             LOGGER.info("Adding web socket endpoints:");
+
             final Set<String> allPaths = new HashSet<>();
 
             final int maxNameLength = providerMap

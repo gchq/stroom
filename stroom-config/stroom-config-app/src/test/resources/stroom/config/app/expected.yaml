@@ -115,7 +115,7 @@ appConfig:
         prepStmtCacheSqlLimit: 256
   dashboard:
     applicationInstanceCache:
-      expireAfterAccess: "PT1M"
+      expireAfterAccess: "PT5M"
       expireAfterWrite: null
       maximumSize: null
   data:
@@ -849,6 +849,7 @@ appConfig:
       search:
         fetchSize: 5000
         maxResults: 100000
+      slowQueryWarningThreshold: "PT1S"
       statisticAggregationBatchSize: 1000000
   ui:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
@@ -863,6 +864,7 @@ appConfig:
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
+    applicationInstanceKeepAliveIntervalMs: 60000
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
     helpSubPathJobs: "/user-guide/jobs/"
