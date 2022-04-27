@@ -26,6 +26,7 @@ import stroom.util.shared.Clearable;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,18 +123,18 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
                 .stream()
                 .collect(Collectors.groupingBy(ApplicationInstance::getUserId));
 
-        groupedData.forEach((userId, uuidToAppInst) -> {
-            final Map<String, Map<String, Object>> appInstMap = new HashMap<>();
-            uuidToAppInst.forEach(appInst -> {
+        groupedData.forEach((userId, applicationInstances) -> {
+            final List<Map<String, Object>> detailMaps = new ArrayList<>();
+            applicationInstances.forEach(appInst -> {
                 final Map<String, Object> detailMap = new HashMap<>();
 
+                detailMap.put("applicationInstanceId", appInst.getUuid());
                 detailMap.put("createTime", DateUtil.createNormalDateTimeString(appInst.getCreateTime()));
                 detailMap.put("activeQueries", appInst.getActiveQueries().count());
 
-                appInstMap.put(appInst.getUuid(), detailMap);
+                detailMaps.add(detailMap);
             });
-            builder.addDetail(userId, appInstMap);
-
+            builder.addDetail(userId, detailMaps);
         });
         return builder.build();
     }
