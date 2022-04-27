@@ -12,6 +12,24 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2839** : Fix invalid event XML generated when adding user perms to an entity with no perms (i.e. System entity).
+
+* Issue **#2843** : Fix NPE when logging in to a user with no password.
+
+* Increase column width for _Sign in Failures_ column on Manage Accounts screen so the sort icon is visible.
+
+* Issue **#2840** : Fix various issues with sorting on Manage Accounts screen.
+
+* Issue **#2841** : Fix issues with sorting/filtering on API Keys screen.
+
+* Increase User Id column width on API Keys screen.
+
+* Issue **#2847** : Fix download of dashboard query and results.
+
+* Issue **#2838** : Change web socket code to avoid errors for expected cases.
+
+* Issue **#2851** : Add configuration property `stroom.statistics.sql.slowQueryWarningThreshold` to configure slow statistics sql query warning threshold.
+
 * Issue **#2827** : Fix Format feature in editor when comment contains unmatched double quote.
 
 * Issue **#2830** : Change logging of document permission changes to log a single event containing the full before/after state of the doc's perms.
