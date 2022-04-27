@@ -19,19 +19,26 @@ package stroom.dashboard.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.security.api.SecurityContext;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.SystemInfoResult;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-class ApplicationInstanceManager implements Clearable {
+class ApplicationInstanceManager implements Clearable, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApplicationInstanceManager.class);
 
@@ -103,5 +110,31 @@ class ApplicationInstanceManager implements Clearable {
     @Override
     public void clear() {
         cache.clear();
+    }
+
+    @Override
+    public SystemInfoResult getSystemInfo() {
+
+        final SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName());
+
+        final Map<String, List<ApplicationInstance>> groupedData = cache.asMap()
+                .values()
+                .stream()
+                .collect(Collectors.groupingBy(ApplicationInstance::getUserId));
+
+        groupedData.forEach((userId, uuidToAppInst) -> {
+            final Map<String, Map<String, Object>> appInstMap = new HashMap<>();
+            uuidToAppInst.forEach(appInst -> {
+                final Map<String, Object> detailMap = new HashMap<>();
+
+                detailMap.put("createTime", DateUtil.createNormalDateTimeString(appInst.getCreateTime()));
+                detailMap.put("activeQueries", appInst.getActiveQueries().count());
+
+                appInstMap.put(appInst.getUuid(), detailMap);
+            });
+            builder.addDetail(userId, appInstMap);
+
+        });
+        return builder.build();
     }
 }

@@ -22,6 +22,7 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.WebSocketBinder;
 import stroom.util.shared.Clearable;
@@ -55,5 +56,8 @@ public class DashboardModule extends AbstractModule {
 
         WebSocketBinder.create(binder())
                 .bind(ApplicationInstanceWebSocket.class);
+
+        HasSystemInfoBinder.create(binder())
+                .bind(ApplicationInstanceManager.class);
     }
 }
