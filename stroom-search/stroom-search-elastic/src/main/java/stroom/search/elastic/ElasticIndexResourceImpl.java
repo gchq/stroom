@@ -43,16 +43,19 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
     private final Provider<ElasticClusterStore> elasticClusterStoreProvider;
     private final Provider<ElasticIndexStore> elasticIndexStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final ElasticConfig elasticConfig;
 
     @Inject
     ElasticIndexResourceImpl(
             final Provider<ElasticClusterStore> elasticClusterStoreProvider,
             final Provider<ElasticIndexStore> elasticIndexStoreProvider,
-            final Provider<DocumentResourceHelper> documentResourceHelperProvider
+            final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+            final ElasticConfig elasticConfig
     ) {
         this.elasticClusterStoreProvider = elasticClusterStoreProvider;
         this.elasticIndexStoreProvider = elasticIndexStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+        this.elasticConfig = elasticConfig;
     }
 
     @Override
@@ -87,7 +90,9 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
                     elasticClusterStoreProvider.get(), index.getClusterRef());
 
             final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
-            final RestHighLevelClient elasticClient = new ElasticClientFactory().create(connectionConfig);
+            final ElasticClientConfig elasticClientConfig = elasticConfig.getElasticClientConfig();
+            final RestHighLevelClient elasticClient = new ElasticClientFactory()
+                    .create(connectionConfig, elasticClientConfig);
 
             // Check whether the specified index exists
             final String indexName = index.getIndexName();

@@ -39,7 +39,8 @@ public class ElasticClientFactory {
     @Inject
     public ElasticClientFactory() { }
 
-    public RestHighLevelClient create(final ElasticConnectionConfig config) {
+    public RestHighLevelClient create(final ElasticConnectionConfig config,
+                                      final ElasticClientConfig elasticClientConfig) {
         final ArrayList<HttpHost> httpHosts = new ArrayList<>();
         boolean useHttps = false;
 
@@ -75,7 +76,10 @@ public class ElasticClientFactory {
                 restClientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
                     @Override
                     public HttpAsyncClientBuilder customizeHttpClient(final HttpAsyncClientBuilder httpClientBuilder) {
-                        return httpClientBuilder.setSSLContext(sslContext);
+                        return httpClientBuilder
+                                .setSSLContext(sslContext)
+                                .setMaxConnPerRoute(elasticClientConfig.getMaxConnectionsPerRoute())
+                                .setMaxConnTotal(elasticClientConfig.getMaxConnections());
                     }
                 });
             }

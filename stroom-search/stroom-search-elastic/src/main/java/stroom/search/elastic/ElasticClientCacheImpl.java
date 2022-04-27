@@ -41,8 +41,11 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     private final ICache<ElasticConnectionConfig, RestHighLevelClient> cache;
     private final IdentityHashMap<RestHighLevelClient, State> useMap = new IdentityHashMap<>();
 
+    private final ElasticConfig elasticConfig;
+
     @Inject
     ElasticClientCacheImpl(final CacheManager cacheManager, final ElasticConfig elasticConfig) {
+        this.elasticConfig = elasticConfig;
         this.cache = cacheManager.create(CACHE_NAME, elasticConfig::getIndexClientCache, this::create, this::destroy);
     }
 
@@ -52,7 +55,7 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
         }
 
         // Create a new instance of `RestHighLevelClient`
-        return new ElasticClientFactory().create(elasticConnectionConfig);
+        return new ElasticClientFactory().create(elasticConnectionConfig, elasticConfig.getElasticClientConfig());
     }
 
     private void destroy(final ElasticConnectionConfig key, final RestHighLevelClient value) {

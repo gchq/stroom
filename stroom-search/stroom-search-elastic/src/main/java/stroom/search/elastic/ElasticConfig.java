@@ -14,12 +14,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
 
+    public final ElasticClientConfig elasticClientConfig;
     private final ElasticIndexingConfig elasticIndexingConfig;
     private final ElasticSearchConfig elasticSearchConfig;
     private final CacheConfig indexClientCache;
     private final CacheConfig indexCache;
 
     public ElasticConfig() {
+        elasticClientConfig = new ElasticClientConfig();
         elasticIndexingConfig = new ElasticIndexingConfig();
         elasticSearchConfig = new ElasticSearchConfig();
         indexClientCache = CacheConfig.builder()
@@ -34,14 +36,21 @@ public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ElasticConfig(@JsonProperty("indexing") final ElasticIndexingConfig elasticIndexingConfig,
+    public ElasticConfig(@JsonProperty("client") final ElasticClientConfig elasticClientConfig,
+                         @JsonProperty("indexing") final ElasticIndexingConfig elasticIndexingConfig,
                          @JsonProperty("search") final ElasticSearchConfig elasticSearchConfig,
                          @JsonProperty("indexClientCache") final CacheConfig indexClientCache,
                          @JsonProperty("indexCache") final CacheConfig indexCache) {
+        this.elasticClientConfig = elasticClientConfig;
         this.elasticIndexingConfig = elasticIndexingConfig;
         this.elasticSearchConfig = elasticSearchConfig;
         this.indexClientCache = indexClientCache;
         this.indexCache = indexCache;
+    }
+
+    @JsonProperty("client")
+    public ElasticClientConfig getElasticClientConfig() {
+        return elasticClientConfig;
     }
 
     @JsonProperty("indexing")
@@ -65,7 +74,8 @@ public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ElasticConfig{" +
-                "elasticIndexingConfig=" + elasticIndexingConfig +
+                "elasticClientConfig=" + elasticClientConfig +
+                ", elasticIndexingConfig=" + elasticIndexingConfig +
                 ", elasticSearchConfig=" + elasticSearchConfig +
                 ", indexClientCache=" + indexClientCache +
                 ", indexCache=" + indexCache +

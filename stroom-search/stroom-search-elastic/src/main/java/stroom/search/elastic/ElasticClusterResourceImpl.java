@@ -39,14 +39,17 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
 
     private final Provider<ElasticClusterStore> elasticClusterStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final ElasticConfig elasticConfig;
 
     @Inject
     ElasticClusterResourceImpl(
             final Provider<ElasticClusterStore> elasticClusterStoreProvider,
-            final Provider<DocumentResourceHelper> documentResourceHelperProvider
+            final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+            final ElasticConfig elasticConfig
     ) {
         this.elasticClusterStoreProvider = elasticClusterStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+        this.elasticConfig = elasticConfig;
     }
 
     @Override
@@ -74,7 +77,9 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
     public ElasticClusterTestResponse testCluster(final ElasticClusterDoc cluster) {
         try {
             final ElasticConnectionConfig connectionConfig = cluster.getConnection();
-            final RestHighLevelClient elasticClient = new ElasticClientFactory().create(connectionConfig);
+            final ElasticClientConfig elasticClientConfig = elasticConfig.getElasticClientConfig();
+            final RestHighLevelClient elasticClient = new ElasticClientFactory()
+                    .create(connectionConfig, elasticClientConfig);
 
             MainResponse response = elasticClient.info(RequestOptions.DEFAULT);
 
