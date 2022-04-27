@@ -12,6 +12,27 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.200] - 2022-04-27
+
+* Issue **#2839** : Fix invalid event XML generated when adding user perms to an entity with no perms (i.e. System entity).
+
+* Issue **#2843** : Fix NPE when logging in to a user with no password.
+
+* Increase column width for _Sign in Failures_ column on Manage Accounts screen so the sort icon is visible.
+
+* Issue **#2840** : Fix various issues with sorting on Manage Accounts screen.
+
+* Issue **#2841** : Fix issues with sorting/filtering on API Keys screen.
+
+* Increase User Id column width on API Keys screen.
+
+* Issue **#2847** : Fix download of dashboard query and results.
+
+* Issue **#2838** : Change web socket code to avoid errors for expected cases.
+
+* Issue **#2851** : Add configuration property `stroom.statistics.sql.slowQueryWarningThreshold` to configure slow statistics sql query warning threshold.
+
+
 ## [v7.0-beta.199] - 2022-04-14
 
 * Issue **#2827** : Fix Format feature in editor when comment contains unmatched double quote.
@@ -4329,7 +4350,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.199...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.200...HEAD
+[v7.0-beta.200]: https://github.com/gchq/stroom/compare/v7.0-beta.199...v7.0-beta.200
 [v7.0-beta.199]: https://github.com/gchq/stroom/compare/v7.0-beta.198...v7.0-beta.199
 [v7.0-beta.198]: https://github.com/gchq/stroom/compare/v7.0-beta.197...v7.0-beta.198
 [v7.0-beta.197]: https://github.com/gchq/stroom/compare/v7.0-beta.196...v7.0-beta.197
