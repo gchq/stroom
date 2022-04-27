@@ -53,6 +53,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.instance.client.ClientApplicationInstance;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionItem;
@@ -139,6 +140,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final FieldsManager fieldsManager;
     private final DataGridView<TableRow> dataGrid;
     private final Column<TableRow, Expander> expanderColumn;
+    private final ClientApplicationInstance clientApplicationInstance;
 
     private int expanderColumnWidth;
     private SearchModel currentSearchModel;
@@ -163,7 +165,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final AnnotationManager annotationManager,
                           final RestFactory restFactory,
                           final UiConfigCache clientPropertyCache,
-                          final TimeZones timeZones) {
+                          final TimeZones timeZones,
+                          final ClientApplicationInstance clientApplicationInstance) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
         this.fieldAddPresenterProvider = fieldAddPresenterProvider;
@@ -171,6 +174,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.annotationManager = annotationManager;
         this.restFactory = restFactory;
         this.timeZones = timeZones;
+        this.clientApplicationInstance = clientApplicationInstance;
         this.dataGrid = new DataGridViewImpl<>(true, true);
 
         view.setTableView(dataGrid);
@@ -432,6 +436,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                             final DashboardSearchRequest searchRequest = DashboardSearchRequest
                                     .builder()
+                                    .applicationInstanceUuid(clientApplicationInstance.getInstanceUuid())
                                     .queryKey(queryKey)
                                     .search(search)
                                     .componentResultRequests(requests)
