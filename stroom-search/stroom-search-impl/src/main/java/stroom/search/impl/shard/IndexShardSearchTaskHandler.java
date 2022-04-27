@@ -195,6 +195,8 @@ public class IndexShardSearchTaskHandler {
                     try {
                         // Start converting found docIds into stored data values
                         while (true) {
+                            // Uncomment this to slow searches down in dev
+//                            ThreadUtil.sleepAtLeastIgnoreInterrupts(1_000);
                             // Take the next item
                             final int docId = docIdQueue.take();
                             // If we have a doc id then retrieve the stored data for it.

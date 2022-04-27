@@ -39,7 +39,7 @@ class StreamTypeExtensions {
     static String getExtension(final String streamType) {
         String extension = EXTENSION_MAP.get(streamType);
         if (extension == null) {
-            LOGGER.warn("Unknown stream type '" + streamType + "' using extension 'dat'");
+            LOGGER.debug("Unknown stream type '" + streamType + "' using extension 'dat'");
             extension = "dat";
         }
         return extension;
