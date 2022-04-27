@@ -33,7 +33,6 @@ public class ApplicationInstance {
 
     public void keepAlive() {
         activeQueries.keepAlive();
-        ;
     }
 
     public ActiveQueries getActiveQueries() {
