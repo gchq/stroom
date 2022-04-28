@@ -79,27 +79,14 @@ query_single_host() {
       "at\n${BLUE}${info_url}${NC}"
   fi
 
-  # Call the api using httpie/curl
+  # Call the api using curl
   local sys_info_json
-  #if command -v "httpX" 1>/dev/null; then
-    #debug "Using httpie"
-    #sys_info_json="$( \
-      #http \
-        #--body \
-        #GET \
-        #"${info_url}" \
-        #"${http_auth_args}" )"
-  #else
-    debug "Using curl"
-    check_for_installed_binary "curl"
-
-    sys_info_json="$( \
-      curl \
-        --silent \
-        --request GET \
-        --header "${http_auth_args}" \
-        "${info_url}" )"
-  #fi
+  sys_info_json="$( \
+    curl \
+      --silent \
+      --request GET \
+      --header "${http_auth_args}" \
+      "${info_url}" )"
 
   # Call the api but wrap the returned json inside a key that is the host name
   # Just output to stdout so the result can be piped to downstream processing,
@@ -149,9 +136,6 @@ query_multiple_hosts() {
       -I'{}' \
       --max-procs="${max_proc_count}" \
       bash -c '{}'
-
-  #ls -l "${temp_dir}"
-  #cat "${temp_dir}/"*.json
 
   # Merge all the files into one json object, which each host's content as a top
   # level key. This is output to stdout for onward piping if needs be
@@ -253,7 +237,6 @@ main(){
   local default_host="localhost"
   local base_path="/api/systemInfo/v1"
   local names_path="${base_path}/names"
-
   local http_auth_args="Authorization:Bearer ${api_token}"
   local base_url="http://localhost:8080/api/systemInfo/v1"
   local names_url="${base_url}/names"
@@ -281,25 +264,12 @@ main(){
     debug_value "names_url" "${names_url}"
 
     local sys_info_names_json
-    #if command -v "httpX" 1>/dev/null; then
-      #debug "Using httpie"
-      #sys_info_names_json="$( \
-        #http \
-          #--body \
-          #GET \
-          #"${names_url}" \
-          #"${http_auth_args}" )"
-    #else
-      debug "Using curl"
-      check_for_installed_binary "curl"
-
-      sys_info_names_json="$( \
-        curl \
-          --silent \
-          --request GET \
-          --header "${http_auth_args}" \
-          "${names_url}" )"
-    #fi
+    sys_info_names_json="$( \
+      curl \
+        --silent \
+        --request GET \
+        --header "${http_auth_args}" \
+        "${names_url}" )"
 
     # Extract a list of names from the json
     sys_info_names="$( \
@@ -307,7 +277,7 @@ main(){
           <<< "${sys_info_names_json}" \
         | sort )"
 
-    if command -v "fzf" 1>/dev/null; then
+    if command -v "fzfx" 1>/dev/null; then
       # Let the user fuzzy find the name they want using fzf
       sys_info_name="$( \
         fzf \
