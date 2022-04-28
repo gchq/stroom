@@ -68,21 +68,76 @@ showUsage() {
 
 query_single_host() {
   local host="$1"; shift
+  local info_path="$1"; shift
+  local info_url="http://${host}:${port}${info_path}"
 
-  info_url="${base_url}/${sys_info_name}"
+  debug_value "host" "${host}"
+  debug_value "info_url" "${info_url}"
+  debug_value "http_auth_args" "${http_auth_args}"
 
   if [[ "${is_raw_output}" = false ]]; then
     echo -e "${GREEN}Querying system info ${BLUE}${sys_info_name}${GREEN}" \
       "at\n${BLUE}${info_url}${NC}"
   fi
-  debug_value "info_url" "${info_url}"
-  debug_value "http_auth_args" "${http_auth_args}"
 
   # Call the api but wrap the returned json inside a key that is the host name
+  # Just output to stdout so the result can be piped to downstream processing,
+  # e.g jq
   http --body GET "${info_url}" "${http_auth_args}" \
-    | jq '{ "localhost": .details }'
-  #http --verbose --body GET "${info_url}" "${http_auth_args}"
+    | jq "{ \"${host}\": .details }"
+}
 
+query_multiple_hosts() {
+  local host_list="$1"; shift
+  local info_path="$1"; shift
+  
+  # TODO validate host_list to ensure it only contains [a-zA-Z.0-9\-] as
+  # we are about to pass it to bash -c
+
+  # Determine how many threads we can use with xargs
+  local max_proc_count
+  max_proc_count="$(nproc)"
+  debug_value "max_proc_count" "${max_proc_count}"
+
+  temp_dir=
+  temp_dir="$(mktemp -d --suffix=_stroom_system_info)"
+  debug_value "temp_dir" "${temp_dir}"
+
+  # Need to export these so they are visible in bash -c
+  export temp_dir
+  export http_auth_args
+  export port
+  export SCRIPT_DIR
+  export SCRIPT_NAME
+  export sys_info_name
+
+  # convert , to \n then use xargs to process each host in parallel
+  # writing output to a temp file
+  # We first use xargs to craft a bash command using bash -c 'echo ...'
+  # so that we can get access to the variables, then we pass each command string
+  # to another xargs bash -c to actually execute it.
+  # shellcheck disable=SC2016
+  tr ',' '\n' <<< "${host_list}" \
+    | sort \
+    | uniq \
+    | xargs \
+      -I'{}' \
+      --max-procs="${max_proc_count}" \
+      bash -c 'echo "\"${SCRIPT_DIR}/${SCRIPT_NAME}\" -r -h \"{}\" \"${sys_info_name}\" > \"${temp_dir}/{}.json\""' \
+    | xargs \
+      -I'{}' \
+      --max-procs="${max_proc_count}" \
+      bash -c '{}'
+
+  ls -l "${temp_dir}"
+  cat "${temp_dir}/"*.json
+
+  # Merge all the files into one json object, which each host's content as a top
+  # level key. This is output to stdout for onward piping if needs be
+  jq --slurp add "${temp_dir}"/*.json
+
+  # No longer need the temp files so bin them
+  rm -rf "${temp_dir}"
 }
 
 main(){
@@ -90,7 +145,8 @@ main(){
 
   #optspec="gu:rih:"
   local is_raw_output=false
-  local host_list=""
+  # If no host_list is supplied we just use localhost
+  local host_list="localhost"
   optspec="rh:"
   while getopts "$optspec" optchar; do
     #echo "Parsing $optchar"
@@ -178,125 +234,35 @@ main(){
     local names_url="http://${host}:${port}${names_path}"
     debug_value "names_url" "${names_url}"
 
-    sys_info_name="$( \
+    sys_info_names="$( \
       http --body "${names_url}" "${http_auth_args}" | 
       jq -r '.[]' | 
-      sort |
-      fzf --border --header="Select the System Info set to view" --height=15)"
+      sort )"
+
+    sys_info_name="$( \
+      fzf \
+        --border \
+        --header="Select the System Info set to view" \
+        --height=15 \
+        <<< "${sys_info_names}" )"
 
     # shellcheck disable=SC2181
     [ $? -eq 0 ] || error_exit "Something went wrong looking up the sys_info_name"
   fi
 
+  # Construct the url path base on the sys info provider name
   local info_path="${base_path}/${sys_info_name}"
 
-  #local jq_args=()
-  #if [[ "${is_raw_output}" = true ]]; then
-    #jq_args+=( "-r" )
-  #fi
-
-  #debug_value "jq_args" "${jq_args[*]}"
-
   if [[ -n "${host_list}" ]] && [[ "${host_list}" =~ , ]]; then
-    # Multiple hosts
-
-    # TODO validate host_list to ensure it only contains [a-zA-Z.0-9\-] as
-    # we are about to pass it to bash -c
-
-    # Determine how many threads we can use with xargs
-    local max_proc_count
-    max_proc_count="$(nproc)"
-    debug_value "max_proc_count" "${max_proc_count}"
-
-    temp_dir=
-    temp_dir="$(mktemp -d --suffix=_stroom_system_info)"
-    debug_value "temp_dir" "${temp_dir}"
-
-    # Need to export so they are visible in bash -c
-    export temp_dir
-    export info_path
-    export http_auth_args
-    export port
-    export SCRIPT_DIR
-    export SCRIPT_NAME
-    export sys_info_name
-
-    #local cmds=""
-    #tr ',' '\n' <<< "${host_list}" \
-      #| sort \
-      #| uniq \
-      #| while read -r host; do
-
-      #debug_value "host" "${host}"
-      #export host
-      #local cmd
-      #cmd="$( bash -c 'host="$host"; url="http://$host:$port$info_path"; file="$temp_dir/$host.json"; echo "http --body \"${url}\" \"${http_auth_args}\" | jq \"{ \\\"${host}\\\": .details }\" > \"$file\""' )"
-
-      #echo "$cmd"
-      #bash -c "${cmd}"
-    #done
-
-    #ls -l "${temp_dir}"
-    #cat "${temp_dir}/"*.json
-    #rm -rf "${temp_dir}"
-    #exit
-
-
-    # convert , to \n then use xargs to process each host in parallel
-    # writing output to a temp file
-    # shellcheck disable=SC2016
-    tr ',' '\n' <<< "${host_list}" \
-      | sort \
-      | uniq \
-      | xargs \
-        -I'{}' \
-        bash -c 'echo "\"${SCRIPT_DIR}/${SCRIPT_NAME}\" -r -h \"{}\" \"${sys_info_name}\" > \"${temp_dir}/{}.json\""' \
-      | xargs \
-        -I'{}' \
-        --max-procs="${max_proc_count}" \
-        bash -c '{}'
-
-        #bash -c 'echo "\"${SCRIPT_DIR}/${SCRIPT_NAME}\" -r -h \"{}\" \"${sys_info_name}\" > \"${temp_dir}/{}.json\""'
-
-
-    #tr ',' '\n' <<< "${host_list}" \
-      #| sort \
-      #| uniq \
-      #| xargs \
-        #-I'{}' \
-        #bash -c 'host="{}"; url="http://$host:$port$info_path"; file="$temp_dir/$host.json"; echo "http --body \"${url}\" \"${http_auth_args}\" | jq \"{ \\\"${host}\\\": .details }\" > \"$file\""' \
-      #| xargs \
-        #-I'{}' \
-        #--max-procs="${max_proc_count}" \
-        #bash -c '{}'
-
-  #http --body "${info_url}" "${http_auth_args}" \
-    #| jq '{ "localhost": .details }'
-        #"query_single_host \"{}\" > \"${temp_dir}/{}.json\""
-
-    ls -l "${temp_dir}"
-    cat "${temp_dir}/"*.json
-    rm -rf "${temp_dir}"
-
+    debug "More than one host to send to"
+    query_multiple_hosts "${host_list}" "${info_path}"
   else
-    local host
+    local host="${host_list:-${default_host}}"
+    debug "Single host"
+    debug_value "host" "${host}"
 
-    if [[ -n "${host_list}" ]] ; then
-      host="${host_list}"
-    else
-      host="${default_host}"
-    fi
-
-    local json
-    json="$( \
-      query_single_host "${host}" \
-    )"
-
-    echo -e "${json}"
+    query_single_host "${host}" "${info_path}"
   fi
-
-  #http --body "${info_url}" "${http_auth_args}" \
-    #| jq '{ "localhost": .details }'
 }
 
 main "$@"
