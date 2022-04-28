@@ -22,7 +22,7 @@ set -e -o pipefail
 }
 
 error_exit() {
-  echo -e "${@}"
+  echo -e "${RED}ERROR${NC}: ${*}"
   exit 1
 }
 
@@ -46,24 +46,23 @@ debug() {
 check_for_installed_binary() {
   local -r binary_name=$1
   command -v "${binary_name}" 1>/dev/null \
-    || error_exit "${GREEN}${binary_name}${RED} is not installed"
+    || error_exit "Binary ${binary_name} is not installed"
 }
 
 check_for_installed_binaries() {
-  check_for_installed_binary "fzf"
-  check_for_installed_binary "http"
+  check_for_installed_binary "curl"
   check_for_installed_binary "jq"
   check_for_installed_binary "nproc"
 }
 
 showUsage() {
     echo -e "${RED}ERROR${NC} - Invalid arguments"
-    echo -e "Usage: ${BLUE}$0${GREEN} [-r] [-h hostList] [systemInfoName]${NC}"
+    echo -e "Usage: ${BLUE}$0${GREEN} [-s] [-h hostList] [systemInfoName]${NC}"
     echo -e "e.g:   ${BLUE}$0${GREEN}${NC}"
     echo -e "e.g:   ${BLUE}$0${GREEN} stroom.dashboard.impl.ApplicationInstanceManager${NC}"
-    echo -e "e.g:   ${BLUE}$0${GREEN} -r -h host1@somedomain,host2@somedomain${NC}"
-    echo -e "${GREEN}-r${NC}:           Raw output of just the json, e.g. for piping to jq for further processing"
-    echo -e "${GREEN}-h hostList${NC}:  A list of hosts to connect to. Will use localhost if not provided."
+    echo -e "e.g:   ${BLUE}$0${GREEN} -s -h host1@somedomain,host2@somedomain${NC}"
+    echo -e "${GREEN}-s${NC}:           Silent. Only output result. Useful for piping to other processes."
+    echo -e "${GREEN}-h hostList${NC}:  A list of comma delimited hosts to connect to. Will use localhost if not provided."
 }
 
 query_single_host() {
@@ -75,16 +74,38 @@ query_single_host() {
   debug_value "info_url" "${info_url}"
   debug_value "http_auth_args" "${http_auth_args}"
 
-  if [[ "${is_raw_output}" = false ]]; then
+  if [[ "${is_silent}" = false ]]; then
     echo -e "${GREEN}Querying system info ${BLUE}${sys_info_name}${GREEN}" \
       "at\n${BLUE}${info_url}${NC}"
   fi
 
+  # Call the api using httpie/curl
+  local sys_info_json
+  #if command -v "httpX" 1>/dev/null; then
+    #debug "Using httpie"
+    #sys_info_json="$( \
+      #http \
+        #--body \
+        #GET \
+        #"${info_url}" \
+        #"${http_auth_args}" )"
+  #else
+    debug "Using curl"
+    check_for_installed_binary "curl"
+
+    sys_info_json="$( \
+      curl \
+        --silent \
+        --request GET \
+        --header "${http_auth_args}" \
+        "${info_url}" )"
+  #fi
+
   # Call the api but wrap the returned json inside a key that is the host name
   # Just output to stdout so the result can be piped to downstream processing,
   # e.g jq
-  http --body GET "${info_url}" "${http_auth_args}" \
-    | jq "{ \"${host}\": .details }"
+  jq "{ \"${host}\": .details }" \
+    <<< "${sys_info_json}"
 }
 
 query_multiple_hosts() {
@@ -123,36 +144,59 @@ query_multiple_hosts() {
     | xargs \
       -I'{}' \
       --max-procs="${max_proc_count}" \
-      bash -c 'echo "\"${SCRIPT_DIR}/${SCRIPT_NAME}\" -r -h \"{}\" \"${sys_info_name}\" > \"${temp_dir}/{}.json\""' \
+      bash -c 'echo "\"${SCRIPT_DIR}/${SCRIPT_NAME}\" -s -h \"{}\" \"${sys_info_name}\" > \"${temp_dir}/{}.json\""' \
     | xargs \
       -I'{}' \
       --max-procs="${max_proc_count}" \
       bash -c '{}'
 
-  ls -l "${temp_dir}"
-  cat "${temp_dir}/"*.json
+  #ls -l "${temp_dir}"
+  #cat "${temp_dir}/"*.json
 
   # Merge all the files into one json object, which each host's content as a top
   # level key. This is output to stdout for onward piping if needs be
   jq --slurp add "${temp_dir}"/*.json
 
   # No longer need the temp files so bin them
+  debug "Deleting temporary dir ${temp_dir}"
   rm -rf "${temp_dir}"
+}
+
+# The host list is passed to bash -c to execute so make sure it only
+# containts safe chars
+validate_host_list() {
+  local host_list="$1"; shift
+  local host_list_pattern="^[-.,0-9a-zA-Z]+$"
+  if [[ ! "${host_list}" =~ ${host_list_pattern} ]]; then
+    error_exit "Host list [${host_list}] does not match pattern ${host_list_pattern}"
+  fi
+}
+
+# The name is passed to bash -c to execute so make sure it only
+# containts safe chars
+validate_sys_info_name() {
+  local sys_info_name="$1"; shift
+  local sys_info_name_pattern="^[.0-9a-zA-Z]+$"
+  debug_value "sys_info_name" "${sys_info_name}"
+  if [[ ! "${sys_info_name}" =~ ${sys_info_name_pattern} ]]; then
+    error_exit "System info provider name [${sys_info_name}] does not" \
+      "match pattern ${sys_info_name_pattern}"
+  fi
 }
 
 main(){
   check_for_installed_binaries
 
   #optspec="gu:rih:"
-  local is_raw_output=false
+  local is_silent=false
   # If no host_list is supplied we just use localhost
   local host_list="localhost"
-  optspec="rh:"
+  optspec="sh:"
   while getopts "$optspec" optchar; do
     #echo "Parsing $optchar"
     case "${optchar}" in
-      r)
-        is_raw_output=true
+      s)
+        is_silent=true
         ;;
       h)
         if [[ -z "${OPTARG}" ]]; then
@@ -182,22 +226,24 @@ main(){
   SCRIPT_NAME="$0"
   SCRIPT_NAME="$(basename "${SCRIPT_NAME}")"
 
-  debug_value "is_raw_output" "${is_raw_output}"
+  debug_value "is_silent" "${is_silent}"
   debug_value "host_list" "${host_list}"
   debug_value "name_arg" "${name_arg}"
   debug_value "SCRIPT_DIR" "${SCRIPT_DIR}"
   debug_value "SCRIPT_NAME" "${SCRIPT_NAME}"
 
+  validate_host_list "${host_list}"
+
   local api_token
   if [ -n "${TOKEN}" ]; then
-    if [[ "${is_raw_output}" = false ]]; then
+    if [[ "${is_silent}" = false ]]; then
       echo -e "${GREEN}Using token from ${BLUE}\${TOKEN}${NC}"
     fi
     api_token="${TOKEN}"
   else
     # Hard coded token that works with the hard coded default open id creds
     # for use in dev only. Expires on 2030-08-18T13:53:50.000Z
-    if [[ "${is_raw_output}" = false ]]; then
+    if [[ "${is_silent}" = false ]]; then
       echo -e "${GREEN}Using hard coded token, export ${BLUE}\${TOKEN}${GREEN} to override.${NC}"
     fi
     local api_token='eyJhbGciOiJSUzI1NiIsImtpZCI6IjhhM2I1OGNhLTk2ZTctNGFhNC05ZjA3LTQ0MDBhYWVkMTQ3MSJ9.eyJleHAiOjE2Njg3NzczNjcsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIiwiYXVkIjoiTlhDbXJyTGpQR2VBMVN4NWNEZkF6OUV2ODdXaTNucHRUbzZSdzVmTC5jbGllbnQtaWQuYXBwcy5zdHJvb20taWRwIn0.YhhRQKF29CQm7IWHP2sh-i70qBicuWKJLhH5UmSRxeyHJ2T38RmHVEcIjC9tv71-gJR4z3bY9tRq_r6cf5hG2G9DKVfPoVZTN-MhK-pU5eD3VbVc2HBEm0Xk02LL7vKRS2mKLolaI-DC_5TuYclZ-CGKmmqhh8Bb5evqAXnknccILAGsl3xDFzsKdfuX5iZ5wjizxvgyMjvLCfaM6P-Ut5kUWYHmxpdNextE3p35Kajw_iEbHvZ3_CobX09l5QQo2R7Hgzk3lIFrGxUqQ7jyC_DmmxRlcT-pyJApl7_TFlFJm153R_9gDXIwphI1mg1vsAojkWncCl8ODY227t3-Lw'
@@ -212,7 +258,7 @@ main(){
   local base_url="http://localhost:8080/api/systemInfo/v1"
   local names_url="${base_url}/names"
 
-  if [[ "${is_raw_output}" = false ]]; then
+  if [[ "${is_silent}" = false ]]; then
     echo -e "${GREEN}Using names URL ${BLUE}${names_url}${NC}"
     echo
   fi
@@ -234,21 +280,72 @@ main(){
     local names_url="http://${host}:${port}${names_path}"
     debug_value "names_url" "${names_url}"
 
-    sys_info_names="$( \
-      http --body "${names_url}" "${http_auth_args}" | 
-      jq -r '.[]' | 
-      sort )"
+    local sys_info_names_json
+    #if command -v "httpX" 1>/dev/null; then
+      #debug "Using httpie"
+      #sys_info_names_json="$( \
+        #http \
+          #--body \
+          #GET \
+          #"${names_url}" \
+          #"${http_auth_args}" )"
+    #else
+      debug "Using curl"
+      check_for_installed_binary "curl"
 
-    sys_info_name="$( \
-      fzf \
-        --border \
-        --header="Select the System Info set to view" \
-        --height=15 \
+      sys_info_names_json="$( \
+        curl \
+          --silent \
+          --request GET \
+          --header "${http_auth_args}" \
+          "${names_url}" )"
+    #fi
+
+    # Extract a list of names from the json
+    sys_info_names="$( \
+        jq -r '.[]' \
+          <<< "${sys_info_names_json}" \
+        | sort )"
+
+    if command -v "fzf" 1>/dev/null; then
+      # Let the user fuzzy find the name they want using fzf
+      sys_info_name="$( \
+        fzf \
+          --border \
+          --header="Select the System Info provider to query" \
+          --height=15 \
         <<< "${sys_info_names}" )"
+    else
+      # User doesn't have FZF, bless, so fall back to a simple bash selection menu
+
+      echo -e "${YELLOW}We recommend you install FZF to improve this menu" \
+        "selection process${NC}"
+      echo -e "${GREEN}Select the system info provider to query${NC}"
+
+      # Build the menu items
+      local menu_item_arr=()
+      while IFS= read -r name; do
+        menu_item_arr+=( "${name}" )
+      done <<< "${sys_info_names}"
+
+      # Present the user with a menu of options in a single column
+      COLUMNS=1
+      select user_input in "${menu_item_arr[@]}"; do
+        if [[ -n "${user_input}" ]]; then
+          sys_info_name="${user_input}"
+          break
+        else
+          echo "Invalid option. Try another one."
+          continue
+        fi
+      done
+    fi
 
     # shellcheck disable=SC2181
     [ $? -eq 0 ] || error_exit "Something went wrong looking up the sys_info_name"
   fi
+
+  validate_sys_info_name "${sys_info_name}"
 
   # Construct the url path base on the sys info provider name
   local info_path="${base_path}/${sys_info_name}"
