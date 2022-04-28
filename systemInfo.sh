@@ -64,7 +64,7 @@ show_usage() {
   echo -e "         # Query the named provider on localhost"
   echo -e "e.g:   ${BLUE}$0 -l \"host1,host2\" stroom.dashboard.impl.ApplicationInstanceManager${NC}"
   echo -e "         # Query the named provider on the listed hosts"
-  echo -e "e.g:   ${BLUE}$0 -s -l host1@somedomain,host2@somedomain${NC}"
+  echo -e "e.g:   ${BLUE}$0 -s -l host1.somedomain,host2.somedomain${NC}"
   echo -e "         # Select a provider from a list of names and query it on the listed hosts.${NC}"
   echo -e "Arguments:"
   echo -e "${GREEN}-h${NC}:             Show this help"
