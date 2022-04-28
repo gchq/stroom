@@ -55,14 +55,14 @@ check_for_installed_binaries() {
   check_for_installed_binary "nproc"
 }
 
-showUsage() {
-    echo -e "${RED}ERROR${NC} - Invalid arguments"
-    echo -e "Usage: ${BLUE}$0${GREEN} [-s] [-h hostList] [systemInfoName]${NC}"
+show_usage() {
+    echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-s] [-l hostList] [systemInfoName]${NC}"
     echo -e "e.g:   ${BLUE}$0${GREEN}${NC}"
     echo -e "e.g:   ${BLUE}$0${GREEN} stroom.dashboard.impl.ApplicationInstanceManager${NC}"
-    echo -e "e.g:   ${BLUE}$0${GREEN} -s -h host1@somedomain,host2@somedomain${NC}"
+    echo -e "e.g:   ${BLUE}$0${GREEN} -s -l host1@somedomain,host2@somedomain${NC}"
+    echo -e "${GREEN}-h${NC}:           Show this help"
     echo -e "${GREEN}-s${NC}:           Silent. Only output result. Useful for piping to other processes."
-    echo -e "${GREEN}-h hostList${NC}:  A list of comma delimited hosts to connect to. Will use localhost if not provided."
+    echo -e "${GREEN}-l hostList${NC}:  A list of comma delimited hosts to connect to. Will use localhost if not provided."
 }
 
 query_single_host() {
@@ -175,7 +175,7 @@ main(){
   local is_silent=false
   # If no host_list is supplied we just use localhost
   local host_list="localhost"
-  optspec="sh:"
+  optspec="shl:"
   while getopts "$optspec" optchar; do
     #echo "Parsing $optchar"
     case "${optchar}" in
@@ -183,10 +183,14 @@ main(){
         is_silent=true
         ;;
       h)
+        show_usage
+        exit 0
+        ;;
+      l)
         if [[ -z "${OPTARG}" ]]; then
           echo -e "${RED}-h argument requires a comma delimted list of hosts (hostname, FQDN or IP) to be specified, e.g. '${GREEN}-h host1@somedomain,host2@somedomain${NC}'${NC}" >&2
           echo
-          showUsage
+          show_usage
           exit 1
         fi
         host_list="${OPTARG}"
@@ -194,7 +198,7 @@ main(){
       *)
         echo -e "${RED}ERROR${NC} Unknown argument: '-${OPTARG}'" >&2
         echo
-        showUsage
+        show_usage
         exit 1
         ;;
     esac
