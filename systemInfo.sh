@@ -56,13 +56,21 @@ check_for_installed_binaries() {
 }
 
 show_usage() {
-    echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-s] [-l hostList] [systemInfoName]${NC}"
-    echo -e "e.g:   ${BLUE}$0${GREEN}${NC}"
-    echo -e "e.g:   ${BLUE}$0${GREEN} stroom.dashboard.impl.ApplicationInstanceManager${NC}"
-    echo -e "e.g:   ${BLUE}$0${GREEN} -s -l host1@somedomain,host2@somedomain${NC}"
-    echo -e "${GREEN}-h${NC}:           Show this help"
-    echo -e "${GREEN}-s${NC}:           Silent. Only output result. Useful for piping to other processes."
-    echo -e "${GREEN}-l hostList${NC}:  A list of comma delimited hosts to connect to. Will use localhost if not provided."
+  echo -e "A script to query Stroom's System Info providers on one or more hosts."
+  echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-s] [-l hostList] [systemInfoName]${NC}"
+  echo -e "e.g:   ${BLUE}$0${GREEN}${NC}"
+  echo -e "         # Select a provider from a list of names and query it on localhost.${NC}"
+  echo -e "e.g:   ${BLUE}$0 stroom.dashboard.impl.ApplicationInstanceManager${NC}"
+  echo -e "         # Query the named provider on localhost"
+  echo -e "e.g:   ${BLUE}$0 -l \"host1,host2\" stroom.dashboard.impl.ApplicationInstanceManager${NC}"
+  echo -e "         # Query the named provider on the listed hosts"
+  echo -e "e.g:   ${BLUE}$0 -s -l host1@somedomain,host2@somedomain${NC}"
+  echo -e "         # Select a provider from a list of names and query it on the listed hosts.${NC}"
+  echo -e "Arguments:"
+  echo -e "${GREEN}-h${NC}:             Show this help"
+  echo -e "${GREEN}-s${NC}:             Silent. Only output result. Useful for piping to other processes."
+  echo -e "${GREEN}-l hostList${NC}:    A list of comma delimited hosts to connect to. Will use localhost if not provided."
+  echo -e "${GREEN}systemInfoName${NC}: The name of the provider to query. If not provided you will be asked to select one."
 }
 
 query_single_host() {
