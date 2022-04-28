@@ -277,7 +277,7 @@ main(){
           <<< "${sys_info_names_json}" \
         | sort )"
 
-    if command -v "fzfx" 1>/dev/null; then
+    if command -v "fzf" 1>/dev/null; then
       # Let the user fuzzy find the name they want using fzf
       sys_info_name="$( \
         fzf \
