@@ -16,7 +16,7 @@ public abstract class AbstractRepoDbConfig extends AbstractConfig implements Rep
             "pragma mmap_size = 30000000000;");
 //            "pragma busy_timeout = 600000;"
 
-    private static final int DEFAULT_BATCH_SIZE = 10_000;
+    private static final int DEFAULT_BATCH_SIZE = 1_0000_000;
 
     private final String dbDir;
     private final List<String> globalPragma;

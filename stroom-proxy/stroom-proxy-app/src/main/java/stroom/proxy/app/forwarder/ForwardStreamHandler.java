@@ -7,6 +7,8 @@ import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.SSLUtil;
+import stroom.util.concurrent.ThreadUtil;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -107,15 +109,8 @@ public class ForwardStreamHandler implements StreamHandler {
         totalBytesSent += bytesSent;
 
         if (forwardDelayMs != null) {
-            try {
-                LOGGER.debug(() -> "handleEntryData() - adding delay " + forwardDelayMs);
-                Thread.sleep(forwardDelayMs);
-            } catch (final InterruptedException e) {
-                LOGGER.error(e::getMessage, e);
-
-                // Continue to interrupt this thread.
-                Thread.currentThread().interrupt();
-            }
+            LOGGER.debug(() -> "handleEntryData() - adding delay " + forwardDelayMs);
+            ThreadUtil.sleep(forwardDelayMs);
         }
 
         zipOutputStream.closeEntry();

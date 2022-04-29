@@ -170,39 +170,45 @@ public final class ProxyRepoFileScanner {
             }
 
             if (add) {
-                if (lastModified == -1) {
-                    lastModified = System.currentTimeMillis();
-                }
-
-                progressLog.increment("ProxyRepoFileScanner - addFile");
-
-                final Path relativePath = repoDir.relativize(file);
-                final String relativePathString = relativePath.toString();
-
-                // See if we already know about this source.
-                final boolean exists = proxyRepoSources.sourceExists(relativePathString);
-                if (!exists) {
-                    // Read meta.
-                    final String metaFileName = ProxyRepoFileNames.getMeta(file.getFileName().toString());
-                    final Path metaFile = file.getParent().resolve(metaFileName);
-                    if (!Files.isRegularFile(metaFile)) {
-                        throw new RuntimeException("Unable to find proxy repo meta file: " + metaFileName);
-                    }
-
-                    final AttributeMap attributeMap = new AttributeMap();
-                    try (final InputStream inputStream = Files.newInputStream(metaFile)) {
-                        AttributeMapUtil.read(inputStream, attributeMap);
-
-                        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-                        final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
-
-                        // This is an unrecorded source so add it.
-                        proxyRepoSources.addSource(relativePathString, feedName, typeName, lastModified, attributeMap);
-
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                }
+//                if (lastModified == -1) {
+//                    lastModified = System.currentTimeMillis();
+//                }
+//
+//                progressLog.increment("ProxyRepoFileScanner - addFile");
+//
+//                final Path relativePath = repoDir.relativize(file);
+//                final String relativePathString = relativePath.toString();
+//
+//                // See if we already know about this source.
+//                final boolean exists = proxyRepoSources.sourceExists(relativePathString);
+//                if (!exists) {
+//                    // Read meta.
+//                    final String metaFileName = ProxyRepoFileNames.getMeta(file.getFileName().toString());
+//                    final Path metaFile = file.getParent().resolve(metaFileName);
+//                    if (!Files.isRegularFile(metaFile)) {
+//                        throw new RuntimeException("Unable to find proxy repo meta file: " + metaFileName);
+//                    }
+//
+//                    final AttributeMap attributeMap = new AttributeMap();
+//                    try (final InputStream inputStream = Files.newInputStream(metaFile)) {
+//                        AttributeMapUtil.read(inputStream, attributeMap);
+//
+//                        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+//                        final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+//
+//                        // This is an unrecorded source so add it.
+//                        if (!proxyRepoSources.sourceExists(relativePathString)) {
+//                            proxyRepoSources.addSource(relativePathString,
+//                                    feedName,
+//                                    typeName,
+//                                    lastModified,
+//                                    attributeMap);
+//                        }
+//
+//                    } catch (final IOException e) {
+//                        throw new UncheckedIOException(e);
+//                    }
+//                }
             }
         }
     }

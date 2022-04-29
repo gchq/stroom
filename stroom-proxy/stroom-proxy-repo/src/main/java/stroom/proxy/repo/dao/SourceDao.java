@@ -1,14 +1,21 @@
 package stroom.proxy.repo.dao;
 
 import stroom.db.util.JooqUtil;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.proxy.repo.RepoSource;
-import stroom.proxy.repo.WorkQueue;
+import stroom.proxy.repo.queue.Batch;
+import stroom.proxy.repo.queue.BindWriteQueue;
+import stroom.proxy.repo.queue.ReadQueue;
+import stroom.proxy.repo.queue.RecordQueue;
+import stroom.proxy.repo.queue.WriteQueue;
+import stroom.util.shared.Flushable;
 
 import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.impl.DSL;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
@@ -18,7 +25,7 @@ import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
-public class SourceDao {
+public class SourceDao implements Flushable {
 
     private static final Condition DELETE_SOURCE_CONDITION =
             SOURCE.FORWARDED.isTrue().or(
@@ -28,23 +35,84 @@ public class SourceDao {
                                     .from(SOURCE_ITEM)
                                     .where(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID))));
 
+    private static final Field<?>[] SOURCE_COLUMNS = new Field<?>[]{
+            SOURCE.ID,
+            SOURCE.FILE_STORE_ID,
+            SOURCE.FEED_NAME,
+            SOURCE.TYPE_NAME,
+            SOURCE.NEW_POSITION};
+
     private final SqliteJooqHelper jooq;
 
-    private final AtomicLong sourceRecordId = new AtomicLong();
-    private WorkQueue newQueue;
+    private final AtomicLong sourceId = new AtomicLong();
+    private final AtomicLong sourceNewPosition = new AtomicLong();
+
+    private final RecordQueue recordQueue;
+    private final BindWriteQueue sourceQueue;
+    private final ReadQueue<RepoSource> sourceReadQueue;
+
 
     @Inject
-    SourceDao(final SqliteJooqHelper jooq) {
+    SourceDao(final SqliteJooqHelper jooq,
+              final RepoDbConfig dbConfig) {
         this.jooq = jooq;
         init();
+
+
+        sourceQueue = new BindWriteQueue(SOURCE, SOURCE_COLUMNS);
+        final List<WriteQueue> writeQueues = List.of(sourceQueue);
+
+        sourceReadQueue = new ReadQueue<>(this::read, dbConfig.getBatchSize());
+        final List<ReadQueue<?>> readQueues = List.of(sourceReadQueue);
+
+        recordQueue = new RecordQueue(jooq, writeQueues, readQueues, dbConfig.getBatchSize());
+    }
+
+    private long read(final long currentReadPos, final long limit, List<RepoSource> readQueue) {
+        final AtomicLong pos = new AtomicLong(currentReadPos);
+        jooq.readOnlyTransactionResult(context -> context
+                        .select(SOURCE.ID,
+                                SOURCE.FILE_STORE_ID,
+                                SOURCE.FEED_NAME,
+                                SOURCE.TYPE_NAME,
+                                SOURCE.NEW_POSITION)
+                        .from(SOURCE)
+                        .where(SOURCE.NEW_POSITION.isNotNull())
+                        .and(SOURCE.NEW_POSITION.gt(currentReadPos))
+                        .orderBy(SOURCE.NEW_POSITION)
+                        .limit(limit)
+                        .fetch())
+                .forEach(r -> {
+                    pos.set(r.get(SOURCE.NEW_POSITION));
+                    final RepoSource repoSource = new RepoSource(
+                            r.get(SOURCE.ID),
+                            r.get(SOURCE.FILE_STORE_ID),
+                            r.get(SOURCE.FEED_NAME),
+                            r.get(SOURCE.TYPE_NAME));
+                    readQueue.add(repoSource);
+                });
+        return pos.get();
     }
 
     private void init() {
         jooq.readOnlyTransaction(context -> {
-            newQueue = WorkQueue.createWithJooq(context, SOURCE, SOURCE.NEW_POSITION);
-            final long maxSourceRecordId = JooqUtil.getMaxId(context, SOURCE, SOURCE.ID).orElse(0L);
-            sourceRecordId.set(maxSourceRecordId);
+            sourceId.set(JooqUtil
+                    .getMaxId(context, SOURCE, SOURCE.ID)
+                    .orElse(0L));
+            sourceNewPosition.set(JooqUtil
+                    .getMaxId(context, SOURCE, SOURCE.NEW_POSITION)
+                    .orElse(0L));
         });
+    }
+
+//    public long getMaxId() {
+//        return jooq.readOnlyTransactionResult(context ->
+//                JooqUtil.getMaxId(context, SOURCE, SOURCE.ID).orElse(0L));
+//    }
+
+    public long getMaxFileStoreId() {
+        return jooq.readOnlyTransactionResult(context ->
+                JooqUtil.getMaxId(context, SOURCE, SOURCE.FILE_STORE_ID).orElse(0L));
     }
 
     public void clear() {
@@ -52,17 +120,18 @@ public class SourceDao {
             JooqUtil.deleteAll(context, SOURCE);
             JooqUtil.checkEmpty(context, SOURCE);
         });
+        recordQueue.clear();
         init();
     }
 
-    public boolean pathExists(final String path) {
-        return jooq.readOnlyTransactionResult(context -> context
-                .fetchExists(
-                        context
-                                .selectFrom(SOURCE)
-                                .where(SOURCE.PATH.eq(path))
-                ));
-    }
+//    public boolean pathExists(final String path) {
+//        return jooq.readOnlyTransactionResult(context -> context
+//                .fetchExists(
+//                        context
+//                                .selectFrom(SOURCE)
+//                                .where(SOURCE.PATH.eq(path))
+//                ));
+//    }
 
     /**
      * Add a new source to the database.
@@ -72,70 +141,32 @@ public class SourceDao {
      * <p>
      * This method is synchronized to cope with sources being added via receipt and repo scanning at the same time.
      *
-     * @param path               The path of the source to add.
+     * @param fileStoreId        The file store id of the source to add.
      * @param feedName           The feed name associated with the source.
      * @param typeName           The type name associated with the source.
      * @param lastModifiedTimeMs The last time the source data was modified.
      */
-    public void addSource(final String path,
+    public void addSource(final long fileStoreId,
                           final String feedName,
-                          final String typeName,
-                          final long lastModifiedTimeMs) {
-        // If a source already exists for the supplied path then return an empty optional.
-        if (!pathExists(path)) {
-            newQueue.put(writePos ->
-                    jooq.transaction(context -> {
-                        final long sourceId = sourceRecordId.incrementAndGet();
-                        context
-                                .insertInto(
-                                        SOURCE,
-                                        SOURCE.ID,
-                                        SOURCE.PATH,
-                                        SOURCE.FEED_NAME,
-                                        SOURCE.TYPE_NAME,
-                                        SOURCE.LAST_MODIFIED_TIME_MS,
-                                        SOURCE.NEW_POSITION
-                                )
-                                .values(
-                                        sourceId,
-                                        path,
-                                        feedName,
-                                        typeName,
-                                        lastModifiedTimeMs,
-                                        writePos.incrementAndGet()
-                                )
-                                .execute();
-                    }));
-        }
+                          final String typeName) {
+        recordQueue.add(() -> {
+            final Object[] source = new Object[6];
+            source[0] = sourceId.incrementAndGet();
+            source[1] = fileStoreId;
+            source[2] = feedName;
+            source[3] = typeName;
+            source[4] = sourceNewPosition.incrementAndGet();
+            sourceQueue.add(source);
+        });
     }
 
-    public Optional<RepoSource> getNewSource() {
-        return newQueue.get(this::getSourceAtPosition);
+    public Batch<RepoSource> getNewSources() {
+        return recordQueue.getBatch(sourceReadQueue);
     }
 
-    public Optional<RepoSource> getNewSource(final long timeout,
-                                             final TimeUnit timeUnit) {
-        return newQueue.get(this::getSourceAtPosition, timeout, timeUnit);
-    }
-
-    public Optional<RepoSource> getSourceAtPosition(final long position) {
-        return jooq.readOnlyTransactionResult(context -> context
-                        .select(SOURCE.ID,
-                                SOURCE.PATH,
-                                SOURCE.FEED_NAME,
-                                SOURCE.TYPE_NAME,
-                                SOURCE.LAST_MODIFIED_TIME_MS)
-                        .from(SOURCE)
-                        .where(SOURCE.NEW_POSITION.eq(position))
-                        .orderBy(SOURCE.ID)
-                        .fetchOptional())
-                .map(r -> new RepoSource(
-                        r.get(SOURCE.ID),
-                        r.get(SOURCE.PATH),
-                        r.get(SOURCE.FEED_NAME),
-                        r.get(SOURCE.TYPE_NAME),
-                        r.get(SOURCE.LAST_MODIFIED_TIME_MS)
-                ));
+    public Batch<RepoSource> getNewSources(final long timeout,
+                                           final TimeUnit timeUnit) {
+        return recordQueue.getBatch(sourceReadQueue, timeout, timeUnit);
     }
 
     public int countSources() {
@@ -153,10 +184,9 @@ public class SourceDao {
     public List<RepoSource> getDeletableSources(final int limit) {
         return jooq.readOnlyTransactionResult(context -> context
                         .select(SOURCE.ID,
-                                SOURCE.PATH,
+                                SOURCE.FILE_STORE_ID,
                                 SOURCE.FEED_NAME,
-                                SOURCE.TYPE_NAME,
-                                SOURCE.LAST_MODIFIED_TIME_MS)
+                                SOURCE.TYPE_NAME)
                         .from(SOURCE)
                         .where(DELETE_SOURCE_CONDITION)
                         .orderBy(SOURCE.ID)
@@ -164,11 +194,9 @@ public class SourceDao {
                         .fetch())
                 .map(r -> new RepoSource(
                         r.get(SOURCE.ID),
-                        r.get(SOURCE.PATH),
+                        r.get(SOURCE.FILE_STORE_ID),
                         r.get(SOURCE.FEED_NAME),
-                        r.get(SOURCE.TYPE_NAME),
-                        r.get(SOURCE.LAST_MODIFIED_TIME_MS)
-                ));
+                        r.get(SOURCE.TYPE_NAME)));
     }
 
     /**
@@ -177,10 +205,11 @@ public class SourceDao {
      * @param sourceId The id of the source record to delete.
      * @return The number of rows changed.
      */
-    public int deleteSource(final long sourceId) {
+    public int deleteSources(final List<RepoSource> sources) {
+        final List<Long> sourceIds = sources.stream().map(RepoSource::getId).toList();
         return jooq.transactionResult(context -> context
                 .deleteFrom(SOURCE)
-                .where(SOURCE.ID.eq(sourceId))
+                .where(SOURCE.ID.in(sourceIds))
                 .execute());
     }
 
@@ -189,5 +218,20 @@ public class SourceDao {
                 .update(SOURCE)
                 .set(SOURCE.EXAMINED, false)
                 .execute());
+    }
+
+    public void setSourceExamined(final DSLContext context,
+                                  final long sourceId) {
+        context
+                .update(SOURCE)
+                .set(SOURCE.EXAMINED, true)
+                .setNull(SOURCE.NEW_POSITION)
+                .where(SOURCE.ID.eq(sourceId))
+                .execute();
+    }
+
+    @Override
+    public void flush() {
+        recordQueue.flush();
     }
 }

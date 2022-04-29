@@ -2,8 +2,8 @@ package stroom.proxy.repo;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
 import stroom.receive.common.StroomStreamException;
@@ -15,11 +15,11 @@ import javax.inject.Inject;
 
 public class ProxyRepositoryStreamHandlers implements StreamHandlers {
 
-    private final ProxyRepo proxyRepo;
+    private final SequentialFileStore sequentialFileStore;
 
     @Inject
-    public ProxyRepositoryStreamHandlers(final ProxyRepo proxyRepo) {
-        this.proxyRepo = proxyRepo;
+    public ProxyRepositoryStreamHandlers(final SequentialFileStore sequentialFileStore) {
+        this.sequentialFileStore = sequentialFileStore;
     }
 
     @Override
@@ -34,7 +34,7 @@ public class ProxyRepositoryStreamHandlers implements StreamHandlers {
 
         ProxyRepositoryStreamHandler streamHandler = null;
         try {
-            streamHandler = new ProxyRepositoryStreamHandler(proxyRepo, attributeMap);
+            streamHandler = new ProxyRepositoryStreamHandler(sequentialFileStore, attributeMap);
             consumer.accept(streamHandler);
             streamHandler.close();
         } catch (final RuntimeException e) {

@@ -42,11 +42,9 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -86,24 +84,24 @@ class TestStoreAndForward {
                         homeDir.toAbsolutePath().toString(),
                         tempDir.toAbsolutePath().toString()))
                 .proxyRepoConfig(ProxyRepoConfig.builder()
-                        .withStoringEnabled(true)
-                        .withFormat("${pathId}/${id}")
-                        .withCleanupFrequency(StroomDuration.ofHours(1))
-                        .withLockDeleteAge(StroomDuration.ofHours(1))
-                        .withDirCleanDelay(StroomDuration.ofSeconds(10))
+                        .storingEnabled(true)
+                        .format("${pathId}/${id}")
+                        .cleanupFrequency(StroomDuration.ofHours(1))
+                        .lockDeleteAge(StroomDuration.ofHours(1))
+                        .dirCleanDelay(StroomDuration.ofSeconds(10))
                         .build())
                 .proxyRepoFileScannerConfig(new ProxyRepoFileScannerConfig()
-                        .withScanningEnabled(false)
-                        .withScanFrequency(StroomDuration.ofSeconds(10)))
+                        .scanningEnabled(false)
+                        .scanFrequency(StroomDuration.ofSeconds(10)))
                 .aggregatorConfig(AggregatorConfig.builder()
-                        .withMaxItemsPerAggregate(1000)
-                        .withMaxUncompressedByteSizeString("1G")
-                        .withMaxAggregateAge(StroomDuration.ofMinutes(10))
-                        .withAggregationFrequency(StroomDuration.ofMinutes(1))
+                        .maxItemsPerAggregate(1000)
+                        .maxUncompressedByteSizeString("1G")
+                        .maxAggregateAge(StroomDuration.ofMinutes(10))
+                        .aggregationFrequency(StroomDuration.ofMinutes(1))
                         .build())
                 .forwarderConfig(new ForwarderConfig()
-                        .withForwardingEnabled(true)
-                        .withForwardDestinations(new ForwardDestinationConfig()
+                        .forwardingEnabled(true)
+                        .forwardDestinations(new ForwardDestinationConfig()
                                 .withForwardUrl("null")))
                 .build();
 
@@ -194,24 +192,24 @@ class TestStoreAndForward {
                         homeDir.toAbsolutePath().toString(),
                         tempDir.toAbsolutePath().toString()))
                 .proxyRepoConfig(ProxyRepoConfig.builder()
-                        .withStoringEnabled(true)
-                        .withFormat("${pathId}/${id}")
-                        .withCleanupFrequency(StroomDuration.ofHours(1))
-                        .withLockDeleteAge(StroomDuration.ofHours(1))
-                        .withDirCleanDelay(StroomDuration.ofSeconds(10))
+                        .storingEnabled(true)
+                        .format("${pathId}/${id}")
+                        .cleanupFrequency(StroomDuration.ofHours(1))
+                        .lockDeleteAge(StroomDuration.ofHours(1))
+                        .dirCleanDelay(StroomDuration.ofSeconds(10))
                         .build())
                 .proxyRepoFileScannerConfig(new ProxyRepoFileScannerConfig()
-                        .withScanningEnabled(true)
-                        .withScanFrequency(StroomDuration.ofSeconds(10)))
+                        .scanningEnabled(true)
+                        .scanFrequency(StroomDuration.ofSeconds(10)))
                 .aggregatorConfig(AggregatorConfig.builder()
-                        .withMaxItemsPerAggregate(100)
-                        .withMaxUncompressedByteSizeString("1G")
-                        .withMaxAggregateAge(StroomDuration.ofMinutes(1))
-                        .withAggregationFrequency(StroomDuration.ofMinutes(1))
+                        .maxItemsPerAggregate(100)
+                        .maxUncompressedByteSizeString("1G")
+                        .maxAggregateAge(StroomDuration.ofMinutes(1))
+                        .aggregationFrequency(StroomDuration.ofMinutes(1))
                         .build())
                 .forwarderConfig(new ForwarderConfig()
-                        .withForwardingEnabled(true)
-                        .withForwardDestinations(new ForwardDestinationConfig()
+                        .forwardingEnabled(true)
+                        .forwardDestinations(new ForwardDestinationConfig()
                                 .withForwardUrl("null")))
                 .build();
 
@@ -225,11 +223,6 @@ class TestStoreAndForward {
         progressLog.selAutoLogCount(iterations);
 
         proxyLifecycle.start();
-
-//        while (true) {
-//            progressLog.report();
-//            Thread.sleep(1000);
-//        }
     }
 
     public long addEntry(final String entry,
@@ -256,25 +249,25 @@ class TestStoreAndForward {
                         homeDir.toAbsolutePath().toString(),
                         tempDir.toAbsolutePath().toString()))
                 .proxyRepoConfig(ProxyRepoConfig.builder()
-                        .withStoringEnabled(true)
-                        .withFormat("${pathId}/${id}")
-                        .withCleanupFrequency(StroomDuration.ofHours(1))
-                        .withLockDeleteAge(StroomDuration.ofHours(1))
-                        .withDirCleanDelay(StroomDuration.ofSeconds(10))
+                        .storingEnabled(true)
+                        .format("${pathId}/${id}")
+                        .cleanupFrequency(StroomDuration.ofHours(1))
+                        .lockDeleteAge(StroomDuration.ofHours(1))
+                        .dirCleanDelay(StroomDuration.ofSeconds(10))
                         .build())
                 .proxyRepoFileScannerConfig(new ProxyRepoFileScannerConfig()
-                        .withScanningEnabled(false)
-                        .withScanFrequency(StroomDuration.ofSeconds(10)))
+                        .scanningEnabled(false)
+                        .scanFrequency(StroomDuration.ofSeconds(10)))
                 .aggregatorConfig(AggregatorConfig.builder()
-                        .withMaxItemsPerAggregate(100)
-                        .withMaxUncompressedByteSizeString("1G")
-                        .withMaxAggregateAge(StroomDuration.ofMinutes(1))
-                        .withAggregationFrequency(StroomDuration.ofMinutes(1))
+                        .maxItemsPerAggregate(100)
+                        .maxUncompressedByteSizeString("1G")
+                        .maxAggregateAge(StroomDuration.ofMinutes(1))
+                        .aggregationFrequency(StroomDuration.ofMinutes(1))
                         .build())
                 .forwarderConfig(new ForwarderConfig()
-                        .withForwardingEnabled(true)
-                        .withForwardDestinations(new ForwardDestinationConfig()
-                                .withForwardUrl("null")))
+                        .forwardingEnabled(true)
+                        .forwardDestinations(new ForwardDestinationConfig().withForwardUrl("null"))
+                )
                 .build();
 
         final Config config = new Config();
@@ -303,12 +296,11 @@ class TestStoreAndForward {
     void testUnique() {
         proxyRepoSources
                 .addSource(
-                        UUID.randomUUID().toString(),
+                        1L,
                         "test",
                         null,
-                        System.currentTimeMillis(),
                         null);
-        proxyRepoSources.getNewSource().ifPresent(source ->
+        proxyRepoSources.getNewSources().list().forEach(source ->
                 addEntriesToSource(source, 10, 10));
     }
 
@@ -346,8 +338,7 @@ class TestStoreAndForward {
         }
 
         sourceItemDao.addItems(
-                Paths.get(source.getSourcePath()),
-                source.getId(),
+                source,
                 itemNameMap
                         .values()
                         .stream()

@@ -19,15 +19,17 @@ package stroom.proxy.repo;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.dao.ForwardAggregateDao;
+import stroom.proxy.repo.queue.Batch;
+import stroom.proxy.repo.queue.BatchUtil;
 import stroom.receive.common.StreamHandlers;
+import stroom.util.concurrent.ThreadUtil;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -77,57 +79,60 @@ public class AggregateForwarder {
         forwardAggregateDao.removeOldForwardAggregates(forwardUrls.getOldForwardUrls());
     }
 
-    public void createAllForwardRecords() {
-        QueueUtil.consumeAll(() -> aggregator.getCompleteAggregate(0, TimeUnit.MILLISECONDS),
-                this::createForwardRecord);
+//    public void createAllForwardRecords() {
+//        final Batch<Aggregate> aggregates = aggregator.getCompleteAggregates(0, TimeUnit.MILLISECONDS);
+//        createForwardRecord(aggregates);
+//    }
+
+    public synchronized void createAllForwardAggregates() {
+        BatchUtil.transfer(aggregator::getCompleteAggregates, this::createForwardAggregates);
     }
 
-    public void createNextForwardRecord() {
-        aggregator.getCompleteAggregate().ifPresent(this::createForwardRecord);
-    }
-
-    private void createForwardRecord(final Aggregate aggregate) {
+    private void createForwardAggregates(final Batch<Aggregate> batch) {
         // Forward to all remaining places.
         progressLog.increment("AggregateForwarder - createForwardRecord");
-        forwardAggregateDao.createForwardAggregates(aggregate.getId(), forwardUrls.getForwardUrls());
+        forwardAggregateDao.createForwardAggregates(batch, forwardUrls.getForwardUrls());
     }
 
     public void forwardAll() {
-        QueueUtil.consumeAll(() -> forwardAggregateDao.getNewForwardAggregate(0, TimeUnit.MILLISECONDS),
-                this::forwardAggregate);
+        BatchUtil.transferEach(forwardAggregateDao::getNewForwardAggregates, this::forward);
+
+//        QueueUtil.consumeAll(() -> forwardAggregateDao.getNewForwardAggregate(0, TimeUnit.MILLISECONDS),
+//                this::forwardAggregate);
     }
 
-    public void forwardNext() {
-        forwardAggregateDao.getNewForwardAggregate().ifPresent(this::forwardAggregate);
+//    public void forwardNext() {
+//        forwardAggregateDao.getNewForwardAggregate().ifPresent(this::forwardAggregate);
+//    }
+//
+//    private void forwardAggregate(final ForwardAggregate forwardAggregate) {
+//        progressLog.increment("AggregateForwarder - forwardAggregate");
+//        forward(forwardAggregate);
+//    }
+
+    public Batch<ForwardAggregate> getNewForwardAggregates() {
+        return forwardAggregateDao.getNewForwardAggregates();
     }
 
-    private void forwardAggregate(final ForwardAggregate forwardAggregate) {
-        progressLog.increment("AggregateForwarder - forwardAggregate");
+    public Batch<ForwardAggregate> getRetryForwardAggregates() {
+        return forwardAggregateDao.getRetryForwardAggregate();
+    }
+
+    public void forwardRetry(final ForwardAggregate forwardAggregate,
+                             final long retryFrequency) {
+        final long oldest = System.currentTimeMillis() - retryFrequency;
+        progressLog.increment("AggregateForwarder - forwardRetry");
+
+        final long updateTime = forwardAggregate.getUpdateTimeMs();
+        final long delay = updateTime - oldest;
+        // Wait until the item is old enough before sending.
+        if (delay > 0) {
+            ThreadUtil.sleep(delay);
+        }
         forward(forwardAggregate);
     }
 
-    public void forwardRetry(final long oldest) {
-        final Optional<ForwardAggregate> optionalForwardAggregate = forwardAggregateDao.getRetryForwardAggregate();
-        optionalForwardAggregate.ifPresent(forwardAggregate -> {
-            progressLog.increment("AggregateForwarder - forwardRetry");
-
-            final long updateTime = forwardAggregate.getUpdateTimeMs();
-            final long delay = updateTime - oldest;
-            // Wait until the item is old enough before sending.
-            if (delay > 0) {
-                try {
-                    Thread.sleep(delay);
-                } catch (final InterruptedException e) {
-                    // Continue to interrupt.
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException(e.getMessage(), e);
-                }
-            }
-            forward(forwardAggregate);
-        });
-    }
-
-    void forward(final ForwardAggregate forwardAggregate) {
+    public void forward(final ForwardAggregate forwardAggregate) {
         final Aggregate aggregate = forwardAggregate.getAggregate();
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();

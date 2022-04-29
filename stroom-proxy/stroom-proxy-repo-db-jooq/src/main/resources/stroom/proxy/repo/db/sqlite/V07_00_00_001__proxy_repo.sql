@@ -16,15 +16,14 @@
 
 CREATE TABLE IF NOT EXISTS source (
   id                        BIGINT PRIMARY KEY,
-  path                      VARCHAR(255) NOT NULL,
+  file_store_id             BIGINT NOT NULL,
   feed_name                 VARCHAR(255) DEFAULT NULL,
   type_name                 VARCHAR(255) DEFAULT NULL,
-  last_modified_time_ms     BIGINT NOT NULL,
   examined                  BOOLEAN DEFAULT FALSE,
   forwarded                 BOOLEAN DEFAULT FALSE,
   new_position              BIGINT NULL
 );
-CREATE UNIQUE INDEX source_path_index ON source(path);
+CREATE UNIQUE INDEX source_file_store_id ON source(file_store_id);
 CREATE UNIQUE INDEX new_position_source_index ON source(new_position);
 
 CREATE TABLE IF NOT EXISTS source_item (

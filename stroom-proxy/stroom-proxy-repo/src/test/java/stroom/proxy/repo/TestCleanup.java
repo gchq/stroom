@@ -5,7 +5,6 @@ import stroom.proxy.repo.dao.SqliteJooqHelper;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,6 +50,7 @@ public class TestCleanup {
     void testCleanup() {
         jooq.transaction(context -> {
             long sourceId = 0;
+            long sourceFileStoreId = 0;
             long sourceItemId = 0;
             long sourceEntryId = 0;
             long aggregateId = 0;
@@ -64,13 +64,11 @@ public class TestCleanup {
                             .insertInto(
                                     SOURCE,
                                     SOURCE.ID,
-                                    SOURCE.PATH,
-                                    SOURCE.LAST_MODIFIED_TIME_MS,
+                                    SOURCE.FILE_STORE_ID,
                                     SOURCE.EXAMINED)
                             .values(
                                     ++sourceId,
-                                    StringUtils.leftPad(String.valueOf(sourceId), 3, "0") + ".zip",
-                                    System.currentTimeMillis(),
+                                    ++sourceFileStoreId,
                                     true)
                             .execute();
 

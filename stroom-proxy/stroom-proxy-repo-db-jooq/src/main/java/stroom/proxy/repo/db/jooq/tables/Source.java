@@ -12,7 +12,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row8;
+import org.jooq.Row7;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -55,9 +55,9 @@ public class Source extends TableImpl<SourceRecord> {
     public final TableField<SourceRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>source.path</code>.
+     * The column <code>source.file_store_id</code>.
      */
-    public final TableField<SourceRecord, String> PATH = createField(DSL.name("path"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<SourceRecord, Long> FILE_STORE_ID = createField(DSL.name("file_store_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>source.feed_name</code>.
@@ -68,11 +68,6 @@ public class Source extends TableImpl<SourceRecord> {
      * The column <code>source.type_name</code>.
      */
     public final TableField<SourceRecord, String> TYPE_NAME = createField(DSL.name("type_name"), SQLDataType.VARCHAR(255).defaultValue(DSL.field("NULL", SQLDataType.VARCHAR)), this, "");
-
-    /**
-     * The column <code>source.last_modified_time_ms</code>.
-     */
-    public final TableField<SourceRecord, Long> LAST_MODIFIED_TIME_MS = createField(DSL.name("last_modified_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>source.examined</code>.
@@ -129,7 +124,7 @@ public class Source extends TableImpl<SourceRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.NEW_POSITION_SOURCE_INDEX, Indexes.SOURCE_PATH_INDEX);
+        return Arrays.asList(Indexes.NEW_POSITION_SOURCE_INDEX, Indexes.SOURCE_FILE_STORE_ID);
     }
 
     @Override
@@ -164,11 +159,11 @@ public class Source extends TableImpl<SourceRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row8 type methods
+    // Row7 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Long, String, String, String, Long, Boolean, Boolean, Long> fieldsRow() {
-        return (Row8) super.fieldsRow();
+    public Row7<Long, Long, String, String, Boolean, Boolean, Long> fieldsRow() {
+        return (Row7) super.fieldsRow();
     }
 }

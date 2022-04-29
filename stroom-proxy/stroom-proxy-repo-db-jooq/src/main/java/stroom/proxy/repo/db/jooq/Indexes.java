@@ -34,5 +34,5 @@ public class Indexes {
     public static final Index NEW_POSITION_SOURCE_ITEM_INDEX = Internal.createIndex(DSL.name("new_position_source_item_index"), SourceItem.SOURCE_ITEM, new OrderField[] { SourceItem.SOURCE_ITEM.NEW_POSITION }, true);
     public static final Index RETRY_POSITION_FORWARD_AGGREGATE_INDEX = Internal.createIndex(DSL.name("retry_position_forward_aggregate_index"), ForwardAggregate.FORWARD_AGGREGATE, new OrderField[] { ForwardAggregate.FORWARD_AGGREGATE.RETRY_POSITION }, true);
     public static final Index RETRY_POSITION_FORWARD_SOURCE_INDEX = Internal.createIndex(DSL.name("retry_position_forward_source_index"), ForwardSource.FORWARD_SOURCE, new OrderField[] { ForwardSource.FORWARD_SOURCE.RETRY_POSITION }, true);
-    public static final Index SOURCE_PATH_INDEX = Internal.createIndex(DSL.name("source_path_index"), Source.SOURCE, new OrderField[] { Source.SOURCE.PATH }, true);
+    public static final Index SOURCE_FILE_STORE_ID = Internal.createIndex(DSL.name("source_file_store_id"), Source.SOURCE, new OrderField[] { Source.SOURCE.FILE_STORE_ID }, true);
 }

@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import java.util.List;
 
 public class ProxyAggregationRepoDbConfig extends AbstractRepoDbConfig implements IsStroomConfig {
+    // TODO : DELETE THIS CLASS
 
     public ProxyAggregationRepoDbConfig() {
         super();

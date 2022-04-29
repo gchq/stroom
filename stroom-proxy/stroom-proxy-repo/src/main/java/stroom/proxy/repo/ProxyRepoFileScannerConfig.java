@@ -39,11 +39,11 @@ public class ProxyRepoFileScannerConfig extends AbstractConfig implements IsProx
         return scanFrequency;
     }
 
-    public ProxyRepoFileScannerConfig withScanningEnabled(final boolean scanningEnabled) {
+    public ProxyRepoFileScannerConfig scanningEnabled(final boolean scanningEnabled) {
         return new ProxyRepoFileScannerConfig(scanningEnabled, scanFrequency);
     }
 
-    public ProxyRepoFileScannerConfig withScanFrequency(final StroomDuration scanFrequency) {
+    public ProxyRepoFileScannerConfig scanFrequency(final StroomDuration scanFrequency) {
         return new ProxyRepoFileScannerConfig(scanningEnabled, scanFrequency);
     }
 }

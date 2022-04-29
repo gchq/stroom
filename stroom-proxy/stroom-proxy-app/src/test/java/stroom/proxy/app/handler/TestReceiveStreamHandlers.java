@@ -1,6 +1,5 @@
 package stroom.proxy.app.handler;
 
-import stroom.data.zip.StroomZipOutputStream;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.forwarder.ForwardDestinationConfig;
 import stroom.proxy.app.forwarder.ForwardStreamHandler;
@@ -9,10 +8,11 @@ import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStreamConfig;
-import stroom.proxy.repo.ProxyRepo;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlers;
+import stroom.proxy.repo.store.Entries;
+import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestReceiveStreamHandlers extends StroomUnitTest {
 
     @Mock
-    private ProxyRepo proxyRepo;
+    private SequentialFileStore sequentialFileStore;
 
     @Test
     void testStoreAndForward(@TempDir Path tempDir) {
@@ -121,18 +121,19 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                 .collect(Collectors.toList());
 
         final ForwarderConfig forwarderConfig = new ForwarderConfig()
-                .withForwardingEnabled(isForwardingEnabled)
-                .withForwardDestinations(forwardDestinationConfigList);
+                .forwardingEnabled(isForwardingEnabled)
+                .forwardDestinations(forwardDestinationConfigList);
 
         try {
-            final StroomZipOutputStream mockStroomZipOutputStream = Mockito.mock(StroomZipOutputStream.class);
-            Mockito.when(proxyRepo.getStroomZipOutputStream(Mockito.any())).thenReturn(mockStroomZipOutputStream);
+            final Entries mockStroomZipOutputStream = Mockito.mock(Entries.class);
+            Mockito.when(sequentialFileStore.getEntries(Mockito.any())).thenReturn(
+                    mockStroomZipOutputStream);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
 
         final ProxyRepositoryStreamHandlers proxyRepositoryRequestHandlerProvider =
-                new ProxyRepositoryStreamHandlers(proxyRepo);
+                new ProxyRepositoryStreamHandlers(sequentialFileStore);
 
         final LogStream logStream = new LogStream(logRequestConfig);
 

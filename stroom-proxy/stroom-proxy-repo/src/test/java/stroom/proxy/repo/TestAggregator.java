@@ -4,6 +4,7 @@ import stroom.proxy.repo.dao.AggregateDao;
 import stroom.proxy.repo.dao.ForwardUrlDao;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceItemDao;
+import stroom.proxy.repo.queue.Batch;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
@@ -71,19 +74,19 @@ public class TestAggregator {
         assertThat(sourceItemDao.countEntries()).isEqualTo(3000);
 
         // Make sure we have no existing aggregates.
-        aggregator.closeOldAggregates(System.currentTimeMillis());
+        aggregator.closeOldAggregates(1, 1, System.currentTimeMillis());
 
         // Aggregate.
         aggregator.aggregateAll();
 
         // Check that we now have nothing left to aggregate.
-        assertThat(sourceItemDao.getNewSourceItem(0, TimeUnit.MILLISECONDS).isPresent()).isFalse();
+        assertThat(sourceItemDao.getNewSourceItems(0, TimeUnit.MILLISECONDS).isEmpty()).isTrue();
         ensureNonDeletable();
 
         // Check that the new aggregates are not yet completed.
-        assertThat(aggregateDao.getNewAggregate(0, TimeUnit.MILLISECONDS).isPresent()).isFalse();
+        assertThat(aggregateDao.getNewAggregates(0, TimeUnit.MILLISECONDS).isEmpty()).isTrue();
         // Close all aggregates.
-        aggregator.closeOldAggregates(System.currentTimeMillis());
+        aggregator.closeOldAggregates(1, 1, System.currentTimeMillis());
         // Check that we now have some aggregates.
         assertThat(aggregateDao.countAggregates()).isEqualTo(10);
         ensureNonDeletable();
@@ -91,7 +94,7 @@ public class TestAggregator {
         // Now forward the completed aggregates.
         final String forwardUrl = "http://test-url.com";
         forwardUrlDao.getForwardUrlId(forwardUrl);
-        aggregateForwarder.createAllForwardRecords();
+        aggregateForwarder.createAllForwardAggregates();
 
         // Check we still can't delete sources.
         ensureNonDeletable();
@@ -114,13 +117,16 @@ public class TestAggregator {
         // Make sure we have no existing aggregates.
         assertThat(aggregateDao.countAggregates()).isZero();
 
+        final List<RepoSourceItemRef> list = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             // Add an item but make sure no aggregation takes place.
-            aggregator.addItem(new RepoSourceItemRef(1, "TEST_FEED", null, 10));
+            list.add(new RepoSourceItemRef(1, "TEST_FEED", null, 10));
         }
 
+        aggregator.addItems(new Batch<>(list, true));
+
         // Now force aggregation and ensure we end up with 1 aggregate.
-        aggregator.closeOldAggregates(System.currentTimeMillis());
+        aggregator.closeOldAggregates(1, 1, System.currentTimeMillis());
         assertThat(aggregateDao.countAggregates()).isOne();
     }
 }

@@ -5,6 +5,7 @@ import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceEntry;
 import stroom.proxy.repo.RepoSourceItem;
+import stroom.proxy.repo.queue.Batch;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -12,10 +13,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
@@ -25,6 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(ProxyRepoTestModule.class)
 public class TestSourceEntryDao {
 
+    @Inject
+    private SqliteJooqHelper jooq;
     @Inject
     private SourceDao sourceDao;
     @Inject
@@ -40,15 +42,17 @@ public class TestSourceEntryDao {
     void testSourceEntry() {
         assertThat(sourceDao.countSources()).isZero();
         assertThat(sourceItemDao.countEntries()).isZero();
-        assertThat(sourceDao.pathExists("test")).isFalse();
+//        assertThat(sourceDao.pathExists("test")).isFalse();
 
-        sourceDao.addSource("test", "test", "test", System.currentTimeMillis());
+        sourceDao.addSource(1L, "test", "test");
+        sourceDao.flush();
 
-        final Optional<RepoSource> optionalSource = sourceDao.getNewSource(0, TimeUnit.MILLISECONDS);
-        assertThat(optionalSource.isPresent()).isTrue();
+        final Batch<RepoSource> sources = sourceDao.getNewSources(0, TimeUnit.MILLISECONDS);
+        assertThat(sources.list().isEmpty()).isFalse();
+        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
 
-        final RepoSource source = optionalSource.get();
-        assertThat(source.getSourcePath()).isEqualTo("test");
+        final RepoSource source = sources.list().get(0);
+        assertThat(source.getFileStoreId()).isEqualTo(1L);
 
         final Map<String, RepoSourceItem> itemNameMap = new HashMap<>();
         for (int i = 0; i < 100; i++) {
@@ -72,10 +76,14 @@ public class TestSourceEntryDao {
             }
         }
 
-        sourceItemDao.addItems(Paths.get("test"), source.getId(), itemNameMap.values());
-        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
+        sourceItemDao.addItems(source, itemNameMap.values());
+        sourceItemDao.flush();
 
-        sourceDao.deleteSource(source.getId());
+        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
+        jooq.transaction(context -> sourceItemDao.deleteBySourceId(context, source.getId()));
+        assertThat(sourceDao.getDeletableSources(1000).size()).isOne();
+
+        sourceDao.deleteSources(Collections.singletonList(source));
         assertThat(sourceDao.countSources()).isZero();
 
         sourceDao.clear();

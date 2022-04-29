@@ -6,6 +6,7 @@ import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceEntry;
 import stroom.proxy.repo.RepoSourceItem;
+import stroom.proxy.repo.queue.Batch;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -13,10 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
@@ -47,15 +46,16 @@ public class TestAggregateDao {
         assertThat(sourceDao.countSources()).isZero();
         assertThat(sourceItemDao.countEntries()).isZero();
         assertThat(aggregateDao.countAggregates()).isZero();
-        assertThat(sourceDao.pathExists("test")).isFalse();
+//        assertThat(sourceDao.pathExists("test")).isFalse();
 
-        sourceDao.addSource("test", "test", "test", System.currentTimeMillis());
+        sourceDao.addSource(1L, "test", "test");
+        sourceDao.flush();
 
-        final Optional<RepoSource> optionalSource = sourceDao.getNewSource(0, TimeUnit.MILLISECONDS);
-        assertThat(optionalSource.isPresent()).isTrue();
+        final Batch<RepoSource> sources = sourceDao.getNewSources(0, TimeUnit.MILLISECONDS);
+        assertThat(sources.list().isEmpty()).isFalse();
 
-        final RepoSource source = optionalSource.get();
-        assertThat(source.getSourcePath()).isEqualTo("test");
+        final RepoSource source = sources.list().get(0);
+        assertThat(source.getFileStoreId()).isEqualTo(1L);
 
         final Map<String, RepoSourceItem> itemNameMap = new HashMap<>();
         for (int i = 0; i < 100; i++) {
@@ -79,10 +79,12 @@ public class TestAggregateDao {
             }
         }
 
-        sourceItemDao.addItems(Paths.get("test"), source.getId(), itemNameMap.values());
+        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
+        sourceItemDao.addItems(source, itemNameMap.values());
+        sourceItemDao.flush();
         assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
         aggregator.aggregateAll();
-        aggregator.closeOldAggregates(System.currentTimeMillis());
+        aggregator.closeOldAggregates(1, 1, System.currentTimeMillis());
 
         assertThat(aggregateDao.countAggregates()).isOne();
     }

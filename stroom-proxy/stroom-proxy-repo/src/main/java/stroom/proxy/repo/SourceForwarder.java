@@ -19,14 +19,15 @@ package stroom.proxy.repo;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.dao.ForwardSourceDao;
+import stroom.proxy.repo.queue.Batch;
+import stroom.proxy.repo.queue.BatchUtil;
 import stroom.receive.common.StreamHandlers;
+import stroom.util.concurrent.ThreadUtil;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
 
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -44,9 +45,8 @@ public class SourceForwarder {
     private final ForwardUrls forwardUrls;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
     private final ForwarderDestinations forwarderDestinations;
-    private final Path repoDir;
-    private final ProgressLog progressLog;
     private final Sender sender;
+    private final ProgressLog progressLog;
 
     private volatile String hostName = null;
 
@@ -55,23 +55,21 @@ public class SourceForwarder {
                     final ForwardSourceDao forwardSourceDao,
                     final ForwardUrls forwardUrls,
                     final ForwarderDestinations forwarderDestinations,
-                    final RepoDirProvider repoDirProvider,
-                    final ProgressLog progressLog,
-                    final Sender sender) {
+                    final Sender sender,
+                    final ProgressLog progressLog) {
 
         this.sources = sources;
         this.forwardSourceDao = forwardSourceDao;
         this.forwardUrls = forwardUrls;
-        this.progressLog = progressLog;
-        this.sender = sender;
 
         this.forwarderDestinations = forwarderDestinations;
-        this.repoDir = repoDirProvider.get();
+        this.sender = sender;
+        this.progressLog = progressLog;
 
         init();
     }
 
-    public void init() {
+    private void init() {
         // Add forward records for new forward URLs.
         forwardSourceDao.addNewForwardSources(forwardUrls.getNewForwardUrls());
 
@@ -79,63 +77,71 @@ public class SourceForwarder {
         forwardSourceDao.removeOldForwardSources(forwardUrls.getOldForwardUrls());
     }
 
-    public void createAllForwardRecords() {
-        QueueUtil.consumeAll(() -> sources.getNewSource(0, TimeUnit.MILLISECONDS),
-                this::createForwardRecord);
+//    public void createAllForwardRecords() {
+//        QueueUtil.consumeAll(() -> sources.getNewSource(0, TimeUnit.MILLISECONDS),
+//                this::createForwardRecord);
+//    }
+//
+//    public void createNextForwardRecord() {
+//        sources.getNewSource().ifPresent(this::createForwardRecord);
+//    }
+
+    public synchronized void createAllForwardSources() {
+        BatchUtil.transfer(sources::getNewSources, this::createForwardSources);
     }
 
-    public void createNextForwardRecord() {
-        sources.getNewSource().ifPresent(this::createForwardRecord);
-    }
-
-    private void createForwardRecord(final RepoSource source) {
+    private void createForwardSources(final Batch<RepoSource> batch) {
         // Forward to all remaining places.
         progressLog.increment("SourceForwarder - createForwardRecord");
-        forwardSourceDao.createForwardSources(source.getId(), forwardUrls.getForwardUrls());
+        forwardSourceDao.createForwardSources(batch, forwardUrls.getForwardUrls());
+    }
+
+//    public void forwardAll() {
+//        Optional<ForwardSource> optionalForwardAggregate;
+//        do {
+//            optionalForwardAggregate = forwardSourceDao.getNewForwardSource(0, TimeUnit.MILLISECONDS);
+//            optionalForwardAggregate.ifPresent(this::forwardSource);
+//        } while (optionalForwardAggregate.isPresent());
+//    }
+//
+//    public void forwardNext() {
+//        final Optional<ForwardSource> optional = forwardSourceDao.getNewForwardSource();
+//        optional.ifPresent(this::forwardSource);
+//    }
+//
+//    private void forwardSource(final ForwardSource forwardSource) {
+//        progressLog.increment("SourceForwarder - forwardSource");
+//        forward(forwardSource);
+//    }
+
+    public Batch<ForwardSource> getNewForwardSources() {
+        return forwardSourceDao.getNewForwardSources();
     }
 
     public void forwardAll() {
-        Optional<ForwardSource> optionalForwardAggregate;
-        do {
-            optionalForwardAggregate = forwardSourceDao.getNewForwardSource(0, TimeUnit.MILLISECONDS);
-            optionalForwardAggregate.ifPresent(this::forwardSource);
-        } while (optionalForwardAggregate.isPresent());
+
     }
 
-    public void forwardNext() {
-        final Optional<ForwardSource> optional = forwardSourceDao.getNewForwardSource();
-        optional.ifPresent(this::forwardSource);
+    public Batch<ForwardSource> getRetryForwardSources() {
+        return forwardSourceDao.getRetryForwardSources();
     }
 
-    private void forwardSource(final ForwardSource forwardSource) {
-        progressLog.increment("SourceForwarder - forwardSource");
+    public void forwardRetry(final ForwardSource forwardSource,
+                             final long retryFrequency) {
+        final long oldest = System.currentTimeMillis() - retryFrequency;
+        progressLog.increment("AggregateForwarder - forwardRetry");
+
+        final long updateTime = forwardSource.getUpdateTimeMs();
+        final long delay = updateTime - oldest;
+        // Wait until the item is old enough before sending.
+        if (delay > 0) {
+            ThreadUtil.sleep(delay);
+        }
         forward(forwardSource);
     }
 
-    public void forwardRetry(final long oldest) {
-        final Optional<ForwardSource> optional = forwardSourceDao.getRetryForwardSource();
-        optional.ifPresent(forwardSource -> {
-            progressLog.increment("SourceForwarder - forwardRetry");
-
-            final long updateTime = forwardSource.getUpdateTimeMs();
-            final long delay = updateTime - oldest;
-            // Wait until the item is old enough before sending.
-            if (delay > 0) {
-                try {
-                    Thread.sleep(delay);
-                } catch (final InterruptedException e) {
-                    // Continue to interrupt.
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException(e.getMessage(), e);
-                }
-            }
-            forward(forwardSource);
-        });
-    }
-
-    private void forward(final ForwardSource forwardSource) {
+    public void forward(final ForwardSource forwardSource) {
         final RepoSource source = forwardSource.getSource();
-        final String forwardUrl = forwardSource.getForwardUrl().getUrl();
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();
 
@@ -154,8 +160,8 @@ public class SourceForwarder {
             attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
         }
 
-        final StreamHandlers streamHandlers = forwarderDestinations.getProvider(forwardUrl);
-        final Path zipFilePath = repoDir.resolve(source.getSourcePath());
+        final StreamHandlers streamHandlers =
+                forwarderDestinations.getProvider(forwardSource.getForwardUrl().getUrl());
 
         // Start the POST
         try {

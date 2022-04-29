@@ -21,14 +21,12 @@ import stroom.proxy.repo.dao.ForwardAggregateDao;
 import stroom.proxy.repo.dao.ForwardSourceDao;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceItemDao;
-import stroom.util.io.FileUtil;
+import stroom.proxy.repo.store.SequentialFileStore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -46,50 +44,42 @@ public class Cleanup {
     private final RepoDbConfig dbConfig;
 
     private final RepoSources sources;
-    private final Path repoDir;
+    private final SequentialFileStore sequentialFileStore;
 
     @Inject
     Cleanup(final RepoSources sources,
-            final RepoDirProvider repoDirProvider,
             final SourceDao sourceDao,
             final SourceItemDao sourceItemDao,
             final AggregateDao aggregateDao,
             final ForwardSourceDao forwardSourceDao,
             final ForwardAggregateDao forwardAggregateDao,
-            final RepoDbConfig dbConfig) {
+            final RepoDbConfig dbConfig,
+            final SequentialFileStore sequentialFileStore) {
         this.sources = sources;
-        this.repoDir = repoDirProvider.get();
         this.sourceDao = sourceDao;
         this.sourceItemDao = sourceItemDao;
         this.aggregateDao = aggregateDao;
         this.forwardSourceDao = forwardSourceDao;
         this.forwardAggregateDao = forwardAggregateDao;
         this.dbConfig = dbConfig;
+        this.sequentialFileStore = sequentialFileStore;
     }
 
     public void cleanupSources() {
         final int batchSize = dbConfig.getBatchSize();
-        List<RepoSource> list;
-        do {
-            list = sources.getDeletableSources(batchSize);
+        boolean full = true;
+        while (full) {
+            final List<RepoSource> list = sources.getDeletableSources(batchSize);
             for (final RepoSource source : list) {
                 try {
-                    // Source path is the zip.
-                    final Path sourceFile = repoDir.resolve(ProxyRepoFileNames.getZip(source.getSourcePath()));
-                    LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(sourceFile));
-                    Files.deleteIfExists(sourceFile);
-
-                    final Path metaFile = repoDir.resolve(ProxyRepoFileNames.getMeta(source.getSourcePath()));
-                    LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(metaFile));
-                    Files.deleteIfExists(metaFile);
-
-                    sources.deleteSource(source);
-
+                    sequentialFileStore.deleteSource(source.getFileStoreId());
                 } catch (final IOException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
             }
-        } while (list.size() == batchSize);
+            sources.deleteSources(list);
+            full = list.size() == batchSize;
+        }
     }
 
     public void resetAggregateForwarder() {

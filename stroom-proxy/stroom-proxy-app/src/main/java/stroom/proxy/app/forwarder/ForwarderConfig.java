@@ -70,15 +70,15 @@ public class ForwarderConfig extends AbstractConfig implements IsProxyConfig {
         return retryFrequency;
     }
 
-    public ForwarderConfig withForwardingEnabled(final boolean forwardingEnabled) {
+    public ForwarderConfig forwardingEnabled(final boolean forwardingEnabled) {
         return new ForwarderConfig(forwardingEnabled, userAgent, forwardDestinations, retryFrequency);
     }
 
-    public ForwarderConfig withForwardDestinations(final List<ForwardDestinationConfig> forwardDestinations) {
+    public ForwarderConfig forwardDestinations(final List<ForwardDestinationConfig> forwardDestinations) {
         return new ForwarderConfig(forwardingEnabled, userAgent, forwardDestinations, retryFrequency);
     }
 
-    public ForwarderConfig withForwardDestinations(final ForwardDestinationConfig... forwardDestinations) {
+    public ForwarderConfig forwardDestinations(final ForwardDestinationConfig... forwardDestinations) {
         return new ForwarderConfig(forwardingEnabled, userAgent, List.of(forwardDestinations), retryFrequency);
     }
 

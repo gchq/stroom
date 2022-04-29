@@ -1,5 +1,8 @@
 package stroom.proxy.app;
 
+import stroom.util.concurrent.ThreadUtil;
+import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import org.apache.http.HttpEntity;
@@ -41,11 +44,7 @@ public class TestReceiveDataServlet {
             long lastTime = startTime;
             long lastCount = 0;
             while (true) {
-                try {
-                    Thread.sleep(10000);
-                } catch (final InterruptedException e) {
-                    System.err.println(e.getMessage());
-                }
+                ThreadUtil.sleep(10000);
 
                 final long now = System.currentTimeMillis();
                 final long totalCount = count.longValue();
@@ -89,8 +88,9 @@ public class TestReceiveDataServlet {
             final HttpEntity entity = response.getEntity();
 
             if (entity != null) {
-                try (InputStream instream = entity.getContent()) {
+                try (final InputStream inputStream = entity.getContent()) {
                     // do something useful
+//                    System.out.println(StreamUtil.streamToString(inputStream));
                 }
             }
 

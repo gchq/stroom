@@ -42,7 +42,7 @@ public class ProxyAggregationExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationExecutor.class);
 
-    private final Exec exec;
+//    private final Exec exec;
 
     @Inject
     public ProxyAggregationExecutor(final Provider<AggregatorConfig> aggregatorConfigProvider,
@@ -52,66 +52,66 @@ public class ProxyAggregationExecutor {
                                     final Provider<AggregateForwarder> aggregatorForwarderProvider,
                                     final Provider<SourceForwarder> sourceForwarderProvider,
                                     final Provider<Cleanup> cleanupProvider) {
-        if (aggregatorConfigProvider.get().isEnabled()) {
-            final ProxyRepoFileScanner proxyRepoFileScanner = proxyRepoFileScannerProvider.get();
-            final RepoSourceItems repoSourceItems = proxyRepoSourceEntriesProvider.get();
-            final Aggregator aggregator = aggregatorProvider.get();
-            final AggregateForwarder aggregateForwarder = aggregatorForwarderProvider.get();
-            final Cleanup cleanup = cleanupProvider.get();
-
-            // We are going to do aggregate forwarding so reset source forwarder.
-            cleanup.resetSourceForwarder();
-
-            this.exec = (boolean forceAggregation, boolean scanSorted) -> {
-                // Scan the proxy repo to find new files to aggregate.
-                proxyRepoFileScanner.scan(scanSorted);
-
-                // Examine all sources.
-                repoSourceItems.examineAll();
-
-                // Aggregate all of the examined source items.
-                aggregator.aggregateAll();
-
-                // Close old aggregates.
-                if (forceAggregation) {
-                    // Force close of old aggregates.
-                    aggregator.closeOldAggregates(System.currentTimeMillis());
-                } else {
-                    aggregator.closeOldAggregates();
-                }
-
-                // Creating forward state tracking records.
-                aggregateForwarder.createAllForwardRecords();
-
-                // Forward.
-                aggregateForwarder.forwardAll();
-
-                // Cleanup
-                cleanup.cleanupSources();
-            };
-
-        } else {
-            final ProxyRepoFileScanner proxyRepoFileScanner = proxyRepoFileScannerProvider.get();
-            final SourceForwarder sourceForwarder = sourceForwarderProvider.get();
-            final Cleanup cleanup = cleanupProvider.get();
-
-            // We are going to do source forwarding so reset aggregate forwarder.
-            cleanup.resetAggregateForwarder();
-
-            this.exec = (boolean forceAggregation, boolean scanSorted) -> {
-                // Scan the proxy repo to find new files to aggregate.
-                proxyRepoFileScanner.scan(scanSorted);
-
-                // Creating forward state tracking records.
-                sourceForwarder.createAllForwardRecords();
-
-                // Forward.
-                sourceForwarder.forwardAll();
-
-                // Cleanup
-                cleanup.cleanupSources();
-            };
-        }
+//        if (aggregatorConfigProvider.get().isEnabled()) {
+//            final ProxyRepoFileScanner proxyRepoFileScanner = proxyRepoFileScannerProvider.get();
+//            final RepoSourceItems repoSourceItems = proxyRepoSourceEntriesProvider.get();
+//            final Aggregator aggregator = aggregatorProvider.get();
+//            final AggregateForwarder aggregateForwarder = aggregatorForwarderProvider.get();
+//            final Cleanup cleanup = cleanupProvider.get();
+//
+//            // We are going to do aggregate forwarding so reset source forwarder.
+//            cleanup.resetSourceForwarder();
+//
+//            this.exec = (boolean forceAggregation, boolean scanSorted) -> {
+//                // Scan the proxy repo to find new files to aggregate.
+//                proxyRepoFileScanner.scan(scanSorted);
+//
+//                // Examine all sources.
+//                repoSourceItems.examineAll();
+//
+//                // Aggregate all of the examined source items.
+//                aggregator.aggregateAll();
+//
+//                // Close old aggregates.
+//                if (forceAggregation) {
+//                    // Force close of old aggregates.
+//                    aggregator.closeOldAggregates(System.currentTimeMillis());
+//                } else {
+//                    aggregator.closeOldAggregates();
+//                }
+//
+//                // Creating forward state tracking records.
+//                aggregateForwarder.createAllForwardRecords();
+//
+//                // Forward.
+//                aggregateForwarder.forwardAll();
+//
+//                // Cleanup
+//                cleanup.cleanupSources();
+//            };
+//
+//        } else {
+//            final ProxyRepoFileScanner proxyRepoFileScanner = proxyRepoFileScannerProvider.get();
+//            final SourceForwarder sourceForwarder = sourceForwarderProvider.get();
+//            final Cleanup cleanup = cleanupProvider.get();
+//
+//            // We are going to do source forwarding so reset aggregate forwarder.
+//            cleanup.resetAggregateForwarder();
+//
+//            this.exec = (boolean forceAggregation, boolean scanSorted) -> {
+//                // Scan the proxy repo to find new files to aggregate.
+//                proxyRepoFileScanner.scan(scanSorted);
+//
+//                // Creating forward state tracking records.
+//                sourceForwarder.createAllForwardRecords();
+//
+//                // Forward.
+//                sourceForwarder.forwardAll();
+//
+//                // Cleanup
+//                cleanup.cleanupSources();
+//            };
+//        }
     }
 
     public void exec() {
@@ -120,13 +120,13 @@ public class ProxyAggregationExecutor {
 
     public void exec(final boolean forceAggregation,
                      final boolean scanSorted) {
-        if (!Thread.currentThread().isInterrupted()) {
-            try {
-                exec.exec(forceAggregation, scanSorted);
-            } catch (final Exception e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        }
+//        if (!Thread.currentThread().isInterrupted()) {
+//            try {
+//                exec.exec(forceAggregation, scanSorted);
+//            } catch (final Exception e) {
+//                LOGGER.error(e.getMessage(), e);
+//            }
+//        }
     }
 
     private interface Exec {

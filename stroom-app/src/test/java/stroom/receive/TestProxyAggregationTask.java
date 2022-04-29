@@ -125,8 +125,8 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                            final long maxStreamSize) {
         clearConfigValueMapper();
         setConfigValueMapper(AggregatorConfig.class, aggregatorConfig -> aggregatorConfig.copy()
-                .withMaxItemsPerAggregate(maxAggregation)
-                .withMaxUncompressedByteSize(maxStreamSize)
+                .maxItemsPerAggregate(maxAggregation)
+                .maxUncompressedByteSize(maxStreamSize)
                 .build());
         proxyAggregationExecutor.exec(true, true);
     }

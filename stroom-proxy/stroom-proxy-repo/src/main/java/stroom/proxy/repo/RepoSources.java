@@ -3,11 +3,11 @@ package stroom.proxy.repo;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.dao.SourceDao;
+import stroom.proxy.repo.queue.Batch;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.shared.Clearable;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,34 +25,41 @@ public class RepoSources implements Clearable {
         this.progressLog = progressLog;
     }
 
-    public boolean sourceExists(final String path) {
-        return sourceDao.pathExists(path);
+    public long getMaxFileStoreId() {
+        return sourceDao.getMaxFileStoreId();
     }
 
-    public void addSource(final String path,
+//    public boolean sourceExists(final String path) {
+//        return sourceDao.pathExists(path);
+//    }
+
+    public void addSource(final long fileStoreId,
                           final String feedName,
                           final String typeName,
-                          final long lastModifiedTimeMs,
                           final AttributeMap attributeMap) {
         if (feedName.isEmpty()) {
             throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
         }
 
         progressLog.increment("ProxyRepoSources - addSource");
-        sourceDao.addSource(path, feedName, typeName, lastModifiedTimeMs);
+        sourceDao.addSource(fileStoreId, feedName, typeName);
     }
 
-    public void deleteSource(final RepoSource source) {
-        sourceDao.deleteSource(source.getId());
+    public int deleteSources(final List<RepoSource> sources) {
+        return sourceDao.deleteSources(sources);
     }
 
-    public Optional<RepoSource> getNewSource() {
-        return sourceDao.getNewSource();
+    public void insert() {
+        sourceDao.flush();
     }
 
-    public Optional<RepoSource> getNewSource(final long timeout,
-                                             final TimeUnit timeUnit) {
-        return sourceDao.getNewSource(timeout, timeUnit);
+    public Batch<RepoSource> getNewSources() {
+        return sourceDao.getNewSources();
+    }
+
+    public Batch<RepoSource> getNewSources(final long timeout,
+                                           final TimeUnit timeUnit) {
+        return sourceDao.getNewSources(timeout, timeUnit);
     }
 
     public List<RepoSource> getDeletableSources(final int limit) {

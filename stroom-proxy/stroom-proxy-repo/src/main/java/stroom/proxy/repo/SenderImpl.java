@@ -3,6 +3,8 @@ package stroom.proxy.repo;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
+import stroom.proxy.repo.store.FileSet;
+import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.receive.common.StreamHandler;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.logging.LambdaLogger;
@@ -28,13 +30,13 @@ public class SenderImpl implements Sender {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SenderImpl.class);
 
     private final ProgressLog progressLog;
-    private final Path repoDir;
+    private final SequentialFileStore sequentialFileStore;
 
     @Inject
     SenderImpl(final ProgressLog progressLog,
-               final RepoDirProvider repoDirProvider) {
+               final SequentialFileStore sequentialFileStore) {
         this.progressLog = progressLog;
-        this.repoDir = repoDirProvider.get();
+        this.sequentialFileStore = sequentialFileStore;
     }
 
     @Override
@@ -54,9 +56,8 @@ public class SenderImpl implements Sender {
                         "processFeedFiles() - Quitting early as we have been told to stop");
             }
 
-            final String sourcePath = source.getSourcePath();
-            final Path zipFilePath = repoDir.resolve(sourcePath);
-            try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipFilePath))) {
+            final FileSet fileSet = sequentialFileStore.getStoreFileSet(source.getFileStoreId());
+            try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileSet.getZip()))) {
                 for (final RepoSourceItem item : repoSourceItems) {
                     targetName = StroomFileNameUtil.getIdPath(sequenceId++);
 
@@ -101,10 +102,10 @@ public class SenderImpl implements Sender {
 
     public void sendDataToHandler(final RepoSource source,
                                   final StreamHandler handler) {
-        final Path zipFilePath = repoDir.resolve(source.getSourcePath());
+        final FileSet fileSet = sequentialFileStore.getStoreFileSet(source.getFileStoreId());
         final Consumer<Long> progressHandler = new ProgressHandler("Sending" +
-                zipFilePath);
-        processZipFile(zipFilePath, handler, progressHandler);
+                fileSet.getZip());
+        processZipFile(fileSet.getZip(), handler, progressHandler);
     }
 
     public void processZipFile(final Path zipFilePath,

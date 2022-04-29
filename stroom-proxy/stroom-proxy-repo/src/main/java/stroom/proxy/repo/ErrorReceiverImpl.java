@@ -1,5 +1,7 @@
 package stroom.proxy.repo;
 
+import stroom.proxy.repo.store.FileSet;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,13 +16,12 @@ public class ErrorReceiverImpl implements ErrorReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorReceiverImpl.class);
 
     @Override
-    public void error(final Path zipFile, final String message) {
+    public void error(final FileSet fileSet, final String message) {
         try {
-            if (!Files.isRegularFile(zipFile)) {
+            if (!Files.isRegularFile(fileSet.getZip())) {
                 return;
             }
-            Path errorFile = getErrorFile(zipFile);
-
+            final Path errorFile = fileSet.getError();
             Files.writeString(
                     errorFile,
                     message,
@@ -29,30 +30,21 @@ public class ErrorReceiverImpl implements ErrorReceiver {
                     StandardOpenOption.APPEND);
 
         } catch (final IOException ex) {
-            LOGGER.warn("Failed to write to file " + zipFile + " message " + message);
+            LOGGER.warn("Failed to write to file " + fileSet.getZip() + " message " + message);
         }
     }
 
     @Override
-    public void fatal(final Path zipFile, final String message) {
+    public void fatal(final FileSet fileSet, final String message) {
         // Write to error file first.
-        error(zipFile, message);
+        error(fileSet, message);
 
         // Now move the source zip so we know it was bad.
-        final Path renamedFile = zipFile
-                .getParent()
-                .resolve(ProxyRepoFileNames.getBad(zipFile.getFileName().toString()));
         try {
-            Files.move(zipFile, renamedFile);
+            Files.move(fileSet.getZip(), fileSet.getBadZip());
         } catch (final Exception e) {
-            LOGGER.warn("Failed to rename zip file to " + renamedFile);
+            LOGGER.warn("Failed to rename zip file to " + fileSet.getBadZip());
         }
-    }
-
-    public static Path getErrorFile(final Path zipFile) {
-        String fileName = zipFile.getFileName().toString();
-        fileName = ProxyRepoFileNames.getError(fileName);
-        return zipFile.getParent().resolve(fileName);
     }
 
     public static void deleteFileAndErrors(final Path zipFile) {

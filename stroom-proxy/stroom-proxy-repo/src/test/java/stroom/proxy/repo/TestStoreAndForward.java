@@ -20,8 +20,6 @@ public class TestStoreAndForward {
     @Inject
     private SourceDao sourceDao;
     @Inject
-    private ProxyRepo proxyRepo;
-    @Inject
     private RepoSources proxyRepoSources;
     @Inject
     private RepoSourceItems proxyRepoSourceEntries;
@@ -45,12 +43,12 @@ public class TestStoreAndForward {
     @Test
     void test() {
         // Add source
-        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
+        proxyRepoSources.addSource(1L, "test", null, null);
         assertThat(sourceDao.countSources()).isOne();
         assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
 
         // Now forward the sources.
-        sourceForwarder.createAllForwardRecords();
+        sourceForwarder.createAllForwardSources();
         sourceForwarder.forwardAll();
         assertThat(sourceDao.getDeletableSources(1000).size()).isOne();
 

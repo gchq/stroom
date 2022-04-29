@@ -48,6 +48,8 @@ import java.util.function.BiConsumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+// TODO : DELETE THIS CLASS
+
 /**
  * Class that represents a repository on the file system. By default files are
  * created in this repo using the stroom id structure where 1000 files are stored
@@ -304,7 +306,7 @@ public class ProxyRepo {
 
                         // If we have added a new source to the repo then add a DB record for it.
                         final long lastModifiedTime = System.currentTimeMillis();
-                        proxyRepoSources.addSource(zipFileName, feedName, typeName, lastModifiedTime, attributeMap);
+//                        proxyRepoSources.addSource(zipFileName, feedName, typeName, lastModifiedTime, attributeMap);
 
                     } catch (final IOException e) {
                         LOGGER.error(e.getMessage(), e);

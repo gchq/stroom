@@ -5,29 +5,26 @@ import java.util.Objects;
 public class RepoSource {
 
     private final long id;
-    private final String sourcePath;
+    private final long fileStoreId;
     private final String feedName;
     private final String typeName;
-    private final long lastModifiedTimeMs;
 
     public RepoSource(final long id,
-                      final String sourcePath,
+                      final long fileStoreId,
                       final String feedName,
-                      final String typeName,
-                      final long lastModifiedTimeMs) {
+                      final String typeName) {
         this.id = id;
-        this.sourcePath = sourcePath;
+        this.fileStoreId = fileStoreId;
         this.feedName = feedName;
         this.typeName = typeName;
-        this.lastModifiedTimeMs = lastModifiedTimeMs;
     }
 
     public long getId() {
         return id;
     }
 
-    public String getSourcePath() {
-        return sourcePath;
+    public long getFileStoreId() {
+        return fileStoreId;
     }
 
     public String getFeedName() {
@@ -36,10 +33,6 @@ public class RepoSource {
 
     public String getTypeName() {
         return typeName;
-    }
-
-    public long getLastModifiedTimeMs() {
-        return lastModifiedTimeMs;
     }
 
     @Override
@@ -63,10 +56,9 @@ public class RepoSource {
     public String toString() {
         return "RepoSource{" +
                 "id=" + id +
-                ", sourcePath='" + sourcePath + '\'' +
+                ", fileStoreId='" + fileStoreId + '\'' +
                 ", feedName='" + feedName + '\'' +
                 ", typeName='" + typeName + '\'' +
-                ", lastModifiedTimeMs=" + lastModifiedTimeMs +
                 '}';
     }
 
@@ -81,20 +73,18 @@ public class RepoSource {
     public static class Builder {
 
         private long id;
-        private String sourcePath;
+        private long fileStoreId;
         private String feedName;
         private String typeName;
-        private long lastModifiedTimeMs;
 
         private Builder() {
         }
 
         private Builder(final RepoSource repoSource) {
             this.id = repoSource.id;
-            this.sourcePath = repoSource.sourcePath;
+            this.fileStoreId = repoSource.fileStoreId;
             this.feedName = repoSource.feedName;
             this.typeName = repoSource.typeName;
-            this.lastModifiedTimeMs = repoSource.lastModifiedTimeMs;
         }
 
         public Builder id(final long id) {
@@ -102,8 +92,8 @@ public class RepoSource {
             return this;
         }
 
-        public Builder sourcePath(final String sourcePath) {
-            this.sourcePath = sourcePath;
+        public Builder fileStoreId(final long fileStoreId) {
+            this.fileStoreId = fileStoreId;
             return this;
         }
 
@@ -117,13 +107,8 @@ public class RepoSource {
             return this;
         }
 
-        public Builder lastModifiedTimeMs(final long lastModifiedTimeMs) {
-            this.lastModifiedTimeMs = lastModifiedTimeMs;
-            return this;
-        }
-
         public RepoSource build() {
-            return new RepoSource(id, sourcePath, feedName, typeName, lastModifiedTimeMs);
+            return new RepoSource(id, fileStoreId, feedName, typeName);
         }
     }
 }

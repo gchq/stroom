@@ -4,6 +4,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.zip.StroomZipFileType;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceItemDao;
+import stroom.proxy.repo.queue.Batch;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -12,11 +13,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -56,12 +55,12 @@ public class TestSourceEntries {
 
     @Test
     void testUnique() {
-        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
+        proxyRepoSources.addSource(1L, "test", null, null);
 
         // Check that we have a new source.
-        final Optional<RepoSource> optionalSource = sourceDao.getNewSource();
-        assertThat(optionalSource.isPresent()).isTrue();
-        final RepoSource source = optionalSource.get();
+        final Batch<RepoSource> batch = sourceDao.getNewSources();
+        assertThat(batch.isEmpty()).isFalse();
+        final RepoSource source = batch.list().get(0);
 
         addEntriesToSource(source, 1, 1);
 
@@ -75,12 +74,12 @@ public class TestSourceEntries {
 
 
     long addEntries() {
-        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
+        proxyRepoSources.addSource(1L, "test", null, null);
 
         // Check that we have a new source.
-        final Optional<RepoSource> optionalSource = sourceDao.getNewSource();
-        assertThat(optionalSource.isPresent()).isTrue();
-        final RepoSource source = optionalSource.get();
+        final Batch<RepoSource> batch = sourceDao.getNewSources();
+        assertThat(batch.isEmpty()).isFalse();
+        final RepoSource source = batch.list().get(0);
         final long sourceId = source.getId();
 
         addEntriesToSource(source, 100, 10);
@@ -90,8 +89,8 @@ public class TestSourceEntries {
         assertThat(sourceItemDao.countEntries()).isEqualTo(3000);
 
         // Check that we have no new sources.
-        final Optional<RepoSource> optionalSource2 = sourceDao.getNewSource(0, TimeUnit.MILLISECONDS);
-        assertThat(optionalSource2.isPresent()).isFalse();
+        final Batch<RepoSource> sources2 = sourceDao.getNewSources(0, TimeUnit.MILLISECONDS);
+        assertThat(sources2.list().isEmpty()).isTrue();
 
         return sourceId;
     }
@@ -131,8 +130,7 @@ public class TestSourceEntries {
         }
 
         sourceItemDao.addItems(
-                Paths.get(source.getSourcePath()),
-                source.getId(),
+                source,
                 itemNameMap
                         .values()
                         .stream()

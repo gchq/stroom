@@ -15,7 +15,7 @@ server:
     - type: file
       currentLogFilename: logs/access/access.log
       threshold: ALL
-      queueSize: 256
+      queueSize: 2048
       discardingThreshold: 0
       archive: true
       archivedLogFilenamePattern: logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log
@@ -92,7 +92,7 @@ proxyConfig:
     #    repoDir: "repo"
     #    dbDir: "repo"
     format: "${pathId}/${id}"
-    cleanupFrequency: 1h
+    cleanupFrequency: 10s
     lockDeleteAge: 1h
     dirCleanDelay: 10s
 
@@ -107,20 +107,13 @@ proxyConfig:
   aggregator:
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1G"
-    maxAggregateAge: 10m
-    aggregationFrequency: 1m
+    maxAggregateAge: 10s
+    aggregationFrequency: 10s
 
   forwarder:
     forwardingEnabled: true
     forwardDestinations:
-      - forwardUrl: "https://localhost/stroom/datafeeddirect"
-        sslConfig:
-          keyStorePath: "${STROOM_RESOURCES_REPO_DIR:-~/git_work/stroom-resources}/dev-resources/certs/client/client.jks"
-          keyStorePassword: "password"
-          trustStorePath: "${STROOM_RESOURCES_REPO_DIR:-~/git_work/stroom-resources}/dev-resources/certs/certificate-authority/ca.jks"
-          trustStorePassword: "password"
-          hostnameVerificationEnabled: true
-      - forwardUrl: "http://localhost/stroom/datafeed"
+      - forwardUrl: "http://localhost:8080/stroom/noauth/datafeed"
 
   logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
@@ -136,7 +129,7 @@ proxyConfig:
   useDefaultOpenIdCredentials: true
 
   feedStatus:
-    url: "https://localhost/api/feedStatus/v1"
+    url: "http://localhost:8080/api/feedStatus/v1"
 
   restClient:
     timeout: 500ms
@@ -151,10 +144,10 @@ proxyConfig:
     tls:
       protocol: TLSv1.2
       verifyHostname: true
-      keyStorePath: "${STROOM_RESOURCES_REPO_DIR:-~/git_work/stroom-resources}/dev-resources/certs/client/client.jks"
+      keyStorePath: "${STROOM_RESOURCES_REPO_DIR:-~/work/stroom-resources}/dev-resources/certs/client/client.jks"
       keyStorePassword: password
       keyStoreType: JKS
-      trustStorePath: "${STROOM_RESOURCES_REPO_DIR:-~/git_work/stroom-resources}/dev-resources/certs/server/ca.jks"
+      trustStorePath: "${STROOM_RESOURCES_REPO_DIR:-~/work/stroom-resources}/dev-resources/certs/server/ca.jks"
       trustStorePassword: password
       trustStoreType: JKS
       trustSelfSignedCertificates: false
