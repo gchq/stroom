@@ -229,7 +229,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         final String forwardedFor = request.getHeader(X_FORWARDED_FOR);
         if (forwardedFor != null && !forwardedFor.isBlank()) {
             final String ip;
-            // X_FORWARD_FOR may contain multiple IPs if it has bee through multiple proxies
+            // X_FORWARD_FOR may contain multiple IPs if it has been through multiple proxies
             // for example '1.2.3.4, 9.8.7.6'.  We will take the left most (i.e. most distant) one.
             if (forwardedFor.contains(",")) {
                 ip = forwardedFor.substring(0, forwardedFor.indexOf(","));
