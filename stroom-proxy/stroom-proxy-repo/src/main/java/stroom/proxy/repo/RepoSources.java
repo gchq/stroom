@@ -70,4 +70,8 @@ public class RepoSources implements Clearable {
     public void clear() {
         sourceDao.clear();
     }
+
+    public void flush() {
+        sourceDao.flush();
+    }
 }

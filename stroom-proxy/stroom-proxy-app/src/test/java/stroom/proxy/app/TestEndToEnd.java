@@ -1,10 +1,10 @@
 package stroom.proxy.app;
 
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.shared.ResourcePaths;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import org.apache.hadoop.util.ThreadUtil;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -30,7 +30,7 @@ public class TestEndToEnd extends AbstractEndToEndTest {
                 Collections.emptyMap(),
                 "Hello");
 
-        ThreadUtil.sleepAtLeastIgnoreInterrupts(30_000);
+        ThreadUtil.sleep(30_000);
 
         final int expectedRequestCount = 1;
 

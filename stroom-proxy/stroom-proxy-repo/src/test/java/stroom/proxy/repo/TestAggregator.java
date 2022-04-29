@@ -120,7 +120,7 @@ public class TestAggregator {
         final List<RepoSourceItemRef> list = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             // Add an item but make sure no aggregation takes place.
-            list.add(new RepoSourceItemRef(1, "TEST_FEED", null, 10));
+            list.add(new RepoSourceItemRef(1, 1, 10));
         }
 
         aggregator.addItems(new Batch<>(list, true));

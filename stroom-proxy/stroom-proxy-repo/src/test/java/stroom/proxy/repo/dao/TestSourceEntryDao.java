@@ -1,6 +1,7 @@
 package stroom.proxy.repo.dao;
 
 import stroom.data.zip.StroomZipFileType;
+import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceEntry;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +29,8 @@ public class TestSourceEntryDao {
 
     @Inject
     private SqliteJooqHelper jooq;
+    @Inject
+    private FeedDao feedDao;
     @Inject
     private SourceDao sourceDao;
     @Inject
@@ -52,26 +56,25 @@ public class TestSourceEntryDao {
         assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
 
         final RepoSource source = sources.list().get(0);
-        assertThat(source.getFileStoreId()).isEqualTo(1L);
+        assertThat(source.fileStoreId()).isEqualTo(1L);
 
+        final long feedId = feedDao.getId(new FeedKey("testFeed", "Raw Events"));
         final Map<String, RepoSourceItem> itemNameMap = new HashMap<>();
         for (int i = 0; i < 100; i++) {
-            final RepoSourceItem sourceItemRecord = RepoSourceItem
-                    .builder()
-                    .source(source)
-                    .name("item" + i)
-                    .feedName("testFeed")
-                    .typeName("Raw Events")
-                    .build();
+            final RepoSourceItem sourceItemRecord = new RepoSourceItem(
+                    source,
+                    "item" + i,
+                    feedId,
+                    null,
+                    0,
+                    new ArrayList<>());
             itemNameMap.put(sourceItemRecord.getName(), sourceItemRecord);
 
             for (int j = 0; j < 10; j++) {
-                final RepoSourceEntry entry = RepoSourceEntry
-                        .builder()
-                        .type(StroomZipFileType.DATA)
-                        .extension("dat")
-                        .byteSize(100L)
-                        .build();
+                final RepoSourceEntry entry = new RepoSourceEntry(
+                        StroomZipFileType.DATA,
+                        "dat",
+                        100L);
                 sourceItemRecord.addEntry(entry);
             }
         }
@@ -80,7 +83,7 @@ public class TestSourceEntryDao {
         sourceItemDao.flush();
 
         assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
-        jooq.transaction(context -> sourceItemDao.deleteBySourceId(context, source.getId()));
+        jooq.transaction(context -> sourceItemDao.deleteBySourceId(context, source.id()));
         assertThat(sourceDao.getDeletableSources(1000).size()).isOne();
 
         sourceDao.deleteSources(Collections.singletonList(source));

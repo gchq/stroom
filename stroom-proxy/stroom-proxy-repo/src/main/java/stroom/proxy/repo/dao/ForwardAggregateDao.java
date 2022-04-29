@@ -120,8 +120,7 @@ public class ForwardAggregateDao implements Flushable {
                                 FORWARD_AGGREGATE.UPDATE_TIME_MS,
                                 FORWARD_AGGREGATE.FK_FORWARD_URL_ID,
                                 FORWARD_URL.URL,
-                                AGGREGATE.FEED_NAME,
-                                AGGREGATE.TYPE_NAME,
+                                AGGREGATE.FK_FEED_ID,
                                 FORWARD_AGGREGATE.FK_AGGREGATE_ID,
                                 FORWARD_AGGREGATE.SUCCESS,
                                 FORWARD_AGGREGATE.ERROR,
@@ -141,8 +140,7 @@ public class ForwardAggregateDao implements Flushable {
                             r.get(FORWARD_URL.URL));
                     final Aggregate aggregate = new Aggregate(
                             r.get(FORWARD_AGGREGATE.FK_AGGREGATE_ID),
-                            r.get(AGGREGATE.FEED_NAME),
-                            r.get(AGGREGATE.TYPE_NAME));
+                            r.get(AGGREGATE.FK_FEED_ID));
                     final ForwardAggregate forwardAggregate = new ForwardAggregate(
                             r.get(FORWARD_AGGREGATE.ID),
                             r.get(FORWARD_AGGREGATE.UPDATE_TIME_MS),
@@ -225,8 +223,7 @@ public class ForwardAggregateDao implements Flushable {
                 final List<Aggregate> aggregates = new ArrayList<>();
                 jooq.readOnlyTransactionResult(context -> context
                                 .select(AGGREGATE.ID,
-                                        AGGREGATE.FEED_NAME,
-                                        AGGREGATE.TYPE_NAME)
+                                        AGGREGATE.FK_FEED_ID)
                                 .from(AGGREGATE)
                                 .where(NEW_AGGREGATE_CONDITION)
                                 .and(AGGREGATE.ID.gt(minId.get()))
@@ -237,8 +234,7 @@ public class ForwardAggregateDao implements Flushable {
                             minId.set(r.get(AGGREGATE.ID));
                             final Aggregate aggregate = new Aggregate(
                                     r.get(AGGREGATE.ID),
-                                    r.get(AGGREGATE.FEED_NAME),
-                                    r.get(AGGREGATE.TYPE_NAME));
+                                    r.get(AGGREGATE.FK_FEED_ID));
                             aggregates.add(aggregate);
                         });
 
@@ -267,7 +263,7 @@ public class ForwardAggregateDao implements Flushable {
             while (full) {
                 final List<Aggregate> aggregates = new ArrayList<>();
                 jooq.readOnlyTransactionResult(context -> context
-                                .select(AGGREGATE.ID)
+                                .select(AGGREGATE.ID, AGGREGATE.FK_FEED_ID)
                                 .from(AGGREGATE)
                                 .where(DELETE_AGGREGATE_CONDITION)
                                 .and(AGGREGATE.ID.gt(minId.get()))
@@ -278,8 +274,7 @@ public class ForwardAggregateDao implements Flushable {
                             minId.set(r.get(AGGREGATE.ID));
                             final Aggregate aggregate = new Aggregate(
                                     r.get(AGGREGATE.ID),
-                                    r.get(AGGREGATE.FEED_NAME),
-                                    r.get(AGGREGATE.TYPE_NAME));
+                                    r.get(AGGREGATE.FK_FEED_ID));
                             aggregates.add(aggregate);
                         });
 
@@ -302,7 +297,7 @@ public class ForwardAggregateDao implements Flushable {
                     row[0] = forwardAggregateId.incrementAndGet();
                     row[1] = System.currentTimeMillis();
                     row[2] = forwardUrl.getId();
-                    row[3] = aggregate.getId();
+                    row[3] = aggregate.id();
                     row[4] = false;
                     row[5] = forwardAggregateNewPosition.incrementAndGet();
                     forwardAggregateWriteQueue.add(row);
@@ -312,7 +307,7 @@ public class ForwardAggregateDao implements Flushable {
                 aggregateUpdateQueue.add(context -> context
                         .update(AGGREGATE)
                         .setNull(AGGREGATE.NEW_POSITION)
-                        .where(AGGREGATE.ID.eq(aggregate.getId()))
+                        .where(AGGREGATE.ID.eq(aggregate.id()))
                         .execute());
             }
         });
@@ -389,7 +384,7 @@ public class ForwardAggregateDao implements Flushable {
 
     public void update(final ForwardAggregate forwardAggregate) {
         if (forwardAggregate.isSuccess()) {
-            final long aggregateId = forwardAggregate.getAggregate().getId();
+            final long aggregateId = forwardAggregate.getAggregate().id();
 
             // Mark success and see if we can delete this record and cascade.
             jooq.transaction(context -> {
@@ -397,7 +392,7 @@ public class ForwardAggregateDao implements Flushable {
                 updateForwardAggregate(context, forwardAggregate, null);
 
                 final Condition condition = FORWARD_AGGREGATE.FK_AGGREGATE_ID
-                        .eq(forwardAggregate.getAggregate().getId())
+                        .eq(forwardAggregate.getAggregate().id())
                         .and(FORWARD_AGGREGATE.SUCCESS.ne(true));
                 final int remainingForwards = context.fetchCount(FORWARD_AGGREGATE, condition);
                 if (remainingForwards == 0) {
@@ -433,7 +428,7 @@ public class ForwardAggregateDao implements Flushable {
     private void deleteAggregates(final Batch<Aggregate> aggregates) {
         jooq.transaction(context -> {
             for (final Aggregate aggregate : aggregates.list()) {
-                deleteAggregate(context, aggregate.getId());
+                deleteAggregate(context, aggregate.id());
             }
         });
     }

@@ -36,7 +36,7 @@ public class BindWriteQueue implements WriteQueue {
         }
     }
 
-    public void add(Object[] row) {
+    public void add(final Object[] row) {
         queue.add(row);
     }
 

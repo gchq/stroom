@@ -18,16 +18,17 @@ package stroom.proxy.repo;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.repo.dao.FeedDao;
 import stroom.proxy.repo.dao.ForwardSourceDao;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BatchUtil;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.concurrent.ThreadUtil;
-import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -40,6 +41,7 @@ public class SourceForwarder {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceForwarder.class);
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";
 
+    private final FeedDao feedDao;
     private final RepoSources sources;
     private final ForwardSourceDao forwardSourceDao;
     private final ForwardUrls forwardUrls;
@@ -51,13 +53,15 @@ public class SourceForwarder {
     private volatile String hostName = null;
 
     @Inject
-    SourceForwarder(final RepoSources sources,
+    SourceForwarder(final FeedDao feedDao,
+                    final RepoSources sources,
                     final ForwardSourceDao forwardSourceDao,
                     final ForwardUrls forwardUrls,
                     final ForwarderDestinations forwarderDestinations,
                     final Sender sender,
                     final ProgressLog progressLog) {
 
+        this.feedDao = feedDao;
         this.sources = sources;
         this.forwardSourceDao = forwardSourceDao;
         this.forwardUrls = forwardUrls;
@@ -119,7 +123,9 @@ public class SourceForwarder {
     }
 
     public void forwardAll() {
-
+        BatchUtil.transferEach(
+                () -> forwardSourceDao.getNewForwardSources(0, TimeUnit.SECONDS),
+                this::forward);
     }
 
     public Batch<ForwardSource> getRetryForwardSources() {
@@ -145,16 +151,17 @@ public class SourceForwarder {
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();
 
+        final FeedKey feedKey = feedDao.getKey(source.feedId());
         final long thisPostId = proxyForwardId.incrementAndGet();
-        final String info = thisPostId + " " + source.getFeedName() + " - " + source.getTypeName();
+        final String info = thisPostId + " " + feedKey.feed() + " - " + feedKey.type();
         LOGGER.debug(() -> "processFeedFiles() - proxyForwardId " + info);
 
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
         attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, getHostName());
-        attributeMap.put(StandardHeaderArguments.FEED, source.getFeedName());
-        if (source.getTypeName() != null) {
-            attributeMap.put(StandardHeaderArguments.TYPE, source.getTypeName());
+        attributeMap.put(StandardHeaderArguments.FEED, feedKey.feed());
+        if (feedKey.type() != null) {
+            attributeMap.put(StandardHeaderArguments.TYPE, feedKey.type());
         }
         if (LOGGER.isDebugEnabled()) {
             attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
@@ -165,7 +172,7 @@ public class SourceForwarder {
 
         // Start the POST
         try {
-            streamHandlers.handle(source.getFeedName(), source.getTypeName(), attributeMap, handler -> {
+            streamHandlers.handle(feedKey.feed(), feedKey.type(), attributeMap, handler -> {
                 sender.sendDataToHandler(source, handler);
                 success.set(true);
                 progressLog.increment("SourceForwarder - forward");
@@ -173,7 +180,7 @@ public class SourceForwarder {
 
         } catch (final RuntimeException ex) {
             error.set(ex.getMessage());
-            LOGGER.warn(() -> "processFeedFiles() - Failed to send to feed " + source.getFeedName() + " ( " + ex + ")");
+            LOGGER.warn(() -> "processFeedFiles() - Failed to send to feed " + feedKey.feed() + " ( " + ex + ")");
             LOGGER.debug(() -> "processFeedFiles() - Debug trace " + info, ex);
         }
 
@@ -197,5 +204,9 @@ public class SourceForwarder {
 
     public void clear() {
         forwardSourceDao.clear();
+    }
+
+    public void flush() {
+        forwardSourceDao.flush();
     }
 }

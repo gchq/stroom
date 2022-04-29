@@ -1,6 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.db.util.JooqUtil;
+import stroom.proxy.repo.dao.FeedDao;
 import stroom.proxy.repo.dao.SqliteJooqHelper;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -22,6 +23,8 @@ import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 @IncludeModule(ProxyRepoTestModule.class)
 public class TestCleanup {
 
+    @Inject
+    private FeedDao feedDao;
     @Inject
     private RepoSources proxyRepoSources;
     @Inject
@@ -57,7 +60,7 @@ public class TestCleanup {
             long forwardAggregateId = 0;
 
             for (int i = 1; i <= 2; i++) {
-                String feedName = "TEST_FEED_" + i;
+                final long feedId = feedDao.getId(new FeedKey("TEST_FEED_" + i, null));
                 for (int j = 0; j < 6; j++) {
                     // Add sources.
                     context
@@ -82,16 +85,14 @@ public class TestCleanup {
                                         AGGREGATE,
                                         AGGREGATE.ID,
                                         AGGREGATE.CREATE_TIME_MS,
-                                        AGGREGATE.FEED_NAME,
-                                        AGGREGATE.TYPE_NAME,
+                                        AGGREGATE.FK_FEED_ID,
                                         AGGREGATE.BYTE_SIZE,
                                         AGGREGATE.ITEMS,
                                         AGGREGATE.COMPLETE)
                                 .values(
                                         aggregateId,
                                         System.currentTimeMillis(),
-                                        feedName,
-                                        null,
+                                        feedId,
                                         170L,
                                         2,
                                         true)
@@ -125,15 +126,13 @@ public class TestCleanup {
                                             SOURCE_ITEM,
                                             SOURCE_ITEM.ID,
                                             SOURCE_ITEM.NAME,
-                                            SOURCE_ITEM.FEED_NAME,
-                                            SOURCE_ITEM.TYPE_NAME,
+                                            SOURCE_ITEM.FK_FEED_ID,
                                             SOURCE_ITEM.FK_SOURCE_ID,
                                             SOURCE_ITEM.FK_AGGREGATE_ID)
                                     .values(
                                             ++sourceItemId,
                                             i + "_" + j + "_" + k + "_" + l,
-                                            feedName,
-                                            null,
+                                            feedId,
                                             sourceId,
                                             aggregateId)
                                     .execute();
@@ -223,7 +222,7 @@ public class TestCleanup {
     }
 
     private void forward(long aggregateId) {
-        final Aggregate aggregate = new Aggregate(aggregateId, null, null);
+        final Aggregate aggregate = new Aggregate(aggregateId, 0L);
         final ForwardUrl forwardUrl = new ForwardUrl(1, "test");
         final ForwardAggregate forwardAggregate = ForwardAggregate
                 .builder()

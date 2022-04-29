@@ -26,7 +26,6 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
-    public static final Index AGGREGATE_FEED_TYPE_INDEX = Internal.createIndex(DSL.name("aggregate_feed_type_index"), Aggregate.AGGREGATE, new OrderField[] { Aggregate.AGGREGATE.FEED_NAME, Aggregate.AGGREGATE.TYPE_NAME }, false);
     public static final Index NEW_POSITION_AGGREGATE_INDEX = Internal.createIndex(DSL.name("new_position_aggregate_index"), Aggregate.AGGREGATE, new OrderField[] { Aggregate.AGGREGATE.NEW_POSITION }, true);
     public static final Index NEW_POSITION_FORWARD_AGGREGATE_INDEX = Internal.createIndex(DSL.name("new_position_forward_aggregate_index"), ForwardAggregate.FORWARD_AGGREGATE, new OrderField[] { ForwardAggregate.FORWARD_AGGREGATE.NEW_POSITION }, true);
     public static final Index NEW_POSITION_FORWARD_SOURCE_INDEX = Internal.createIndex(DSL.name("new_position_forward_source_index"), ForwardSource.FORWARD_SOURCE, new OrderField[] { ForwardSource.FORWARD_SOURCE.NEW_POSITION }, true);

@@ -12,6 +12,7 @@ import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
 import stroom.proxy.repo.db.jooq.tables.Aggregate;
+import stroom.proxy.repo.db.jooq.tables.Feed;
 import stroom.proxy.repo.db.jooq.tables.ForwardAggregate;
 import stroom.proxy.repo.db.jooq.tables.ForwardSource;
 import stroom.proxy.repo.db.jooq.tables.ForwardUrl;
@@ -37,6 +38,11 @@ public class DefaultSchema extends SchemaImpl {
      * The table <code>aggregate</code>.
      */
     public final Aggregate AGGREGATE = Aggregate.AGGREGATE;
+
+    /**
+     * The table <code>feed</code>.
+     */
+    public final Feed FEED = Feed.FEED;
 
     /**
      * The table <code>forward_aggregate</code>.
@@ -85,6 +91,7 @@ public class DefaultSchema extends SchemaImpl {
     public final List<Table<?>> getTables() {
         return Arrays.asList(
             Aggregate.AGGREGATE,
+            Feed.FEED,
             ForwardAggregate.FORWARD_AGGREGATE,
             ForwardSource.FORWARD_SOURCE,
             ForwardUrl.FORWARD_URL,

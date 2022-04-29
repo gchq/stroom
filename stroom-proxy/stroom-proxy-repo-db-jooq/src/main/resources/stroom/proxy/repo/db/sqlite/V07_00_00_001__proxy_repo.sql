@@ -14,14 +14,20 @@
 -- limitations under the License.
 -- ------------------------------------------------------------------------
 
+CREATE TABLE IF NOT EXISTS feed (
+  id                        BIGINT PRIMARY KEY,
+  feed_name                 VARCHAR(255) DEFAULT NULL,
+  type_name                 VARCHAR(255) DEFAULT NULL
+);
+
 CREATE TABLE IF NOT EXISTS source (
   id                        BIGINT PRIMARY KEY,
   file_store_id             BIGINT NOT NULL,
-  feed_name                 VARCHAR(255) DEFAULT NULL,
-  type_name                 VARCHAR(255) DEFAULT NULL,
+  fk_feed_id                BIGINT NOT NULL,
   examined                  BOOLEAN DEFAULT FALSE,
   forwarded                 BOOLEAN DEFAULT FALSE,
-  new_position              BIGINT NULL
+  new_position              BIGINT NULL,
+  FOREIGN KEY               (fk_feed_id) REFERENCES feed (id)
 );
 CREATE UNIQUE INDEX source_file_store_id ON source(file_store_id);
 CREATE UNIQUE INDEX new_position_source_index ON source(new_position);
@@ -29,13 +35,13 @@ CREATE UNIQUE INDEX new_position_source_index ON source(new_position);
 CREATE TABLE IF NOT EXISTS source_item (
   id                        BIGINT PRIMARY KEY,
   name                      VARCHAR(255) NOT NULL,
-  feed_name                 VARCHAR(255) DEFAULT NULL,
-  type_name                 VARCHAR(255) DEFAULT NULL,
+  fk_feed_id                BIGINT NOT NULL,
   byte_size                 BIGINT DEFAULT 0,
   fk_source_id              BIGINT NOT NULL,
   fk_aggregate_id           BIGINT NULL,
   new_position              BIGINT NULL,
   UNIQUE                    (name, fk_source_id),
+  FOREIGN KEY               (fk_feed_id) REFERENCES feed (id),
   FOREIGN KEY               (fk_source_id) REFERENCES source (id),
   FOREIGN KEY               (fk_aggregate_id) REFERENCES aggregate (id)
 );
@@ -53,14 +59,13 @@ CREATE TABLE IF NOT EXISTS source_entry (
 CREATE TABLE IF NOT EXISTS aggregate (
   id                        BIGINT PRIMARY KEY,
   create_time_ms            BIGINT NOT NULL,
-  feed_name                 VARCHAR(255) DEFAULT NULL,
-  type_name                 VARCHAR(255) DEFAULT NULL,
+  fk_feed_id                BIGINT NOT NULL,
   byte_size                 BIGINT NOT NULL,
   items                     INTEGER NOT NULL,
   complete                  BOOLEAN DEFAULT FALSE,
-  new_position              BIGINT NULL
+  new_position              BIGINT NULL,
+  FOREIGN KEY               (fk_feed_id) REFERENCES feed (id)
 );
-CREATE INDEX aggregate_feed_type_index ON aggregate(feed_name, type_name);
 CREATE UNIQUE INDEX new_position_aggregate_index ON aggregate(new_position);
 
 CREATE TABLE IF NOT EXISTS forward_url (

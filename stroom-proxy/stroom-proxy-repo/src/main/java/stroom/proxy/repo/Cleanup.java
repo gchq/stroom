@@ -72,7 +72,7 @@ public class Cleanup {
             final List<RepoSource> list = sources.getDeletableSources(batchSize);
             for (final RepoSource source : list) {
                 try {
-                    sequentialFileStore.deleteSource(source.getFileStoreId());
+                    sequentialFileStore.deleteSource(source.fileStoreId());
                 } catch (final IOException e) {
                     LOGGER.error(e.getMessage(), e);
                 }

@@ -3,7 +3,6 @@ package stroom.proxy.repo.dao;
 import stroom.data.zip.StroomZipFileType;
 import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.Aggregate;
-import stroom.proxy.repo.AggregateKey;
 import stroom.proxy.repo.RepoDbConfig;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceEntry;
@@ -69,8 +68,7 @@ public class AggregateDao {
         final AtomicLong pos = new AtomicLong(currentReadPos);
         jooq.readOnlyTransactionResult(context -> context
                         .select(AGGREGATE.ID,
-                                AGGREGATE.FEED_NAME,
-                                AGGREGATE.TYPE_NAME,
+                                AGGREGATE.FK_FEED_ID,
                                 AGGREGATE.NEW_POSITION)
                         .from(AGGREGATE)
                         .where(AGGREGATE.NEW_POSITION.isNotNull())
@@ -82,8 +80,7 @@ public class AggregateDao {
                     pos.set(r.get(AGGREGATE.NEW_POSITION));
                     final Aggregate aggregate = new Aggregate(
                             r.get(AGGREGATE.ID),
-                            r.get(AGGREGATE.FEED_NAME),
-                            r.get(AGGREGATE.TYPE_NAME));
+                            r.get(AGGREGATE.FK_FEED_ID));
                     readQueue.add(aggregate);
                 });
         return pos.get();
@@ -159,16 +156,16 @@ public class AggregateDao {
                                 )
                         );
         final List<Aggregate> list = jooq.readOnlyTransactionResult(context -> context
-                        .select(AGGREGATE.ID, AGGREGATE.FEED_NAME, AGGREGATE.TYPE_NAME)
+                        .select(AGGREGATE.ID,
+                                AGGREGATE.FK_FEED_ID)
                         .from(AGGREGATE)
                         .where(condition)
                         .orderBy(AGGREGATE.CREATE_TIME_MS)
                         .limit(limit)
                         .fetch())
                 .map(r -> new Aggregate(
-                        r.value1(),
-                        r.value2(),
-                        r.value3()));
+                        r.get(AGGREGATE.ID),
+                        r.get(AGGREGATE.FK_FEED_ID)));
 
         recordQueue.add(() -> {
             for (final Aggregate aggregate : list) {
@@ -176,7 +173,7 @@ public class AggregateDao {
                         .update(AGGREGATE)
                         .set(AGGREGATE.COMPLETE, true)
                         .set(AGGREGATE.NEW_POSITION, aggregateNewPosition.incrementAndGet())
-                        .where(AGGREGATE.ID.eq(aggregate.getId()))
+                        .where(AGGREGATE.ID.eq(aggregate.id()))
                         .execute());
             }
         });
@@ -200,12 +197,10 @@ public class AggregateDao {
                                       final int maxItemsPerAggregate,
                                       final long maxUncompressedByteSize) {
         if (!newSourceItems.isEmpty()) {
-            final Map<AggregateKey, List<RepoSourceItemRef>> itemMap = newSourceItems
+            final Map<Long, List<RepoSourceItemRef>> itemMap = newSourceItems
                     .list()
                     .stream()
-                    .collect(Collectors
-                            .groupingBy(item -> new AggregateKey(item.getFeedName(), item.getTypeName())));
-
+                    .collect(Collectors.groupingBy(RepoSourceItemRef::feedId));
 
             final OperationWriteQueue operationWriteQueue = new OperationWriteQueue();
 
@@ -216,11 +211,10 @@ public class AggregateDao {
 
                     // Get an aggregate to fit the item.
                     if (currentRecord != null) {
-                        if (!Objects.equals(currentRecord.getFeedName(), item.getFeedName()) ||
-                                !Objects.equals(currentRecord.getTypeName(), item.getTypeName()) ||
+                        if (!Objects.equals(currentRecord.getFkFeedId(), item.feedId()) ||
                                 currentRecord.getItems() >= maxItemsPerAggregate ||
                                 (currentRecord.getItems() > 0 &&
-                                        currentRecord.getByteSize() + item.getTotalByteSize() >
+                                        currentRecord.getByteSize() + item.totalByteSize() >
                                                 maxUncompressedByteSize)) {
                             // Commit and nullify current record.
                             final AggregateRecord record = currentRecord;
@@ -252,8 +246,7 @@ public class AggregateDao {
                             final AggregateRecord record = new AggregateRecord(
                                     id,
                                     System.currentTimeMillis(),
-                                    item.getFeedName(),
-                                    item.getTypeName(),
+                                    item.feedId(),
                                     0L,
                                     0,
                                     false,
@@ -265,14 +258,14 @@ public class AggregateDao {
                     }
 
                     currentRecord.setItems(currentRecord.getItems() + 1);
-                    currentRecord.setByteSize(currentRecord.getByteSize() + item.getTotalByteSize());
+                    currentRecord.setByteSize(currentRecord.getByteSize() + item.totalByteSize());
                     // Mark the item as added by setting the aggregate id.
                     final long aggregateId = currentRecord.getId();
                     operationWriteQueue.add(context -> context
                             .update(SOURCE_ITEM)
                             .set(SOURCE_ITEM.FK_AGGREGATE_ID, aggregateId)
                             .setNull(SOURCE_ITEM.NEW_POSITION)
-                            .where(SOURCE_ITEM.ID.eq(item.getId()))
+                            .where(SOURCE_ITEM.ID.eq(item.id()))
                             .execute());
                 }
             }
@@ -291,15 +284,10 @@ public class AggregateDao {
     private Optional<AggregateRecord> getTargetAggregate(final RepoSourceItemRef item,
                                                          final int maxItemsPerAggregate,
                                                          final long maxUncompressedByteSize) {
-        final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - item.getTotalByteSize());
+        final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - item.totalByteSize());
 
         final Condition condition = DSL
-                .and(item.getFeedName() == null
-                        ? AGGREGATE.FEED_NAME.isNull()
-                        : AGGREGATE.FEED_NAME.equal(item.getFeedName()))
-                .and(item.getTypeName() == null
-                        ? AGGREGATE.TYPE_NAME.isNull()
-                        : AGGREGATE.TYPE_NAME.equal(item.getTypeName()))
+                .and(AGGREGATE.FK_FEED_ID.eq(item.feedId()))
                 .and(AGGREGATE.BYTE_SIZE.lessOrEqual(maxAggregateSize))
                 .and(AGGREGATE.ITEMS.lessThan(maxItemsPerAggregate))
                 .and(AGGREGATE.COMPLETE.isFalse());
@@ -322,26 +310,20 @@ public class AggregateDao {
     public Map<RepoSource, List<RepoSourceItem>> fetchSourceItems(final long aggregateId) {
         final Map<Long, RepoSourceItem> items = new HashMap<>();
         final Map<RepoSource, List<RepoSourceItem>> resultMap =
-                new TreeMap<>(Comparator.comparing(RepoSource::getId));
+                new TreeMap<>(Comparator.comparing(RepoSource::id));
 
         // Get all of the source zip entries that we want to write to the forwarding location.
         jooq.readOnlyTransactionResult(context -> context
                         .select(
-                                SOURCE_ENTRY.ID,
                                 SOURCE_ENTRY.EXTENSION,
                                 SOURCE_ENTRY.EXTENSION_TYPE,
                                 SOURCE_ENTRY.BYTE_SIZE,
-                                SOURCE_ITEM.ID,
-                                SOURCE_ITEM.FK_SOURCE_ID,
                                 SOURCE_ITEM.NAME,
-                                SOURCE_ITEM.FEED_NAME,
-                                SOURCE_ITEM.TYPE_NAME,
+                                SOURCE_ITEM.FK_FEED_ID,
                                 SOURCE_ITEM.FK_AGGREGATE_ID,
                                 SOURCE.ID,
                                 SOURCE.FILE_STORE_ID,
-                                SOURCE.FEED_NAME,
-                                SOURCE.TYPE_NAME,
-                                SOURCE.EXAMINED)
+                                SOURCE.FK_FEED_ID)
                         .from(SOURCE_ENTRY)
                         .join(SOURCE_ITEM).on(SOURCE_ITEM.ID.eq(SOURCE_ENTRY.FK_SOURCE_ITEM_ID))
                         .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
@@ -351,34 +333,30 @@ public class AggregateDao {
                 .forEach(r -> {
                     final long id = r.get(SOURCE_ITEM.ID);
 
-                    final RepoSourceItem sourceItem = items.computeIfAbsent(id, k -> {
-                        final RepoSource source = RepoSource.builder()
-                                .id(r.get(SOURCE.ID))
-                                .fileStoreId(r.get(SOURCE.FILE_STORE_ID))
-                                .feedName(r.get(SOURCE.FEED_NAME))
-                                .typeName(r.get(SOURCE.TYPE_NAME))
-                                .build();
+                    final RepoSourceItem item = items.computeIfAbsent(id, k -> {
+                        final RepoSource source = new RepoSource(
+                                r.get(SOURCE.ID),
+                                r.get(SOURCE.FILE_STORE_ID),
+                                r.get(SOURCE.FK_FEED_ID));
 
-                        final RepoSourceItem item = RepoSourceItem.builder()
-                                .source(source)
-                                .name(r.get(SOURCE_ITEM.NAME))
-                                .feedName(r.get(SOURCE_ITEM.FEED_NAME))
-                                .typeName(r.get(SOURCE_ITEM.TYPE_NAME))
-                                .aggregateId(r.get(SOURCE_ITEM.FK_AGGREGATE_ID))
-                                .build();
+                        final RepoSourceItem repoSourceItem = new RepoSourceItem(
+                                source,
+                                r.get(SOURCE_ITEM.NAME),
+                                r.get(SOURCE_ITEM.FK_FEED_ID),
+                                r.get(SOURCE_ITEM.FK_AGGREGATE_ID),
+                                0,
+                                new ArrayList<>());
 
-                        resultMap.computeIfAbsent(source, s -> new ArrayList<>()).add(item);
+                        resultMap.computeIfAbsent(source, s -> new ArrayList<>()).add(repoSourceItem);
 
-                        return item;
+                        return repoSourceItem;
                     });
 
-                    final RepoSourceEntry entry = RepoSourceEntry.builder()
-                            .id(r.get(SOURCE_ENTRY.ID))
-                            .type(StroomZipFileType.TYPE_MAP.get(r.get(SOURCE_ENTRY.EXTENSION_TYPE)))
-                            .extension(r.get(SOURCE_ENTRY.EXTENSION))
-                            .byteSize(r.get(SOURCE_ENTRY.BYTE_SIZE))
-                            .build();
-                    sourceItem.addEntry(entry);
+                    final RepoSourceEntry entry = new RepoSourceEntry(
+                            StroomZipFileType.TYPE_MAP.get(r.get(SOURCE_ENTRY.EXTENSION_TYPE)),
+                            r.get(SOURCE_ENTRY.EXTENSION),
+                            r.get(SOURCE_ENTRY.BYTE_SIZE));
+                    item.addEntry(entry);
                 });
 
         return resultMap;

@@ -5,6 +5,7 @@ package stroom.proxy.repo.db.jooq;
 
 
 import stroom.proxy.repo.db.jooq.tables.Aggregate;
+import stroom.proxy.repo.db.jooq.tables.Feed;
 import stroom.proxy.repo.db.jooq.tables.ForwardAggregate;
 import stroom.proxy.repo.db.jooq.tables.ForwardSource;
 import stroom.proxy.repo.db.jooq.tables.ForwardUrl;
@@ -23,6 +24,11 @@ public class Tables {
      * The table <code>aggregate</code>.
      */
     public static final Aggregate AGGREGATE = Aggregate.AGGREGATE;
+
+    /**
+     * The table <code>feed</code>.
+     */
+    public static final Feed FEED = Feed.FEED;
 
     /**
      * The table <code>forward_aggregate</code>.

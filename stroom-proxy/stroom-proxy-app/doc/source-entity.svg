@@ -1,21 +1,30 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="188px" preserveAspectRatio="none" style="width:205px;height:188px;background:#FFFFFF;" version="1.1" viewBox="0 0 205 188" width="205px" zoomAndPan="magnify"><defs><filter height="300%" id="fpnyeltk08ujw" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[fb94403e3d3521d383fd6507b67b3642]
-class source--><rect codeLine="5" fill="#FEFECE" filter="url(#fpnyeltk08ujw)" height="167.8551" id="source" style="stroke:#A80036;stroke-width:1.5;" width="184" x="7" y="7"/><ellipse cx="75.75" cy="23" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M72.1094,29.5 L72.1094,17.3594 L79.7656,17.3594 L79.7656,19.4844 L74.4844,19.4844 L74.4844,22.1406 L79.5,22.1406 L79.5,24.2656 L74.4844,24.2656 L74.4844,27.375 L79.7656,27.375 L79.7656,29.5 L72.1094,29.5 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="38" x="96.25" y="27.656">source</text><line style="stroke:#A80036;stroke-width:1.5;" x1="8" x2="190" y1="39" y2="39"/><ellipse cx="18" cy="50" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="50" x="27" y="54.7589">id : bigint</text><line style="stroke:#A80036;stroke-width:1.0;" x1="8" x2="190" y1="61.9819" y2="61.9819"/><ellipse cx="18" cy="72.9819" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="144" x="27" y="77.7408">path : varchar(255) - unique</text><ellipse cx="18" cy="87.9638" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="130" x="27" y="92.7227">feed_name : varchar(255)</text><ellipse cx="18" cy="102.9457" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="130" x="27" y="107.7046">type_name : varchar(255)</text><ellipse cx="18" cy="117.9276" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="158" x="27" y="122.6865">last_modified_time_ms : bigint</text><ellipse cx="18" cy="132.9094" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="103" x="27" y="137.6684">examined : boolean</text><ellipse cx="18" cy="147.8913" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="108" x="27" y="152.6502">forwarded : boolean</text><ellipse cx="18" cy="162.8732" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="110" x="27" y="167.6321">new_position : bigint</text><!--MD5=[08d67f41f736e7f2516cbe76486dab5a]
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="311px" preserveAspectRatio="none" style="width:191px;height:311px;background:#FFFFFF;" version="1.1" viewBox="0 0 191 311" width="191px" zoomAndPan="magnify"><defs><filter height="300%" id="ftphuxt7m3i9z" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[a89e013394a4179b87aacb584f03bea5]
+class feed--><rect codeLine="5" fill="#FEFECE" filter="url(#ftphuxt7m3i9z)" height="92.9457" id="feed" style="stroke:#A80036;stroke-width:1.5;" width="156" x="14" y="7"/><ellipse cx="75.25" cy="23" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M71.6094,29.5 L71.6094,17.3594 L79.2656,17.3594 L79.2656,19.4844 L73.9844,19.4844 L73.9844,22.1406 L79,22.1406 L79,24.2656 L73.9844,24.2656 L73.9844,27.375 L79.2656,27.375 L79.2656,29.5 L71.6094,29.5 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="25" x="95.75" y="27.656">feed</text><line style="stroke:#A80036;stroke-width:1.5;" x1="15" x2="169" y1="39" y2="39"/><ellipse cx="25" cy="50" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="50" x="34" y="54.7589">id : bigint</text><line style="stroke:#A80036;stroke-width:1.0;" x1="15" x2="169" y1="61.9819" y2="61.9819"/><ellipse cx="25" cy="72.9819" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="130" x="34" y="77.7408">feed_name : varchar(255)</text><ellipse cx="25" cy="87.9638" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="130" x="34" y="92.7227">type_name : varchar(255)</text><!--MD5=[fb94403e3d3521d383fd6507b67b3642]
+class source--><rect codeLine="12" fill="#FEFECE" filter="url(#ftphuxt7m3i9z)" height="137.8913" id="source" style="stroke:#A80036;stroke-width:1.5;" width="170" x="7" y="160"/><ellipse cx="68.75" cy="176" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M65.1094,182.5 L65.1094,170.3594 L72.7656,170.3594 L72.7656,172.4844 L67.4844,172.4844 L67.4844,175.1406 L72.5,175.1406 L72.5,177.2656 L67.4844,177.2656 L67.4844,180.375 L72.7656,180.375 L72.7656,182.5 L65.1094,182.5 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="38" x="89.25" y="180.656">source</text><line style="stroke:#A80036;stroke-width:1.5;" x1="8" x2="176" y1="192" y2="192"/><ellipse cx="18" cy="203" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="50" x="27" y="207.7589">id : bigint</text><line style="stroke:#A80036;stroke-width:1.0;" x1="8" x2="176" y1="214.9819" y2="214.9819"/><ellipse cx="18" cy="225.9819" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="144" x="27" y="230.7408">path : varchar(255) - unique</text><ellipse cx="18" cy="240.9638" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="93" x="27" y="245.7227">fk_feed_id : bigint</text><ellipse cx="18" cy="255.9457" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="103" x="27" y="260.7046">examined : boolean</text><ellipse cx="18" cy="270.9276" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="108" x="27" y="275.6865">forwarded : boolean</text><ellipse cx="18" cy="285.9094" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="110" x="27" y="290.6684">new_position : bigint</text><!--MD5=[8fc0b909dc2d6f9332fdd45de385bd9e]
+link feed to source--><path codeLine="22" d="M92,108.07 C92,108.07 92,151.73 92,151.73 " fill="none" id="feed-source" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="92" x2="98" y1="151.73" y2="159.73"/><line style="stroke:#A80036;stroke-width:1.0;" x1="92" x2="86" y1="151.73" y2="159.73"/><line style="stroke:#A80036;stroke-width:1.0;" x1="92" x2="92" y1="151.73" y2="159.73"/><line style="stroke:#A80036;stroke-width:1.0;" x1="96" x2="88" y1="149.73" y2="149.73"/><line style="stroke:#A80036;stroke-width:1.0;" x1="88" x2="96" y1="104.07" y2="104.07"/><line style="stroke:#A80036;stroke-width:1.0;" x1="88" x2="96" y1="107.07" y2="107.07"/><line style="stroke:#A80036;stroke-width:1.0;" x1="92" x2="92" y1="108.07" y2="100.07"/><!--MD5=[481f0479a8339a6618dedb87a9758c89]
 @startuml
 
 ' avoid problems with angled crows feet
 skinparam linetype ortho
 
+entity feed {
+  *id : bigint
+  - -
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+}
+
 entity source {
   *id : bigint
   - -
   *path : varchar(255) - unique
-  *feed_name : varchar(255)
-  *type_name : varchar(255)
-  *last_modified_time_ms : bigint
+  *fk_feed_id : bigint
   *examined : boolean
   *forwarded : boolean
   *new_position : bigint
 }
+
+feed ||- -|{ source
 
 @enduml
 
@@ -23,17 +32,24 @@ entity source {
 
 skinparam linetype ortho
 
+entity feed {
+  *id : bigint
+  - -
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+}
+
 entity source {
   *id : bigint
   - -
   *path : varchar(255) - unique
-  *feed_name : varchar(255)
-  *type_name : varchar(255)
-  *last_modified_time_ms : bigint
+  *fk_feed_id : bigint
   *examined : boolean
   *forwarded : boolean
   *new_position : bigint
 }
+
+feed ||- -|{ source
 
 @enduml
 

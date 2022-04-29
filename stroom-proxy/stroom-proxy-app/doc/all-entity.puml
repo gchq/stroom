@@ -3,13 +3,18 @@
 ' avoid problems with angled crows feet
 skinparam linetype ortho
 
+entity feed {
+  *id : bigint
+  --
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+}
+
 entity source {
   *id : bigint
   --
   *path : varchar(255) - unique
-  *feed_name : varchar(255)
-  *type_name : varchar(255)
-  *last_modified_time_ms : bigint
+  *fk_feed_id : bigint
   *examined : boolean
   *forwarded : boolean
   *new_position : bigint
@@ -19,8 +24,7 @@ entity source_item {
   *id : bigint
   --
   *name : varchar(255)
-  *feed_name : varchar(255)
-  *type_name : varchar(255)
+  *fk_feed_id : bigint
   *byte_size : bigint
   *fk_source_id : bigint
   *fk_aggregate_id : bigint
@@ -40,8 +44,7 @@ entity aggregate {
   *id : bigint
   --
   *create_time_ms : bigint
-  *feed_name : varchar(255)
-  *type_name : varchar(255)
+  *fk_feed_id : bigint
   *byte_size : bigint
   *items : int
   *complete : boolean
@@ -79,6 +82,10 @@ entity forward_aggregate {
   *new_position : bigint
   *retry_position : bigint
 }
+
+feed ||--|{ source
+feed ||--|{ source_item
+feed ||--|{ aggregate
 
 source ||..o{ source_item
 source_item ||--|{ source_entry

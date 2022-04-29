@@ -4,6 +4,7 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.repo.dao.FeedDao;
 import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.store.FileSet;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -36,30 +38,34 @@ public class RepoSourceItems {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RepoSourceItems.class);
 
     private final SourceItemDao sourceItemDao;
+    private final FeedDao feedDao;
     private final ErrorReceiver errorReceiver;
     private final ProgressLog progressLog;
     private final SequentialFileStore sequentialFileStore;
 
     @Inject
     public RepoSourceItems(final SourceItemDao sourceItemDao,
+                           final FeedDao feedDao,
                            final ErrorReceiver errorReceiver,
                            final ProgressLog progressLog,
                            final SequentialFileStore sequentialFileStore) {
         this.sourceItemDao = sourceItemDao;
+        this.feedDao = feedDao;
         this.errorReceiver = errorReceiver;
         this.progressLog = progressLog;
         this.sequentialFileStore = sequentialFileStore;
     }
 
     public void examineSource(final RepoSource source) {
+        final FeedKey feedKey = feedDao.getKey(source.feedId());
         Metrics.measure("Examine Source", () -> {
-            final FileSet fileSet = sequentialFileStore.getStoreFileSet(source.getFileStoreId());
+            final FileSet fileSet = sequentialFileStore.getStoreFileSet(source.fileStoreId());
             final Path zipPath = fileSet.getZip();
 
             LOGGER.debug(() -> "Examining zip  '" + FileUtil.getCanonicalPath(zipPath) + "'");
             progressLog.increment("ProxyRepoSourceEntries - examineSource");
 
-            final Map<String, RepoSourceItem.Builder> itemNameMap = new HashMap<>();
+            final Map<String, RepoSourceItemBuilder> itemNameMap = new HashMap<>();
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipPath))) {
                 final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
                 while (entries.hasMoreElements()) {
@@ -74,8 +80,8 @@ public class RepoSourceItems {
                                 StroomZipFileType.fromExtension(fileName.getExtension());
 
                         // If this is a meta entry then get the feed name.
-                        String feedName = source.getFeedName();
-                        String typeName = source.getTypeName();
+                        String feedName = feedKey.feed();
+                        String typeName = feedKey.type();
 
                         if (StroomZipFileType.META.equals(stroomZipFileType)) {
                             try (final InputStream metaStream = zipFile.getInputStream(entry)) {
@@ -99,24 +105,23 @@ public class RepoSourceItems {
                             }
                         }
 
-                        final RepoSourceItem.Builder builder = itemNameMap.computeIfAbsent(itemName, k ->
-                                RepoSourceItem.builder()
+                        final RepoSourceItemBuilder builder = itemNameMap.computeIfAbsent(itemName, k ->
+                                new RepoSourceItemBuilder()
                                         .name(itemName)
                                         .source(source));
 
                         // If we have an existing source item then update the feed and type names if we have some.
-                        if (feedName != null && builder.build().getFeedName() == null) {
+                        if (feedName != null && builder.getFeedName() == null) {
                             builder.feedName(feedName);
                         }
-                        if (typeName != null && builder.build().getTypeName() == null) {
+                        if (typeName != null && builder.getTypeName() == null) {
                             builder.typeName(typeName);
                         }
 
-                        final RepoSourceEntry sourceEntry = RepoSourceEntry.builder()
-                                .type(stroomZipFileType)
-                                .extension(fileName.getExtension())
-                                .byteSize(entry.getSize())
-                                .build();
+                        final RepoSourceEntry sourceEntry = new RepoSourceEntry(
+                                stroomZipFileType,
+                                fileName.getExtension(),
+                                entry.getSize());
                         builder.addEntry(sourceEntry);
                         itemNameMap.put(fileName.getStem(), builder);
                     }
@@ -136,7 +141,7 @@ public class RepoSourceItems {
             final List<RepoSourceItem> items = itemNameMap
                     .values()
                     .stream()
-                    .map(RepoSourceItem.Builder::build)
+                    .map(builder -> builder.build(feedDao))
                     .collect(Collectors.toList());
             sourceItemDao.addItems(source, items);
         });
@@ -197,6 +202,71 @@ public class RepoSourceItems {
         @Override
         public String toString() {
             return fullName;
+        }
+    }
+
+    private final class RepoSourceItemBuilder {
+
+        private RepoSource source;
+        private String name;
+        private String feedName;
+        private String typeName;
+        private Long aggregateId;
+        private long totalByteSize;
+        private final List<RepoSourceEntry> entries;
+
+        public RepoSourceItemBuilder() {
+            entries = new ArrayList<>();
+        }
+
+        public RepoSourceItemBuilder source(final RepoSource source) {
+            this.source = source;
+            return this;
+        }
+
+        public RepoSourceItemBuilder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public RepoSourceItemBuilder feedName(final String feedName) {
+            this.feedName = feedName;
+            return this;
+        }
+
+        public RepoSourceItemBuilder typeName(final String typeName) {
+            this.typeName = typeName;
+            return this;
+        }
+
+        public RepoSourceItemBuilder aggregateId(final Long aggregateId) {
+            this.aggregateId = aggregateId;
+            return this;
+        }
+
+        public RepoSourceItemBuilder addEntry(final RepoSourceEntry entry) {
+            this.entries.add(entry);
+            this.totalByteSize += entry.byteSize();
+            return this;
+        }
+
+        public String getTypeName() {
+            return typeName;
+        }
+
+        public String getFeedName() {
+            return feedName;
+        }
+
+        public RepoSourceItem build(final FeedDao feedDao) {
+            final long feedId = feedDao.getId(new FeedKey(feedName, typeName));
+            return new RepoSourceItem(
+                    source,
+                    name,
+                    feedId,
+                    aggregateId,
+                    totalByteSize,
+                    entries);
         }
     }
 }

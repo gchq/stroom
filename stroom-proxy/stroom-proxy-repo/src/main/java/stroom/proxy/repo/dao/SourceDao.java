@@ -1,6 +1,7 @@
 package stroom.proxy.repo.dao;
 
 import stroom.db.util.JooqUtil;
+import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.RepoDbConfig;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.queue.Batch;
@@ -38,11 +39,11 @@ public class SourceDao implements Flushable {
     private static final Field<?>[] SOURCE_COLUMNS = new Field<?>[]{
             SOURCE.ID,
             SOURCE.FILE_STORE_ID,
-            SOURCE.FEED_NAME,
-            SOURCE.TYPE_NAME,
+            SOURCE.FK_FEED_ID,
             SOURCE.NEW_POSITION};
 
     private final SqliteJooqHelper jooq;
+    private final FeedDao feedDao;
 
     private final AtomicLong sourceId = new AtomicLong();
     private final AtomicLong sourceNewPosition = new AtomicLong();
@@ -54,8 +55,10 @@ public class SourceDao implements Flushable {
 
     @Inject
     SourceDao(final SqliteJooqHelper jooq,
+              final FeedDao feedDao,
               final RepoDbConfig dbConfig) {
         this.jooq = jooq;
+        this.feedDao = feedDao;
         init();
 
 
@@ -73,8 +76,7 @@ public class SourceDao implements Flushable {
         jooq.readOnlyTransactionResult(context -> context
                         .select(SOURCE.ID,
                                 SOURCE.FILE_STORE_ID,
-                                SOURCE.FEED_NAME,
-                                SOURCE.TYPE_NAME,
+                                SOURCE.FK_FEED_ID,
                                 SOURCE.NEW_POSITION)
                         .from(SOURCE)
                         .where(SOURCE.NEW_POSITION.isNotNull())
@@ -87,8 +89,7 @@ public class SourceDao implements Flushable {
                     final RepoSource repoSource = new RepoSource(
                             r.get(SOURCE.ID),
                             r.get(SOURCE.FILE_STORE_ID),
-                            r.get(SOURCE.FEED_NAME),
-                            r.get(SOURCE.TYPE_NAME));
+                            r.get(SOURCE.FK_FEED_ID));
                     readQueue.add(repoSource);
                 });
         return pos.get();
@@ -141,21 +142,20 @@ public class SourceDao implements Flushable {
      * <p>
      * This method is synchronized to cope with sources being added via receipt and repo scanning at the same time.
      *
-     * @param fileStoreId        The file store id of the source to add.
-     * @param feedName           The feed name associated with the source.
-     * @param typeName           The type name associated with the source.
-     * @param lastModifiedTimeMs The last time the source data was modified.
+     * @param fileStoreId The file store id of the source to add.
+     * @param feedName    The feed name associated with the source.
+     * @param typeName    The type name associated with the source.
      */
     public void addSource(final long fileStoreId,
                           final String feedName,
                           final String typeName) {
+        final long feedId = feedDao.getId(new FeedKey(feedName, typeName));
         recordQueue.add(() -> {
-            final Object[] source = new Object[6];
+            final Object[] source = new Object[SOURCE_COLUMNS.length];
             source[0] = sourceId.incrementAndGet();
             source[1] = fileStoreId;
-            source[2] = feedName;
-            source[3] = typeName;
-            source[4] = sourceNewPosition.incrementAndGet();
+            source[2] = feedId;
+            source[3] = sourceNewPosition.incrementAndGet();
             sourceQueue.add(source);
         });
     }
@@ -185,8 +185,7 @@ public class SourceDao implements Flushable {
         return jooq.readOnlyTransactionResult(context -> context
                         .select(SOURCE.ID,
                                 SOURCE.FILE_STORE_ID,
-                                SOURCE.FEED_NAME,
-                                SOURCE.TYPE_NAME)
+                                SOURCE.FK_FEED_ID)
                         .from(SOURCE)
                         .where(DELETE_SOURCE_CONDITION)
                         .orderBy(SOURCE.ID)
@@ -195,18 +194,17 @@ public class SourceDao implements Flushable {
                 .map(r -> new RepoSource(
                         r.get(SOURCE.ID),
                         r.get(SOURCE.FILE_STORE_ID),
-                        r.get(SOURCE.FEED_NAME),
-                        r.get(SOURCE.TYPE_NAME)));
+                        r.get(SOURCE.FK_FEED_ID)));
     }
 
     /**
      * Delete a source record for the provided source id.
      *
-     * @param sourceId The id of the source record to delete.
+     * @param sources The sources to delete.
      * @return The number of rows changed.
      */
     public int deleteSources(final List<RepoSource> sources) {
-        final List<Long> sourceIds = sources.stream().map(RepoSource::getId).toList();
+        final List<Long> sourceIds = sources.stream().map(RepoSource::id).toList();
         return jooq.transactionResult(context -> context
                 .deleteFrom(SOURCE)
                 .where(SOURCE.ID.in(sourceIds))

@@ -12,7 +12,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row7;
+import org.jooq.Row6;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -60,14 +60,9 @@ public class Source extends TableImpl<SourceRecord> {
     public final TableField<SourceRecord, Long> FILE_STORE_ID = createField(DSL.name("file_store_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>source.feed_name</code>.
+     * The column <code>source.fk_feed_id</code>.
      */
-    public final TableField<SourceRecord, String> FEED_NAME = createField(DSL.name("feed_name"), SQLDataType.VARCHAR(255).defaultValue(DSL.field("NULL", SQLDataType.VARCHAR)), this, "");
-
-    /**
-     * The column <code>source.type_name</code>.
-     */
-    public final TableField<SourceRecord, String> TYPE_NAME = createField(DSL.name("type_name"), SQLDataType.VARCHAR(255).defaultValue(DSL.field("NULL", SQLDataType.VARCHAR)), this, "");
+    public final TableField<SourceRecord, Long> FK_FEED_ID = createField(DSL.name("fk_feed_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>source.examined</code>.
@@ -159,11 +154,11 @@ public class Source extends TableImpl<SourceRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row7 type methods
+    // Row6 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<Long, Long, String, String, Boolean, Boolean, Long> fieldsRow() {
-        return (Row7) super.fieldsRow();
+    public Row6<Long, Long, Long, Boolean, Boolean, Long> fieldsRow() {
+        return (Row6) super.fieldsRow();
     }
 }

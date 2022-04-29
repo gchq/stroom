@@ -12,6 +12,7 @@ import stroom.proxy.app.forwarder.ForwardDestinationConfig;
 import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.app.handler.ReceiveStreamHandlers;
 import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProgressHandler;
 import stroom.proxy.repo.ProgressLog;
 import stroom.proxy.repo.ProxyRepoConfig;
@@ -22,6 +23,7 @@ import stroom.proxy.repo.RepoSourceEntry;
 import stroom.proxy.repo.RepoSourceItem;
 import stroom.proxy.repo.RepoSourceItems;
 import stroom.proxy.repo.RepoSources;
+import stroom.proxy.repo.dao.FeedDao;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -42,6 +44,7 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +53,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 class TestStoreAndForward {
@@ -65,6 +67,8 @@ class TestStoreAndForward {
     private RepoSources proxyRepoSources;
     @Inject
     private RepoSourceItems proxyRepoSourceEntries;
+    @Inject
+    private FeedDao feedDao;
     @Inject
     private SourceDao sourceDao;
     @Inject
@@ -307,8 +311,7 @@ class TestStoreAndForward {
     void addEntriesToSource(final RepoSource source,
                             final int loopCount,
                             final int feedCount) {
-        final Map<String, RepoSourceItem.Builder> itemNameMap = new HashMap<>();
-
+        final Map<String, RepoSourceItem> itemNameMap = new HashMap<>();
         final List<StroomZipFileType> types = List.of(
                 StroomZipFileType.META,
                 StroomZipFileType.CONTEXT,
@@ -319,31 +322,27 @@ class TestStoreAndForward {
                 final String dataName = "entry_" + i + "_" + j;
                 final String feedName = "feed_" + j;
                 final String typeName = StreamTypeNames.RAW_EVENTS;
+                final long feedId = feedDao.getId(new FeedKey(feedName, typeName));
 
                 for (final StroomZipFileType type : types) {
-                    final RepoSourceItem.Builder builder = itemNameMap.computeIfAbsent(dataName, k ->
-                            RepoSourceItem.builder()
-                                    .source(source)
-                                    .name(dataName)
-                                    .feedName(feedName)
-                                    .typeName(typeName));
+                    final RepoSourceItem item = new RepoSourceItem(
+                            source,
+                            dataName,
+                            feedId,
+                            null,
+                            0,
+                            new ArrayList<>());
 
-                    builder.addEntry(RepoSourceEntry.builder()
-                            .type(type)
-                            .extension(type.getExtension())
-                            .byteSize(1000L)
-                            .build());
+                    final RepoSourceEntry entry = new RepoSourceEntry(
+                            type,
+                            type.getExtension(),
+                            1000L);
+                    item.addEntry(entry);
                 }
             }
         }
 
-        sourceItemDao.addItems(
-                source,
-                itemNameMap
-                        .values()
-                        .stream()
-                        .map(RepoSourceItem.Builder::build)
-                        .collect(Collectors.toList()));
+        sourceItemDao.addItems(source, itemNameMap.values());
     }
 
 

@@ -56,14 +56,14 @@ public class SenderImpl implements Sender {
                         "processFeedFiles() - Quitting early as we have been told to stop");
             }
 
-            final FileSet fileSet = sequentialFileStore.getStoreFileSet(source.getFileStoreId());
+            final FileSet fileSet = sequentialFileStore.getStoreFileSet(source.fileStoreId());
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileSet.getZip()))) {
                 for (final RepoSourceItem item : repoSourceItems) {
                     targetName = StroomFileNameUtil.getIdPath(sequenceId++);
 
                     for (final RepoSourceEntry entry : item.getEntries()) {
                         final String sourceName = item.getName();
-                        final String extension = entry.getExtension();
+                        final String extension = entry.extension();
                         final String fullSourceName = sourceName + extension;
                         final String fullTargetName = targetName + extension;
 
@@ -102,7 +102,7 @@ public class SenderImpl implements Sender {
 
     public void sendDataToHandler(final RepoSource source,
                                   final StreamHandler handler) {
-        final FileSet fileSet = sequentialFileStore.getStoreFileSet(source.getFileStoreId());
+        final FileSet fileSet = sequentialFileStore.getStoreFileSet(source.fileStoreId());
         final Consumer<Long> progressHandler = new ProgressHandler("Sending" +
                 fileSet.getZip());
         processZipFile(fileSet.getZip(), handler, progressHandler);

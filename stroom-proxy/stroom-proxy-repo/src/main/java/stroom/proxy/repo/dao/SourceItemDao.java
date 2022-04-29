@@ -12,8 +12,6 @@ import stroom.proxy.repo.queue.OperationWriteQueue;
 import stroom.proxy.repo.queue.ReadQueue;
 import stroom.proxy.repo.queue.RecordQueue;
 import stroom.proxy.repo.queue.WriteQueue;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
 import stroom.util.shared.Flushable;
 
@@ -33,13 +31,10 @@ import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 @Singleton
 public class SourceItemDao implements Flushable {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceItemDao.class);
-
     private static final Field<?>[] SOURCE_ITEM_COLUMNS = new Field<?>[]{
             SOURCE_ITEM.ID,
             SOURCE_ITEM.NAME,
-            SOURCE_ITEM.FEED_NAME,
-            SOURCE_ITEM.TYPE_NAME,
+            SOURCE_ITEM.FK_FEED_ID,
             SOURCE_ITEM.BYTE_SIZE,
             SOURCE_ITEM.FK_SOURCE_ID,
             SOURCE_ITEM.FK_AGGREGATE_ID,
@@ -89,8 +84,7 @@ public class SourceItemDao implements Flushable {
         final AtomicLong pos = new AtomicLong(currentReadPos);
         jooq.readOnlyTransactionResult(context -> context
                         .select(SOURCE_ITEM.ID,
-                                SOURCE_ITEM.FEED_NAME,
-                                SOURCE_ITEM.TYPE_NAME,
+                                SOURCE_ITEM.FK_FEED_ID,
                                 SOURCE_ITEM.BYTE_SIZE,
                                 SOURCE_ITEM.NEW_POSITION)
                         .from(SOURCE_ITEM)
@@ -103,8 +97,7 @@ public class SourceItemDao implements Flushable {
                     pos.set(r.get(SOURCE_ITEM.NEW_POSITION));
                     final RepoSourceItemRef repoSourceItemRef = new RepoSourceItemRef(
                             r.get(SOURCE_ITEM.ID),
-                            r.get(SOURCE_ITEM.FEED_NAME),
-                            r.get(SOURCE_ITEM.TYPE_NAME),
+                            r.get(SOURCE_ITEM.FK_FEED_ID),
                             r.get(SOURCE_ITEM.BYTE_SIZE)
                     );
                     readQueue.add(repoSourceItemRef);
@@ -151,42 +144,33 @@ public class SourceItemDao implements Flushable {
                          final Collection<RepoSourceItem> items) {
         recordQueue.add(() -> {
             for (final RepoSourceItem sourceItemRecord : items) {
-                if (sourceItemRecord.getFeedName() == null) {
-                    LOGGER.error(() ->
-                            "Source item has no feed name: " +
-                                    source +
-                                    " - " +
-                                    sourceItemRecord.getName());
-                } else {
-                    final long itemRecordId = sourceItemId.incrementAndGet();
+                final long itemRecordId = sourceItemId.incrementAndGet();
 
-                    final Object[] sourceItem = new Object[SOURCE_ITEM_COLUMNS.length];
-                    sourceItem[0] = itemRecordId;
-                    sourceItem[1] = sourceItemRecord.getName();
-                    sourceItem[2] = sourceItemRecord.getFeedName();
-                    sourceItem[3] = sourceItemRecord.getTypeName();
-                    sourceItem[4] = sourceItemRecord.getTotalByteSize();
-                    sourceItem[5] = sourceItemRecord.getSource().getId();
-                    sourceItem[6] = sourceItemRecord.getAggregateId();
-                    sourceItem[7] = sourceItemNewPosition.incrementAndGet();
-                    sourceItemQueue.add(sourceItem);
+                final Object[] sourceItem = new Object[SOURCE_ITEM_COLUMNS.length];
+                sourceItem[0] = itemRecordId;
+                sourceItem[1] = sourceItemRecord.getName();
+                sourceItem[2] = sourceItemRecord.getFeedId();
+                sourceItem[3] = sourceItemRecord.getTotalByteSize();
+                sourceItem[4] = sourceItemRecord.getSource().id();
+                sourceItem[5] = sourceItemRecord.getAggregateId();
+                sourceItem[6] = sourceItemNewPosition.incrementAndGet();
+                sourceItemQueue.add(sourceItem);
 
-                    final List<RepoSourceEntry> entries = sourceItemRecord.getEntries();
-                    for (final RepoSourceEntry entry : entries) {
-                        final long entryRecordId = sourceEntryId.incrementAndGet();
+                final List<RepoSourceEntry> entries = sourceItemRecord.getEntries();
+                for (final RepoSourceEntry entry : entries) {
+                    final long entryRecordId = sourceEntryId.incrementAndGet();
 
-                        final Object[] sourceEntry = new Object[SOURCE_ENTRY_COLUMNS.length];
-                        sourceEntry[0] = entryRecordId;
-                        sourceEntry[1] = entry.getExtension();
-                        sourceEntry[2] = entry.getType().getId();
-                        sourceEntry[3] = entry.getByteSize();
-                        sourceEntry[4] = itemRecordId;
-                        sourceEntryQueue.add(sourceEntry);
-                    }
+                    final Object[] sourceEntry = new Object[SOURCE_ENTRY_COLUMNS.length];
+                    sourceEntry[0] = entryRecordId;
+                    sourceEntry[1] = entry.extension();
+                    sourceEntry[2] = entry.type().getId();
+                    sourceEntry[3] = entry.byteSize();
+                    sourceEntry[4] = itemRecordId;
+                    sourceEntryQueue.add(sourceEntry);
                 }
             }
 
-            sourceUpdateQueue.add(context -> sourceDao.setSourceExamined(context, source.getId()));
+            sourceUpdateQueue.add(context -> sourceDao.setSourceExamined(context, source.id()));
         });
     }
 

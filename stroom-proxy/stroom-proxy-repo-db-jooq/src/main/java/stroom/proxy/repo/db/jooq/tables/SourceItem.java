@@ -12,7 +12,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row8;
+import org.jooq.Row7;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -60,14 +60,9 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     public final TableField<SourceItemRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>source_item.feed_name</code>.
+     * The column <code>source_item.fk_feed_id</code>.
      */
-    public final TableField<SourceItemRecord, String> FEED_NAME = createField(DSL.name("feed_name"), SQLDataType.VARCHAR(255).defaultValue(DSL.field("NULL", SQLDataType.VARCHAR)), this, "");
-
-    /**
-     * The column <code>source_item.type_name</code>.
-     */
-    public final TableField<SourceItemRecord, String> TYPE_NAME = createField(DSL.name("type_name"), SQLDataType.VARCHAR(255).defaultValue(DSL.field("NULL", SQLDataType.VARCHAR)), this, "");
+    public final TableField<SourceItemRecord, Long> FK_FEED_ID = createField(DSL.name("fk_feed_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>source_item.byte_size</code>.
@@ -164,11 +159,11 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row8 type methods
+    // Row7 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Long, String, String, String, Long, Long, Long, Long> fieldsRow() {
-        return (Row8) super.fieldsRow();
+    public Row7<Long, String, Long, Long, Long, Long, Long> fieldsRow() {
+        return (Row7) super.fieldsRow();
     }
 }

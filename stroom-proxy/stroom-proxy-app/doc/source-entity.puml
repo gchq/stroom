@@ -3,16 +3,23 @@
 ' avoid problems with angled crows feet
 skinparam linetype ortho
 
+entity feed {
+  *id : bigint
+  --
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+}
+
 entity source {
   *id : bigint
   --
   *path : varchar(255) - unique
-  *feed_name : varchar(255)
-  *type_name : varchar(255)
-  *last_modified_time_ms : bigint
+  *fk_feed_id : bigint
   *examined : boolean
   *forwarded : boolean
   *new_position : bigint
 }
+
+feed ||--|{ source
 
 @enduml

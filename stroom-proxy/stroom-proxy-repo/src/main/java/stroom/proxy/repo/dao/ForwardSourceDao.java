@@ -113,8 +113,7 @@ public class ForwardSourceDao implements Flushable {
                                 FORWARD_SOURCE.FK_FORWARD_URL_ID,
                                 FORWARD_URL.URL,
                                 SOURCE.FILE_STORE_ID,
-                                SOURCE.FEED_NAME,
-                                SOURCE.TYPE_NAME,
+                                SOURCE.FK_FEED_ID,
                                 FORWARD_SOURCE.FK_SOURCE_ID,
                                 FORWARD_SOURCE.SUCCESS,
                                 FORWARD_SOURCE.ERROR,
@@ -134,8 +133,7 @@ public class ForwardSourceDao implements Flushable {
                     final RepoSource source = new RepoSource(
                             r.get(FORWARD_SOURCE.FK_SOURCE_ID),
                             r.get(SOURCE.FILE_STORE_ID),
-                            r.get(SOURCE.FEED_NAME),
-                            r.get(SOURCE.TYPE_NAME));
+                            r.get(SOURCE.FK_FEED_ID));
                     final ForwardSource forwardSource = new ForwardSource(
                             r.get(FORWARD_SOURCE.ID),
                             r.get(FORWARD_SOURCE.UPDATE_TIME_MS),
@@ -218,8 +216,7 @@ public class ForwardSourceDao implements Flushable {
                 jooq.readOnlyTransactionResult(context -> context
                                 .select(SOURCE.ID,
                                         SOURCE.FILE_STORE_ID,
-                                        SOURCE.FEED_NAME,
-                                        SOURCE.TYPE_NAME)
+                                        SOURCE.FK_FEED_ID)
                                 .from(SOURCE)
                                 .where(NEW_SOURCE_CONDITION)
                                 .and(SOURCE.ID.gt(minId.get()))
@@ -231,8 +228,7 @@ public class ForwardSourceDao implements Flushable {
                             final RepoSource source = new RepoSource(
                                     r.get(SOURCE.ID),
                                     r.get(SOURCE.FILE_STORE_ID),
-                                    r.get(SOURCE.FEED_NAME),
-                                    r.get(SOURCE.TYPE_NAME));
+                                    r.get(SOURCE.FK_FEED_ID));
                             sources.add(source);
                         });
 
@@ -269,7 +265,7 @@ public class ForwardSourceDao implements Flushable {
                     row[0] = forwardAggregateId.incrementAndGet();
                     row[1] = System.currentTimeMillis();
                     row[2] = forwardUrl.getId();
-                    row[3] = source.getId();
+                    row[3] = source.id();
                     row[4] = false;
                     row[5] = forwardAggregateNewPosition.incrementAndGet();
                     forwardAggregateWriteQueue.add(row);
@@ -279,7 +275,7 @@ public class ForwardSourceDao implements Flushable {
                 aggregateUpdateQueue.add(context -> context
                         .update(SOURCE)
                         .setNull(SOURCE.NEW_POSITION)
-                        .where(SOURCE.ID.eq(source.getId()))
+                        .where(SOURCE.ID.eq(source.id()))
                         .execute());
             }
         });
@@ -360,7 +356,7 @@ public class ForwardSourceDao implements Flushable {
 
     public void update(final ForwardSource forwardSource) {
         if (forwardSource.isSuccess()) {
-            final long sourceId = forwardSource.getSource().getId();
+            final long sourceId = forwardSource.getSource().id();
 
             // Mark success and see if we can delete this record and cascade.
             jooq.transaction(context -> {
@@ -368,7 +364,7 @@ public class ForwardSourceDao implements Flushable {
                 updateForwardSource(context, forwardSource, null);
 
                 final Condition condition = FORWARD_SOURCE.FK_SOURCE_ID
-                        .eq(forwardSource.getSource().getId())
+                        .eq(forwardSource.getSource().id())
                         .and(FORWARD_SOURCE.SUCCESS.ne(true));
                 final int remainingForwards = context.fetchCount(FORWARD_SOURCE, condition);
                 if (remainingForwards == 0) {
