@@ -369,6 +369,7 @@ class TestJsonSerialisation {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     void testAllSharedAreResources() {
         final List<Class<?>> sharedClasses = getSharedClasses();
 
