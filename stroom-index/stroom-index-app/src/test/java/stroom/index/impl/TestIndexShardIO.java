@@ -95,7 +95,8 @@ class TestIndexShardIO {
         FileUtil.deleteDir(dir);
 
         for (int i = 1; i <= 10; i++) {
-            final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
+            final IndexShardWriter writer = new IndexShardWriterImpl(
+                    null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1);
             writer.flush();
             writer.addDocument(buildDocument(i));
             writer.flush();
@@ -126,7 +127,8 @@ class TestIndexShardIO {
         FileUtil.deleteDir(dir);
 
         for (int i = 1; i <= 10; i++) {
-            final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
+            final IndexShardWriter writer = new IndexShardWriterImpl(
+                    null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1);
             writer.addDocument(buildDocument(i));
             writer.close();
             assertThat(writer.getDocumentCount()).isEqualTo(i);
@@ -304,7 +306,8 @@ class TestIndexShardIO {
         final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileUtil.deleteDir(dir);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
+        final IndexShardWriter writer = new IndexShardWriterImpl(
+                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -336,7 +339,8 @@ class TestIndexShardIO {
         final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileUtil.deleteDir(dir);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
+        final IndexShardWriter writer = new IndexShardWriterImpl(
+                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -365,7 +369,8 @@ class TestIndexShardIO {
 
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
+        final IndexShardWriter writer = new IndexShardWriterImpl(
+                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1);
 
         Long lastSize = null;
 
