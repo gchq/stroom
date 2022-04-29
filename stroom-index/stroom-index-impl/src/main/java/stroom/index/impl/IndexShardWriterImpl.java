@@ -22,11 +22,13 @@ import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LoggerPrintStream;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.StroomDuration;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
@@ -44,6 +46,8 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,6 +67,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     private final Map<String, Analyzer> fieldAnalyzers = new ConcurrentHashMap<>();
 
     private final IndexShardManager indexShardManager;
+    private final StroomDuration slowIndexWriteWarningThreshold;
     /**
      * When we are in debug mode we track some important info from the LUCENE
      * log so that we can report some debug info
@@ -96,27 +101,40 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
     private final AtomicBoolean open = new AtomicBoolean();
     private final AtomicInteger adding = new AtomicInteger();
-    private volatile long lastUsedTime;
+    private volatile Instant lastUsedTime;
 
     /**
      * Convenience constructor used in tests.
      */
     public IndexShardWriterImpl(final IndexShardManager indexShardManager,
+                                final IndexConfig indexConfig,
                                 final IndexStructure indexStructure,
-                                final IndexShardKey indexShardKey, final IndexShard indexShard) throws IOException {
-        this(indexShardManager, indexStructure, indexShardKey, indexShard, DEFAULT_RAM_BUFFER_MB_SIZE);
+                                final IndexShardKey indexShardKey,
+                                final IndexShard indexShard) throws IOException {
+        this(indexShardManager,
+                indexConfig,
+                indexStructure,
+                indexShardKey,
+                indexShard,
+                DEFAULT_RAM_BUFFER_MB_SIZE);
     }
 
     IndexShardWriterImpl(final IndexShardManager indexShardManager,
+                         final IndexConfig indexConfig,
                          final IndexStructure indexStructure,
                          final IndexShardKey indexShardKey,
                          final IndexShard indexShard,
                          final int ramBufferSizeMB) throws IOException {
         this.indexShardManager = indexShardManager;
+        this.slowIndexWriteWarningThreshold = NullSafe.getOrElse(
+                indexConfig,
+                IndexConfig::getIndexWriterConfig,
+                stroom.index.impl.IndexWriterConfig::getSlowIndexWriteWarningThreshold,
+                StroomDuration.ZERO);
         this.indexShardKey = indexShardKey;
         this.indexShardId = indexShard.getId();
         this.creationTime = System.currentTimeMillis();
-        this.lastUsedTime = creationTime;
+        this.lastUsedTime = Instant.ofEpochMilli(creationTime);
 
         // Find the index shard dir.
         dir = IndexShardUtil.getIndexPath(indexShard);
@@ -157,7 +175,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         // Setup the field analyzers.
         final Analyzer defaultAnalyzer = AnalyzerFactory.create(AnalyzerType.ALPHA_NUMERIC, false);
         final PerFieldAnalyzerWrapper analyzerWrapper = new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
-        final IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzerWrapper);
+        final IndexWriterConfig luceneIndexWriterConfig = new IndexWriterConfig(analyzerWrapper);
 
         // In debug mode we do extra trace in LUCENE and we also count
         // certain logging info like merge and flush
@@ -167,14 +185,14 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             for (final String term : LOG_WATCH_TERMS.values()) {
                 loggerPrintStream.addWatchTerm(term);
             }
-            indexWriterConfig.setInfoStream(loggerPrintStream);
+            luceneIndexWriterConfig.setInfoStream(loggerPrintStream);
         }
 
         // Create lucene directory object.
         directory = new NIOFSDirectory(dir, LockFactoryFactory.get());
 
         // IndexWriter to use for adding data to the index.
-        final IndexWriter indexWriter = new IndexWriter(directory, indexWriterConfig);
+        final IndexWriter indexWriter = new IndexWriter(directory, luceneIndexWriterConfig);
         open.set(true);
 
         final LiveIndexWriterConfig liveIndexWriterConfig = indexWriter.getConfig();
@@ -211,16 +229,25 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     throw new ShardFullException("Shard is full");
                 }
 
-                final long now = System.currentTimeMillis();
-                this.lastUsedTime = now;
+                final Instant startTime = Instant.now();
+                this.lastUsedTime = startTime;
                 indexWriter.addDocument(document);
-                final long duration = System.currentTimeMillis() - now;
-                if (duration > 1000) {
-                    LAMBDA_LOGGER.warn(() ->
-                            "addDocument() - took " + ModelStringUtil.formatDurationString(duration) +
-                                    " " + toString());
-                }
 
+                if (!slowIndexWriteWarningThreshold.isZero()) {
+                    final Duration duration = Duration.between(startTime, Instant.now());
+
+                    if (duration.compareTo(slowIndexWriteWarningThreshold.getDuration()) > 0) {
+                        LAMBDA_LOGGER.warn(() ->
+                                "addDocument() - "
+                                        + this.toString()
+                                        + " took "
+                                        + duration
+                                        + " (Warning threshold: "
+                                        + slowIndexWriteWarningThreshold
+                                        + ". Configure this with property"
+                                        + " stroom.index.writer.slowIndexWriteWarningThreshold)");
+                    }
+                }
             } catch (final RuntimeException e) {
                 documentCount.decrementAndGet();
                 throw e;
@@ -403,7 +430,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
     @Override
     public long getLastUsedTime() {
-        return lastUsedTime;
+        return lastUsedTime.toEpochMilli();
     }
 
     @Override
