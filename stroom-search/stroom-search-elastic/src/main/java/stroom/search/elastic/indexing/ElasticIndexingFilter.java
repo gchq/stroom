@@ -508,13 +508,19 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 final SearchRequest searchRequest = new SearchRequest(indexBaseName + "*")
                         .source(searchSourceBuilder);
                 final SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
-                final CompositeAggregation agg = searchResponse.getAggregations().get(indicesAggregationKey);
-                final List<? extends Bucket> buckets = agg.getBuckets();
-                bucketSize = buckets.size();
-                for (final var bucket : buckets) {
-                    indexNames.add((String) bucket.getKey().get(streamIdSourceKey));
+                final Aggregations aggregations = searchResponse.getAggregations();
+                if (aggregations != null) {
+                    final CompositeAggregation aggregation = aggregations.get(indicesAggregationKey);
+                    final List<? extends Bucket> buckets = aggregation.getBuckets();
+                    bucketSize = buckets.size();
+                    for (final var bucket : buckets) {
+                        indexNames.add((String) bucket.getKey().get(streamIdSourceKey));
+                    }
+                    afterKey = aggregation.afterKey();
+                } else {
+                    // No index exists for this stream, so no deletion necessary
+                    return null;
                 }
-                afterKey = agg.afterKey();
             }
             return indexNames;
         } catch (IOException e) {
