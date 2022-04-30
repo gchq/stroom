@@ -95,6 +95,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexingFilter.class);
     private static final JsonFactory JSON_FACTORY = new JsonFactory();
     private static final int INITIAL_JSON_STREAM_SIZE_BYTES = 1024;
+    private static final int ES_MAX_EXCEPTION_CHARS = 1024;
     private static final String ES_TOO_MANY_REQUESTS_STATUS = "TOO_MANY_REQUESTS";
 
     // Dependencies
@@ -586,12 +587,13 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         if (e instanceof ElasticsearchStatusException) {
                             statusName = ((ElasticsearchStatusException) e).status().name();
                         }
+                        final String errorDetailMsg = e.getMessage() != null ? e.getMessage().substring(0,
+                                Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length())) : "";
                         if (e instanceof ElasticsearchOverloadedException ||
                                 ES_TOO_MANY_REQUESTS_STATUS.equals(statusName)) {
-                            currentRetry++;
-                            if (currentRetry <= elasticIndexingConfig.getRetryCount()) {
-                                final long sleepDurationMs =
-                                        elasticIndexingConfig.getInitialRetryBackoffPeriodMs() * (long) currentRetry;
+                            if (currentRetry < elasticIndexingConfig.getRetryCount()) {
+                                final long sleepDurationMs = elasticIndexingConfig.getInitialRetryBackoffPeriodMs() *
+                                        ((long) currentRetry + 1);
                                 try {
                                     LOGGER.warn("Indexing request by pipeline '" + pipelineName + "' was rejected by " +
                                             "Elasticsearch. Retrying in " + sleepDurationMs + " milliseconds " +
@@ -599,18 +601,21 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                                     Thread.sleep(sleepDurationMs);
                                 } catch (InterruptedException ex) {
                                     fatalError("Indexing terminated after " + currentRetry + " retries: " +
-                                            e.getMessage(), ex);
+                                            errorDetailMsg, ex);
                                 }
                             } else {
                                 fatalError("Indexing failed to complete after " + currentRetry +
-                                        " retries: " + e.getMessage(), e);
+                                        " retries: " + errorDetailMsg, null);
                             }
                         } else {
                             fatalError("Indexing failed to complete after " + currentRetry +
-                                    " retries: " + e.getMessage(), e);
+                                    " retries: " + errorDetailMsg, null);
                         }
                     } catch (RuntimeException | IOException e) {
-                        fatalError(e.getMessage(), e);
+                        fatalError(e.getMessage() != null ? e.getMessage().substring(0,
+                                        Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length())) : "", e);
+                    } finally {
+                        currentRetry++;
                     }
                 });
             }
@@ -721,10 +726,20 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
     }
 
+    /**
+     * @param message - Message to send to the error receiver and log target
+     * @param e - Original exception (optional - omit if output is likely to be excessive)
+     * @throws LoggedException
+     */
     private void fatalError(final String message, final Exception e) throws LoggedException {
         // Terminate processing as this is a fatal error
         log(Severity.FATAL_ERROR, message, e);
-        throw new LoggedException(message, e);
+
+        if (e != null) {
+            throw new LoggedException(message, e);
+        } else {
+            throw new LoggedException(message);
+        }
     }
 
     private static class ElasticsearchOverloadedException extends RuntimeException {
