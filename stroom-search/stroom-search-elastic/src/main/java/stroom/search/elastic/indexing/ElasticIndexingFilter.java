@@ -46,6 +46,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.DocWriteRequest.OpType;
+import org.elasticsearch.action.bulk.BulkItemResponse.Failure;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -562,15 +563,15 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
                         final BulkResponse response = elasticClient.bulk(bulkRequest, RequestOptions.DEFAULT);
                         if (response.hasFailures()) {
-                            final boolean isOverloaded = Arrays.stream(response.getItems()).anyMatch(r ->
-                                    ES_TOO_MANY_REQUESTS_STATUS.equals(r.getFailure().getStatus().name()));
-                            if (isOverloaded) {
-                                throw new ElasticsearchOverloadedException(response.buildFailureMessage());
-                            } else {
-                                // Request failed for some other reason, so abort without retry
-                                throw new IOException("Bulk indexing request failed: " +
-                                        response.buildFailureMessage());
+                            for (final var bulkResponse : response.getItems()) {
+                                final Failure failure = bulkResponse.getFailure();
+                                if (failure != null && failure.getStatus() != null &&
+                                        ES_TOO_MANY_REQUESTS_STATUS.equals(failure.getStatus().name())) {
+                                    throw new ElasticsearchOverloadedException(response.buildFailureMessage());
+                                }
                             }
+                            // Request failed for some other reason, so abort without retry
+                            throw new IOException("Bulk indexing request failed: " + response.buildFailureMessage());
                         } else {
                             succeeded.set(true);
                             final String retryMessage = currentRetry > 0 ? " (retries: " + currentRetry + ")" : "";
