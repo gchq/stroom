@@ -41,6 +41,7 @@ import stroom.search.elastic.shared.ElasticIndexConstants;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -74,12 +75,17 @@ import org.xml.sax.SAXException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.InvalidParameterException;
+import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
@@ -112,12 +118,15 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     // Pipeline filter configuration options
     private int batchSize = 10000;
     private boolean purgeOnReprocess = true;
-    private String ingestPipelineName = null;
+    private String ingestPipelineName;
     private boolean refreshAfterEachBatch = false;
     private DocRef clusterRef;
     private String indexBaseName;
     private String indexNameDateFormat;
     private String indexNameDateFieldName = "@timestamp";
+    private Date indexNameDateMin;
+    private SimpleDateFormat indexNameDateMinFormat;
+    private StroomDuration indexNameDateMaxFutureOffset;
 
     // Cached entities
     ElasticClusterDoc elasticCluster;
@@ -159,6 +168,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         indexRequests = new ArrayList<>();
         currentDocument = new ByteArrayOutputStream(INITIAL_JSON_STREAM_SIZE_BYTES);
         currentRetry = 0;
+
+        indexNameDateMinFormat = new SimpleDateFormat("yyyy");
+        indexNameDateMinFormat.setTimeZone(TimeZone.getTimeZone("UTC)"));
+        indexNameDateMaxFutureOffset = StroomDuration.parse("P1D");
     }
 
     /**
@@ -638,10 +651,27 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             return indexBaseName;
         } else {
             try {
-                final ZonedDateTime timestamp = ZonedDateTime.parse(currentDocTimestamp);
+                final ZonedDateTime eventTime = ZonedDateTime.parse(currentDocTimestamp);
                 final DateTimeFormatter pattern = DateTimeFormatter.ofPattern(indexNameDateFormat);
 
-                return indexBaseName + pattern.format(timestamp);
+                // If the event occurred after now + max offset, don't append a time suffix to the index name
+                if (!indexNameDateMaxFutureOffset.isZero()) {
+                    final ZonedDateTime timeNow = ZonedDateTime.now(eventTime.getZone());
+                    final ZonedDateTime nowPlusOffset = timeNow.plusSeconds(
+                            indexNameDateMaxFutureOffset.get(ChronoUnit.SECONDS));
+                    if (eventTime.isAfter(nowPlusOffset)) {
+                        return indexBaseName;
+                    }
+                }
+
+                // If the event occurred before the minimum date, don't append a time suffix to the index name
+                if (indexNameDateMin != null) {
+                    if (eventTime.isBefore(indexNameDateMin.toInstant().atZone(ZoneId.of("UTC")))) {
+                        return indexBaseName;
+                    }
+                }
+
+                return indexBaseName + pattern.format(eventTime);
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException(String.format("Invalid index name date format: %s", indexNameDateFormat));
             } catch (Exception e) {
@@ -661,16 +691,44 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(
-            description = "Name of the Elasticsearch index",
+            description = "Maximum number of documents to index in each bulk request",
+            defaultValue = "10000",
             displayPriority = 2
+    )
+    public void setBatchSize(final int batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    @PipelineProperty(
+            description = "Refresh the index after each batch is processed, making the indexed documents visible to " +
+                    "searches",
+            defaultValue = "false",
+            displayPriority = 3
+    )
+    public void setRefreshAfterEachBatch(final boolean refreshAfterEachBatch) {
+        this.refreshAfterEachBatch = refreshAfterEachBatch;
+    }
+
+    @PipelineProperty(
+            description = "Name of the Elasticsearch ingest pipeline to execute when indexing",
+            displayPriority = 4
+    )
+    public void setIngestPipeline(final String ingestPipelineName) {
+        this.ingestPipelineName = ingestPipelineName;
+    }
+
+    @PipelineProperty(
+            description = "Name of the Elasticsearch index",
+            displayPriority = 5
     )
     public void setIndexBaseName(final String indexBaseName) {
         this.indexBaseName = indexBaseName;
     }
 
     @PipelineProperty(
-            description = "Format of the date to append to the index name (see `DateTimeFormatter`)",
-            displayPriority = 3
+            description = "Format of the date to append to the index name (example: `-yyyy`). If unspecified, no " +
+                    "date is appended.",
+            displayPriority = 6
     )
     public void setIndexNameDateFormat(final String indexNameDateFormat) {
         this.indexNameDateFormat = indexNameDateFormat;
@@ -680,47 +738,66 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             description = "Name of the field containing the `DateTime` value to use when determining the index date " +
                     "suffix",
             defaultValue = "@timestamp",
-            displayPriority = 4
+            displayPriority = 7
     )
     public void setIndexNameDateFieldName(final String indexNameDateFieldName) {
         this.indexNameDateFieldName = indexNameDateFieldName;
     }
 
     @PipelineProperty(
-            description = "Maximum number of documents to index in each bulk request",
-            defaultValue = "10000",
-            displayPriority = 5
+            description = "Do not append a time suffix to the index name for events occurring before this date. " +
+                    "Date is assumed to be in UTC and of the format specified in `indexNameDateMinFormat`",
+            displayPriority = 8
     )
-    public void setBatchSize(final int batchSize) {
-        this.batchSize = batchSize;
+    public void setIndexNameDateMin(final String indexNameDateMin) {
+        try {
+            if (indexNameDateMin != null && !indexNameDateMin.isEmpty() && indexNameDateMinFormat != null) {
+                this.indexNameDateMin = indexNameDateMinFormat.parse(indexNameDateMin);
+            } else {
+                this.indexNameDateMin = null;
+            }
+        } catch (DateTimeParseException e) {
+            this.indexNameDateMin = null;
+            fatalError("Invalid value " + indexNameDateMin + " provided for indexNameDateMin", e);
+        } catch (Exception e) {
+            fatalError("Error occurred when parsing date value: " + indexNameDateMin, e);
+        }
+    }
+
+    @PipelineProperty(
+            description = "Date format of the supplied `indexNameDateMin` property",
+            defaultValue = "yyyy",
+            displayPriority = 9
+    )
+    public void setIndexNameDateMinFormat(final String indexNameDateMinFormat) {
+        try {
+            this.indexNameDateMinFormat = new SimpleDateFormat(indexNameDateMinFormat);
+            this.indexNameDateMinFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        } catch (IllegalArgumentException e) {
+            this.indexNameDateMinFormat = null;
+            fatalError("Invalid date format " + indexNameDateMinFormat + " provided for " +
+                    "indexNameDateMinFormat", e);
+        }
+    }
+
+    @PipelineProperty(
+            description = "Do not append a time suffix to the index name for events occurring after the current " +
+                    "time plus the specified offset",
+            defaultValue = "P1D",
+            displayPriority = 10
+    )
+    public void setIndexNameDateMaxFutureOffset(final String indexNameDateMaxFutureOffset) {
+        this.indexNameDateMaxFutureOffset = StroomDuration.parse(indexNameDateMaxFutureOffset);
     }
 
     @PipelineProperty(
             description = "When reprocessing a stream, first delete any documents from the index matching the " +
                     "stream ID",
             defaultValue = "true",
-            displayPriority = 6
+            displayPriority = 11
     )
     public void setPurgeOnReprocess(final boolean purgeOnReprocess) {
         this.purgeOnReprocess = purgeOnReprocess;
-    }
-
-    @PipelineProperty(
-            description = "Name of the Elasticsearch ingest pipeline to execute when indexing",
-            displayPriority = 7
-    )
-    public void setIngestPipeline(final String ingestPipelineName) {
-        this.ingestPipelineName = ingestPipelineName;
-    }
-
-    @PipelineProperty(
-            description = "Refresh the index after each batch is processed, making the indexed documents visible to " +
-                    "searches",
-            defaultValue = "false",
-            displayPriority = 8
-    )
-    public void setRefreshAfterEachBatch(final boolean refreshAfterEachBatch) {
-        this.refreshAfterEachBatch = refreshAfterEachBatch;
     }
 
     private void log(final Severity severity, final String message, final Exception e) {
