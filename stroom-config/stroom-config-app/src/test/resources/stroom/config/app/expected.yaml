@@ -282,6 +282,7 @@ appConfig:
         minItems: 0
         timeToIdle: "PT0S"
         timeToLive: "PT0S"
+      slowIndexWriteWarningThreshold: "PT1S"
   job:
     db:
       connection:
