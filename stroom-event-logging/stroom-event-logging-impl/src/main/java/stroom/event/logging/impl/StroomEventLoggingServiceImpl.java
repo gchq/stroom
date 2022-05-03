@@ -29,6 +29,9 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.ByteSize;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasId;
@@ -58,8 +61,6 @@ import event.logging.SystemDetail;
 import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
 import event.logging.util.DeviceUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -90,7 +91,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     /**
      * Logger - should not be used for event logs
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
 
     private static final String PROCESSING_USER_ID = "INTERNAL_PROCESSING_USER";
     private static final String X_FORWARDED_FOR = "X-FORWARDED-FOR";
@@ -247,11 +248,17 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private Device getClient(final HttpServletRequest request) {
         final Device device;
         if (request != null) {
-            // First try and use the X-FORWARDED-FOR header that provides the originating IP address of the request if
-            // behind a proxy.
+            // First try and use the X-FORWARDED-FOR header that provides the originating
+            // IP address of the request if behind a proxy.
             final String address = getIpFromXForwardedFor(request)
                     .orElseGet(request::getRemoteAddr);
+
             device = copyDevice(deviceCache.getDeviceForIpAddress(address));
+
+            LOGGER.debug(() -> LogUtil.message("Device - (host: {}, ip: {}, mac: {})",
+                    device.getHostName(),
+                    device.getIPAddress(),
+                    device.getMACAddress()));
         } else {
             device = null;
         }
@@ -279,7 +286,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             }
             obtainedDevice = true;
         }
-
         return storedDevice;
     }
 
