@@ -16,6 +16,7 @@
 
 package stroom.proxy.app;
 
+import stroom.dropwizard.common.AdminServlets;
 import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
@@ -72,6 +73,8 @@ public class App extends Application<Config> {
     private Filters filters;
     @Inject
     private Servlets servlets;
+    @Inject
+    private AdminServlets adminServlets;
     @Inject
     private RestResources restResources;
     @Inject
@@ -167,6 +170,9 @@ public class App extends Application<Config> {
 
         // Add servlets
         servlets.register();
+
+        // Add admin port/path servlets. Needs to be called after healthChecks.register()
+        adminServlets.register();
 
         // Add all injectable rest resources.
         restResources.register();
