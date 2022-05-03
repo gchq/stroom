@@ -103,7 +103,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
      */
     public IndexShardWriterImpl(final IndexShardManager indexShardManager,
                                 final IndexStructure indexStructure,
-                                final IndexShardKey indexShardKey, final IndexShard indexShard) throws IOException {
+                                final IndexShardKey indexShardKey,
+                                final IndexShard indexShard) throws IOException {
         this(indexShardManager, indexStructure, indexShardKey, indexShard, DEFAULT_RAM_BUFFER_MB_SIZE);
     }
 
