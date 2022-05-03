@@ -1,10 +1,15 @@
 package stroom.proxy.repo.queue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class ReadQueue<T> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReadQueue.class);
 
     private final int batchSize;
     private volatile List<T> readQueue = Collections.emptyList();
@@ -23,7 +28,12 @@ public class ReadQueue<T> {
             throw new RuntimeException("Expected empty queue");
         }
         readQueue = new ArrayList<>();
-        readPos = recordReader.read(readPos, batchSize, readQueue);
+        try {
+            readPos = recordReader.read(readPos, batchSize, readQueue);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public Batch<T> getBatch() {

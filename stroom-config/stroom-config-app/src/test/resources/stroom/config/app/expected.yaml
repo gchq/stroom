@@ -514,6 +514,7 @@ appConfig:
       maxItemsPerAggregate: 1000
       maxUncompressedByteSize: "1.0G"
     repoDb:
+      batchSize: 10000000
       connectionPragma:
       - "pragma synchronous = normal;"
       - "pragma temp_store = memory;"

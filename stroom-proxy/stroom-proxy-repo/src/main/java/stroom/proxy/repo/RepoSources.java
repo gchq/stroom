@@ -49,10 +49,6 @@ public class RepoSources implements Clearable {
         return sourceDao.deleteSources(sources);
     }
 
-    public void insert() {
-        sourceDao.flush();
-    }
-
     public Batch<RepoSource> getNewSources() {
         return sourceDao.getNewSources();
     }

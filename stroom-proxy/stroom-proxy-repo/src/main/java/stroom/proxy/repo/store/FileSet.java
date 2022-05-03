@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -41,23 +42,25 @@ public class FileSet {
     }
 
     public static FileSet get(final Path root,
-                              final long id) {
+                              final long id,
+                              final boolean nested) {
         // Convert the id to a padded string.
         final String idString = idToString(id);
-
-        // Create sub dirs.
-        final List<Path> subDirs = new ArrayList<>();
         Path dir = root;
+        final List<Path> subDirs = new ArrayList<>();
 
-        // Add depth.
-        final int depth = (idString.length() / 3) - 1;
-        dir = dir.resolve(Integer.toString(depth));
-        subDirs.add(dir);
-
-        // Add dirs from parts of id string.
-        for (int i = 0; i < idString.length() - 3; i += 3) {
-            dir = dir.resolve(idString.substring(i, i + 3));
+        // Create sub dirs if nested.
+        if (nested) {
+            // Add depth.
+            final int depth = (idString.length() / 3) - 1;
+            dir = dir.resolve(Integer.toString(depth));
             subDirs.add(dir);
+
+            // Add dirs from parts of id string.
+            for (int i = 0; i < idString.length() - 3; i += 3) {
+                dir = dir.resolve(idString.substring(i, i + 3));
+                subDirs.add(dir);
+            }
         }
 
         final Path zip = dir.resolve(idString +
@@ -113,6 +116,18 @@ public class FileSet {
         Files.deleteIfExists(meta);
         Files.deleteIfExists(getError());
         Files.deleteIfExists(getBadZip());
+
+        // Try to delete directories.
+        try {
+            boolean success = true;
+            for (int i = subDirs.size() - 1; i >= 0 && success; i--) {
+                final Path path = subDirs.get(i);
+                success = Files.deleteIfExists(path);
+            }
+        } catch (final DirectoryNotEmptyException e) {
+            // Expected error.
+            LOGGER.trace(e.getMessage(), e);
+        }
     }
 
     private static String idToString(long id) {

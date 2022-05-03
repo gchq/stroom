@@ -78,6 +78,7 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled
 class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
     private static final long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");

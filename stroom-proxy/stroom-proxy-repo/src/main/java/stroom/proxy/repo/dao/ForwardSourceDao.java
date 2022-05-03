@@ -111,13 +111,14 @@ public class ForwardSourceDao implements Flushable {
                         .select(FORWARD_SOURCE.ID,
                                 FORWARD_SOURCE.UPDATE_TIME_MS,
                                 FORWARD_SOURCE.FK_FORWARD_URL_ID,
-                                FORWARD_URL.URL,
-                                SOURCE.FILE_STORE_ID,
-                                SOURCE.FK_FEED_ID,
                                 FORWARD_SOURCE.FK_SOURCE_ID,
                                 FORWARD_SOURCE.SUCCESS,
                                 FORWARD_SOURCE.ERROR,
-                                FORWARD_SOURCE.TRIES)
+                                FORWARD_SOURCE.TRIES,
+                                positionField,
+                                FORWARD_URL.URL,
+                                SOURCE.FILE_STORE_ID,
+                                SOURCE.FK_FEED_ID)
                         .from(FORWARD_SOURCE)
                         .join(FORWARD_URL).on(FORWARD_URL.ID.eq(FORWARD_SOURCE.FK_FORWARD_URL_ID))
                         .join(SOURCE).on(SOURCE.ID.eq(FORWARD_SOURCE.FK_SOURCE_ID))

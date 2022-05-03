@@ -1,5 +1,6 @@
 package stroom.proxy.repo;
 
+import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.queue.Batch;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -29,6 +30,8 @@ public class TestSource {
 
     @Inject
     private RepoSources proxyRepoSources;
+    @Inject
+    private SourceDao sourceDao;
 
     @BeforeEach
     void beforeEach() {
@@ -58,7 +61,7 @@ public class TestSource {
                 "test",
                 null,
                 null);
-        proxyRepoSources.insert();
+        proxyRepoSources.flush();
 
         assertThatThrownBy(() -> {
             proxyRepoSources.addSource(
@@ -66,15 +69,16 @@ public class TestSource {
                     "test",
                     null,
                     null);
-            proxyRepoSources.insert();
+            proxyRepoSources.flush();
         }).isInstanceOf(DataAccessException.class);
+        sourceDao.clearQueue();
 
         proxyRepoSources.addSource(
                 2L,
                 "test",
                 null,
                 null);
-        proxyRepoSources.insert();
+        proxyRepoSources.flush();
     }
 
 //    @Test
@@ -97,7 +101,7 @@ public class TestSource {
 
     @Test
     void testSourceQueueComplex() {
-        testSourceQueue(10, 3, 1000000);
+        testSourceQueue(10, 3, 1_000_000);
     }
 
     private void testSourceQueue(final int producerThreads,
@@ -109,15 +113,19 @@ public class TestSource {
 
         for (int threads = 0; threads < producerThreads; threads++) {
             final CompletableFuture completableFuture = CompletableFuture.runAsync(() -> {
-                long added = totalAdded.incrementAndGet();
-                while (added <= totalSources) {
-                    proxyRepoSources.addSource(
-                            ThreadLocalRandom.current().nextLong(),
-                            "test",
-                            null,
-                            null);
-//                    LOGGER.info("ADDED: " + added);
-                    added = totalAdded.incrementAndGet();
+                boolean add = true;
+                while (add) {
+                    final long added = totalAdded.incrementAndGet();
+                    if (added <= totalSources) {
+                        proxyRepoSources.addSource(
+                                ThreadLocalRandom.current().nextLong(),
+                                "test",
+                                null,
+                                null);
+//                        LOGGER.info("ADDED: " + added);
+                    } else {
+                        add = false;
+                    }
                 }
             });
             all[threads] = completableFuture;
@@ -125,12 +133,15 @@ public class TestSource {
 
         for (int threads = producerThreads; threads < producerThreads + consumerThreads; threads++) {
             final CompletableFuture completableFuture = CompletableFuture.runAsync(() -> {
-                long consumed = totalConsumed.incrementAndGet();
-                while (consumed <= totalSources) {
-                    final Batch<RepoSource> batch = proxyRepoSources.getNewSources();
+                boolean consume = true;
+                while (consume) {
+                    final Batch<RepoSource> batch = proxyRepoSources.getNewSources(1, TimeUnit.SECONDS);
 //                    LOGGER.info("CONSUMED SOURCE: " + source.get().getId());
-//                    LOGGER.info("CONSUMED: " + consumed);
-                    consumed = totalConsumed.addAndGet(batch.list().size());
+                    totalConsumed.addAndGet(batch.list().size());
+//                    LOGGER.info("CONSUMED: " + totalConsumed.get());
+                    if (totalConsumed.get() == totalSources) {
+                        consume = false;
+                    }
                 }
             });
             all[threads] = completableFuture;
@@ -139,7 +150,7 @@ public class TestSource {
         // Insert thread.
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
-            proxyRepoSources.insert();
+            proxyRepoSources.flush();
         }, 1, 1, TimeUnit.SECONDS);
 
         CompletableFuture.allOf(all).join();

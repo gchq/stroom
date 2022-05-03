@@ -17,7 +17,6 @@ import stroom.proxy.repo.ProgressHandler;
 import stroom.proxy.repo.ProgressLog;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileNames;
-import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceEntry;
 import stroom.proxy.repo.RepoSourceItem;
@@ -34,12 +33,10 @@ import stroom.util.time.StroomDuration;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -51,8 +48,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 
 class TestStoreAndForward {
@@ -60,9 +57,9 @@ class TestStoreAndForward {
     private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
 
     @Inject
-    ProxyLifecycle proxyLifecycle;
+    private ProxyLifecycle proxyLifecycle;
     @Inject
-    ReceiveStreamHandlers receiveStreamHandlers;
+    private ReceiveStreamHandlers receiveStreamHandlers;
     @Inject
     private RepoSources proxyRepoSources;
     @Inject
@@ -94,9 +91,6 @@ class TestStoreAndForward {
                         .lockDeleteAge(StroomDuration.ofHours(1))
                         .dirCleanDelay(StroomDuration.ofSeconds(10))
                         .build())
-                .proxyRepoFileScannerConfig(new ProxyRepoFileScannerConfig()
-                        .scanningEnabled(false)
-                        .scanFrequency(StroomDuration.ofSeconds(10)))
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxItemsPerAggregate(1000)
                         .maxUncompressedByteSizeString("1G")
@@ -116,7 +110,6 @@ class TestStoreAndForward {
         injector.injectMembers(this);
 
         proxyLifecycle.start();
-
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final AttributeMap attributeMap1 = new AttributeMap();
@@ -140,107 +133,6 @@ class TestStoreAndForward {
         }
     }
 
-    @Disabled
-    @Test
-    void testForwardOldStore() throws Exception {
-//        final ForwardDestinationConfig forwardDestinationConfig = new ForwardDestinationConfig();
-//        forwardDestinationConfig.setForwardUrl("null");
-
-        final long iterations = 1000000;
-//
-        final Path tempDir = Files.createTempDirectory("stroom-proxy-temp");
-        final Path homeDir = Files.createTempDirectory("stroom-proxy-home");
-        final Path configPath = tempDir.resolve("temp-config.yml");
-        FileUtil.deleteContents(homeDir);
-
-//        final ProxyConfig proxyConfig = new ProxyConfig();
-//        proxyConfig.getPathConfig().setTemp(tempDir.toAbsolutePath().toString());
-//        proxyConfig.getPathConfig().setHome(homeDir.toAbsolutePath().toString());
-//        proxyConfig.getProxyRepositoryConfig().setStoringEnabled(true);
-//        proxyConfig.getProxyRepositoryConfig().setFormat("${pathId}/${id}");
-//
-//        final Config config = new Config();
-//        config.setProxyConfig(proxyConfig);
-//        final StoreAndForwardTestModule proxyModule = new StoreAndForwardTestModule(config, configPath);
-//        Injector injector = Guice.createInjector(proxyModule);
-//        injector.injectMembers(this);
-//
-//        proxyLifecycle.start();
-//
-        final String feedName1 = FileSystemTestUtil.getUniqueTestString();
-        final AttributeMap attributeMap1 = new AttributeMap();
-        attributeMap1.put(StandardHeaderArguments.FEED, feedName1);
-        attributeMap1.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
-        final ProgressHandler progressHandler = new ProgressHandler("Test");
-
-        final Path repoDir = homeDir.resolve("repo");
-        final AtomicLong fileCount = new AtomicLong();
-        for (int i = 0; i < iterations; i++) {
-            try (final StroomZipOutputStream stroomZipOutputStream =
-                    getStroomZipOutputStream(
-                            "test",
-                            repoDir,
-                            fileCount,
-                            attributeMap1)) {
-                addEntry("1" + StroomZipFileType.META.getExtension(),
-                        new ByteArrayInputStream(new byte[100]), progressHandler, stroomZipOutputStream);
-                addEntry("1" + StroomZipFileType.CONTEXT.getExtension(),
-                        new ByteArrayInputStream(new byte[100]), progressHandler, stroomZipOutputStream);
-                addEntry("1" + StroomZipFileType.DATA.getExtension(),
-                        new ByteArrayInputStream(new byte[100]), progressHandler, stroomZipOutputStream);
-            }
-        }
-
-        final ProxyConfig proxyConfig = ProxyConfig.builder()
-                .pathConfig(new ProxyPathConfig(
-                        homeDir.toAbsolutePath().toString(),
-                        tempDir.toAbsolutePath().toString()))
-                .proxyRepoConfig(ProxyRepoConfig.builder()
-                        .storingEnabled(true)
-                        .format("${pathId}/${id}")
-                        .cleanupFrequency(StroomDuration.ofHours(1))
-                        .lockDeleteAge(StroomDuration.ofHours(1))
-                        .dirCleanDelay(StroomDuration.ofSeconds(10))
-                        .build())
-                .proxyRepoFileScannerConfig(new ProxyRepoFileScannerConfig()
-                        .scanningEnabled(true)
-                        .scanFrequency(StroomDuration.ofSeconds(10)))
-                .aggregatorConfig(AggregatorConfig.builder()
-                        .maxItemsPerAggregate(100)
-                        .maxUncompressedByteSizeString("1G")
-                        .maxAggregateAge(StroomDuration.ofMinutes(1))
-                        .aggregationFrequency(StroomDuration.ofMinutes(1))
-                        .build())
-                .forwarderConfig(new ForwarderConfig()
-                        .forwardingEnabled(true)
-                        .forwardDestinations(new ForwardDestinationConfig()
-                                .withForwardUrl("null")))
-                .build();
-
-        final Config config = new Config();
-        config.setProxyConfig(proxyConfig);
-        final StoreAndForwardTestModule proxyModule = new StoreAndForwardTestModule(config, configPath);
-        final Injector injector = Guice.createInjector(proxyModule);
-        injector.injectMembers(this);
-
-        // Always log after we hot the iteration count.
-        progressLog.selAutoLogCount(iterations);
-
-        proxyLifecycle.start();
-    }
-
-    public long addEntry(final String entry,
-                         final InputStream inputStream,
-                         final Consumer<Long> progressHandler,
-                         final StroomZipOutputStream stroomZipOutputStream) throws IOException {
-        long bytesWritten;
-        try (final OutputStream outputStream = stroomZipOutputStream.addEntry(entry)) {
-            bytesWritten = StreamUtil.streamToStream(inputStream, outputStream, buffer, progressHandler);
-        }
-        return bytesWritten;
-    }
-
-
     @Test
     void testForwardPerformance() throws Exception {
         final Path tempDir = Files.createTempDirectory("stroom-proxy-temp");
@@ -259,9 +151,6 @@ class TestStoreAndForward {
                         .lockDeleteAge(StroomDuration.ofHours(1))
                         .dirCleanDelay(StroomDuration.ofSeconds(10))
                         .build())
-                .proxyRepoFileScannerConfig(new ProxyRepoFileScannerConfig()
-                        .scanningEnabled(false)
-                        .scanFrequency(StroomDuration.ofSeconds(10)))
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxItemsPerAggregate(100)
                         .maxUncompressedByteSizeString("1G")
@@ -286,9 +175,10 @@ class TestStoreAndForward {
 
         long start = System.currentTimeMillis();
         final CompletableFuture<?>[] futures = new CompletableFuture[10]; // 4000 = 16 s  100000 = 5.6m  10000 = 38s
+        final AtomicLong fileStoreId = new AtomicLong();
         for (int i = 0; i < futures.length; i++) {
             final CompletableFuture<?> completableFuture =
-                    CompletableFuture.runAsync(this::testUnique, executorService);
+                    CompletableFuture.runAsync(() -> testUnique(fileStoreId.incrementAndGet()), executorService);
             futures[i] = completableFuture;
         }
 
@@ -297,14 +187,15 @@ class TestStoreAndForward {
         System.out.println("Completed in " + ModelStringUtil.formatDurationString(System.currentTimeMillis() - start));
     }
 
-    void testUnique() {
+    void testUnique(final long fileStoreId) {
         proxyRepoSources
                 .addSource(
-                        1L,
+                        fileStoreId,
                         "test",
                         null,
                         null);
-        proxyRepoSources.getNewSources().list().forEach(source ->
+        proxyRepoSources.flush();
+        proxyRepoSources.getNewSources(0, TimeUnit.SECONDS).list().forEach(source ->
                 addEntriesToSource(source, 10, 10));
     }
 
@@ -343,6 +234,7 @@ class TestStoreAndForward {
         }
 
         sourceItemDao.addItems(source, itemNameMap.values());
+        sourceItemDao.flush();
     }
 
 

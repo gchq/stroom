@@ -7,9 +7,15 @@ import stroom.db.util.AbstractDataSourceProviderModule;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.FlywayUtil;
+import stroom.proxy.repo.dao.ForwardAggregateDao;
+import stroom.proxy.repo.dao.ForwardSourceDao;
+import stroom.proxy.repo.dao.SourceDao;
+import stroom.proxy.repo.dao.SourceItemDao;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Flushable;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -32,6 +38,12 @@ public class ProxyDbModule extends AbstractModule {
     @Override
     protected void configure() {
         super.configure();
+
+        GuiceUtil.buildMultiBinder(binder(), Flushable.class)
+                .addBinding(SourceDao.class)
+                .addBinding(SourceItemDao.class)
+                .addBinding(ForwardAggregateDao.class)
+                .addBinding(ForwardSourceDao.class);
     }
 
     @Provides

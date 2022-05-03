@@ -36,7 +36,8 @@ public class ProxyLifecycle implements Managed {
     private final List<Managed> services = new ArrayList<>();
 
     @Inject
-    public ProxyLifecycle(final ProxyRepoConfig proxyRepoConfig,
+    public ProxyLifecycle(final ProxyConfig proxyConfig,
+                          final ProxyRepoConfig proxyRepoConfig,
                           final AggregatorConfig aggregatorConfig,
                           final ForwarderConfig forwarderConfig,
                           final ThreadConfig threadConfig,
@@ -47,7 +48,8 @@ public class ProxyLifecycle implements Managed {
                           final Provider<AggregateForwarder> aggregatorForwarderProvider,
                           final Provider<SourceForwarder> sourceForwarderProvider,
                           final Provider<Cleanup> cleanupProvider,
-                          final Provider<Set<Flushable>> flushableProvider) {
+                          final Provider<Set<Flushable>> flushableProvider,
+                          final Provider<FileScanners> fileScannersProvider) {
 
         // If we aren't storing and forwarding then don't do anything.
         if (proxyRepoConfig.isStoringEnabled() &&
@@ -65,13 +67,8 @@ public class ProxyLifecycle implements Managed {
 
             final Cleanup cleanup = cleanupProvider.get();
 
-//            if (proxyRepoFileScannerConfig.isScanningEnabled()) {
-//                // Add executor to scan proxy files from a repo where a repo is not populated by receiving data.
-//                final ProxyRepoFileScanner proxyRepoFileScanner = proxyRepoFileScannerProvider.get();
-//                addFrequencyExecutor("ProxyRepoFileScanner - scan",
-//                        () -> proxyRepoFileScanner::scan,
-//                        proxyRepoFileScannerConfig.getScanFrequency().toMillis());
-//            }
+            // Add file scanners.
+            services.add(fileScannersProvider.get());
 
             // Start flushing the DB.
             final Set<Flushable> flushables = flushableProvider.get();

@@ -13,6 +13,7 @@ proxyConfig:
     syncFrequency: 60000
     upstreamUrl: null
   db:
+    batchSize: 10000000
     connectionPragma:
     - "pragma synchronous = normal;"
     - "pragma temp_store = memory;"
@@ -20,9 +21,15 @@ proxyConfig:
     dbDir: "db"
     globalPragma:
     - "pragma journal_mode = WAL;"
+    maintenancePragma:
+    - "pragma wal_checkpoint(truncate);"
+    - "pragma vacuum;"
+    - "pragma optimize;"
+    maintenancePragmaFrequency: "PT1M"
   feedStatus:
     apiKey: null
     url: null
+  fileScanners: []
   forwarder:
     forwardDestinations: []
     forwardingEnabled: false
@@ -34,6 +41,7 @@ proxyConfig:
   path:
     home: null
     temp: null
+  proxyId: null
   receiveDataConfig:
     clientId: null
     metaTypes:
@@ -54,6 +62,7 @@ proxyConfig:
   repository:
     cleanupFrequency: "PT1H"
     dirCleanDelay: "PT10S"
+    flushFrequency: "PT1S"
     format: "${pathId}/${id}"
     lockDeleteAge: "PT1H"
     repoDir: "repo"
@@ -77,12 +86,7 @@ proxyConfig:
     userAgent: null
     validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
-  scanner:
-    scanFrequency: "PT10S"
-    scanningEnabled: false
   threads:
-    aggregatorThreadCount: 2
-    createForwardRecordThreadCount: 2
     examineSourceThreadCount: 3
     forwardRetryThreadCount: 2
     forwardThreadCount: 10

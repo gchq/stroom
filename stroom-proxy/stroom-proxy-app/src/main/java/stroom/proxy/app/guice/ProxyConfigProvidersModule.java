@@ -1,7 +1,5 @@
 package stroom.proxy.app.guice;
 
-import stroom.proxy.repo.ProxyRepoDbConfig;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -39,7 +37,7 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     stroom.proxy.repo.RepoDbConfig getRepoDbConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                ProxyRepoDbConfig.class);
+                stroom.proxy.repo.ProxyRepoDbConfig.class);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -146,19 +144,10 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    ProxyRepoDbConfig getProxyRepoDbConfig(
+    stroom.proxy.repo.ProxyRepoDbConfig getProxyRepoDbConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                ProxyRepoDbConfig.class);
-    }
-
-    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.proxy.repo.ProxyRepoFileScannerConfig getProxyRepoFileScannerConfig(
-            final ProxyConfigProvider proxyConfigProvider) {
-        return proxyConfigProvider.getConfigObject(
-                stroom.proxy.repo.ProxyRepoFileScannerConfig.class);
+                stroom.proxy.repo.ProxyRepoDbConfig.class);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

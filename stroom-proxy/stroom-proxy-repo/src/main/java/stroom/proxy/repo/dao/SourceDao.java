@@ -61,7 +61,6 @@ public class SourceDao implements Flushable {
         this.feedDao = feedDao;
         init();
 
-
         sourceQueue = new BindWriteQueue(SOURCE, SOURCE_COLUMNS);
         final List<WriteQueue> writeQueues = List.of(sourceQueue);
 
@@ -231,5 +230,9 @@ public class SourceDao implements Flushable {
     @Override
     public void flush() {
         recordQueue.flush();
+    }
+
+    public void clearQueue() {
+        recordQueue.clear();
     }
 }

@@ -4,10 +4,10 @@ import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.repo.FileScannerConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoDbConfig;
-import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
@@ -18,6 +18,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.validation.constraints.AssertTrue;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -39,7 +42,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final ProxyRepoDbConfig proxyDbConfig;
     private final ReceiveDataConfig receiveDataConfig;
     private final ProxyRepoConfig proxyRepoConfig;
-    private final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig;
+    private final List<FileScannerConfig> fileScanners;
     private final AggregatorConfig aggregatorConfig;
     private final ForwarderConfig forwarderConfig;
     private final LogStreamConfig logStreamConfig;
@@ -58,7 +61,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         proxyDbConfig = new ProxyRepoDbConfig();
         receiveDataConfig = new ReceiveDataConfig();
         proxyRepoConfig = new ProxyRepoConfig();
-        proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
+        fileScanners = Collections.emptyList();
         aggregatorConfig = new AggregatorConfig();
         forwarderConfig = new ForwarderConfig();
         logStreamConfig = new LogStreamConfig();
@@ -78,7 +81,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty("db") final ProxyRepoDbConfig proxyDbConfig,
             @JsonProperty("receiveDataConfig") final ReceiveDataConfig receiveDataConfig,
             @JsonProperty("repository") final ProxyRepoConfig proxyRepoConfig,
-            @JsonProperty("scanner") final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig,
+            @JsonProperty("fileScanners") final List<FileScannerConfig> fileScanners,
             @JsonProperty("aggregator") final AggregatorConfig aggregatorConfig,
             @JsonProperty("forwarder") final ForwarderConfig forwarderConfig,
             @JsonProperty("logStream") final LogStreamConfig logStreamConfig,
@@ -95,7 +98,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.proxyDbConfig = proxyDbConfig;
         this.receiveDataConfig = receiveDataConfig;
         this.proxyRepoConfig = proxyRepoConfig;
-        this.proxyRepoFileScannerConfig = proxyRepoFileScannerConfig;
+        this.fileScanners = fileScanners;
         this.aggregatorConfig = aggregatorConfig;
         this.forwarderConfig = forwarderConfig;
         this.logStreamConfig = logStreamConfig;
@@ -156,9 +159,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxyRepoConfig;
     }
 
-    @JsonProperty("scanner")
-    public ProxyRepoFileScannerConfig getProxyRepoFileScannerConfig() {
-        return proxyRepoFileScannerConfig;
+    @JsonProperty("fileScanners")
+    public List<FileScannerConfig> getFileScanners() {
+        return fileScanners;
     }
 
     @JsonProperty("aggregator")
@@ -211,7 +214,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private ProxyRepoDbConfig proxyDbConfig = new ProxyRepoDbConfig();
         private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
         private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
-        private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
+        private List<FileScannerConfig> fileScanners = new ArrayList<>();
         private AggregatorConfig aggregatorConfig = new AggregatorConfig();
         private ForwarderConfig forwarderConfig = new ForwarderConfig();
         private LogStreamConfig logStreamConfig = new LogStreamConfig();
@@ -264,8 +267,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
-        public Builder proxyRepoFileScannerConfig(final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig) {
-            this.proxyRepoFileScannerConfig = proxyRepoFileScannerConfig;
+        public Builder addFileScanner(final FileScannerConfig fileScannerConfig) {
+            this.fileScanners.add(fileScannerConfig);
             return this;
         }
 
@@ -314,7 +317,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     proxyDbConfig,
                     receiveDataConfig,
                     proxyRepoConfig,
-                    proxyRepoFileScannerConfig,
+                    fileScanners,
                     aggregatorConfig,
                     forwarderConfig,
                     logStreamConfig,

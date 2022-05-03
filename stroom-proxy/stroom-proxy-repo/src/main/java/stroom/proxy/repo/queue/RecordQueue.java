@@ -4,12 +4,17 @@ import stroom.proxy.repo.dao.SqliteJooqHelper;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.shared.Flushable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class RecordQueue implements Flushable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RecordQueue.class);
 
     private final SqliteJooqHelper jooq;
     private final List<WriteQueue> writeQueues;
@@ -36,10 +41,20 @@ public class RecordQueue implements Flushable {
                 writeLock.lockInterruptibly();
                 try {
                     for (final WriteQueue writeQueue : writeQueues) {
-                        writeQueue.clear();
+                        try {
+                            writeQueue.clear();
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e.getMessage(), e);
+                            throw e;
+                        }
                     }
                     for (final ReadQueue<?> readQueue : readQueues) {
-                        readQueue.clear();
+                        try {
+                            readQueue.clear();
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e.getMessage(), e);
+                            throw e;
+                        }
                     }
                 } finally {
                     writeLock.unlock();
@@ -98,7 +113,12 @@ public class RecordQueue implements Flushable {
     private void flushInternal(final SqliteJooqHelper jooq) {
         jooq.transaction(context -> {
             for (final WriteQueue writeQueue : writeQueues) {
-                writeQueue.flush(context);
+                try {
+                    writeQueue.flush(context);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    throw e;
+                }
             }
         });
         for (final WriteQueue writeQueue : writeQueues) {
@@ -121,6 +141,9 @@ public class RecordQueue implements Flushable {
                             // Wait for new inserts.
                             writeLockCondition.await();
                         }
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        throw e;
                     } finally {
                         writeLock.unlock();
                     }
@@ -153,6 +176,9 @@ public class RecordQueue implements Flushable {
                                 return batch;
                             }
                         }
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        throw e;
                     } finally {
                         writeLock.unlock();
                     }

@@ -50,6 +50,7 @@ public class TestStoreAndForward {
 
         // Now forward the sources.
         sourceForwarder.createAllForwardSources();
+        sourceForwarder.flush();
         sourceForwarder.forwardAll();
         sourceForwarder.flush();
         assertThat(sourceDao.getDeletableSources(1000).size()).isOne();

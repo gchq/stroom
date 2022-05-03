@@ -95,6 +95,7 @@ public class TestAggregator {
         final String forwardUrl = "http://test-url.com";
         forwardUrlDao.getForwardUrlId(forwardUrl);
         aggregateForwarder.createAllForwardAggregates();
+        aggregateForwarder.flush();
 
         // Check we still can't delete sources.
         ensureNonDeletable();

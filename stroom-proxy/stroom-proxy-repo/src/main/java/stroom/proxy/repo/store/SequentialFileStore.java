@@ -21,8 +21,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,9 +54,7 @@ public class SequentialFileStore {
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private final AtomicLong addedStoreId = new AtomicLong();
-
-    //    private final SequenceFile sequenceFile;
-    private final DirManager dirManager = new DirManager();
+//    private final DirManager storeDirManager = new DirManager();
 
     @Inject
     public SequentialFileStore(final RepoDirProvider repoDirProvider,
@@ -74,20 +75,32 @@ public class SequentialFileStore {
 
         // Create the store directory and initialise the store id.
         storeDir = repoDir.resolve("store");
-//        sequenceFile = new SequenceFile(storeDir);
         if (ensureDirExists(storeDir)) {
+            long maxId = getMaxId(storeDir);
+            boolean deletePartialStore = true;
 
-            storeId.set(getMaxId(storeDir));
-            addedStoreId.set(storeId.get());
+            // Delete any partially moved/stored data.
+            while (deletePartialStore && maxId > 0) {
+                final FileSet fileSet = getStoreFileSet(maxId);
+                // Ensure the file set is complete.
+                if (!Files.exists(fileSet.getZip()) || !Files.exists(fileSet.getMeta())) {
+                    LOGGER.info("Found partially stored data, will delete: " + fileSet);
+                    try {
+                        fileSet.delete();
 
-//            storeId.set(getMaxId(storeDir));
-//
-//            try {
-//                storeId.set(sequenceFile.read());
-//                addedStoreId.set(storeId.get());
-//            } catch (final IOException e) {
-//                throw new UncheckedIOException(e);
-//            }
+//                        storeDirManager.deleteDirsUnderLock(fileSet);
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                    maxId--;
+
+                } else {
+                    deletePartialStore = false;
+                }
+            }
+
+            storeId.set(maxId);
+            addedStoreId.set(maxId);
         }
     }
 
@@ -140,13 +153,17 @@ public class SequentialFileStore {
     public void deleteSource(final long storeId) throws IOException {
         final FileSet fileSet = getStoreFileSet(storeId);
         fileSet.delete();
-
-        dirManager.deleteDirsUnderLock(fileSet);
+//        storeDirManager.deleteDirsUnderLock(fileSet);
     }
 
     public FileSet getStoreFileSet(final long storeId) {
-        return FileSet.get(storeDir, storeId);
+        return FileSet.get(storeDir, storeId, true);
     }
+
+    public FileSet getTempFileSet(final long tempId) {
+        return FileSet.get(tempDir, tempId, false);
+    }
+
 
     public Entries getEntries(final AttributeMap attributeMap) throws IOException {
         return new SequentialEntries(attributeMap);
@@ -163,7 +180,6 @@ public class SequentialFileStore {
                         condition.await();
                     } else {
                         // Record the sequence id for future use.
-//                    sequenceFile.write(storeId);
                         addedStoreId.incrementAndGet();
                         condition.signalAll();
                         done = true;
@@ -202,34 +218,6 @@ public class SequentialFileStore {
         }
 
         return 0;
-
-//        try {
-//            Files.walkFileTree(path,
-//                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
-//                    Integer.MAX_VALUE,
-//                    new AbstractFileVisitor() {
-//                        @Override
-//                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-//                            try {
-//                                if (file.toString().endsWith(ProxyRepoFileNames.ZIP_EXTENSION)) {
-//                                    final String idString = getIdPart(file);
-//                                    if (idString.length() == 0) {
-//                                        LOGGER.warn("File is not a valid repository file " + file);
-//                                    } else {
-//                                        final long id = Long.parseLong(idString);
-//                                        maxId.set(Math.max(maxId.get(), id));
-//                                    }
-//                                }
-//                            } catch (final RuntimeException e) {
-//                                LOGGER.error(e.getMessage(), e);
-//                            }
-//                            return super.visitFile(file, attrs);
-//                        }
-//                    });
-//        } catch (final IOException e) {
-//            LOGGER.error(e.getMessage(), e);
-//        }
-//        return maxId.get();
     }
 
     private Optional<NumericFile> getMaxFile(final Path path) {
@@ -279,30 +267,6 @@ public class SequentialFileStore {
 
     }
 
-//    private String getIdPart(final Path path) {
-//        final String fileName = path.getFileName().toString();
-//
-//        // Turn the file name into a char array.
-//        final char[] chars = fileName.toCharArray();
-//
-//        // Find the index of the first non digit character.
-//        int index = -1;
-//        for (int i = 0; i < chars.length && index == -1; i++) {
-//            if (!Character.isDigit(chars[i])) {
-//                index = i;
-//            }
-//        }
-//
-//        // If we found a non digit character at a position greater than 0
-//        // but that is a modulus of 3 (id's are of the form 001 or 001001 etc)
-//        // then this is a valid repository zip file.
-//        if (index > 0 && index % 3 == 0) {
-//            return fileName.substring(0, index);
-//        }
-//
-//        return "";
-//    }
-
     private boolean ensureDirExists(final Path path) {
         if (Files.isDirectory(path)) {
             return true;
@@ -332,12 +296,21 @@ public class SequentialFileStore {
             final long currentTempId = tempId.incrementAndGet();
 
             // Create a temp location to write the data to.
-            tempFileSet = FileSet.get(tempDir, currentTempId);
-            // Create directories.
-            Files.createDirectories(tempFileSet.getDir());
+            tempFileSet = getTempFileSet(currentTempId);
 
             this.attributeMap = attributeMap;
-            final OutputStream rawOutputStream = Files.newOutputStream(this.tempFileSet.getZip());
+
+            OutputStream rawOutputStream = null;
+            while (rawOutputStream == null) {
+                try {
+                    rawOutputStream = Files.newOutputStream(this.tempFileSet.getZip(),
+                            StandardOpenOption.CREATE_NEW);
+                } catch (final NoSuchFileException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    ensureDirExists(tempDir);
+                }
+            }
+
             final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream);
             zipOutputStream = new ZipOutputStream(bufferedOutputStream);
         }
@@ -375,7 +348,8 @@ public class SequentialFileStore {
                 closed = true;
 
                 // Write the meta data.
-                try (final OutputStream metaOutputStream = Files.newOutputStream(tempFileSet.getMeta())) {
+                try (final OutputStream metaOutputStream = Files.newOutputStream(tempFileSet.getMeta(),
+                        StandardOpenOption.CREATE_NEW)) {
                     AttributeMapUtil.write(attributeMap, metaOutputStream);
                     // ZIP's don't like to be empty !
                     if (entryCount == 0) {
@@ -386,20 +360,24 @@ public class SequentialFileStore {
 
                     // Move the new data to the store.
                     final long currentStoreId = storeId.incrementAndGet();
-                    final FileSet storeFileSet = FileSet.get(storeDir, currentStoreId);
+                    final FileSet storeFileSet = getStoreFileSet(currentStoreId);
 
-                    dirManager.createDirsUnderLock(storeFileSet, () -> {
-                        try {
-                            Files.move(tempFileSet.getZip(),
-                                    storeFileSet.getZip(),
-                                    StandardCopyOption.ATOMIC_MOVE);
-                            Files.move(tempFileSet.getMeta(),
-                                    storeFileSet.getMeta(),
-                                    StandardCopyOption.ATOMIC_MOVE);
-                        } catch (final IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    });
+//                    storeDirManager.createDirsUnderLock(storeFileSet, () -> {
+                    try {
+                        move(
+                                storeFileSet.getRoot(),
+                                storeFileSet.getSubDirs(),
+                                tempFileSet.getZip(),
+                                storeFileSet.getZip());
+                        move(
+                                storeFileSet.getRoot(),
+                                storeFileSet.getSubDirs(),
+                                tempFileSet.getMeta(),
+                                storeFileSet.getMeta());
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+//                    });
 
                     afterStore(currentStoreId);
 
@@ -411,6 +389,22 @@ public class SequentialFileStore {
             }
         }
 
+        private void move(final Path root, final List<Path> subDirs, final Path source, final Path dest)
+                throws IOException {
+            boolean success = false;
+            while (!success) {
+                try {
+                    Files.move(source,
+                            dest,
+                            StandardCopyOption.ATOMIC_MOVE);
+                    success = true;
+                } catch (final NoSuchFileException e) {
+                    ensureDirExists(root);
+                    subDirs.forEach(SequentialFileStore.this::ensureDirExists);
+                }
+            }
+        }
+
         @Override
         public void closeDelete() throws IOException {
             // Don't try and close more than once.
@@ -418,18 +412,17 @@ public class SequentialFileStore {
                 closed = true;
                 // ZIP's don't like to be empty !
                 if (entryCount == 0) {
-                    final OutputStream os = addEntry("NULL.DAT");
-                    os.write("NULL".getBytes(CharsetConstants.DEFAULT_CHARSET));
-                    os.close();
+                    try (final OutputStream os = addEntry("NULL.DAT")) {
+                        os.write("NULL".getBytes(CharsetConstants.DEFAULT_CHARSET));
+                    }
                 }
 
                 zipOutputStream.close();
-                if (tempFileSet.getZip() != null) {
-                    try {
-                        Files.delete(tempFileSet.getZip());
-                    } catch (final RuntimeException e) {
-                        throw new IOException("Failed to delete file " + tempFileSet.getZip());
-                    }
+
+                try {
+                    tempFileSet.delete();
+                } catch (final IOException e) {
+                    throw new IOException("Failed to delete file " + tempFileSet.getZip());
                 }
             }
         }

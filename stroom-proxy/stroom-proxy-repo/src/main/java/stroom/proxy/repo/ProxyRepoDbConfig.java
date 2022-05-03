@@ -82,4 +82,12 @@ public class ProxyRepoDbConfig extends AbstractRepoDbConfig implements IsProxyCo
     public StroomDuration getMaintenancePragmaFrequency() {
         return maintenancePragmaFrequency;
     }
+
+    @Override
+    @RequiresRestart(value = RestartScope.SYSTEM)
+    @JsonProperty
+    @JsonPropertyDescription("Choose the batch processing size")
+    public int getBatchSize() {
+        return super.getBatchSize();
+    }
 }

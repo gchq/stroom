@@ -152,9 +152,7 @@ proxyConfig:
   # Do we want to forward data by scanning for files in the repository? This is only needed where we want to pick up
   # files from a repository that isn't being filled by receiving new data via HTTP POST. When we receive data via POST
   # the receipt of new data automatically triggers any required process.
-  scanner:
-    scanningEnabled: false
-    scanFrequency: 10s
+  fileScanners: []
 
   # If we are storing data in a proxy repository we can aggregate it before forwarding.
   aggregator:

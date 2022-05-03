@@ -2,6 +2,8 @@ package stroom.proxy.repo;
 
 import stroom.util.shared.AbstractConfig;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
 import java.util.List;
 
 public abstract class AbstractRepoDbConfig extends AbstractConfig implements RepoDbConfig {

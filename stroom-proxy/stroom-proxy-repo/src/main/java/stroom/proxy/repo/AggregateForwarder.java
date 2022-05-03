@@ -205,4 +205,8 @@ public class AggregateForwarder {
     public void clear() {
         forwardAggregateDao.clear();
     }
+
+    public void flush() {
+        forwardAggregateDao.flush();
+    }
 }

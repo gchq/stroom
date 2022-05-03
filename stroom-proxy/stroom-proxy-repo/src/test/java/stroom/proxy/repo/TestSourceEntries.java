@@ -58,6 +58,7 @@ public class TestSourceEntries {
     @Test
     void testUnique() {
         proxyRepoSources.addSource(1L, "test", null, null);
+        proxyRepoSources.flush();
 
         // Check that we have a new source.
         final Batch<RepoSource> batch = sourceDao.getNewSources();
@@ -77,9 +78,10 @@ public class TestSourceEntries {
 
     long addEntries() {
         proxyRepoSources.addSource(1L, "test", null, null);
+        proxyRepoSources.flush();
 
         // Check that we have a new source.
-        final Batch<RepoSource> batch = sourceDao.getNewSources();
+        final Batch<RepoSource> batch = sourceDao.getNewSources(0, TimeUnit.MILLISECONDS);
         assertThat(batch.isEmpty()).isFalse();
         final RepoSource source = batch.list().get(0);
         final long sourceId = source.id();
@@ -128,5 +130,6 @@ public class TestSourceEntries {
         }
 
         sourceItemDao.addItems(source, itemNameMap.values());
+        sourceItemDao.flush();
     }
 }

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,16 +52,22 @@ public class TestCleanup {
 
     @Test
     void testCleanup() {
-        jooq.transaction(context -> {
-            long sourceId = 0;
-            long sourceFileStoreId = 0;
-            long sourceItemId = 0;
-            long sourceEntryId = 0;
-            long aggregateId = 0;
-            long forwardAggregateId = 0;
+        final AtomicLong sourceId = new AtomicLong();
+        final AtomicLong sourceFileStoreId = new AtomicLong();
+        ;
+        final AtomicLong sourceItemId = new AtomicLong();
+        ;
+        final AtomicLong sourceEntryId = new AtomicLong();
+        ;
+        final AtomicLong aggregateId = new AtomicLong();
+        ;
+        final AtomicLong forwardAggregateId = new AtomicLong();
+        ;
 
-            for (int i = 1; i <= 2; i++) {
-                final long feedId = feedDao.getId(new FeedKey("TEST_FEED_" + i, null));
+        for (int i = 1; i <= 2; i++) {
+            final long feedId = feedDao.getId(new FeedKey("TEST_FEED_" + i, null));
+
+            jooq.transaction(context -> {
                 for (int j = 0; j < 6; j++) {
                     // Add sources.
                     context
@@ -68,16 +75,18 @@ public class TestCleanup {
                                     SOURCE,
                                     SOURCE.ID,
                                     SOURCE.FILE_STORE_ID,
+                                    SOURCE.FK_FEED_ID,
                                     SOURCE.EXAMINED)
                             .values(
-                                    ++sourceId,
-                                    ++sourceFileStoreId,
+                                    sourceId.incrementAndGet(),
+                                    sourceFileStoreId.incrementAndGet(),
+                                    feedId,
                                     true)
                             .execute();
 
                     // Add an aggregate.
                     for (int k = 0; k < 2; k++) {
-                        aggregateId++;
+                        aggregateId.incrementAndGet();
 
                         // Add aggregate.
                         context
@@ -90,7 +99,7 @@ public class TestCleanup {
                                         AGGREGATE.ITEMS,
                                         AGGREGATE.COMPLETE)
                                 .values(
-                                        aggregateId,
+                                        aggregateId.get(),
                                         System.currentTimeMillis(),
                                         feedId,
                                         170L,
@@ -110,9 +119,9 @@ public class TestCleanup {
                                         FORWARD_AGGREGATE.TRIES,
                                         FORWARD_AGGREGATE.FK_FORWARD_URL_ID)
                                 .values(
-                                        ++forwardAggregateId,
+                                        forwardAggregateId.incrementAndGet(),
                                         System.currentTimeMillis(),
-                                        aggregateId,
+                                        aggregateId.get(),
                                         false,
                                         null,
                                         null,
@@ -130,11 +139,11 @@ public class TestCleanup {
                                             SOURCE_ITEM.FK_SOURCE_ID,
                                             SOURCE_ITEM.FK_AGGREGATE_ID)
                                     .values(
-                                            ++sourceItemId,
-                                            i + "_" + j + "_" + k + "_" + l,
+                                            sourceItemId.incrementAndGet(),
+                                            feedId + "_" + j + "_" + k + "_" + l,
                                             feedId,
-                                            sourceId,
-                                            aggregateId)
+                                            sourceId.get(),
+                                            aggregateId.get())
                                     .execute();
 
                             // Add source entry.
@@ -147,11 +156,11 @@ public class TestCleanup {
                                             SOURCE_ENTRY.BYTE_SIZE,
                                             SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
                                     .values(
-                                            ++sourceEntryId,
+                                            sourceEntryId.incrementAndGet(),
                                             ".hdr",
                                             2,
                                             84L,
-                                            sourceItemId)
+                                            sourceItemId.get())
                                     .execute();
                             context
                                     .insertInto(
@@ -162,17 +171,17 @@ public class TestCleanup {
                                             SOURCE_ENTRY.BYTE_SIZE,
                                             SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
                                     .values(
-                                            ++sourceEntryId,
+                                            sourceEntryId.incrementAndGet(),
                                             ".dat",
                                             4,
                                             1L,
-                                            sourceItemId)
+                                            sourceItemId.get())
                                     .execute();
                         }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // Make sure we can't delete any sources.
         jooq.printAllTables();
@@ -222,7 +231,7 @@ public class TestCleanup {
     }
 
     private void forward(long aggregateId) {
-        final Aggregate aggregate = new Aggregate(aggregateId, 0L);
+        final Aggregate aggregate = new Aggregate(aggregateId, 1L);
         final ForwardUrl forwardUrl = new ForwardUrl(1, "test");
         final ForwardAggregate forwardAggregate = ForwardAggregate
                 .builder()

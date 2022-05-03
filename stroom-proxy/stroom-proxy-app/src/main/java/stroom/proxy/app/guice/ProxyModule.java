@@ -44,10 +44,6 @@ import stroom.proxy.repo.RepoDirProvider;
 import stroom.proxy.repo.RepoDirProviderImpl;
 import stroom.proxy.repo.Sender;
 import stroom.proxy.repo.SenderImpl;
-import stroom.proxy.repo.dao.ForwardAggregateDao;
-import stroom.proxy.repo.dao.ForwardSourceDao;
-import stroom.proxy.repo.dao.SourceDao;
-import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.FeedStatusResourceImpl;
@@ -73,7 +69,6 @@ import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.BuildInfo;
-import stroom.util.shared.Flushable;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -187,12 +182,6 @@ public class ProxyModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ReceiveDataRuleSetService.class)
                 .addBinding(DictionaryStore.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Flushable.class)
-                .addBinding(SourceDao.class)
-                .addBinding(SourceItemDao.class)
-                .addBinding(ForwardAggregateDao.class)
-                .addBinding(ForwardSourceDao.class);
     }
 
     @Provides
