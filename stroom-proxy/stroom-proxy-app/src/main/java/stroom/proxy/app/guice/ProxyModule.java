@@ -11,6 +11,7 @@ import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
+import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
@@ -51,6 +52,7 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.guice.AdminServletBinder;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
@@ -151,6 +153,9 @@ public class ProxyModule extends AbstractModule {
                 .bind(ProxyStatusServlet.class)
                 .bind(ProxyWelcomeServlet.class)
                 .bind(ReceiveDataServlet.class);
+
+        AdminServletBinder.create(binder())
+                .bind(FilteredHealthCheckServlet.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ReceiveDataRuleSetResourceImpl.class)
