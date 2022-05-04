@@ -25,6 +25,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.ConfigMapper;
+import stroom.dropwizard.common.AdminServlets;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -92,6 +93,8 @@ public class App extends Application<Config> {
     private Filters filters;
     @Inject
     private Servlets servlets;
+    @Inject
+    private AdminServlets adminServlets;
     @Inject
     private WebSockets webSockets;
     @Inject
@@ -180,6 +183,7 @@ public class App extends Application<Config> {
 
     @Override
     public void run(final Config configuration, final Environment environment) {
+
         Objects.requireNonNull(configFile, () ->
                 LogUtil.message("No config YAML file supplied in arguments"));
 
@@ -256,6 +260,9 @@ public class App extends Application<Config> {
 
         // Add servlets
         servlets.register();
+
+        // Add admin port/path servlets. Needs to be called after healthChecks.register()
+        adminServlets.register();
 
         // Add web sockets
         webSockets.register();
