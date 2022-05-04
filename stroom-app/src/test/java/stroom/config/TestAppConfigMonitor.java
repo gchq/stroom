@@ -24,14 +24,11 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.validation.Validator;
@@ -42,6 +39,7 @@ class TestAppConfigMonitor {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigMonitor.class);
 
     private static final String YAML_KEY = "htmlTitle";
+    protected static final Pattern YAML_KEY_PATTERN = Pattern.compile(YAML_KEY + ":\\s*\"[^\"]+\"");
 
     @Inject
     private Validator validator;
@@ -65,26 +63,14 @@ class TestAppConfigMonitor {
     void test() throws Exception {
         final Path yamlFile = configHolder.getConfigFile();
         final AppConfig appConfig = configHolder.getBootStrapConfig();
-//        final Path yamlFile = Paths.get(System.getProperty("user.dir"))
-//                .getParent()
-//                .resolve("stroom-app")
-//                .resolve("dev.yml");
 
         LOGGER.info("Testing with config file {}", yamlFile.toAbsolutePath().normalize());
 
         // AppConfigTestModule creates an appConfig instance but doesn't create the file.
-        StroomYamlUtil.writeConfig(configHolder.getBootStrapConfig(), configHolder.getConfigFile());
+        StroomYamlUtil.writeAppConfig(configHolder.getBootStrapConfig(), configHolder.getConfigFile());
 
-        // Remove all the dropwiz stuff from the file to avoid (de)ser issues.
-        final List<String> outputLines = Files.lines(yamlFile)
-                .takeWhile(line -> !line.startsWith("server:"))
-                .collect(Collectors.toList());
-
-        Files.write(
-                yamlFile,
-                outputLines,
-                StandardOpenOption.WRITE,
-                StandardOpenOption.TRUNCATE_EXISTING);
+        final String yamlAfter = Files.readString(yamlFile);
+        LOGGER.info("yamlAfter:\n{}", yamlAfter);
 
         Assertions.assertThat(yamlFile)
                 .isRegularFile();
@@ -92,34 +78,13 @@ class TestAppConfigMonitor {
         Assertions.assertThat(yamlFile)
                 .isNotEmptyFile();
 
-//        final Path yamlCopyFile = getCurrentTestDir().resolve(yamlFile.getFileName());
-//        final Path yamlCopyFile = yamlFile;
-
-//        LOGGER.info("devYamlCopyPath {}", yamlCopyFile.toAbsolutePath().normalize());
-
-        // Make a copy of dev.yml so we can hack about with it
-//        Files.copy(yamlFile, yamlCopyFile);
-
-        // We need to craft our own instances of these classes rather than use guice
-        // so that we can use our own config file
-//        final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
-
-        // Create the dirs so validation doesn't fail
-//        final Path tempDir = Path.of(FileUtil.replaceHome(uiConfigProvider.get().getTemp()));
-//        LOGGER.info("Ensuring temp directory {}", tempDir.toAbsolutePath().normalize());
-//        Files.createDirectories(tempDir);
-//
-//        final Path homeDir = Path.of(FileUtil.replaceHome(uiConfigProvider.get().getHome()));
-//        LOGGER.info("Ensuring home directory {}", homeDir.toAbsolutePath().normalize());
-//        Files.createDirectories(homeDir);
-
         final ConfigLocation configLocation = new ConfigLocation(yamlFile);
         final AppConfigValidator appConfigValidator = new AppConfigValidator(validator);
 
         final AbstractFileChangeMonitor appConfigMonitor = new AppConfigMonitor(
                 configLocation, configMapper, appConfigValidator);
 
-        // start watching our copied file for changes, the start is async
+        // start watching our created yaml file for changes, the start is async
         appConfigMonitor.start();
 
         // wait for the monitoring to start
@@ -128,21 +93,20 @@ class TestAppConfigMonitor {
         }
         // isRunning is set to true just before watchService.take() is called so add an extra little sleep
         // to be on the safe side.
-        Thread.sleep(100);
+        Thread.sleep(200);
 
-        doFileUpdateTest(yamlFile, appConfig);
+        doFileUpdateTest(yamlFile);
 
         // Have a quick snooze then test another file change to be sure it can cope with more than
         // one change.
         Thread.sleep(200);
 
-        doFileUpdateTest(yamlFile, appConfig);
+        doFileUpdateTest(yamlFile);
 
         appConfigMonitor.stop();
     }
 
-    private void doFileUpdateTest(final Path devYamlCopyPath,
-                                  final AppConfig appConfig) throws IOException, InterruptedException {
+    private void doFileUpdateTest(final Path yamlFile) throws IOException, InterruptedException {
 
         final String newValue = Integer.toString(new Random().nextInt(10000000));
 
@@ -152,55 +116,54 @@ class TestAppConfigMonitor {
         Assertions.assertThat(uiConfigProvider.get().getHtmlTitle())
                 .isNotEqualTo(newValue);
 
-        final Pattern pattern = Pattern.compile(YAML_KEY + ":\\s*\"[^\"]+\"");
-        final String devYamlStr = Files.readString(devYamlCopyPath);
-        final Optional<MatchResult> optMatchResult = pattern.matcher(devYamlStr)
+        final String devYamlStr = Files.readString(yamlFile);
+        final Optional<MatchResult> optMatchResult = YAML_KEY_PATTERN.matcher(devYamlStr)
                 .results()
                 .findFirst();
 
-        final Runnable grepFile = () -> {
-            try {
-                String str = pattern.matcher(Files.readString(devYamlCopyPath))
-                        .results()
-                        .findFirst()
-                        .orElseThrow()
-                        .group(0);
-                LOGGER.debug("Found str [{}] in file {}", str, devYamlCopyPath);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        };
+        grepFile(yamlFile);
 
-        // Make sure the temp prop is in the file
+        // Make sure the prop is in the file
         Assertions.assertThat(optMatchResult)
                 .withFailMessage(LogUtil.message(
                         "Can't find pattern {} in file {}",
-                        pattern.toString(),
-                        devYamlCopyPath.toAbsolutePath().normalize()))
+                        YAML_KEY_PATTERN.toString(),
+                        yamlFile.toAbsolutePath().normalize()))
                 .isPresent();
 
         // We need to sleep here to give the config monitor time to start as it monitors asynchronously.
-        Thread.sleep(3000);
+//        Thread.sleep(3000);
 
         // Update the config file with our new value for a key (key must be uniquely named)
-        final String updatedDevYamlStr = pattern.matcher(devYamlStr)
+        final String updatedDevYamlStr = YAML_KEY_PATTERN.matcher(devYamlStr)
                 .replaceAll(YAML_KEY + ": \"" + newValue + "\"");
 
         // Ensure the replace worked by compare old file content to new
-        Assertions.assertThat(updatedDevYamlStr).isNotEqualTo(devYamlStr);
+        Assertions.assertThat(updatedDevYamlStr)
+                .isNotEqualTo(devYamlStr);
 
         // Now modify the file which the watcher should detect
-        Files.writeString(devYamlCopyPath, updatedDevYamlStr);
-        LOGGER.debug("Modified file {}", devYamlCopyPath.toAbsolutePath());
+        Files.writeString(yamlFile, updatedDevYamlStr);
+        LOGGER.info("Modified file {}, set {} to {}",
+                yamlFile.toAbsolutePath(),
+                YAML_KEY,
+                newValue);
 
         // Synchronous check of what is in the file for debugging
-        grepFile.run();
+        grepFile(yamlFile);
 
         // Now keep checking if the appConfig has been updated, or we timeout
         Instant startTime = Instant.now();
         Instant timeOutTime = startTime.plusSeconds(10);
-        while (!uiConfigProvider.get().getHtmlTitle().equals(newValue)
-                && Instant.now().isBefore(timeOutTime)) {
+        LOGGER.info("Waiting for config object to be updated by AppConfigMonitor");
+        // AppConfigMonitor waits 2s after detecting the change before it actually updates the object
+        // so need to allow for that
+        while (!uiConfigProvider.get().getHtmlTitle().equals(newValue)) {
+            if (Instant.now().isAfter(timeOutTime)) {
+                Assertions.fail("Timed out waiting for {} to equal {}",
+                        uiConfigProvider.get().getHtmlTitle(),
+                        newValue);
+            }
 
             LOGGER.debug("value {}", uiConfigProvider.get().getHtmlTitle());
             Thread.sleep(200);
@@ -208,5 +171,18 @@ class TestAppConfigMonitor {
 
         Assertions.assertThat(uiConfigProvider.get().getHtmlTitle())
                 .isEqualTo(newValue);
+    }
+
+    private void grepFile(final Path file) {
+        try {
+            String str = YAML_KEY_PATTERN.matcher(Files.readString(file))
+                    .results()
+                    .findFirst()
+                    .orElseThrow()
+                    .group(0);
+            LOGGER.info("Found str [{}] in file {}", str, file);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
