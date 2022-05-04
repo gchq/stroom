@@ -255,13 +255,13 @@ class TestStroomEventLoggingServiceImpl {
     }
 
     @Test
-    void testConvertPojoWithInfoPrvider() throws Exception {
+    void testConvertPojoWithInfoProvider() throws Exception {
         BaseObject baseObject = stroomEventLoggingService.convert(new TestObj());
         assertThat(baseObject).isSameAs(testObj);
     }
 
     @Test
-    void testConvertPojoWithoutInfoPrvider() throws Exception {
+    void testConvertPojoWithoutInfoProvider() throws Exception {
         String name = "TestSecretObject1";
         String typeName = TestSecretObj.class.getSimpleName();
         BaseObject baseObject = stroomEventLoggingService.convert(new TestSecretObj(name, "b", "x"));

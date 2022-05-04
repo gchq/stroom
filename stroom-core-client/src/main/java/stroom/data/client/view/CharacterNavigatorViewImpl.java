@@ -230,6 +230,9 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     @UiHandler("showHeadCharactersBtn")
     void onClickShowHeadCharacters(final ClickEvent event) {
         if (display != null) {
+            // Disable the control to stop the user clicking it while the position is being changed
+            // It will be re-enabled (if applicable) once the position has changed
+            showHeadCharactersBtn.setEnabled(false);
             display.showHeadCharacters();
         }
     }
@@ -237,6 +240,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     @UiHandler("advanceCharactersBackwardBtn")
     void onClickNextAdvanceCharsBackwards(final ClickEvent event) {
         if (display != null) {
+            advanceCharactersBackwardBtn.setEnabled(false);
             display.advanceCharactersBackwards();
         }
     }
@@ -244,6 +248,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     @UiHandler("advanceCharactersForwardBtn")
     void onClickAdvanceCharsForwards(final ClickEvent event) {
         if (display != null) {
+            advanceCharactersForwardBtn.setEnabled(false);
             display.advanceCharactersForward();
         }
     }
@@ -251,6 +256,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     @UiHandler("refreshBtn")
     void onClickRefresh(final ClickEvent event) {
         if (display != null) {
+            refreshBtn.setEnabled(false);
             display.refresh();
         }
     }

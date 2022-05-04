@@ -2,6 +2,7 @@ package stroom.app.guice;
 
 import stroom.app.uri.UriFactoryModule;
 import stroom.cluster.impl.ClusterModule;
+import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.index.impl.IndexShardWriterExecutorProvider;
 import stroom.index.impl.IndexShardWriterExecutorProviderImpl;
@@ -10,6 +11,7 @@ import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.SessionResourceModule;
 import stroom.security.impl.SecurityContextModule;
 import stroom.statistics.impl.sql.search.SQLStatisticSearchModule;
+import stroom.util.guice.AdminServletBinder;
 import stroom.util.guice.HasSystemInfoBinder;
 
 import com.google.inject.AbstractModule;
@@ -83,6 +85,9 @@ public class AppModule extends AbstractModule {
 
         HasSystemInfoBinder.create(binder())
                 .bind(LogLevelInspector.class);
+
+        AdminServletBinder.create(binder())
+                .bind(FilteredHealthCheckServlet.class);
     }
 
 }

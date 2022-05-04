@@ -205,6 +205,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         try {
             final IndexShardWriter indexShardWriter = new IndexShardWriterImpl(indexShardManager,
+                    indexConfigProvider.get(),
                     indexStructure,
                     indexShardKey,
                     indexShard,
