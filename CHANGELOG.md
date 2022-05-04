@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.203] - 2022-05-04
+
+* Fix failing test.
+
+
 ## [v7.0-beta.202] - 2022-05-04
 
 * No changes, failed build.
@@ -4366,7 +4371,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.202...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.203...HEAD
+[v7.0-beta.203]: https://github.com/gchq/stroom/compare/v7.0-beta.202...v7.0-beta.203
 [v7.0-beta.202]: https://github.com/gchq/stroom/compare/v7.0-beta.201...v7.0-beta.202
 [v7.0-beta.201]: https://github.com/gchq/stroom/compare/v7.0-beta.200...v7.0-beta.201
 [v7.0-beta.200]: https://github.com/gchq/stroom/compare/v7.0-beta.199...v7.0-beta.200
