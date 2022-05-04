@@ -211,6 +211,9 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     @UiHandler("firstPageBtn")
     void onClickFirstPageBtn(final ClickEvent event) {
         if (display != null) {
+            // Disable the control to stop the user clicking it while the position is being changed
+            // It will be re-enabled (if applicable) once the position has changed
+            firstPageBtn.setEnabled(false);
             display.firstPage();
         }
     }
@@ -218,6 +221,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     @UiHandler("previousPageBtn")
     void onClickNextPageBtn(final ClickEvent event) {
         if (display != null) {
+            previousPageBtn.setEnabled(false);
             display.previousPage();
         }
     }
@@ -225,6 +229,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     @UiHandler("nextPageBtn")
     void onClickPreviousPageBtn(final ClickEvent event) {
         if (display != null) {
+            nextPageBtn.setEnabled(false);
             display.nextPage();
         }
     }
@@ -232,6 +237,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     @UiHandler("lastPageBtn")
     void onClickLastPageBtn(final ClickEvent event) {
         if (display != null) {
+            lastPageBtn.setEnabled(false);
             display.lastPage();
         }
     }
@@ -239,6 +245,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     @UiHandler("refreshBtn")
     void onClickRefresh(final ClickEvent event) {
         if (display != null) {
+            refreshBtn.setEnabled(false);
             display.refresh();
         }
     }
