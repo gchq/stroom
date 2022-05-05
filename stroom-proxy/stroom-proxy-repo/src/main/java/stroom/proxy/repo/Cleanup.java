@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -41,7 +42,7 @@ public class Cleanup {
     private final AggregateDao aggregateDao;
     private final ForwardSourceDao forwardSourceDao;
     private final ForwardAggregateDao forwardAggregateDao;
-    private final RepoDbConfig dbConfig;
+    private final ProxyDbConfig dbConfig;
 
     private final RepoSources sources;
     private final SequentialFileStore sequentialFileStore;
@@ -53,7 +54,7 @@ public class Cleanup {
             final AggregateDao aggregateDao,
             final ForwardSourceDao forwardSourceDao,
             final ForwardAggregateDao forwardAggregateDao,
-            final RepoDbConfig dbConfig,
+            final ProxyDbConfig dbConfig,
             final SequentialFileStore sequentialFileStore) {
         this.sources = sources;
         this.sourceDao = sourceDao;
@@ -66,18 +67,20 @@ public class Cleanup {
     }
 
     public void cleanupSources() {
-        final int batchSize = dbConfig.getBatchSize();
+        final int batchSize = 100;//dbConfig.getBatchSize();
         boolean full = true;
         while (full) {
             final List<RepoSource> list = sources.getDeletableSources(batchSize);
+            final List<RepoSource> successList = new ArrayList<>();
             for (final RepoSource source : list) {
                 try {
                     sequentialFileStore.deleteSource(source.fileStoreId());
+                    successList.add(source);
                 } catch (final IOException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
             }
-            sources.deleteSources(list);
+            sources.deleteSources(successList);
             full = list.size() == batchSize;
         }
     }

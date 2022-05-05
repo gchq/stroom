@@ -51,17 +51,17 @@ entity aggregate {
   *new_position : bigint
 }
 
-entity forward_url {
+entity forward_dest {
   *id : int
   --
-  *url : varchar(255)
+  *name : varchar(255)
 }
 
 entity forward_source {
   *id : bigint
   --
   *update_time_ms : bigint
-  *fk_forward_url_id : int
+  *fk_forward_dest_id : int
   *fk_source_id : bigint
   *success : boolean
   *error : varchar(255)
@@ -74,7 +74,7 @@ entity forward_aggregate {
   *id : bigint
   --
   *update_time_ms : bigint
-  *fk_forward_url_id : int
+  *fk_forward_dest_id : int
   *fk_aggregate_id : bigint
   *success : boolean
   *error : varchar(255)
@@ -90,9 +90,9 @@ feed ||--|{ aggregate
 source ||..o{ source_item
 source_item ||--|{ source_entry
 aggregate ||--|{ source_item
-forward_source }o--|| forward_url
+forward_source }o--|| forward_dest
 forward_source }o..|| source
-forward_aggregate }o--|| forward_url
+forward_aggregate }o--|| forward_dest
 forward_aggregate }o--|| aggregate
 
 @enduml

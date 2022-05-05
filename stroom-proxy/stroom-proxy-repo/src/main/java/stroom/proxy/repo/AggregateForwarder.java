@@ -46,7 +46,7 @@ public class AggregateForwarder {
     private final FeedDao feedDao;
     private final Aggregator aggregator;
     private final ForwardAggregateDao forwardAggregateDao;
-    private final ForwardUrls forwardUrls;
+    private final ForwardDestinations forwardDestinations;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
     private final ForwarderDestinations forwarderDestinations;
     private final Sender sender;
@@ -58,14 +58,14 @@ public class AggregateForwarder {
     AggregateForwarder(final FeedDao feedDao,
                        final Aggregator aggregator,
                        final ForwardAggregateDao forwardAggregateDao,
-                       final ForwardUrls forwardUrls,
+                       final ForwardDestinations forwardDestinations,
                        final ForwarderDestinations forwarderDestinations,
                        final Sender sender,
                        final ProgressLog progressLog) {
         this.feedDao = feedDao;
         this.aggregator = aggregator;
         this.forwardAggregateDao = forwardAggregateDao;
-        this.forwardUrls = forwardUrls;
+        this.forwardDestinations = forwardDestinations;
 
         this.forwarderDestinations = forwarderDestinations;
         this.sender = sender;
@@ -76,10 +76,10 @@ public class AggregateForwarder {
 
     private void init() {
         // Add forward records for new forward URLs.
-        forwardAggregateDao.addNewForwardAggregates(forwardUrls.getNewForwardUrls());
+        forwardAggregateDao.addNewForwardAggregates(forwardDestinations.getNewForwardDests());
 
         // Remove forward records for forward URLs that are no longer in use.
-        forwardAggregateDao.removeOldForwardAggregates(forwardUrls.getOldForwardUrls());
+        forwardAggregateDao.removeOldForwardAggregates(forwardDestinations.getOldForwardDests());
     }
 
 //    public void createAllForwardRecords() {
@@ -94,7 +94,7 @@ public class AggregateForwarder {
     private void createForwardAggregates(final Batch<Aggregate> batch) {
         // Forward to all remaining places.
         progressLog.increment("AggregateForwarder - createForwardRecord");
-        forwardAggregateDao.createForwardAggregates(batch, forwardUrls.getForwardUrls());
+        forwardAggregateDao.createForwardAggregates(batch, forwardDestinations.getForwardDests());
     }
 
     public void forwardAll() {
@@ -161,7 +161,7 @@ public class AggregateForwarder {
             }
 
             final StreamHandlers streamHandlers =
-                    forwarderDestinations.getProvider(forwardAggregate.getForwardUrl().getUrl());
+                    forwarderDestinations.getProvider(forwardAggregate.getForwardDest().getName());
 
             // Start the POST
             try {

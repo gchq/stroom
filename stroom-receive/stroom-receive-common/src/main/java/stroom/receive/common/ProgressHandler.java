@@ -1,4 +1,4 @@
-package stroom.proxy.repo;
+package stroom.receive.common;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

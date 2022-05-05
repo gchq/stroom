@@ -3,7 +3,7 @@ package stroom.proxy.repo.dao;
 import stroom.data.zip.StroomZipFileType;
 import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.Aggregate;
-import stroom.proxy.repo.RepoDbConfig;
+import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceEntry;
 import stroom.proxy.repo.RepoSourceItem;
@@ -16,6 +16,7 @@ import stroom.proxy.repo.queue.RecordQueue;
 import stroom.proxy.repo.queue.WriteQueue;
 
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public class AggregateDao {
 
     @Inject
     AggregateDao(final SqliteJooqHelper jooq,
-                 final RepoDbConfig dbConfig) {
+                 final ProxyDbConfig dbConfig) {
         this.jooq = jooq;
         init();
 
@@ -299,67 +300,6 @@ public class AggregateDao {
                 .orderBy(AGGREGATE.CREATE_TIME_MS)
                 .limit(1)
                 .fetchOptional());
-    }
-
-    /**
-     * Fetch a list of all source entries that belong to the specified aggregate.
-     *
-     * @param aggregateId The id of the aggregate to get source entries for.
-     * @return A list of source entries for the aggregate.
-     */
-    public Map<RepoSource, List<RepoSourceItem>> fetchSourceItems(final long aggregateId) {
-        final Map<Long, RepoSourceItem> items = new HashMap<>();
-        final Map<RepoSource, List<RepoSourceItem>> resultMap =
-                new TreeMap<>(Comparator.comparing(RepoSource::id));
-
-        // Get all of the source zip entries that we want to write to the forwarding location.
-        jooq.readOnlyTransactionResult(context -> context
-                        .select(
-                                SOURCE_ENTRY.EXTENSION,
-                                SOURCE_ENTRY.EXTENSION_TYPE,
-                                SOURCE_ENTRY.BYTE_SIZE,
-                                SOURCE_ITEM.NAME,
-                                SOURCE_ITEM.FK_FEED_ID,
-                                SOURCE_ITEM.FK_AGGREGATE_ID,
-                                SOURCE.ID,
-                                SOURCE.FILE_STORE_ID,
-                                SOURCE.FK_FEED_ID)
-                        .from(SOURCE_ENTRY)
-                        .join(SOURCE_ITEM).on(SOURCE_ITEM.ID.eq(SOURCE_ENTRY.FK_SOURCE_ITEM_ID))
-                        .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
-                        .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId))
-                        .orderBy(SOURCE.ID, SOURCE_ITEM.ID, SOURCE_ENTRY.EXTENSION_TYPE, SOURCE_ENTRY.EXTENSION)
-                        .fetch())
-                .forEach(r -> {
-                    final long id = r.get(SOURCE_ITEM.ID);
-
-                    final RepoSourceItem item = items.computeIfAbsent(id, k -> {
-                        final RepoSource source = new RepoSource(
-                                r.get(SOURCE.ID),
-                                r.get(SOURCE.FILE_STORE_ID),
-                                r.get(SOURCE.FK_FEED_ID));
-
-                        final RepoSourceItem repoSourceItem = new RepoSourceItem(
-                                source,
-                                r.get(SOURCE_ITEM.NAME),
-                                r.get(SOURCE_ITEM.FK_FEED_ID),
-                                r.get(SOURCE_ITEM.FK_AGGREGATE_ID),
-                                0,
-                                new ArrayList<>());
-
-                        resultMap.computeIfAbsent(source, s -> new ArrayList<>()).add(repoSourceItem);
-
-                        return repoSourceItem;
-                    });
-
-                    final RepoSourceEntry entry = new RepoSourceEntry(
-                            StroomZipFileType.TYPE_MAP.get(r.get(SOURCE_ENTRY.EXTENSION_TYPE)),
-                            r.get(SOURCE_ENTRY.EXTENSION),
-                            r.get(SOURCE_ENTRY.BYTE_SIZE));
-                    item.addEntry(entry);
-                });
-
-        return resultMap;
     }
 
     public int countAggregates() {

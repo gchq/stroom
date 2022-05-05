@@ -33,7 +33,6 @@ dependencies {
     implementation project(':stroom-node:stroom-node-impl')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-processor:stroom-processor-impl')
-    implementation project(':stroom-proxy:stroom-proxy-repo')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-search:stroom-search-elastic')
     implementation project(':stroom-search:stroom-search-extraction')

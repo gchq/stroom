@@ -1,7 +1,7 @@
 package stroom.proxy.repo.dao;
 
-import stroom.proxy.repo.ProxyRepoDbConfig;
 import stroom.proxy.repo.ProxyRepoDbConnProvider;
+import stroom.proxy.repo.ProxyDbConfig;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
@@ -34,7 +34,7 @@ import javax.sql.DataSource;
 
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
-import static stroom.proxy.repo.db.jooq.tables.ForwardUrl.FORWARD_URL;
+import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
@@ -59,11 +59,11 @@ public class SqliteJooqHelper {
 
     @Inject
     public SqliteJooqHelper(final ProxyRepoDbConnProvider connProvider,
-                            final ProxyRepoDbConfig proxyRepoDbConfig) {
+                            final ProxyDbConfig proxyProxyDbConfig) {
         this.sqlDialect = SQLDialect.SQLITE;
         this.dataSource = connProvider;
-        this.maintenancePragma = proxyRepoDbConfig.getMaintenancePragma();
-        this.maintenancePragmaFrequencyMs = proxyRepoDbConfig.getMaintenancePragmaFrequency().toMillis();
+        this.maintenancePragma = proxyProxyDbConfig.getMaintenancePragma();
+        this.maintenancePragmaFrequencyMs = proxyProxyDbConfig.getMaintenancePragmaFrequency().toMillis();
 
         // Start periodic report.
         CompletableFuture.runAsync(() -> {
@@ -343,7 +343,7 @@ public class SqliteJooqHelper {
         printRecordCount(SOURCE_ENTRY, null, "SOURCE_ENTRY");
         printRecordCount(AGGREGATE, null, "AGGREGATE");
         printRecordCount(AGGREGATE, AGGREGATE.NEW_POSITION.isNotNull(), "AGGREGATE NEW POSITION");
-        printRecordCount(FORWARD_URL, null, "FORWARD_URL");
+        printRecordCount(FORWARD_DEST, null, "FORWARD_DEST");
         printRecordCount(FORWARD_AGGREGATE, null, "FORWARD_AGGREGATE");
         printRecordCount(FORWARD_AGGREGATE,
                 FORWARD_AGGREGATE.NEW_POSITION.isNotNull(),
@@ -364,7 +364,7 @@ public class SqliteJooqHelper {
         printTable(SOURCE_ITEM, null, "SOURCE_ITEM");
         printTable(SOURCE_ENTRY, null, "SOURCE_ENTRY");
         printTable(AGGREGATE, null, "AGGREGATE");
-        printTable(FORWARD_URL, null, "FORWARD_URL");
+        printTable(FORWARD_DEST, null, "FORWARD_DEST");
         printTable(FORWARD_AGGREGATE, null, "FORWARD_AGGREGATE");
     }
 

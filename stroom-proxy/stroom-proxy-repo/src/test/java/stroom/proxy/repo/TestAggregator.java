@@ -1,7 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.proxy.repo.dao.AggregateDao;
-import stroom.proxy.repo.dao.ForwardUrlDao;
+import stroom.proxy.repo.dao.ForwardDestDao;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.proxy.repo.queue.Batch;
@@ -38,7 +38,7 @@ public class TestAggregator {
     @Inject
     private AggregateForwarder aggregateForwarder;
     @Inject
-    private ForwardUrlDao forwardUrlDao;
+    private ForwardDestDao forwardDestDao;
     @Inject
     private MockForwardDestinations mockForwardDestinations;
     @Inject
@@ -93,7 +93,7 @@ public class TestAggregator {
 
         // Now forward the completed aggregates.
         final String forwardUrl = "http://test-url.com";
-        forwardUrlDao.getForwardUrlId(forwardUrl);
+        forwardDestDao.getForwardDestId(forwardUrl);
         aggregateForwarder.createAllForwardAggregates();
         aggregateForwarder.flush();
 

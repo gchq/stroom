@@ -1,9 +1,10 @@
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
-import stroom.proxy.app.forwarder.ForwardDestinationConfig;
+import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
+import stroom.proxy.app.forwarder.ForwardHttpPostHandlersFactory;
 import stroom.proxy.app.forwarder.ForwardStreamHandler;
-import stroom.proxy.app.forwarder.ForwarderConfig;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.LogStream;
@@ -32,7 +33,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -115,14 +115,8 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                 .withRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()))
                 .withStoringEnabled(isStoringEnabled);
 
-        final List<ForwardDestinationConfig> forwardDestinationConfigList = forwardUrlList.stream()
-                .map(url ->
-                        new ForwardDestinationConfig().withForwardUrl(url))
-                .collect(Collectors.toList());
-
-        final ForwarderConfig forwarderConfig = new ForwarderConfig()
-                .forwardingEnabled(isForwardingEnabled)
-                .forwardDestinations(forwardDestinationConfigList);
+        final ProxyConfig.Builder builder = ProxyConfig.builder();
+        forwardUrlList.forEach(url -> builder.addForwardDestination(ForwardHttpPostConfig.withForwardUrl(url, url)));
 
         try {
             final Entries mockStroomZipOutputStream = Mockito.mock(Entries.class);
@@ -143,17 +137,23 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
         final PathCreator pathCreator = new TemporaryPathCreator(tempDir);
 //        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
 
-        final ForwarderDestinations forwarderDestinations = new ForwarderDestinationsImpl(
+        final ProxyConfig proxyConfig = builder.build();
+
+        ForwardHttpPostHandlersFactory forwardHttpPostHandlersFactory = new ForwardHttpPostHandlersFactory(
                 logStream,
-                () -> forwarderConfig,
+                pathCreator,
+                () -> buildInfo);
+
+        final ForwarderDestinations forwarderDestinations = new ForwarderDestinationsImpl(
+                proxyConfig,
                 proxyRepoConfig,
-                () -> buildInfo,
-                pathCreator);
+                forwardHttpPostHandlersFactory,
+                null);
 
         return new ReceiveStreamHandlers(
                 proxyRepoConfig,
                 proxyRepositoryRequestHandlerProvider,
                 forwarderDestinations,
-                forwarderConfig);
+                proxyConfig);
     }
 }

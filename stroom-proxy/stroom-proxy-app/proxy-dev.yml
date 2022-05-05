@@ -103,10 +103,11 @@ proxyConfig:
     maxAggregateAge: 10s
     aggregationFrequency: 10s
 
-  forwarder:
-    forwardingEnabled: true
-    forwardDestinations:
-      - forwardUrl: "http://localhost:8080/stroom/noauth/datafeed"
+  forwardDestinations:
+    - type: "post"
+      enabled: true
+      name: "upstream"
+      forwardUrl: "http://localhost:8080/stroom/noauth/datafeed"
 
   logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"

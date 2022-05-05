@@ -51,13 +51,13 @@ public class ProxyDbModule extends AbstractModule {
     public ProxyRepoDbConnProvider getConnectionProvider(
             final RepoDbDirProvider repoDbDirProvider,
             final DataSourceFactory dataSourceFactory,
-            final RepoDbConfig repoDbConfig) {
+            final ProxyDbConfig proxyDbConfig) {
         LOGGER.debug(() -> "Getting connection provider for " + MODULE);
 
         final AbstractDbConfig config = getDbConfig(repoDbDirProvider);
         final DataSource dataSource = dataSourceFactory.create(config, MODULE, true);
         FlywayUtil.migrate(dataSource, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
-        return new DataSourceImpl(dataSource, repoDbConfig);
+        return new DataSourceImpl(dataSource, proxyDbConfig);
     }
 
     private AbstractDbConfig getDbConfig(final RepoDbDirProvider repoDbDirProvider) {
@@ -88,14 +88,14 @@ public class ProxyDbModule extends AbstractModule {
 
     public static class DataSourceImpl extends DataSourceProxy implements ProxyRepoDbConnProvider {
 
-        private final RepoDbConfig repoDbConfig;
+        private final ProxyDbConfig proxyDbConfig;
 
         private DataSourceImpl(final DataSource dataSource,
-                               final RepoDbConfig repoDbConfig) {
+                               final ProxyDbConfig proxyDbConfig) {
             super(dataSource, MODULE);
-            this.repoDbConfig = repoDbConfig;
+            this.proxyDbConfig = proxyDbConfig;
 
-            for (final String pragma : repoDbConfig.getGlobalPragma()) {
+            for (final String pragma : proxyDbConfig.getGlobalPragma()) {
                 try (final Connection connection = super.getConnection()) {
                     pragma(connection, pragma);
                 } catch (final SQLException e) {
@@ -107,7 +107,7 @@ public class ProxyDbModule extends AbstractModule {
         @Override
         public Connection getConnection() throws SQLException {
             final Connection connection = super.getConnection();
-            for (final String pragma : repoDbConfig.getConnectionPragma()) {
+            for (final String pragma : proxyDbConfig.getConnectionPragma()) {
                 pragma(connection, pragma);
             }
             return connection;

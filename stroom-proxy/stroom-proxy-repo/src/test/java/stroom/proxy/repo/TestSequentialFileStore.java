@@ -11,7 +11,6 @@ import stroom.util.io.FileUtil;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -19,7 +18,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,28 +25,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(ProxyRepoTestModule.class)
 class TestSequentialFileStore {
 
-    @Inject
-    private RepoSources proxyRepoSources;
-
-    @BeforeEach
-    void beforeEach() {
-        proxyRepoSources.clear();
-    }
-
     @Test
     void test() throws IOException {
         final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
         final SequentialFileStore fileStore = new SequentialFileStore(
-                () -> repoDir,
-                proxyRepoSources);
+                () -> repoDir);
 
         addFile(fileStore);
         addFile(fileStore);
 
         // Re open.
         final SequentialFileStore reopenFileStore = new SequentialFileStore(
-                () -> repoDir,
-                proxyRepoSources);
+                () -> repoDir);
 
         final FileSet fileSet1 = reopenFileStore.getStoreFileSet(1L);
         final FileSet fileSet2 = reopenFileStore.getStoreFileSet(2L);
@@ -70,8 +58,7 @@ class TestSequentialFileStore {
     void testPerformance() throws IOException {
         final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
         final SequentialFileStore fileStore = new SequentialFileStore(
-                () -> repoDir,
-                proxyRepoSources);
+                () -> repoDir);
 
         for (int i = 0; i < 100000; i++) {
             addFile(fileStore);

@@ -3,9 +3,7 @@ package stroom.proxy.app.guice;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyPathConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.proxy.repo.ProxyRepoDbConfig;
-import stroom.proxy.repo.RepoConfig;
-import stroom.proxy.repo.RepoDbConfig;
+import stroom.proxy.repo.ProxyDbConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -28,10 +26,7 @@ public class TestProxyConfigProvidersModule {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProxyConfigProvidersModule.class);
 
-    private static final Set<Class<?>> SPECIAL_CASE_CLASSES = Set.of(
-            PathConfig.class,
-            RepoConfig.class,
-            RepoDbConfig.class);
+    private static final Set<Class<?>> SPECIAL_CASE_CLASSES = Set.of(PathConfig.class);
 
     @Test
     void testProviderMethodPresence() {
@@ -45,7 +40,7 @@ public class TestProxyConfigProvidersModule {
                 .collect(Collectors.toSet());
 
         final Set<Class<?>> notInjectableMethodReturnClasses = Arrays.stream(
-                ProxyConfigProvidersModule.class.getDeclaredMethods())
+                        ProxyConfigProvidersModule.class.getDeclaredMethods())
                 .filter(method -> method.getName().endsWith(GenerateProxyConfigProvidersModule.THROWING_METHOD_SUFFIX))
                 .map(Method::getReturnType)
                 .collect(Collectors.toSet());
@@ -129,7 +124,7 @@ public class TestProxyConfigProvidersModule {
                             } else if (method.getName().equals("getRepoDbConfig")) {
                                 // StroomPathConfig is also mapped to PathConfig
                                 softAssertions.assertThat(config.getClass())
-                                        .isEqualTo(ProxyRepoDbConfig.class);
+                                        .isEqualTo(ProxyDbConfig.class);
                             } else {
                                 softAssertions.assertThat(config.getClass().getSimpleName())
                                         .withFailMessage(LogUtil.message("method {} returned {}, expecting {}",

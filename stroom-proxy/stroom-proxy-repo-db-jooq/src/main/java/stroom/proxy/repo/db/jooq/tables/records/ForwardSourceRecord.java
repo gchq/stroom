@@ -4,13 +4,13 @@
 package stroom.proxy.repo.db.jooq.tables.records;
 
 
+import stroom.proxy.repo.db.jooq.tables.ForwardSource;
+
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record9;
 import org.jooq.Row9;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.proxy.repo.db.jooq.tables.ForwardSource;
 
 
 /**
@@ -50,16 +50,16 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
     }
 
     /**
-     * Setter for <code>forward_source.fk_forward_url_id</code>.
+     * Setter for <code>forward_source.fk_forward_dest_id</code>.
      */
-    public void setFkForwardUrlId(Integer value) {
+    public void setFkForwardDestId(Integer value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>forward_source.fk_forward_url_id</code>.
+     * Getter for <code>forward_source.fk_forward_dest_id</code>.
      */
-    public Integer getFkForwardUrlId() {
+    public Integer getFkForwardDestId() {
         return (Integer) get(2);
     }
 
@@ -182,7 +182,7 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
 
     @Override
     public Field<Integer> field3() {
-        return ForwardSource.FORWARD_SOURCE.FK_FORWARD_URL_ID;
+        return ForwardSource.FORWARD_SOURCE.FK_FORWARD_DEST_ID;
     }
 
     @Override
@@ -227,7 +227,7 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
 
     @Override
     public Integer component3() {
-        return getFkForwardUrlId();
+        return getFkForwardDestId();
     }
 
     @Override
@@ -272,7 +272,7 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
 
     @Override
     public Integer value3() {
-        return getFkForwardUrlId();
+        return getFkForwardDestId();
     }
 
     @Override
@@ -319,7 +319,7 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
 
     @Override
     public ForwardSourceRecord value3(Integer value) {
-        setFkForwardUrlId(value);
+        setFkForwardDestId(value);
         return this;
     }
 
@@ -387,12 +387,12 @@ public class ForwardSourceRecord extends UpdatableRecordImpl<ForwardSourceRecord
     /**
      * Create a detached, initialised ForwardSourceRecord
      */
-    public ForwardSourceRecord(Long id, Long updateTimeMs, Integer fkForwardUrlId, Long fkSourceId, Boolean success, String error, Long tries, Long newPosition, Long retryPosition) {
+    public ForwardSourceRecord(Long id, Long updateTimeMs, Integer fkForwardDestId, Long fkSourceId, Boolean success, String error, Long tries, Long newPosition, Long retryPosition) {
         super(ForwardSource.FORWARD_SOURCE);
 
         setId(id);
         setUpdateTimeMs(updateTimeMs);
-        setFkForwardUrlId(fkForwardUrlId);
+        setFkForwardDestId(fkForwardDestId);
         setFkSourceId(fkSourceId);
         setSuccess(success);
         setError(error);

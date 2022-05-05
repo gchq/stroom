@@ -7,40 +7,26 @@ import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
 import stroom.receive.common.StroomStreamException;
-import stroom.util.cert.SSLUtil;
-import stroom.util.io.PathCreator;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.function.Consumer;
 import javax.net.ssl.SSLSocketFactory;
 
-public class ForwardStreamHandlers implements StreamHandlers {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandlers.class);
+public class ForwardHttpPostHandlers implements StreamHandlers {
 
     private final LogStream logStream;
     private final String userAgentString;
-    private final ForwardDestinationConfig config;
+    private final ForwardHttpPostConfig config;
     private final SSLSocketFactory sslSocketFactory;
 
-    public ForwardStreamHandlers(final LogStream logStream,
-                                 final String userAgentString,
-                                 final ForwardDestinationConfig config,
-                                 final PathCreator pathCreator) {
+    public ForwardHttpPostHandlers(final LogStream logStream,
+                                   final ForwardHttpPostConfig config,
+                                   final String userAgentString,
+                                   final SSLSocketFactory sslSocketFactory) {
         this.logStream = logStream;
         this.userAgentString = userAgentString;
-
-        LOGGER.info("Configuring SSLSocketFactory for URL {}", config.getForwardUrl());
-        if (config.getSslConfig() != null) {
-            sslSocketFactory = SSLUtil.createSslSocketFactory(config.getSslConfig(), pathCreator);
-        } else {
-            sslSocketFactory = null;
-        }
-
+        this.sslSocketFactory = sslSocketFactory;
         this.config = config;
     }
 
@@ -77,12 +63,11 @@ public class ForwardStreamHandlers implements StreamHandlers {
         }
     }
 
-    ForwardDestinationConfig getConfig() {
+    ForwardHttpPostConfig getConfig() {
         return config;
     }
 
     SSLSocketFactory getSslSocketFactory() {
         return sslSocketFactory;
     }
-
 }

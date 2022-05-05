@@ -30,11 +30,7 @@ proxyConfig:
     apiKey: null
     url: null
   fileScanners: []
-  forwarder:
-    forwardDestinations: []
-    forwardingEnabled: false
-    retryFrequency: "PT1M"
-    userAgent: null
+  forwardDestinations: []
   haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
@@ -86,6 +82,7 @@ proxyConfig:
     userAgent: null
     validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
+  retryFrequency: "PT1M"
   threads:
     examineSourceThreadCount: 3
     forwardRetryThreadCount: 2

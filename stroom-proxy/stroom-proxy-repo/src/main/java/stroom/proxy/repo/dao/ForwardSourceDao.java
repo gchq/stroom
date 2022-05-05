@@ -1,9 +1,9 @@
 package stroom.proxy.repo.dao;
 
 import stroom.db.util.JooqUtil;
+import stroom.proxy.repo.ForwardDest;
 import stroom.proxy.repo.ForwardSource;
-import stroom.proxy.repo.ForwardUrl;
-import stroom.proxy.repo.RepoDbConfig;
+import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.db.jooq.tables.records.ForwardSourceRecord;
 import stroom.proxy.repo.queue.Batch;
@@ -30,8 +30,8 @@ import javax.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
+import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
 import static stroom.proxy.repo.db.jooq.tables.ForwardSource.FORWARD_SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.ForwardUrl.FORWARD_URL;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 
 @Singleton
@@ -40,7 +40,7 @@ public class ForwardSourceDao implements Flushable {
     private static final Field<?>[] FORWARD_SOURCE_COLUMNS = new Field<?>[]{
             FORWARD_SOURCE.ID,
             FORWARD_SOURCE.UPDATE_TIME_MS,
-            FORWARD_SOURCE.FK_FORWARD_URL_ID,
+            FORWARD_SOURCE.FK_FORWARD_DEST_ID,
             FORWARD_SOURCE.FK_SOURCE_ID,
             FORWARD_SOURCE.SUCCESS,
             FORWARD_SOURCE.NEW_POSITION};
@@ -52,7 +52,7 @@ public class ForwardSourceDao implements Flushable {
                     .where(FORWARD_SOURCE.FK_SOURCE_ID.eq(SOURCE.ID)));
 
     private final SqliteJooqHelper jooq;
-    private final RepoDbConfig dbConfig;
+    private final ProxyDbConfig dbConfig;
     private final AtomicLong forwardAggregateId = new AtomicLong();
 
 
@@ -71,7 +71,7 @@ public class ForwardSourceDao implements Flushable {
 
     @Inject
     ForwardSourceDao(final SqliteJooqHelper jooq,
-                     final RepoDbConfig dbConfig) {
+                     final ProxyDbConfig dbConfig) {
         this.jooq = jooq;
         this.dbConfig = dbConfig;
         init();
@@ -110,17 +110,17 @@ public class ForwardSourceDao implements Flushable {
         jooq.readOnlyTransactionResult(context -> context
                         .select(FORWARD_SOURCE.ID,
                                 FORWARD_SOURCE.UPDATE_TIME_MS,
-                                FORWARD_SOURCE.FK_FORWARD_URL_ID,
+                                FORWARD_SOURCE.FK_FORWARD_DEST_ID,
                                 FORWARD_SOURCE.FK_SOURCE_ID,
                                 FORWARD_SOURCE.SUCCESS,
                                 FORWARD_SOURCE.ERROR,
                                 FORWARD_SOURCE.TRIES,
                                 positionField,
-                                FORWARD_URL.URL,
+                                FORWARD_DEST.NAME,
                                 SOURCE.FILE_STORE_ID,
                                 SOURCE.FK_FEED_ID)
                         .from(FORWARD_SOURCE)
-                        .join(FORWARD_URL).on(FORWARD_URL.ID.eq(FORWARD_SOURCE.FK_FORWARD_URL_ID))
+                        .join(FORWARD_DEST).on(FORWARD_DEST.ID.eq(FORWARD_SOURCE.FK_FORWARD_DEST_ID))
                         .join(SOURCE).on(SOURCE.ID.eq(FORWARD_SOURCE.FK_SOURCE_ID))
                         .where(positionField.isNotNull())
                         .and(positionField.gt(currentReadPos))
@@ -129,8 +129,8 @@ public class ForwardSourceDao implements Flushable {
                         .fetch())
                 .forEach(r -> {
                     pos.set(r.get(positionField));
-                    final ForwardUrl forwardUrl = new ForwardUrl(r.get(FORWARD_AGGREGATE.FK_FORWARD_URL_ID),
-                            r.get(FORWARD_URL.URL));
+                    final ForwardDest forwardDest = new ForwardDest(r.get(FORWARD_AGGREGATE.FK_FORWARD_DEST_ID),
+                            r.get(FORWARD_DEST.NAME));
                     final RepoSource source = new RepoSource(
                             r.get(FORWARD_SOURCE.FK_SOURCE_ID),
                             r.get(SOURCE.FILE_STORE_ID),
@@ -139,7 +139,7 @@ public class ForwardSourceDao implements Flushable {
                             r.get(FORWARD_SOURCE.ID),
                             r.get(FORWARD_SOURCE.UPDATE_TIME_MS),
                             source,
-                            forwardUrl,
+                            forwardDest,
                             r.get(FORWARD_SOURCE.SUCCESS),
                             r.get(FORWARD_SOURCE.ERROR),
                             r.get(FORWARD_SOURCE.TRIES));
@@ -194,7 +194,7 @@ public class ForwardSourceDao implements Flushable {
 //     */
 //    public Map<Integer, Boolean> getForwardingState(final long sourceId) {
 //        return jooq.readOnlyTransactionResult(context -> context
-//                        .select(FORWARD_SOURCE.FK_FORWARD_URL_ID, FORWARD_SOURCE.SUCCESS)
+//                        .select(FORWARD_SOURCE.FK_FORWARD_DEST_ID, FORWARD_SOURCE.SUCCESS)
 //                        .from(FORWARD_SOURCE)
 //                        .where(FORWARD_SOURCE.FK_SOURCE_ID.eq(sourceId))
 //                        .fetch())
@@ -203,12 +203,12 @@ public class ForwardSourceDao implements Flushable {
 //    }
 
     /**
-     * Add forward sources for any new URLs that have been added since the application last ran.
+     * Add forward sources for any new dests that have been added since the application last ran.
      *
-     * @param newForwardUrls New urls to add forward aggregate entries for.
+     * @param newForwardDests New dests to add forward aggregate entries for.
      */
-    public void addNewForwardSources(final List<ForwardUrl> newForwardUrls) {
-        if (newForwardUrls.size() > 0) {
+    public void addNewForwardSources(final List<ForwardDest> newForwardDests) {
+        if (newForwardDests.size() > 0) {
             final AtomicLong minId = new AtomicLong();
             final int batchSize = dbConfig.getBatchSize();
             boolean full = true;
@@ -234,22 +234,22 @@ public class ForwardSourceDao implements Flushable {
                         });
 
                 final Batch<RepoSource> batch = new Batch<>(sources, sources.size() == batchSize);
-                createForwardSources(batch, newForwardUrls);
+                createForwardSources(batch, newForwardDests);
                 full = batch.full();
             }
         }
     }
 
-    public void removeOldForwardSources(final List<ForwardUrl> oldForwardUrls) {
-        if (oldForwardUrls.size() > 0) {
-            final List<Integer> oldIdList = oldForwardUrls
+    public void removeOldForwardSources(final List<ForwardDest> oldForwardDests) {
+        if (oldForwardDests.size() > 0) {
+            final List<Integer> oldIdList = oldForwardDests
                     .stream()
-                    .map(ForwardUrl::getId)
+                    .map(ForwardDest::getId)
                     .collect(Collectors.toList());
 
             jooq.transaction(context -> context
                     .deleteFrom(FORWARD_SOURCE)
-                    .where(FORWARD_SOURCE.FK_FORWARD_URL_ID.in(oldIdList))
+                    .where(FORWARD_SOURCE.FK_FORWARD_DEST_ID.in(oldIdList))
                     .execute());
         }
     }
@@ -258,14 +258,14 @@ public class ForwardSourceDao implements Flushable {
      * Create a record of the fact that we forwarded an aggregate or at least tried to.
      */
     public void createForwardSources(final Batch<RepoSource> sources,
-                                     final List<ForwardUrl> forwardUrls) {
+                                     final List<ForwardDest> forwardDests) {
         recordQueue.add(() -> {
             for (final RepoSource source : sources.list()) {
-                for (final ForwardUrl forwardUrl : forwardUrls) {
+                for (final ForwardDest forwardDest : forwardDests) {
                     final Object[] row = new Object[FORWARD_SOURCE_COLUMNS.length];
                     row[0] = forwardAggregateId.incrementAndGet();
                     row[1] = System.currentTimeMillis();
-                    row[2] = forwardUrl.getId();
+                    row[2] = forwardDest.getId();
                     row[3] = source.id();
                     row[4] = false;
                     row[5] = forwardAggregateNewPosition.incrementAndGet();
@@ -319,8 +319,8 @@ public class ForwardSourceDao implements Flushable {
 //        return jooq.readOnlyTransactionResult(context -> context
 //                        .select(FORWARD_SOURCE.ID,
 //                                FORWARD_SOURCE.UPDATE_TIME_MS,
-//                                FORWARD_SOURCE.FK_FORWARD_URL_ID,
-//                                FORWARD_URL.URL,
+//                                FORWARD_SOURCE.FK_FORWARD_DEST_ID,
+//                                FORWARD_DEST.NAME,
 //                                SOURCE.FILE_STORE_ID,
 //                                SOURCE.FEED_NAME,
 //                                SOURCE.TYPE_NAME,
@@ -330,14 +330,14 @@ public class ForwardSourceDao implements Flushable {
 //                                FORWARD_SOURCE.ERROR,
 //                                FORWARD_SOURCE.TRIES)
 //                        .from(FORWARD_SOURCE)
-//                        .join(FORWARD_URL).on(FORWARD_URL.ID.eq(FORWARD_SOURCE.FK_FORWARD_URL_ID))
+//                        .join(FORWARD_DEST).on(FORWARD_DEST.ID.eq(FORWARD_SOURCE.FK_FORWARD_DEST_ID))
 //                        .join(SOURCE).on(SOURCE.ID.eq(FORWARD_SOURCE.FK_SOURCE_ID))
 //                        .where(positionField.eq(position))
 //                        .orderBy(FORWARD_SOURCE.ID)
 //                        .fetchOptional())
 //                .map(r -> {
-//                    final ForwardUrl forwardUrl = new ForwardUrl(r.get(FORWARD_SOURCE.FK_FORWARD_URL_ID),
-//                            r.get(FORWARD_URL.URL));
+//                    final ForwardUrl forwardUrl = new ForwardUrl(r.get(FORWARD_SOURCE.FK_FORWARD_DEST_ID),
+//                            r.get(FORWARD_DEST.NAME));
 //                    final RepoSource source = new RepoSource(
 //                            r.get(FORWARD_SOURCE.FK_SOURCE_ID),
 //                            r.get(SOURCE.FILE_STORE_ID),

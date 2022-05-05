@@ -2,7 +2,7 @@ package stroom.proxy.repo.dao;
 
 import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.RepoDbConfig;
+import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BindWriteQueue;
@@ -56,7 +56,7 @@ public class SourceDao implements Flushable {
     @Inject
     SourceDao(final SqliteJooqHelper jooq,
               final FeedDao feedDao,
-              final RepoDbConfig dbConfig) {
+              final ProxyDbConfig dbConfig) {
         this.jooq = jooq;
         this.feedDao = feedDao;
         init();

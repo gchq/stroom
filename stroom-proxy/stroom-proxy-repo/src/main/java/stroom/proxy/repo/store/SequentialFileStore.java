@@ -3,9 +3,7 @@ package stroom.proxy.repo.store;
 import stroom.data.zip.CharsetConstants;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.RepoDirProvider;
-import stroom.proxy.repo.RepoSources;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
 import stroom.util.io.WrappedOutputStream;
@@ -17,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -43,8 +40,6 @@ public class SequentialFileStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SequentialFileStore.class);
 
-    private final RepoSources repoSources;
-
     private final Path tempDir;
     private final Path storeDir;
 
@@ -57,9 +52,7 @@ public class SequentialFileStore {
 //    private final DirManager storeDirManager = new DirManager();
 
     @Inject
-    public SequentialFileStore(final RepoDirProvider repoDirProvider,
-                               final RepoSources repoSources) {
-        this.repoSources = repoSources;
+    public SequentialFileStore(final RepoDirProvider repoDirProvider) {
         final Path repoDir = repoDirProvider.get();
 
         // Create the root directory
@@ -107,47 +100,23 @@ public class SequentialFileStore {
     /**
      * Add sources to the DB.
      */
-    public void addSources() {
+    public long awaitNew(final long lastAddedStoreId) {
+        long currentStoreId = lastAddedStoreId;
         try {
-            long lastAddedStoreId = repoSources.getMaxFileStoreId();
-            long currentStoreId;
-            while (true) {
-                lock.lockInterruptibly();
-                try {
+            lock.lockInterruptibly();
+            try {
+                currentStoreId = addedStoreId.get();
+                while (currentStoreId <= lastAddedStoreId) {
+                    condition.await();
                     currentStoreId = addedStoreId.get();
-                    if (currentStoreId == lastAddedStoreId) {
-                        condition.await();
-                    }
-                } finally {
-                    lock.unlock();
                 }
-
-                for (long i = lastAddedStoreId + 1; i <= currentStoreId; i++) {
-                    addSource(i);
-                }
-                lastAddedStoreId = currentStoreId;
+            } finally {
+                lock.unlock();
             }
         } catch (final InterruptedException e) {
             UncheckedInterruptedException.resetAndThrow(e);
         }
-    }
-
-    private void addSource(final long storeId) {
-        final FileSet fileSet = getStoreFileSet(storeId);
-
-        // Read the meta data.
-        try (final InputStream inputStream = Files.newInputStream(fileSet.getMeta())) {
-            final AttributeMap attributeMap = new AttributeMap();
-            AttributeMapUtil.read(inputStream, attributeMap);
-            final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-            final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
-
-            // If we have added a new source to the repo then add a DB record for it.
-            repoSources.addSource(storeId, feedName, typeName, attributeMap);
-
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+        return currentStoreId;
     }
 
     public void deleteSource(final long storeId) throws IOException {

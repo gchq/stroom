@@ -2,9 +2,12 @@ package stroom.proxy.repo.dao;
 
 import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.Aggregate;
+import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.ForwardAggregate;
-import stroom.proxy.repo.ForwardUrl;
-import stroom.proxy.repo.RepoDbConfig;
+import stroom.proxy.repo.ForwardDest;
+import stroom.proxy.repo.ProxyDbConfig;
+import stroom.proxy.repo.RepoSource;
+import stroom.proxy.repo.RepoSourceItem;
 import stroom.proxy.repo.db.jooq.tables.records.ForwardAggregateRecord;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BindWriteQueue;
@@ -23,6 +26,7 @@ import org.jooq.impl.DSL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -31,7 +35,10 @@ import javax.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
-import static stroom.proxy.repo.db.jooq.tables.ForwardUrl.FORWARD_URL;
+import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
+import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
+import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
+import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 
 @Singleton
 public class ForwardAggregateDao implements Flushable {
@@ -39,7 +46,7 @@ public class ForwardAggregateDao implements Flushable {
     private static final Field<?>[] FORWARD_AGGREGATE_COLUMNS = new Field<?>[]{
             FORWARD_AGGREGATE.ID,
             FORWARD_AGGREGATE.UPDATE_TIME_MS,
-            FORWARD_AGGREGATE.FK_FORWARD_URL_ID,
+            FORWARD_AGGREGATE.FK_FORWARD_DEST_ID,
             FORWARD_AGGREGATE.FK_AGGREGATE_ID,
             FORWARD_AGGREGATE.SUCCESS,
             FORWARD_AGGREGATE.NEW_POSITION};
@@ -58,7 +65,7 @@ public class ForwardAggregateDao implements Flushable {
 
     private final SqliteJooqHelper jooq;
     private final SourceItemDao sourceItemDao;
-    private final RepoDbConfig dbConfig;
+    private final ProxyDbConfig dbConfig;
     private final AtomicLong forwardAggregateId = new AtomicLong();
 
 
@@ -78,7 +85,7 @@ public class ForwardAggregateDao implements Flushable {
     @Inject
     ForwardAggregateDao(final SqliteJooqHelper jooq,
                         final SourceItemDao sourceItemDao,
-                        final RepoDbConfig dbConfig) {
+                        final ProxyDbConfig dbConfig) {
         this.jooq = jooq;
         this.sourceItemDao = sourceItemDao;
         this.dbConfig = dbConfig;
@@ -118,8 +125,8 @@ public class ForwardAggregateDao implements Flushable {
         jooq.readOnlyTransactionResult(context -> context
                         .select(FORWARD_AGGREGATE.ID,
                                 FORWARD_AGGREGATE.UPDATE_TIME_MS,
-                                FORWARD_AGGREGATE.FK_FORWARD_URL_ID,
-                                FORWARD_URL.URL,
+                                FORWARD_AGGREGATE.FK_FORWARD_DEST_ID,
+                                FORWARD_DEST.NAME,
                                 AGGREGATE.FK_FEED_ID,
                                 FORWARD_AGGREGATE.FK_AGGREGATE_ID,
                                 FORWARD_AGGREGATE.SUCCESS,
@@ -127,7 +134,7 @@ public class ForwardAggregateDao implements Flushable {
                                 FORWARD_AGGREGATE.TRIES,
                                 positionField)
                         .from(FORWARD_AGGREGATE)
-                        .join(FORWARD_URL).on(FORWARD_URL.ID.eq(FORWARD_AGGREGATE.FK_FORWARD_URL_ID))
+                        .join(FORWARD_DEST).on(FORWARD_DEST.ID.eq(FORWARD_AGGREGATE.FK_FORWARD_DEST_ID))
                         .join(AGGREGATE).on(AGGREGATE.ID.eq(FORWARD_AGGREGATE.FK_AGGREGATE_ID))
                         .where(positionField.isNotNull())
                         .and(positionField.gt(currentReadPos))
@@ -136,8 +143,8 @@ public class ForwardAggregateDao implements Flushable {
                         .fetch())
                 .forEach(r -> {
                     pos.set(r.get(positionField));
-                    final ForwardUrl forwardUrl = new ForwardUrl(r.get(FORWARD_AGGREGATE.FK_FORWARD_URL_ID),
-                            r.get(FORWARD_URL.URL));
+                    final ForwardDest forwardDest = new ForwardDest(r.get(FORWARD_AGGREGATE.FK_FORWARD_DEST_ID),
+                            r.get(FORWARD_DEST.NAME));
                     final Aggregate aggregate = new Aggregate(
                             r.get(FORWARD_AGGREGATE.FK_AGGREGATE_ID),
                             r.get(AGGREGATE.FK_FEED_ID));
@@ -145,7 +152,7 @@ public class ForwardAggregateDao implements Flushable {
                             r.get(FORWARD_AGGREGATE.ID),
                             r.get(FORWARD_AGGREGATE.UPDATE_TIME_MS),
                             aggregate,
-                            forwardUrl,
+                            forwardDest,
                             r.get(FORWARD_AGGREGATE.SUCCESS),
                             r.get(FORWARD_AGGREGATE.ERROR),
                             r.get(FORWARD_AGGREGATE.TRIES));
@@ -180,42 +187,13 @@ public class ForwardAggregateDao implements Flushable {
         init();
     }
 
-//    /**
-//     * Delete all record of failed forward attempts so we can retry forwarding.
-//     *
-//     * @return The number of rows deleted.
-//     */
-//    public int deleteFailedForwards() {
-//        return jooq.transactionResult(context -> context
-//                .deleteFrom(FORWARD_AGGREGATE)
-//                .where(FORWARD_AGGREGATE.SUCCESS.isFalse())
-//                .execute());
-//    }
-//
-//    /**
-//     * Gets the current forwarding state for the supplied aggregate id.
-//     *
-//     * @param aggregateId The aggregateId.
-//     * @return A map of forward URL ids to success state.
-//     */
-//    public Map<Integer, Boolean> getForwardingState(final long aggregateId) {
-//        return jooq.readOnlyTransactionResult(context -> context
-//                        .select(FORWARD_AGGREGATE.FK_FORWARD_URL_ID, FORWARD_AGGREGATE.SUCCESS)
-//                        .from(FORWARD_AGGREGATE)
-//                        .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.eq(aggregateId))
-//                        .fetch())
-//                .stream()
-//                .collect(Collectors.toMap(Record2::value1, Record2::value2));
-//    }
-//
-
     /**
-     * Add forward aggregates for any new URLs that have been added since the application last ran.
+     * Add forward aggregates for any new dests that have been added since the application last ran.
      *
-     * @param newForwardUrls New urls to add forward aggregate entries for.
+     * @param newForwardDests New dests to add forward aggregate entries for.
      */
-    public void addNewForwardAggregates(final List<ForwardUrl> newForwardUrls) {
-        if (newForwardUrls.size() > 0) {
+    public void addNewForwardAggregates(final List<ForwardDest> newForwardDests) {
+        if (newForwardDests.size() > 0) {
             final AtomicLong minId = new AtomicLong();
             final int batchSize = dbConfig.getBatchSize();
             boolean full = true;
@@ -239,22 +217,22 @@ public class ForwardAggregateDao implements Flushable {
                         });
 
                 final Batch<Aggregate> batch = new Batch<>(aggregates, aggregates.size() == batchSize);
-                createForwardAggregates(batch, newForwardUrls);
+                createForwardAggregates(batch, newForwardDests);
                 full = batch.full();
             }
         }
     }
 
-    public void removeOldForwardAggregates(final List<ForwardUrl> oldForwardUrls) {
-        if (oldForwardUrls.size() > 0) {
-            final List<Integer> oldIdList = oldForwardUrls
+    public void removeOldForwardAggregates(final List<ForwardDest> oldForwardDests) {
+        if (oldForwardDests.size() > 0) {
+            final List<Integer> oldIdList = oldForwardDests
                     .stream()
-                    .map(ForwardUrl::getId)
+                    .map(ForwardDest::getId)
                     .collect(Collectors.toList());
 
             jooq.transaction(context -> context
                     .deleteFrom(FORWARD_AGGREGATE)
-                    .where(FORWARD_AGGREGATE.FK_FORWARD_URL_ID.in(oldIdList))
+                    .where(FORWARD_AGGREGATE.FK_FORWARD_DEST_ID.in(oldIdList))
                     .execute());
 
             final AtomicLong minId = new AtomicLong();
@@ -289,14 +267,14 @@ public class ForwardAggregateDao implements Flushable {
      * Create a record of the fact that we forwarded an aggregate or at least tried to.
      */
     public void createForwardAggregates(final Batch<Aggregate> aggregates,
-                                        final List<ForwardUrl> forwardUrls) {
+                                        final List<ForwardDest> forwardDests) {
         recordQueue.add(() -> {
             for (final Aggregate aggregate : aggregates.list()) {
-                for (final ForwardUrl forwardUrl : forwardUrls) {
+                for (final ForwardDest forwardDest : forwardDests) {
                     final Object[] row = new Object[FORWARD_AGGREGATE_COLUMNS.length];
                     row[0] = forwardAggregateId.incrementAndGet();
                     row[1] = System.currentTimeMillis();
-                    row[2] = forwardUrl.getId();
+                    row[2] = forwardDest.getId();
                     row[3] = aggregate.id();
                     row[4] = false;
                     row[5] = forwardAggregateNewPosition.incrementAndGet();
@@ -350,8 +328,8 @@ public class ForwardAggregateDao implements Flushable {
 //        return jooq.readOnlyTransactionResult(context -> context
 //                        .select(FORWARD_AGGREGATE.ID,
 //                                FORWARD_AGGREGATE.UPDATE_TIME_MS,
-//                                FORWARD_AGGREGATE.FK_FORWARD_URL_ID,
-//                                FORWARD_URL.URL,
+//                                FORWARD_AGGREGATE.FK_FORWARD_DEST_ID,
+//                                FORWARD_DEST.NAME,
 //                                AGGREGATE.FEED_NAME,
 //                                AGGREGATE.TYPE_NAME,
 //                                FORWARD_AGGREGATE.FK_AGGREGATE_ID,
@@ -359,14 +337,14 @@ public class ForwardAggregateDao implements Flushable {
 //                                FORWARD_AGGREGATE.ERROR,
 //                                FORWARD_AGGREGATE.TRIES)
 //                        .from(FORWARD_AGGREGATE)
-//                        .join(FORWARD_URL).on(FORWARD_URL.ID.eq(FORWARD_AGGREGATE.FK_FORWARD_URL_ID))
+//                        .join(FORWARD_DEST).on(FORWARD_DEST.ID.eq(FORWARD_AGGREGATE.FK_FORWARD_DEST_ID))
 //                        .join(AGGREGATE).on(AGGREGATE.ID.eq(FORWARD_AGGREGATE.FK_AGGREGATE_ID))
 //                        .where(positionField.eq(position))
 //                        .orderBy(FORWARD_AGGREGATE.ID)
 //                        .fetchOptional())
 //                .map(r -> {
-//                    final ForwardUrl forwardUrl = new ForwardUrl(r.get(FORWARD_AGGREGATE.FK_FORWARD_URL_ID),
-//                            r.get(FORWARD_URL.URL));
+//                    final ForwardUrl forwardUrl = new ForwardUrl(r.get(FORWARD_AGGREGATE.FK_FORWARD_DEST_ID),
+//                            r.get(FORWARD_DEST.NAME));
 //                    final Aggregate aggregate = new Aggregate(
 //                            r.get(FORWARD_AGGREGATE.FK_AGGREGATE_ID),
 //                            r.get(AGGREGATE.FEED_NAME),
@@ -434,6 +412,26 @@ public class ForwardAggregateDao implements Flushable {
     }
 
     private void deleteAggregate(final DSLContext context, final long aggregateId) {
+        // Get source items and sources.
+        context
+                .selectDistinct(SOURCE.ID)
+                .from(SOURCE)
+                .join(SOURCE_ITEM)
+                .on(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID))
+                .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId));
+
+        final Map<RepoSource, List<RepoSourceItem>> itemMap =
+                sourceItemDao.fetchSourceItemsByAggregateId(context, aggregateId);
+
+        // Delete source entries and items.
+        sourceItemDao.deleteByAggregateId(context, aggregateId);
+
+        itemMap.values().forEach(sourceItems -> {
+            sourceItems.forEach(sourceItem -> {
+
+            });
+        });
+
         // Delete forward records.
         Metrics.measure("Delete forward records", () -> {
             context
@@ -442,8 +440,15 @@ public class ForwardAggregateDao implements Flushable {
                     .execute();
         });
 
-        // Delete source entries and items.
-        sourceItemDao.deleteByAggregateId(context, aggregateId);
+
+
+
+        // Mark source as forwarded.
+        context
+                .update(SOURCE)
+                .set(SOURCE.FORWARDED, true)
+                .where(SOURCE.ID.eq(sourceId))
+                .execute();
 
         // Delete aggregate.
         Metrics.measure("Delete aggregate", () -> {

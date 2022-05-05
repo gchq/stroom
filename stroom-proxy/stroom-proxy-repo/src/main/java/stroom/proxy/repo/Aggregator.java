@@ -34,14 +34,14 @@ public class Aggregator {
     private final AggregateDao aggregateDao;
     private final Provider<AggregatorConfig> aggregatorConfigProvider;
     private final ProgressLog progressLog;
-    private final RepoDbConfig dbConfig;
+    private final ProxyDbConfig dbConfig;
 
     @Inject
     Aggregator(final RepoSourceItems sourceItems,
                final AggregateDao aggregateDao,
                final Provider<AggregatorConfig> aggregatorConfigProvider,
                final ProgressLog progressLog,
-               final RepoDbConfig dbConfig) {
+               final ProxyDbConfig dbConfig) {
         this.sourceItems = sourceItems;
         this.aggregateDao = aggregateDao;
         this.aggregatorConfigProvider = aggregatorConfigProvider;

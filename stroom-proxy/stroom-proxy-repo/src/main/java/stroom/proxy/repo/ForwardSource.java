@@ -5,7 +5,7 @@ public class ForwardSource {
     private final long id;
     private final long updateTimeMs;
     private final RepoSource source;
-    private final ForwardUrl forwardUrl;
+    private final ForwardDest forwardDest;
     private final boolean success;
     private final String error;
     private final long tries;
@@ -13,14 +13,14 @@ public class ForwardSource {
     public ForwardSource(final long id,
                          final long updateTimeMs,
                          final RepoSource source,
-                         final ForwardUrl forwardUrl,
+                         final ForwardDest forwardDest,
                          final boolean success,
                          final String error,
                          final long tries) {
         this.id = id;
         this.updateTimeMs = updateTimeMs;
         this.source = source;
-        this.forwardUrl = forwardUrl;
+        this.forwardDest = forwardDest;
         this.success = success;
         this.error = error;
         this.tries = tries;
@@ -38,8 +38,8 @@ public class ForwardSource {
         return source;
     }
 
-    public ForwardUrl getForwardUrl() {
-        return forwardUrl;
+    public ForwardDest getForwardDest() {
+        return forwardDest;
     }
 
     public boolean isSuccess() {
@@ -67,7 +67,7 @@ public class ForwardSource {
         private long id;
         private long updateTimeMs;
         private RepoSource source;
-        private ForwardUrl forwardUrl;
+        private ForwardDest forwarddest;
         private boolean success;
         private String error;
         private long tries;
@@ -79,7 +79,7 @@ public class ForwardSource {
             this.id = forwardSource.id;
             this.updateTimeMs = forwardSource.updateTimeMs;
             this.source = forwardSource.source;
-            this.forwardUrl = forwardSource.forwardUrl;
+            this.forwarddest = forwardSource.forwardDest;
             this.success = forwardSource.success;
             this.error = forwardSource.error;
             this.tries = forwardSource.tries;
@@ -100,8 +100,8 @@ public class ForwardSource {
             return this;
         }
 
-        public Builder forwardUrl(final ForwardUrl forwardUrl) {
-            this.forwardUrl = forwardUrl;
+        public Builder forwardDest(final ForwardDest forwarddest) {
+            this.forwarddest = forwarddest;
             return this;
         }
 
@@ -121,7 +121,7 @@ public class ForwardSource {
         }
 
         public ForwardSource build() {
-            return new ForwardSource(id, updateTimeMs, source, forwardUrl, success, error, tries);
+            return new ForwardSource(id, updateTimeMs, source, forwarddest, success, error, tries);
         }
     }
 }

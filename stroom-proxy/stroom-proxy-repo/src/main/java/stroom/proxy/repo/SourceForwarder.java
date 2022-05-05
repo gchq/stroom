@@ -44,7 +44,7 @@ public class SourceForwarder {
     private final FeedDao feedDao;
     private final RepoSources sources;
     private final ForwardSourceDao forwardSourceDao;
-    private final ForwardUrls forwardUrls;
+    private final ForwardDestinations forwardDestinations;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
     private final ForwarderDestinations forwarderDestinations;
     private final Sender sender;
@@ -56,7 +56,7 @@ public class SourceForwarder {
     SourceForwarder(final FeedDao feedDao,
                     final RepoSources sources,
                     final ForwardSourceDao forwardSourceDao,
-                    final ForwardUrls forwardUrls,
+                    final ForwardDestinations forwardDestinations,
                     final ForwarderDestinations forwarderDestinations,
                     final Sender sender,
                     final ProgressLog progressLog) {
@@ -64,7 +64,7 @@ public class SourceForwarder {
         this.feedDao = feedDao;
         this.sources = sources;
         this.forwardSourceDao = forwardSourceDao;
-        this.forwardUrls = forwardUrls;
+        this.forwardDestinations = forwardDestinations;
 
         this.forwarderDestinations = forwarderDestinations;
         this.sender = sender;
@@ -75,10 +75,10 @@ public class SourceForwarder {
 
     private void init() {
         // Add forward records for new forward URLs.
-        forwardSourceDao.addNewForwardSources(forwardUrls.getNewForwardUrls());
+        forwardSourceDao.addNewForwardSources(forwardDestinations.getNewForwardDests());
 
         // Remove forward records for forward URLs that are no longer in use.
-        forwardSourceDao.removeOldForwardSources(forwardUrls.getOldForwardUrls());
+        forwardSourceDao.removeOldForwardSources(forwardDestinations.getOldForwardDests());
     }
 
 //    public void createAllForwardRecords() {
@@ -97,7 +97,7 @@ public class SourceForwarder {
     private void createForwardSources(final Batch<RepoSource> batch) {
         // Forward to all remaining places.
         progressLog.increment("SourceForwarder - createForwardRecord");
-        forwardSourceDao.createForwardSources(batch, forwardUrls.getForwardUrls());
+        forwardSourceDao.createForwardSources(batch, forwardDestinations.getForwardDests());
     }
 
 //    public void forwardAll() {
@@ -168,7 +168,7 @@ public class SourceForwarder {
         }
 
         final StreamHandlers streamHandlers =
-                forwarderDestinations.getProvider(forwardSource.getForwardUrl().getUrl());
+                forwarderDestinations.getProvider(forwardSource.getForwardDest().getName());
 
         // Start the POST
         try {

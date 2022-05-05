@@ -14,19 +14,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(ProxyRepoTestModule.class)
-public class TestForwardUrlDao {
+public class TestForwardDestDao {
 
     @Inject
-    private ForwardUrlDao forwardUrlDao;
+    private ForwardDestDao forwardDestDao;
 
     @BeforeEach
     void beforeEach() {
-        forwardUrlDao.clear();
+        forwardDestDao.clear();
     }
 
     @Test
     void testForwardUrlDao() {
-        assertThat(forwardUrlDao.getForwardUrlId("test")).isOne();
-        assertThat(forwardUrlDao.getAllForwardUrls().size()).isOne();
+        assertThat(forwardDestDao.getForwardDestId("test")).isOne();
+        assertThat(forwardDestDao.getAllForwardDests().size()).isOne();
     }
 }

@@ -24,32 +24,32 @@ public class TestForwardSourceDao {
     @Inject
     private ForwardSourceDao forwardSourceDao;
     @Inject
-    private ForwardUrlDao forwardUrlDao;
+    private ForwardDestDao forwardDestDao;
 
     @BeforeEach
     void beforeEach() {
         sourceDao.clear();
         forwardSourceDao.clear();
-        forwardUrlDao.clear();
+        forwardDestDao.clear();
     }
 
     @Test
     void testForwardSource() {
         assertThat(sourceDao.countSources()).isZero();
         assertThat(forwardSourceDao.countForwardSource()).isZero();
-        assertThat(forwardUrlDao.countForwardUrl()).isZero();
+        assertThat(forwardDestDao.countForwardDest()).isZero();
 //        assertThat(sourceDao.pathExists("test")).isFalse();
 
         sourceDao.addSource(1L, "test", "test");
         assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
 
         // Create forward sources.
-        forwardUrlDao.getForwardUrlId("test");
-        assertThat(forwardUrlDao.countForwardUrl()).isOne();
+        forwardDestDao.getForwardDestId("test");
+        assertThat(forwardDestDao.countForwardDest()).isOne();
         BatchUtil.transfer(
                 () -> sourceDao.getNewSources(0, TimeUnit.MILLISECONDS),
                 batch -> forwardSourceDao.createForwardSources(batch,
-                        forwardUrlDao.getAllForwardUrls())
+                        forwardDestDao.getAllForwardDests())
         );
 
         // Mark all as forwarded.

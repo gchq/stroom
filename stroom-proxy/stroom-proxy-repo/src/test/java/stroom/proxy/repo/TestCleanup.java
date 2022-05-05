@@ -117,7 +117,7 @@ public class TestCleanup {
                                         FORWARD_AGGREGATE.SUCCESS,
                                         FORWARD_AGGREGATE.ERROR,
                                         FORWARD_AGGREGATE.TRIES,
-                                        FORWARD_AGGREGATE.FK_FORWARD_URL_ID)
+                                        FORWARD_AGGREGATE.FK_FORWARD_DEST_ID)
                                 .values(
                                         forwardAggregateId.incrementAndGet(),
                                         System.currentTimeMillis(),
@@ -232,12 +232,12 @@ public class TestCleanup {
 
     private void forward(long aggregateId) {
         final Aggregate aggregate = new Aggregate(aggregateId, 1L);
-        final ForwardUrl forwardUrl = new ForwardUrl(1, "test");
+        final ForwardDest forwardUrl = new ForwardDest(1, "test");
         final ForwardAggregate forwardAggregate = ForwardAggregate
                 .builder()
                 .id(aggregateId)
                 .aggregate(aggregate)
-                .forwardUrl(forwardUrl)
+                .forwardDest(forwardUrl)
                 .build();
         aggregateForwarder.forward(forwardAggregate);
     }

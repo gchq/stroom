@@ -4,21 +4,21 @@
 package stroom.proxy.repo.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.proxy.repo.db.jooq.tables.Aggregate;
+import stroom.proxy.repo.db.jooq.tables.Feed;
+import stroom.proxy.repo.db.jooq.tables.ForwardAggregate;
+import stroom.proxy.repo.db.jooq.tables.ForwardDest;
+import stroom.proxy.repo.db.jooq.tables.ForwardSource;
+import stroom.proxy.repo.db.jooq.tables.Source;
+import stroom.proxy.repo.db.jooq.tables.SourceEntry;
+import stroom.proxy.repo.db.jooq.tables.SourceItem;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.proxy.repo.db.jooq.tables.Aggregate;
-import stroom.proxy.repo.db.jooq.tables.Feed;
-import stroom.proxy.repo.db.jooq.tables.ForwardAggregate;
-import stroom.proxy.repo.db.jooq.tables.ForwardSource;
-import stroom.proxy.repo.db.jooq.tables.ForwardUrl;
-import stroom.proxy.repo.db.jooq.tables.Source;
-import stroom.proxy.repo.db.jooq.tables.SourceEntry;
-import stroom.proxy.repo.db.jooq.tables.SourceItem;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -50,14 +50,14 @@ public class DefaultSchema extends SchemaImpl {
     public final ForwardAggregate FORWARD_AGGREGATE = ForwardAggregate.FORWARD_AGGREGATE;
 
     /**
+     * The table <code>forward_dest</code>.
+     */
+    public final ForwardDest FORWARD_DEST = ForwardDest.FORWARD_DEST;
+
+    /**
      * The table <code>forward_source</code>.
      */
     public final ForwardSource FORWARD_SOURCE = ForwardSource.FORWARD_SOURCE;
-
-    /**
-     * The table <code>forward_url</code>.
-     */
-    public final ForwardUrl FORWARD_URL = ForwardUrl.FORWARD_URL;
 
     /**
      * The table <code>source</code>.
@@ -93,8 +93,8 @@ public class DefaultSchema extends SchemaImpl {
             Aggregate.AGGREGATE,
             Feed.FEED,
             ForwardAggregate.FORWARD_AGGREGATE,
+            ForwardDest.FORWARD_DEST,
             ForwardSource.FORWARD_SOURCE,
-            ForwardUrl.FORWARD_URL,
             Source.SOURCE,
             SourceEntry.SOURCE_ENTRY,
             SourceItem.SOURCE_ITEM

@@ -17,7 +17,7 @@
 package stroom.proxy.repo.dao;
 
 import stroom.db.util.JooqUtil;
-import stroom.proxy.repo.ForwardUrl;
+import stroom.proxy.repo.ForwardDest;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,65 +26,65 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import static stroom.proxy.repo.db.jooq.tables.ForwardUrl.FORWARD_URL;
+import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
 
 @Singleton
-public class ForwardUrlDao {
+public class ForwardDestDao {
 
     private final SqliteJooqHelper jooq;
-    private final AtomicInteger forwardUrlRecordId = new AtomicInteger();
+    private final AtomicInteger forwardDestRecordId = new AtomicInteger();
 
     @Inject
-    ForwardUrlDao(final SqliteJooqHelper jooq) {
+    ForwardDestDao(final SqliteJooqHelper jooq) {
         this.jooq = jooq;
         init();
     }
 
     private void init() {
         jooq.readOnlyTransaction(context -> {
-            final int maxForwardUrlRecordId = JooqUtil.getMaxId(context, FORWARD_URL, FORWARD_URL.ID)
+            final int maxForwardUrlRecordId = JooqUtil.getMaxId(context, FORWARD_DEST, FORWARD_DEST.ID)
                     .orElse(0);
-            forwardUrlRecordId.set(maxForwardUrlRecordId);
+            forwardDestRecordId.set(maxForwardUrlRecordId);
         });
     }
 
     public void clear() {
         jooq.transaction(context -> {
-            JooqUtil.deleteAll(context, FORWARD_URL);
-            JooqUtil.checkEmpty(context, FORWARD_URL);
+            JooqUtil.deleteAll(context, FORWARD_DEST);
+            JooqUtil.checkEmpty(context, FORWARD_DEST);
         });
         init();
     }
 
-    public List<ForwardUrl> getAllForwardUrls() {
+    public List<ForwardDest> getAllForwardDests() {
         return jooq.readOnlyTransactionResult(context -> context
-                        .select(FORWARD_URL.ID, FORWARD_URL.URL)
-                        .from(FORWARD_URL)
+                        .select(FORWARD_DEST.ID, FORWARD_DEST.NAME)
+                        .from(FORWARD_DEST)
                         .fetch())
-                .map(r -> new ForwardUrl(r.get(FORWARD_URL.ID), r.get(FORWARD_URL.URL)));
+                .map(r -> new ForwardDest(r.get(FORWARD_DEST.ID), r.get(FORWARD_DEST.NAME)));
     }
 
-    public int getForwardUrlId(final String forwardUrl) {
-        Objects.requireNonNull(forwardUrl, "The forward URL is null");
+    public int getForwardDestId(final String name) {
+        Objects.requireNonNull(name, "The forward dest name is null");
         return jooq.transactionResult(context -> {
             final Optional<Integer> optionalId = context
-                    .select(FORWARD_URL.ID)
-                    .from(FORWARD_URL)
-                    .where(FORWARD_URL.URL.equal(forwardUrl))
-                    .fetchOptional(FORWARD_URL.ID);
+                    .select(FORWARD_DEST.ID)
+                    .from(FORWARD_DEST)
+                    .where(FORWARD_DEST.NAME.equal(name))
+                    .fetchOptional(FORWARD_DEST.ID);
 
             return optionalId.orElseGet(() -> {
-                final int newId = forwardUrlRecordId.incrementAndGet();
+                final int newId = forwardDestRecordId.incrementAndGet();
                 context
-                        .insertInto(FORWARD_URL, FORWARD_URL.ID, FORWARD_URL.URL)
-                        .values(newId, forwardUrl)
+                        .insertInto(FORWARD_DEST, FORWARD_DEST.ID, FORWARD_DEST.NAME)
+                        .values(newId, name)
                         .execute();
                 return newId;
             });
         });
     }
 
-    public int countForwardUrl() {
-        return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, FORWARD_URL));
+    public int countForwardDest() {
+        return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, FORWARD_DEST));
     }
 }

@@ -43,7 +43,7 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
         return bytesWritten;
     }
 
-    void error() {
+    public void error() {
         try {
             LOGGER.info("Error writing file {}", entryOutputStream);
             entryOutputStream.closeDelete();
@@ -52,7 +52,7 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
         }
     }
 
-    void close() throws IOException {
+    public void close() throws IOException {
         if (doneOne) {
             entryOutputStream.close();
         } else {

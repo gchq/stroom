@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
 public class ErrorReceiverImpl implements ErrorReceiver {
@@ -41,7 +42,7 @@ public class ErrorReceiverImpl implements ErrorReceiver {
 
         // Now move the source zip so we know it was bad.
         try {
-            Files.move(fileSet.getZip(), fileSet.getBadZip());
+            Files.move(fileSet.getZip(), fileSet.getBadZip(), StandardCopyOption.ATOMIC_MOVE);
         } catch (final Exception e) {
             LOGGER.warn("Failed to rename zip file to " + fileSet.getBadZip());
         }

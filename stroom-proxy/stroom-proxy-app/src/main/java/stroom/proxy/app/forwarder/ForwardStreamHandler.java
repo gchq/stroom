@@ -8,7 +8,6 @@ import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.SSLUtil;
 import stroom.util.concurrent.ThreadUtil;
-import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -46,17 +45,17 @@ public class ForwardStreamHandler implements StreamHandler {
     private long totalBytesSent = 0;
 
     public ForwardStreamHandler(final LogStream logStream,
-                                final ForwardDestinationConfig forwardDestinationConfig,
+                                final ForwardHttpPostConfig config,
                                 final SSLSocketFactory sslSocketFactory,
                                 final String userAgent,
                                 final AttributeMap attributeMap) throws IOException {
         this.logStream = logStream;
-        this.forwardUrl = forwardDestinationConfig.getForwardUrl();
-        this.forwardDelayMs = forwardDestinationConfig.getForwardDelayMs();
+        this.forwardUrl = config.getForwardUrl();
+        this.forwardDelayMs = config.getForwardDelayMs();
         this.attributeMap = attributeMap;
 
-        final Integer forwardTimeoutMs = forwardDestinationConfig.getForwardTimeoutMs();
-        final Integer forwardChunkSize = forwardDestinationConfig.getForwardChunkSize();
+        final Integer forwardTimeoutMs = config.getForwardTimeoutMs();
+        final Integer forwardChunkSize = config.getForwardChunkSize();
 
         startTimeMs = System.currentTimeMillis();
         attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
@@ -68,7 +67,7 @@ public class ForwardStreamHandler implements StreamHandler {
 
         connection.setRequestProperty("User-Agent", userAgent);
         if (sslSocketFactory != null) {
-            SSLUtil.applySSLConfiguration(connection, sslSocketFactory, forwardDestinationConfig.getSslConfig());
+            SSLUtil.applySSLConfiguration(connection, sslSocketFactory, config.getSslConfig());
         }
 
         if (forwardTimeoutMs != null) {

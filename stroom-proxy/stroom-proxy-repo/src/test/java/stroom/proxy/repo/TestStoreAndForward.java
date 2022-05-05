@@ -1,6 +1,6 @@
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.dao.ForwardUrlDao;
+import stroom.proxy.repo.dao.ForwardDestDao;
 import stroom.proxy.repo.dao.SourceDao;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -26,7 +26,7 @@ public class TestStoreAndForward {
     @Inject
     private SourceForwarder sourceForwarder;
     @Inject
-    private ForwardUrlDao forwardUrlDao;
+    private ForwardDestDao forwardDestDao;
     @Inject
     private Cleanup cleanup;
     @Inject

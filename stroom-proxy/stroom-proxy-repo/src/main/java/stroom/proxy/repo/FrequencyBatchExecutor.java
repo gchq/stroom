@@ -10,11 +10,10 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TransferQueue;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -23,7 +22,7 @@ public class FrequencyBatchExecutor<T> implements Managed {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FrequencyBatchExecutor.class);
 
-    private final ScheduledExecutorService executorService;
+    private final ExecutorService executorService;
     private final int threadCount;
     private final Supplier<Batch<T>> batchSupplier;
     private final Consumer<T> consumer;
@@ -43,13 +42,14 @@ public class FrequencyBatchExecutor<T> implements Managed {
                 threadName + " ",
                 StroomThreadGroup.instance(),
                 Thread.NORM_PRIORITY - 1);
-        executorService = Executors.newScheduledThreadPool(threadCount + 1, threadFactory);
+        executorService = Executors.newFixedThreadPool(threadCount + 1, threadFactory);
     }
 
     @Override
     public void start() {
         // Start.
-        executorService.schedule(this::fillQueue, 0, TimeUnit.MILLISECONDS);
+//        executorService.schedule(this::fillQueue, 0, TimeUnit.MILLISECONDS);
+        executorService.execute(this::fillQueue);
 
         for (int i = 0; i < threadCount; i++) {
             executorService.execute(this::process);
@@ -57,7 +57,7 @@ public class FrequencyBatchExecutor<T> implements Managed {
     }
 
     private void fillQueue() {
-        if (!Thread.currentThread().isInterrupted()) {
+        while (!Thread.currentThread().isInterrupted()) {
             try {
                 BatchUtil.transferEach(batchSupplier, item -> {
                     try {
@@ -66,11 +66,6 @@ public class FrequencyBatchExecutor<T> implements Managed {
                         UncheckedInterruptedException.resetAndThrow(e);
                     }
                 });
-
-                // Schedule a new fill if we are still running.
-                if (!Thread.currentThread().isInterrupted()) {
-                    executorService.schedule(this::fillQueue, frequency, TimeUnit.MILLISECONDS);
-                }
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }

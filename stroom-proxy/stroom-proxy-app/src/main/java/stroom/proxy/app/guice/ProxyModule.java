@@ -152,7 +152,6 @@ public class ProxyModule extends AbstractModule {
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
                 .bind(FeedStatusResourceImpl.class)
-                .bind(ForwarderDestinationsImpl.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
                 .bind(RemoteFeedStatusService.class);

@@ -4,8 +4,10 @@
 package stroom.proxy.repo.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.proxy.repo.db.jooq.DefaultSchema;
+import stroom.proxy.repo.db.jooq.Indexes;
+import stroom.proxy.repo.db.jooq.Keys;
+import stroom.proxy.repo.db.jooq.tables.records.ForwardSourceRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -22,10 +24,8 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.proxy.repo.db.jooq.DefaultSchema;
-import stroom.proxy.repo.db.jooq.Indexes;
-import stroom.proxy.repo.db.jooq.Keys;
-import stroom.proxy.repo.db.jooq.tables.records.ForwardSourceRecord;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -60,9 +60,9 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
     public final TableField<ForwardSourceRecord, Long> UPDATE_TIME_MS = createField(DSL.name("update_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>forward_source.fk_forward_url_id</code>.
+     * The column <code>forward_source.fk_forward_dest_id</code>.
      */
-    public final TableField<ForwardSourceRecord, Integer> FK_FORWARD_URL_ID = createField(DSL.name("fk_forward_url_id"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<ForwardSourceRecord, Integer> FK_FORWARD_DEST_ID = createField(DSL.name("fk_forward_dest_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>forward_source.fk_source_id</code>.

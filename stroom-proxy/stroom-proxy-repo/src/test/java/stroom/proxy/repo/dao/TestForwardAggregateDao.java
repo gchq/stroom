@@ -39,7 +39,7 @@ public class TestForwardAggregateDao {
     @Inject
     private ForwardAggregateDao forwardAggregateDao;
     @Inject
-    private ForwardUrlDao forwardUrlDao;
+    private ForwardDestDao forwardDestDao;
 
     @BeforeEach
     void beforeEach() {
@@ -47,7 +47,7 @@ public class TestForwardAggregateDao {
         sourceItemDao.clear();
         aggregateDao.clear();
         forwardAggregateDao.clear();
-        forwardUrlDao.clear();
+        forwardDestDao.clear();
     }
 
     @Test
@@ -56,7 +56,7 @@ public class TestForwardAggregateDao {
         assertThat(sourceItemDao.countEntries()).isZero();
         assertThat(aggregateDao.countAggregates()).isZero();
         assertThat(forwardAggregateDao.countForwardAggregates()).isZero();
-        assertThat(forwardUrlDao.countForwardUrl()).isZero();
+        assertThat(forwardDestDao.countForwardDest()).isZero();
 //        assertThat(sourceDao.pathExists("test")).isFalse();
 
         sourceDao.addSource(1L, "test", "test");
@@ -106,12 +106,12 @@ public class TestForwardAggregateDao {
         assertThat(aggregateDao.countAggregates()).isEqualTo(10);
 
         // Create forward aggregates.
-        forwardUrlDao.getForwardUrlId("test");
-        assertThat(forwardUrlDao.countForwardUrl()).isOne();
+        forwardDestDao.getForwardDestId("test");
+        assertThat(forwardDestDao.countForwardDest()).isOne();
         BatchUtil.transfer(
                 () -> aggregateDao.getNewAggregates(0, TimeUnit.MILLISECONDS),
                 batch -> forwardAggregateDao.createForwardAggregates(batch,
-                        forwardUrlDao.getAllForwardUrls())
+                        forwardDestDao.getAllForwardDests())
         );
         forwardAggregateDao.flush();
         assertThat(forwardAggregateDao.countForwardAggregates()).isEqualTo(10);

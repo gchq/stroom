@@ -1,6 +1,6 @@
 package stroom.proxy.app;
 
-import stroom.proxy.app.forwarder.ForwarderConfig;
+import stroom.proxy.app.forwarder.ForwardConfig;
 import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.repo.AggregateForwarder;
 import stroom.proxy.repo.Aggregator;
@@ -9,6 +9,7 @@ import stroom.proxy.repo.Cleanup;
 import stroom.proxy.repo.FrequencyBatchExecutor;
 import stroom.proxy.repo.FrequencyExecutor;
 import stroom.proxy.repo.ParallelExecutor;
+import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.RepoSourceItems;
 import stroom.proxy.repo.RepoSources;
@@ -37,9 +38,9 @@ public class ProxyLifecycle implements Managed {
 
     @Inject
     public ProxyLifecycle(final ProxyConfig proxyConfig,
+                          final ProxyDbConfig proxyDbConfig,
                           final ProxyRepoConfig proxyRepoConfig,
                           final AggregatorConfig aggregatorConfig,
-                          final ForwarderConfig forwarderConfig,
                           final ThreadConfig threadConfig,
                           final Provider<SequentialFileStore> sequentialFileStoreProvider,
                           final Provider<RepoSources> proxyRepoSourcesProvider,
@@ -51,18 +52,21 @@ public class ProxyLifecycle implements Managed {
                           final Provider<Set<Flushable>> flushableProvider,
                           final Provider<FileScanners> fileScannersProvider) {
 
+        // Get forwarding destinations.
+        final List<ForwardConfig> forwardDestinations = proxyConfig.getForwardDestinations();
+
         // If we aren't storing and forwarding then don't do anything.
         if (proxyRepoConfig.isStoringEnabled() &&
-                forwarderConfig.isForwardingEnabled() &&
-                forwarderConfig.getForwardDestinations() != null &&
-                forwarderConfig.getForwardDestinations().size() > 0) {
+                forwardDestinations != null &&
+                forwardDestinations.size() > 0) {
 
-            final long dbFlushFrequencyMs = proxyRepoConfig.getFlushFrequency().toMillis();
+            final long dbFlushFrequencyMs = proxyDbConfig.getFlushFrequency().toMillis();
 
             // Start looking at file store to add sources to the DB.
             final SequentialFileStore sequentialFileStore = sequentialFileStoreProvider.get();
-            addParallelExecutor("Add sources",
-                    () -> sequentialFileStore::addSources,
+            addParallelExecutor(
+                    "Add sources",
+                    () -> () -> proxyRepoSourcesProvider.get().addSources(sequentialFileStore),
                     1);
 
             final Cleanup cleanup = cleanupProvider.get();
@@ -118,7 +122,7 @@ public class ProxyLifecycle implements Managed {
                         dbFlushFrequencyMs);
 
                 // Retry forward records.
-                final long retryFrequency = forwarderConfig.getRetryFrequency().toMillis();
+                final long retryFrequency = proxyConfig.getRetryFrequency().toMillis();
                 addFrequencyBatchExecutor("AggregateForwarder - forwardRetry",
                         threadConfig.getForwardRetryThreadCount(),
                         aggregateForwarder::getRetryForwardAggregates,
@@ -145,7 +149,7 @@ public class ProxyLifecycle implements Managed {
                         dbFlushFrequencyMs);
 
                 // Retry forward records.
-                final long retryFrequency = forwarderConfig.getRetryFrequency().toMillis();
+                final long retryFrequency = proxyConfig.getRetryFrequency().toMillis();
                 addFrequencyBatchExecutor("SourceForwarder - forwardRetry",
                         threadConfig.getForwardRetryThreadCount(),
                         sourceForwarder::getRetryForwardSources,
@@ -155,7 +159,7 @@ public class ProxyLifecycle implements Managed {
 
             addFrequencyExecutor("Cleanup - cleanupSources",
                     () -> cleanup::cleanupSources,
-                    proxyRepoConfig.getCleanupFrequency().toMillis());
+                    proxyDbConfig.getCleanupFrequency().toMillis());
         }
     }
 
