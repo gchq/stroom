@@ -143,11 +143,6 @@ proxyConfig:
   repository:
     storingEnabled: {{ true | envVar('STORING_ENABLED') }}
 #    repoDir: "repo"
-#    dbDir: "repo"
-    format: "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
-#    cleanupFrequency: 1h
-#    lockDeleteAge: 1h
-#    dirCleanDelay: 10s
 
   # Do we want to forward data by scanning for files in the repository? This is only needed where we want to pick up
   # files from a repository that isn't being filled by receiving new data via HTTP POST. When we receive data via POST

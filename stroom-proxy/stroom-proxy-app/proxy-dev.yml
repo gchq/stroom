@@ -90,11 +90,6 @@ proxyConfig:
   repository:
     storingEnabled: true
     #    repoDir: "repo"
-    #    dbDir: "repo"
-    format: "${pathId}/${id}"
-    cleanupFrequency: 10s
-    lockDeleteAge: 1h
-    dirCleanDelay: 10s
 
   # If we are storing data in a proxy repository we can aggregate it before forwarding.
   aggregator:
