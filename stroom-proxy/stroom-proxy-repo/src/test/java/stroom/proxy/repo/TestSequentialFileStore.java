@@ -52,6 +52,8 @@ class TestSequentialFileStore {
         assertThat(Files.exists(fileSet3.getZip())).isFalse();
         addFile(fileStore);
         assertThat(Files.exists(fileSet3.getZip())).isTrue();
+
+        FileUtil.delete(repoDir);
     }
 
     @Test

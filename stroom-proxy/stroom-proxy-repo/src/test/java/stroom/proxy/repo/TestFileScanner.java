@@ -24,13 +24,15 @@ class TestFileScanner {
 
     @Test
     void testScanner() throws Exception {
-        final Path sourcePath = Files.createTempDirectory("old-store");
+        final Path root = Files.createTempDirectory("proxy");
+
+        final Path sourcePath = Files.createDirectories(root.resolve("old-store"));
         final SequentialFileStore sourceFileStore = new SequentialFileStore(() -> sourcePath);
 
-        final Path targetPath1 = Files.createTempDirectory("new-store1");
+        final Path targetPath1 = Files.createDirectories(root.resolve("new-store1"));
         final SequentialFileStore targetFileStore1 = new SequentialFileStore(() -> targetPath1);
 
-        final Path targetPath2 = Files.createTempDirectory("new-store2");
+        final Path targetPath2 = Files.createDirectories(root.resolve("new-store2"));
         final SequentialFileStore targetFileStore2 = new SequentialFileStore(() -> targetPath2);
 
         assertThat(FileUtil.countNested(sourcePath)).isEqualTo(3);
@@ -69,6 +71,8 @@ class TestFileScanner {
         assertThat(FileUtil.countNested(sourcePath)).isEqualTo(1);
         assertThat(FileUtil.countNested(targetPath1)).isEqualTo(1);
         assertThat(FileUtil.countNested(targetPath2)).isEqualTo(404);
+
+        FileUtil.deleteDir(root);
     }
 
     private void createStore(final SequentialFileStore sequentialFileStore) throws Exception {
