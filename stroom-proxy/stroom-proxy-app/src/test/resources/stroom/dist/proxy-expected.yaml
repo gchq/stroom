@@ -14,11 +14,13 @@ proxyConfig:
     upstreamUrl: null
   db:
     batchSize: 10000000
+    cleanupFrequency: "PT1S"
     connectionPragma:
     - "pragma synchronous = normal;"
     - "pragma temp_store = memory;"
     - "pragma mmap_size = 30000000000;"
     dbDir: "db"
+    flushFrequency: "PT1S"
     globalPragma:
     - "pragma journal_mode = WAL;"
     maintenancePragma:
@@ -56,11 +58,6 @@ proxyConfig:
     receiptPolicyUuid: null
     requireTokenAuthentication: false
   repository:
-    cleanupFrequency: "PT1H"
-    dirCleanDelay: "PT10S"
-    flushFrequency: "PT1S"
-    format: "${pathId}/${id}"
-    lockDeleteAge: "PT1H"
     repoDir: "repo"
     storingEnabled: false
   restClient:

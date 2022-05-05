@@ -190,7 +190,7 @@ public class SourceItemDao implements Flushable {
                                                       final TimeUnit timeUnit) {
         return recordQueue.getBatch(sourceItemReadQueue, timeout, timeUnit);
     }
-    
+
     public void deleteBySourceId(final DSLContext context, final long sourceId) {
         Metrics.measure("Delete source entries", () -> {
             context

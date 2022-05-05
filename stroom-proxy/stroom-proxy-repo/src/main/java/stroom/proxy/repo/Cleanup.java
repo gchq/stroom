@@ -67,7 +67,7 @@ public class Cleanup {
     }
 
     public void cleanupSources() {
-        final int batchSize = 100;//dbConfig.getBatchSize();
+        final int batchSize = 100;
         boolean full = true;
         while (full) {
             final List<RepoSource> list = sources.getDeletableSources(batchSize);

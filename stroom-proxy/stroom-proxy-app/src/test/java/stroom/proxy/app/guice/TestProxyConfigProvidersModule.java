@@ -2,8 +2,8 @@ package stroom.proxy.app.guice;
 
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyPathConfig;
-import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyDbConfig;
+import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

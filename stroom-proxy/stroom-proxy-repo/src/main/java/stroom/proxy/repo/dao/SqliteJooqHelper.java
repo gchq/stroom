@@ -1,7 +1,7 @@
 package stroom.proxy.repo.dao;
 
-import stroom.proxy.repo.ProxyRepoDbConnProvider;
 import stroom.proxy.repo.ProxyDbConfig;
+import stroom.proxy.repo.ProxyRepoDbConnProvider;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
