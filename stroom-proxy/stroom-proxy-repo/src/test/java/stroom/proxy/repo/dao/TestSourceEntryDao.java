@@ -84,6 +84,8 @@ public class TestSourceEntryDao {
 
         assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
         jooq.transaction(context -> sourceItemDao.deleteBySourceId(context, source.id()));
+        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
+        jooq.transaction(context -> sourceDao.setSourceExamined(context, source.id(), true, 0));
         assertThat(sourceDao.getDeletableSources(1000).size()).isOne();
 
         sourceDao.deleteSources(Collections.singletonList(source));

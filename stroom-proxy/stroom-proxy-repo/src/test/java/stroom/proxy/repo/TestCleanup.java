@@ -2,6 +2,8 @@ package stroom.proxy.repo;
 
 import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.dao.FeedDao;
+import stroom.proxy.repo.dao.SourceDao;
+import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.proxy.repo.dao.SqliteJooqHelper;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -27,9 +29,11 @@ public class TestCleanup {
     @Inject
     private FeedDao feedDao;
     @Inject
-    private RepoSources proxyRepoSources;
+    private RepoSources repoSources;
     @Inject
-    private RepoSourceItems proxyRepoSourceEntries;
+    private SourceDao sourceDao;
+    @Inject
+    private SourceItemDao sourceItemDao;
     @Inject
     private Aggregator aggregator;
     @Inject
@@ -45,8 +49,8 @@ public class TestCleanup {
     void beforeEach() {
         aggregateForwarder.clear();
         aggregator.clear();
-        proxyRepoSourceEntries.clear();
-        proxyRepoSources.clear();
+        sourceItemDao.clear();
+        repoSources.clear();
         mockForwardDestinations.clear();
     }
 
@@ -54,15 +58,61 @@ public class TestCleanup {
     void testCleanup() {
         final AtomicLong sourceId = new AtomicLong();
         final AtomicLong sourceFileStoreId = new AtomicLong();
-        ;
         final AtomicLong sourceItemId = new AtomicLong();
-        ;
         final AtomicLong sourceEntryId = new AtomicLong();
-        ;
         final AtomicLong aggregateId = new AtomicLong();
-        ;
         final AtomicLong forwardAggregateId = new AtomicLong();
-        ;
+
+        for (int i = 1; i <= 2; i++) {
+            final long feedId = feedDao.getId(new FeedKey("TEST_FEED_" + i, null));
+
+            // Add an aggregate.
+            jooq.transaction(context -> {
+                aggregateId.incrementAndGet();
+
+                // Add aggregate.
+                context
+                        .insertInto(
+                                AGGREGATE,
+                                AGGREGATE.ID,
+                                AGGREGATE.CREATE_TIME_MS,
+                                AGGREGATE.FK_FEED_ID,
+                                AGGREGATE.BYTE_SIZE,
+                                AGGREGATE.ITEMS,
+                                AGGREGATE.COMPLETE)
+                        .values(
+                                aggregateId.get(),
+                                System.currentTimeMillis(),
+                                feedId,
+                                170L,
+                                2,
+                                true)
+                        .execute();
+
+                for (int j = 0; j < 2; j++) {
+                    // Add aggregate forward.
+                    context
+                            .insertInto(
+                                    FORWARD_AGGREGATE,
+                                    FORWARD_AGGREGATE.ID,
+                                    FORWARD_AGGREGATE.UPDATE_TIME_MS,
+                                    FORWARD_AGGREGATE.FK_AGGREGATE_ID,
+                                    FORWARD_AGGREGATE.SUCCESS,
+                                    FORWARD_AGGREGATE.ERROR,
+                                    FORWARD_AGGREGATE.TRIES,
+                                    FORWARD_AGGREGATE.FK_FORWARD_DEST_ID)
+                            .values(
+                                    forwardAggregateId.incrementAndGet(),
+                                    System.currentTimeMillis(),
+                                    aggregateId.get(),
+                                    false,
+                                    null,
+                                    null,
+                                    1)
+                            .execute();
+                }
+            });
+        }
 
         for (int i = 1; i <= 2; i++) {
             final long feedId = feedDao.getId(new FeedKey("TEST_FEED_" + i, null));
@@ -76,149 +126,88 @@ public class TestCleanup {
                                     SOURCE.ID,
                                     SOURCE.FILE_STORE_ID,
                                     SOURCE.FK_FEED_ID,
-                                    SOURCE.EXAMINED)
+                                    SOURCE.EXAMINED,
+                                    SOURCE.ITEM_COUNT)
                             .values(
                                     sourceId.incrementAndGet(),
                                     sourceFileStoreId.incrementAndGet(),
                                     feedId,
-                                    true)
+                                    true,
+                                    4)
                             .execute();
 
-                    // Add an aggregate.
-                    for (int k = 0; k < 2; k++) {
-                        aggregateId.incrementAndGet();
-
-                        // Add aggregate.
+                    // Add source items.
+                    for (int k = 1; k <= 4; k++) {
                         context
                                 .insertInto(
-                                        AGGREGATE,
-                                        AGGREGATE.ID,
-                                        AGGREGATE.CREATE_TIME_MS,
-                                        AGGREGATE.FK_FEED_ID,
-                                        AGGREGATE.BYTE_SIZE,
-                                        AGGREGATE.ITEMS,
-                                        AGGREGATE.COMPLETE)
+                                        SOURCE_ITEM,
+                                        SOURCE_ITEM.ID,
+                                        SOURCE_ITEM.NAME,
+                                        SOURCE_ITEM.FK_FEED_ID,
+                                        SOURCE_ITEM.FK_SOURCE_ID,
+                                        SOURCE_ITEM.FK_AGGREGATE_ID)
                                 .values(
-                                        aggregateId.get(),
-                                        System.currentTimeMillis(),
+                                        sourceItemId.incrementAndGet(),
+                                        feedId + "_" + k,
                                         feedId,
-                                        170L,
-                                        2,
-                                        true)
+                                        sourceId.get(),
+                                        k % 2 == 0
+                                                ? 1L
+                                                : 2L)
                                 .execute();
 
-                        // Add aggregate forward.
+                        // Add source entry.
                         context
                                 .insertInto(
-                                        FORWARD_AGGREGATE,
-                                        FORWARD_AGGREGATE.ID,
-                                        FORWARD_AGGREGATE.UPDATE_TIME_MS,
-                                        FORWARD_AGGREGATE.FK_AGGREGATE_ID,
-                                        FORWARD_AGGREGATE.SUCCESS,
-                                        FORWARD_AGGREGATE.ERROR,
-                                        FORWARD_AGGREGATE.TRIES,
-                                        FORWARD_AGGREGATE.FK_FORWARD_DEST_ID)
+                                        SOURCE_ENTRY,
+                                        SOURCE_ENTRY.ID,
+                                        SOURCE_ENTRY.EXTENSION,
+                                        SOURCE_ENTRY.EXTENSION_TYPE,
+                                        SOURCE_ENTRY.BYTE_SIZE,
+                                        SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
                                 .values(
-                                        forwardAggregateId.incrementAndGet(),
-                                        System.currentTimeMillis(),
-                                        aggregateId.get(),
-                                        false,
-                                        null,
-                                        null,
-                                        1)
+                                        sourceEntryId.incrementAndGet(),
+                                        ".hdr",
+                                        2,
+                                        84L,
+                                        sourceItemId.get())
                                 .execute();
-
-                        // Add source items.
-                        for (int l = 1; l <= 4; l++) {
-                            context
-                                    .insertInto(
-                                            SOURCE_ITEM,
-                                            SOURCE_ITEM.ID,
-                                            SOURCE_ITEM.NAME,
-                                            SOURCE_ITEM.FK_FEED_ID,
-                                            SOURCE_ITEM.FK_SOURCE_ID,
-                                            SOURCE_ITEM.FK_AGGREGATE_ID)
-                                    .values(
-                                            sourceItemId.incrementAndGet(),
-                                            feedId + "_" + j + "_" + k + "_" + l,
-                                            feedId,
-                                            sourceId.get(),
-                                            aggregateId.get())
-                                    .execute();
-
-                            // Add source entry.
-                            context
-                                    .insertInto(
-                                            SOURCE_ENTRY,
-                                            SOURCE_ENTRY.ID,
-                                            SOURCE_ENTRY.EXTENSION,
-                                            SOURCE_ENTRY.EXTENSION_TYPE,
-                                            SOURCE_ENTRY.BYTE_SIZE,
-                                            SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
-                                    .values(
-                                            sourceEntryId.incrementAndGet(),
-                                            ".hdr",
-                                            2,
-                                            84L,
-                                            sourceItemId.get())
-                                    .execute();
-                            context
-                                    .insertInto(
-                                            SOURCE_ENTRY,
-                                            SOURCE_ENTRY.ID,
-                                            SOURCE_ENTRY.EXTENSION,
-                                            SOURCE_ENTRY.EXTENSION_TYPE,
-                                            SOURCE_ENTRY.BYTE_SIZE,
-                                            SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
-                                    .values(
-                                            sourceEntryId.incrementAndGet(),
-                                            ".dat",
-                                            4,
-                                            1L,
-                                            sourceItemId.get())
-                                    .execute();
-                        }
+                        context
+                                .insertInto(
+                                        SOURCE_ENTRY,
+                                        SOURCE_ENTRY.ID,
+                                        SOURCE_ENTRY.EXTENSION,
+                                        SOURCE_ENTRY.EXTENSION_TYPE,
+                                        SOURCE_ENTRY.BYTE_SIZE,
+                                        SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
+                                .values(
+                                        sourceEntryId.incrementAndGet(),
+                                        ".dat",
+                                        4,
+                                        1L,
+                                        sourceItemId.get())
+                                .execute();
                     }
                 }
             });
         }
 
         // Make sure we can't delete any sources.
-        jooq.printAllTables();
-        assertThat(proxyRepoSources.getDeletableSources(1000).size()).isZero();
+        check(12, 48, 96, 0);
 
         // Now pretend we forwarded the first aggregates.
-        jooq.printAllTables();
-        forward(1);
-
-        // Make sure we can delete source entries and items but not data.
-        jooq.printAllTables();
-        assertThat(proxyRepoSources.getDeletableSources(1000).size()).isZero();
+        forward(1, 1);
+        check(12, 48, 96, 0);
 
         // Now forward some more.
-        jooq.printAllTables();
-        forward(2);
+        forward(1, 2);
+        check(12, 24, 48, 0);
 
-        // Check we can now delete the first source.
-        jooq.printAllTables();
-        assertThat(proxyRepoSources.getDeletableSources(1000).size()).isOne();
+        forward(2, 3);
+        check(12, 24, 48, 0);
 
-        // Forward remaining.
-        jooq.printAllTables();
-
-        final long minId = jooq.readOnlyTransactionResult(context ->
-                JooqUtil.getMinId(context, FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID)
-                        .orElse(0L));
-        final long maxId = jooq.readOnlyTransactionResult(context ->
-                JooqUtil.getMaxId(context, FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID)
-                        .orElse(0L));
-        for (long i = minId; i <= maxId; i++) {
-            forward(i);
-        }
-
-        // Check everything is deleted.
-        jooq.printAllTables();
-        assertThat(proxyRepoSources.getDeletableSources(1000).size()).isEqualTo(12);
+        forward(2, 4);
+        check(12, 0, 0, 12);
 
         cleanup.cleanupSources();
 
@@ -230,14 +219,26 @@ public class TestCleanup {
         });
     }
 
-    private void forward(long aggregateId) {
+    private void check(final int sources,
+                       final int items,
+                       final int entries,
+                       final int deletableSources) {
+//        jooq.printAllTables();
+        assertThat(sourceDao.countSources()).isEqualTo(sources);
+        assertThat(sourceItemDao.countItems()).isEqualTo(items);
+        assertThat(sourceItemDao.countEntries()).isEqualTo(entries);
+        assertThat(repoSources.getDeletableSources(1000).size()).isEqualTo(deletableSources);
+    }
+
+    private void forward(final long aggregateId,
+                         final long forwardAggregateId) {
         final Aggregate aggregate = new Aggregate(aggregateId, 1L);
-        final ForwardDest forwardUrl = new ForwardDest(1, "test");
+        final ForwardDest forwardDest = new ForwardDest(1, "test");
         final ForwardAggregate forwardAggregate = ForwardAggregate
                 .builder()
-                .id(aggregateId)
+                .id(forwardAggregateId)
                 .aggregate(aggregate)
-                .forwardDest(forwardUrl)
+                .forwardDest(forwardDest)
                 .build();
         aggregateForwarder.forward(forwardAggregate);
     }
