@@ -4,6 +4,11 @@
 package stroom.proxy.repo.db.jooq;
 
 
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+
 import stroom.proxy.repo.db.jooq.tables.Aggregate;
 import stroom.proxy.repo.db.jooq.tables.Feed;
 import stroom.proxy.repo.db.jooq.tables.ForwardAggregate;
@@ -20,11 +25,6 @@ import stroom.proxy.repo.db.jooq.tables.records.ForwardSourceRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceRecord;
-
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 
 
 /**

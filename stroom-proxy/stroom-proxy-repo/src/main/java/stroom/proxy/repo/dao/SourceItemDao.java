@@ -177,7 +177,8 @@ public class SourceItemDao implements Flushable {
                 }
             }
 
-            sourceUpdateQueue.add(context -> sourceDao.setSourceExamined(context, source.id()));
+            sourceUpdateQueue.add(context ->
+                    sourceDao.setSourceExamined(context, source.id(), true, items.size()));
         });
     }
 
@@ -189,29 +190,7 @@ public class SourceItemDao implements Flushable {
                                                       final TimeUnit timeUnit) {
         return recordQueue.getBatch(sourceItemReadQueue, timeout, timeUnit);
     }
-
-    public void deleteByAggregateId(final DSLContext context, final long aggregateId) {
-        Metrics.measure("Delete source entries", () -> {
-            context
-                    .deleteFrom(SOURCE_ENTRY)
-                    .where(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.in(
-                            context
-                                    .select(SOURCE_ITEM.ID)
-                                    .from(SOURCE_ITEM)
-                                    .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId)))
-                    )
-                    .execute();
-        });
-
-        // Delete source items.
-        Metrics.measure("Delete source items", () -> {
-            context
-                    .deleteFrom(SOURCE_ITEM)
-                    .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId))
-                    .execute();
-        });
-    }
-
+    
     public void deleteBySourceId(final DSLContext context, final long sourceId) {
         Metrics.measure("Delete source entries", () -> {
             context

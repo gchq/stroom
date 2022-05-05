@@ -2,12 +2,9 @@ package stroom.proxy.repo.dao;
 
 import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.Aggregate;
-import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.ForwardAggregate;
 import stroom.proxy.repo.ForwardDest;
 import stroom.proxy.repo.ProxyDbConfig;
-import stroom.proxy.repo.RepoSource;
-import stroom.proxy.repo.RepoSourceItem;
 import stroom.proxy.repo.db.jooq.tables.records.ForwardAggregateRecord;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BindWriteQueue;
@@ -20,13 +17,14 @@ import stroom.util.shared.Flushable;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Record2;
+import org.jooq.Result;
 import org.jooq.TableField;
 import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -37,8 +35,8 @@ import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
+import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
 public class ForwardAggregateDao implements Flushable {
@@ -64,7 +62,6 @@ public class ForwardAggregateDao implements Flushable {
                     .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.eq(AGGREGATE.ID)));
 
     private final SqliteJooqHelper jooq;
-    private final SourceItemDao sourceItemDao;
     private final ProxyDbConfig dbConfig;
     private final AtomicLong forwardAggregateId = new AtomicLong();
 
@@ -84,10 +81,8 @@ public class ForwardAggregateDao implements Flushable {
 
     @Inject
     ForwardAggregateDao(final SqliteJooqHelper jooq,
-                        final SourceItemDao sourceItemDao,
                         final ProxyDbConfig dbConfig) {
         this.jooq = jooq;
-        this.sourceItemDao = sourceItemDao;
         this.dbConfig = dbConfig;
         init();
 
@@ -413,23 +408,45 @@ public class ForwardAggregateDao implements Flushable {
 
     private void deleteAggregate(final DSLContext context, final long aggregateId) {
         // Get source items and sources.
-        context
-                .selectDistinct(SOURCE.ID)
+        final Result<Record2<Long, Integer>> result = context
+                .select(SOURCE.ID, DSL.count(SOURCE_ITEM.ID))
                 .from(SOURCE)
                 .join(SOURCE_ITEM)
                 .on(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID))
-                .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId));
+                .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId))
+                .groupBy(SOURCE.ID)
+                .fetch();
 
-        final Map<RepoSource, List<RepoSourceItem>> itemMap =
-                sourceItemDao.fetchSourceItemsByAggregateId(context, aggregateId);
-
-        // Delete source entries and items.
-        sourceItemDao.deleteByAggregateId(context, aggregateId);
-
-        itemMap.values().forEach(sourceItems -> {
-            sourceItems.forEach(sourceItem -> {
-
+        // Update the source item count.
+        for (final Record2<Long, Integer> record : result) {
+            Metrics.measure("Update source item count", () -> {
+                context
+                        .update(SOURCE)
+                        .set(SOURCE.ITEM_COUNT, SOURCE.ITEM_COUNT.minus(record.value2()))
+                        .where(SOURCE.ID.eq(record.value1()))
+                        .execute();
             });
+        }
+
+        // Delete source entries.
+        Metrics.measure("Delete source entries", () -> {
+            context
+                    .deleteFrom(SOURCE_ENTRY)
+                    .where(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.in(
+                            context
+                                    .select(SOURCE_ITEM.ID)
+                                    .from(SOURCE_ITEM)
+                                    .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId)))
+                    )
+                    .execute();
+        });
+
+        // Delete source items.
+        Metrics.measure("Delete source items", () -> {
+            context
+                    .deleteFrom(SOURCE_ITEM)
+                    .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId))
+                    .execute();
         });
 
         // Delete forward records.
@@ -439,16 +456,6 @@ public class ForwardAggregateDao implements Flushable {
                     .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.eq(aggregateId))
                     .execute();
         });
-
-
-
-
-        // Mark source as forwarded.
-        context
-                .update(SOURCE)
-                .set(SOURCE.FORWARDED, true)
-                .where(SOURCE.ID.eq(sourceId))
-                .execute();
 
         // Delete aggregate.
         Metrics.measure("Delete aggregate", () -> {

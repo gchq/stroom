@@ -11,10 +11,8 @@ import stroom.proxy.repo.queue.RecordQueue;
 import stroom.proxy.repo.queue.WriteQueue;
 import stroom.util.shared.Flushable;
 
-import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
-import org.jooq.impl.DSL;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -23,18 +21,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
 public class SourceDao implements Flushable {
-
-    private static final Condition DELETE_SOURCE_CONDITION =
-            SOURCE.FORWARDED.isTrue().or(
-                    SOURCE.EXAMINED.isTrue()
-                            .andNotExists(DSL
-                                    .select(SOURCE_ITEM.ID)
-                                    .from(SOURCE_ITEM)
-                                    .where(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID))));
 
     private static final Field<?>[] SOURCE_COLUMNS = new Field<?>[]{
             SOURCE.ID,
@@ -186,7 +175,8 @@ public class SourceDao implements Flushable {
                                 SOURCE.FILE_STORE_ID,
                                 SOURCE.FK_FEED_ID)
                         .from(SOURCE)
-                        .where(DELETE_SOURCE_CONDITION)
+                        .where(SOURCE.EXAMINED.isTrue())
+                        .and(SOURCE.ITEM_COUNT.eq(0))
                         .orderBy(SOURCE.ID)
                         .limit(limit)
                         .fetch())
@@ -214,14 +204,18 @@ public class SourceDao implements Flushable {
         jooq.transaction(context -> context
                 .update(SOURCE)
                 .set(SOURCE.EXAMINED, false)
+                .set(SOURCE.ITEM_COUNT, 0)
                 .execute());
     }
 
     public void setSourceExamined(final DSLContext context,
-                                  final long sourceId) {
+                                  final long sourceId,
+                                  final boolean examined,
+                                  final int itemCount) {
         context
                 .update(SOURCE)
-                .set(SOURCE.EXAMINED, true)
+                .set(SOURCE.EXAMINED, examined)
+                .set(SOURCE.ITEM_COUNT, itemCount)
                 .setNull(SOURCE.NEW_POSITION)
                 .where(SOURCE.ID.eq(sourceId))
                 .execute();

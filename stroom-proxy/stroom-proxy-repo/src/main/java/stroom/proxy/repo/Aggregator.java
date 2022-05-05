@@ -20,8 +20,6 @@ import stroom.proxy.repo.dao.AggregateDao;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BatchUtil;
 
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -82,10 +80,6 @@ public class Aggregator {
             progressLog.add("Aggregator - closeOldAggregates", count);
             full = count == batchSize;
         }
-    }
-
-    public Map<RepoSource, List<RepoSourceItem>> getItems(final long aggregateId) {
-        return aggregateDao.fetchSourceItems(aggregateId);
     }
 
     public Batch<Aggregate> getCompleteAggregates() {

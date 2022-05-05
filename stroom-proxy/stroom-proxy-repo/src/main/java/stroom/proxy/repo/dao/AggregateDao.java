@@ -1,12 +1,8 @@
 package stroom.proxy.repo.dao;
 
-import stroom.data.zip.StroomZipFileType;
 import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.Aggregate;
 import stroom.proxy.repo.ProxyDbConfig;
-import stroom.proxy.repo.RepoSource;
-import stroom.proxy.repo.RepoSourceEntry;
-import stroom.proxy.repo.RepoSourceItem;
 import stroom.proxy.repo.RepoSourceItemRef;
 import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
 import stroom.proxy.repo.queue.Batch;
@@ -16,17 +12,12 @@ import stroom.proxy.repo.queue.RecordQueue;
 import stroom.proxy.repo.queue.WriteQueue;
 
 import org.jooq.Condition;
-import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -34,8 +25,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
-import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton

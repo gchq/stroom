@@ -20,6 +20,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.dao.FeedDao;
 import stroom.proxy.repo.dao.ForwardAggregateDao;
+import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BatchUtil;
 import stroom.receive.common.StreamHandlers;
@@ -44,6 +45,7 @@ public class AggregateForwarder {
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";
 
     private final FeedDao feedDao;
+    private final SourceItemDao sourceItemDao;
     private final Aggregator aggregator;
     private final ForwardAggregateDao forwardAggregateDao;
     private final ForwardDestinations forwardDestinations;
@@ -56,6 +58,7 @@ public class AggregateForwarder {
 
     @Inject
     AggregateForwarder(final FeedDao feedDao,
+                       final SourceItemDao sourceItemDao,
                        final Aggregator aggregator,
                        final ForwardAggregateDao forwardAggregateDao,
                        final ForwardDestinations forwardDestinations,
@@ -63,6 +66,7 @@ public class AggregateForwarder {
                        final Sender sender,
                        final ProgressLog progressLog) {
         this.feedDao = feedDao;
+        this.sourceItemDao = sourceItemDao;
         this.aggregator = aggregator;
         this.forwardAggregateDao = forwardAggregateDao;
         this.forwardDestinations = forwardDestinations;
@@ -142,7 +146,8 @@ public class AggregateForwarder {
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();
 
-        final Map<RepoSource, List<RepoSourceItem>> items = aggregator.getItems(aggregate.id());
+        final Map<RepoSource, List<RepoSourceItem>> items =
+                sourceItemDao.fetchSourceItemsByAggregateId(aggregate.id());
         if (items.size() > 0) {
             final FeedKey feedKey = feedDao.getKey(aggregate.feedId());
             final long thisPostId = proxyForwardId.incrementAndGet();

@@ -399,17 +399,19 @@ public class ForwardSourceDao implements Flushable {
     }
 
     private void deleteForwardSource(final DSLContext context, final long sourceId) {
+        // Mark source as forwarded by setting examined with 0 items.
+        context
+                .update(SOURCE)
+                .set(SOURCE.EXAMINED, true)
+                .set(SOURCE.ITEM_COUNT, 0)
+                .setNull(SOURCE.NEW_POSITION)
+                .where(SOURCE.ID.eq(sourceId))
+                .execute();
+
         // Delete forward records.
         context
                 .delete(FORWARD_SOURCE)
                 .where(FORWARD_SOURCE.FK_SOURCE_ID.eq(sourceId))
-                .execute();
-
-        // Mark source as forwarded.
-        context
-                .update(SOURCE)
-                .set(SOURCE.FORWARDED, true)
-                .where(SOURCE.ID.eq(sourceId))
                 .execute();
     }
 

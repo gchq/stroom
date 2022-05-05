@@ -70,9 +70,9 @@ public class Source extends TableImpl<SourceRecord> {
     public final TableField<SourceRecord, Boolean> EXAMINED = createField(DSL.name("examined"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
 
     /**
-     * The column <code>source.forwarded</code>.
+     * The column <code>source.item_count</code>.
      */
-    public final TableField<SourceRecord, Boolean> FORWARDED = createField(DSL.name("forwarded"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
+    public final TableField<SourceRecord, Integer> ITEM_COUNT = createField(DSL.name("item_count"), SQLDataType.INTEGER.defaultValue(DSL.field("0", SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>source.new_position</code>.
@@ -119,7 +119,7 @@ public class Source extends TableImpl<SourceRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.NEW_POSITION_SOURCE_INDEX, Indexes.SOURCE_FILE_STORE_ID);
+        return Arrays.asList(Indexes.EXAMINED_ITEM_COUNT_INDEX, Indexes.NEW_POSITION_SOURCE_INDEX, Indexes.SOURCE_FILE_STORE_ID);
     }
 
     @Override
@@ -158,7 +158,7 @@ public class Source extends TableImpl<SourceRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row6<Long, Long, Long, Boolean, Boolean, Long> fieldsRow() {
+    public Row6<Long, Long, Long, Boolean, Integer, Long> fieldsRow() {
         return (Row6) super.fieldsRow();
     }
 }
