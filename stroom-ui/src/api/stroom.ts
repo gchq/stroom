@@ -3446,6 +3446,9 @@ export interface TokenResponse {
 export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
+
+  /** @format int32 */
+  applicationInstanceKeepAliveIntervalMs?: number;
   defaultMaxResults?: string;
   helpSubPathExpressions?: string;
   helpSubPathJobs?: string;

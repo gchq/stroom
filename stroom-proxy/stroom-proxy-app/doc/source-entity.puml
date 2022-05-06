@@ -16,7 +16,7 @@ entity source {
   *path : varchar(255) - unique
   *fk_feed_id : bigint
   *examined : boolean
-  *forwarded : boolean
+  *item_count : integer
   *new_position : bigint
 }
 

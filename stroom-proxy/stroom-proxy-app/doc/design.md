@@ -139,8 +139,8 @@ The `SourceForwarder` runs asynchronously and will try and forward all new sourc
 It will either be waiting for new sources to be added or will be forwarding in which case it will either wait again at the end of it's forwarding activity if no new sources have arrived since it started or will try to forward any new sources that have arrived since it previously began forwarding.
 The `SourceForwarder` will find sources to forward and will try and send each asynchronously to each of the forward destinations.
 When a source is successfully sent to a destination a record is added to the `forward_source` table.
-When a source has been sent to all destinations the source table is updated to set `forwarded` to `true` so that the system no longer tries to forward the source.
-After setting the `forwarded` flag the `forward_source` records are deleted prior to firing a change event to any listeners.
+When a source has been sent to all destinations the source table is updated to set `examined` to `true` and `item_count` to 0 so that the system no longer tries to forward the source.
+After setting the `examined` to `true` and `item_count` to 0 the `forward_source` records are deleted prior to firing a change event to any listeners.
 
 If an error occurs when forwarding a source it is recorded in the `forward_source` table and the `source` table has the `forward_error` flag set so that the proxy stops trying to forward the source until a retry attempt is made.
 If a forwarding error is recorded it will be logged.
@@ -183,8 +183,8 @@ Aggregates that are older than the aggregation frequency are marked `complete` a
 The `AggregateForwarder` is registered to listen for new aggregates.
 The `AggregateForwarder` will find completed aggregates to forward and will try and send each asynchronously to each of the forward destinations.
 When an aggregate is successfully sent to a destination a record is added to the `forward_aggregate` table.
-When an aggregate has been sent to all destinations the aggregate table is updated to set `forwarded` to `true` so that the system no longer tries to forward the aggregate.
-After setting the `forwarded` flag the `forward_aggregate`, `aggregate_item` and `aggregate` records are deleted prior to firing a change event to any listeners.
+When an aggregate has been sent to all destinations the `new_position` is updated to `null` so that the system no longer tries to forward the aggregate.
+After setting the source `examined` to `true` and `item_count` to 0 the `forward_aggregate`, `aggregate_item` and `aggregate` records are deleted prior to firing a change event to any listeners.
 
 If an error occurs when forwarding an aggregate it is recorded in the `forward_aggregate` table and the `aggregate` table has the `forward_error` flag set so that the proxy stops trying to forward the aggregate until a retry attempt is made.
 If a forwarding error is recorded it will be logged.
