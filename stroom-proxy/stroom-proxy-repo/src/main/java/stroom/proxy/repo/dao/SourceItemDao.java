@@ -220,33 +220,28 @@ public class SourceItemDao implements Flushable {
      * @return A list of source entries for the aggregate.
      */
     public Map<RepoSource, List<RepoSourceItem>> fetchSourceItemsByAggregateId(final long aggregateId) {
-        return jooq.readOnlyTransactionResult(context -> fetchSourceItemsByAggregateId(context, aggregateId));
-    }
-
-    public Map<RepoSource, List<RepoSourceItem>> fetchSourceItemsByAggregateId(final DSLContext context,
-                                                                               final long aggregateId) {
         final Map<Long, RepoSourceItem> items = new HashMap<>();
         final Map<RepoSource, List<RepoSourceItem>> resultMap =
                 new TreeMap<>(Comparator.comparing(RepoSource::id));
 
         // Get all of the source zip entries that we want to write to the forwarding location.
-        context
-                .select(
-                        SOURCE_ENTRY.EXTENSION,
-                        SOURCE_ENTRY.EXTENSION_TYPE,
-                        SOURCE_ENTRY.BYTE_SIZE,
-                        SOURCE_ITEM.NAME,
-                        SOURCE_ITEM.FK_FEED_ID,
-                        SOURCE_ITEM.FK_AGGREGATE_ID,
-                        SOURCE.ID,
-                        SOURCE.FILE_STORE_ID,
-                        SOURCE.FK_FEED_ID)
-                .from(SOURCE_ENTRY)
-                .join(SOURCE_ITEM).on(SOURCE_ITEM.ID.eq(SOURCE_ENTRY.FK_SOURCE_ITEM_ID))
-                .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
-                .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId))
-                .orderBy(SOURCE.ID, SOURCE_ITEM.ID, SOURCE_ENTRY.EXTENSION_TYPE, SOURCE_ENTRY.EXTENSION)
-                .fetch()
+        jooq.readOnlyTransactionResult(context -> context
+                        .select(
+                                SOURCE_ENTRY.EXTENSION,
+                                SOURCE_ENTRY.EXTENSION_TYPE,
+                                SOURCE_ENTRY.BYTE_SIZE,
+                                SOURCE_ITEM.NAME,
+                                SOURCE_ITEM.FK_FEED_ID,
+                                SOURCE_ITEM.FK_AGGREGATE_ID,
+                                SOURCE.ID,
+                                SOURCE.FILE_STORE_ID,
+                                SOURCE.FK_FEED_ID)
+                        .from(SOURCE_ENTRY)
+                        .join(SOURCE_ITEM).on(SOURCE_ITEM.ID.eq(SOURCE_ENTRY.FK_SOURCE_ITEM_ID))
+                        .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
+                        .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId))
+                        .orderBy(SOURCE.ID, SOURCE_ITEM.ID, SOURCE_ENTRY.EXTENSION_TYPE, SOURCE_ENTRY.EXTENSION)
+                        .fetch())
                 .forEach(r -> {
                     final long id = r.get(SOURCE_ITEM.ID);
 
