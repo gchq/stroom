@@ -82,7 +82,7 @@ public class RecordQueue implements Flushable {
             try {
                 runnable.run();
                 final int maxQueueSize = getMaxQueueSize();
-                if (maxQueueSize > batchSize) {
+                if (maxQueueSize >= batchSize) {
                     flushInternal(jooq);
                 }
             } finally {
