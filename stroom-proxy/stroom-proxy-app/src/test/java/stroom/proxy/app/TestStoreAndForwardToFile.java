@@ -6,10 +6,16 @@ import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.store.SequentialFileStore;
 
 import com.google.inject.AbstractModule;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 
 class TestStoreAndForwardToFile extends AbstractTestStoreAndForward {
+
+    @Test
+    void testStoreAndForward() throws Exception {
+        super.testStoreAndForward();
+    }
 
     @Override
     AbstractModule getModule(final Config configuration, final Path configFile) {

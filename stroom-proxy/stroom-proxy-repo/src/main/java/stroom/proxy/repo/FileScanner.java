@@ -19,6 +19,7 @@ package stroom.proxy.repo;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.store.Entries;
+import stroom.proxy.repo.store.FileSet;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.StreamUtil;
@@ -139,17 +140,17 @@ public final class FileScanner {
         final String fileName = file.getFileName().toString();
 
         // Meta is moved last so use that to determine if we can consume this stream.
-        if (fileName.endsWith(ProxyRepoFileNames.META_EXTENSION)) {
+        if (fileName.endsWith(FileSet.META_EXTENSION)) {
             final Path parent = file.getParent();
             final Path metaFile = file;
 
             // Get zip file.
             String stem = fileName;
-            int index = fileName.lastIndexOf(ProxyRepoFileNames.META_EXTENSION);
+            int index = fileName.lastIndexOf(FileSet.META_EXTENSION);
             if (index != -1) {
                 stem = fileName.substring(0, index);
             }
-            final Path zipFile = parent.resolve(stem + ProxyRepoFileNames.ZIP_EXTENSION);
+            final Path zipFile = parent.resolve(stem + FileSet.ZIP_EXTENSION);
 
             if (Files.isRegularFile(zipFile)) {
                 final AttributeMap attributeMap = new AttributeMap();
@@ -171,8 +172,6 @@ public final class FileScanner {
 
                 // Delete files.
                 Files.deleteIfExists(zipFile);
-                Files.deleteIfExists(parent.resolve(stem + ProxyRepoFileNames.BAD_EXTENSION));
-                Files.deleteIfExists(parent.resolve(stem + ProxyRepoFileNames.ERROR_EXTENSION));
                 Files.deleteIfExists(metaFile);
             }
         }

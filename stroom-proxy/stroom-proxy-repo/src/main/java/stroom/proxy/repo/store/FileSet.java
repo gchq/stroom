@@ -1,6 +1,5 @@
 package stroom.proxy.repo.store;
 
-import stroom.proxy.repo.ProxyRepoFileNames;
 import stroom.util.io.FileUtil;
 
 import org.slf4j.Logger;
@@ -14,6 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileSet {
+
+    public static final String META_EXTENSION = ".meta";
+    public static final String ZIP_EXTENSION = ".zip";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSet.class);
 
@@ -64,9 +66,9 @@ public class FileSet {
         }
 
         final Path zip = dir.resolve(idString +
-                ProxyRepoFileNames.ZIP_EXTENSION);
+                ZIP_EXTENSION);
         final Path meta = dir.resolve(idString +
-                ProxyRepoFileNames.META_EXTENSION);
+                META_EXTENSION);
         return new FileSet(id, idString, root, subDirs, dir, zip, meta);
     }
 
@@ -94,17 +96,6 @@ public class FileSet {
         return meta;
     }
 
-    public Path getError() {
-        return dir.resolve(idString +
-                ProxyRepoFileNames.ERROR_EXTENSION);
-    }
-
-    public Path getBadZip() {
-        return dir.resolve(idString +
-                ProxyRepoFileNames.ZIP_EXTENSION +
-                ProxyRepoFileNames.BAD_EXTENSION);
-    }
-
     public String getZipFileName() {
         return root.relativize(zip).toString();
     }
@@ -114,8 +105,6 @@ public class FileSet {
         Files.deleteIfExists(zip);
         LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(meta));
         Files.deleteIfExists(meta);
-        Files.deleteIfExists(getError());
-        Files.deleteIfExists(getBadZip());
 
         // Try to delete directories.
         try {
