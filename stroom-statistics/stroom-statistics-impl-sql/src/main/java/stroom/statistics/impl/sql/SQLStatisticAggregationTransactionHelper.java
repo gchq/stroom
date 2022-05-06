@@ -153,6 +153,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
     private final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     private final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider;
+    private final ConnectionUtil connectionUtil;
 
     // @formatter:on
     private final AggregateConfig[] aggregateConfig = new AggregateConfig[]{
@@ -187,9 +188,11 @@ public class SQLStatisticAggregationTransactionHelper {
 
     @Inject
     SQLStatisticAggregationTransactionHelper(final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider,
-                                             final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider) {
+                                             final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider,
+                                             final ConnectionUtil connectionUtil) {
         this.sqlStatisticsDbConnProvider = sqlStatisticsDbConnProvider;
         this.sqlStatisticsConfigProvider = sqlStatisticsConfigProvider;
+        this.connectionUtil = connectionUtil;
     }
 
     public static final long round(final long timeMs, final int precision) {
@@ -208,7 +211,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
         taskContext.info(() -> prefix + "\n " + trace);
 
-        final int count = ConnectionUtil.executeUpdate(connection, sql, args);
+        final int count = connectionUtil.executeUpdate(connection, sql, args);
 
         LOGGER.debug(() -> LogUtil.message("doAggretateSQL - {} - {} in {} - {}",
                 prefix, ModelStringUtil.formatCsv(count), time, trace));
@@ -222,7 +225,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
         taskContext.info(() -> prefix + "\n " + trace);
 
-        final long result = ConnectionUtil.executeQueryLongResult(connection, sql, args);
+        final long result = connectionUtil.executeQueryLongResult(connection, sql, args);
 
         LOGGER.debug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(result), time, trace);
         return result;
@@ -236,7 +239,7 @@ public class SQLStatisticAggregationTransactionHelper {
                                              final String sql,
                                              final List<Object> args)
             throws SQLException {
-        return ConnectionUtil.executeQueryLongResult(connection, sql, args);
+        return connectionUtil.executeQueryLongResult(connection, sql, args);
     }
 
     public Long getAggregateMinId() throws SQLException {
@@ -307,7 +310,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
             taskContext.info(() -> "\n " + sql);
 
-            final int count = ConnectionUtil.executeUpdate(
+            final int count = connectionUtil.executeUpdate(
                     connection,
                     DELETE_UNUSED_KEYS,
                     Collections.emptyList());

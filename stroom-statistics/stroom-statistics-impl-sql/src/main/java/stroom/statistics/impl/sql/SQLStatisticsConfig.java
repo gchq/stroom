@@ -27,6 +27,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
     // TODO 29/11/2021 AT: Make final
     private StroomDuration maxProcessingAge;
     private final CacheConfig dataSourceCache;
+    private final StroomDuration slowQueryWarningThreshold;
 
     public SQLStatisticsConfig() {
         dbConfig = new SQLStatisticsDbConfig();
@@ -38,22 +39,27 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
                 .maximumSize(100L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
+        slowQueryWarningThreshold = StroomDuration.ofSeconds(1);
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public SQLStatisticsConfig(@JsonProperty("db") final SQLStatisticsDbConfig dbConfig,
-                               @JsonProperty("docRefType") final String docRefType,
-                               @JsonProperty("search") final SearchConfig searchConfig,
-                               @JsonProperty("statisticAggregationBatchSize") final int statisticAggregationBatchSize,
-                               @JsonProperty("maxProcessingAge") final StroomDuration maxProcessingAge,
-                               @JsonProperty("dataSourceCache") final CacheConfig dataSourceCache) {
+    public SQLStatisticsConfig(
+            @JsonProperty("db") final SQLStatisticsDbConfig dbConfig,
+            @JsonProperty("docRefType") final String docRefType,
+            @JsonProperty("search") final SearchConfig searchConfig,
+            @JsonProperty("statisticAggregationBatchSize") final int statisticAggregationBatchSize,
+            @JsonProperty("maxProcessingAge") final StroomDuration maxProcessingAge,
+            @JsonProperty("dataSourceCache") final CacheConfig dataSourceCache,
+            @JsonProperty("slowQueryWarningThreshold") final StroomDuration slowQueryWarningThreshold) {
+
         this.dbConfig = dbConfig;
         this.docRefType = docRefType;
         this.searchConfig = searchConfig;
         this.statisticAggregationBatchSize = statisticAggregationBatchSize;
         this.maxProcessingAge = maxProcessingAge;
         this.dataSourceCache = dataSourceCache;
+        this.slowQueryWarningThreshold = slowQueryWarningThreshold;
     }
 
     @Override
@@ -95,6 +101,12 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
         return dataSourceCache;
     }
 
+    @JsonPropertyDescription("A warning will be logged for any statistics database queries that take longer than " +
+            "this threshold to complete. A value of '0' or 'PT0' means no warnings will be logged at all.")
+    public StroomDuration getSlowQueryWarningThreshold() {
+        return slowQueryWarningThreshold;
+    }
+
     public SQLStatisticsConfig withMaxProcessingAge(final StroomDuration maxProcessingAge) {
         return new SQLStatisticsConfig(
                 dbConfig,
@@ -102,7 +114,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
                 searchConfig,
                 statisticAggregationBatchSize,
                 maxProcessingAge,
-                dataSourceCache);
+                dataSourceCache, slowQueryWarningThreshold);
     }
 
     @Override

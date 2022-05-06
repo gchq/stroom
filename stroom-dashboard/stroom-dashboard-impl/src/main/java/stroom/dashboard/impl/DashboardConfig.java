@@ -18,7 +18,7 @@ public class DashboardConfig extends AbstractConfig implements IsStroomConfig {
 
     public DashboardConfig() {
         applicationInstanceCache = CacheConfig.builder()
-                .expireAfterAccess(StroomDuration.ofMinutes(1))
+                .expireAfterAccess(StroomDuration.ofMinutes(5))
                 .build();
     }
 

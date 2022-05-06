@@ -62,6 +62,22 @@ class ActiveQuery {
         return dataSourceProvider.destroy(queryKey);
     }
 
+    public QueryKey getQueryKey() {
+        return queryKey;
+    }
+
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
+    public DataSourceProvider getDataSourceProvider() {
+        return dataSourceProvider;
+    }
+
+    public long getCreationTime() {
+        return creationTime;
+    }
+
     @Override
     public String toString() {
         return "ActiveQuery{" +

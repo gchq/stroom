@@ -1,5 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Stroom Proxy" type="Application" factoryName="Application">
+    <envs>
+      <env name="STROOM_RESOURCES_REPO_DIR" value="$PROJECT_DIR$/../stroom-resources" />
+    </envs>
     <option name="MAIN_CLASS_NAME" value="stroom.proxy.app.App" />
     <module name="stroom.stroom-proxy.stroom-proxy-app.main" />
     <option name="PROGRAM_PARAMETERS" value="server proxy-dev.yml" />

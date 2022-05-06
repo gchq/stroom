@@ -1,6 +1,7 @@
 package stroom.util;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -9,7 +10,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * Util methods for safely getting properties (or properties of properties of ...) from
+ * Utility methods for safely getting properties (or properties of properties of ...) from
  * a value with protection from null values anywhere in the chain.
  */
 public class NullSafe {
@@ -17,12 +18,124 @@ public class NullSafe {
     private NullSafe() {
     }
 
-    public static <T> boolean isEmpty(final Collection<T> collection) {
+    /**
+     * @return True if str is null or blank
+     */
+    public static boolean isBlankString(final String str) {
+        return str == null || str.isBlank();
+    }
+
+    /**
+     * @return True if str is null or empty
+     */
+    public static boolean isEmptyString(final String str) {
+        return str == null || str.isEmpty();
+    }
+
+    /**
+     * @return True if the collection is null or empty
+     */
+    public static <T> boolean isEmptyCollection(final Collection<T> collection) {
         return collection == null || collection.isEmpty();
     }
 
-    public static <T> boolean isNotEmpty(final Collection<T> collection) {
+    /**
+     * @return True if the map is null or empty
+     */
+    public static <T1, T2> boolean isEmptyMap(final Map<T1, T2> map) {
+        return map == null || map.isEmpty();
+    }
+
+    /**
+     * @return True if value is null or the string property is null or empty
+     */
+    public static <T> boolean isEmptyString(final T value,
+                                            final Function<T, String> stringGetter) {
+        if (value == null) {
+            return true;
+        } else {
+            final String str = Objects.requireNonNull(stringGetter).apply(value);
+            return str == null || str.isEmpty();
+        }
+    }
+
+    /**
+     * @return True if value is null or the string property is null or empty
+     */
+    public static <T> boolean isBlankString(final T value,
+                                            final Function<T, String> stringGetter) {
+        if (value == null) {
+            return true;
+        } else {
+            final String str = Objects.requireNonNull(stringGetter).apply(value);
+            return str == null || str.isBlank();
+        }
+    }
+
+    /**
+     * @return True if value is null or the collection is null or empty
+     */
+    public static <T1, T2> boolean isEmptyCollection(final T1 value,
+                                                     final Function<T1, Collection<T2>> collectionGetter) {
+        if (value == null) {
+            return true;
+        } else {
+            final Collection<T2> collection = Objects.requireNonNull(collectionGetter).apply(value);
+            return collection == null || collection.isEmpty();
+        }
+    }
+
+    /**
+     * @return True if value is null or the map is null or empty
+     */
+    public static <T1, T2, T3> boolean isEmptyMap(final T1 value,
+                                                  final Function<T1, Map<T2, T3>> mapGetter) {
+        if (value == null) {
+            return true;
+        } else {
+            final Map<T2, T3> map = Objects.requireNonNull(mapGetter).apply(value);
+            return map == null || map.isEmpty();
+        }
+    }
+
+    /**
+     * @return True if the collection is non-null and not empty
+     */
+    public static <T> boolean hasItems(final Collection<T> collection) {
         return collection != null && !collection.isEmpty();
+    }
+
+    /**
+     * @return True if the map is non-null and not empty
+     */
+    public static <T1, T2> boolean hasEntries(final Map<T1, T2> map) {
+        return map != null && !map.isEmpty();
+    }
+
+    /**
+     * @return True if value is non-null and the collection is non-null and not empty
+     */
+    public static <T1, T2> boolean hasItems(final T1 value,
+                                            final Function<T1, Collection<T2>> collectionGetter) {
+        if (value == null) {
+            return false;
+        } else {
+            final Collection<T2> collection = Objects.requireNonNull(collectionGetter).apply(value);
+            return collection != null && !collection.isEmpty();
+        }
+    }
+
+    /**
+     * @return True if value is non-null and the map is non-null and not empty
+     */
+    public static <T1, T2, T3> boolean hasEntries(final T1 value,
+                                                  final Function<T1, Map<T2, T3>> mapGetter) {
+        if (value == null) {
+            return false;
+        } else {
+            final Map<T2, T3> map = Objects.requireNonNull(mapGetter).apply(value);
+            return map != null && !map.isEmpty();
+        }
     }
 
     public static <T1, R> R get(final T1 value,
@@ -65,11 +178,11 @@ public class NullSafe {
     /**
      * Allows you to test some property of a value without worrying if the value is null, e.g.
      * <pre><code>
-     *    List<Sting> list = null;
-     *    boolean hasValues = NullSafe.test(list, list -> list.size > 0);
+     *    boolean hasValues = NullSafe.test(myObject, MyObject::getItems, list -> !list.isEmpty());
      * </code></pre>
      *
-     * @return false if value is null, else return the value of the predicate when applied
+     * @return false if value is null or the getter returns null,
+     * else return the value of the predicate when applied
      * to the result of the getter.
      */
     public static <T1, R> boolean test(final T1 value,
@@ -354,6 +467,7 @@ public class NullSafe {
         return Objects.requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
     }
 
+    @SuppressWarnings("unused")
     public static <T1, T2, T3, T4, R> Optional<R> getAsOptional(final T1 value,
                                                                 final Function<T1, T2> getter1,
                                                                 final Function<T2, T3> getter2,

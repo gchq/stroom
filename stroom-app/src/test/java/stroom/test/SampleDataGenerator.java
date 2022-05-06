@@ -26,6 +26,9 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -39,6 +42,8 @@ public class SampleDataGenerator {
 //    private final StoreCreationTool storeCreationTool;
 
     private final Path templatesDir;
+
+    private final List<CompletableFuture<Void>> futures = new ArrayList<>();
 
     @Inject
     public SampleDataGenerator() {
@@ -69,6 +74,10 @@ public class SampleDataGenerator {
         generateRefDataForEffectiveDateTesting(dir);
 
         generateCharsetData(dir);
+
+        LOGGER.info("Waiting for {} async tasks to complete", futures.size());
+        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+        LOGGER.info("Completed generation");
     }
 
     private void generateDataViewingData(final Path dir) {
@@ -89,6 +98,7 @@ public class SampleDataGenerator {
                 .recordElementName("record")
                 .fieldValueElementName("data")
                 .build();
+
 
         // Data that has one record per line
         // One with long lines, one with short
@@ -155,6 +165,7 @@ public class SampleDataGenerator {
                 longLoremText,
                 LocalDateTime.of(2020, 11, 1, 0, 0),
                 randomSeed++);
+
     }
 
     private void generateDataViewRawData(final Path dir,
@@ -166,52 +177,54 @@ public class SampleDataGenerator {
                                          final LocalDateTime startDate,
                                          final long randomSeed) {
         final Path file = makeInputFilePath(dir, fileNo, feedName);
-        LOGGER.info("Generating file {}", file.toAbsolutePath().normalize().toString());
 
-        DataGenerator.buildDefinition()
-                .addFieldDefinition(DataGenerator.randomDateTimeField(
-                        "dateTime",
-                        startDate,
-                        startDate.plusDays(28),
-                        DateTimeFormatter.ISO_DATE_TIME
-                ))
-                .addFieldDefinition(DataGenerator.randomIpV4Field(
-                        "machineIp"))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "machineMacAddress",
-                        faker -> faker.internet().macAddress()
-                ))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "firstName",
-                        faker -> faker.name().firstName()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "surname",
-                        faker -> faker.name().lastName()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "username",
-                        faker -> faker.name().username()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "bloodGroup",
-                        faker -> faker.name().bloodGroup()))
-                .addFieldDefinition(DataGenerator.randomEmoticonEmojiField(
-                        "emotionalState"))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "address",
-                        faker -> faker.address().fullAddress()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "company",
-                        faker -> faker.company().name()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "companyLogo",
-                        faker -> faker.company().logo()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "lorum",
-                        faker -> String.join(" ", faker.lorem().words(loremWordCount))))
-                .setDataWriter(dataWriter)
-                .consumedBy(DataGenerator.getFileOutputConsumer(file, recordSeparator))
-                .rowCount(2_000)
-                .withRandomSeed(randomSeed)
-                .generate();
+        futures.add(CompletableFuture.runAsync(() -> {
+            LOGGER.info("Generating file {}", file.toAbsolutePath().normalize());
+            DataGenerator.buildDefinition()
+                    .addFieldDefinition(DataGenerator.randomDateTimeField(
+                            "dateTime",
+                            startDate,
+                            startDate.plusDays(28),
+                            DateTimeFormatter.ISO_DATE_TIME
+                    ))
+                    .addFieldDefinition(DataGenerator.randomIpV4Field(
+                            "machineIp"))
+                    .addFieldDefinition(DataGenerator.fakerField(
+                            "machineMacAddress",
+                            faker -> faker.internet().macAddress()
+                    ))
+                    .addFieldDefinition(DataGenerator.fakerField(
+                            "firstName",
+                            faker -> faker.name().firstName()))
+                    .addFieldDefinition(DataGenerator.fakerField(
+                            "surname",
+                            faker -> faker.name().lastName()))
+                    .addFieldDefinition(DataGenerator.fakerField(
+                            "username",
+                            faker -> faker.name().username()))
+                    .addFieldDefinition(DataGenerator.fakerField(
+                            "bloodGroup",
+                            faker -> faker.name().bloodGroup()))
+                    .addFieldDefinition(DataGenerator.randomEmoticonEmojiField(
+                            "emotionalState"))
+                    .addFieldDefinition(DataGenerator.fakerField(
+                            "address",
+                            faker -> faker.address().fullAddress()))
+                    .addFieldDefinition(DataGenerator.fakerField(
+                            "company",
+                            faker -> faker.company().name()))
+                    .addFieldDefinition(DataGenerator.fakerField(
+                            "companyLogo",
+                            faker -> faker.company().logo()))
+                    .addFieldDefinition(DataGenerator.fakerField(
+                            "lorum",
+                            faker -> String.join(" ", faker.lorem().words(loremWordCount))))
+                    .setDataWriter(dataWriter)
+                    .consumedBy(DataGenerator.getFileOutputConsumer(file, recordSeparator))
+                    .rowCount(2_000)
+                    .withRandomSeed(randomSeed)
+                    .generate();
+        }));
     }
 
     private void generateRefDataForEffectiveDateTesting(final Path dir) {
@@ -225,8 +238,38 @@ public class SampleDataGenerator {
         LocalDateTime effectiveDateTime = startTime;
 
         for (int i = 1; i <= dateCount; i++) {
-            final Path refFile = makeInputFilePath(dir, i, effectiveDateTime, refFeed);
-            LOGGER.info("Generating file {}", refFile.toAbsolutePath().normalize().toString());
+            final int finalI = i;
+            final LocalDateTime finalEffectiveDateTime = effectiveDateTime;
+
+            futures.add(CompletableFuture.runAsync(() -> {
+                final Path refFile = makeInputFilePath(dir, finalI, finalEffectiveDateTime, refFeed);
+                LOGGER.info("Generating file {}", refFile.toAbsolutePath().normalize().toString());
+
+                DataGenerator.buildDefinition()
+                        .addFieldDefinition(DataGenerator.sequentiallyNumberedValueField(
+                                "user",
+                                "user%s",
+                                1,
+                                userCount + 1))
+                        .addFieldDefinition(DataGenerator.sequentiallyNumberedValueField(
+                                "effectiveDateTime",
+                                "user%s-" + finalEffectiveDateTime.toString(),
+                                1,
+                                userCount + 1))
+                        .setDataWriter(XmlAttributesDataWriterBuilder.builder()
+                                .namespace("records:2")
+                                .build())
+                        .consumedBy(DataGenerator.getFileOutputConsumer(refFile))
+                        .rowCount(userCount)
+                        .generate();
+
+            }));
+            effectiveDateTime = effectiveDateTime.plusDays(1);
+        }
+
+        futures.add(CompletableFuture.runAsync(() -> {
+            final Path eventsFile = makeInputFilePath(dir, 1, eventsFeed);
+            LOGGER.info("Generating file {}", eventsFile.toAbsolutePath().normalize());
 
             DataGenerator.buildDefinition()
                     .addFieldDefinition(DataGenerator.sequentiallyNumberedValueField(
@@ -234,41 +277,19 @@ public class SampleDataGenerator {
                             "user%s",
                             1,
                             userCount + 1))
-                    .addFieldDefinition(DataGenerator.sequentiallyNumberedValueField(
-                            "effectiveDateTime",
-                            "user%s-" + effectiveDateTime.toString(),
-                            1,
-                            userCount + 1))
+                    .addFieldDefinition(DataGenerator.sequentialDateTimeField(
+                            "time",
+                            startTime.plusHours(1),
+                            Duration.ofDays(1),
+                            DateTimeFormatter.ISO_DATE_TIME))
                     .setDataWriter(XmlAttributesDataWriterBuilder.builder()
                             .namespace("records:2")
                             .build())
-                    .consumedBy(DataGenerator.getFileOutputConsumer(refFile))
+                    .consumedBy(DataGenerator.getFileOutputConsumer(eventsFile))
                     .rowCount(userCount)
+                    .multiThreaded()
                     .generate();
-
-            effectiveDateTime = effectiveDateTime.plusDays(1);
-        }
-
-        final Path eventsFile = makeInputFilePath(dir, 1, eventsFeed);
-        LOGGER.info("Generating file {}", eventsFile.toAbsolutePath().normalize().toString());
-
-        DataGenerator.buildDefinition()
-                .addFieldDefinition(DataGenerator.sequentiallyNumberedValueField(
-                        "user",
-                        "user%s",
-                        1,
-                        userCount + 1))
-                .addFieldDefinition(DataGenerator.sequentialDateTimeField(
-                        "time",
-                        startTime.plusHours(1),
-                        Duration.ofDays(1),
-                        DateTimeFormatter.ISO_DATE_TIME))
-                .setDataWriter(XmlAttributesDataWriterBuilder.builder()
-                        .namespace("records:2")
-                        .build())
-                .consumedBy(DataGenerator.getFileOutputConsumer(eventsFile))
-                .rowCount(userCount)
-                .generate();
+        }));
     }
 
     private void generateCharsetData(final Path dir) {
@@ -281,21 +302,21 @@ public class SampleDataGenerator {
                     multipleLanguagesFile, StandardCharsets.UTF_8);
 
             Stream.of(
-                    Tuple.of("UTF8_BOM", StandardCharsets.UTF_8, ByteOrderMark.UTF_8),
-                    Tuple.of("UTF8_NO_BOM", StandardCharsets.UTF_8, (ByteOrderMark) null),
+                            Tuple.of("UTF8_BOM", StandardCharsets.UTF_8, ByteOrderMark.UTF_8),
+                            Tuple.of("UTF8_NO_BOM", StandardCharsets.UTF_8, (ByteOrderMark) null),
 
-                    // Stroom doesn't support straight UTF16
-                    Tuple.of("UTF16LE_BOM", StandardCharsets.UTF_16LE, ByteOrderMark.UTF_16LE),
-                    Tuple.of("UTF16LE_NO_BOM", StandardCharsets.UTF_16LE, (ByteOrderMark) null),
-                    Tuple.of("UTF16BE_BOM", StandardCharsets.UTF_16BE, ByteOrderMark.UTF_16BE),
-                    Tuple.of("UTF16BE_NO_BOM", StandardCharsets.UTF_16BE, (ByteOrderMark) null),
+                            // Stroom doesn't support straight UTF16
+                            Tuple.of("UTF16LE_BOM", StandardCharsets.UTF_16LE, ByteOrderMark.UTF_16LE),
+                            Tuple.of("UTF16LE_NO_BOM", StandardCharsets.UTF_16LE, (ByteOrderMark) null),
+                            Tuple.of("UTF16BE_BOM", StandardCharsets.UTF_16BE, ByteOrderMark.UTF_16BE),
+                            Tuple.of("UTF16BE_NO_BOM", StandardCharsets.UTF_16BE, (ByteOrderMark) null),
 
-                    // Stroom doesn't support straight UTF32
-                    Tuple.of("UTF32LE_BOM", Charset.forName("UTF-32LE"), ByteOrderMark.UTF_32LE),
-                    Tuple.of("UTF32LE_NO_BOM", Charset.forName("UTF-32LE"), (ByteOrderMark) null),
-                    Tuple.of("UTF32BE_BOM", Charset.forName("UTF-32BE"), ByteOrderMark.UTF_32BE),
-                    Tuple.of("UTF32BE_NO_BOM", Charset.forName("UTF-32BE"), (ByteOrderMark) null)
-            )
+                            // Stroom doesn't support straight UTF32
+                            Tuple.of("UTF32LE_BOM", Charset.forName("UTF-32LE"), ByteOrderMark.UTF_32LE),
+                            Tuple.of("UTF32LE_NO_BOM", Charset.forName("UTF-32LE"), (ByteOrderMark) null),
+                            Tuple.of("UTF32BE_BOM", Charset.forName("UTF-32BE"), ByteOrderMark.UTF_32BE),
+                            Tuple.of("UTF32BE_NO_BOM", Charset.forName("UTF-32BE"), (ByteOrderMark) null)
+                    )
                     .forEach(tuple3 -> {
                         final String feedName = "TEST_CHARSETS_" + tuple3._1() + "-REFERENCE";
                         generateDataForCharset(
@@ -318,43 +339,45 @@ public class SampleDataGenerator {
                                         final ByteOrderMark byteOrderMark,
                                         final String sourceContent,
                                         final int iteration) {
-        LOGGER.info("Creating feed {} in {} for charset {} and BOM {}",
-                feedName, dir, charset, byteOrderMark);
+        futures.add(CompletableFuture.runAsync(() -> {
+            LOGGER.info("Creating feed {} in {} for charset {} and BOM {}",
+                    feedName, dir, charset, byteOrderMark);
 
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-        // Get the bytes of the desired charset
-        byte[] sourceBytes = sourceContent.getBytes(charset);
+            // Get the bytes of the desired charset
+            byte[] sourceBytes = sourceContent.getBytes(charset);
 
-        final Path file = makeInputFilePath(
-                dir,
-                1,
-                LocalDateTime.of(2020, 1, 1, 0, 0, 0)
-                        .plusMonths(iteration),
-                feedName);
+            final Path file = makeInputFilePath(
+                    dir,
+                    1,
+                    LocalDateTime.of(2020, 1, 1, 0, 0, 0)
+                            .plusMonths(iteration),
+                    feedName);
 
-        LOGGER.info("Generating file {}, with charset {}, BOM {}",
-                file, charset, byteOrderMark);
+            LOGGER.info("Generating file {}, with charset {}, BOM {}",
+                    file, charset, byteOrderMark);
 
-        try (OutputStream outputStream = new FileOutputStream(file.toFile())) {
+            try (OutputStream outputStream = new FileOutputStream(file.toFile())) {
 
-            // Write the BOM to the stream if we have one. We control the
-            // presence of the BOM, not the java.
-            if (byteOrderMark != null) {
-                byteArrayOutputStream.writeBytes(byteOrderMark.getBytes());
+                // Write the BOM to the stream if we have one. We control the
+                // presence of the BOM, not the java.
+                if (byteOrderMark != null) {
+                    byteArrayOutputStream.writeBytes(byteOrderMark.getBytes());
+                }
+
+                final BOMInputStream bomFreeInputStream = new BOMInputStream(
+                        new ByteArrayInputStream(sourceBytes),
+                        false);
+
+                // now write the encoded bytes without the BOM
+                bomFreeInputStream.transferTo(byteArrayOutputStream);
+
+                byteArrayOutputStream.writeTo(outputStream);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-
-            final BOMInputStream bomFreeInputStream = new BOMInputStream(
-                    new ByteArrayInputStream(sourceBytes),
-                    false);
-
-            // now write the encoded bytes without the BOM
-            bomFreeInputStream.transferTo(byteArrayOutputStream);
-
-            byteArrayOutputStream.writeTo(outputStream);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        }));
     }
 
     private Path makeInputFilePath(final Path dir,

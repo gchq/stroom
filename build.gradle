@@ -87,7 +87,7 @@ ext.versions = [
 
         //------Stroom-repos---------------
         //    stroomProxyRepo: 'v5.1-beta.8',
-        eventLogging      : '5.0-beta.30_schema-v4.0-beta.3',
+        eventLogging      : '5.0-beta.31_schema-v4.0-beta.3',
         hadoopCommonShaded: '2.6.4-9',
         hadoopHdfsShaded  : '2.6.4-7',
         stroomStats       : '1.0-alpha.6',
@@ -152,7 +152,7 @@ ext.libs = [
         commons_lang                   : "org.apache.commons:commons-lang3", // version controlled by DW BOM
         commons_pool2                  : "org.apache.commons:commons-pool2:2.10.0",
         commons_text                   : "org.apache.commons:commons-text", // version controlled by DW BOM
-        classgraph                     : "io.github.classgraph:classgraph:4.8.138",
+        classgraph                     : "io.github.classgraph:classgraph:4.8.146",
         curator_client                 : "org.apache.curator:curator-client:$versions.curator",
         curator_framework              : "org.apache.curator:curator-framework:$versions.curator",
         curator_x_discovery            : "org.apache.curator:curator-x-discovery:$versions.curator",

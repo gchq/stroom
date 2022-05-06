@@ -12,6 +12,49 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Fix failing test.
+
+* No changes, failed build.
+
+* Issue **#2855** : Add propety `stroom.index.writer.slowIndexWriteWarningThreshold` to configure the threshold for warning about slow index shard writes.
+
+* Issue **#2856** : Strip `[` and `]` from IPv6 addresses in the logged events to ensure schema compliance.
+
+* Issue **#2857** : Add `/stroomAdmin/filteredhealthcheck` and `/proxyAdmin/filteredhealthcheck` servlets to allow filtering of the health checks that are run.
+
+* Issue **#2863** : Fix UI hanging when data viewer navigation buttons are clicked repeatedly and very quickly.
+
+* Issue **#2839** : Fix invalid event XML generated when adding user perms to an entity with no perms (i.e. System entity).
+
+* Issue **#2843** : Fix NPE when logging in to a user with no password.
+
+* Increase column width for _Sign in Failures_ column on Manage Accounts screen so the sort icon is visible.
+
+* Issue **#2840** : Fix various issues with sorting on Manage Accounts screen.
+
+* Issue **#2841** : Fix issues with sorting/filtering on API Keys screen.
+
+* Increase User Id column width on API Keys screen.
+
+* Issue **#2847** : Fix download of dashboard query and results.
+
+* Issue **#2838** : Change web socket code to avoid errors for expected cases.
+
+* Issue **#2851** : Add configuration property `stroom.statistics.sql.slowQueryWarningThreshold` to configure slow statistics sql query warning threshold.
+
+* Issue **#2827** : Fix Format feature in editor when comment contains unmatched double quote.
+
+* Issue **#2830** : Change logging of document permission changes to log a single event containing the full before/after state of the doc's perms.
+
+* Issue **#2830** : Ensure the creation of a stroom user record is only logged once.
+
+* Issue **#2830** : When cascading document permissions, only log the change for the top level but mark it with the cascade setting.
+
+* Issue **#2816** : Fix missing navigation controls when viewing a multi part stream where a middle part is binary and the rest are text.
+
+* Add missing Singlton annotation to ProxyConfigProvider.
+
+
 ## [v7.1-beta.11] - 2022-04-01
 
 * Issue **#2749** : Improve support for  and  fields when searching an Elasticsearch index.

@@ -42,10 +42,16 @@ public class Changes {
         this.remove = remove;
     }
 
+    /**
+     * @return A map of user UUID => Set of permission names
+     */
     public Map<String, Set<String>> getAdd() {
         return add;
     }
 
+    /**
+     * @return A map of user UUID => Set of permission names
+     */
     public Map<String, Set<String>> getRemove() {
         return remove;
     }
