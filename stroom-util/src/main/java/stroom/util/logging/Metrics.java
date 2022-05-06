@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class Metrics {
 
     private static final Map<String, Metric> map = new ConcurrentHashMap<>();
-    private static boolean enabled = true;
+    private static boolean enabled = false;
 
     public static <R> R measure(final String name, final Supplier<R> runnable) {
         if (enabled) {

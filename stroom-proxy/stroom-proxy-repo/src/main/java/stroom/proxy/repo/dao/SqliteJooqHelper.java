@@ -65,15 +65,15 @@ public class SqliteJooqHelper {
         this.maintenancePragma = proxyProxyDbConfig.getMaintenancePragma();
         this.maintenancePragmaFrequencyMs = proxyProxyDbConfig.getMaintenancePragmaFrequency().toMillis();
 
-        // Start periodic report.
-        CompletableFuture.runAsync(() -> {
-            while (true) {
-                ThreadUtil.sleep(10000);
-                Metrics.report();
-                printTableRecordCounts();
-                System.out.println("");
-            }
-        });
+//        // Start periodic report.
+//        CompletableFuture.runAsync(() -> {
+//            while (true) {
+//                ThreadUtil.sleep(10000);
+//                Metrics.report();
+//                printTableRecordCounts();
+//                System.out.println("");
+//            }
+//        });
     }
 
     public void readOnlyTransaction(final Consumer<DSLContext> consumer) {
