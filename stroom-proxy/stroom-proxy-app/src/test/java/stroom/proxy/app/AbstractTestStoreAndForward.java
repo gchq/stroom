@@ -31,6 +31,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
 abstract class AbstractTestStoreAndForward {
@@ -89,25 +91,48 @@ abstract class AbstractTestStoreAndForward {
         proxyLifecycle.start();
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StandardHeaderArguments.FEED, feedName);
-        attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
-        final byte[] metaBytes = AttributeMapUtil.toByteArray(attributeMap);
-        final byte[] dataBytes = "test".getBytes(StandardCharsets.UTF_8);
-        final ProgressHandler progressHandler = new ProgressHandler("Test");
 
-        for (int i = 0; i < 1_000_000; i++) {
-            receiveStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
+        final int threadCount = 10;
+        final int totalStreams = 1_000_000;
+        final AtomicInteger count = new AtomicInteger();
+        final CompletableFuture[] futures = new CompletableFuture[threadCount];
+        for (int i = 0; i < threadCount; i++) {
+            futures[i] = CompletableFuture.runAsync(() -> {
                 try {
-                    handler.addEntry("1" + StroomZipFileType.META.getExtension(),
-                            new ByteArrayInputStream(metaBytes), progressHandler);
-                    handler.addEntry("1" + StroomZipFileType.DATA.getExtension(),
-                            new ByteArrayInputStream(dataBytes), progressHandler);
+                    final AttributeMap attributeMap = new AttributeMap();
+                    attributeMap.put(StandardHeaderArguments.FEED, feedName);
+                    attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
+                    final byte[] metaBytes = AttributeMapUtil.toByteArray(attributeMap);
+                    final byte[] dataBytes = "test".getBytes(StandardCharsets.UTF_8);
+                    final ProgressHandler progressHandler = new ProgressHandler("Test");
+
+                    boolean add = true;
+                    while (add) {
+                        if (count.incrementAndGet() > totalStreams) {
+                            add = false;
+                        } else {
+                            receiveStreamHandlers.handle(feedName,
+                                    StreamTypeNames.RAW_EVENTS,
+                                    attributeMap,
+                                    handler -> {
+                                        try {
+                                            handler.addEntry("1" + StroomZipFileType.META.getExtension(),
+                                                    new ByteArrayInputStream(metaBytes), progressHandler);
+                                            handler.addEntry("1" + StroomZipFileType.DATA.getExtension(),
+                                                    new ByteArrayInputStream(dataBytes), progressHandler);
+                                        } catch (final IOException e) {
+                                            throw new UncheckedIOException(e);
+                                        }
+                                    });
+                        }
+                    }
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }
             });
         }
+
+        CompletableFuture.allOf(futures).join();
 
         await(forwarderDestinations);
 

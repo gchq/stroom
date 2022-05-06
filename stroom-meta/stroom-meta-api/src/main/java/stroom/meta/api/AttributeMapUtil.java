@@ -270,8 +270,8 @@ public class AttributeMapUtil {
     }
 
     public static void addFeedAndType(final AttributeMap attributeMap,
-                                       final String feedName,
-                                       final String typeName) {
+                                      final String feedName,
+                                      final String typeName) {
         attributeMap.put(StandardHeaderArguments.FEED, feedName.trim());
         if (typeName != null && !typeName.isBlank()) {
             attributeMap.put(StandardHeaderArguments.TYPE, typeName.trim());

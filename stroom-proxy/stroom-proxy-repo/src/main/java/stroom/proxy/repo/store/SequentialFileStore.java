@@ -138,7 +138,7 @@ public class SequentialFileStore {
         return new SequentialEntries(attributeMap);
     }
 
-    private void afterStore(final long storeId) throws IOException {
+    private void afterStore(final long storeId) {
         try {
             boolean done = false;
             while (!done) {
@@ -312,49 +312,56 @@ public class SequentialFileStore {
 
         @Override
         public void close() throws IOException {
-            // Don't try and close more than once.
-            if (!closed) {
+            // ZIP's don't like to be empty !
+            if (entryCount == 0) {
+                closeDelete();
+
+            } else if (!closed) {
+                // Don't try and close more than once.
                 closed = true;
 
-                // Write the meta data.
-                try (final OutputStream metaOutputStream = Files.newOutputStream(tempFileSet.getMeta(),
-                        StandardOpenOption.CREATE_NEW)) {
-                    AttributeMapUtil.write(attributeMap, metaOutputStream);
-                    // ZIP's don't like to be empty !
-                    if (entryCount == 0) {
-                        closeDelete();
-                    } else {
-                        zipOutputStream.close();
+                try {
+                    // Close the zip file.
+                    zipOutputStream.close();
+
+                    // Write the meta data.
+                    try (final OutputStream metaOutputStream = Files.newOutputStream(tempFileSet.getMeta(),
+                            StandardOpenOption.CREATE_NEW)) {
+                        AttributeMapUtil.write(attributeMap, metaOutputStream);
                     }
-
-                    // Move the new data to the store.
-                    final long currentStoreId = storeId.incrementAndGet();
-                    final FileSet storeFileSet = getStoreFileSet(currentStoreId);
-
-//                    storeDirManager.createDirsUnderLock(storeFileSet, () -> {
-                    try {
-                        move(
-                                storeFileSet.getRoot(),
-                                storeFileSet.getSubDirs(),
-                                tempFileSet.getZip(),
-                                storeFileSet.getZip());
-                        move(
-                                storeFileSet.getRoot(),
-                                storeFileSet.getSubDirs(),
-                                tempFileSet.getMeta(),
-                                storeFileSet.getMeta());
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-//                    });
-
-                    afterStore(currentStoreId);
 
                 } catch (final IOException | RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
-                    closeDelete();
+                    try {
+                        tempFileSet.delete();
+                    } catch (final IOException e2) {
+                        LOGGER.error("Failed to delete file " + tempFileSet.getZip());
+                    }
                     throw e;
                 }
+
+                // Move the new data to the store.
+                final long currentStoreId = storeId.incrementAndGet();
+                final FileSet storeFileSet = getStoreFileSet(currentStoreId);
+
+                try {
+                    move(
+                            storeFileSet.getRoot(),
+                            storeFileSet.getSubDirs(),
+                            tempFileSet.getZip(),
+                            storeFileSet.getZip());
+                    move(
+                            storeFileSet.getRoot(),
+                            storeFileSet.getSubDirs(),
+                            tempFileSet.getMeta(),
+                            storeFileSet.getMeta());
+                } catch (final IOException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    throw e;
+                }
+
+                // Let consumers know there is new data.
+                afterStore(currentStoreId);
             }
         }
 
@@ -379,19 +386,22 @@ public class SequentialFileStore {
             // Don't try and close more than once.
             if (!closed) {
                 closed = true;
-                // ZIP's don't like to be empty !
-                if (entryCount == 0) {
-                    try (final OutputStream os = addEntry("NULL.DAT")) {
-                        os.write("NULL".getBytes(CharsetConstants.DEFAULT_CHARSET));
-                    }
-                }
-
-                zipOutputStream.close();
 
                 try {
-                    tempFileSet.delete();
-                } catch (final IOException e) {
-                    throw new IOException("Failed to delete file " + tempFileSet.getZip());
+                    // ZIP's don't like to be empty !
+                    if (entryCount == 0) {
+                        try (final OutputStream os = addEntry("NULL.DAT")) {
+                            os.write("NULL".getBytes(CharsetConstants.DEFAULT_CHARSET));
+                        }
+                    }
+                    zipOutputStream.close();
+
+                } finally {
+                    try {
+                        tempFileSet.delete();
+                    } catch (final IOException e) {
+                        LOGGER.error("Failed to delete file " + tempFileSet.getZip());
+                    }
                 }
             }
         }
