@@ -18,6 +18,8 @@ package stroom.pipeline.reader;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
@@ -27,6 +29,8 @@ import java.util.Random;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestInvalidXmlCharReplacementFilter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestInvalidXmlCharReplacementFilter.class);
 
     public static final char REPLACE_CHAR = 0xfffd;
 
@@ -45,7 +49,11 @@ public class TestInvalidXmlCharReplacementFilter {
         }
 
         if (mode.getClass().equals(Xml11Chars.class)) {
-            return (ch >= 0x1 && ch <= 0xd7ff)
+            return (ch > 0x8 && ch < 0xb ||
+                    ch == 0xd ||
+                    ch > 0x1f && ch < 0x7f ||
+                    ch == 0x85 ||
+                    ch > 0x9f && ch <= 0xd7ff)
                     || (ch >= 0xe000 && ch <= 0xfffd)
                     || (ch >= 0x10000 && ch <= 0x10ffff);
         }
@@ -75,7 +83,7 @@ public class TestInvalidXmlCharReplacementFilter {
 
     private Reader getReader(final char[] data, final XmlChars mode) {
         final Reader r = new CharArrayReader(data);
-        return new InvalidXmlCharFilter(r, mode, true, REPLACE_CHAR);
+        return new InvalidXmlCharFilter(r, mode, true, REPLACE_CHAR, null);
     }
 
     private void readCharBMP(final char[] testData, final XmlChars mode) throws IOException {
@@ -107,6 +115,9 @@ public class TestInvalidXmlCharReplacementFilter {
                 // as idx < floor(char_len /chunk_len)
                 assertThat(rch).isEqualTo(expect_read);
                 for (int i = 0; i != expect_read; ++i, ++origchar) {
+                    if (isValidXmlCP(origchar, mode) && buf[i] != origchar) {
+                        LOGGER.info("Char: " + Integer.toHexString(origchar));
+                    }
                     assertThat(buf[i]).isEqualTo(isValidXmlCP(origchar, mode)
                             ? origchar
                             : REPLACE_CHAR);
@@ -170,7 +181,10 @@ public class TestInvalidXmlCharReplacementFilter {
                             highSurrogate = buf[i];
                         } else {
                             if (!isValidXmlCP(buf[i], mode)) {
-                                assertThat(isValidXmlCP(buf[i], mode)).isTrue();
+                                if (!isValidXmlCP(buf[i], mode)) {
+                                    LOGGER.error("Character: " + buf[i]);
+                                }
+                                assertThat(isValidXmlCP(buf[i], mode)).isFalse();
                             }
                             assertThat(brokenUTF16Str[origidx] == buf[i] || buf[i] == REPLACE_CHAR).isTrue();
                         }
