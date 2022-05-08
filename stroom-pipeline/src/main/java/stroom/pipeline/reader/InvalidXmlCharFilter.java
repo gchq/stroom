@@ -135,7 +135,8 @@ public class InvalidXmlCharFilter extends TransformReader {
                             hasReadAhead = false;
                         }
 
-                        modified = true;
+                        replacementCount++;
+                        addReplacedCharacter(ch);
                     } else {
                         cbuf[off++] = ch;
                         if (usingBuffer) {
@@ -147,7 +148,8 @@ public class InvalidXmlCharFilter extends TransformReader {
                     if (replace) {
                         cbuf[off++] = replacementChar;
                     }
-                    modified = true;
+                    replacementCount++;
+                    addReplacedCharacter(ch);
                 }
             } else {
                 cbuf[off++] = ch;

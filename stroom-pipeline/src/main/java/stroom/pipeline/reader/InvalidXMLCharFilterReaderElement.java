@@ -46,6 +46,7 @@ public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
 
     private InvalidXmlCharFilter invalidXmlCharFilter;
     private XmlChars validChars = XML_11_CHARS;
+    private boolean showReplacementCount = true;
 
     @Inject
     public InvalidXMLCharFilterReaderElement(final ErrorReceiverProxy errorReceiver) {
@@ -60,8 +61,13 @@ public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
 
     @Override
     public void endStream() {
-        if (invalidXmlCharFilter.hasModifiedContent()) {
-            errorReceiver.log(Severity.WARNING, null, getElementId(), "The content was modified", null);
+        if (invalidXmlCharFilter.hasModifiedContent() && showReplacementCount) {
+            String message = "Replaced " + invalidXmlCharFilter.getReplacementCount() + " invalid XML characters";
+            final String charsReplaced = invalidXmlCharFilter.getReplacedCharactersAsString();
+            if (charsReplaced.length() > 0) {
+                message += " (" + charsReplaced + ")";
+            }
+            errorReceiver.log(Severity.WARNING, null, getElementId(), message, null);
         }
         super.endStream();
     }
@@ -74,5 +80,13 @@ public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
         if ("1.0".equals(xmlMode)) {
             validChars = XML_10_CHARS;
         }
+    }
+
+    @PipelineProperty(
+            description = "Raise a warning when a character replacement is performed",
+            defaultValue = "true",
+            displayPriority = 2)
+    public void setShowReplacementCount(final boolean showReplacementCount) {
+        this.showReplacementCount = showReplacementCount;
     }
 }

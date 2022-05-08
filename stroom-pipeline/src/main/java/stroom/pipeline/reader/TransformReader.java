@@ -16,19 +16,28 @@
 
 package stroom.pipeline.reader;
 
+import event.logging.Hash;
+
 import java.io.FilterReader;
 import java.io.Reader;
+import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * An abstract class to implement a FilterReader extended with a
  * hasModifiedContent() method.
  */
 public abstract class TransformReader extends FilterReader {
-    protected boolean modified;
+    protected long replacementCount;
+    protected Map<Character, Long> replacedCharacters;
 
     protected TransformReader(final Reader in) {
         super(in);
-        modified = false;
+        replacementCount = 0L;
+        replacedCharacters = new HashMap<>();
     }
 
     /**
@@ -37,6 +46,28 @@ public abstract class TransformReader extends FilterReader {
      * @return True if, and only if stream contents were transformed.
      */
     public boolean hasModifiedContent() {
-        return modified;
+        return replacementCount > 0;
+    }
+
+    public String getReplacedCharactersAsString() {
+        return String.join(", ", replacedCharacters.entrySet().stream()
+                .map(entry -> "0x" + Integer.toHexString(entry.getKey()) + ": " + entry.getValue())
+                .toArray(String[]::new));
+    }
+
+    public long getReplacementCount() {
+        return this.replacementCount;
+    }
+
+    public Map<Character, Long> getReplacedCharacters() {
+        return this.replacedCharacters;
+    }
+
+    public void addReplacedCharacter(final char ch) {
+        if (!replacedCharacters.containsKey(ch)) {
+            replacedCharacters.put(ch, 1L);
+        } else {
+            replacedCharacters.replace(ch, replacedCharacters.get(ch) + 1);
+        }
     }
 }
