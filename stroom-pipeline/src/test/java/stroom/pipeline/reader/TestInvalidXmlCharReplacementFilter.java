@@ -18,8 +18,6 @@ package stroom.pipeline.reader;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
@@ -29,8 +27,6 @@ import java.util.Random;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestInvalidXmlCharReplacementFilter {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestInvalidXmlCharReplacementFilter.class);
 
     public static final char REPLACE_CHAR = 0xfffd;
 
@@ -115,9 +111,6 @@ public class TestInvalidXmlCharReplacementFilter {
                 // as idx < floor(char_len /chunk_len)
                 assertThat(rch).isEqualTo(expect_read);
                 for (int i = 0; i != expect_read; ++i, ++origchar) {
-                    if (isValidXmlCP(origchar, mode) && buf[i] != origchar) {
-                        LOGGER.info("Char: " + Integer.toHexString(origchar));
-                    }
                     assertThat(buf[i]).isEqualTo(isValidXmlCP(origchar, mode)
                             ? origchar
                             : REPLACE_CHAR);
@@ -181,9 +174,6 @@ public class TestInvalidXmlCharReplacementFilter {
                             highSurrogate = buf[i];
                         } else {
                             if (!isValidXmlCP(buf[i], mode)) {
-                                if (!isValidXmlCP(buf[i], mode)) {
-                                    LOGGER.error("Character: " + buf[i]);
-                                }
                                 assertThat(isValidXmlCP(buf[i], mode)).isFalse();
                             }
                             assertThat(brokenUTF16Str[origidx] == buf[i] || buf[i] == REPLACE_CHAR).isTrue();
