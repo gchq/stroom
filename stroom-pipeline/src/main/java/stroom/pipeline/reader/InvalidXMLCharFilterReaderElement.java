@@ -16,6 +16,7 @@
 
 package stroom.pipeline.reader;
 
+import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -43,19 +44,23 @@ public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
     private static final Xml11Chars XML_11_CHARS = new Xml11Chars();
 
     private final ErrorReceiver errorReceiver;
+    private final LocationFactory locationFactory;
 
     private InvalidXmlCharFilter invalidXmlCharFilter;
     private XmlChars validChars = XML_11_CHARS;
     private boolean showReplacementCount = true;
 
     @Inject
-    public InvalidXMLCharFilterReaderElement(final ErrorReceiverProxy errorReceiver) {
+    public InvalidXMLCharFilterReaderElement(
+            final ErrorReceiverProxy errorReceiver,
+            final LocationFactory locationFactory) {
         this.errorReceiver = errorReceiver;
+        this.locationFactory = locationFactory;
     }
 
     @Override
     protected Reader insertFilter(final Reader reader) {
-        invalidXmlCharFilter = new InvalidXmlCharFilter(reader, validChars, true, REPLACEMENT_CHAR);
+        invalidXmlCharFilter = new InvalidXmlCharFilter(reader, validChars, true, REPLACEMENT_CHAR, locationFactory);
         return invalidXmlCharFilter;
     }
 

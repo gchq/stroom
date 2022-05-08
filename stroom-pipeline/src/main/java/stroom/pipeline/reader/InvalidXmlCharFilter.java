@@ -16,6 +16,7 @@
 
 package stroom.pipeline.reader;
 
+import stroom.pipeline.LocationFactory;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
@@ -38,6 +39,7 @@ public class InvalidXmlCharFilter extends TransformReader {
     private final XmlChars xmlChars;
     private final boolean replace;
     private final char replacementChar;
+    private final LocationFactory locationFactory;
 
     private final char[] buffer;
     private boolean hasReadAhead;
@@ -50,17 +52,20 @@ public class InvalidXmlCharFilter extends TransformReader {
         this.xmlChars = xmlChars;
         this.replace = false;
         this.replacementChar = ' ';
+        this.locationFactory = null;
         buffer = new char[StreamUtil.BUFFER_SIZE];
     }
 
     public InvalidXmlCharFilter(final Reader in,
                                 final XmlChars xmlChars,
                                 final boolean replace,
-                                final char replacementChar) {
+                                final char replacementChar,
+                                final LocationFactory locationFactory) {
         super(in);
         this.xmlChars = xmlChars;
         this.replace = replace;
         this.replacementChar = replacementChar;
+        this.locationFactory = locationFactory;
         buffer = new char[StreamUtil.BUFFER_SIZE];
     }
 
