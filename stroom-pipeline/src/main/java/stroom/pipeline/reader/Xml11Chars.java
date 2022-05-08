@@ -2,6 +2,21 @@ package stroom.pipeline.reader;
 
 import java.util.Arrays;
 
+/**
+ * THIS IS A COPY OF THE XERCES-2J CLASS com.sun.org.apache.xerces.internal.utls.XMLChar
+ * <p>
+ * This class defines the basic properties of characters in XML 1.1. The data
+ * in this class can be used to verify that a character is a valid
+ * XML 1.1 character or if the character is a space, name start, or name
+ * character.
+ * <p>
+ * A series of convenience methods are supplied to ease the burden
+ * of the developer.  Using the character as an index into the <code>XML11CHARS</code>
+ * array and applying the appropriate mask flag (e.g.
+ * <code>MASK_VALID</code>), yields the same results as calling the
+ * convenience methods. There is one exception: check the comments
+ * for the <code>isValid</code> method for details.
+ */
 public class Xml11Chars implements XmlChars {
     //
     // Constants
