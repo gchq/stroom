@@ -87,9 +87,9 @@ public class Xml11Chars implements XmlChars {
         XML11CHARS[96] = 33;
         Arrays.fill(XML11CHARS, 97, 123, (byte) -19); // Fill 26 of value (byte) -19
         Arrays.fill(XML11CHARS, 123, 127, (byte) 33); // Fill 4 of value (byte) 33
-        Arrays.fill(XML11CHARS, 127, 133, (byte) 17); // Fill 6 of value (byte) 2
+        Arrays.fill(XML11CHARS, 127, 133, (byte) 2); // Fill 6 of value (byte) 2
         XML11CHARS[133] = 35;
-        Arrays.fill(XML11CHARS, 134, 160, (byte) 17); // Fill 26 of value (byte) 2
+        Arrays.fill(XML11CHARS, 134, 160, (byte) 2); // Fill 26 of value (byte) 2
         Arrays.fill(XML11CHARS, 160, 183, (byte) 33); // Fill 23 of value (byte) 33
         XML11CHARS[183] = -87;
         Arrays.fill(XML11CHARS, 184, 192, (byte) 33); // Fill 8 of value (byte) 33

@@ -47,7 +47,9 @@ public class TestInvalidXmlCharReplacementFilter {
         if (mode.getClass().equals(Xml11Chars.class)) {
             return (ch > 0x8 && ch < 0xb ||
                     ch == 0xd ||
-                    ch > 0x1f && ch <= 0xd7ff)
+                    ch > 0x1f && ch < 0x7f ||
+                    ch == 0x85 ||
+                    ch > 0x9f && ch <= 0xd7ff)
                     || (ch >= 0xe000 && ch <= 0xfffd)
                     || (ch >= 0x10000 && ch <= 0x10ffff);
         }
