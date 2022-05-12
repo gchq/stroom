@@ -1,6 +1,7 @@
 package stroom.proxy.repo.store;
 
 import stroom.util.io.FileUtil;
+import stroom.util.string.StringIdUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class FileSet {
                               final long id,
                               final boolean nested) {
         // Convert the id to a padded string.
-        final String idString = idToString(id);
+        final String idString = StringIdUtil.idToString(id);
         Path dir = root;
         final List<Path> subDirs = new ArrayList<>();
 
@@ -117,16 +118,6 @@ public class FileSet {
             // Expected error.
             LOGGER.trace(e.getMessage(), e);
         }
-    }
-
-    private static String idToString(long id) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(id);
-        // Pad out e.g. 10100 -> 010100
-        while ((sb.length() % 3) != 0) {
-            sb.insert(0, '0');
-        }
-        return sb.toString();
     }
 
     @Override

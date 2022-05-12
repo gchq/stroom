@@ -1,0 +1,29 @@
+ext.moduleName = 'stroom.proxy.message.store'
+
+dependencies {
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-proxy:stroom-proxy-repo')
+    implementation project(':stroom-util')
+
+    implementation libs.caffeine
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.kafka_clients
+    implementation libs.slf4j_api
+
+    testImplementation libs.assertj_core
+    testImplementation libs.classgraph
+    testImplementation libs.commons_lang
+    testImplementation libs.guice_extension
+    testImplementation libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_impl
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

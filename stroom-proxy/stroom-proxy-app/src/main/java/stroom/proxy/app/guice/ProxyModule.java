@@ -26,6 +26,7 @@ import stroom.proxy.app.ProxyLifecycle;
 import stroom.proxy.app.RequestAuthenticatorImpl;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.RestClientConfigConverter;
+import stroom.proxy.app.event.TextEventServlet;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyRequestHandler;
@@ -166,7 +167,8 @@ public class ProxyModule extends AbstractModule {
                 .bind(DebugServlet.class)
                 .bind(ProxyStatusServlet.class)
                 .bind(ProxyWelcomeServlet.class)
-                .bind(ReceiveDataServlet.class);
+                .bind(ReceiveDataServlet.class)
+                .bind(TextEventServlet.class);
 
         AdminServletBinder.create(binder())
                 .bind(FilteredHealthCheckServlet.class);

@@ -1,6 +1,7 @@
 package stroom.data.zip;
 
 import stroom.meta.api.AttributeMap;
+import stroom.util.string.StringIdUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,19 +35,9 @@ public final class StroomFileNameUtil {
     }
 
     public static String getIdPath(final long id) {
-        final String idString = idToString(id);
+        final String idString = StringIdUtil.idToString(id);
         final String path = idToPathId(idString) + PATH_SEPARATOR + idString;
         return clean(path);
-    }
-
-    public static String idToString(long id) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(id);
-        // Pad out e.g. 10100 -> 010100
-        while ((sb.length() % 3) != 0) {
-            sb.insert(0, '0');
-        }
-        return sb.toString();
     }
 
     public static String idToPathId(final String id) {
@@ -124,7 +115,7 @@ public final class StroomFileNameUtil {
                     Arrays.toString(fileExtensions));
         }
 
-        final String idStr = idToString(id);
+        final String idStr = StringIdUtil.idToString(id);
         final String pathIdStr = idToPathId(idStr);
 
         String path = template;
