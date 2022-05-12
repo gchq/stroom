@@ -11,7 +11,9 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Used for turning a {@link Collection} of some class into a
@@ -72,11 +75,26 @@ public class AsciiTable {
      * Attempts to determine the structure of the table from the public getters
      * of the collection items. The column names are derived from the method name,
      * e.g. getFirstNameLength() becomes "First Name Length".
-     * Columns are in declared order. Sub-classes of {@link Number} are right aligned.
+     * Columns MAY be in declared order, but order cannot be guaranteed.
+     * Sub-classes of {@link Number} are right aligned.
      *
      * @return A {@link String} containing the markdown style table.
      */
     public static <T> String from(final Collection<T> data) {
+        return from(data, false);
+    }
+
+    /**
+     * Attempts to determine the structure of the table from the public getters
+     * of the collection items. The column names are derived from the method name,
+     * e.g. getFirstNameLength() becomes "First Name Length".
+     * Sub-classes of {@link Number} are right aligned.
+     *
+     * @param sortColumns If true columns will be in order of column name, else they will
+     *                    be in no particular order.
+     * @return A {@link String} containing the markdown style table.
+     */
+    public static <T> String from(final Collection<T> data, boolean sortColumns) {
         if (data.size() <= 1) {
             throw new RuntimeException("Need at least one row to auto create a table");
         }
@@ -84,15 +102,20 @@ public class AsciiTable {
         final T item = data.iterator().next();
         final TableBuilder<T> tableBuilder = builder(data);
 
-        for (final Method method : item.getClass().getDeclaredMethods()) {
-            final String methodName = method.getName();
-            if (methodName.startsWith("get") || methodName.startsWith("is")) {
+        Stream<Method> methodNameStream = Arrays.stream(item.getClass().getDeclaredMethods())
+                .filter(method -> {
+                    final String methodName = method.getName();
+                    return methodName.startsWith("get") || methodName.startsWith("is");
+                });
 
-                final Column<T, ?> column = convertToColumn(method);
-
-                tableBuilder.withColumn(column);
-            }
+        if (sortColumns) {
+            methodNameStream = methodNameStream.sorted(Comparator.comparing(Method::getName));
         }
+        methodNameStream.forEach(method -> {
+            final Column<T, ?> column = convertToColumn(method);
+            tableBuilder.withColumn(column);
+        });
+
         return tableBuilder.build();
     }
 
@@ -465,7 +488,7 @@ public class AsciiTable {
 
             public Column<T_ROW, T_COL> build() {
                 // IJ was having issues inferring arguments, hence not inlined
-                final Column<T_ROW, T_COL> column = new Column<>(
+                final Column<T_ROW, T_COL> column = new Column<T_ROW, T_COL>(
                         name,
                         columnExtractor,
                         columnFormatter == null

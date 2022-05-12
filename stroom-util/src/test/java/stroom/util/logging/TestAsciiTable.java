@@ -97,12 +97,45 @@ class TestAsciiTable {
         final List<String> lines = table.lines()
                 .collect(Collectors.toList());
 
+        Assertions.assertThat(lines)
+                        .hasSize(5);
+
         Assertions.assertThat(lines.get(0))
-                .isEqualTo("| Title | First Name | Surname | Dob        | Height Cm |");
+                .contains("Height Cm");
         Assertions.assertThat(lines.get(1))
-                .isEqualTo("|-------|------------|---------|------------|-----------|");
+                .matches("(\\|-+)+\\|");
         Assertions.assertThat(lines.get(2))
-                .isEqualTo("| Mr    | Joe        | Bloggs  | 1971-03-23 |       180 |");
+                .contains("Joe");
+    }
+
+    @Test
+    void testAuto_sorted() {
+
+        final List<Pojo> sourceData = List.of(
+                new Pojo("Mr", "Joe", "Bloggs",
+                        LocalDate.of(1971, 3, 23), 180),
+                new Pojo("Mrs", "Joanna", "Bloggs",
+                        LocalDate.of(1972, 4, 1), 170),
+                new Pojo("Mr", "No Surname", null,
+                        LocalDate.of(1972, 4, 1), 170)
+        );
+
+        final String table = AsciiTable.from(sourceData, true);
+
+        LOGGER.info("table:\n{}", table);
+
+        final List<String> lines = table.lines()
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(lines)
+                .hasSize(5);
+
+        Assertions.assertThat(lines.get(0))
+                .contains("Height Cm");
+        Assertions.assertThat(lines.get(1))
+                .matches("(\\|-+)+\\|");
+        Assertions.assertThat(lines.get(2))
+                .contains("Joe");
     }
 
     @Test
