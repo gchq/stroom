@@ -45,15 +45,23 @@ public class QuickFilterTestBed {
 
         final Scanner scanner = new Scanner(System.in);
         do {
-            System.out.println("Enter your search term:");
+            System.out.println("QuickFilter Test Bed - filtering fully qualified class names");
+            System.out.println("Enter your search term, then hit enter to see the results:");
             System.out.println("Valid field qualifiers: "
                     + filterFieldMappers.getFieldQualifiers().stream().sorted().collect(Collectors.toList()));
             final String userInput = scanner.nextLine();
 
+            if (userInput.equals("quit")
+                    || userInput.equals("exit")
+                    || userInput.equals(":q")) {
+                System.out.println("Exiting");
+                break;
+            }
+
             final List<ClassInfo> filteredClassInfoList = QuickFilterPredicateFactory.filterStream(
-                    userInput,
-                    filterFieldMappers,
-                    classInfoList.stream())
+                            userInput,
+                            filterFieldMappers,
+                            classInfoList.stream())
                     .collect(Collectors.toList());
 
             final String outputStr = AsciiTable.builder(filteredClassInfoList)
@@ -66,6 +74,8 @@ public class QuickFilterTestBed {
             System.out.println("For user input  '" + userInput +
                     "', results [" + filteredClassInfoList.size() + "]:\n" + outputStr);
         } while (scanner.hasNext());
+
+        System.exit(0);
     }
 
 }
