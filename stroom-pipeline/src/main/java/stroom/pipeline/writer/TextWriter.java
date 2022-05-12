@@ -33,9 +33,19 @@ import javax.inject.Inject;
 /**
  * Joins text instances into a single text instance.
  */
-@ConfigurableElement(type = "TextWriter", category = Category.WRITER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.TEXT)
+@ConfigurableElement(
+        type = "TextWriter",
+        description = """
+                Writer to convert XML character data events into plain text output.
+                """,
+        category = Category.WRITER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.ROLE_WRITER,
+                PipelineElementType.ROLE_MUTATOR,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = ElementIcons.TEXT)
 public class TextWriter extends AbstractWriter {
 
     private byte[] header;

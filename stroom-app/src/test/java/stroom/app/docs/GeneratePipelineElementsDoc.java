@@ -92,6 +92,7 @@ public class GeneratePipelineElementsDoc {
             Category.WRITER, """
                     Writers consume XML events (from _Parsers_ and _Filters_) and convert them into a stream of bytes
                     using the character encoding configured on the _Writer_ (if applicable).
+                    The output data can then be fed to a Destination.
                     """,
             Category.DESTINATION, """
                     Destination elements consume a stream of bytes from a _Writer_ and persist then to a destination.

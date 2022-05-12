@@ -45,9 +45,19 @@ import javax.inject.Inject;
 /**
  * Joins text instances into a single text instance.
  */
-@ConfigurableElement(type = "RollingStreamAppender", category = Category.DESTINATION, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
-        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
+@ConfigurableElement(
+        type = "RollingStreamAppender",
+        description = """
+                A destination used to write one or more output streams to a new stream which is then rolled \
+                when it reaches a certain size or age.
+                A new stream will be created after the size or age criteria has been met.
+                """,
+        category = Category.DESTINATION,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_DESTINATION,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = ElementIcons.STREAM)
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
 
     private final Store streamStore;

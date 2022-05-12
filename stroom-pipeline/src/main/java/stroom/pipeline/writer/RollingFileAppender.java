@@ -39,6 +39,14 @@ import javax.inject.Inject;
  */
 @ConfigurableElement(
         type = "RollingFileAppender",
+        description = """
+                A destination used to write an output stream to a file on the file system.
+                If multiple paths are specified in the 'outputPaths' property it will pick one at random to \
+                write to.
+                This is distinct from the FileAppender in that when the `rollSize` is reached it will move the \
+                current file to the path specified in `rolledFileName` and resume writing to the original path.
+                This allows other processes to follow the changes to a single file path, e.g. when using `tail`.
+                """,
         category = Category.DESTINATION,
         roles = {
                 PipelineElementType.ROLE_TARGET,
