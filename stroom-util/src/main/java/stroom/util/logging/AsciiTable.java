@@ -298,24 +298,27 @@ public class AsciiTable {
                                             maxColumnWidths.get(column)))
                             .collect(Collectors.joining(
                                     String.valueOf(TABLE_COLUMN_DELIMITER))))
+                    .map(rowStr -> String.join("", "|", rowStr, "|"))
                     .collect(Collectors.toList());
         }
 
         private String createHeaderLineString(final Map<Column<T_ROW, ?>, Integer> maxColumnWidths) {
             // TODO could add markdown alignment indicators e.g. |------:|
-            return columns.stream()
+            return "|" + columns.stream()
                     .map(column ->
                             Strings.repeat(
                                     String.valueOf(TABLE_HEADER_DELIMITER),
                                     maxColumnWidths.get(column) + (COLUMN_PADDING * 2)))
-                    .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
+                    .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)))
+                    + "|";
         }
 
         private String createHeaderRowString(final Map<Column<T_ROW, ?>, Integer> maxColumnWidths) {
-            return columns.stream()
+            return "|" + columns.stream()
                     .map(column ->
                             formatCell(column, column.getName(), maxColumnWidths.get(column)))
-                    .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
+                    .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)))
+                    + "|";
         }
     }
 

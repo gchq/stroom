@@ -3,12 +3,17 @@ package stroom.util.logging;
 
 import stroom.util.logging.AsciiTable.Column;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 class TestAsciiTable {
@@ -49,6 +54,31 @@ class TestAsciiTable {
     }
 
     @Test
+    void testSingleCol() {
+        final List<Integer> numbers = IntStream.rangeClosed(1, 10)
+                .boxed()
+                .collect(Collectors.toList());
+
+        final String table = AsciiTable.builder(numbers)
+                .withColumn(Column.builder("Number", (Integer num) -> num.toString())
+                        .rightAligned()
+                        .build())
+                .build();
+
+        LOGGER.info("table:\n{}", table);
+
+        final List<String> lines = table.lines()
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(lines.get(0))
+                .isEqualTo("| Number |");
+        Assertions.assertThat(lines.get(1))
+                .isEqualTo("|--------|");
+        Assertions.assertThat(lines.get(2))
+                .isEqualTo("|      1 |");
+    }
+
+    @Test
     void testAuto() {
 
         final List<Pojo> sourceData = List.of(
@@ -63,6 +93,16 @@ class TestAsciiTable {
         final String table = AsciiTable.from(sourceData);
 
         LOGGER.info("table:\n{}", table);
+
+        final List<String> lines = table.lines()
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(lines.get(0))
+                .isEqualTo("| Title | First Name | Surname | Dob        | Height Cm |");
+        Assertions.assertThat(lines.get(1))
+                .isEqualTo("|-------|------------|---------|------------|-----------|");
+        Assertions.assertThat(lines.get(2))
+                .isEqualTo("| Mr    | Joe        | Bloggs  | 1971-03-23 |       180 |");
     }
 
     @Test
@@ -76,6 +116,7 @@ class TestAsciiTable {
                 .forEach(System.out::println);
     }
 
+
     @Test
     void testAsciiBar2() {
 
@@ -85,6 +126,35 @@ class TestAsciiTable {
                 .boxed()
                 .map(i -> AsciiTable.asciiBar(i, min, max, 8))
                 .forEach(System.out::println);
+    }
+
+    @Test
+    void testAsciiBar_inTable() {
+
+        final int seed = 123;
+        final int min = 0;
+        final int max = 64;
+        Random random = new Random(seed);
+        final List<Tuple2<Integer, String>> data = IntStream.rangeClosed(1, 15)
+                .boxed()
+                .map(i -> {
+                    final int randomNum = random.nextInt(max);
+                    return Tuple.of(
+                            randomNum,
+                            AsciiTable.asciiBar(randomNum, min, max, 8)
+                    );
+                })
+                .collect(Collectors.toList());
+
+        final String table = AsciiTable.builder(data)
+                .withColumn(Column.builder("Number", (Tuple2<Integer, String> tuple2) -> tuple2._1.toString())
+                        .rightAligned()
+                        .build())
+                .withColumn(Column.builder("Bar", (Tuple2<Integer, String> tuple2) -> tuple2._2)
+                        .build())
+                .build();
+
+        LOGGER.info("table:\n{}", table);
     }
 
     private static class Pojo {
