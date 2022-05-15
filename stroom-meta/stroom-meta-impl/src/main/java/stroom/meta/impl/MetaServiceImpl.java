@@ -22,8 +22,10 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
+import stroom.processor.shared.ProcessorTask;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.searchable.api.Searchable;
@@ -338,6 +340,31 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     }
                 },
                 "Finding meta");
+    }
+
+    public Long findReprocessedStreamId(final Meta parentMeta, final String streamType,
+                                         final ProcessorTask processorTask) throws RuntimeException {
+        if (processorTask.getProcessorFilter().isReprocess()) {
+            final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
+                    .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, parentMeta.getId())
+                    .addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF,
+                            processorTask.getProcessorFilter().getPipeline())
+                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.toString())
+                    .addTerm(MetaFields.TYPE, Condition.EQUALS, streamType)
+                    .addOperator(ExpressionOperator.builder()
+                            .op(Op.NOT)
+                            .addTerm(MetaFields.META_PROCESSOR_TASK_ID, Condition.EQUALS, processorTask.getId())
+                            .build()
+                    )
+                    .build();
+            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
+            final Meta reprocessedStream = find(findMetaCriteria).getFirst();
+            if (reprocessedStream != null) {
+                return reprocessedStream.getId();
+            }
+        }
+
+        return null;
     }
 
     private ResultPage<Meta> secureFind(final FindMetaCriteria criteria) {

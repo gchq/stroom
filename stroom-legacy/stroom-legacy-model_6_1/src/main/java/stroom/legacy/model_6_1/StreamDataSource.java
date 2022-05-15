@@ -33,6 +33,7 @@ public class StreamDataSource {
     public static final String CREATE_TIME = "Create Time";
     public static final String EFFECTIVE_TIME = "Effective Time";
     public static final String STATUS_TIME = "Status Time";
+    public static final String REPROCESSED_STREAM_ID = "Reprocessed Stream Id";
 
     // Extended fields.
     public static final String NODE = "Node";
@@ -62,6 +63,7 @@ public class StreamDataSource {
         // Id's
         FIELDS.add(DataSourceUtil.createIdField(STREAM_ID));
         FIELDS.add(DataSourceUtil.createIdField(PARENT_STREAM_ID));
+        FIELDS.add(DataSourceUtil.createIdField(REPROCESSED_STREAM_ID));
 
         // Times
         FIELDS.add(DataSourceUtil.createDateField(CREATE_TIME));

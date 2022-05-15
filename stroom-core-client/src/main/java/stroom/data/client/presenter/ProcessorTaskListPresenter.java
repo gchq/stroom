@@ -236,6 +236,7 @@ public class ProcessorTaskListPresenter
                             .addRow("Stream Id", meta.getId())
                             .addRow("Status", meta.getStatus().getDisplayValue())
                             .addRow("Parent Stream Id", meta.getParentMetaId())
+                            .addRow("Reprocessed Stream Id", meta.getReprocessedStreamId())
                             .addRow("Created", toDateString(meta.getCreateMs()))
                             .addRow("Effective", toDateString(meta.getEffectiveMs()))
                             .addRow("Stream Type", meta.getTypeName());

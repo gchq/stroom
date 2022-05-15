@@ -16,6 +16,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
+import stroom.processor.shared.ProcessorTask;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
@@ -72,6 +73,7 @@ public class MockMetaService implements MetaService, Clearable {
         builder.effectiveMs(properties.getEffectiveMs());
         builder.statusMs(properties.getStatusMs());
         builder.status(Status.LOCKED);
+        builder.reprocessedStreamId(properties.getReprocessedStreamId());
 
         currentId++;
         builder.id(currentId);
@@ -187,6 +189,13 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
+    public Long findReprocessedStreamId(final Meta parentMeta,
+                                        final String streamType,
+                                        final ProcessorTask processorTask) {
+        return null;
+    }
+
+    @Override
     public ResultPage<Meta> findReprocess(final FindMetaCriteria criteria) {
         return null;
     }
@@ -215,6 +224,9 @@ public class MockMetaService implements MetaService, Clearable {
             attributeMap.put(MetaFields.STATUS.getName(), meta.getStatus().getDisplayValue());
             if (meta.getParentMetaId() != null) {
                 attributeMap.put(MetaFields.PARENT_ID.getName(), meta.getParentMetaId());
+            }
+            if (meta.getReprocessedStreamId() != null) {
+                attributeMap.put(MetaFields.META_REPROCESSED_STREAM_ID.getName(), meta.getReprocessedStreamId());
             }
             if (meta.getTypeName() != null) {
                 attributeMap.put(MetaFields.TYPE.getName(), meta.getTypeName());

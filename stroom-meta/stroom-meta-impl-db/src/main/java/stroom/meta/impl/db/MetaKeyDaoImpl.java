@@ -47,6 +47,7 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
 //    private static final String FEED = StreamDataSource.FEED;
     private static final String FILE_SIZE = MetaFields.FILE_SIZE.getName();
     private static final String STREAM_SIZE = MetaFields.RAW_SIZE.getName();
+    private static final String REPROCESSED_STREAM_ID = MetaFields.META_REPROCESSED_STREAM_ID.getName();
 
 //    static {
 //        final HashMap<String, MetaFieldUse> map = new HashMap<>();
