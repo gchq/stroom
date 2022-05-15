@@ -44,7 +44,6 @@ import stroom.util.shared.Severity;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.StatusLine;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
@@ -156,18 +155,17 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
             final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(clusterRef);
             final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
+            final Long reprocessStreamId = getReprocessStreamId();
 
             elasticClientCache.context(connectionConfig, elasticClient -> {
                 try {
                     // If this is a reprocessing filter, delete any documents from the target index that have the same
-                    // `StreamId` as the stream that's being reprocessed. This prevents duplicate documents.
-                    final ProcessorFilter processorFilter = this.streamProcessorHolder.getStreamTask()
-                            .getProcessorFilter();
-                    if (purgeOnReprocess && processorFilter.isReprocess()) {
-                        final Meta meta = this.metaHolder.getMeta();
-                        final long streamId = meta.getId();
-                        if (!purgeDocumentsForStream(elasticClient, streamId)) {
-                            throw new RuntimeException("Failed to purge existing documents for StreamId " + streamId);
+                    // `StreamId` as the stream that's being reprocessed, or the source meta field
+                    // `Reprocessed Stream Id`.
+                    if (purgeOnReprocess) {
+                        if (!purgeDocumentsForStream(elasticClient, reprocessStreamId)) {
+                            throw new RuntimeException("Failed to purge existing documents for StreamIds: " +
+                                    reprocessStreamId);
                         }
                     }
                 } catch (final RuntimeException e) {
@@ -181,6 +179,18 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             fatalError("Failed to initialise JsonGenerator", e);
         } finally {
             super.startProcessing();
+        }
+    }
+
+    private Long getReprocessStreamId() throws RuntimeException {
+        final ProcessorFilter processorFilter = this.streamProcessorHolder.getStreamTask().getProcessorFilter();
+        final Meta meta = metaHolder.getMeta();
+        if (processorFilter.isReprocess()) {
+            // This is a reprocessing filter, so first delete the source stream's data from the target index
+            return meta.getId();
+        } else {
+            // Non-null if the source stream resulted from reprocessing
+            return meta.getReprocessedStreamId();
         }
     }
 
@@ -422,9 +432,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * Delete documents from the target index, where `StreamId` matches the current stream
+     * Delete documents from the target index, where the indexed field `StreamId` matches one of the provided IDs
      */
-    private boolean purgeDocumentsForStream(final RestHighLevelClient elasticClient, final long streamId)
+    private boolean purgeDocumentsForStream(final RestHighLevelClient elasticClient, final Long streamId)
             throws LoggedException {
         final List<String> indexNames = getTargetIndexNames(elasticClient, streamId);
         if (indexNames != null && !indexNames.isEmpty()) {
@@ -454,7 +464,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     /**
      * Given a StreamId, retrieve a list of names of all indices containing matching documents
      */
-    private List<String> getTargetIndexNames(final RestHighLevelClient elasticClient, final long streamId)
+    private List<String> getTargetIndexNames(final RestHighLevelClient elasticClient, final Long streamId)
             throws LoggedException {
         final String indicesAggregationKey = "indices";
         final String streamIdSourceKey = "streamId";
@@ -493,7 +503,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             }
             return indexNames;
         } catch (IOException e) {
-            fatalError("Failed to list indices for reindex purge. StreamId: " + streamId + ". " +
+            fatalError("Failed to list indices for reindex purge. Streams: " + streamId + ". " +
                     "Base name: '" + indexBaseName + "'", e);
             return null;
         }
