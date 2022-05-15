@@ -369,6 +369,7 @@ class TestJsonSerialisation {
     }
 
     @Test
+    @Execution(ExecutionMode.SAME_THREAD)
     void testAllSharedAreResources() {
         final List<Class<?>> sharedClasses = getSharedClasses();
 
@@ -611,8 +612,9 @@ class TestJsonSerialisation {
         final Set<Class<?>> stroomClasses = new HashSet<>();
         try (ScanResult scanResult =
                 new ClassGraph()
-                        .enableAllInfo()             // Scan classes, methods, fields, annotations
-                        .whitelistPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
+                        .disableJarScanning()
+                        .enableClassInfo()             // Scan classes, methods, fields, annotations
+                        .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
                         .scan()) {                   // Start the scan
             for (ClassInfo routeClassInfo : scanResult.getClassesImplementing(DirectRestService.class.getName())) {
                 final Class<?> clazz = routeClassInfo.loadClass();
@@ -632,17 +634,25 @@ class TestJsonSerialisation {
 
     private List<Class<?>> getSharedClasses() {
         final Set<Class<?>> stroomClasses = new HashSet<>();
+
         try (ScanResult scanResult =
                 new ClassGraph()
-                        .enableAllInfo()
-                        .whitelistPackages(PACKAGE_NAME)
+                        .disableJarScanning()
+                        .enableClassInfo()
+                        .acceptPackages(PACKAGE_NAME)
+                        .rejectPackages("hadoopcommonshaded")
                         .scan()) {
+
+            LOGGER.info("class count {}", scanResult.getAllClasses().size());
+
             for (ClassInfo routeClassInfo : scanResult.getAllClasses()) {
-                if (routeClassInfo.getName().contains(".shared.") &&
-                        !routeClassInfo.getName().contains("hadoopcommonshaded") &&
-                        !routeClassInfo.getName().contains("Util") &&
-                        !routeClassInfo.getName().contains("$") &&
-                        !routeClassInfo.getName().contains("_")) {
+//                LOGGER.info("{}", routeClassInfo.getName());
+                final String name = routeClassInfo.getName();
+                if (name.contains(".shared.") &&
+                        !name.contains("hadoopcommonshaded") &&
+                        !name.contains("Util") &&
+                        !name.contains("$") &&
+                        !name.contains("_")) {
                     try {
                         final Class<?> clazz = routeClassInfo.loadClass();
                         if (!Modifier.isInterface(clazz.getModifiers()) &&
@@ -657,6 +667,8 @@ class TestJsonSerialisation {
                 }
             }
         }
+
+        LOGGER.info("Shared class count {}", stroomClasses.size());
 
         return stroomClasses
                 .stream()

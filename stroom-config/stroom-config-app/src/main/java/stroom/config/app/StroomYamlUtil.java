@@ -136,7 +136,6 @@ public class StroomYamlUtil {
     public static void writeConfig(final Config config, final Path path) throws IOException {
         final YAMLFactory yf = new YAMLFactory();
         final ObjectMapper mapper = new ObjectMapper(yf);
-        // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(path.toFile(), config);
     }
 
@@ -144,6 +143,17 @@ public class StroomYamlUtil {
         Config config = new Config();
         config.setYamlAppConfig(appConfig);
         writeConfig(config, path);
+    }
+
+    /**
+     * Writes {@link AppConfig} to the file as if appConfig was the only property of a wrapper object.
+     * This is essentially a DropWizard configuration file without the DropWizard bits.
+     */
+    public static void writeAppConfig(final AppConfig appConfig, final Path path) throws IOException {
+        final DummyConfig config = new DummyConfig(appConfig);
+        final YAMLFactory yf = new YAMLFactory();
+        final ObjectMapper mapper = new ObjectMapper(yf);
+        mapper.writeValue(path.toFile(), config);
     }
 
 

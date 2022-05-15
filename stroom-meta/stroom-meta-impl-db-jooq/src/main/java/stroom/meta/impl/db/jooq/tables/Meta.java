@@ -13,7 +13,7 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row11;
+import org.jooq.Row12;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -104,6 +104,11 @@ public class Meta extends TableImpl<MetaRecord> {
      * The column <code>stroom.meta.processor_task_id</code>.
      */
     public final TableField<MetaRecord, Long> PROCESSOR_TASK_ID = createField(DSL.name("processor_task_id"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.meta.reprocessed_stream_id</code>.
+     */
+    public final TableField<MetaRecord, Long> REPROCESSED_STREAM_ID = createField(DSL.name("reprocessed_stream_id"), SQLDataType.BIGINT, this, "");
 
     private Meta(Name alias, Table<MetaRecord> aliased) {
         this(alias, aliased, null);
@@ -225,11 +230,11 @@ public class Meta extends TableImpl<MetaRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row11 type methods
+    // Row12 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row11<Long, Long, Long, Long, Byte, Long, Integer, Integer, Integer, Integer, Long> fieldsRow() {
-        return (Row11) super.fieldsRow();
+    public Row12<Long, Long, Long, Long, Byte, Long, Integer, Integer, Integer, Integer, Long, Long> fieldsRow() {
+        return (Row12) super.fieldsRow();
     }
 }

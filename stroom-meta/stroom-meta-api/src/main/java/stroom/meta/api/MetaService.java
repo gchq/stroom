@@ -10,6 +10,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
+import stroom.processor.shared.ProcessorTask;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
@@ -132,6 +133,17 @@ public interface MetaService {
      * @return A list of matching meta data records.
      */
     ResultPage<Meta> find(final FindMetaCriteria criteria);
+
+    /**
+     * Get the ID of the any unlocked child stream matching the target stream type, where the specified
+     * `ProcessorTask` is a reprocess task.
+     *
+     * @param parentMeta    - Search for child streams under this meta.
+     * @param streamType    - Match against the stream type of this meta.
+     * @param processorTask - Match when this is a reprocess task.
+     * @return The stream meta being reprocessed, or `null` if not exists.
+     */
+    Long findReprocessedStreamId(final Meta parentMeta, final String streamType, final ProcessorTask processorTask);
 
     /**
      * Find meta data records and attributes that match the specified criteria.
