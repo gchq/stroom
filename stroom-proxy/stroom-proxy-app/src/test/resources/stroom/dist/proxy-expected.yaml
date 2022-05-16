@@ -28,6 +28,8 @@ proxyConfig:
     - "pragma vacuum;"
     - "pragma optimize;"
     maintenancePragmaFrequency: "PT1M"
+    slowExecutionWarningThreshold: "PT10S"
+    slowTransactionLockThreshold: "PT10S"
   feedStatus:
     apiKey: null
     url: null

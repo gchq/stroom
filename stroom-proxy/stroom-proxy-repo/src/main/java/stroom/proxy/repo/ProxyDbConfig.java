@@ -37,6 +37,8 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
     private static final int DEFAULT_BATCH_SIZE = 1_0000_000;
     protected static final StroomDuration DEFAULT_FLUSH_FREQUENCY = StroomDuration.ofSeconds(1);
     protected static final StroomDuration DEFAULT_CLEANUP_FREQUENCY = StroomDuration.ofSeconds(1);
+    protected static final StroomDuration DEFAULT_SLOW_BEGIN_TRANSACTION_THRESHOLD = StroomDuration.ofSeconds(10);
+    protected static final StroomDuration DEFAULT_SLOW_EXECUTION_WARNING_THRESHOLD = StroomDuration.ofSeconds(10);
 
     private final String dbDir;
     private final List<String> globalPragma;
@@ -48,6 +50,10 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
     private final StroomDuration flushFrequency;
     private final StroomDuration cleanupFrequency;
 
+    private final StroomDuration slowTransactionLockThreshold;
+
+    private final StroomDuration slowExecutionWarningThreshold;
+
     public ProxyDbConfig() {
         dbDir = "db";
         globalPragma = DEFAULT_GLOBAL_PRAGMA;
@@ -57,6 +63,8 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
         batchSize = DEFAULT_BATCH_SIZE;
         flushFrequency = DEFAULT_FLUSH_FREQUENCY;
         cleanupFrequency = DEFAULT_CLEANUP_FREQUENCY;
+        slowTransactionLockThreshold = DEFAULT_SLOW_BEGIN_TRANSACTION_THRESHOLD;
+        slowExecutionWarningThreshold = DEFAULT_SLOW_EXECUTION_WARNING_THRESHOLD;
     }
 
     @JsonCreator
@@ -68,7 +76,9 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty("maintenancePragmaFrequency") final StroomDuration maintenancePragmaFrequency,
             @JsonProperty("batchSize") final int batchSize,
             @JsonProperty("flushFrequency") final StroomDuration flushFrequency,
-            @JsonProperty("cleanupFrequency") final StroomDuration cleanupFrequency) {
+            @JsonProperty("cleanupFrequency") final StroomDuration cleanupFrequency,
+            @JsonProperty("slowTransactionLockThreshold") final StroomDuration slowTransactionLockThreshold,
+            @JsonProperty("slowExecutionWarningThreshold") final StroomDuration slowExecutionWarningThreshold) {
         this.dbDir = dbDir;
         this.globalPragma = List.copyOf(globalPragma);
         this.connectionPragma = List.copyOf(connectionPragma);
@@ -81,6 +91,8 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
         }
         this.flushFrequency = flushFrequency;
         this.cleanupFrequency = cleanupFrequency;
+        this.slowTransactionLockThreshold = slowTransactionLockThreshold;
+        this.slowExecutionWarningThreshold = slowExecutionWarningThreshold;
     }
 
     @RequiresRestart(value = RestartScope.SYSTEM)
@@ -137,4 +149,15 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
         return cleanupFrequency;
     }
 
+    @RequiresRestart(value = RestartScope.SYSTEM)
+    @JsonProperty
+    public StroomDuration getSlowTransactionLockThreshold() {
+        return slowTransactionLockThreshold;
+    }
+
+    @RequiresRestart(value = RestartScope.SYSTEM)
+    @JsonProperty
+    public StroomDuration getSlowExecutionWarningThreshold() {
+        return slowExecutionWarningThreshold;
+    }
 }

@@ -2,7 +2,6 @@ package stroom.proxy.repo.dao;
 
 import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoDbConnProvider;
-import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -22,7 +21,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -57,6 +55,10 @@ public class SqliteJooqHelper {
     private final List<String> maintenancePragma;
     private final long maintenancePragmaFrequencyMs;
 
+    private final long slowTransactionLockThresholdMs;
+
+    private final long slowExecutionWarningThresholdMs;
+
     @Inject
     public SqliteJooqHelper(final ProxyRepoDbConnProvider connProvider,
                             final ProxyDbConfig proxyProxyDbConfig) {
@@ -64,6 +66,8 @@ public class SqliteJooqHelper {
         this.dataSource = connProvider;
         this.maintenancePragma = proxyProxyDbConfig.getMaintenancePragma();
         this.maintenancePragmaFrequencyMs = proxyProxyDbConfig.getMaintenancePragmaFrequency().toMillis();
+        this.slowTransactionLockThresholdMs = proxyProxyDbConfig.getSlowTransactionLockThreshold().toMillis();
+        this.slowExecutionWarningThresholdMs = proxyProxyDbConfig.getSlowExecutionWarningThreshold().toMillis();
 
 //        // Start periodic report.
 //        CompletableFuture.runAsync(() -> {
@@ -129,9 +133,14 @@ public class SqliteJooqHelper {
                         beginTransaction(connection);
                         boolean success = false;
                         try {
-                            final DSLContext context = createContext(connection);
-                            consumer.accept(context);
-                            success = true;
+                            final long startTime = System.currentTimeMillis();
+                            try {
+                                final DSLContext context = createContext(connection);
+                                consumer.accept(context);
+                                success = true;
+                            } finally {
+                                reportExecutionDuration(startTime);
+                            }
                         } finally {
                             endTransaction(connection, success);
                         }
@@ -156,10 +165,15 @@ public class SqliteJooqHelper {
                         beginTransaction(connection);
                         boolean success = false;
                         try {
-                            final DSLContext context = createContext(connection);
-                            R r = function.apply(context);
-                            success = true;
-                            return r;
+                            final long startTime = System.currentTimeMillis();
+                            try {
+                                final DSLContext context = createContext(connection);
+                                R r = function.apply(context);
+                                success = true;
+                                return r;
+                            } finally {
+                                reportExecutionDuration(startTime);
+                            }
                         } finally {
                             endTransaction(connection, success);
                         }
@@ -172,6 +186,28 @@ public class SqliteJooqHelper {
 
             return result;
         });
+    }
+
+    private boolean reportTransactionLockDuration(final long duration) {
+        if (duration > slowTransactionLockThresholdMs) {
+            LOGGER.warn("TAKING A LONG TIME TO ACQUIRE LOCK: " +
+                    getMethod() +
+                    " " +
+                    ModelStringUtil.formatDurationString(duration));
+            return true;
+        }
+        return false;
+    }
+
+    private boolean reportExecutionDuration(final long duration) {
+        if (duration > slowExecutionWarningThresholdMs) {
+            LOGGER.warn("TAKING A LONG TIME TO EXECUTE: " +
+                    getMethod() +
+                    " " +
+                    ModelStringUtil.formatDurationString(duration));
+            return true;
+        }
+        return false;
     }
 
     private void beginTransaction(final Connection connection) throws SQLException {
@@ -191,11 +227,8 @@ public class SqliteJooqHelper {
             }
 
             final long now = System.currentTimeMillis();
-            if (lastReport < now - 10000) {
-                LOGGER.info("TAKING A LONG TIME TO ACQUIRE LOCK: " +
-                        getMethod() +
-                        " " +
-                        ModelStringUtil.formatDurationString(now - startTime));
+            final long duration = now - lastReport;
+            if (reportTransactionLockDuration(duration)) {
                 lastReport = now;
             }
         }
