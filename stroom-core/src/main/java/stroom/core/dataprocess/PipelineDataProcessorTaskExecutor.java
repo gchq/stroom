@@ -59,6 +59,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
+import stroom.pipeline.state.StreamDeleteListeners;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
@@ -127,6 +128,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     private final FeedProperties feedProperties;
     private final MetaDataHolder metaDataHolder;
     private final MetaHolder metaHolder;
+    private final StreamDeleteListeners streamDeleteListeners;
     private final SearchIdHolder searchIdHolder;
     private final LocationFactoryProxy locationFactory;
     private final StreamProcessorHolder streamProcessorHolder;
@@ -161,6 +163,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                       final FeedProperties feedProperties,
                                       final MetaDataHolder metaDataHolder,
                                       final MetaHolder metaHolder,
+                                      final StreamDeleteListeners streamDeleteListeners,
                                       final SearchIdHolder searchIdHolder,
                                       final LocationFactoryProxy locationFactory,
                                       final StreamProcessorHolder streamProcessorHolder,
@@ -182,6 +185,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         this.feedProperties = feedProperties;
         this.metaDataHolder = metaDataHolder;
         this.metaHolder = metaHolder;
+        this.streamDeleteListeners = streamDeleteListeners;
         this.searchIdHolder = searchIdHolder;
         this.locationFactory = locationFactory;
         this.streamProcessorHolder = streamProcessorHolder;
@@ -537,7 +541,9 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                     try {
                         if (oldMeta.getProcessorTaskId() == null) {
                             metaService.updateStatus(oldMeta, oldMeta.getStatus(), Status.DELETED);
+                            streamDeleteListeners.delete(oldMeta.getId());
                             count.incrementAndGet();
+
                         } else if (oldMeta.getProcessorTaskId() != processorTask.getId()) {
                             if (taskMap == null) {
                                 final ExpressionOperator findTaskExpression = ExpressionOperator.builder()
@@ -559,6 +565,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                                 // If the task associated with the other output is complete in some way then delete the
                                 // output.
                                 metaService.updateStatus(oldMeta, oldMeta.getStatus(), Status.DELETED);
+                                streamDeleteListeners.delete(oldMeta.getId());
                                 count.incrementAndGet();
                             }
                         }

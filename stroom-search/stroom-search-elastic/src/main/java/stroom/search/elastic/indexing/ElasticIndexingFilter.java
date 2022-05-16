@@ -17,7 +17,6 @@
 package stroom.search.elastic.indexing;
 
 import stroom.docref.DocRef;
-import stroom.meta.shared.Meta;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -28,10 +27,9 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.pipeline.state.StreamDeleteListener;
+import stroom.pipeline.state.StreamDeleteListeners;
 import stroom.pipeline.xml.converter.json.JSONParser;
-import stroom.processor.shared.ProcessorFilter;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -44,7 +42,6 @@ import stroom.util.shared.Severity;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.StatusLine;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
@@ -87,7 +84,8 @@ import javax.ws.rs.NotFoundException;
         PipelineElementType.ROLE_HAS_TARGETS,
         PipelineElementType.VISABILITY_SIMPLE
 }, icon = ElementIcons.ELASTIC_INDEX)
-class ElasticIndexingFilter extends AbstractXMLFilter {
+class ElasticIndexingFilter extends AbstractXMLFilter implements StreamDeleteListener {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexingFilter.class);
     private static final JsonFactory JSON_FACTORY = new JsonFactory();
     private static final int INITIAL_JSON_STREAM_SIZE_BYTES = 1024;
@@ -97,8 +95,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private final ElasticIndexingConfig elasticIndexingConfig;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
-    private final StreamProcessorHolder streamProcessorHolder;
-    private final MetaHolder metaHolder;
 
     private int batchSize = 10000;
     private boolean purgeOnReprocess = true;
@@ -129,15 +125,30 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             final ElasticIndexingConfig elasticIndexingConfig,
             final ElasticClientCache elasticClientCache,
             final ElasticClusterStore elasticClusterStore,
-            final StreamProcessorHolder streamProcessorHolder,
-            final MetaHolder metaHolder) {
+            final StreamDeleteListeners streamDeleteListeners) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.elasticIndexingConfig = elasticIndexingConfig;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
-        this.streamProcessorHolder = streamProcessorHolder;
-        this.metaHolder = metaHolder;
+        streamDeleteListeners.add(this);
+    }
+
+    @Override
+    public void delete(final long streamId) {
+        if (purgeOnReprocess) {
+            final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(clusterRef);
+            final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
+            elasticClientCache.context(connectionConfig, elasticClient -> {
+                try {
+                    if (!purgeDocumentsForStream(elasticClient, streamId)) {
+                        throw new RuntimeException("Failed to purge existing documents for StreamId " + streamId);
+                    }
+                } catch (final RuntimeException e) {
+                    fatalError(e.getMessage(), e);
+                }
+            });
+        }
     }
 
     /**
@@ -153,27 +164,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             if (indexBaseName == null || indexBaseName.isEmpty()) {
                 fatalError("Index name has not been set", new InvalidParameterException());
             }
-
-            final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(clusterRef);
-            final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
-
-            elasticClientCache.context(connectionConfig, elasticClient -> {
-                try {
-                    // If this is a reprocessing filter, delete any documents from the target index that have the same
-                    // `StreamId` as the stream that's being reprocessed. This prevents duplicate documents.
-                    final ProcessorFilter processorFilter = this.streamProcessorHolder.getStreamTask()
-                            .getProcessorFilter();
-                    if (purgeOnReprocess && processorFilter.isReprocess()) {
-                        final Meta meta = this.metaHolder.getMeta();
-                        final long streamId = meta.getId();
-                        if (!purgeDocumentsForStream(elasticClient, streamId)) {
-                            throw new RuntimeException("Failed to purge existing documents for StreamId " + streamId);
-                        }
-                    }
-                } catch (final RuntimeException e) {
-                    fatalError(e.getMessage(), e);
-                }
-            });
 
             jsonGenerator = JSON_FACTORY.createGenerator(currentDocument);
 
@@ -548,6 +538,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     /**
      * Where an index name date pattern is specified, formats the value of the document timestamp field
      * using the date pattern. Otherwise the index base name is returned.
+     *
      * @return Index base name appended with the formatted document timestamp
      */
     private String formatIndexName() {
