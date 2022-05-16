@@ -95,7 +95,7 @@ public class StroomStreamException extends RuntimeException {
     }
 
 
-    private static RuntimeException unwrap(final Throwable ex, final AttributeMap attributeMap) {
+    public static RuntimeException unwrap(final Throwable ex, final AttributeMap attributeMap) {
         if (ex instanceof ZipException) {
             throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, attributeMap, ex.getMessage());
         } else if (ex instanceof DataFormatException) {
@@ -219,7 +219,7 @@ public class StroomStreamException extends RuntimeException {
         return attributeMap;
     }
 
-    protected static String unwrapMessage(final Throwable throwable) {
+    public static String unwrapMessage(final Throwable throwable) {
         final StringBuilder stringBuilder = new StringBuilder();
         unwrapMessage(stringBuilder, throwable, 10);
         return stringBuilder.toString();

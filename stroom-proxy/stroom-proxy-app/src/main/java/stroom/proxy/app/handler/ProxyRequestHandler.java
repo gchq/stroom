@@ -188,16 +188,60 @@ public class ProxyRequestHandler implements RequestHandler {
                                         duration);
                             }
                         }
-                    } catch (final StroomStreamException e) {
-                        StroomStreamException.sendErrorResponse(request, response, e);
-                        returnCode = e.getStroomStatusCode().getCode();
+                    } catch (final Throwable e) {
+                        LOGGER.error(() -> (e.getMessage() == null
+                                ? e.getClass().getName()
+                                : e.getMessage()) +
+                                "\n" +
+                                CSVFormatter.format(attributeMap), e);
 
-                        LOGGER.warn("\"handleException()\",{},\"{}\"",
-                                CSVFormatter.format(attributeMap),
-                                CSVFormatter.escape(e.getMessage()));
+                        final RuntimeException unwrappedException = StroomStreamException.unwrap(e, attributeMap);
+                        StroomStatusCode stroomStatusCode = StroomStatusCode.UNKNOWN_ERROR;
+                        final String message = StroomStreamException.unwrapMessage(unwrappedException);
 
+                        if (unwrappedException instanceof StroomStreamException) {
+                            stroomStatusCode = ((StroomStreamException) unwrappedException).getStroomStatusCode();
+                        }
+
+                        if (stroomStatusCode == null) {
+                            stroomStatusCode = StroomStatusCode.UNKNOWN_ERROR;
+                        }
+
+                        final StroomStatusCode finalStroomStatusCode = stroomStatusCode;
+                        LOGGER.warn(() -> {
+                            final StringBuilder clientDetailsStringBuilder = new StringBuilder();
+                            AttributeMapUtil.appendAttributes(
+                                    attributeMap,
+                                    clientDetailsStringBuilder,
+                                    StandardHeaderArguments.X_FORWARDED_FOR,
+                                    StandardHeaderArguments.REMOTE_HOST,
+                                    StandardHeaderArguments.REMOTE_ADDRESS,
+                                    StandardHeaderArguments.RECEIVED_PATH);
+
+                            final String clientDetailsStr = clientDetailsStringBuilder.isEmpty()
+                                    ? ""
+                                    : " - " + clientDetailsStringBuilder;
+
+                            return "Sending error response "
+                                    + finalStroomStatusCode.getHttpCode()
+                                    + " - "
+                                    + message
+                                    + clientDetailsStr;
+                        });
+
+                        response.setHeader(StandardHeaderArguments.STROOM_STATUS,
+                                String.valueOf(stroomStatusCode.getCode()));
+
+                        try {
+                            response.sendError(stroomStatusCode.getHttpCode(), message);
+                        } catch (final Throwable e2) {
+                            LOGGER.debug(e2::getMessage, e2);
+                        }
+
+                        returnCode = finalStroomStatusCode.getCode();
                         final long duration = System.currentTimeMillis() - startTimeMs;
-                        if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA.equals(e.getStroomStatusCode())) {
+
+                        if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA.equals(finalStroomStatusCode)) {
                             logStream.log(
                                     RECEIVE_LOG,
                                     attributeMap,
@@ -216,23 +260,6 @@ public class ProxyRequestHandler implements RequestHandler {
                                     -1,
                                     duration);
                         }
-
-                    } catch (final IOException | RuntimeException e) {
-                        RuntimeException unwrappedException = StroomStreamException.sendErrorResponse(request,
-                                response,
-                                e);
-                        returnCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-
-                        LOGGER.error("\"handleException()\",{}", CSVFormatter.format(attributeMap), unwrappedException);
-                        final long duration = System.currentTimeMillis() - startTimeMs;
-                        logStream.log(
-                                RECEIVE_LOG,
-                                attributeMap,
-                                "ERROR",
-                                request.getRequestURI(),
-                                returnCode,
-                                -1,
-                                duration);
                     }
 
                     return returnCode;

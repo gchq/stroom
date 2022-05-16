@@ -1,8 +1,6 @@
 package stroom.proxy.app;
 
 import stroom.util.concurrent.ThreadUtil;
-import stroom.util.concurrent.UncheckedInterruptedException;
-import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import org.apache.http.HttpEntity;
@@ -12,9 +10,15 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.HttpClients;
 
-import java.io.ByteArrayInputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -22,6 +26,20 @@ public class TestReceiveDataServlet {
 
     public static void main(final String[] args) {
         System.out.println("AVAILABLE PROCESSORS = " + Runtime.getRuntime().availableProcessors());
+
+        // Write a big file.
+        final Path tempFile;
+        try {
+            tempFile = Files.createTempFile("data", "temp");
+            final byte[] line = "This is a line of data\n".getBytes(StandardCharsets.UTF_8);
+            try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(tempFile))) {
+                for (int i = 0; i < 10; i++) {
+                    outputStream.write(line);
+                }
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
 
         final HttpClient httpClient = HttpClients.createDefault();
 
@@ -33,7 +51,7 @@ public class TestReceiveDataServlet {
         for (int i = 0; i < threadCount; i++) {
             arr[i] = CompletableFuture.runAsync(() -> {
                 while (true) {
-                    if (post(httpClient)) {
+                    if (post(httpClient, tempFile)) {
                         count.increment();
                     }
                 }
@@ -73,22 +91,21 @@ public class TestReceiveDataServlet {
         CompletableFuture.allOf(arr).join();
     }
 
-    private static boolean post(final HttpClient httpClient) {
-        try {
+    private static boolean post(final HttpClient httpClient,
+                                final Path tempFile) {
+        try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(tempFile))) {
             final HttpPost httpPost = new HttpPost("http://127.0.0.1:8090/stroom/noauth/datafeed");
             httpPost.addHeader("Feed", "TEST-EVENTS");
             httpPost.addHeader("System", "EXAMPLE_SYSTEM");
             httpPost.addHeader("Environment", "EXAMPLE_ENVIRONMENT");
-            httpPost.setEntity(
-                    new InputStreamEntity(
-                            new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8))));
+            httpPost.setEntity(new InputStreamEntity(inputStream));
 
             // Execute and get the response.
             final HttpResponse response = httpClient.execute(httpPost);
             final HttpEntity entity = response.getEntity();
 
             if (entity != null) {
-                try (final InputStream inputStream = entity.getContent()) {
+                try (final InputStream resultStream = entity.getContent()) {
                     // do something useful
 //                    System.out.println(StreamUtil.streamToString(inputStream));
                 }

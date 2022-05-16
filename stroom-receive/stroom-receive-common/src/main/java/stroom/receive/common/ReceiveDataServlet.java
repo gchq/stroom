@@ -16,11 +16,10 @@
 
 package stroom.receive.common;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.Unauthenticated;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Enumeration;
@@ -40,7 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 @Unauthenticated
 public class ReceiveDataServlet extends HttpServlet implements IsServlet {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataServlet.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataServlet.class);
 
     private static final Set<String> PATH_SPECS = Set.of("/datafeed", "/datafeed/*");
 
@@ -73,14 +72,12 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
      * Do handle the request.
      */
     private void handleRequest(final HttpServletRequest request, final HttpServletResponse response) {
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(getRequestTrace(request));
-        }
-
+        LOGGER.trace(() -> getRequestTrace(request));
         try {
             final RequestHandler requestHandler = requestHandlerProvider.get();
             requestHandler.handle(request, response);
         } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
             StroomStreamException.sendErrorResponse(request, response, e);
         }
     }
