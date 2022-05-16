@@ -139,7 +139,7 @@ public class SqliteJooqHelper {
                                 consumer.accept(context);
                                 success = true;
                             } finally {
-                                reportExecutionDuration(startTime);
+                                reportExecutionDuration(System.currentTimeMillis() - startTime);
                             }
                         } finally {
                             endTransaction(connection, success);
@@ -172,7 +172,7 @@ public class SqliteJooqHelper {
                                 success = true;
                                 return r;
                             } finally {
-                                reportExecutionDuration(startTime);
+                                reportExecutionDuration(System.currentTimeMillis() - startTime);
                             }
                         } finally {
                             endTransaction(connection, success);
@@ -227,8 +227,7 @@ public class SqliteJooqHelper {
             }
 
             final long now = System.currentTimeMillis();
-            final long duration = now - lastReport;
-            if (reportTransactionLockDuration(duration)) {
+            if (reportTransactionLockDuration(now - lastReport)) {
                 lastReport = now;
             }
         }
