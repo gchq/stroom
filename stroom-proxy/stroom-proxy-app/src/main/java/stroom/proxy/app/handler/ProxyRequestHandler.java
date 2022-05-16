@@ -121,151 +121,147 @@ public class ProxyRequestHandler implements RequestHandler {
                 throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED, attributeMap);
 
             } else {
-                final int rc = Metrics.measure("ProxyRequestHandler - handle1", () -> {
-                    int returnCode = HttpServletResponse.SC_OK;
+                int returnCode = HttpServletResponse.SC_OK;
 
-                    // Remove authorization header from attributes.
-                    attributeMap.remove(HttpHeaders.AUTHORIZATION);
+                // Remove authorization header from attributes.
+                attributeMap.remove(HttpHeaders.AUTHORIZATION);
 
-                    try {
-                        // Validate the supplied attributes.
-                        AttributeMapValidator.validate(
-                                attributeMap,
-                                receiveDataConfig::getMetaTypes);
+                try {
+                    // Validate the supplied attributes.
+                    AttributeMapValidator.validate(
+                            attributeMap,
+                            receiveDataConfig::getMetaTypes);
 
-                        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-                        if (feedName == null || feedName.trim().isEmpty()) {
-                            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
-                        }
-                        final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+                    final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+                    if (feedName == null || feedName.trim().isEmpty()) {
+                        throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
+                    }
+                    final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
 
-                        try (final ByteCountInputStream inputStream =
-                                new ByteCountInputStream(request.getInputStream())) {
-                            // Test to see if we are going to accept this stream or drop the data.
-                            if (attributeMapFilter.filter(attributeMap)) {
-                                // Consume the data
-                                Metrics.measure("ProxyRequestHandler - handle", () -> {
-                                    receiveStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
-                                        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                                                attributeMap,
-                                                handler,
-                                                new ProgressHandler("Receiving data"));
-                                        stroomStreamProcessor.processRequestHeader(request);
-                                        stroomStreamProcessor.processInputStream(inputStream, "");
-                                    });
+                    try (final ByteCountInputStream inputStream =
+                            new ByteCountInputStream(request.getInputStream())) {
+                        // Test to see if we are going to accept this stream or drop the data.
+                        if (attributeMapFilter.filter(attributeMap)) {
+                            // Consume the data
+                            Metrics.measure("ProxyRequestHandler - handle", () -> {
+                                receiveStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
+                                    final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                                            attributeMap,
+                                            handler,
+                                            new ProgressHandler("Receiving data"));
+                                    stroomStreamProcessor.processRequestHeader(request);
+                                    stroomStreamProcessor.processInputStream(inputStream, "");
                                 });
+                            });
 
-                                final long duration = System.currentTimeMillis() - startTimeMs;
-                                logStream.log(
-                                        RECEIVE_LOG,
-                                        attributeMap,
-                                        "RECEIVE",
-                                        request.getRequestURI(),
-                                        returnCode,
-                                        inputStream.getCount(),
-                                        duration);
-
-                            } else {
-                                // Just read the stream in and ignore it
-                                final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
-                                while (inputStream.read(buffer) >= 0) {
-                                    // Ignore data.
-                                    if (LOGGER.isTraceEnabled()) {
-                                        LOGGER.trace(new String(buffer));
-                                    }
-                                }
-                                returnCode = HttpServletResponse.SC_OK;
-                                LOGGER.warn("\"Dropped stream\",{}", CSVFormatter.format(attributeMap));
-
-                                final long duration = System.currentTimeMillis() - startTimeMs;
-                                logStream.log(
-                                        RECEIVE_LOG,
-                                        attributeMap,
-                                        "DROP",
-                                        request.getRequestURI(),
-                                        returnCode,
-                                        inputStream.getCount(),
-                                        duration);
-                            }
-                        }
-                    } catch (final Throwable e) {
-                        LOGGER.error(() -> (e.getMessage() == null
-                                ? e.getClass().getName()
-                                : e.getMessage()) +
-                                "\n" +
-                                CSVFormatter.format(attributeMap), e);
-
-                        final RuntimeException unwrappedException = StroomStreamException.unwrap(e, attributeMap);
-                        StroomStatusCode stroomStatusCode = StroomStatusCode.UNKNOWN_ERROR;
-                        final String message = StroomStreamException.unwrapMessage(unwrappedException);
-
-                        if (unwrappedException instanceof StroomStreamException) {
-                            stroomStatusCode = ((StroomStreamException) unwrappedException).getStroomStatusCode();
-                        }
-
-                        if (stroomStatusCode == null) {
-                            stroomStatusCode = StroomStatusCode.UNKNOWN_ERROR;
-                        }
-
-                        final StroomStatusCode finalStroomStatusCode = stroomStatusCode;
-                        LOGGER.warn(() -> {
-                            final StringBuilder clientDetailsStringBuilder = new StringBuilder();
-                            AttributeMapUtil.appendAttributes(
-                                    attributeMap,
-                                    clientDetailsStringBuilder,
-                                    StandardHeaderArguments.X_FORWARDED_FOR,
-                                    StandardHeaderArguments.REMOTE_HOST,
-                                    StandardHeaderArguments.REMOTE_ADDRESS,
-                                    StandardHeaderArguments.RECEIVED_PATH);
-
-                            final String clientDetailsStr = clientDetailsStringBuilder.isEmpty()
-                                    ? ""
-                                    : " - " + clientDetailsStringBuilder;
-
-                            return "Sending error response "
-                                    + finalStroomStatusCode.getHttpCode()
-                                    + " - "
-                                    + message
-                                    + clientDetailsStr;
-                        });
-
-                        response.setHeader(StandardHeaderArguments.STROOM_STATUS,
-                                String.valueOf(stroomStatusCode.getCode()));
-
-                        try {
-                            response.sendError(stroomStatusCode.getHttpCode(), message);
-                        } catch (final Throwable e2) {
-                            LOGGER.debug(e2::getMessage, e2);
-                        }
-
-                        returnCode = finalStroomStatusCode.getCode();
-                        final long duration = System.currentTimeMillis() - startTimeMs;
-
-                        if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA.equals(finalStroomStatusCode)) {
+                            final long duration = System.currentTimeMillis() - startTimeMs;
                             logStream.log(
                                     RECEIVE_LOG,
                                     attributeMap,
-                                    "REJECT",
+                                    "RECEIVE",
                                     request.getRequestURI(),
                                     returnCode,
-                                    -1,
+                                    inputStream.getCount(),
                                     duration);
+
                         } else {
+                            // Just read the stream in and ignore it
+                            final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
+                            while (inputStream.read(buffer) >= 0) {
+                                // Ignore data.
+                                if (LOGGER.isTraceEnabled()) {
+                                    LOGGER.trace(new String(buffer));
+                                }
+                            }
+                            returnCode = HttpServletResponse.SC_OK;
+                            LOGGER.warn("\"Dropped stream\",{}", CSVFormatter.format(attributeMap));
+
+                            final long duration = System.currentTimeMillis() - startTimeMs;
                             logStream.log(
                                     RECEIVE_LOG,
                                     attributeMap,
-                                    "ERROR",
+                                    "DROP",
                                     request.getRequestURI(),
                                     returnCode,
-                                    -1,
+                                    inputStream.getCount(),
                                     duration);
                         }
                     }
+                } catch (final Throwable e) {
+                    LOGGER.error(() -> (e.getMessage() == null
+                            ? e.getClass().getName()
+                            : e.getMessage()) +
+                            "\n" +
+                            CSVFormatter.format(attributeMap), e);
 
-                    return returnCode;
-                });
+                    final RuntimeException unwrappedException = StroomStreamException.unwrap(e, attributeMap);
+                    StroomStatusCode stroomStatusCode = StroomStatusCode.UNKNOWN_ERROR;
+                    final String message = StroomStreamException.unwrapMessage(unwrappedException);
 
-                response.setStatus(rc);
+                    if (unwrappedException instanceof StroomStreamException) {
+                        stroomStatusCode = ((StroomStreamException) unwrappedException).getStroomStatusCode();
+                    }
+
+                    if (stroomStatusCode == null) {
+                        stroomStatusCode = StroomStatusCode.UNKNOWN_ERROR;
+                    }
+
+                    final StroomStatusCode finalStroomStatusCode = stroomStatusCode;
+                    LOGGER.warn(() -> {
+                        final StringBuilder clientDetailsStringBuilder = new StringBuilder();
+                        AttributeMapUtil.appendAttributes(
+                                attributeMap,
+                                clientDetailsStringBuilder,
+                                StandardHeaderArguments.X_FORWARDED_FOR,
+                                StandardHeaderArguments.REMOTE_HOST,
+                                StandardHeaderArguments.REMOTE_ADDRESS,
+                                StandardHeaderArguments.RECEIVED_PATH);
+
+                        final String clientDetailsStr = clientDetailsStringBuilder.isEmpty()
+                                ? ""
+                                : " - " + clientDetailsStringBuilder;
+
+                        return "Sending error response "
+                                + finalStroomStatusCode.getHttpCode()
+                                + " - "
+                                + message
+                                + clientDetailsStr;
+                    });
+
+                    response.setHeader(StandardHeaderArguments.STROOM_STATUS,
+                            String.valueOf(stroomStatusCode.getCode()));
+
+                    try {
+                        response.sendError(stroomStatusCode.getHttpCode(), message);
+                    } catch (final Throwable e2) {
+                        LOGGER.debug(e2::getMessage, e2);
+                    }
+
+                    returnCode = finalStroomStatusCode.getCode();
+                    final long duration = System.currentTimeMillis() - startTimeMs;
+
+                    if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA.equals(finalStroomStatusCode)) {
+                        logStream.log(
+                                RECEIVE_LOG,
+                                attributeMap,
+                                "REJECT",
+                                request.getRequestURI(),
+                                returnCode,
+                                -1,
+                                duration);
+                    } else {
+                        logStream.log(
+                                RECEIVE_LOG,
+                                attributeMap,
+                                "ERROR",
+                                request.getRequestURI(),
+                                returnCode,
+                                -1,
+                                duration);
+                    }
+                }
+
+                response.setStatus(returnCode);
             }
         });
     }
