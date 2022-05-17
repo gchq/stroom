@@ -56,6 +56,9 @@ public class AggregateForwarder {
 
     private volatile String hostName = null;
 
+//    private volatile long startTime;
+//    private final AtomicLong calls = new AtomicLong();
+
     @Inject
     AggregateForwarder(final FeedDao feedDao,
                        final SourceItemDao sourceItemDao,
@@ -77,6 +80,33 @@ public class AggregateForwarder {
 
         init();
     }
+
+//    private void report() {
+//        if (startTime == 0) {
+//            startTime = System.currentTimeMillis();
+//        }
+//
+//        final long duration = System.currentTimeMillis() - startTime;
+//        final String elapsedString = ModelStringUtil.formatDurationString(duration);
+//        final long calls = this.calls.get();
+//        double callsPerMs = calls;
+//        if (duration > 0) {
+//            callsPerMs = callsPerMs / duration;
+//        }
+//        final long callsPerSecond = (long) (callsPerMs * 1000);
+//        LOGGER.info(() -> "AggregateForwarder" +
+//                ": " +
+//                "Total " +
+//                calls +
+//                " in " +
+//                elapsedString +
+//                " " +
+//                callsPerSecond +
+//                "cps" +
+//                " " +
+//                duration +
+//                "ms");
+//    }
 
     private void init() {
         // Add forward records for new forward URLs.
@@ -142,6 +172,9 @@ public class AggregateForwarder {
     }
 
     public void forward(final ForwardAggregate forwardAggregate) {
+//        calls.incrementAndGet();
+//        report();
+
         final Aggregate aggregate = forwardAggregate.getAggregate();
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();

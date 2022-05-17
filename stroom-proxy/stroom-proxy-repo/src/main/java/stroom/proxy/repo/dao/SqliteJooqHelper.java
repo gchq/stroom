@@ -50,8 +50,10 @@ public class SqliteJooqHelper {
     private final ThreadLocal<StackTraceElement[]> currentTransaction = new ThreadLocal<>();
     private final AtomicInteger transactionCount = new AtomicInteger();
     private volatile long lastRunMaintenance;
-    private final ReentrantLock lock = new ReentrantLock();
-    private final java.util.concurrent.locks.Condition condition = lock.newCondition();
+    private final ReentrantLock transactionCheckLock = new ReentrantLock();
+    private final ReentrantLock writeLock = new ReentrantLock(true);
+    private final java.util.concurrent.locks.Condition transactionCheckCondition =
+            transactionCheckLock.newCondition();
     private final List<String> maintenancePragma;
     private final long maintenancePragmaFrequencyMs;
 
@@ -71,6 +73,7 @@ public class SqliteJooqHelper {
 
 //        // Start periodic report.
 //        CompletableFuture.runAsync(() -> {
+//            Metrics.setEnabled(true);
 //            while (true) {
 //                ThreadUtil.sleep(10000);
 //                Metrics.report();
@@ -81,111 +84,66 @@ public class SqliteJooqHelper {
     }
 
     public void readOnlyTransaction(final Consumer<DSLContext> consumer) {
-        transactionCheck(() -> {
-            final String method = getMethod();
-            Metrics.measure(method, () -> {
-                useConnection(connection -> {
-//            try {
-//                connection.createStatement().execute("BEGIN IMMEDIATE;");
-                    final DSLContext context = createContext(connection);
-                    consumer.accept(context);
-//                connection.createStatement().execute("COMMIT;");
-//            } catch (final SQLException e) {
-//                LOGGER.error(e.getMessage(), e);
-//                throw new RuntimeException(e.getMessage(), e);
-//            }
-                });
-            });
+        readOnlyTransactionResult(context -> {
+            consumer.accept(context);
+            return null;
         });
-
-//        context(context -> context.transaction(nested -> consumer.accept(DSL.using(nested))));
     }
 
     public <R> R readOnlyTransactionResult(final Function<DSLContext, R> function) {
-        return transactionCheck(() -> {
-            final String method = getMethod();
-            final R result = Metrics.measure(method, () -> {
-                return useConnectionResult(connection -> {
-//            try {
-//                connection.createStatement().execute("BEGIN IMMEDIATE;");
-                    final DSLContext context = createContext(connection);
-                    return function.apply(context);
-//                connection.createStatement().execute("COMMIT;");
-//            } catch (final SQLException e) {
-//                LOGGER.error(e.getMessage(), e);
-//                throw new RuntimeException(e.getMessage(), e);
-//            }
-                });
-
-            });
-
-            return result;
-        });
-//        return contextResult(context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
+        return transactionCheck(() ->
+                Metrics.measure(getMethod(), () ->
+                        useConnection(connection ->
+                                useContext(connection, function))));
     }
 
     public void transaction(final Consumer<DSLContext> consumer) {
-        transactionCheck(() -> {
-            final String method = getMethod();
-            Metrics.measure(method, () -> {
-                useConnection(connection -> {
-                    try {
-                        beginTransaction(connection);
-                        boolean success = false;
-                        try {
-                            final long startTime = System.currentTimeMillis();
-                            try {
-                                final DSLContext context = createContext(connection);
-                                consumer.accept(context);
-                                success = true;
-                            } finally {
-                                reportExecutionDuration(System.currentTimeMillis() - startTime);
-                            }
-                        } finally {
-                            endTransaction(connection, success);
-                        }
-                    } catch (final SQLException e) {
-                        LOGGER.error(e.getMessage(), e);
-                        throw new RuntimeException(e.getMessage(), e);
-                    }
-                });
-            });
-
-//        context(context -> {
-//            context.transaction(nested -> consumer.accept(DSL.using(nested)))
-//        });
+        transactionResult(context -> {
+            consumer.accept(context);
+            return null;
         });
     }
 
     public <R> R transactionResult(final Function<DSLContext, R> function) {
-        return transactionCheck(() -> {
-            final R result = Metrics.measure(getMethod(), () -> {
-                return useConnectionResult(connection -> {
-                    try {
-                        beginTransaction(connection);
-                        boolean success = false;
-                        try {
-                            final long startTime = System.currentTimeMillis();
-                            try {
-                                final DSLContext context = createContext(connection);
-                                R r = function.apply(context);
-                                success = true;
-                                return r;
-                            } finally {
-                                reportExecutionDuration(System.currentTimeMillis() - startTime);
-                            }
-                        } finally {
-                            endTransaction(connection, success);
-                        }
-                    } catch (final SQLException e) {
-                        LOGGER.error(e.getMessage(), e);
-                        throw new RuntimeException(e.getMessage(), e);
-                    }
-                });
-            });
+        return writeLock(() ->
+                transactionCheck(() ->
+                        Metrics.measure(getMethod(), () ->
+                                useConnection(connection -> {
+                                    try {
+                                        beginTransaction(connection);
+                                        boolean success = false;
+                                        try {
+                                            final long startTime = System.currentTimeMillis();
+                                            try {
+                                                final R r = useContext(connection, function);
+                                                success = true;
+                                                return r;
+                                            } finally {
+                                                reportExecutionDuration(System.currentTimeMillis() - startTime);
+                                            }
+                                        } finally {
+                                            endTransaction(connection, success);
+                                        }
+                                    } catch (final SQLException e) {
+                                        LOGGER.error(e.getMessage(), e);
+                                        throw new RuntimeException(e.getMessage(), e);
+                                    }
+                                }))));
+    }
 
-            return result;
-        });
+    private <R> R writeLock(final Supplier<R> supplier) {
+        R result = null;
+        try {
+            writeLock.lockInterruptibly();
+            try {
+                result = supplier.get();
+            } finally {
+                writeLock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            UncheckedInterruptedException.resetAndThrow(e);
+        }
+        return result;
     }
 
     private boolean reportTransactionLockDuration(final long duration) {
@@ -211,9 +169,7 @@ public class SqliteJooqHelper {
     }
 
     private void beginTransaction(final Connection connection) throws SQLException {
-        final long startTime = System.currentTimeMillis();
-        long lastReport = startTime;
-
+        long lastReport = System.currentTimeMillis();
         boolean success = false;
         while (!success) {
             try {
@@ -223,6 +179,8 @@ public class SqliteJooqHelper {
                 LOGGER.debug(e.getMessage(), e);
                 if (!e.getMessage().contains("BUSY")) {
                     throw e;
+                } else {
+                    LOGGER.debug("Expected immediate DB lock: " + getMethod());
                 }
             }
 
@@ -247,46 +205,19 @@ public class SqliteJooqHelper {
         }
     }
 
-    private DSLContext createContext(final Connection connection) {
+    private <R> R useContext(final Connection connection, final Function<DSLContext, R> function) {
         Settings settings = new Settings();
         // Turn off fully qualified schemata.
         settings = settings.withRenderSchema(RENDER_SCHEMA);
-        return DSL.using(connection, sqlDialect, settings);
+        return function.apply(DSL.using(connection, sqlDialect, settings));
     }
 
-    private <R> R useConnectionResult(final Function<Connection, R> function) {
+    private <R> R useConnection(final Function<Connection, R> function) {
         try (final Connection connection = dataSource.getConnection()) {
             return function.apply(connection);
         } catch (final SQLException e) {
             LOGGER.error(e::getMessage, e);
             throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    private void useConnection(final Consumer<Connection> consumer) {
-        useConnectionResult(connection -> {
-            consumer.accept(connection);
-            return null;
-        });
-    }
-
-    private void transactionCheck(final Runnable runnable) {
-        try {
-            increment();
-            try {
-                final StackTraceElement[] stackTraceElements = currentTransaction.get();
-                if (stackTraceElements != null) {
-                    LOGGER.error("Current transaction exists: " + Arrays.toString(stackTraceElements));
-                }
-                currentTransaction.set(Thread.currentThread().getStackTrace());
-
-                runnable.run();
-
-            } finally {
-                currentTransaction.set(null);
-            }
-        } finally {
-            decrement();
         }
     }
 
@@ -310,13 +241,13 @@ public class SqliteJooqHelper {
     private void increment() {
         try {
             if (maintenancePragma.size() > 0) {
-                lock.lockInterruptibly();
+                transactionCheckLock.lockInterruptibly();
                 try {
                     // Is it time to run maintenance pragmas?
                     if (lastRunMaintenance < System.currentTimeMillis() - maintenancePragmaFrequencyMs) {
                         // Wait until there are no active transactions.
                         while (transactionCount.get() != 0) {
-                            condition.await();
+                            transactionCheckCondition.await();
                         }
 
                         // The first thread that gets the chance should run the maintenance pragmas.
@@ -330,7 +261,7 @@ public class SqliteJooqHelper {
                     }
                 } finally {
                     transactionCount.incrementAndGet();
-                    lock.unlock();
+                    transactionCheckLock.unlock();
                 }
             }
         } catch (final InterruptedException e) {
@@ -341,12 +272,12 @@ public class SqliteJooqHelper {
     private void decrement() {
         try {
             if (maintenancePragma.size() > 0) {
-                lock.lockInterruptibly();
+                transactionCheckLock.lockInterruptibly();
                 try {
                     transactionCount.decrementAndGet();
-                    condition.signalAll();
+                    transactionCheckCondition.signalAll();
                 } finally {
-                    lock.unlock();
+                    transactionCheckLock.unlock();
                 }
             }
         } catch (final InterruptedException e) {
@@ -362,6 +293,7 @@ public class SqliteJooqHelper {
             } catch (final SQLException e) {
                 LOGGER.error("Error executing " + pragma + ": " + e.getMessage(), e);
             }
+            return null;
         });
     }
 
