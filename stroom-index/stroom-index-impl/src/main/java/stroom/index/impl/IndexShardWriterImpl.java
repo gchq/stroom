@@ -184,10 +184,10 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         final PerFieldAnalyzerWrapper analyzerWrapper = new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
         final IndexWriterConfig luceneIndexWriterConfig = new IndexWriterConfig(analyzerWrapper);
 
-        // In debug mode we do extra trace in LUCENE and we also count
+        // In trace mode we do extra trace in LUCENE and we also count
         // certain logging info like merge and flush
         // counts, so you can get this later using the trace method.
-        if (LOGGER.isDebugEnabled()) {
+        if (LOGGER.isTraceEnabled()) {
             final LoggerPrintStream loggerPrintStream = new LoggerPrintStream(LOGGER);
             for (final String term : LOG_WATCH_TERMS.values()) {
                 loggerPrintStream.addWatchTerm(term);

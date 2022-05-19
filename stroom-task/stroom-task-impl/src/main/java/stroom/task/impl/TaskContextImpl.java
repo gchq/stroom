@@ -25,7 +25,9 @@ import stroom.util.NullSafe;
 
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,11 +74,30 @@ public class TaskContextImpl implements TaskContext {
         this.messageSupplier = messageSupplier;
 
         if (logger != null && logger.isDebugEnabled() && messageSupplier != null) {
-            logger.debug("TaskId: {}, user: {}, task name: {}, info: {}",
-                    NullSafe.get(taskId, TaskId::getId),
+            logger.debug("Task stack: {}, user: {}, task: {}, info: {}",
+                    getTaskHierarchy(),
                     NullSafe.get(userIdentity, UserIdentity::getId),
                     name,
                     messageSupplier.get());
+        }
+    }
+
+    private String getTaskHierarchy() {
+        if (taskId == null) {
+            return "";
+        } else {
+            final List<String> taskIds = new ArrayList<>();
+            TaskId currTaskId = this.taskId;
+            while (currTaskId != null) {
+                taskIds.add(currTaskId.getId());
+                currTaskId = currTaskId.getParentId();
+                // In case we get a huge hierarchy
+                if (currTaskId != null && taskIds.size() >= 10) {
+                    taskIds.add("...");
+                    break;
+                }
+            }
+            return String.join(" < ", taskIds);
         }
     }
 

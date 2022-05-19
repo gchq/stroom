@@ -123,7 +123,7 @@ public class IndexShardSearchTaskHandler {
 
         } finally {
             if (indexShardSearcher != null) {
-                taskContext.info(() -> "Closing searcher for index shard " + shardId);
+                taskContext.info(() -> "Closing searcher for index shard " + shardId, LOGGER);
                 indexShardSearcher.destroy();
             }
         }
