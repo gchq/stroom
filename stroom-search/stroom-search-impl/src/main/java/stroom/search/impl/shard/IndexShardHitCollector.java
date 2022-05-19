@@ -105,7 +105,7 @@ class IndexShardHitCollector extends SimpleCollector {
 
     private void info(final Supplier<String> message) {
         taskContext.info(message);
-        LOGGER.debug(message);
+        LOGGER.trace(message);
     }
 
     @Override
