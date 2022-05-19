@@ -59,7 +59,7 @@ public class AdminServlets {
                     String.join(", ", duplicatePaths)));
         }
 
-        LOGGER.info("Adding admins servlets:");
+        LOGGER.info("Adding servlets to admin path/port:");
 
         final Set<String> allPaths = new HashSet<>();
 
