@@ -26,6 +26,7 @@ import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.logging.LoggerPrintStream;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
@@ -138,6 +139,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
         // Find the index shard dir.
         dir = IndexShardUtil.getIndexPath(indexShard);
+        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating index shard writer for dir {} {}", dir, this));
 
         // Make sure the index writer is primed with the necessary analysers.
         LAMBDA_LOGGER.debug(() -> "Updating field analysers");
@@ -152,12 +154,15 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         final String path = FileUtil.getCanonicalPath(dir);
         if (Files.isDirectory(dir)) {
             final long count = FileUtil.count(dir);
+            LAMBDA_LOGGER.debug(() -> dir + " exists, file count: " + count + " " + this);
             if (count == 0) {
                 throw new IndexException("Unable to find any index shard data in directory: " + path);
             }
 
         } else {
             // Make sure the index hasn't been deleted.
+            LAMBDA_LOGGER.debug(() ->
+                    dir + " doesn't exist, doc count: " + indexShard.getDocumentCount() + " " + this);
             if (indexShard.getDocumentCount() > 0) {
                 throw new IndexException("Unable to find any index shard data in directory: " + path);
             }
@@ -166,7 +171,9 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             try {
                 Files.createDirectories(dir);
             } catch (final IOException e) {
-                LAMBDA_LOGGER.error(e::getMessage, e);
+                LAMBDA_LOGGER.error(() ->
+                                buildErrorMessage("Error creating path " + dir, e),
+                        e);
                 throw new IndexException("Unable to create directories for new index in \"" + path + "\"");
             }
         }
@@ -193,6 +200,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
         // IndexWriter to use for adding data to the index.
         final IndexWriter indexWriter = new IndexWriter(directory, luceneIndexWriterConfig);
+        LOGGER.debug("Marking shard writer as open. {}", this);
         open.set(true);
 
         final LiveIndexWriterConfig liveIndexWriterConfig = indexWriter.getConfig();
@@ -208,7 +216,12 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
         if (indexShard.getDocumentCount() != numDocs) {
             LAMBDA_LOGGER.error(() ->
-                    "Mismatch document count. Index says " + numDocs + " DB says " + indexShard.getDocumentCount());
+                    "Mismatch document count. Index says "
+                            + numDocs
+                            + " DB says "
+                            + indexShard.getDocumentCount()
+                            + " "
+                            + this);
         }
 
         this.directory = directory;
@@ -239,7 +252,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     if (duration.compareTo(slowIndexWriteWarningThreshold.getDuration()) > 0) {
                         LAMBDA_LOGGER.warn(() ->
                                 "addDocument() - "
-                                        + this.toString()
+                                        + this
                                         + " took "
                                         + duration
                                         + " (Warning threshold: "
@@ -266,7 +279,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 // Add the field analyser.
                 final Analyzer analyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
                         indexField.isCaseSensitive());
-                LAMBDA_LOGGER.debug(() -> "Adding field analyser for: " + indexField.getFieldName());
+                LAMBDA_LOGGER.debug(() ->
+                        "Adding field analyser for: " + indexField.getFieldName() + " " + toString());
                 fieldAnalyzers.put(indexField.getFieldName(), analyzer);
             }
         }
@@ -284,7 +298,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 indexWriter.commit();
 
             } catch (final IOException | RuntimeException e) {
-                LAMBDA_LOGGER.error(e::getMessage, e);
+                LAMBDA_LOGGER.error(buildErrorMessage("Error while committing writer.", e), e);
 
             } finally {
                 // Update the shard info
@@ -315,6 +329,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                         Thread.sleep(1000);
                     }
                 } catch (final InterruptedException e) {
+                    LAMBDA_LOGGER.debug(() -> "Interrupted waiting for docs to be added. " + toString());
                     // Interrupt this thread again.
                     Thread.currentThread().interrupt();
                 }
@@ -329,15 +344,14 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                             directory.close();
                         }
                     } catch (final IOException | RuntimeException e) {
-                        LAMBDA_LOGGER.error(e::getMessage, e);
+                        LOGGER.error(buildErrorMessage("Error closing directory.", e), e);
                     }
 
                     open.set(false);
                 }
 
             } catch (final RuntimeException e) {
-                LAMBDA_LOGGER.error(e::getMessage, e);
-
+                LOGGER.error(buildErrorMessage("Error closing shard writer.", e), e);
             } finally {
                 // Update the shard info
                 updateShardInfo(startTime);
@@ -366,7 +380,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
             update(indexShardId, lastDocumentCount, lastCommitDurationMs, lastCommitMs, fileSize);
         } catch (final RuntimeException e) {
-            LAMBDA_LOGGER.error(e::getMessage, e);
+            LOGGER.error(buildErrorMessage("Error updating shard info.", e), e);
         }
     }
 
@@ -380,16 +394,16 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                         try {
                             totalSize.getAndAdd(Files.size(file));
                         } catch (final IOException e) {
-                            LOGGER.trace(e.getMessage(), e);
+                            LOGGER.trace(buildErrorMessage("IO error getting file size.", e), e);
                         }
                     });
                 } catch (final IOException e) {
-                    LOGGER.trace(e.getMessage(), e);
+                    LOGGER.trace(buildErrorMessage("IO error getting file sizes.", e), e);
                 }
                 fileSize = totalSize.get();
             }
         } catch (final RuntimeException e) {
-            LAMBDA_LOGGER.debug(e::getMessage, e);
+            LOGGER.debug(buildErrorMessage("Error calculating file sizes.", e), e);
         }
         return fileSize;
     }
@@ -436,5 +450,14 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     @Override
     public String toString() {
         return "(id=" + indexShardId + ")";
+    }
+
+    private String buildErrorMessage(final String message,
+                                     final Throwable throwable) {
+        return message
+                + " "
+                + NullSafe.getOrElse(throwable, Throwable::getMessage, "null")
+                + " "
+                + this;
     }
 }

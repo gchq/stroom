@@ -49,7 +49,7 @@ import org.apache.lucene.util.Version;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import javax.inject.Inject;
 
 public class IndexShardSearchTaskHandler {
@@ -83,7 +83,7 @@ public class IndexShardSearchTaskHandler {
                             final QueryKey queryKey,
                             final IndexShardQueryFactory queryFactory,
                             final String[] storedFieldNames,
-                            final AtomicLong hitCount,
+                            final LongAdder hitCount,
                             final int shardNumber,
                             final int shardTotal,
                             final long shardId,
@@ -96,8 +96,7 @@ public class IndexShardSearchTaskHandler {
                 taskContext.reset();
                 taskContext.info(() ->
                         "Searching shard " + shardNumber + " of " + shardTotal +
-                                " (id=" + shardId + ")");
-
+                                " (id=" + shardId + ")", LOGGER);
 
                 final IndexWriter indexWriter = getWriter(shardId);
 
@@ -145,7 +144,7 @@ public class IndexShardSearchTaskHandler {
     private void searchShard(final TaskContext parentContext,
                              final IndexShardQueryFactory queryFactory,
                              final String[] storedFieldNames,
-                             final AtomicLong hitCount,
+                             final LongAdder hitCount,
                              final IndexShardSearcher indexShardSearcher,
                              final ValuesConsumer valuesConsumer,
                              final ErrorConsumer errorConsumer) {
@@ -178,10 +177,17 @@ public class IndexShardSearchTaskHandler {
                                             final IndexShardHitCollector collector = new IndexShardHitCollector(
                                                     taskContext,
                                                     queryKey,
+                                                    indexShard,
+                                                    query,
                                                     docIdQueue,
                                                     hitCount);
 
                                             searcher.search(query, collector);
+
+                                            LOGGER.debug("Shard search complete. {}, query term [{}]",
+                                                    collector,
+                                                    query);
+
                                         } catch (final IOException e) {
                                             error(errorConsumer, e);
                                         }

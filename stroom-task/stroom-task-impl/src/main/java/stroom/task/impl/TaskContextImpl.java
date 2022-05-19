@@ -21,6 +21,9 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandler;
 import stroom.task.shared.TaskId;
+import stroom.util.NullSafe;
+
+import org.slf4j.Logger;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -62,6 +65,19 @@ public class TaskContextImpl implements TaskContext {
     @Override
     public void info(final Supplier<String> messageSupplier) {
         this.messageSupplier = messageSupplier;
+    }
+
+    @Override
+    public void info(final Supplier<String> messageSupplier, final Logger logger) {
+        this.messageSupplier = messageSupplier;
+
+        if (logger != null && logger.isDebugEnabled() && messageSupplier != null) {
+            logger.debug("TaskId: {}, user: {}, task name: {}, info: {}",
+                    NullSafe.get(taskId, TaskId::getId),
+                    NullSafe.get(userIdentity, UserIdentity::getId),
+                    name,
+                    messageSupplier.get());
+        }
     }
 
     @Override

@@ -5,25 +5,25 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 class Tracker {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Tracker.class);
 
-    private final AtomicLong hitCount;
+    private final LongAdder hitCount;
     private final CountDownLatch completed = new CountDownLatch(1);
 
-    Tracker(final AtomicLong hitCount) {
+    Tracker(final LongAdder hitCount) {
         this.hitCount = hitCount;
     }
 
     long getHitCount() {
-        return hitCount.get();
+        return hitCount.sum();
     }
 
     void incrementHitCount() {
-        hitCount.incrementAndGet();
+        hitCount.increment();
     }
 
     boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
