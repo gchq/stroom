@@ -38,7 +38,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import javax.inject.Provider;
 
@@ -232,7 +232,7 @@ public class ExtractionDecorator {
 
     @SuppressWarnings("unchecked")
     public CompletableFuture<Void> startExtraction(final TaskContext parentContext,
-                                                   final AtomicLong extractionCount,
+                                                   final LongAdder extractionCount,
                                                    final ErrorConsumer errorConsumer) {
         // Delay extraction if we are going to use one or more extraction pipelines.
         receivers.keySet().stream().filter(Objects::nonNull).findFirst().ifPresent(docRef -> {
@@ -257,7 +257,7 @@ public class ExtractionDecorator {
 
     private void extractData(final TaskContext parentContext,
                              final QueryKey queryKey,
-                             final AtomicLong extractionCount,
+                             final LongAdder extractionCount,
                              final ErrorConsumer errorConsumer) {
         taskContextFactory.childContext(parentContext, "Extraction Task", taskContext ->
                 securityContext.useAsRead(() -> {
@@ -293,7 +293,7 @@ public class ExtractionDecorator {
     private void extractEvents(final TaskContext taskContext,
                                final long streamId,
                                final Set<Event> events,
-                               final AtomicLong extractionCount,
+                               final LongAdder extractionCount,
                                final ErrorConsumer errorConsumer) {
         SearchProgressLog.increment(queryKey, SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS);
         SearchProgressLog.add(queryKey, SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_EVENTS, events.size());
@@ -336,7 +336,7 @@ public class ExtractionDecorator {
                                     pipelineData);
                         });
 
-                        extractionCount.addAndGet(events.size());
+                        extractionCount.add(events.size());
 
                     } else {
                         // See if we can load the stream. We might get a StreamPermissionException if we aren't
@@ -358,7 +358,7 @@ public class ExtractionDecorator {
                         // Pass raw values to coprocessors that are not requesting values to be extracted.
                         for (final Event event : events) {
                             receiver.add(event.getValues());
-                            extractionCount.incrementAndGet();
+                            extractionCount.increment();
                         }
                     }
                 }

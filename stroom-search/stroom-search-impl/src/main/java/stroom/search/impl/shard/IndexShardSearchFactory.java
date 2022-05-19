@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -75,7 +75,7 @@ public class IndexShardSearchFactory {
                                           final ExpressionOperator expression,
                                           final FieldIndex fieldIndex,
                                           final TaskContext parentContext,
-                                          final AtomicLong hitCount,
+                                          final LongAdder hitCount,
                                           final StoredDataQueue storedDataQueue,
                                           final ErrorConsumer errorConsumer) {
         SearchProgressLog.increment(task.getKey(), SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
