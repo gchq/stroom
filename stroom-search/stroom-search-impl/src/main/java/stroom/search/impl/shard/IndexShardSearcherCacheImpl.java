@@ -29,6 +29,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -201,14 +202,9 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                         TimeUnit.SECONDS);
 
                 while (closing.get() > 0) {
-                    Thread.sleep(500);
+                    ThreadUtil.sleep(500);
                 }
             }
-        } catch (final InterruptedException e) {
-            LOGGER.error(e::getMessage, e);
-
-            // Continue to interrupt this thread.
-            Thread.currentThread().interrupt();
         } finally {
             if (executor != null) {
                 // Shut down the progress logging executor.

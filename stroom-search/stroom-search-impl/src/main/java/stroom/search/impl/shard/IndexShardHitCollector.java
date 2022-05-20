@@ -31,6 +31,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SimpleCollector;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
@@ -85,15 +86,12 @@ class IndexShardHitCollector extends SimpleCollector {
 
         try {
             SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_PUT);
-            docIdQueue.put(docId);
+            // Keep trying to add the doc id until we manage it or termination occurs.
+            LOGGER.trace("Collecting docId {} from {}, query term [{}]", docId, this, query);
+            while (!taskContext.isTerminated() && !docIdQueue.offer(docId, 1, TimeUnit.SECONDS)) {
+                LOGGER.trace("Continuing to offer docId {} from {}, query term [{}]", docId, this, query);
+            }
             info(() -> "Found " + localHitCount + " hits");
-            LOGGER.trace("Collect called. {}, query term [{}]", this, query);
-        } catch (final InterruptedException e) {
-            info(() -> "Quitting...");
-            LOGGER.debug("Quitting (interrupted). {}, query term [{}]", this, query);
-            // Keep interrupting this thread.
-            Thread.currentThread().interrupt();
-            throw new TaskTerminatedException();
         } catch (final RuntimeException e) {
             LOGGER.error("Error logging search progress: {}. {}", e.getMessage(), this, e);
         }

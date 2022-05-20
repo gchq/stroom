@@ -17,6 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -30,7 +31,7 @@ class TestQueues {
 
     @Test
     @SuppressWarnings("unchecked")
-    void testShardIdQueue() throws InterruptedException {
+    void testShardIdQueue() {
         final int threads = 10;
         final ShardIdQueue queue = new ShardIdQueue(LongStream
                 .rangeClosed(1, 1000)
@@ -44,10 +45,11 @@ class TestQueues {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
                     while (true) {
-                        queue.take();
-                        consumed.incrementAndGet();
+                        if (queue.next() != null) {
+                            consumed.incrementAndGet();
+                        }
                     }
-                } catch (final InterruptedException | CompleteException e) {
+                } catch (final CompleteException e) {
                     // Ignore.
                 }
             }, executor);
@@ -71,18 +73,14 @@ class TestQueues {
         final CompletableFuture<Void>[] producers = new CompletableFuture[threads];
         for (int i = 0; i < threads; i++) {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                try {
-                    boolean run = true;
-                    while (run) {
-                        final int id = produced.incrementAndGet();
-                        if (id > MAX) {
-                            run = false;
-                        } else {
-                            queue.put(id);
-                        }
+                boolean run = true;
+                while (run) {
+                    final int id = produced.incrementAndGet();
+                    if (id > MAX) {
+                        run = false;
+                    } else {
+                        queue.offer(id, 1, TimeUnit.SECONDS);
                     }
-                } catch (final InterruptedException e) {
-                    // Ignore.
                 }
             }, executor);
             producers[i] = future;
@@ -93,10 +91,11 @@ class TestQueues {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
                     while (true) {
-                        queue.take();
-                        consumed.incrementAndGet();
+                        if (queue.next() != null) {
+                            consumed.incrementAndGet();
+                        }
                     }
-                } catch (final InterruptedException | CompleteException e) {
+                } catch (final CompleteException e) {
                     // Ignore.
                 }
             }, executor);
