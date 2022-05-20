@@ -1,22 +1,24 @@
 package stroom.search.impl.shard;
 
-import stroom.util.concurrent.CompletableLongQueue;
+import stroom.util.concurrent.CompleteException;
 
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 
-public class ShardIdQueue extends CompletableLongQueue {
+public class ShardIdQueue {
 
-    public ShardIdQueue(final List<Long> shards) throws InterruptedException {
-        // Make the queue big enough for all shards plus the completion state.
-        super(shards.size() + 1);
+    private final ArrayBlockingQueue<Long> queue;
 
-        try {
-            for (final Long shard : shards) {
-                put(shard);
-            }
-        } finally {
-            // Tell the queue there will be no more items.
-            complete();
+    public ShardIdQueue(final List<Long> shards) {
+        queue = new ArrayBlockingQueue<>(shards.size());
+        queue.addAll(shards);
+    }
+
+    public Long next() throws CompleteException {
+        final Long shardId =  queue.poll();
+        if (shardId == null) {
+            throw new CompleteException();
         }
+        return shardId;
     }
 }
