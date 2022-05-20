@@ -20,6 +20,7 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.CompleteException;
@@ -107,49 +108,44 @@ public class IndexShardSearchFactory {
         final Executor executor = executorProvider.get(INDEX_SHARD_SEARCH_THREAD_POOL);
 
         if (task.getShards().size() > 0) {
-            try {
-                final Map<Version, Optional<SearchExpressionQuery>> queryMap = new ConcurrentHashMap<>();
-                final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
-                        task, expression, indexFieldsMap, queryMap, errorConsumer);
+            final Map<Version, Optional<SearchExpressionQuery>> queryMap = new ConcurrentHashMap<>();
+            final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
+                    task, expression, indexFieldsMap, queryMap, errorConsumer);
 
-                // Create a queue of shards to search.
-                final ShardIdQueue queue = new ShardIdQueue(task.getShards());
-                final AtomicInteger shardNo = new AtomicInteger();
-                for (int i = 0; i < threadCount; i++) {
-                    futures[i] = CompletableFuture.runAsync(() -> taskContextFactory
-                            .childContext(parentContext, "Search Index Shard", taskContext -> {
-                                try {
-                                    while (true) {
-                                        taskContext.reset();
-                                        taskContext.info(() -> "Waiting for index shard...");
-                                        final long shardId = queue.take();
-                                        final IndexShardSearchTaskHandler handler =
-                                                indexShardSearchTaskHandlerProvider.get();
-                                        handler.searchShard(
-                                                taskContext,
-                                                task.getKey(),
-                                                queryFactory,
-                                                storedFieldNames,
-                                                hitCount,
-                                                shardNo.incrementAndGet(),
-                                                task.getShards().size(),
-                                                shardId,
-                                                storedDataQueue,
-                                                errorConsumer);
+            // Create a queue of shards to search.
+            final ShardIdQueue shardIdQueue = new ShardIdQueue(task.getShards());
+            final AtomicInteger shardNo = new AtomicInteger();
+            for (int i = 0; i < threadCount; i++) {
+                futures[i] = CompletableFuture.runAsync(() -> taskContextFactory
+                        .childContext(parentContext,
+                                "Search Index Shard",
+                                TerminateHandlerFactory.NOOP_FACTORY,
+                                taskContext -> {
+                                    try {
+                                        while (!taskContext.isTerminated()) {
+                                            taskContext.reset();
+                                            taskContext.info(() -> "Waiting for index shard...");
+                                            final Long shardId = shardIdQueue.next();
+                                            if (shardId != null) {
+                                                final IndexShardSearchTaskHandler handler =
+                                                        indexShardSearchTaskHandlerProvider.get();
+                                                handler.searchShard(
+                                                        taskContext,
+                                                        task.getKey(),
+                                                        queryFactory,
+                                                        storedFieldNames,
+                                                        hitCount,
+                                                        shardNo.incrementAndGet(),
+                                                        task.getShards().size(),
+                                                        shardId,
+                                                        storedDataQueue,
+                                                        errorConsumer);
+                                            }
+                                        }
+                                    } catch (final CompleteException e) {
+                                        LOGGER.trace(() -> "Complete");
                                     }
-                                } catch (final CompleteException e) {
-                                    LOGGER.trace(() -> "Complete");
-                                } catch (final InterruptedException e) {
-                                    LOGGER.trace(e::getMessage, e);
-                                    // Keep interrupting this thread.
-                                    Thread.currentThread().interrupt();
-                                }
-                            }).run(), executor);
-                }
-            } catch (final InterruptedException e) {
-                LOGGER.trace(e::getMessage, e);
-                // Keep interrupting this thread.
-                Thread.currentThread().interrupt();
+                                }).run(), executor);
             }
         }
 

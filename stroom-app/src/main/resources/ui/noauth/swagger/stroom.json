@@ -15278,6 +15278,10 @@
           "activity" : {
             "$ref" : "#/components/schemas/ActivityConfig"
           },
+          "applicationInstanceKeepAliveIntervalMs" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "defaultMaxResults" : {
             "type" : "string"
           },
