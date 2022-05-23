@@ -2,10 +2,12 @@ package stroom.core.sysinfo;
 
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,14 +48,27 @@ public class SystemInfoServiceImpl implements SystemInfoService {
     }
 
     @Override
+    public Map<String, String> getParamInfo(final String name) {
+        checkPermission();
+        final HasSystemInfo systemInfoSupplier = systemInfoSuppliers.get(name);
+        return systemInfoSupplier.getParamInfo();
+    }
+
+    @Override
     public Optional<SystemInfoResult> get(final String name) {
+        return get(name, Collections.emptyMap());
+    }
+
+    @Override
+    public Optional<SystemInfoResult> get(final String name, final Map<String, String> params) {
         checkPermission();
 
         // We should have a user in context as this is coming from an authenticated rest api
         final HasSystemInfo systemInfoSupplier = systemInfoSuppliers.get(name);
 
-        return Optional.ofNullable(systemInfoSupplier)
-                .map(HasSystemInfo::getSystemInfo);
+        return NullSafe.getAsOptional(
+                systemInfoSupplier,
+                supplier -> supplier.getSystemInfo(params));
     }
 
     private void checkPermission() {

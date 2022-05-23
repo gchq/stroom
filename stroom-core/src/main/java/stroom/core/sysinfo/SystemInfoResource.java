@@ -9,12 +9,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
 
 @Tag(name = "System Info")
 @Path(SystemInfoResource.BASE_PATH)
@@ -24,6 +27,8 @@ public interface SystemInfoResource extends RestResource {
 
     String BASE_PATH = "/systemInfo" + ResourcePaths.V1;
     String NAMES_PATH_PART = "/names";
+    String PARAMS_PATH_PART = "/params";
+    String PARAM_NAME_NAME = "name";
 
     @GET
     @Operation(
@@ -39,9 +44,17 @@ public interface SystemInfoResource extends RestResource {
     List<String> getNames();
 
     @GET
+    @Path(PARAMS_PATH_PART + "/{name}")
+    @Operation(
+            summary = "Gets the parameters for this system info provider",
+            operationId = "getSystemInfoParams")
+    Map<String, String> getParams(@PathParam(PARAM_NAME_NAME) final String name);
+
+    @GET
     @Path("/{name}")
     @Operation(
             summary = "Get a system info result by name",
             operationId = "getSystemInfoByName")
-    SystemInfoResult get(@PathParam("name") final String name);
+    SystemInfoResult get(@Context final UriInfo uriInfo,
+                         @PathParam(PARAM_NAME_NAME) final String name);
 }

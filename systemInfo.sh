@@ -87,13 +87,22 @@ query_single_host() {
       "at\n${BLUE}${info_url}${NC}"
   fi
 
+  local query_param_args=()
+  for param in "${params[@]}"; do
+    query_param_args+=( "--data-urlencode" "${param}" )
+  done
+
+  debug_value "query_param_args" "${query_param_args[*]}"
+
   # Call the api using curl
   local sys_info_json
   sys_info_json="$( \
     curl \
+      --get \
       --silent \
       --request GET \
       --header "${http_auth_args}" \
+      "${query_param_args[@]}" \
       "${info_url}" )"
 
   # Call the api but wrap the returned json inside a key that is the host name
@@ -119,6 +128,12 @@ query_multiple_hosts() {
   temp_dir="$(mktemp -d --suffix=_stroom_system_info)"
   debug_value "temp_dir" "${temp_dir}"
 
+  param_args_str=""
+  for param in "${params[@]}"; do
+    param_args_str+="\"${param}\" "
+  done
+  debug_value "param_args_str" "${param_args_str}"
+
   # Need to export these so they are visible in bash -c
   export temp_dir
   export http_auth_args
@@ -126,6 +141,7 @@ query_multiple_hosts() {
   export SCRIPT_DIR
   export SCRIPT_NAME
   export sys_info_name
+  export param_args_str
 
   # convert , to \n then use xargs to process each host in parallel
   # writing output to a temp file
@@ -139,11 +155,23 @@ query_multiple_hosts() {
     | xargs \
       -I'{}' \
       --max-procs="${max_proc_count}" \
-      bash -c 'echo "\"${SCRIPT_DIR}/${SCRIPT_NAME}\" -s -h \"{}\" \"${sys_info_name}\" > \"${temp_dir}/{}.json\""' \
+      bash -c 'echo "\"${SCRIPT_DIR}/${SCRIPT_NAME}\" -s -l \"{}\" \"${sys_info_name}\" ${param_args_str} > \"${temp_dir}/{}.json\""' \
     | xargs \
       -I'{}' \
       --max-procs="${max_proc_count}" \
       bash -c '{}'
+
+  if [ "${IS_DEBUG}" = true ]; then
+    for file in "${temp_dir}"/*.json; do
+      echo 
+      echo -e "${DGREY}DEBUG ${file} contents:${NC}"
+      echo -e "${DGREY}-START------------------------------------------------------${NC}"
+      local file_content
+      file_content="$(<"${file}")"
+      echo -e "${DGREY}${file_content}${NC}"
+      echo -e "${DGREY}-END--------------------------------------------------------${NC}"
+    done
+  fi
 
   # Merge all the files into one json object, which each host's content as a top
   # level key. This is output to stdout for onward piping if needs be
@@ -216,7 +244,17 @@ main(){
   shift $((OPTIND -1))
   #echo "Remaining args [${@}]"
 
-  local name_arg="$1"
+  local name_arg
+  if [ $# -gt 0 ]; then
+    name_arg="$1"; shift
+  fi
+
+  local params=()
+  #loop through the pairs of args
+  while [ $# -gt 0 ]; do
+    params+=( "$1" )
+    shift
+  done
 
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   SCRIPT_NAME="$0"
@@ -227,6 +265,7 @@ main(){
   debug_value "name_arg" "${name_arg}"
   debug_value "SCRIPT_DIR" "${SCRIPT_DIR}"
   debug_value "SCRIPT_NAME" "${SCRIPT_NAME}"
+  debug_value "params" "${params[*]}"
 
   validate_host_list "${host_list}"
 

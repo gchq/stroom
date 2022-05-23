@@ -1,5 +1,8 @@
 package stroom.util.sysinfo;
 
+import java.util.Collections;
+import java.util.Map;
+
 public interface HasSystemInfo {
 
     /**
@@ -18,4 +21,49 @@ public interface HasSystemInfo {
      * VIEW_SYSTEM_INFO_PERMISSION are required.
      */
     SystemInfoResult getSystemInfo();
+
+    default SystemInfoResult getSystemInfo(final Map<String, String> params) {
+        if (params == null || params.isEmpty()) {
+            return getSystemInfo();
+        } else {
+            throw new UnsupportedOperationException("This system info provider does not support parameters");
+        }
+    }
+
+    // TODO Change this to a list of ParamInfo
+    default Map<String, String> getParamInfo() {
+        return Collections.emptyMap();
+    }
+
+    class ParamInfo {
+
+        private final String name;
+        private final String description;
+        private final ParamType paramType;
+
+        public ParamInfo(final String name,
+                         final String description,
+                         final ParamType paramType) {
+            this.name = name;
+            this.description = description;
+            this.paramType = paramType;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public ParamType getParamType() {
+            return paramType;
+        }
+    }
+
+    enum ParamType {
+        OPTIONAL,
+        MANDATORY
+    }
 }
