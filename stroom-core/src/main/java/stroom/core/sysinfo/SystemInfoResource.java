@@ -2,6 +2,7 @@ package stroom.core.sysinfo;
 
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.sysinfo.HasSystemInfo.ParamInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
 
@@ -9,7 +10,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
-import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -48,7 +48,7 @@ public interface SystemInfoResource extends RestResource {
     @Operation(
             summary = "Gets the parameters for this system info provider",
             operationId = "getSystemInfoParams")
-    Map<String, String> getParams(@PathParam(PARAM_NAME_NAME) final String name);
+    List<ParamInfo> getParams(@PathParam(PARAM_NAME_NAME) final String name);
 
     @GET
     @Path("/{name}")
@@ -56,5 +56,5 @@ public interface SystemInfoResource extends RestResource {
             summary = "Get a system info result by name",
             operationId = "getSystemInfoByName")
     SystemInfoResult get(@Context final UriInfo uriInfo,
-                         @PathParam(PARAM_NAME_NAME) final String name);
+                         @PathParam(PARAM_NAME_NAME) final String providerName);
 }

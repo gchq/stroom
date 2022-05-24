@@ -3,13 +3,16 @@ package stroom.core.sysinfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.HasSystemInfo.ParamInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -48,23 +51,25 @@ public class SystemInfoServiceImpl implements SystemInfoService {
     }
 
     @Override
-    public Map<String, String> getParamInfo(final String name) {
+    public List<ParamInfo> getParamInfo(final String providerName) {
         checkPermission();
-        final HasSystemInfo systemInfoSupplier = systemInfoSuppliers.get(name);
+        final HasSystemInfo systemInfoSupplier = Objects.requireNonNull(
+                systemInfoSuppliers.get(providerName),
+                () -> LogUtil.message("Unknown system info provider name [{}]", providerName));
         return systemInfoSupplier.getParamInfo();
     }
 
     @Override
-    public Optional<SystemInfoResult> get(final String name) {
-        return get(name, Collections.emptyMap());
+    public Optional<SystemInfoResult> get(final String providerName) {
+        return get(providerName, Collections.emptyMap());
     }
 
     @Override
-    public Optional<SystemInfoResult> get(final String name, final Map<String, String> params) {
+    public Optional<SystemInfoResult> get(final String providerName, final Map<String, String> params) {
         checkPermission();
 
         // We should have a user in context as this is coming from an authenticated rest api
-        final HasSystemInfo systemInfoSupplier = systemInfoSuppliers.get(name);
+        final HasSystemInfo systemInfoSupplier = systemInfoSuppliers.get(providerName);
 
         return NullSafe.getAsOptional(
                 systemInfoSupplier,

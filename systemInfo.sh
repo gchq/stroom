@@ -57,7 +57,7 @@ check_for_installed_binaries() {
 
 show_usage() {
   echo -e "A script to query Stroom's System Info providers on one or more hosts."
-  echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-s] [-l hostList] [systemInfoName]${NC}"
+  echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-s] [-l hostList] [systemInfoName] [[param_key=param_val]...]${NC}"
   echo -e "e.g:   ${BLUE}$0${GREEN}${NC}"
   echo -e "         # Select a provider from a list of names and query it on localhost.${NC}"
   echo -e "e.g:   ${BLUE}$0 stroom.dashboard.impl.ApplicationInstanceManager${NC}"
@@ -71,6 +71,7 @@ show_usage() {
   echo -e "${GREEN}-s${NC}:             Silent. Only output result. Useful for piping to other processes."
   echo -e "${GREEN}-l hostList${NC}:    A list of comma delimited hosts to connect to. Will use localhost if not provided."
   echo -e "${GREEN}systemInfoName${NC}: The name of the provider to query. If not provided you will be asked to select one."
+  echo -e "${GREEN}params${NC}:         Query parameter key=value paris, space delimited."
 }
 
 query_single_host() {
@@ -130,6 +131,7 @@ query_multiple_hosts() {
 
   param_args_str=""
   for param in "${params[@]}"; do
+    # shellcheck disable=SC2089
     param_args_str+="\"${param}\" "
   done
   debug_value "param_args_str" "${param_args_str}"
@@ -141,6 +143,7 @@ query_multiple_hosts() {
   export SCRIPT_DIR
   export SCRIPT_NAME
   export sys_info_name
+  # shellcheck disable=SC2090
   export param_args_str
 
   # convert , to \n then use xargs to process each host in parallel
@@ -204,7 +207,60 @@ validate_sys_info_name() {
   fi
 }
 
-main(){
+capture_params() {
+  local sys_info_name="$1"; shift
+  local params_url="${params_url_base}/${sys_info_name}"
+
+  debug "Querying params for ${sys_info_name}"
+  param_details="$( \
+    curl \
+        --silent \
+        --request GET \
+        --header "${http_auth_args}" \
+        "${params_url}" \
+      | jq -r '. | sort_by(.paramType, .name)[] | .name + " (" + .paramType + ") - " + .description' \
+    )"
+
+  if [[ -n "${param_details}" ]]; then
+    debug "Found some params"
+
+    # Get just the keys
+    local param_keys
+    param_keys="$( \
+      curl \
+          --silent \
+          --request GET \
+          --header "${http_auth_args}" \
+          "${params_url}" \
+          | jq -r '.[] | .name' )"
+    param_keys_arr=()
+    while IFS= read -r line; do
+      param_keys_arr+=("$line")
+    done <<< "${param_keys}"
+
+    local mandatory_param_details
+    mandatory_param_details="$( \
+      grep "MANDATORY" <<<"${param_details}" )"
+
+    if [[ -n "${mandatory_param_details}" ]]; then
+      echo -e "${GREEN}Mandatory query parametes are required for this system info provider${NC}"
+      echo -e "${YELLOW}${param_details}${NC}"
+
+      for param_key in "${param_keys_arr[@]}"; do
+        echo -n "Enter the value for parameter ${param_key} (or hit enter for no value): "
+        read -r param_value
+        debug_value "param_value" "${param_value}"
+        if [[ -n "${param_value}" ]]; then
+          params+=( "${param_key}=${param_value}" )
+        fi
+      done
+
+      debug_value "params" "${params[*]}"
+    fi
+  fi
+}
+
+main() {
   check_for_installed_binaries
 
   #optspec="gu:rih:"
@@ -287,15 +343,29 @@ main(){
   local port=8080
   local default_host="localhost"
   local base_path="/api/systemInfo/v1"
-  local names_path="${base_path}/names"
+  local names_path_part="/names"
+  local params_path_part="/params"
   local http_auth_args="Authorization:Bearer ${api_token}"
-  local base_url="http://localhost:8080/api/systemInfo/v1"
-  local names_url="${base_url}/names"
 
   if [[ "${is_silent}" = false ]]; then
     echo -e "${GREEN}Using names URL ${BLUE}${names_url}${NC}"
     echo
   fi
+
+  local host
+  if [[ -n "${host_list}" ]]; then
+    # Get the first host in the list
+    host="${host_list%%,*}"
+  else
+    host="${default_host}"
+  fi
+  local names_url="http://${host}:${port}${names_path_part}"
+  debug_value "names_url" "${names_url}"
+  local base_url="http://${host}:${port}${base_path}"
+  local names_url="${base_url}${names_path_part}"
+  local params_url_base="${base_url}${params_path_part}"
+  debug_value "names_url" "${names_url}"
+  debug_value "params_url_base" "${params_url_base}"
 
   local sys_info_name
 
@@ -303,17 +373,7 @@ main(){
     sys_info_name="${name_arg}"
   else
     # Use fzf to get a system info name
-    local host
-    if [[ -n "${host_list}" ]]; then
-      # Get the first host in the list
-      host="${host_list%%,*}"
-    else
-      host="${default_host}"
-    fi
-
-    local names_url="http://${host}:${port}${names_path}"
-    debug_value "names_url" "${names_url}"
-
+    debug "Qurying for system info provider names"
     local sys_info_names_json
     sys_info_names_json="$( \
       curl \
@@ -321,6 +381,8 @@ main(){
         --request GET \
         --header "${http_auth_args}" \
         "${names_url}" )"
+
+    debug_value "sys_info_names_json" "${sys_info_names_json}"
 
     # Extract a list of names from the json
     sys_info_names="$( \
@@ -367,6 +429,13 @@ main(){
   fi
 
   validate_sys_info_name "${sys_info_name}"
+
+  local param_details=()
+  if [[ "${is_silent}" = false ]] && [[ "${#params[@]}" -eq 0 ]]; then
+    # No param args used, so see if the sys info provider has any params
+    # and if so prompt user for their values.
+    capture_params "${sys_info_name}"
+  fi
 
   # Construct the url path base on the sys info provider name
   local info_path="${base_path}/${sys_info_name}"

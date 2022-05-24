@@ -1,5 +1,6 @@
 package stroom.core.sysinfo;
 
+import stroom.util.sysinfo.HasSystemInfo.ParamInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import java.util.List;
@@ -13,9 +14,9 @@ public interface SystemInfoService {
 
     Set<String> getNames();
 
-    Map<String, String> getParamInfo(final String name);
+    List<ParamInfo> getParamInfo(final String providerName);
 
-    Optional<SystemInfoResult> get(final String name);
+    Optional<SystemInfoResult> get(final String providerName);
 
-    Optional<SystemInfoResult> get(final String name, final Map<String, String> params);
+    Optional<SystemInfoResult> get(final String providerName, final Map<String, String> params);
 }

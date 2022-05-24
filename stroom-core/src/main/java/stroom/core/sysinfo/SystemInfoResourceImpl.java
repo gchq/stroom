@@ -7,6 +7,7 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.sysinfo.HasSystemInfo.ParamInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
 
@@ -66,7 +67,7 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
     }
 
     @Override
-    public Map<String, String> getParams(final String name) {
+    public List<ParamInfo> getParams(final String name) {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId("getAllSystemInfo")
                 .withDescription("Getting all system info result names")
@@ -77,19 +78,20 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
 
     @Override
     public SystemInfoResult get(final UriInfo uriInfo,
-                                final String name) {
+                                final String providerName) {
 
-        if (name == null || name.isEmpty()) {
+        if (providerName == null || providerName.isEmpty()) {
             throw RestUtil.badRequest("name not supplied");
         }
 
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId("getSystemInfo")
-                .withDescription("Getting system info results for " + name)
+                .withDescription("Getting system info results for " + providerName)
                 .withDefaultEventAction(buildViewEventAction("/"))
                 .withSimpleLoggedResult(() -> {
                     try {
-                        final Map<String, String> queryParams = getExtraQueryParams(uriInfo);
+                        final Map<String, String> queryParams = getQueryParams(uriInfo);
+                        validateParams(queryParams, providerName);
 
                         LOGGER.debug("Params: [{}]",
                                 queryParams.entrySet()
@@ -97,19 +99,36 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
                                         .map(entry -> entry.getKey() + "=" + entry.getValue())
                                         .collect(Collectors.joining(", ")));
 
-                        return systemInfoServiceProvider.get().get(name, queryParams)
+                        return systemInfoServiceProvider.get().get(providerName, queryParams)
                                 .orElseThrow(() ->
-                                        new NotFoundException(LogUtil.message("Name {} not found", name)));
+                                        new NotFoundException(LogUtil.message("Name {} not found", providerName)));
                     } catch (Exception e) {
                         LOGGER.error(LogUtil.message("Error getting system info for {}. {}",
-                                name, e.getMessage()), e);
+                                providerName, e.getMessage()), e);
                         throw e;
                     }
                 })
                 .getResultAndLog();
     }
 
-    private Map<String, String> getExtraQueryParams(final UriInfo uriInfo) {
+    private void validateParams(final Map<String, String> params,
+                                final String providerName) {
+        final List<ParamInfo> paramInfo = systemInfoServiceProvider.get().getParamInfo(providerName);
+
+        final String missingMandatoryParams = paramInfo.stream()
+                .filter(ParamInfo::isMandatory)
+                .map(ParamInfo::getName)
+                .filter(paramName -> !params.containsKey(paramName))
+                .collect(Collectors.joining(", "));
+
+        if (!missingMandatoryParams.isBlank()) {
+            throw new RuntimeException(LogUtil.message(
+                    "The following query parameter(s) must have a value [{}]",
+                    missingMandatoryParams));
+        }
+    }
+
+    private Map<String, String> getQueryParams(final UriInfo uriInfo) {
         final MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         // TODO For now just take the first value for each key.
         //  In future we may want to pass down the MultivaluedMap or a Guava MultiMap
