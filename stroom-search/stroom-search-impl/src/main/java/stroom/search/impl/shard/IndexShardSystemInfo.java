@@ -14,6 +14,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
@@ -45,6 +46,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.BadRequestException;
 
+/**
+ * Provides system information for inspecting index shards.
+ * Gets counts of documents grouped by stream id.
+ * Requires the shardId as a query parameter.
+ */
 @Singleton
 public class IndexShardSystemInfo implements HasSystemInfo {
 
@@ -134,9 +140,12 @@ public class IndexShardSystemInfo implements HasSystemInfo {
                                          final Long streamId) {
         SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
         IndexSearcher indexSearcher = null;
+        final IndexShard indexShard = Objects.requireNonNull(
+                indexShardService.loadById(shardId),
+                () -> "Unknown shardId " + shardId);
         try {
             indexSearcher = searcherManager.acquire();
-            final Query query = buildQuery(shardId, streamId);
+            final Query query = buildQuery(indexShard, streamId);
 
             final TopDocs topDocs = indexSearcher.search(query, limit);
 
@@ -169,6 +178,10 @@ public class IndexShardSystemInfo implements HasSystemInfo {
                     .addDetail("StreamCount", streamIdDocCounts.size())
                     .addDetail("DocCount", docCount)
                     .addDetail("DocLimit", limit)
+                    .addDetail("PartitionFromTime",
+                            DateUtil.createNormalDateTimeString(indexShard.getPartitionFromTime()))
+                    .addDetail("PartitionToTime",
+                            DateUtil.createNormalDateTimeString(indexShard.getPartitionToTime()))
                     .build();
         } catch (Exception e) {
             throw new RuntimeException("Error acquiring index searcher: " + e.getMessage(), e);
@@ -183,15 +196,10 @@ public class IndexShardSystemInfo implements HasSystemInfo {
         }
     }
 
-    private Query buildQuery(final long shardId, final Long streamId) {
+    private Query buildQuery(final IndexShard indexShard, final Long streamId) {
         if (streamId == null) {
             return new MatchAllDocsQuery();
         } else {
-
-            final IndexShard indexShard = Objects.requireNonNull(
-                    indexShardService.loadById(shardId),
-                    () -> "Unknown shardId " + shardId);
-
             final IndexDoc indexDoc = indexStore.readDocument(DocRef.builder()
                     .uuid(indexShard.getIndexUuid())
                     .type(IndexDoc.DOCUMENT_TYPE)
@@ -220,10 +228,8 @@ public class IndexShardSystemInfo implements HasSystemInfo {
                                  final Map<Long, Tuple2<String, LongAdder>> streamIdDocCounts,
                                  final ScoreDoc scoreDoc) throws IOException {
         final Document doc = indexSearcher.doc(scoreDoc.doc);
-//        final IndexableField field = doc.getField(IndexConstants.STREAM_ID);
-//        LOGGER.info("field type {}", field.fieldType());
         final String streamIdStr = doc.get(IndexConstants.STREAM_ID);
-        if (streamIdStr != null && streamIdDocCounts.size() <= 1_000) {
+        if (streamIdStr != null) {
             final long streamId = Long.parseLong(streamIdStr);
             final Tuple2<String, LongAdder> tuple2 = streamIdDocCounts.computeIfAbsent(
                     streamId,
