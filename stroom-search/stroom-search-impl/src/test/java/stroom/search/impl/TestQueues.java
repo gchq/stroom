@@ -17,7 +17,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -73,14 +72,18 @@ class TestQueues {
         final CompletableFuture<Void>[] producers = new CompletableFuture[threads];
         for (int i = 0; i < threads; i++) {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                boolean run = true;
-                while (run) {
-                    final int id = produced.incrementAndGet();
-                    if (id > MAX) {
-                        run = false;
-                    } else {
-                        queue.offer(id, 1, TimeUnit.SECONDS);
+                try {
+                    boolean run = true;
+                    while (run) {
+                        final int id = produced.incrementAndGet();
+                        if (id > MAX) {
+                            run = false;
+                        } else {
+                            queue.put(id);
+                        }
                     }
+                } catch (final InterruptedException e) {
+                    // Ignore.
                 }
             }, executor);
             producers[i] = future;
@@ -91,11 +94,10 @@ class TestQueues {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
                     while (true) {
-                        if (queue.next() != null) {
-                            consumed.incrementAndGet();
-                        }
+                        queue.take();
+                        consumed.incrementAndGet();
                     }
-                } catch (final CompleteException e) {
+                } catch (final InterruptedException | CompleteException e) {
                     // Ignore.
                 }
             }, executor);

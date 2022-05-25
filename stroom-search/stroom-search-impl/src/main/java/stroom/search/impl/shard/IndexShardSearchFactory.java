@@ -20,7 +20,6 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
-import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.CompleteException;
@@ -119,7 +118,6 @@ public class IndexShardSearchFactory {
                 futures[i] = CompletableFuture.runAsync(() -> taskContextFactory
                         .childContext(parentContext,
                                 "Search Index Shard",
-                                TerminateHandlerFactory.NOOP_FACTORY,
                                 taskContext -> {
                                     try {
                                         while (!taskContext.isTerminated()) {

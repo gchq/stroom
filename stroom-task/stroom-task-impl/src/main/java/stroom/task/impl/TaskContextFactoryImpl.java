@@ -281,7 +281,18 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
                 try {
                     subTaskContext.setThread(null);
                     subTaskContext.setTerminateHandler(null);
-                    terminateHandler.onDestroy();
+
+                    // Make sure we don't continue to interrupt a thread after the task context is out of scope.
+                    if (currentThread.isInterrupted()) {
+                        LOGGER.debug("Clearing interrupted state");
+                        if (Thread.interrupted()) {
+                            if (currentThread.isInterrupted()) {
+                                LOGGER.error("Unable to clear interrupted state");
+                            } else {
+                                LOGGER.debug("Cleared interrupted state");
+                            }
+                        }
+                    }
                 } finally {
 //                    currentThread.setName(oldThreadName);
                 }
