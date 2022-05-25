@@ -120,7 +120,7 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
     @Override
     public SystemInfoResult getSystemInfo() {
 
-        final SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName());
+        final SystemInfoResult.Builder builder = SystemInfoResult.builder(this);
 
         final Map<String, List<ApplicationInstance>> groupedData = cache.asMap()
                 .values()

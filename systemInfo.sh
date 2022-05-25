@@ -75,11 +75,12 @@ show_usage() {
 }
 
 query_single_host() {
-  local host="$1"; shift
+  local host_port="$1"; shift
   local info_path="$1"; shift
-  local info_url="http://${host}:${port}${info_path}"
+  local info_url="http://${host_port}${info_path}"
 
-  debug_value "host" "${host}"
+
+  debug_value "host_port" "${host_port}"
   debug_value "info_url" "${info_url}"
   debug_value "http_auth_args" "${http_auth_args}"
 
@@ -109,13 +110,14 @@ query_single_host() {
   # Call the api but wrap the returned json inside a key that is the host name
   # Just output to stdout so the result can be piped to downstream processing,
   # e.g jq
-  jq "{ \"${host}\": .details }" \
+  jq "{ \"${host_port}\": .details }" \
     <<< "${sys_info_json}"
 }
 
 query_multiple_hosts() {
   local host_list="$1"; shift
   local info_path="$1"; shift
+  debug_value "host_list" "${host_list}"
   
   # TODO validate host_list to ensure it only contains [a-zA-Z.0-9\-] as
   # we are about to pass it to bash -c
@@ -189,7 +191,7 @@ query_multiple_hosts() {
 # containts safe chars
 validate_host_list() {
   local host_list="$1"; shift
-  local host_list_pattern="^[-.,0-9a-zA-Z]+$"
+  local host_list_pattern="^([-.0-9a-zA-Z]+(:[0-9]+)?,?)+$"
   if [[ ! "${host_list}" =~ ${host_list_pattern} ]]; then
     error_exit "Host list [${host_list}] does not match pattern ${host_list_pattern}"
   fi
@@ -340,8 +342,8 @@ main() {
     local api_token='eyJhbGciOiJSUzI1NiIsImtpZCI6IjhhM2I1OGNhLTk2ZTctNGFhNC05ZjA3LTQ0MDBhYWVkMTQ3MSJ9.eyJleHAiOjE2Njg3NzczNjcsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIiwiYXVkIjoiTlhDbXJyTGpQR2VBMVN4NWNEZkF6OUV2ODdXaTNucHRUbzZSdzVmTC5jbGllbnQtaWQuYXBwcy5zdHJvb20taWRwIn0.YhhRQKF29CQm7IWHP2sh-i70qBicuWKJLhH5UmSRxeyHJ2T38RmHVEcIjC9tv71-gJR4z3bY9tRq_r6cf5hG2G9DKVfPoVZTN-MhK-pU5eD3VbVc2HBEm0Xk02LL7vKRS2mKLolaI-DC_5TuYclZ-CGKmmqhh8Bb5evqAXnknccILAGsl3xDFzsKdfuX5iZ5wjizxvgyMjvLCfaM6P-Ut5kUWYHmxpdNextE3p35Kajw_iEbHvZ3_CobX09l5QQo2R7Hgzk3lIFrGxUqQ7jyC_DmmxRlcT-pyJApl7_TFlFJm153R_9gDXIwphI1mg1vsAojkWncCl8ODY227t3-Lw'
   fi
 
-  local port=8080
-  local default_host="localhost"
+  local default_port="8080"
+  local default_host_port="localhost:8080"
   local base_path="/api/systemInfo/v1"
   local names_path_part="/names"
   local params_path_part="/params"
@@ -359,9 +361,14 @@ main() {
   else
     host="${default_host}"
   fi
-  local names_url="http://${host}:${port}${names_path_part}"
+  local host_port="${host}"
+  if [[ ! "${host}" =~ :[0-9]+ ]]; then
+    host_port="${host}:${default_port}"
+  fi
+
+  local names_url="http://${host_port}${names_path_part}"
   debug_value "names_url" "${names_url}"
-  local base_url="http://${host}:${port}${base_path}"
+  local base_url="http://${host_port}${base_path}"
   local names_url="${base_url}${names_path_part}"
   local params_url_base="${base_url}${params_path_part}"
   debug_value "names_url" "${names_url}"
@@ -446,9 +453,9 @@ main() {
   else
     local host="${host_list:-${default_host}}"
     debug "Single host"
-    debug_value "host" "${host}"
+    debug_value "host_port" "${host_port}"
 
-    query_single_host "${host}" "${info_path}"
+    query_single_host "${host_port}" "${info_path}"
   fi
 }
 

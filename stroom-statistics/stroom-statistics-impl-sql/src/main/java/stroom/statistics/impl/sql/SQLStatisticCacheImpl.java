@@ -175,7 +175,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache, HasSystemInfo {
 
     @Override
     public SystemInfoResult getSystemInfo() {
-        return SystemInfoResult.builder().name(getSystemInfoName())
+        return SystemInfoResult.builder(this)
                 .addDetail("mapAge", map.getAge().toString())
                 .addDetail("countMapSize", map.countEntrySet().size())
                 .addDetail("valueMapSize", map.valueEntrySet().size())

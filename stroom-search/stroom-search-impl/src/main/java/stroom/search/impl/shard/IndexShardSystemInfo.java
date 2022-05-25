@@ -13,6 +13,7 @@ import stroom.index.shared.IndexShard;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
+import stroom.node.api.NodeInfo;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.sysinfo.HasSystemInfo;
@@ -64,16 +65,19 @@ public class IndexShardSystemInfo implements HasSystemInfo {
     private final MetaService metaService;
     private final IndexShardService indexShardService;
     private final IndexStore indexStore;
+    private final NodeInfo nodeInfo;
 
     @Inject
     public IndexShardSystemInfo(final IndexShardWriterCache indexShardWriterCache,
                                 final MetaService metaService,
                                 final IndexShardService indexShardService,
-                                final IndexStore indexStore) {
+                                final IndexStore indexStore,
+                                final NodeInfo nodeInfo) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.metaService = metaService;
         this.indexShardService = indexShardService;
         this.indexStore = indexStore;
+        this.nodeInfo = nodeInfo;
     }
 
     @Override
@@ -118,31 +122,54 @@ public class IndexShardSystemInfo implements HasSystemInfo {
                                            final Integer limit,
                                            final Long streamId) {
 
-        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shardId);
-        final IndexShard indexShard = indexShardService.loadById(shardId);
-        final IndexWriter indexWriter = NullSafe.get(indexShardWriter, IndexShardWriter::getWriter);
 
-        IndexShardSearcher indexShardSearcher = null;
         try {
-            indexShardSearcher = new IndexShardSearcher(indexShard, indexWriter);
-            return searchShard(indexShardSearcher, shardId, limit, streamId);
-
-        } finally {
-            if (indexShardSearcher != null) {
-                indexShardSearcher.destroy();
+            final IndexShard indexShard = indexShardService.loadById(shardId);
+            if (indexShard == null) {
+                throw new RuntimeException("Unknown shardId " + shardId);
             }
+            if (doesThisNodeOwnTheShard(indexShard)) {
+                // This may be null if we don't happen to have a writer
+                final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shardId);
+                final IndexWriter indexWriter = NullSafe.get(indexShardWriter, IndexShardWriter::getWriter);
+
+                IndexShardSearcher indexShardSearcher = null;
+                try {
+                    indexShardSearcher = new IndexShardSearcher(indexShard, indexWriter);
+                    return searchShard(indexShardSearcher, indexShard, limit, streamId);
+
+                } finally {
+                    if (indexShardSearcher != null) {
+                        indexShardSearcher.destroy();
+                    }
+                }
+            } else {
+                return SystemInfoResult.builder(this)
+                        .addDetail("ShardId", indexShard.getId())
+                        .addDetail("ThisNode", nodeInfo.getThisNodeName())
+                        .addDetail("OwningNode", indexShard.getNodeName())
+                        .addDetail("Owned", false)
+                        .build();
+            }
+        } catch (RuntimeException e) {
+            return SystemInfoResult.builder(this)
+                    .addError(e)
+                    .build();
         }
     }
 
+    private boolean doesThisNodeOwnTheShard(final IndexShard indexShard) {
+        final String thisNodeName = nodeInfo.getThisNodeName();
+        final String shardNodeName = indexShard.getNodeName();
+        return thisNodeName.equals(shardNodeName);
+    }
+
     private SystemInfoResult searchShard(final IndexShardSearcher indexShardSearcher,
-                                         final long shardId,
+                                         final IndexShard indexShard,
                                          final Integer limit,
                                          final Long streamId) {
         SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
         IndexSearcher indexSearcher = null;
-        final IndexShard indexShard = Objects.requireNonNull(
-                indexShardService.loadById(shardId),
-                () -> "Unknown shardId " + shardId);
         try {
             indexSearcher = searcherManager.acquire();
             final Query query = buildQuery(indexShard, streamId);
@@ -172,8 +199,12 @@ public class IndexShardSystemInfo implements HasSystemInfo {
                     .mapToLong(tuple2 -> tuple2._2.sum())
                     .sum();
 
-            return SystemInfoResult.builder()
-                    .addDetail("ShardId", shardId)
+            return SystemInfoResult.builder(this)
+                    .description("Details of the contents of the shard")
+                    .addDetail("ShardId", indexShard.getId())
+                    .addDetail("ThisNode", nodeInfo.getThisNodeName())
+                    .addDetail("OwningNode", indexShard.getNodeName())
+                    .addDetail("Owned", true)
                     .addDetail("DocCountsByStreamId", detailMap)
                     .addDetail("StreamCount", streamIdDocCounts.size())
                     .addDetail("DocCount", docCount)
