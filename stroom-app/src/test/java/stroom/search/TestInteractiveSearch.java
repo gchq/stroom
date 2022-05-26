@@ -478,14 +478,14 @@ class TestInteractiveSearch extends AbstractSearchTest {
                 "Translate",
                 TerminateHandlerFactory.NOOP_FACTORY,
                 taskContext -> {
-            final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
-            eventSearchTaskHandler.exec(eventSearchTask, (eventRefs, throwable) -> {
-                if (eventRefs != null) {
-                    results.set(eventRefs);
-                }
-                complete.countDown();
-            });
-        });
+                    final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
+                    eventSearchTaskHandler.exec(eventSearchTask, (eventRefs, throwable) -> {
+                        if (eventRefs != null) {
+                            results.set(eventRefs);
+                        }
+                        complete.countDown();
+                    });
+                });
         CompletableFuture.runAsync(runnable, executor);
         try {
             complete.await();

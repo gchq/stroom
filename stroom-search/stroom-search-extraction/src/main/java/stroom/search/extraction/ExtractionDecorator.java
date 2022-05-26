@@ -190,9 +190,8 @@ public class ExtractionDecorator {
                                                 streamEventMap.size());
 
                                         // If we have some values then map them.
-                                        SearchProgressLog
-                                                .increment(queryKey,
-                                                        SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_TAKE);
+                                        SearchProgressLog.increment(queryKey,
+                                                SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_TAKE);
                                         streamMapCreator.addEvent(streamEventMap, values);
 
                                     } catch (final RuntimeException e) {

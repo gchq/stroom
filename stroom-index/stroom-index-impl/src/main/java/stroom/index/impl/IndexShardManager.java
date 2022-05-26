@@ -222,58 +222,61 @@ public class IndexShardManager {
                     "Index Shard Manager",
                     TerminateHandlerFactory.NOOP_FACTORY,
                     parentTaskContext -> {
-                parentTaskContext.info(() -> action.getActivity() + " index shards");
+                        parentTaskContext.info(() -> action.getActivity() + " index shards");
 
-                final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
+                        final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
 
-                // Create an atomic integer to count the number of index shard writers yet to complete the specified
-                // action.
-                final AtomicInteger remaining = new AtomicInteger(ownedShards.size());
+                        // Create an atomic integer to count the number of index shard writers yet to complete the
+                        // specified action.
+                        final AtomicInteger remaining = new AtomicInteger(ownedShards.size());
 
-                // Create a scheduled executor for us to continually log index shard writer action progress.
-                final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-                // Start logging action progress.
-                executor.scheduleAtFixedRate(
-                        () ->
-                                LOGGER.info(() ->
+                        // Create a scheduled executor for us to continually log index shard writer action progress.
+                        final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+                        // Start logging action progress.
+                        executor.scheduleAtFixedRate(
+                                () -> LOGGER.info(() ->
                                         "Waiting for " + remaining.get() + " index shards to " + action.getName()),
-                        10,
-                        10,
-                        TimeUnit.SECONDS);
+                                10,
+                                10,
+                                TimeUnit.SECONDS);
 
-                // Perform action on all of the index shard writers in parallel.
-                ownedShards.parallelStream().forEach(shard -> {
-                    try {
-                        // We use a child tak context here to create child messages in the UI but also to ensure the
-                        // task is performed in the context of the parent user.
-                        taskContextFactory.childContext(parentTaskContext,
-                                "Index Shard Manager",
-                                TerminateHandlerFactory.NOOP_FACTORY,
-                                taskContext -> {
-                                    taskContext.info(() -> action.getActivity() + " index shard: " + shard.getId());
-                                    switch (action) {
-                                        case FLUSH:
-                                            shardCount.incrementAndGet();
-                                            indexShardWriterCache.flush(shard.getId());
-                                            break;
-                                        case DELETE:
-                                            shardCount.incrementAndGet();
-                                            indexShardWriterCache.delete(shard.getId());
-                                            break;
-                                    }
-                                }).run();
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e::getMessage, e);
-                    }
+                        // Perform action on all of the index shard writers in parallel.
+                        ownedShards.parallelStream().forEach(shard -> {
+                            try {
+                                // We use a child tak context here to create child messages in the UI but also to ensure
+                                // the task is performed in the context of the parent user.
+                                taskContextFactory.childContext(parentTaskContext,
+                                        "Index Shard Manager",
+                                        TerminateHandlerFactory.NOOP_FACTORY,
+                                        taskContext -> {
+                                            taskContext.info(() -> action.getActivity() +
+                                                    " index shard: " +
+                                                    shard.getId());
+                                            switch (action) {
+                                                case FLUSH:
+                                                    shardCount.incrementAndGet();
+                                                    indexShardWriterCache.flush(shard.getId());
+                                                    break;
+                                                case DELETE:
+                                                    shardCount.incrementAndGet();
+                                                    indexShardWriterCache.delete(shard.getId());
+                                                    break;
+                                            }
+                                        }).run();
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e::getMessage, e);
+                            }
 
-                    remaining.getAndDecrement();
-                });
+                            remaining.getAndDecrement();
+                        });
 
-                // Shut down the progress logging executor.
-                executor.shutdown();
+                        // Shut down the progress logging executor.
+                        executor.shutdown();
 
-                LOGGER.info(() -> "Finished " + action.getActivity().toLowerCase(Locale.ROOT) + " index shards");
-            }).run();
+                        LOGGER.info(() -> "Finished " +
+                                action.getActivity().toLowerCase(Locale.ROOT) +
+                                " index shards");
+                    }).run();
         }
 
         return shardCount.get();

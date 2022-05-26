@@ -82,12 +82,13 @@ public class SolrSearchResultCollector implements Store {
                 TASK_NAME,
                 TerminateHandlerFactory.NOOP_FACTORY,
                 taskContext -> {
-            // Don't begin execution if we have been asked to complete already.
-            if (!coprocessors.getCompletionState().isComplete()) {
-                final SolrAsyncSearchTaskHandler asyncSearchTaskHandler = solrAsyncSearchTaskHandlerProvider.get();
-                asyncSearchTaskHandler.exec(taskContext, task, coprocessors, this);
-            }
-        });
+                    // Don't begin execution if we have been asked to complete already.
+                    if (!coprocessors.getCompletionState().isComplete()) {
+                        final SolrAsyncSearchTaskHandler asyncSearchTaskHandler =
+                                solrAsyncSearchTaskHandlerProvider.get();
+                        asyncSearchTaskHandler.exec(taskContext, task, coprocessors, this);
+                    }
+                });
         CompletableFuture
                 .runAsync(runnable, executor)
                 .whenComplete((result, t) -> {
