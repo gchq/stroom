@@ -101,7 +101,9 @@ class TestQueues {
         }
 
         CompletableFuture.allOf(producers).join();
-        queue.complete();
+        for (int i = 0; i < threads; i++) {
+            queue.complete();
+        }
         CompletableFuture.allOf(consumers).join();
 
         assertThat(consumed.get()).isEqualTo(MAX);
@@ -149,7 +151,9 @@ class TestQueues {
         }
 
         CompletableFuture.allOf(producers).join();
-        queue.complete();
+        for (int i = 0; i < threads; i++) {
+            queue.complete();
+        }
         CompletableFuture.allOf(consumers).join();
 
         assertThat(consumed.get()).isEqualTo(MAX);
@@ -200,7 +204,9 @@ class TestQueues {
         }
 
         CompletableFuture.allOf(producers).join();
-        queue.complete();
+        for (int i = 0; i < threads; i++) {
+            queue.complete();
+        }
         CompletableFuture.allOf(consumers).join();
 
         assertThat(consumed.get()).isEqualTo(MAX);
