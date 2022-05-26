@@ -74,11 +74,17 @@ public class ResultPage<T> implements Serializable {
      * @param <T>         The type of list item.
      * @return A list limited to a result page from a full list of results.
      */
-    public static <T> ResultPage<T> createPageLimitedList(final List<T> fullList, final PageRequest pageRequest) {
+    public static <T> ResultPage<T> createPageLimitedList(final List<T> fullList,
+                                                          final PageRequest pageRequest) {
         if (pageRequest != null) {
             int offset = 0;
             if (pageRequest.getOffset() != null) {
                 offset = pageRequest.getOffset();
+            }
+            if (offset > fullList.size()) {
+                // The UI should not let this happen
+                throw new RuntimeException("Offset " + offset
+                        + " is greater than the number of results " + fullList.size());
             }
 
             int length = fullList.size() - offset;
