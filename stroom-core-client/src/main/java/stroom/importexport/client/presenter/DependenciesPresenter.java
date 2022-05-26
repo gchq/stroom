@@ -33,11 +33,13 @@ import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.ImageUtil;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -95,14 +97,14 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
         // From (Icon)
         getView().addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
-                        getDocTypeIcon(row.getFrom()))
+                                getDocTypeIcon(row.getFrom()))
                         .build(),
                 "<br/>",
                 ColumnSizeConstants.ICON_COL);
 
         // From (Type)
         getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                        getValue(row, Dependency::getFrom, DocRef::getType))
+                                getValue(row, Dependency::getFrom, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_FROM_TYPE, true)
                         .build(),
                 DependencyCriteria.FIELD_FROM_TYPE,
@@ -110,7 +112,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
         // From (Name)
         getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                        getValue(row, Dependency::getFrom, DocRef::getName))
+                                getValue(row, Dependency::getFrom, DocRef::getName))
                         .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
                         .build(),
                 DependencyCriteria.FIELD_FROM_NAME,
@@ -118,21 +120,21 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
         // From (UUID)
         getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
-                        getUUID(row, Dependency::getFrom))
+                                getUUID(row, Dependency::getFrom))
                         .build(),
                 DependencyCriteria.FIELD_FROM_UUID,
                 COL_WIDTH_UUID);
 
         // To (Icon)
         getView().addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
-                        getDocTypeIcon(row.getTo()))
+                                getDocTypeIcon(row.getTo()))
                         .build(),
                 "<br/>",
                 ColumnSizeConstants.ICON_COL);
 
         // To (Type)
         getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                        getValue(row, Dependency::getTo, DocRef::getType))
+                                getValue(row, Dependency::getTo, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_TO_TYPE, true)
                         .build(),
                 DependencyCriteria.FIELD_TO_TYPE,
@@ -140,7 +142,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
         // To (Name)
         getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                        getValue(row, Dependency::getTo, DocRef::getName))
+                                getValue(row, Dependency::getTo, DocRef::getName))
                         .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
                         .build(),
                 DependencyCriteria.FIELD_TO_NAME,
@@ -148,7 +150,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
         // To (UUID)
         getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
-                        getUUID(row, Dependency::getTo))
+                                getUUID(row, Dependency::getTo))
                         .build(),
                 DependencyCriteria.FIELD_TO_UUID,
                 COL_WIDTH_UUID);
@@ -242,10 +244,18 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
     void setFilterInput(final String filterInput) {
         this.criteria.setPartialName(filterInput);
+        // Changing the filter means any existing offset is wrong, so we need to reset to the initial state
+        resetRange();
     }
 
     void clearFilterInput() {
         this.criteria.setPartialName(null);
+        // Changing the filter means any existing offset is wrong, so we need to reset to the initial state
+        resetRange();
+    }
+
+    private void resetRange() {
+        getView().getDataDisplay().setVisibleRange(new Range(0, PageRequest.DEFAULT_PAGE_SIZE));
     }
 
     void refresh() {
