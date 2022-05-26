@@ -12,6 +12,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.207] - 2022-05-26
+
+* Change the shard system info provider to only query the shard if the node has ownership.
+
+* Issue **#2879** : Prevent shards closing during read.
+
+* Issue **#2879** : Prevent interrupts during index shard use.
+
+* Issue **#2888** : Fix error when paging and then filtering on the dependencies screen.
+
+
 ## [v7.0-beta.206] - 2022-05-25
 
 * Add system info provider for index shards.
@@ -4390,7 +4401,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.206...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.207...HEAD
+[v7.0-beta.207]: https://github.com/gchq/stroom/compare/v7.0-beta.206...v7.0-beta.207
 [v7.0-beta.206]: https://github.com/gchq/stroom/compare/v7.0-beta.205...v7.0-beta.206
 [v7.0-beta.205]: https://github.com/gchq/stroom/compare/v7.0-beta.204...v7.0-beta.205
 [v7.0-beta.204]: https://github.com/gchq/stroom/compare/v7.0-beta.203...v7.0-beta.204
