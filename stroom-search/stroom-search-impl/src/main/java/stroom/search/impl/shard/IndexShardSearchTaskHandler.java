@@ -32,6 +32,7 @@ import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.CompleteException;
@@ -188,6 +189,9 @@ public class IndexShardSearchTaskHandler {
                                                     collector,
                                                     query);
 
+                                        } catch (final TaskTerminatedException e) {
+                                            // Expected error on early completion.
+                                            LOGGER.trace(e::getMessage, e);
                                         } catch (final IOException e) {
                                             error(errorConsumer, e);
                                         }
