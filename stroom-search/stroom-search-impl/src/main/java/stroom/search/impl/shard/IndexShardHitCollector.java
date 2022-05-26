@@ -31,11 +31,10 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SimpleCollector;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
-class IndexShardHitCollector extends SimpleCollector {
+public class IndexShardHitCollector extends SimpleCollector {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardHitCollector.class);
 
@@ -50,12 +49,12 @@ class IndexShardHitCollector extends SimpleCollector {
     private final LongAdder localHitCount = new LongAdder();
     private int docBase;
 
-    IndexShardHitCollector(final TaskContext taskContext,
-                           final QueryKey queryKey,
-                           final IndexShard indexShard,
-                           final Query query,
-                           final DocIdQueue docIdQueue,
-                           final LongAdder totalHitCount) {
+    public IndexShardHitCollector(final TaskContext taskContext,
+                                  final QueryKey queryKey,
+                                  final IndexShard indexShard,
+                                  final Query query,
+                                  final DocIdQueue docIdQueue,
+                                  final LongAdder totalHitCount) {
         this.taskContext = taskContext;
         this.indexShard = indexShard;
         this.queryKey = queryKey;
@@ -74,31 +73,32 @@ class IndexShardHitCollector extends SimpleCollector {
 
     @Override
     public void collect(final int doc) {
-        // The interrupt status seems to be cleared somewhere is Lucene code so check here if we should terminate.
-        if (taskContext.isTerminated()) {
+        LOGGER.trace("Collect called. {}, query term [{}]", this, query);
+
+        if (!taskContext.isTerminated()) {
+            final int docId = docBase + doc;
+
+            // Add to the hit count.
+            docIdQueue.put(docId);
+            localHitCount.increment();
+            totalHitCount.increment();
+
+            try {
+                SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_PUT);
+                info(() -> "Found " + localHitCount + " hits");
+            } catch (final RuntimeException e) {
+                LOGGER.error("Error logging search progress: {}. {}", e.getMessage(), this, e);
+            }
+
+        } else {
+            // We are terminating so let follow-on tasks know.
+            docIdQueue.clear();
+            docIdQueue.complete();
+
             info(() -> "Quitting...");
             LOGGER.debug("Quitting (terminated). {}, query term [{}]", this, query);
             throw new TaskTerminatedException();
         }
-
-        // Pause the current search if the deque is full.
-        final int docId = docBase + doc;
-
-        try {
-            SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_PUT);
-            // Keep trying to add the doc id until we manage it or termination occurs.
-            LOGGER.trace("Collecting docId {} from {}, query term [{}]", docId, this, query);
-            while (!taskContext.isTerminated() && !docIdQueue.offer(docId, 1, TimeUnit.SECONDS)) {
-                LOGGER.trace("Continuing to offer docId {} from {}, query term [{}]", docId, this, query);
-            }
-            info(() -> "Found " + localHitCount + " hits");
-        } catch (final RuntimeException e) {
-            LOGGER.error("Error logging search progress: {}. {}", e.getMessage(), this, e);
-        }
-
-        // Add to the hit count.
-        localHitCount.increment();
-        totalHitCount.increment();
     }
 
     private void info(final Supplier<String> message) {

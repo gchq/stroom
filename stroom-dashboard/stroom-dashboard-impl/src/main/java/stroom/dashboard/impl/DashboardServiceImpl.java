@@ -59,6 +59,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
@@ -381,6 +382,7 @@ class DashboardServiceImpl implements DashboardService {
                 try {
                     final Supplier<DashboardSearchResponse> supplier = taskContextFactory.contextResult(
                             "Dashboard Search",
+                            TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> {
                                 DashboardSearchResponse searchResponse;
                                 try {

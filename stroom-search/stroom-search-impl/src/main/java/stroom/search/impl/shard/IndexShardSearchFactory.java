@@ -23,7 +23,6 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
-import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -121,29 +120,28 @@ public class IndexShardSearchFactory {
                                 "Search Index Shard",
                                 TerminateHandlerFactory.NOOP_FACTORY,
                                 taskContext -> {
-                                    try {
-                                        while (!taskContext.isTerminated()) {
-                                            taskContext.reset();
-                                            taskContext.info(() -> "Waiting for index shard...");
-                                            final Long shardId = shardIdQueue.next();
-                                            if (shardId != null) {
-                                                final IndexShardSearchTaskHandler handler =
-                                                        indexShardSearchTaskHandlerProvider.get();
-                                                handler.searchShard(
-                                                        taskContext,
-                                                        task.getKey(),
-                                                        queryFactory,
-                                                        storedFieldNames,
-                                                        hitCount,
-                                                        shardNo.incrementAndGet(),
-                                                        task.getShards().size(),
-                                                        shardId,
-                                                        storedDataQueue,
-                                                        errorConsumer);
-                                            }
+                                    boolean complete = false;
+                                    while (!complete && !taskContext.isTerminated()) {
+                                        taskContext.reset();
+                                        taskContext.info(() -> "Waiting for index shard...");
+                                        final Long shardId = shardIdQueue.next();
+                                        if (shardId != null) {
+                                            final IndexShardSearchTaskHandler handler =
+                                                    indexShardSearchTaskHandlerProvider.get();
+                                            handler.searchShard(
+                                                    taskContext,
+                                                    task.getKey(),
+                                                    queryFactory,
+                                                    storedFieldNames,
+                                                    hitCount,
+                                                    shardNo.incrementAndGet(),
+                                                    task.getShards().size(),
+                                                    shardId,
+                                                    storedDataQueue,
+                                                    errorConsumer);
+                                        } else {
+                                            complete = true;
                                         }
-                                    } catch (final CompleteException e) {
-                                        LOGGER.trace(() -> "Complete");
                                     }
                                 }).run(), executor);
             }
@@ -151,11 +149,14 @@ public class IndexShardSearchFactory {
 
         // When we complete the index shard search tell the stored data queue we are complete.
         return CompletableFuture.allOf(futures).whenCompleteAsync((r, t) ->
-                taskContextFactory.childContext(parentContext, "Search Index Shard", taskContext -> {
-                    taskContext.info(() -> "Complete stored data queue");
-                    LOGGER.debug("Complete stored data queue");
-                    storedDataQueue.complete();
-                }).run(), executor);
+                taskContextFactory.childContext(parentContext,
+                        "Search Index Shard",
+                        TerminateHandlerFactory.NOOP_FACTORY,
+                        taskContext -> {
+                            taskContext.info(() -> "Complete stored data queue");
+                            LOGGER.debug("Complete stored data queue");
+                            storedDataQueue.complete();
+                        }).run(), executor);
     }
 
     private IndexShardQueryFactory createIndexShardQueryFactory(

@@ -4866,6 +4866,27 @@ paths:
       summary: Get all system info result names
       tags:
       - System Info
+  /systemInfo/v1/params/{name}:
+    get:
+      operationId: getSystemInfoParams
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParamInfo'
+          description: default response
+      summary: Gets the parameters for this system info provider
+      tags:
+      - System Info
   /systemInfo/v1/{name}:
     get:
       operationId: getSystemInfoByName
@@ -8436,6 +8457,18 @@ components:
       required:
       - key
       - value
+    ParamInfo:
+      type: object
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        paramType:
+          type: string
+          enum:
+          - OPTIONAL
+          - MANDATORY
     PasswordPolicyConfig:
       type: object
       properties:

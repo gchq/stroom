@@ -23,6 +23,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.CompleteException;
@@ -167,52 +168,51 @@ public class ExtractionDecorator {
         final StreamMapCreator streamMapCreator = new StreamMapCreator(queryKey, coprocessors.getFieldIndex());
         final ErrorConsumer errorConsumer = coprocessors.getErrorConsumer();
 
-        return taskContextFactory.childContext(parentContext, "Extraction Task Mapper", taskContext -> {
-            info(taskContext, () -> "Starting extraction task producer");
-            try {
-                while (true) {
-                    info(taskContext, () -> "" +
-                            "Creating extraction tasks - stored data queue size: " +
-                            storedDataQueue.size() +
-                            " stream event map size: " +
-                            streamEventMap.size());
-
-                    // Poll for the next set of values.
-                    final Val[] values = storedDataQueue.take();
+        return taskContextFactory.childContext(
+                parentContext,
+                "Extraction Task Mapper",
+                TerminateHandlerFactory.NOOP_FACTORY,
+                taskContext -> {
+                    info(taskContext, () -> "Starting extraction task producer");
                     try {
-                        // If we have some values then map them.
-                        SearchProgressLog
-                                .increment(queryKey, SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_TAKE);
-                        streamMapCreator.addEvent(streamEventMap, values);
+                        boolean done = false;
+                        while (!done) {
+                            // Poll for the next set of values.
+                            // When we get null we are done.
+                            final Val[] values = storedDataQueue.take();
+                            if (values != null) {
+                                if (!taskContext.isTerminated()) {
+                                    try {
+                                        info(taskContext, () -> "" +
+                                                "Creating extraction tasks - stored data queue size: " +
+                                                storedDataQueue.size() +
+                                                " stream event map size: " +
+                                                streamEventMap.size());
 
+                                        // If we have some values then map them.
+                                        SearchProgressLog.increment(queryKey,
+                                                SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_TAKE);
+                                        streamMapCreator.addEvent(streamEventMap, values);
+
+                                    } catch (final RuntimeException e) {
+                                        LOGGER.debug(e::getMessage, e);
+                                        receivers.values().forEach(receiver ->
+                                                errorConsumer.add(e));
+                                    }
+                                }
+                            } else {
+                                done = true;
+                            }
+                        }
                     } catch (final RuntimeException e) {
-                        LOGGER.debug(e::getMessage, e);
-                        receivers.values().forEach(receiver ->
-                                errorConsumer.add(e));
+                        LOGGER.error(e::getMessage, e);
+                    } finally {
+                        info(taskContext, () -> "Finished creating extraction tasks");
+                        // We have finished mapping streams so mark the stream event map as complete.
+                        LOGGER.debug(() -> "Completed stream mapping");
+                        streamEventMap.complete();
                     }
-                }
-            } catch (final InterruptedException e) {
-                LOGGER.trace(e::getMessage, e);
-                // Keep interrupting this thread.
-                Thread.currentThread().interrupt();
-            } catch (final CompleteException e) {
-                LOGGER.debug(() -> "Complete");
-                LOGGER.trace(e::getMessage, e);
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-            } finally {
-                info(taskContext, () -> "Finished creating extraction tasks");
-                try {
-                    // We have finished mapping streams so mark the stream event map as complete.
-                    LOGGER.debug(() -> "Completed stream mapping");
-                    streamEventMap.complete();
-                } catch (final InterruptedException e) {
-                    LOGGER.trace(e::getMessage, e);
-                    // Keep interrupting this thread.
-                    Thread.currentThread().interrupt();
-                }
-            }
-        });
+                });
     }
 
     private void info(final TaskContext taskContext, final Supplier<String> messageSupplier) {
@@ -259,35 +259,31 @@ public class ExtractionDecorator {
                              final QueryKey queryKey,
                              final LongAdder extractionCount,
                              final ErrorConsumer errorConsumer) {
-        taskContextFactory.childContext(parentContext, "Extraction Task", taskContext ->
-                securityContext.useAsRead(() -> {
-                    try {
-                        while (true) {
-                            taskContext.reset();
-                            taskContext.info(() -> "Waiting for extraction task...");
+        try {
+            while (true) {
+                final EventSet eventSet = streamEventMap.take();
+                if (!parentContext.isTerminated() && eventSet != null) {
+                    SearchProgressLog.add(queryKey,
+                            SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
+                            eventSet.size());
 
-                            final EventSet eventSet = streamEventMap.take();
-                            if (eventSet != null) {
-                                SearchProgressLog.add(queryKey,
-                                        SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
-                                        eventSet.size());
-                                extractEvents(taskContext,
-                                        eventSet.getStreamId(),
-                                        eventSet.getEvents(),
-                                        extractionCount,
-                                        errorConsumer);
-                            }
-                        }
-                    } catch (final InterruptedException e) {
-                        LOGGER.trace(e::getMessage, e);
-                        // Keep interrupting this thread.
-                        Thread.currentThread().interrupt();
-                    } catch (final CompleteException e) {
-                        LOGGER.debug(() -> "Complete");
-                        LOGGER.trace(e::getMessage, e);
-                    }
-                })).run();
-        LOGGER.debug("Completed extraction thread");
+                    taskContextFactory.childContext(
+                            parentContext,
+                            "Extraction Task",
+                            taskContext ->
+                                    securityContext.useAsRead(() ->
+                                            extractEvents(taskContext,
+                                                    eventSet.getStreamId(),
+                                                    eventSet.getEvents(),
+                                                    extractionCount,
+                                                    errorConsumer))).run();
+                    LOGGER.debug("Completed extraction thread");
+                }
+            }
+        } catch (final CompleteException e) {
+            LOGGER.debug(() -> "Complete");
+            LOGGER.trace(e::getMessage, e);
+        }
     }
 
     private void extractEvents(final TaskContext taskContext,

@@ -32,10 +32,10 @@ import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
-import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -163,7 +163,6 @@ public class IndexShardSearchTaskHandler {
             final int maxDocIdQueueSize = shardConfig.getMaxDocIdQueueSize();
             LOGGER.debug(() -> "Creating docIdStore with size " + maxDocIdQueueSize);
             final DocIdQueue docIdQueue = new DocIdQueue(maxDocIdQueueSize);
-
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
@@ -191,6 +190,9 @@ public class IndexShardSearchTaskHandler {
                                                     collector,
                                                     query);
 
+                                        } catch (final TaskTerminatedException e) {
+                                            // Expected error on early completion.
+                                            LOGGER.trace(e::getMessage, e);
                                         } catch (final IOException e) {
                                             error(errorConsumer, e);
                                         }
@@ -200,24 +202,27 @@ public class IndexShardSearchTaskHandler {
                                 }
                             });
                     final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-
                     try {
                         // Start converting found docIds into stored data values
-                        while (!parentContext.isTerminated()) {
+                        boolean done = false;
+                        while (!done) {
                             // Uncomment this to slow searches down in dev
 //                            ThreadUtil.sleepAtLeastIgnoreInterrupts(1_000);
-                            // Take the next item
-                            final Integer docId = docIdQueue.next();
+
+                            // Take the next item.
+                            // When we get null we are done.
+                            final Integer docId = docIdQueue.take();
                             if (docId != null) {
-                                // If we have a doc id then retrieve the stored data for it.
-                                SearchProgressLog.increment(queryKey,
-                                        SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
-                                getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
+                                if (!parentContext.isTerminated()) {
+                                    // If we have a doc id then retrieve the stored data for it.
+                                    SearchProgressLog.increment(queryKey,
+                                            SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
+                                    getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
+                                }
+                            } else {
+                                done = true;
                             }
                         }
-                    } catch (final CompleteException e) {
-                        LOGGER.debug(() -> "Complete");
-                        LOGGER.trace(e::getMessage, e);
                     } catch (final RuntimeException e) {
                         error(errorConsumer, e);
                     } finally {

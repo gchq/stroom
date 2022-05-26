@@ -1,6 +1,7 @@
 package stroom.search.extraction;
 
 import stroom.util.concurrent.CompleteException;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -36,90 +37,105 @@ public class StreamEventMap {
         this.capacity = capacity;
     }
 
-    public void complete() throws InterruptedException {
-        lock.lockInterruptibly();
+    public void complete() {
         try {
-            while (count == capacity) {
-                notFull.await();
-            }
-
-            streamIdQueue.addLast(COMPLETE);
-            count++;
-            notEmpty.signal();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void put(final Event event) throws InterruptedException {
-        lock.lockInterruptibly();
-        try {
-            while (count == capacity) {
-                notFull.await();
-            }
-
-            final Set<Event> events = storedDataMap.compute(event.getStreamId(), (k, v) -> {
-                if (v == null) {
-                    // The value is null so this is a new entry in the map.
-                    // Remember this fact for use after we have added the new value.
-                    v = new HashSet<>();
-                    streamIdQueue.addLast(new Key(k, System.currentTimeMillis()));
+            lock.lockInterruptibly();
+            try {
+                while (count == capacity) {
+                    notFull.await();
                 }
-                return v;
-            });
-            if (events.add(event)) {
+
+                streamIdQueue.addLast(COMPLETE);
                 count++;
                 notEmpty.signal();
-            } else {
-                LOGGER.warn("Duplicate segment for streamId=" +
-                        event.getStreamId() +
-                        ", eventId=" +
-                        event.getEventId());
+            } finally {
+                lock.unlock();
             }
-        } finally {
-            lock.unlock();
+        } catch (final InterruptedException e) {
+            LOGGER.error(e::getMessage, e);
+            throw new UncheckedInterruptedException(e);
         }
     }
 
-    public EventSet take() throws InterruptedException, CompleteException {
-        Key key;
-        EventSet eventSet = null;
-        long delay = 0;
-
-        lock.lockInterruptibly();
+    public void put(final Event event) {
         try {
-            while (count == 0) {
-                notEmpty.await();
-            }
+            lock.lockInterruptibly();
+            try {
+                while (count == capacity) {
+                    notFull.await();
+                }
 
-            key = streamIdQueue.peekFirst();
-            if (key != null) {
-                if (key == COMPLETE) {
+                final Set<Event> events = storedDataMap.compute(event.getStreamId(), (k, v) -> {
+                    if (v == null) {
+                        // The value is null so this is a new entry in the map.
+                        // Remember this fact for use after we have added the new value.
+                        v = new HashSet<>();
+                        streamIdQueue.addLast(new Key(k, System.currentTimeMillis()));
+                    }
+                    return v;
+                });
+                if (events.add(event)) {
+                    count++;
                     notEmpty.signal();
                 } else {
-                    delay = extractionDelayMs - (System.currentTimeMillis() - key.createTimeMs);
-                    if (delay <= 0) {
-                        key = streamIdQueue.removeFirst();
-                        final Set<Event> events = storedDataMap.remove(key.streamId);
-                        eventSet = new EventSet(key.streamId, events);
-                        count -= events.size();
-                        notFull.signal();
+                    LOGGER.warn("Duplicate segment for streamId=" +
+                            event.getStreamId() +
+                            ", eventId=" +
+                            event.getEventId());
+                }
+            } finally {
+                lock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            LOGGER.error(e::getMessage, e);
+            throw new UncheckedInterruptedException(e);
+        }
+    }
+
+    public EventSet take() throws CompleteException {
+        try {
+            Key key;
+            EventSet eventSet = null;
+            long delay = 0;
+
+            lock.lockInterruptibly();
+            try {
+                while (count == 0) {
+                    notEmpty.await();
+                }
+
+                key = streamIdQueue.peekFirst();
+                if (key != null) {
+                    if (key == COMPLETE) {
+                        notEmpty.signal();
+                    } else {
+                        delay = extractionDelayMs - (System.currentTimeMillis() - key.createTimeMs);
+                        if (delay <= 0) {
+                            key = streamIdQueue.removeFirst();
+                            final Set<Event> events = storedDataMap.remove(key.streamId);
+                            eventSet = new EventSet(key.streamId, events);
+                            count -= events.size();
+                            notFull.signal();
+                        }
                     }
                 }
+            } finally {
+                lock.unlock();
             }
-        } finally {
-            lock.unlock();
-        }
 
-        if (key == COMPLETE) {
-            throw new CompleteException();
-        }
+            if (key == COMPLETE) {
+                throw new CompleteException();
+            }
 
-        if (delay > 0) {
-            Thread.sleep(delay);
-        }
+            if (delay > 0) {
+                Thread.sleep(delay);
+            }
 
-        return eventSet;
+            return eventSet;
+        } catch (final InterruptedException e) {
+            LOGGER.error(e::getMessage, e);
+            throw new UncheckedInterruptedException(e);
+        }
     }
 
     public int size() {

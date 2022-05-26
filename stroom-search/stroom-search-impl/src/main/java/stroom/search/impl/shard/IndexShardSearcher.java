@@ -69,7 +69,7 @@ public class IndexShardSearcher {
                     LOGGER.debug("Using provided writer");
                     searcherManager = openWithWriter(indexWriter);
                 } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage());
+                    LOGGER.debug(e.getMessage());
                 }
             }
 
