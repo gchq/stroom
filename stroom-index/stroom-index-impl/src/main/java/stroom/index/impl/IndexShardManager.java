@@ -26,6 +26,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.concurrent.StripedLock;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -134,7 +135,9 @@ public class IndexShardManager {
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
                     final ResultPage<IndexShard> shards = indexShardService.find(criteria);
 
-                    final Runnable runnable = taskContextFactory.context("Delete Logically Deleted Shards",
+                    final Runnable runnable = taskContextFactory.context(
+                            "Delete Logically Deleted Shards",
+                            TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> {
                                 try {
                                     taskContext.info(() -> "Deleting Logically Deleted Shards...");
@@ -215,7 +218,10 @@ public class IndexShardManager {
     private long performAction(final List<IndexShard> ownedShards, final IndexShardAction action) {
         final AtomicLong shardCount = new AtomicLong();
         if (ownedShards.size() > 0) {
-            taskContextFactory.context("Index Shard Manager", parentTaskContext -> {
+            taskContextFactory.context(
+                    "Index Shard Manager",
+                    TerminateHandlerFactory.NOOP_FACTORY,
+                    parentTaskContext -> {
                 parentTaskContext.info(() -> action.getActivity() + " index shards");
 
                 final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
@@ -240,7 +246,9 @@ public class IndexShardManager {
                     try {
                         // We use a child tak context here to create child messages in the UI but also to ensure the
                         // task is performed in the context of the parent user.
-                        taskContextFactory.childContext(parentTaskContext, "Index Shard Manager",
+                        taskContextFactory.childContext(parentTaskContext,
+                                "Index Shard Manager",
+                                TerminateHandlerFactory.NOOP_FACTORY,
                                 taskContext -> {
                                     taskContext.info(() -> action.getActivity() + " index shard: " + shard.getId());
                                     switch (action) {

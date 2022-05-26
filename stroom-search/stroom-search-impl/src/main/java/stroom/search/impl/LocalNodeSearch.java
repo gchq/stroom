@@ -5,6 +5,7 @@ import stroom.query.common.v2.Coprocessors;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -65,7 +66,11 @@ public class LocalNodeSearch implements NodeSearch {
                             clusterSearchTaskHandlerProvider.get();
 
                     // Add a child context just to get the same indentation level for local and remote search tasks.
-                    taskContextFactory.childContext(parentContext, clusterSearchTask.getTaskName(), taskContext ->
+                    taskContextFactory.childContext(
+                            parentContext,
+                            clusterSearchTask.getTaskName(),
+                            TerminateHandlerFactory.NOOP_FACTORY,
+                            taskContext ->
                             clusterSearchTaskHandler.search(taskContext,
                                     clusterSearchTask,
                                     coprocessors)).run();

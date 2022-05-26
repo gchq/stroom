@@ -21,6 +21,7 @@ import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -77,7 +78,10 @@ public class SolrSearchResultCollector implements Store {
 
     public void start() {
         // Start asynchronous search execution.
-        final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
+        final Runnable runnable = taskContextFactory.context(
+                TASK_NAME,
+                TerminateHandlerFactory.NOOP_FACTORY,
+                taskContext -> {
             // Don't begin execution if we have been asked to complete already.
             if (!coprocessors.getCompletionState().isComplete()) {
                 final SolrAsyncSearchTaskHandler asyncSearchTaskHandler = solrAsyncSearchTaskHandlerProvider.get();

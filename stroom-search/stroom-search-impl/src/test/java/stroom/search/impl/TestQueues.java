@@ -42,14 +42,14 @@ class TestQueues {
         final CompletableFuture<Void>[] futures = new CompletableFuture[threads];
         for (int i = 0; i < threads; i++) {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                try {
-                    while (true) {
-                        if (queue.next() != null) {
-                            consumed.incrementAndGet();
-                        }
+                boolean complete = false;
+                while (!complete) {
+                    final Long id = queue.next();
+                    if (id != null) {
+                        consumed.incrementAndGet();
+                    } else {
+                        complete = true;
                     }
-                } catch (final CompleteException e) {
-                    // Ignore.
                 }
             }, executor);
             futures[i] = future;
@@ -72,18 +72,14 @@ class TestQueues {
         final CompletableFuture<Void>[] producers = new CompletableFuture[threads];
         for (int i = 0; i < threads; i++) {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                try {
-                    boolean run = true;
-                    while (run) {
-                        final int id = produced.incrementAndGet();
-                        if (id > MAX) {
-                            run = false;
-                        } else {
-                            queue.put(id);
-                        }
+                boolean run = true;
+                while (run) {
+                    final int id = produced.incrementAndGet();
+                    if (id > MAX) {
+                        run = false;
+                    } else {
+                        queue.put(id);
                     }
-                } catch (final InterruptedException e) {
-                    // Ignore.
                 }
             }, executor);
             producers[i] = future;
@@ -92,13 +88,13 @@ class TestQueues {
         final CompletableFuture<Void>[] consumers = new CompletableFuture[threads];
         for (int i = 0; i < threads; i++) {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                try {
-                    while (true) {
-                        queue.take();
+                boolean done = false;
+                while (!done) {
+                    if (queue.take() == null) {
+                        done = true;
+                    } else {
                         consumed.incrementAndGet();
                     }
-                } catch (final InterruptedException | CompleteException e) {
-                    // Ignore.
                 }
             }, executor);
             consumers[i] = future;
@@ -124,18 +120,14 @@ class TestQueues {
         final CompletableFuture<Void>[] producers = new CompletableFuture[threads];
         for (int i = 0; i < threads; i++) {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                try {
-                    boolean run = true;
-                    while (run) {
-                        final int id = produced.incrementAndGet();
-                        if (id > MAX) {
-                            run = false;
-                        } else {
-                            queue.put(new Val[]{ValString.create("test"), ValString.create("test")});
-                        }
+                boolean run = true;
+                while (run) {
+                    final int id = produced.incrementAndGet();
+                    if (id > MAX) {
+                        run = false;
+                    } else {
+                        queue.put(new Val[]{ValString.create("test"), ValString.create("test")});
                     }
-                } catch (final InterruptedException e) {
-                    // Ignore.
                 }
             }, executor);
             producers[i] = future;
@@ -144,13 +136,13 @@ class TestQueues {
         final CompletableFuture<Void>[] consumers = new CompletableFuture[threads];
         for (int i = 0; i < threads; i++) {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                try {
-                    while (true) {
-                        queue.take();
+                boolean done = false;
+                while (!done) {
+                    if (queue.take() == null) {
+                        done = true;
+                    } else {
                         consumed.incrementAndGet();
                     }
-                } catch (final InterruptedException | CompleteException e) {
-                    // Ignore.
                 }
             }, executor);
             consumers[i] = future;
@@ -165,7 +157,7 @@ class TestQueues {
 
     @Test
     @SuppressWarnings("unchecked")
-    void testStreamEventMap() throws InterruptedException {
+    void testStreamEventMap() {
         final int threads = 10;
         final StreamEventMap queue = new StreamEventMap(1000000);
         final AtomicInteger produced = new AtomicInteger();
@@ -176,19 +168,15 @@ class TestQueues {
         final CompletableFuture<Void>[] producers = new CompletableFuture[threads];
         for (int i = 0; i < threads; i++) {
             final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                try {
-                    boolean run = true;
-                    while (run) {
-                        final int id = produced.incrementAndGet();
-                        if (id > MAX) {
-                            run = false;
-                        } else {
-                            queue.put(new Event(1, id,
-                                    new Val[]{ValString.create("test"), ValString.create("test")}));
-                        }
+                boolean run = true;
+                while (run) {
+                    final int id = produced.incrementAndGet();
+                    if (id > MAX) {
+                        run = false;
+                    } else {
+                        queue.put(new Event(1, id,
+                                new Val[]{ValString.create("test"), ValString.create("test")}));
                     }
-                } catch (final InterruptedException e) {
-                    // Ignore.
                 }
             }, executor);
             producers[i] = future;
@@ -204,7 +192,7 @@ class TestQueues {
                             consumed.addAndGet(eventSet.size());
                         }
                     }
-                } catch (final InterruptedException | CompleteException e) {
+                } catch (final CompleteException e) {
                     // Ignore.
                 }
             }, executor);

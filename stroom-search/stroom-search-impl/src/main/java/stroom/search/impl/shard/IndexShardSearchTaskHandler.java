@@ -33,9 +33,9 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
-import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -163,13 +163,14 @@ public class IndexShardSearchTaskHandler {
             final int maxDocIdQueueSize = shardConfig.getMaxDocIdQueueSize();
             LOGGER.debug(() -> "Creating docIdStore with size " + maxDocIdQueueSize);
             final DocIdQueue docIdQueue = new DocIdQueue(maxDocIdQueueSize);
-
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
-                    final Runnable runnable = taskContextFactory.childContext(parentContext,
+                    final Runnable runnable = taskContextFactory.childContext(
+                            parentContext,
                             "Index Searcher",
+                            TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> {
                                 try {
                                     LOGGER.logDurationIfDebugEnabled(() -> {
@@ -201,28 +202,27 @@ public class IndexShardSearchTaskHandler {
                                 }
                             });
                     final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-
                     try {
                         // Start converting found docIds into stored data values
-                        while (true) {
+                        boolean done = false;
+                        while (!done) {
                             // Uncomment this to slow searches down in dev
 //                            ThreadUtil.sleepAtLeastIgnoreInterrupts(1_000);
-                            // Take the next item
-                            final int docId = docIdQueue.take();
-                            // If we have a doc id then retrieve the stored data for it.
-                            SearchProgressLog.increment(queryKey,
-                                    SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
-                            getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
+
+                            // Take the next item.
+                            // When we get null we are done.
+                            final Integer docId = docIdQueue.take();
+                            if (docId != null) {
+                                if (!parentContext.isTerminated()) {
+                                    // If we have a doc id then retrieve the stored data for it.
+                                    SearchProgressLog.increment(queryKey,
+                                            SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
+                                    getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
+                                }
+                            } else {
+                                done = true;
+                            }
                         }
-                    } catch (final InterruptedException e) {
-                        LOGGER.trace(e::getMessage, e);
-                        // Clear the doc id queue to ensure the search code is not blocked from completing.
-                        docIdQueue.clear();
-                        // Keep interrupting this thread.
-                        Thread.currentThread().interrupt();
-                    } catch (final CompleteException e) {
-                        LOGGER.debug(() -> "Complete");
-                        LOGGER.trace(e::getMessage, e);
                     } catch (final RuntimeException e) {
                         error(errorConsumer, e);
                     } finally {
