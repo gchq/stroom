@@ -81,7 +81,7 @@ public final class SearchResponseCreatorManager implements Clearable {
         LOGGER.trace(() -> "destroy() " + key);
         if (value != null) {
             LOGGER.debug(() -> "Destroying key: " + key);
-            value.destroy();
+            securityContext.asProcessingUser(value::destroy);
         }
     }
 
