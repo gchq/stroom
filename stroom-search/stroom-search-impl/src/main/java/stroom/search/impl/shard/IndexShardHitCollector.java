@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
-class IndexShardHitCollector extends SimpleCollector {
+public class IndexShardHitCollector extends SimpleCollector {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardHitCollector.class);
 
@@ -49,12 +49,12 @@ class IndexShardHitCollector extends SimpleCollector {
     private final LongAdder localHitCount = new LongAdder();
     private int docBase;
 
-    IndexShardHitCollector(final TaskContext taskContext,
-                           final QueryKey queryKey,
-                           final IndexShard indexShard,
-                           final Query query,
-                           final DocIdQueue docIdQueue,
-                           final LongAdder totalHitCount) {
+    public IndexShardHitCollector(final TaskContext taskContext,
+                                  final QueryKey queryKey,
+                                  final IndexShard indexShard,
+                                  final Query query,
+                                  final DocIdQueue docIdQueue,
+                                  final LongAdder totalHitCount) {
         this.taskContext = taskContext;
         this.indexShard = indexShard;
         this.queryKey = queryKey;
