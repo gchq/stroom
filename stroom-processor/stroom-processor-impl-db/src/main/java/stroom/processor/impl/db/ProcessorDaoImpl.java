@@ -9,18 +9,26 @@ import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
+import stroom.processor.shared.TaskStatus;
 import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
+import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
 
+import static stroom.processor.impl.db.jooq.Tables.PROCESSOR_TASK;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 
 class ProcessorDaoImpl implements ProcessorDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorDaoImpl.class);
 
     private final ProcessorDbConnProvider processorDbConnProvider;
     private final GenericDao<ProcessorRecord, Processor, Integer> genericDao;
@@ -45,6 +53,8 @@ class ProcessorDaoImpl implements ProcessorDao {
     public Processor create(final Processor processor) {
         // We don't use the delegate DAO here as we want to handle potential duplicates carefully so this
         // behaves as a getOrCreate method.
+        // TODO This should be replaced with JooqUtil.tryCreate as ANY error in the sql will be
+        //  ignored, not just key duplicates.
         return JooqUtil.contextResult(processorDbConnProvider, context -> {
             final Optional<ProcessorRecord> optional = context
                     .insertInto(PROCESSOR,
@@ -99,16 +109,63 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public boolean logicalDelete(final int id) {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .update(PROCESSOR)
-                .set(PROCESSOR.DELETED, true)
-                .where(PROCESSOR.ID.eq(id))
-                .execute()) > 0;
+        try {
+            return JooqUtil.transactionResult(processorDbConnProvider, context -> {
+                // Logically delete all the child filters first
+
+                final int processor_task_update_count = context
+                        .update(PROCESSOR_TASK)
+                        .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                        .where(DSL.exists(
+                                DSL.selectZero()
+                                        .from(PROCESSOR_FILTER)
+                                        .innerJoin(PROCESSOR)
+                                        .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                                        .where(PROCESSOR.ID.eq(id))))
+                        .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.UNPROCESSED.getPrimitiveValue()))
+                        .execute();
+
+                LOGGER.debug("Logically deleted {} tasks for processor Id {}",
+                        processor_task_update_count, id);
+
+                final int processor_filter_update_count = context
+                        .update(PROCESSOR_FILTER)
+                        .set(PROCESSOR_FILTER.DELETED, true)
+                        .where(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(id))
+                        .execute();
+                LOGGER.debug("Logically deleted {} filters for processor Id {}",
+                        processor_filter_update_count, id);
+
+                final int processor_update_count = context
+                        .update(PROCESSOR)
+                        .set(PROCESSOR.DELETED, true)
+                        .where(PROCESSOR.ID.eq(id))
+                        .execute();
+
+                LOGGER.debug("Logically deleted {} processor with Id {}",
+                        processor_update_count, id);
+
+                return processor_update_count > 0;
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Error deleting filters, tasks and processor for processor id " + id, e);
+        }
     }
 
     @Override
     public Optional<Processor> fetch(final int id) {
         return genericDao.fetch(id);
+    }
+
+    @Override
+    public Optional<Processor> fetchByPipelineUuid(final String pipelineUuid) {
+        Objects.requireNonNull(pipelineUuid);
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .select()
+                .from(PROCESSOR)
+                .where(PROCESSOR.PIPELINE_UUID.eq(pipelineUuid))
+                .fetchOptionalInto(Processor.class));
     }
 
     @Override

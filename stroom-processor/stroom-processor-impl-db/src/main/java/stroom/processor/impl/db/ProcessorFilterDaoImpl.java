@@ -22,6 +22,8 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
@@ -35,6 +37,8 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FIL
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
 
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
@@ -143,6 +147,17 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .set(PROCESSOR_FILTER.DELETED, true)
                 .where(PROCESSOR_FILTER.ID.eq(id))
                 .execute()) > 0;
+    }
+
+    @Override
+    public boolean logicalDeleteAll(final int processorId) {
+        final int updateCount = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(PROCESSOR_FILTER)
+                .set(PROCESSOR_FILTER.DELETED, true)
+                .where(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(processorId))
+                .execute());
+        LOGGER.debug("Logically deleted {} filters for processorId {}", updateCount, processorId);
+        return updateCount > 0;
     }
 
     @Override

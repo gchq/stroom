@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -110,6 +111,13 @@ public final class JooqUtil {
     public static <R extends Record> int getTableCount(final DataSource dataSource,
                                                        final Table<R> table) {
 
+        return getTableCount(dataSource, table, null);
+    }
+
+    public static <R extends Record> int getTableCount(final DataSource dataSource,
+                                                       final Table<R> table,
+                                                       final Condition condition) {
+
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 checkDataSource(dataSource);
@@ -117,6 +125,7 @@ public final class JooqUtil {
                 return context
                         .selectCount()
                         .from(table)
+                        .where(Objects.requireNonNullElseGet(condition, DSL::trueCondition))
                         .fetchOne()
                         .value1();
             } finally {
@@ -127,7 +136,8 @@ public final class JooqUtil {
         }
     }
 
-    public static <R> R contextResult(final DataSource dataSource, final Function<DSLContext, R> function) {
+    public static <R> R contextResult(final DataSource dataSource,
+                                      final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
             try {
