@@ -789,9 +789,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             if (optional.isEmpty()) {
                                 LOGGER.warn(() -> LogUtil.message(
                                         "changeTaskStatus() - Failed to reload task {}", processorTask));
+                                record = null;
                             } else if (TaskStatus.DELETED.getPrimitiveValue() == optional.get().getStatus()) {
                                 LOGGER.warn(() -> LogUtil.message(
                                         "changeTaskStatus() - Task has been deleted {}", processorTask));
+                                record = null;
                             } else {
                                 LOGGER.warn(() -> LogUtil.message(
                                         "changeTaskStatus() - Loaded stream task {}", optional.get()));
