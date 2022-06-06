@@ -111,11 +111,14 @@ class ProcessorDaoImpl implements ProcessorDao {
     public boolean logicalDelete(final int id) {
         try {
             return JooqUtil.transactionResult(processorDbConnProvider, context -> {
-                // Logically delete all the child filters first
 
+                // Logically delete any associated unprocessed tasks.
+                // Once the filter is logically deleted no new tasks will be created for it
+                // but we may still have active tasks for 'deleted' filters.
                 final int processor_task_update_count = context
                         .update(PROCESSOR_TASK)
                         .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                        .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                         .where(DSL.exists(
                                 DSL.selectZero()
                                         .from(PROCESSOR_FILTER)
@@ -128,9 +131,11 @@ class ProcessorDaoImpl implements ProcessorDao {
                 LOGGER.debug("Logically deleted {} tasks for processor Id {}",
                         processor_task_update_count, id);
 
+                // Logically delete all the child filters first
                 final int processor_filter_update_count = context
                         .update(PROCESSOR_FILTER)
                         .set(PROCESSOR_FILTER.DELETED, true)
+                        .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
                         .where(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(id))
                         .execute();
                 LOGGER.debug("Logically deleted {} filters for processor Id {}",
@@ -139,6 +144,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                 final int processor_update_count = context
                         .update(PROCESSOR)
                         .set(PROCESSOR.DELETED, true)
+                        .set(PROCESSOR.VERSION, PROCESSOR.VERSION.plus(1))
                         .where(PROCESSOR.ID.eq(id))
                         .execute();
 
