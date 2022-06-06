@@ -145,6 +145,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         return JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.DELETED, true)
+                .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
                 .where(PROCESSOR_FILTER.ID.eq(id))
                 .execute()) > 0;
     }
@@ -154,6 +155,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         final int updateCount = JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.DELETED, true)
+                .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
                 .where(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(processorId))
                 .execute());
         LOGGER.debug("Logically deleted {} filters for processorId {}", updateCount, processorId);
