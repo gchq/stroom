@@ -55,7 +55,7 @@ class StreamMapCreator {
         return index;
     }
 
-    void addEvent(final StreamEventMap streamEventMap, final Val[] storedData) throws InterruptedException {
+    void addEvent(final StreamEventMap streamEventMap, final Val[] storedData) {
         if (error != null) {
             throw error;
         } else {

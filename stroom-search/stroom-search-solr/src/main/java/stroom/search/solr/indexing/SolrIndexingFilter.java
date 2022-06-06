@@ -55,9 +55,17 @@ import javax.inject.Inject;
 /**
  * The Solr index filter... takes the index XML and sends documents to Solr for indexing.
  */
-@ConfigurableElement(type = "SolrIndexingFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.SOLR)
+@ConfigurableElement(
+        type = "SolrIndexingFilter",
+        description = """
+                Delivers source data to the specified index in an external Solr instance/cluster.
+                """,
+        category = Category.FILTER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE},
+        icon = ElementIcons.SOLR)
 class SolrIndexingFilter extends AbstractXMLFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexingFilter.class);

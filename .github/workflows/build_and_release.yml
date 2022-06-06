@@ -27,6 +27,11 @@ jobs:
           # See https://github.com/actions/runner/issues/712
           ref: ${{ github.ref }} 
 
+        # Make sure the wrapper jar has not been tampered with
+      - name: Validate gradle wrapper jar
+        id: validate_gradle_wrapper
+        uses: gradle/wrapper-validation-action@v1
+
         # Set variables in github's special env file which are then automatically 
         # read into env vars in each subsequent step
       - name: Set Environment Variables

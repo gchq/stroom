@@ -12,6 +12,7 @@ import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -46,7 +47,9 @@ public class StroomIndexQueryService implements DataSourceProvider {
     @Override
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
-            final Supplier<DataSource> supplier = taskContextFactory.contextResult("Getting Data Source",
+            final Supplier<DataSource> supplier = taskContextFactory.contextResult(
+                    "Getting Data Source",
+                    TerminateHandlerFactory.NOOP_FACTORY,
                     taskContext -> {
                         final IndexDoc index = indexStore.readDocument(docRef);
                         return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext));

@@ -19,6 +19,7 @@ package stroom.search.impl.shard;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
@@ -41,6 +42,9 @@ public class ShardModule extends AbstractModule {
                         .name("Index Searcher Cache Refresh")
                         .description("Job to refresh index shard searchers in the cache")
                         .schedule(PERIODIC, "10m"));
+
+        HasSystemInfoBinder.create(binder())
+                .bind(IndexShardSystemInfo.class);
     }
 
     private static class IndexSearcherCacheRefresh extends RunnableWrapper {

@@ -76,7 +76,9 @@ public final class SearchResponse {
         this.queryKey = queryKey;
         this.highlights = highlights;
         this.results = results;
-        this.errors = errors;
+        this.errors = errors == null || errors.isEmpty()
+                ? null
+                : errors;
         this.complete = complete;
     }
 

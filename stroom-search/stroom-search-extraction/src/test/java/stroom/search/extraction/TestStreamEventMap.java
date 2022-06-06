@@ -28,15 +28,11 @@ class TestStreamEventMap {
 
         // Start a producer.
         CompletableFuture<Void> producer = CompletableFuture.runAsync(() -> {
-            try {
-                for (int i = 0; i < TOTAL_EVENTS; i++) {
-                    int streamId = (int) (Math.random() * 10);
-                    streamEventMap.put(new Event(streamId, i, null));
-                }
-                streamEventMap.complete();
-            } catch (final InterruptedException e) {
-                // Ignore.
+            for (int i = 0; i < TOTAL_EVENTS; i++) {
+                int streamId = (int) (Math.random() * 10);
+                streamEventMap.put(new Event(streamId, i, null));
             }
+            streamEventMap.complete();
         });
         futures.add(producer);
 
@@ -51,10 +47,6 @@ class TestStreamEventMap {
                             total.addAndGet(eventSet.size());
                         }
                     }
-                } catch (final InterruptedException e) {
-                    LOGGER.trace(e::getMessage, e);
-                    // Keep interrupting this thread.
-                    Thread.currentThread().interrupt();
                 } catch (final CompleteException e) {
                     LOGGER.debug(() -> "Complete");
                     LOGGER.trace(e::getMessage, e);

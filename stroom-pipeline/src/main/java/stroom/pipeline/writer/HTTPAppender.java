@@ -44,6 +44,9 @@ import javax.net.ssl.SSLSocketFactory;
  */
 @ConfigurableElement(
         type = "HTTPAppender",
+        description = """
+                A destination used to write an output stream to a remote HTTP(s) server.
+                """,
         category = Category.DESTINATION,
         roles = {
                 PipelineElementType.ROLE_TARGET,

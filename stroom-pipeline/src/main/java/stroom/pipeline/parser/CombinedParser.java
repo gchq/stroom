@@ -70,6 +70,10 @@ import javax.xml.parsers.SAXParserFactory;
 @ConfigurableElement(
         type = "CombinedParser",
         category = Category.PARSER,
+        description = """
+                The original general-purpose reader/parser that covers all source data types but provides less \
+                flexibility than the source format-specific parsers such as dsParser.
+                """,
         roles = {
                 PipelineElementType.ROLE_PARSER,
                 PipelineElementType.ROLE_HAS_TARGETS,

@@ -12,7 +12,23 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-* Fix failing test.
+* Change the shard system info provider to only query the shard if the node has ownership.
+
+* Issue **#2879** : Prevent shards closing during read.
+
+* Issue **#2879** : Prevent interrupts during index shard use.
+
+* Issue **#2888** : Fix error when paging and then filtering on the dependencies screen.
+
+* Add system info provider for index shards.
+
+* Issue **#2883** : Fix issue of search errors not being shown in the UI.
+
+* Issue **#2879** : Prevent interrupting threads that may be reading search index shards.
+
+* Issue **#2874** : Add debug logging for shard writing/reading.
+
+* Issue **#2881** : Fix broken CLI commands, e.g. `reset_password`.
 
 * No changes, failed build.
 
