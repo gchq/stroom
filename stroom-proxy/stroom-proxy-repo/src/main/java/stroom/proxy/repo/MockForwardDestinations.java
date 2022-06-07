@@ -42,7 +42,7 @@ public class MockForwardDestinations implements ForwarderDestinations {
                     lock.unlock();
                 }
             } catch (final InterruptedException e) {
-                UncheckedInterruptedException.resetAndThrow(e);
+                throw UncheckedInterruptedException.reset(e);
             }
             consumer.accept((entry, inputStream, progressHandler) -> 0);
         };
@@ -62,7 +62,7 @@ public class MockForwardDestinations implements ForwarderDestinations {
                 lock.unlock();
             }
         } catch (final InterruptedException e) {
-            UncheckedInterruptedException.resetAndThrow(e);
+            throw UncheckedInterruptedException.reset(e);
         }
         return currentStoreId;
     }
@@ -76,7 +76,7 @@ public class MockForwardDestinations implements ForwarderDestinations {
                 lock.unlock();
             }
         } catch (final InterruptedException e) {
-            UncheckedInterruptedException.resetAndThrow(e);
+            throw UncheckedInterruptedException.reset(e);
         }
     }
 }
