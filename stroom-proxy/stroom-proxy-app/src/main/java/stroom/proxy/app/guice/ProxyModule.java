@@ -26,6 +26,7 @@ import stroom.proxy.app.ProxyLifecycle;
 import stroom.proxy.app.RequestAuthenticatorImpl;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.RestClientConfigConverter;
+import stroom.proxy.app.event.SchemaEventResourceImpl;
 import stroom.proxy.app.event.TextEventServlet;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.app.handler.ProxyId;
@@ -175,7 +176,8 @@ public class ProxyModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(ReceiveDataRuleSetResourceImpl.class)
-                .bind(FeedStatusResourceImpl.class);
+                .bind(FeedStatusResourceImpl.class)
+                .bind(SchemaEventResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)

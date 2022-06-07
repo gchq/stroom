@@ -91,17 +91,6 @@ public class ProxyRequestHandler implements RequestHandler {
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
             final String authorisationHeader = attributeMap.get(HttpHeaders.AUTHORIZATION);
 
-            // Create a new proxy id for the stream and report it back to the sender,
-            final String attributeKey = proxyId.getId();
-            final String attributeName = UUID.randomUUID().toString();
-            attributeMap.put(attributeKey, attributeName);
-            LOGGER.debug(() -> "Adding proxy id attribute: " + attributeKey + ": " + attributeName);
-            try (final PrintWriter writer = response.getWriter()) {
-                writer.println(attributeKey + ": " + attributeName);
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-
             // If token authentication is required but no token is supplied then error.
             if (receiveDataConfig.isRequireTokenAuthentication() &&
                     (authorisationHeader == null || authorisationHeader.isBlank())) {
@@ -121,6 +110,17 @@ public class ProxyRequestHandler implements RequestHandler {
                 throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED, attributeMap);
 
             } else {
+                // Create a new proxy id for the stream and report it back to the sender,
+                final String attributeKey = proxyId.getId();
+                final String attributeName = UUID.randomUUID().toString();
+                attributeMap.put(attributeKey, attributeName);
+                LOGGER.debug(() -> "Adding proxy id attribute: " + attributeKey + ": " + attributeName);
+                try (final PrintWriter writer = response.getWriter()) {
+                    writer.println(attributeKey + ": " + attributeName);
+                } catch (final IOException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+
                 final int rc = Metrics.measure("ProxyRequestHandler - handle1", () -> {
                     int returnCode = HttpServletResponse.SC_OK;
 

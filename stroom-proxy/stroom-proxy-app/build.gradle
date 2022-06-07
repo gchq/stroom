@@ -50,6 +50,7 @@ dependencies {
     implementation libs.dropwizard_metrics_core
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_configuration
+    implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice5
     implementation libs.jackson_annotations
@@ -62,6 +63,7 @@ dependencies {
     implementation libs.jose4j
     implementation libs.kafka_clients
     implementation libs.slf4j_api
+    implementation libs.swagger_annotations
     
     testImplementation project(':stroom-test-common')
 

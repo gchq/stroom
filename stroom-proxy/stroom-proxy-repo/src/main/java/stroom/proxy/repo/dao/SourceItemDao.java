@@ -38,6 +38,27 @@ import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 @Singleton
 public class SourceItemDao implements Flushable {
 
+    private static final Field<String> SOURCE_ENTRY_EXTENSION = SOURCE_ENTRY.EXTENSION
+            .as("source_entry_extension");
+    private static final Field<Integer> SOURCE_ENTRY_EXTENSION_TYPE = SOURCE_ENTRY.EXTENSION_TYPE
+            .as("source_entry_extension_type");
+    private static final Field<Long> SOURCE_ENTRY_BYTE_SIZE = SOURCE_ENTRY.BYTE_SIZE
+            .as("source_entry_byte_size");
+    private static final Field<Long> SOURCE_ITEM_ID = SOURCE_ITEM.ID
+            .as("source_item_id");
+    private static final Field<String> SOURCE_ITEM_NAME = SOURCE_ITEM.NAME
+            .as("source_item_name");
+    private static final Field<Long> SOURCE_ITEM_FEED_ID = SOURCE_ITEM.FK_FEED_ID
+            .as("source_item_feed_id");
+    private static final Field<Long> SOURCE_ITEM_AGGREGATE_ID = SOURCE_ITEM.FK_AGGREGATE_ID
+            .as("source_item_aggregate_id");
+    private static final Field<Long> SOURCE_ID = SOURCE.ID
+            .as("source_id");
+    private static final Field<Long> SOURCE_FILE_STORE_ID = SOURCE.FILE_STORE_ID
+            .as("source_file_store_id");
+    private static final Field<Long> SOURCE_FEED_ID = SOURCE.FK_FEED_ID
+            .as("source_feed_id");
+
     private static final Field<?>[] SOURCE_ITEM_COLUMNS = new Field<?>[]{
             SOURCE_ITEM.ID,
             SOURCE_ITEM.NAME,
@@ -224,38 +245,39 @@ public class SourceItemDao implements Flushable {
         final Map<RepoSource, List<RepoSourceItem>> resultMap =
                 new TreeMap<>(Comparator.comparing(RepoSource::id));
 
-        // Get all of the source zip entries that we want to write to the forwarding location.
+        // Get all the source zip entries that we want to write to the forwarding location.
         jooq.readOnlyTransactionResult(context -> context
                         .select(
-                                SOURCE_ENTRY.EXTENSION,
-                                SOURCE_ENTRY.EXTENSION_TYPE,
-                                SOURCE_ENTRY.BYTE_SIZE,
-                                SOURCE_ITEM.NAME,
-                                SOURCE_ITEM.FK_FEED_ID,
-                                SOURCE_ITEM.FK_AGGREGATE_ID,
-                                SOURCE.ID,
-                                SOURCE.FILE_STORE_ID,
-                                SOURCE.FK_FEED_ID)
+                                SOURCE_ENTRY_EXTENSION,
+                                SOURCE_ENTRY_EXTENSION_TYPE,
+                                SOURCE_ENTRY_BYTE_SIZE,
+                                SOURCE_ITEM_ID,
+                                SOURCE_ITEM_NAME,
+                                SOURCE_ITEM_FEED_ID,
+                                SOURCE_ITEM_AGGREGATE_ID,
+                                SOURCE_ID,
+                                SOURCE_FILE_STORE_ID,
+                                SOURCE_FEED_ID)
                         .from(SOURCE_ENTRY)
                         .join(SOURCE_ITEM).on(SOURCE_ITEM.ID.eq(SOURCE_ENTRY.FK_SOURCE_ITEM_ID))
                         .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
-                        .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId))
+                        .where(SOURCE_ITEM_AGGREGATE_ID.eq(aggregateId))
                         .orderBy(SOURCE.ID, SOURCE_ITEM.ID, SOURCE_ENTRY.EXTENSION_TYPE, SOURCE_ENTRY.EXTENSION)
                         .fetch())
                 .forEach(r -> {
-                    final long id = r.get(SOURCE_ITEM.ID);
+                    final long sourceItemId = r.get(SOURCE_ITEM_ID);
 
-                    final RepoSourceItem item = items.computeIfAbsent(id, k -> {
+                    final RepoSourceItem item = items.computeIfAbsent(sourceItemId, k -> {
                         final RepoSource source = new RepoSource(
-                                r.get(SOURCE.ID),
-                                r.get(SOURCE.FILE_STORE_ID),
-                                r.get(SOURCE.FK_FEED_ID));
+                                r.get(SOURCE_ID),
+                                r.get(SOURCE_FILE_STORE_ID),
+                                r.get(SOURCE_FEED_ID));
 
                         final RepoSourceItem repoSourceItem = new RepoSourceItem(
                                 source,
-                                r.get(SOURCE_ITEM.NAME),
-                                r.get(SOURCE_ITEM.FK_FEED_ID),
-                                r.get(SOURCE_ITEM.FK_AGGREGATE_ID),
+                                r.get(SOURCE_ITEM_NAME),
+                                r.get(SOURCE_ITEM_FEED_ID),
+                                r.get(SOURCE_ITEM_AGGREGATE_ID),
                                 0,
                                 new ArrayList<>());
 
@@ -265,9 +287,9 @@ public class SourceItemDao implements Flushable {
                     });
 
                     final RepoSourceEntry entry = new RepoSourceEntry(
-                            StroomZipFileType.TYPE_MAP.get(r.get(SOURCE_ENTRY.EXTENSION_TYPE)),
-                            r.get(SOURCE_ENTRY.EXTENSION),
-                            r.get(SOURCE_ENTRY.BYTE_SIZE));
+                            StroomZipFileType.TYPE_MAP.get(r.get(SOURCE_ENTRY_EXTENSION_TYPE)),
+                            r.get(SOURCE_ENTRY_EXTENSION),
+                            r.get(SOURCE_ENTRY_BYTE_SIZE));
                     item.addEntry(entry);
                 });
 
