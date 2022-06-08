@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.208] - 2022-06-08
+
+* Issue **#2872** : Fix permission exception thrown when removing search store from cache.
+
+* Issue **#2889** : Change pipeline entity deletion to also logically delete the processor, processor filters and any unprocessed tasks.
+
+
 ## [v7.0-beta.207] - 2022-05-26
 
 * Change the shard system info provider to only query the shard if the node has ownership.
@@ -4401,7 +4408,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.207...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.208...HEAD
+[v7.0-beta.208]: https://github.com/gchq/stroom/compare/v7.0-beta.207...v7.0-beta.208
 [v7.0-beta.207]: https://github.com/gchq/stroom/compare/v7.0-beta.206...v7.0-beta.207
 [v7.0-beta.206]: https://github.com/gchq/stroom/compare/v7.0-beta.205...v7.0-beta.206
 [v7.0-beta.205]: https://github.com/gchq/stroom/compare/v7.0-beta.204...v7.0-beta.205
