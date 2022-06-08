@@ -4,6 +4,7 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.repo.RepoSourceItem.RepoSourceItemBuilder;
 import stroom.proxy.repo.dao.FeedDao;
 import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.proxy.repo.queue.Batch;
@@ -21,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -75,9 +75,9 @@ public class RepoSourceItems {
                     // Skip directories
                     if (!entry.isDirectory()) {
                         final FileName fileName = parseFileName(entry.getName());
-                        final String itemName = fileName.getStem();
+                        final String itemName = fileName.stem();
                         final StroomZipFileType stroomZipFileType =
-                                StroomZipFileType.fromExtension(fileName.getExtension());
+                                StroomZipFileType.fromExtension(fileName.extension());
 
                         // If this is a meta entry then get the feed name.
                         String feedName = feedKey.feed();
@@ -107,8 +107,8 @@ public class RepoSourceItems {
 
                         final RepoSourceItemBuilder builder = itemNameMap.computeIfAbsent(itemName, k ->
                                 new RepoSourceItemBuilder()
-                                        .name(itemName)
-                                        .source(source));
+                                        .repoSource(source)
+                                        .name(itemName));
 
                         // If we have an existing source item then update the feed and type names if we have some.
                         if (feedName != null && builder.getFeedName() == null) {
@@ -118,12 +118,8 @@ public class RepoSourceItems {
                             builder.typeName(typeName);
                         }
 
-                        final RepoSourceEntry sourceEntry = new RepoSourceEntry(
-                                stroomZipFileType,
-                                fileName.getExtension(),
-                                entry.getSize());
-                        builder.addEntry(sourceEntry);
-                        itemNameMap.put(fileName.getStem(), builder);
+                        builder.addEntry(fileName.extension(), entry.getSize());
+                        itemNameMap.put(fileName.stem(), builder);
                     }
                 }
 
@@ -175,98 +171,10 @@ public class RepoSourceItems {
         return sourceItemDao.getNewSourceItems(timeout, timeUnit);
     }
 
-    private static class FileName {
+    private record FileName(
+            String fullName,
+            String stem,
+            String extension) {
 
-        private final String fullName;
-        private final String stem;
-        private final String extension;
-
-        public FileName(final String fullName, final String stem, final String extension) {
-            this.fullName = fullName;
-            this.stem = stem;
-            this.extension = extension;
-        }
-
-        public String getFullName() {
-            return fullName;
-        }
-
-        public String getStem() {
-            return stem;
-        }
-
-        public String getExtension() {
-            return extension;
-        }
-
-        @Override
-        public String toString() {
-            return fullName;
-        }
-    }
-
-    private final class RepoSourceItemBuilder {
-
-        private RepoSource source;
-        private String name;
-        private String feedName;
-        private String typeName;
-        private Long aggregateId;
-        private long totalByteSize;
-        private final List<RepoSourceEntry> entries;
-
-        public RepoSourceItemBuilder() {
-            entries = new ArrayList<>();
-        }
-
-        public RepoSourceItemBuilder source(final RepoSource source) {
-            this.source = source;
-            return this;
-        }
-
-        public RepoSourceItemBuilder name(final String name) {
-            this.name = name;
-            return this;
-        }
-
-        public RepoSourceItemBuilder feedName(final String feedName) {
-            this.feedName = feedName;
-            return this;
-        }
-
-        public RepoSourceItemBuilder typeName(final String typeName) {
-            this.typeName = typeName;
-            return this;
-        }
-
-        public RepoSourceItemBuilder aggregateId(final Long aggregateId) {
-            this.aggregateId = aggregateId;
-            return this;
-        }
-
-        public RepoSourceItemBuilder addEntry(final RepoSourceEntry entry) {
-            this.entries.add(entry);
-            this.totalByteSize += entry.byteSize();
-            return this;
-        }
-
-        public String getTypeName() {
-            return typeName;
-        }
-
-        public String getFeedName() {
-            return feedName;
-        }
-
-        public RepoSourceItem build(final FeedDao feedDao) {
-            final long feedId = feedDao.getId(new FeedKey(feedName, typeName));
-            return new RepoSourceItem(
-                    source,
-                    name,
-                    feedId,
-                    aggregateId,
-                    totalByteSize,
-                    entries);
-        }
     }
 }

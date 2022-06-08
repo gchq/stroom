@@ -12,7 +12,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row7;
+import org.jooq.Row9;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -60,6 +60,11 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     public final TableField<SourceItemRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
+     * The column <code>source_item.extensions</code>.
+     */
+    public final TableField<SourceItemRecord, String> EXTENSIONS = createField(DSL.name("extensions"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
      * The column <code>source_item.fk_feed_id</code>.
      */
     public final TableField<SourceItemRecord, Long> FK_FEED_ID = createField(DSL.name("fk_feed_id"), SQLDataType.BIGINT.nullable(false), this, "");
@@ -73,6 +78,11 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
      * The column <code>source_item.fk_source_id</code>.
      */
     public final TableField<SourceItemRecord, Long> FK_SOURCE_ID = createField(DSL.name("fk_source_id"), SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>source_item.file_store_id</code>.
+     */
+    public final TableField<SourceItemRecord, Long> FILE_STORE_ID = createField(DSL.name("file_store_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>source_item.fk_aggregate_id</code>.
@@ -124,7 +134,7 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.NEW_POSITION_SOURCE_ITEM_INDEX);
+        return Arrays.asList(Indexes.NEW_POSITION_SOURCE_ITEM_INDEX, Indexes.SOURCE_ITEM_AGGREGATE_ID);
     }
 
     @Override
@@ -159,11 +169,11 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row7 type methods
+    // Row9 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<Long, String, Long, Long, Long, Long, Long> fieldsRow() {
-        return (Row7) super.fieldsRow();
+    public Row9<Long, String, String, Long, Long, Long, Long, Long, Long> fieldsRow() {
+        return (Row9) super.fieldsRow();
     }
 }

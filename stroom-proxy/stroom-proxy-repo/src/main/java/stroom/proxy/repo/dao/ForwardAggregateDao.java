@@ -35,7 +35,6 @@ import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
@@ -427,19 +426,6 @@ public class ForwardAggregateDao implements Flushable {
                         .execute();
             });
         }
-
-        // Delete source entries.
-        Metrics.measure("Delete source entries", () -> {
-            context
-                    .deleteFrom(SOURCE_ENTRY)
-                    .where(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.in(
-                            context
-                                    .select(SOURCE_ITEM.ID)
-                                    .from(SOURCE_ITEM)
-                                    .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId)))
-                    )
-                    .execute();
-        });
 
         // Delete source items.
         Metrics.measure("Delete source items", () -> {

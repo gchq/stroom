@@ -50,7 +50,13 @@ public class TestSourceDao {
         final Batch<RepoSource> batch = sourceDao.getNewSources();
         assertThat(batch.list().size()).isOne();
 
-        sourceDao.deleteSources(batch.list());
+        sourceDao.markDeletableSources();
+        sourceDao.deleteSources();
+        assertThat(sourceDao.countSources()).isOne();
+
+        sourceDao.setSourceExamined(batch.list().get(0).id(), true, 0);
+        sourceDao.markDeletableSources();
+        sourceDao.deleteSources();
         assertThat(sourceDao.countSources()).isZero();
 
         sourceDao.clear();

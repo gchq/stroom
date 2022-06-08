@@ -39,7 +39,6 @@ public class Metrics {
                 .values()
                 .stream()
                 .map(Metric::snapshot)
-                .filter(s -> s.deltaCalls > 0)
                 .sorted(Comparator.comparing(Snapshot::getDeltaCallsPerSecond))
                 .map(Snapshot::toString)
                 .collect(Collectors.joining("\n")) + "\n\n");

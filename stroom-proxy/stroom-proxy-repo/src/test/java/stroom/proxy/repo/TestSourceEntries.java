@@ -14,11 +14,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -90,7 +90,6 @@ public class TestSourceEntries {
 
         assertThat(sourceDao.countSources()).isOne();
         assertThat(sourceItemDao.countItems()).isEqualTo(1000);
-        assertThat(sourceItemDao.countEntries()).isEqualTo(3000);
 
         // Check that we have no new sources.
         final Batch<RepoSource> sources2 = sourceDao.getNewSources(0, TimeUnit.MILLISECONDS);
@@ -102,6 +101,7 @@ public class TestSourceEntries {
     void addEntriesToSource(final RepoSource source,
                             final int loopCount,
                             final int feedCount) {
+        final AtomicLong id = new AtomicLong();
         final Map<String, RepoSourceItem> itemNameMap = new HashMap<>();
         final List<StroomZipFileType> types = List.of(
                 StroomZipFileType.META,
@@ -118,13 +118,12 @@ public class TestSourceEntries {
                 for (final StroomZipFileType type : types) {
                     final RepoSourceItem item = itemNameMap.computeIfAbsent(dataName, k ->
                             new RepoSourceItem(source,
+                                    id.incrementAndGet(),
                                     dataName,
                                     feedId,
                                     null,
                                     0,
-                                    new ArrayList<>()));
-
-                    item.addEntry(new RepoSourceEntry(type, type.getExtension(), 1000L));
+                                    "dat"));
                 }
             }
         }

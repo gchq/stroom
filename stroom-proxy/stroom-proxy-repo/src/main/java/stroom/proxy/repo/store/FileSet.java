@@ -1,10 +1,9 @@
 package stroom.proxy.repo.store;
 
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.StringIdUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
@@ -18,7 +17,7 @@ public class FileSet {
     public static final String META_EXTENSION = ".meta";
     public static final String ZIP_EXTENSION = ".zip";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileSet.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FileSet.class);
 
     private final long id;
     private final String idString;
@@ -102,9 +101,9 @@ public class FileSet {
     }
 
     public void delete() throws IOException {
-        LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(zip));
+        LOGGER.debug(() -> "Deleting: " + FileUtil.getCanonicalPath(zip));
         Files.deleteIfExists(zip);
-        LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(meta));
+        LOGGER.debug(() -> "Deleting: " + FileUtil.getCanonicalPath(meta));
         Files.deleteIfExists(meta);
 
         // Try to delete directories.
@@ -116,7 +115,7 @@ public class FileSet {
             }
         } catch (final DirectoryNotEmptyException e) {
             // Expected error.
-            LOGGER.trace(e.getMessage(), e);
+            LOGGER.trace(e::getMessage, e);
         }
     }
 

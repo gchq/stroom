@@ -163,20 +163,33 @@ public class SourceDao implements Flushable {
     }
 
     /**
+     * Mark sources as being ready for deletion.
+     */
+    public void markDeletableSources() {
+        jooq.transaction(context -> context
+                .update(SOURCE)
+                .set(SOURCE.DELETED, true)
+                .where(SOURCE.EXAMINED.isTrue())
+                .and(SOURCE.ITEM_COUNT.eq(0))
+                .execute());
+    }
+
+    /**
      * Get a list of sources that have either been successfully forwarded to all destinations or have been examined and
      * the examined source entries and items have since been deleted, i.e. were no longer needed as aggregate forwarding
      * completed for all entries.
      *
      * @return A list of sources that are ready to be deleted.
      */
-    public List<RepoSource> getDeletableSources(final int limit) {
+    public List<RepoSource> getDeletableSources(final long minSourceId,
+                                                final int limit) {
         return jooq.readOnlyTransactionResult(context -> context
                         .select(SOURCE.ID,
                                 SOURCE.FILE_STORE_ID,
                                 SOURCE.FK_FEED_ID)
                         .from(SOURCE)
-                        .where(SOURCE.EXAMINED.isTrue())
-                        .and(SOURCE.ITEM_COUNT.eq(0))
+                        .where(SOURCE.DELETED.isTrue())
+                        .and(SOURCE.ID.gt(minSourceId))
                         .orderBy(SOURCE.ID)
                         .limit(limit)
                         .fetch())
@@ -187,16 +200,24 @@ public class SourceDao implements Flushable {
     }
 
     /**
-     * Delete a source record for the provided source id.
+     * Used for testing.
      *
-     * @param sources The sources to delete.
+     * @return
+     */
+    public int countDeletableSources() {
+        markDeletableSources();
+        return getDeletableSources(0, 1000).size();
+    }
+
+    /**
+     * Delete sources that have already been marked for deletion.
+     *
      * @return The number of rows changed.
      */
-    public int deleteSources(final List<RepoSource> sources) {
-        final List<Long> sourceIds = sources.stream().map(RepoSource::id).toList();
+    public int deleteSources() {
         return jooq.transactionResult(context -> context
                 .deleteFrom(SOURCE)
-                .where(SOURCE.ID.in(sourceIds))
+                .where(SOURCE.DELETED.isTrue())
                 .execute());
     }
 
@@ -206,6 +227,12 @@ public class SourceDao implements Flushable {
                 .set(SOURCE.EXAMINED, false)
                 .set(SOURCE.ITEM_COUNT, 0)
                 .execute());
+    }
+
+    public void setSourceExamined(final long sourceId,
+                                  final boolean examined,
+                                  final int itemCount) {
+        jooq.transaction(context -> setSourceExamined(context, sourceId, examined, itemCount));
     }
 
     public void setSourceExamined(final DSLContext context,

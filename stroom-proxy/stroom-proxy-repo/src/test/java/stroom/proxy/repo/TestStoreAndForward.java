@@ -46,14 +46,14 @@ public class TestStoreAndForward {
         proxyRepoSources.addSource(1L, "test", null, null);
         proxyRepoSources.flush();
         assertThat(sourceDao.countSources()).isOne();
-        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
+        assertThat(sourceDao.countDeletableSources()).isZero();
 
         // Now forward the sources.
         sourceForwarder.createAllForwardSources();
         sourceForwarder.flush();
         sourceForwarder.forwardAll();
         sourceForwarder.flush();
-        assertThat(sourceDao.getDeletableSources(1000).size()).isOne();
+        assertThat(sourceDao.countDeletableSources()).isOne();
 
         assertThat(sourceDao.countSources()).isOne();
         cleanup.cleanupSources();

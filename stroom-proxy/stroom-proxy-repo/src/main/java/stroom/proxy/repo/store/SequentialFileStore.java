@@ -10,9 +10,6 @@ import stroom.util.io.WrappedOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,7 +35,7 @@ import javax.inject.Singleton;
 @Singleton
 public class SequentialFileStore {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SequentialFileStore.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SequentialFileStore.class);
 
     private final Path tempDir;
     private final Path storeDir;
@@ -77,7 +74,7 @@ public class SequentialFileStore {
                 final FileSet fileSet = getStoreFileSet(maxId);
                 // Ensure the file set is complete.
                 if (!Files.exists(fileSet.getZip()) || !Files.exists(fileSet.getMeta())) {
-                    LOGGER.info("Found partially stored data, will delete: " + fileSet);
+                    LOGGER.info(() -> "Found partially stored data, will delete: " + fileSet);
                     try {
                         fileSet.delete();
 
@@ -275,7 +272,7 @@ public class SequentialFileStore {
                     rawOutputStream = Files.newOutputStream(this.tempFileSet.getZip(),
                             StandardOpenOption.CREATE_NEW);
                 } catch (final NoSuchFileException e) {
-                    LOGGER.debug(e.getMessage(), e);
+                    LOGGER.debug(e::getMessage, e);
                     ensureDirExists(tempDir);
                 }
             }
@@ -294,18 +291,14 @@ public class SequentialFileStore {
             if (Thread.currentThread().isInterrupted()) {
                 throw new IOException("Progress Stopped");
             }
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("addEntry() - " + tempFileSet.getZip() + " - " + name + " - adding");
-            }
+            LOGGER.trace(() -> "addEntry() - " + tempFileSet.getZip() + " - " + name + " - adding");
             zipOutputStream.putNextEntry(new ZipEntry(name));
             return new WrappedOutputStream(zipOutputStream) {
                 @Override
                 public void close() throws IOException {
                     zipOutputStream.closeEntry();
                     inEntry = false;
-                    if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace("addEntry() - " + tempFileSet.getZip() + " - " + name + " - closed");
-                    }
+                    LOGGER.trace(() -> "addEntry() - " + tempFileSet.getZip() + " - " + name + " - closed");
                 }
             };
         }
@@ -331,11 +324,11 @@ public class SequentialFileStore {
                     }
 
                 } catch (final IOException | RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(e::getMessage, e);
                     try {
                         tempFileSet.delete();
                     } catch (final IOException e2) {
-                        LOGGER.error("Failed to delete file " + tempFileSet.getZip());
+                        LOGGER.error(() -> "Failed to delete file " + tempFileSet.getZip());
                     }
                     throw e;
                 }
@@ -356,7 +349,7 @@ public class SequentialFileStore {
                             tempFileSet.getMeta(),
                             storeFileSet.getMeta());
                 } catch (final IOException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(e::getMessage, e);
                     throw e;
                 }
 
@@ -400,7 +393,7 @@ public class SequentialFileStore {
                     try {
                         tempFileSet.delete();
                     } catch (final IOException e) {
-                        LOGGER.error("Failed to delete file " + tempFileSet.getZip());
+                        LOGGER.error(() -> "Failed to delete file " + tempFileSet.getZip());
                     }
                 }
             }

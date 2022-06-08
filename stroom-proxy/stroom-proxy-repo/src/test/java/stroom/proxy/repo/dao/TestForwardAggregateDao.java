@@ -1,10 +1,8 @@
 package stroom.proxy.repo.dao;
 
-import stroom.data.zip.StroomZipFileType;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.RepoSource;
-import stroom.proxy.repo.RepoSourceEntry;
 import stroom.proxy.repo.RepoSourceItem;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BatchUtil;
@@ -15,8 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -53,7 +49,6 @@ public class TestForwardAggregateDao {
     @Test
     void testForwardAggregate() {
         assertThat(sourceDao.countSources()).isZero();
-        assertThat(sourceItemDao.countEntries()).isZero();
         assertThat(aggregateDao.countAggregates()).isZero();
         assertThat(forwardAggregateDao.countForwardAggregates()).isZero();
         assertThat(forwardDestDao.countForwardDest()).isZero();
@@ -73,25 +68,18 @@ public class TestForwardAggregateDao {
         for (int i = 0; i < 100; i++) {
             final RepoSourceItem sourceItemRecord = new RepoSourceItem(
                     source,
+                    i,
                     "item" + i,
                     feedId,
                     null,
                     0,
-                    new ArrayList<>());
-            itemNameMap.put(sourceItemRecord.getName(), sourceItemRecord);
-
-            for (int j = 0; j < 10; j++) {
-                final RepoSourceEntry entry = new RepoSourceEntry(
-                        StroomZipFileType.DATA,
-                        "dat",
-                        100L);
-                sourceItemRecord.addEntry(entry);
-            }
+                    "dat");
+            itemNameMap.put(sourceItemRecord.name(), sourceItemRecord);
         }
 
         sourceItemDao.addItems(source, itemNameMap.values());
         sourceItemDao.flush();
-        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
+        assertThat(sourceDao.countDeletableSources()).isZero();
 
         BatchUtil.transfer(
                 sourceItemDao::getNewSourceItems,
@@ -122,11 +110,11 @@ public class TestForwardAggregateDao {
                 forwardAggregate -> forwardAggregateDao.update(forwardAggregate.copy().tries(1).success(true).build())
         );
 
-        sourceDao.getDeletableSources(1000).forEach(s -> sourceDao.deleteSources(Collections.singletonList(s)));
+        sourceDao.countDeletableSources();
+        sourceDao.deleteSources();
 
         assertThat(forwardAggregateDao.countForwardAggregates()).isZero();
         assertThat(aggregateDao.countAggregates()).isZero();
-        assertThat(sourceItemDao.countEntries()).isZero();
         assertThat(sourceItemDao.countItems()).isZero();
         assertThat(sourceDao.countSources()).isZero();
     }

@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS source (
   file_store_id             BIGINT NOT NULL,
   fk_feed_id                BIGINT NOT NULL,
   examined                  BOOLEAN DEFAULT FALSE,
+  deleted                   BOOLEAN DEFAULT FALSE,
   item_count                INTEGER DEFAULT 0,
   new_position              BIGINT NULL,
   FOREIGN KEY               (fk_feed_id) REFERENCES feed (id)
@@ -36,9 +37,11 @@ CREATE INDEX examined_item_count_index ON source(examined, item_count);
 CREATE TABLE IF NOT EXISTS source_item (
   id                        BIGINT PRIMARY KEY,
   name                      VARCHAR(255) NOT NULL,
+  extensions                VARCHAR(255) NOT NULL,
   fk_feed_id                BIGINT NOT NULL,
   byte_size                 BIGINT DEFAULT 0,
   fk_source_id              BIGINT NOT NULL,
+  file_store_id             BIGINT NOT NULL,
   fk_aggregate_id           BIGINT NULL,
   new_position              BIGINT NULL,
   UNIQUE                    (name, fk_source_id),
@@ -47,15 +50,7 @@ CREATE TABLE IF NOT EXISTS source_item (
   FOREIGN KEY               (fk_aggregate_id) REFERENCES aggregate (id)
 );
 CREATE UNIQUE INDEX new_position_source_item_index ON source_item(new_position);
-
-CREATE TABLE IF NOT EXISTS source_entry (
-  id                        BIGINT PRIMARY KEY,
-  extension                 VARCHAR(255) NOT NULL,
-  extension_type            INTEGER NOT NULL,
-  byte_size                 BIGINT DEFAULT 0,
-  fk_source_item_id         BIGINT NOT NULL,
-  FOREIGN KEY               (fk_source_item_id) REFERENCES source_item (id)
-);
+CREATE INDEX source_item_aggregate_id ON source_item(fk_aggregate_id);
 
 CREATE TABLE IF NOT EXISTS aggregate (
   id                        BIGINT PRIMARY KEY,

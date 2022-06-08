@@ -20,9 +20,9 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
@@ -41,15 +41,18 @@ public class SenderImpl implements Sender {
     }
 
     @Override
-    public void sendDataToHandler(final Map<RepoSource, List<RepoSourceItem>> items,
+    public void sendDataToHandler(final Items items,
                                   final StreamHandler handler) {
         String targetName;
         long sequenceId = 1;
 
-        for (final Entry<RepoSource, List<RepoSourceItem>> mapEntry : items.entrySet()) {
-            final RepoSource source = mapEntry.getKey();
-            final List<RepoSourceItem> repoSourceItems = mapEntry.getValue();
-
+        final List<Items.Source> sources = items
+                .map()
+                .keySet()
+                .stream()
+                .sorted(Comparator.comparing(Items.Source::id))
+                .toList();
+        for (final Items.Source source : sources) {
             // Send no more if told to finish
             if (Thread.currentThread().isInterrupted()) {
                 LOGGER.info(() -> "processFeedFiles() - Quitting early as we have been told to stop");
@@ -59,12 +62,23 @@ public class SenderImpl implements Sender {
 
             final FileSet fileSet = sequentialFileStore.getStoreFileSet(source.fileStoreId());
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileSet.getZip()))) {
-                for (final RepoSourceItem item : repoSourceItems) {
+                final List<Items.Item> repoSourceItems = items
+                        .map()
+                        .get(source)
+                        .stream()
+                        .sorted(Comparator.comparing(Items.Item::id))
+                        .toList();
+                for (final Items.Item item : repoSourceItems) {
                     targetName = StroomFileNameUtil.getIdPath(sequenceId++);
 
-                    for (final RepoSourceEntry entry : item.getEntries()) {
-                        final String sourceName = item.getName();
-                        final String extension = entry.extension();
+                    final String extensions = item.extensions();
+                    final List<String> extensionList = Arrays
+                            .stream(extensions.split(","))
+                            .sorted(Comparator.comparingInt(entry -> StroomZipFileType.fromExtension(entry).getId()))
+                            .toList();
+
+                    for (final String extension : extensionList) {
+                        final String sourceName = item.name();
                         final String fullSourceName = sourceName + extension;
                         final String fullTargetName = targetName + extension;
 

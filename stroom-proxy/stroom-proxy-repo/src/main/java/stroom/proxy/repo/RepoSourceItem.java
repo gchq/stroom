@@ -1,68 +1,85 @@
 package stroom.proxy.repo;
 
-import java.util.List;
+import stroom.proxy.repo.dao.FeedDao;
 
-public class RepoSourceItem {
+public record RepoSourceItem(
+        RepoSource repoSource,
+        long itemId,
+        String name,
+        long feedId,
+        Long aggregateId,
+        long totalByteSize,
+        String extensions) {
 
-    private final RepoSource source;
-    private final String name;
-    private final long feedId;
-    private final Long aggregateId;
-    private long totalByteSize;
-    private final List<RepoSourceEntry> entries;
+    public static class RepoSourceItemBuilder {
 
-    public RepoSourceItem(final RepoSource source,
-                          final String name,
-                          final long feedId,
-                          final Long aggregateId,
-                          final long totalByteSize,
-                          final List<RepoSourceEntry> entries) {
-        this.source = source;
-        this.name = name;
-        this.feedId = feedId;
-        this.aggregateId = aggregateId;
-        this.totalByteSize = totalByteSize;
-        this.entries = entries;
-    }
+        private RepoSource repoSource;
+        private long id;
+        private String name;
+        private String feedName;
+        private String typeName;
+        private Long aggregateId;
+        private long totalByteSize;
+        private String extensions = "";
 
-    public RepoSource getSource() {
-        return source;
-    }
+        public RepoSourceItemBuilder repoSource(RepoSource repoSource) {
+            this.repoSource = repoSource;
+            return this;
+        }
 
-    public String getName() {
-        return name;
-    }
+        public RepoSourceItemBuilder id(final long id) {
+            this.id = id;
+            return this;
+        }
 
-    public long getFeedId() {
-        return feedId;
-    }
+        public RepoSourceItemBuilder name(final String name) {
+            this.name = name;
+            return this;
+        }
 
-    public Long getAggregateId() {
-        return aggregateId;
-    }
+        public RepoSourceItemBuilder feedName(final String feedName) {
+            this.feedName = feedName;
+            return this;
+        }
 
-    public long getTotalByteSize() {
-        return totalByteSize;
-    }
+        public RepoSourceItemBuilder typeName(final String typeName) {
+            this.typeName = typeName;
+            return this;
+        }
 
-    public List<RepoSourceEntry> getEntries() {
-        return entries;
-    }
+        public RepoSourceItemBuilder aggregateId(final Long aggregateId) {
+            this.aggregateId = aggregateId;
+            return this;
+        }
 
-    public void addEntry(final RepoSourceEntry entry) {
-        this.entries.add(entry);
-        this.totalByteSize += entry.byteSize();
-    }
+        public RepoSourceItemBuilder addEntry(final String extension, final long byteSize) {
+            if (extensions.length() == 0) {
+                this.extensions = extension;
+            } else {
+                this.extensions = this.extensions + "," + extension;
+            }
+            this.totalByteSize += byteSize;
+            return this;
+        }
 
-    @Override
-    public String toString() {
-        return "RepoSourceItem{" +
-                ", source=" + source +
-                ", name='" + name + '\'' +
-                ", feedId='" + feedId + '\'' +
-                ", aggregateId=" + aggregateId +
-                ", totalByteSize=" + totalByteSize +
-                ", entries=" + entries +
-                '}';
+        public String getTypeName() {
+            return typeName;
+        }
+
+        public String getFeedName() {
+            return feedName;
+        }
+
+        public RepoSourceItem build(final FeedDao feedDao) {
+            final long feedId = feedDao.getId(new FeedKey(feedName, typeName));
+            return new RepoSourceItem(
+                    repoSource,
+                    id,
+                    name,
+                    feedId,
+                    aggregateId,
+                    totalByteSize,
+                    extensions);
+        }
     }
 }

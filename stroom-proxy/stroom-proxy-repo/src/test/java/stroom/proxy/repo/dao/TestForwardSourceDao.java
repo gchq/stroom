@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
@@ -41,7 +40,7 @@ public class TestForwardSourceDao {
 //        assertThat(sourceDao.pathExists("test")).isFalse();
 
         sourceDao.addSource(1L, "test", "test");
-        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
+        assertThat(sourceDao.countDeletableSources()).isZero();
 
         // Create forward sources.
         forwardDestDao.getForwardDestId("test");
@@ -58,7 +57,8 @@ public class TestForwardSourceDao {
                 forwardSource -> forwardSourceDao.update(forwardSource.copy().tries(1).success(true).build())
         );
 
-        sourceDao.getDeletableSources(1000).forEach(s -> sourceDao.deleteSources(Collections.singletonList(s)));
+        sourceDao.countDeletableSources();
+        sourceDao.deleteSources();
 
         assertThat(forwardSourceDao.countForwardSource()).isZero();
         assertThat(sourceDao.countSources()).isZero();

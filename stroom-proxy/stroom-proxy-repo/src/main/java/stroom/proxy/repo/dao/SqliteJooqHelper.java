@@ -35,7 +35,6 @@ import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
@@ -63,15 +62,15 @@ public class SqliteJooqHelper {
         this.maintenancePragma = proxyProxyDbConfig.getMaintenancePragma();
         this.maintenancePragmaFrequencyMs = proxyProxyDbConfig.getMaintenancePragmaFrequency().toMillis();
 
-        // Start periodic report.
-        CompletableFuture.runAsync(() -> {
-            while (true) {
-                ThreadUtil.sleep(10000);
-                Metrics.report();
-                printTableRecordCounts();
-                System.out.println("");
-            }
-        });
+//        // Start periodic report.
+//        CompletableFuture.runAsync(() -> {
+//            while (true) {
+//                ThreadUtil.sleep(10000);
+//                Metrics.report();
+//                printTableRecordCounts();
+//                System.out.println("");
+//            }
+//        });
     }
 
     public void readOnlyTransaction(final Consumer<DSLContext> consumer) {
@@ -264,7 +263,6 @@ public class SqliteJooqHelper {
         printRecordCount(SOURCE_ITEM, null, "SOURCE_ITEM");
         printRecordCount(SOURCE_ITEM, SOURCE_ITEM.FK_AGGREGATE_ID.isNotNull(), "SOURCE_ITEM AGGREGATED");
         printRecordCount(SOURCE_ITEM, SOURCE_ITEM.NEW_POSITION.isNotNull(), "SOURCE_ITEM NEW POSITION");
-        printRecordCount(SOURCE_ENTRY, null, "SOURCE_ENTRY");
         printRecordCount(AGGREGATE, null, "AGGREGATE");
         printRecordCount(AGGREGATE, AGGREGATE.NEW_POSITION.isNotNull(), "AGGREGATE NEW POSITION");
         printRecordCount(FORWARD_DEST, null, "FORWARD_DEST");
@@ -286,7 +284,6 @@ public class SqliteJooqHelper {
     public void printAllTables() {
         printTable(SOURCE, null, "SOURCE");
         printTable(SOURCE_ITEM, null, "SOURCE_ITEM");
-        printTable(SOURCE_ENTRY, null, "SOURCE_ENTRY");
         printTable(AGGREGATE, null, "AGGREGATE");
         printTable(FORWARD_DEST, null, "FORWARD_DEST");
         printTable(FORWARD_AGGREGATE, null, "FORWARD_AGGREGATE");

@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @ExtendWith(GuiceExtension.class)
@@ -119,6 +118,9 @@ public class TestCleanup {
 
             jooq.transaction(context -> {
                 for (int j = 0; j < 6; j++) {
+                    final long localSourceId = sourceId.incrementAndGet();
+                    final long localFileStoreId = sourceFileStoreId.incrementAndGet();
+
                     // Add sources.
                     context
                             .insertInto(
@@ -129,8 +131,8 @@ public class TestCleanup {
                                     SOURCE.EXAMINED,
                                     SOURCE.ITEM_COUNT)
                             .values(
-                                    sourceId.incrementAndGet(),
-                                    sourceFileStoreId.incrementAndGet(),
+                                    localSourceId,
+                                    localFileStoreId,
                                     feedId,
                                     true,
                                     4)
@@ -145,47 +147,19 @@ public class TestCleanup {
                                         SOURCE_ITEM.NAME,
                                         SOURCE_ITEM.FK_FEED_ID,
                                         SOURCE_ITEM.FK_SOURCE_ID,
-                                        SOURCE_ITEM.FK_AGGREGATE_ID)
+                                        SOURCE_ITEM.FILE_STORE_ID,
+                                        SOURCE_ITEM.FK_AGGREGATE_ID,
+                                        SOURCE_ITEM.EXTENSIONS)
                                 .values(
                                         sourceItemId.incrementAndGet(),
                                         feedId + "_" + k,
                                         feedId,
-                                        sourceId.get(),
+                                        localSourceId,
+                                        localFileStoreId,
                                         k % 2 == 0
                                                 ? 1L
-                                                : 2L)
-                                .execute();
-
-                        // Add source entry.
-                        context
-                                .insertInto(
-                                        SOURCE_ENTRY,
-                                        SOURCE_ENTRY.ID,
-                                        SOURCE_ENTRY.EXTENSION,
-                                        SOURCE_ENTRY.EXTENSION_TYPE,
-                                        SOURCE_ENTRY.BYTE_SIZE,
-                                        SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
-                                .values(
-                                        sourceEntryId.incrementAndGet(),
-                                        ".hdr",
-                                        2,
-                                        84L,
-                                        sourceItemId.get())
-                                .execute();
-                        context
-                                .insertInto(
-                                        SOURCE_ENTRY,
-                                        SOURCE_ENTRY.ID,
-                                        SOURCE_ENTRY.EXTENSION,
-                                        SOURCE_ENTRY.EXTENSION_TYPE,
-                                        SOURCE_ENTRY.BYTE_SIZE,
-                                        SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
-                                .values(
-                                        sourceEntryId.incrementAndGet(),
-                                        ".dat",
-                                        4,
-                                        1L,
-                                        sourceItemId.get())
+                                                : 2L,
+                                        ".hdr,.dat")
                                 .execute();
                     }
                 }
@@ -213,7 +187,6 @@ public class TestCleanup {
 
         // Check we have no source left
         jooq.readOnlyTransaction(context -> {
-            assertThat(JooqUtil.count(context, SOURCE_ENTRY)).isZero();
             assertThat(JooqUtil.count(context, SOURCE_ITEM)).isZero();
             assertThat(JooqUtil.count(context, SOURCE)).isZero();
         });
@@ -226,8 +199,7 @@ public class TestCleanup {
 //        jooq.printAllTables();
         assertThat(sourceDao.countSources()).isEqualTo(sources);
         assertThat(sourceItemDao.countItems()).isEqualTo(items);
-        assertThat(sourceItemDao.countEntries()).isEqualTo(entries);
-        assertThat(repoSources.getDeletableSources(1000).size()).isEqualTo(deletableSources);
+        assertThat(sourceDao.countDeletableSources()).isEqualTo(deletableSources);
     }
 
     private void forward(final long aggregateId,

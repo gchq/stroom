@@ -86,10 +86,6 @@ public class RepoSources implements Clearable {
         sourceDao.addSource(fileStoreId, feedName, typeName);
     }
 
-    public int deleteSources(final List<RepoSource> sources) {
-        return sourceDao.deleteSources(sources);
-    }
-
     public Batch<RepoSource> getNewSources() {
         return sourceDao.getNewSources();
     }
@@ -99,8 +95,17 @@ public class RepoSources implements Clearable {
         return sourceDao.getNewSources(timeout, timeUnit);
     }
 
-    public List<RepoSource> getDeletableSources(final int limit) {
-        return sourceDao.getDeletableSources(limit);
+    public void markDeletableSources() {
+        sourceDao.markDeletableSources();
+    }
+
+    public List<RepoSource> getDeletableSources(final long minSourceId,
+                                                final int limit) {
+        return sourceDao.getDeletableSources(minSourceId, limit);
+    }
+
+    public int deleteSources() {
+        return sourceDao.deleteSources();
     }
 
     @Override

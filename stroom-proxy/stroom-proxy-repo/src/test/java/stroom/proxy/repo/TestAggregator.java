@@ -61,7 +61,6 @@ public class TestAggregator {
     @Test
     void testWithSourceEntries() {
         assertThat(sourceItemDao.countItems()).isZero();
-        assertThat(sourceItemDao.countEntries()).isZero();
         assertThat(aggregateDao.countAggregates()).isZero();
         ensureNonDeletable();
 
@@ -71,7 +70,6 @@ public class TestAggregator {
 
         // Check that there is now something to aggregate.
         assertThat(sourceItemDao.countItems()).isEqualTo(1000);
-        assertThat(sourceItemDao.countEntries()).isEqualTo(3000);
 
         // Make sure we have no existing aggregates.
         aggregator.closeOldAggregates(1, 1, System.currentTimeMillis());
@@ -104,13 +102,12 @@ public class TestAggregator {
 
         // We should now have no source entries but some sources we can delete.
         assertThat(sourceItemDao.countItems()).isZero();
-        assertThat(sourceItemDao.countEntries()).isZero();
         assertThat(aggregateDao.countAggregates()).isZero();
-        assertThat(sourceDao.getDeletableSources(1000).size()).isOne();
+        assertThat(sourceDao.countDeletableSources()).isOne();
     }
 
     private void ensureNonDeletable() {
-        assertThat(sourceDao.getDeletableSources(1000).size()).isZero();
+        assertThat(sourceDao.countDeletableSources()).isZero();
     }
 
     @Test

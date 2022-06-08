@@ -17,7 +17,6 @@ import stroom.proxy.repo.db.jooq.tables.ForwardAggregate;
 import stroom.proxy.repo.db.jooq.tables.ForwardDest;
 import stroom.proxy.repo.db.jooq.tables.ForwardSource;
 import stroom.proxy.repo.db.jooq.tables.Source;
-import stroom.proxy.repo.db.jooq.tables.SourceEntry;
 import stroom.proxy.repo.db.jooq.tables.SourceItem;
 
 
@@ -65,11 +64,6 @@ public class DefaultSchema extends SchemaImpl {
     public final Source SOURCE = Source.SOURCE;
 
     /**
-     * The table <code>source_entry</code>.
-     */
-    public final SourceEntry SOURCE_ENTRY = SourceEntry.SOURCE_ENTRY;
-
-    /**
      * The table <code>source_item</code>.
      */
     public final SourceItem SOURCE_ITEM = SourceItem.SOURCE_ITEM;
@@ -96,7 +90,6 @@ public class DefaultSchema extends SchemaImpl {
             ForwardDest.FORWARD_DEST,
             ForwardSource.FORWARD_SOURCE,
             Source.SOURCE,
-            SourceEntry.SOURCE_ENTRY,
             SourceItem.SOURCE_ITEM
         );
     }

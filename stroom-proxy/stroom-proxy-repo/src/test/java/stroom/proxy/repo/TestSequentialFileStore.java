@@ -8,6 +8,7 @@ import stroom.proxy.repo.store.FileSet;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.Metrics;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -16,8 +17,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,7 +61,7 @@ class TestSequentialFileStore {
     }
 
     @Test
-    void testPerformance() throws IOException {
+    void testPerformance() {
         final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
         final SequentialFileStore fileStore = new SequentialFileStore(
                 () -> repoDir);
@@ -75,17 +79,62 @@ class TestSequentialFileStore {
         assertThat(fileStore.getMaxStoreId()).isEqualTo(100005);
     }
 
-    private void addFile(final SequentialFileStore fileStore) throws IOException {
-        final AttributeMap attributeMap = new AttributeMap();
-        AttributeMapUtil.addFeedAndType(attributeMap, "test", null);
-        try (final Entries entries = fileStore.getEntries(attributeMap)) {
-            OutputStream outputStream = null;
-            try {
-                outputStream = entries.addEntry("file");
-                outputStream.write("SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
-            } finally {
-                CloseableUtil.close(outputStream);
+    @Test
+    void testDelete() {
+        final int count = 1_000;
+        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
+        FileUtil.deleteContents(repoDir);
+        final SequentialFileStore fileStore = new SequentialFileStore(
+                () -> repoDir);
+
+        Metrics.measure("Add files", () -> {
+            for (int i = 0; i < count; i++) {
+                addFile(fileStore);
             }
+        });
+
+        assertThat(fileStore.getMaxStoreId()).isEqualTo(count);
+
+        Metrics.measure("Delete files", () -> {
+
+            final AtomicLong sequence = new AtomicLong();
+
+            final int futureCOunt = 1;
+            final CompletableFuture[] futures = new CompletableFuture[futureCOunt];
+            for (int i = 0; i < futureCOunt; i++) {
+                futures[i] = CompletableFuture.runAsync(() -> {
+                    try {
+                        long id = sequence.getAndIncrement();
+                        while (id < count) {
+                            fileStore.deleteSource(id);
+                            id = sequence.getAndIncrement();
+                        }
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+            }
+            CompletableFuture.allOf(futures).join();
+        });
+
+        Metrics.report();
+    }
+
+    private void addFile(final SequentialFileStore fileStore) {
+        try {
+            final AttributeMap attributeMap = new AttributeMap();
+            AttributeMapUtil.addFeedAndType(attributeMap, "test", null);
+            try (final Entries entries = fileStore.getEntries(attributeMap)) {
+                OutputStream outputStream = null;
+                try {
+                    outputStream = entries.addEntry("file");
+                    outputStream.write("SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
+                } finally {
+                    CloseableUtil.close(outputStream);
+                }
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }
