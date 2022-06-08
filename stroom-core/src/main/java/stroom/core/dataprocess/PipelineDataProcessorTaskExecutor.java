@@ -278,7 +278,9 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case
             // with a batch search.
-            if (processorFilter != null && processorTask.getData() != null && processorTask.getData().length() > 0) {
+            if (processorFilter != null
+                    && processorTask.getData() != null
+                    && processorTask.getData().length() > 0) {
                 searchIdHolder.setSearchId(Long.toString(processorFilter.getId()));
             }
 
@@ -292,6 +294,12 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             // Set the pipeline so it can be used by a filter if needed.
             pipelineDoc = pipelineStore.readDocument(
                     new DocRef(PipelineDoc.DOCUMENT_TYPE, streamProcessor.getPipelineUuid()));
+            if (pipelineDoc == null) {
+                final String msg = "Pipeline " + streamProcessor.getPipelineUuid()
+                        + " cannot be found for processor with id " + streamProcessor.getId();
+                LOGGER.error(msg);
+                throw new RuntimeException(msg);
+            }
             pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
 
             // Create some processing info.
@@ -343,19 +351,23 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     }
 
     private void recordStats(final String feedName, final PipelineDoc pipelineDoc) {
-        try {
-            final InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat(
-                    InternalStatisticKey.PIPELINE_STREAM_PROCESSOR,
-                    System.currentTimeMillis(),
-                    ImmutableMap.of(
-                            "Feed", feedName,
-                            "Pipeline", pipelineDoc.getName(),
-                            "Node", nodeInfo.getThisNodeName()));
+        if (feedName != null && pipelineDoc != null) {
+            try {
+                final InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat(
+                        InternalStatisticKey.PIPELINE_STREAM_PROCESSOR,
+                        System.currentTimeMillis(),
+                        ImmutableMap.of(
+                                "Feed", feedName,
+                                "Pipeline", pipelineDoc.getName(),
+                                "Node", nodeInfo.getThisNodeName()));
 
-            internalStatisticsReceiver.putEvent(event);
+                internalStatisticsReceiver.putEvent(event);
 
-        } catch (final RuntimeException e) {
-            LOGGER.error(() -> "recordStats", e);
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> "recordStats", e);
+            }
+        } else {
+            LOGGER.warn("Unable to record stats. feedName: {}, pipelineDoc: {}", feedName, pipelineDoc);
         }
     }
 

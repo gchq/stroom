@@ -12,6 +12,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2872** : Fix permission exception thrown when removing search store from cache.
+
+* Issue **#2889** : Change pipeline entity deletion to also logically delete the processor, processor filters and any unprocessed tasks.
+
 * Change the shard system info provider to only query the shard if the node has ownership.
 
 * Issue **#2879** : Prevent shards closing during read.
