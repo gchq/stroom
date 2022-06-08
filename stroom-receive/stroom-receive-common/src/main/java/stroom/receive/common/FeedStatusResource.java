@@ -38,9 +38,10 @@ import javax.ws.rs.core.MediaType;
 public interface FeedStatusResource extends RestResource {
 
     String BASE_RESOURCE_PATH = "/feedStatus" + ResourcePaths.V1;
+    String GET_FEED_STATUS_PATH_PART = "/getFeedStatus";
 
     @POST
-    @Path("/getFeedStatus")
+    @Path(GET_FEED_STATUS_PATH_PART)
     @Operation(
             summary = "Submit a request to get the status of a feed",
             operationId = "getFeedStatus")

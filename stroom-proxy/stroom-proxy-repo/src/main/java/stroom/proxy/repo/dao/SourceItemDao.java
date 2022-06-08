@@ -1,205 +1,217 @@
 package stroom.proxy.repo.dao;
 
-import stroom.proxy.repo.RepoSourceEntry;
+import stroom.db.util.JooqUtil;
+import stroom.proxy.repo.Items;
+import stroom.proxy.repo.ProxyDbConfig;
+import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceItem;
 import stroom.proxy.repo.RepoSourceItemRef;
-import stroom.proxy.repo.WorkQueue;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
+import stroom.proxy.repo.queue.Batch;
+import stroom.proxy.repo.queue.BindWriteQueue;
+import stroom.proxy.repo.queue.OperationWriteQueue;
+import stroom.proxy.repo.queue.ReadQueue;
+import stroom.proxy.repo.queue.RecordQueue;
+import stroom.proxy.repo.queue.WriteQueue;
+import stroom.util.logging.Metrics;
+import stroom.util.shared.Flushable;
 
-import org.jooq.BatchBindStep;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
-public class SourceItemDao {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceItemDao.class);
+public class SourceItemDao implements Flushable {
 
     private static final Field<?>[] SOURCE_ITEM_COLUMNS = new Field<?>[]{
             SOURCE_ITEM.ID,
             SOURCE_ITEM.NAME,
-            SOURCE_ITEM.FEED_NAME,
-            SOURCE_ITEM.TYPE_NAME,
+            SOURCE_ITEM.EXTENSIONS,
+            SOURCE_ITEM.FK_FEED_ID,
             SOURCE_ITEM.BYTE_SIZE,
-            SOURCE_ITEM.SOURCE_ID,
-            SOURCE_ITEM.AGGREGATE_ID,
+            SOURCE_ITEM.FK_SOURCE_ID,
+            SOURCE_ITEM.FILE_STORE_ID,
+            SOURCE_ITEM.FK_AGGREGATE_ID,
             SOURCE_ITEM.NEW_POSITION};
-    private static final Object[] SOURCE_ITEM_VALUES = new Object[SOURCE_ITEM_COLUMNS.length];
-
-    private static final Field<?>[] SOURCE_ENTRY_COLUMNS = new Field<?>[]{
-            SOURCE_ENTRY.ID,
-            SOURCE_ENTRY.EXTENSION,
-            SOURCE_ENTRY.EXTENSION_TYPE,
-            SOURCE_ENTRY.BYTE_SIZE,
-            SOURCE_ENTRY.FK_SOURCE_ITEM_ID};
-    private static final Object[] SOURCE_ENTRY_VALUES = new Object[SOURCE_ENTRY_COLUMNS.length];
 
     private final SqliteJooqHelper jooq;
 
-    private final AtomicLong sourceItemRecordId = new AtomicLong();
-    private final AtomicLong sourceEntryRecordId = new AtomicLong();
-    private WorkQueue newQueue;
+    private final SourceDao sourceDao;
+
+    private final AtomicLong sourceItemId = new AtomicLong();
+    private final AtomicLong sourceItemNewPosition = new AtomicLong();
+
+    private final RecordQueue recordQueue;
+    private final OperationWriteQueue sourceUpdateQueue;
+    private final BindWriteQueue sourceItemQueue;
+    private final ReadQueue<RepoSourceItemRef> sourceItemReadQueue;
 
     @Inject
-    SourceItemDao(final SqliteJooqHelper jooq) {
+    SourceItemDao(final SqliteJooqHelper jooq,
+                  final SourceDao sourceDao,
+                  final ProxyDbConfig dbConfig) {
         this.jooq = jooq;
+        this.sourceDao = sourceDao;
         init();
+
+        sourceUpdateQueue = new OperationWriteQueue();
+        sourceItemQueue = new BindWriteQueue(SOURCE_ITEM, SOURCE_ITEM_COLUMNS);
+        final List<WriteQueue> writeQueues = List.of(sourceItemQueue, sourceUpdateQueue);
+
+        sourceItemReadQueue = new ReadQueue<>(this::read, dbConfig.getBatchSize());
+        final List<ReadQueue<?>> readQueues = List.of(sourceItemReadQueue);
+
+        recordQueue = new RecordQueue(jooq, writeQueues, readQueues, dbConfig.getBatchSize());
+    }
+
+    private long read(final long currentReadPos, final long limit, List<RepoSourceItemRef> readQueue) {
+        final AtomicLong pos = new AtomicLong(currentReadPos);
+        jooq.readOnlyTransactionResult(context -> context
+                        .select(SOURCE_ITEM.ID,
+                                SOURCE_ITEM.FK_FEED_ID,
+                                SOURCE_ITEM.BYTE_SIZE,
+                                SOURCE_ITEM.NEW_POSITION)
+                        .from(SOURCE_ITEM)
+                        .where(SOURCE_ITEM.NEW_POSITION.isNotNull())
+                        .and(SOURCE_ITEM.NEW_POSITION.gt(currentReadPos))
+                        .orderBy(SOURCE_ITEM.NEW_POSITION)
+                        .limit(limit)
+                        .fetch())
+                .forEach(r -> {
+                    pos.set(r.get(SOURCE_ITEM.NEW_POSITION));
+                    final RepoSourceItemRef repoSourceItemRef = new RepoSourceItemRef(
+                            r.get(SOURCE_ITEM.ID),
+                            r.get(SOURCE_ITEM.FK_FEED_ID),
+                            r.get(SOURCE_ITEM.BYTE_SIZE)
+                    );
+                    readQueue.add(repoSourceItemRef);
+                });
+        return pos.get();
     }
 
     private void init() {
-        newQueue = WorkQueue.createWithJooq(jooq, SOURCE_ITEM, SOURCE_ITEM.NEW_POSITION);
+        jooq.readOnlyTransaction(context -> {
+            sourceItemId.set(JooqUtil
+                    .getMaxId(context, SOURCE_ITEM, SOURCE_ITEM.ID)
+                    .orElse(0L));
 
-        final long maxSourceItemRecordId = jooq.getMaxId(SOURCE_ITEM, SOURCE_ITEM.ID).orElse(0L);
-        sourceItemRecordId.set(maxSourceItemRecordId);
-
-        final long maxSourceEntryRecordId = jooq.getMaxId(SOURCE_ENTRY, SOURCE_ENTRY.ID).orElse(0L);
-        sourceEntryRecordId.set(maxSourceEntryRecordId);
+            sourceItemNewPosition.set(JooqUtil
+                    .getMaxId(context, SOURCE_ITEM, SOURCE_ITEM.NEW_POSITION)
+                    .orElse(0L));
+        });
     }
 
     public void clear() {
-        jooq.deleteAll(SOURCE_ENTRY);
-        jooq.deleteAll(SOURCE_ITEM);
-        jooq.checkEmpty(SOURCE_ENTRY);
-        jooq.checkEmpty(SOURCE_ITEM);
+        jooq.transaction(context -> {
+            JooqUtil.deleteAll(context, SOURCE_ITEM);
+            JooqUtil.checkEmpty(context, SOURCE_ITEM);
+        });
+        recordQueue.clear();
         init();
     }
 
     public int countItems() {
-        return jooq.count(SOURCE_ITEM);
+        return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, SOURCE_ITEM));
     }
 
-    public int countEntries() {
-        return jooq.count(SOURCE_ENTRY);
-    }
-
-    public void addItems(final Path fullPath,
-                         final long sourceId,
+    public void addItems(final RepoSource source,
                          final Collection<RepoSourceItem> items) {
-        jooq.underLock(() -> {
-            newQueue.put(writePos -> {
-                final List<Object[]> sourceItems = new ArrayList<>(items.size());
-                final List<Object[]> sourceEntries = new ArrayList<>();
-                for (final RepoSourceItem sourceItemRecord : items) {
-                    if (sourceItemRecord.getFeedName() == null) {
-                        LOGGER.error(() ->
-                                "Source item has no feed name: " +
-                                        fullPath +
-                                        " - " +
-                                        sourceItemRecord.getName());
-                    } else {
-                        final long itemRecordId = sourceItemRecordId.incrementAndGet();
+        recordQueue.add(() -> {
+            for (final RepoSourceItem sourceItemRecord : items) {
+                final long itemRecordId = sourceItemId.incrementAndGet();
 
-                        final Object[] sourceItem = new Object[SOURCE_ITEM_COLUMNS.length];
-                        sourceItem[0] = itemRecordId;
-                        sourceItem[1] = sourceItemRecord.getName();
-                        sourceItem[2] = sourceItemRecord.getFeedName();
-                        sourceItem[3] = sourceItemRecord.getTypeName();
-                        sourceItem[4] = sourceItemRecord.getTotalByteSize();
-                        sourceItem[5] = sourceItemRecord.getSource().getId();
-                        sourceItem[6] = sourceItemRecord.getAggregateId();
-                        sourceItem[7] = writePos.incrementAndGet();
-                        sourceItems.add(sourceItem);
+                final Object[] sourceItem = new Object[SOURCE_ITEM_COLUMNS.length];
+                sourceItem[0] = itemRecordId;
+                sourceItem[1] = sourceItemRecord.name();
+                sourceItem[2] = sourceItemRecord.extensions();
+                sourceItem[3] = sourceItemRecord.feedId();
+                sourceItem[4] = sourceItemRecord.totalByteSize();
+                sourceItem[5] = sourceItemRecord.repoSource().id();
+                sourceItem[6] = sourceItemRecord.repoSource().fileStoreId();
+                sourceItem[7] = sourceItemRecord.aggregateId();
+                sourceItem[8] = sourceItemNewPosition.incrementAndGet();
+                sourceItemQueue.add(sourceItem);
+            }
 
-                        final List<RepoSourceEntry> entries = sourceItemRecord.getEntries();
-                        for (final RepoSourceEntry entry : entries) {
-                            final long entryRecordId = sourceEntryRecordId.incrementAndGet();
-
-                            final Object[] sourceEntry = new Object[SOURCE_ENTRY_COLUMNS.length];
-                            sourceEntry[0] = entryRecordId;
-                            sourceEntry[1] = entry.getExtension();
-                            sourceEntry[2] = entry.getType().getId();
-                            sourceEntry[3] = entry.getByteSize();
-                            sourceEntry[4] = itemRecordId;
-                            sourceEntries.add(sourceEntry);
-                        }
-                    }
-                }
-
-                jooq.transaction(context -> {
-                    insertItems(context, sourceItems);
-                    insertEntries(context, sourceEntries);
-
-                    // Mark the source as having been examined.
-                    setSourceExamined(context, sourceId);
-                });
-            });
-            return null;
+            sourceUpdateQueue.add(context ->
+                    sourceDao.setSourceExamined(context, source.id(), true, items.size()));
         });
     }
 
-    private void insertItems(final DSLContext context, final List<Object[]> sourceItems) {
-        if (sourceItems.size() > 0) {
-            final BatchBindStep batchBindStep = context.batch(context
-                    .insertInto(SOURCE_ITEM)
-                    .columns(SOURCE_ITEM_COLUMNS)
-                    .values(SOURCE_ITEM_VALUES));
-            for (final Object[] sourceItem : sourceItems) {
-                batchBindStep.bind(sourceItem);
-            }
-            batchBindStep.execute();
-        }
+    public Batch<RepoSourceItemRef> getNewSourceItems() {
+        return recordQueue.getBatch(sourceItemReadQueue);
     }
 
-    private void insertEntries(final DSLContext context, final List<Object[]> sourceEntries) {
-        if (sourceEntries.size() > 0) {
-            final BatchBindStep batchBindStep = context.batch(context
-                    .insertInto(SOURCE_ENTRY)
-                    .columns(SOURCE_ENTRY_COLUMNS)
-                    .values(SOURCE_ENTRY_VALUES));
-            for (final Object[] sourceEntry : sourceEntries) {
-                batchBindStep.bind(sourceEntry);
-            }
-            batchBindStep.execute();
-        }
+    public Batch<RepoSourceItemRef> getNewSourceItems(final long timeout,
+                                                      final TimeUnit timeUnit) {
+        return recordQueue.getBatch(sourceItemReadQueue, timeout, timeUnit);
     }
 
-    private void setSourceExamined(final DSLContext context, final long sourceId) {
-        context
-                .update(SOURCE)
-                .set(SOURCE.EXAMINED, true)
-                .setNull(SOURCE.NEW_POSITION)
-                .where(SOURCE.ID.eq(sourceId))
-                .execute();
+    public void deleteBySourceId(final DSLContext context, final long sourceId) {
+        // Delete source items.
+        Metrics.measure("Delete source items by source id", () -> {
+            context
+                    .deleteFrom(SOURCE_ITEM)
+                    .where(SOURCE_ITEM.FK_SOURCE_ID.eq(sourceId))
+                    .execute();
+        });
     }
 
-    public Optional<RepoSourceItemRef> getNewSourceItem() {
-        return newQueue.get(this::getSourceItemAtQueuePosition);
-    }
+    /**
+     * Fetch a list of all source entries that belong to the specified aggregate.
+     *
+     * @param aggregateId The id of the aggregate to get source entries for.
+     * @return A list of source entries for the aggregate.
+     */
+    public Items fetchSourceItemsByAggregateId(final long aggregateId) {
+        final Map<Items.Source, List<Items.Item>> resultMap = new HashMap<>();
 
-    public Optional<RepoSourceItemRef> getNewSourceItem(final long timeout,
-                                                        final TimeUnit timeUnit) {
-        return newQueue.get(this::getSourceItemAtQueuePosition, timeout, timeUnit);
-    }
-
-    public Optional<RepoSourceItemRef> getSourceItemAtQueuePosition(final long position) {
-        return jooq.contextResult(context -> context
-                        .select(SOURCE_ITEM.ID,
-                                SOURCE_ITEM.FEED_NAME,
-                                SOURCE_ITEM.TYPE_NAME,
-                                SOURCE_ITEM.BYTE_SIZE)
+        // Get all the source zip entries that we want to write to the forwarding location.
+        jooq.readOnlyTransactionResult(context -> context
+                        .select(
+                                SOURCE_ITEM.ID,
+                                SOURCE_ITEM.NAME,
+                                SOURCE_ITEM.EXTENSIONS,
+                                SOURCE_ITEM.FK_FEED_ID,
+                                SOURCE_ITEM.BYTE_SIZE,
+                                SOURCE_ITEM.FK_SOURCE_ID,
+                                SOURCE_ITEM.FILE_STORE_ID,
+                                SOURCE_ITEM.FK_AGGREGATE_ID)
                         .from(SOURCE_ITEM)
-                        .where(SOURCE_ITEM.NEW_POSITION.eq(position))
-                        .fetchOptional())
-                .map(r -> new RepoSourceItemRef(
-                        r.get(SOURCE_ITEM.ID),
-                        r.get(SOURCE_ITEM.FEED_NAME),
-                        r.get(SOURCE_ITEM.TYPE_NAME),
-                        r.get(SOURCE_ITEM.BYTE_SIZE))
-                );
+                        .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId))
+                        .fetch())
+                .forEach(r -> {
+                    final Items.Source source = new Items.Source(
+                            r.get(SOURCE_ITEM.FK_SOURCE_ID),
+                            r.get(SOURCE_ITEM.FILE_STORE_ID));
+
+                    final Items.Item item = new Items.Item(
+                            source,
+                            r.get(SOURCE_ITEM.ID),
+                            r.get(SOURCE_ITEM.NAME),
+                            r.get(SOURCE_ITEM.FK_FEED_ID),
+                            r.get(SOURCE_ITEM.FK_AGGREGATE_ID),
+                            r.get(SOURCE_ITEM.BYTE_SIZE),
+                            r.get(SOURCE_ITEM.EXTENSIONS));
+
+                    resultMap.computeIfAbsent(source, s -> new ArrayList<>()).add(item);
+                });
+
+        return new Items(resultMap);
+    }
+
+    @Override
+    public void flush() {
+        recordQueue.flush();
     }
 }

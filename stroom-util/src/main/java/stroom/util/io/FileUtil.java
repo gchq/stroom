@@ -30,6 +30,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
@@ -140,6 +141,49 @@ public final class FileUtil {
         } catch (final IOException e) {
             LOGGER.debug(e.getMessage(), e);
         }
+        return count.get();
+    }
+
+    public static long countNested(final Path dir) {
+        final AtomicLong count = new AtomicLong();
+
+        try {
+            Files.walkFileTree(dir, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs)
+                        throws IOException {
+                    count.incrementAndGet();
+                    return super.preVisitDirectory(dir, attrs);
+                }
+
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+                    count.incrementAndGet();
+                    return super.visitFile(file, attrs);
+                }
+            });
+        } catch (final IOException e) {
+            // Ignore.
+        }
+
+        return count.get();
+    }
+
+    public static long countNestedFiles(final Path dir) {
+        final AtomicLong count = new AtomicLong();
+
+        try {
+            Files.walkFileTree(dir, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+                    count.incrementAndGet();
+                    return super.visitFile(file, attrs);
+                }
+            });
+        } catch (final IOException e) {
+            // Ignore.
+        }
+
         return count.get();
     }
 

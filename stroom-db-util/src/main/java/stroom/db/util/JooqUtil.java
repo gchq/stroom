@@ -682,4 +682,48 @@ public final class JooqUtil {
     private static void releaseDataSource() {
         DATA_SOURCE_THREAD_LOCAL.set(null);
     }
+
+    public static <T> Optional<T> getMinId(final DSLContext context,
+                                           final Table<?> table,
+                                           final Field<T> idField) {
+        return context
+                .select(DSL.min(idField))
+                .from(table)
+                .fetchOptional()
+                .map(Record1::value1);
+    }
+
+    public static <T> Optional<T> getMaxId(final DSLContext context,
+                                           final Table<?> table,
+                                           final Field<T> idField) {
+        return context
+                .select(DSL.max(idField))
+                .from(table)
+                .fetchOptional()
+                .map(Record1::value1);
+    }
+
+    public static int count(final DSLContext context,
+                            final Table<?> table) {
+        return context
+                .select(DSL.count())
+                .from(table)
+                .fetchOptional()
+                .map(Record1::value1)
+                .orElse(0);
+    }
+
+    public static int deleteAll(final DSLContext context,
+                                final Table<?> table) {
+        return context
+                .deleteFrom(table)
+                .execute();
+    }
+
+    public static void checkEmpty(final DSLContext context,
+                                  final Table<?> table) {
+        if (count(context, table) > 0) {
+            throw new RuntimeException("Unexpected data");
+        }
+    }
 }

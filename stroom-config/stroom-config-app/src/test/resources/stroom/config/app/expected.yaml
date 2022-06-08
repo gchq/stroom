@@ -507,22 +507,6 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-  proxyAggregation:
-    aggregator:
-      aggregationFrequency: "PT1M"
-      enabled: true
-      maxAggregateAge: "PT10M"
-      maxItemsPerAggregate: 1000
-      maxUncompressedByteSize: "1.0G"
-    repoDb:
-      connectionPragma:
-      - "pragma synchronous = normal;"
-      - "pragma temp_store = memory;"
-      - "pragma mmap_size = 30000000000;"
-      dbDir: "proxi_repo_db"
-      globalPragma:
-      - "pragma journal_mode = WAL;"
-    repoDir: "proxy_repo"
   publicUri:
     hostname: null
     pathPrefix: null

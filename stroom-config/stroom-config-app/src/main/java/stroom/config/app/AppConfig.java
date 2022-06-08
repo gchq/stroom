@@ -10,7 +10,6 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
-import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
@@ -92,7 +91,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_PIPELINE = "pipeline";
     public static final String PROP_NAME_PROCESSOR = "processor";
     public static final String PROP_NAME_PROPERTIES = "properties";
-    public static final String PROP_NAME_PROXY_AGGREGATION = "proxyAggregation";
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
@@ -136,7 +134,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final PipelineConfig pipelineConfig;
     private final ProcessorConfig processorConfig;
     private final PropertyServiceConfig propertyServiceConfig;
-    private final ProxyAggregationConfig proxyAggregationConfig;
     private final PublicUriConfig publicUri;
     private final ReceiveDataConfig receiveDataConfig;
     private final SearchConfig searchConfig;
@@ -184,7 +181,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new PipelineConfig(),
                 new ProcessorConfig(),
                 new PropertyServiceConfig(),
-                new ProxyAggregationConfig(),
                 new PublicUriConfig(),
                 new ReceiveDataConfig(),
                 new SearchConfig(),
@@ -231,7 +227,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_PIPELINE) final PipelineConfig pipelineConfig,
                      @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
                      @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
-                     @JsonProperty(PROP_NAME_PROXY_AGGREGATION) final ProxyAggregationConfig proxyAggregationConfig,
                      @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                      @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
                      @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
@@ -274,7 +269,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.pipelineConfig = pipelineConfig;
         this.processorConfig = processorConfig;
         this.propertyServiceConfig = propertyServiceConfig;
-        this.proxyAggregationConfig = proxyAggregationConfig;
         this.publicUri = publicUri;
         this.receiveDataConfig = receiveDataConfig;
         this.searchConfig = searchConfig;
@@ -450,11 +444,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonPropertyDescription("Configuration for the stroom property service")
     public PropertyServiceConfig getPropertyServiceConfig() {
         return propertyServiceConfig;
-    }
-
-    @JsonProperty(PROP_NAME_PROXY_AGGREGATION)
-    public ProxyAggregationConfig getProxyAggregationConfig() {
-        return proxyAggregationConfig;
     }
 
     @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host if " +

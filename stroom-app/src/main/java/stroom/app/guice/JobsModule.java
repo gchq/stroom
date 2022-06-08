@@ -1,6 +1,5 @@
 package stroom.app.guice;
 
-import stroom.core.receive.ProxyAggregationJobsModule;
 import stroom.data.store.impl.DataRetentionJobModule;
 import stroom.data.store.impl.fs.FsDataStoreJobsModule;
 import stroom.data.store.impl.fs.FsVolumeJobsModule;
@@ -16,7 +15,6 @@ public class JobsModule extends AbstractModule {
         install(new DataRetentionJobModule());
         install(new FsVolumeJobsModule());
         install(new stroom.node.impl.NodeJobsModule());
-        install(new ProxyAggregationJobsModule());
         install(new FsDataStoreJobsModule());
     }
 }

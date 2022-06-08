@@ -1,10 +1,13 @@
 package stroom.proxy.repo;
 
 import stroom.receive.common.StreamHandlers;
+import stroom.util.concurrent.UncheckedInterruptedException;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -13,6 +16,8 @@ public class MockForwardDestinations implements ForwarderDestinations {
 
     private final ProgressLog progressLog;
     private final AtomicInteger forwardCount = new AtomicInteger();
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
 
     @Inject
     public MockForwardDestinations(final ProgressLog progressLog) {
@@ -25,19 +30,53 @@ public class MockForwardDestinations implements ForwarderDestinations {
     }
 
     @Override
-    public StreamHandlers getProvider(final String forwardUrl) {
+    public StreamHandlers getProvider(final String name) {
         return (feeName, typeName, attributeMap, consumer) -> {
             progressLog.increment("MockForwardDestinations - handle");
-            forwardCount.incrementAndGet();
+            try {
+                lock.lockInterruptibly();
+                try {
+                    forwardCount.incrementAndGet();
+                    condition.signalAll();
+                } finally {
+                    lock.unlock();
+                }
+            } catch (final InterruptedException e) {
+                throw UncheckedInterruptedException.reset(e);
+            }
             consumer.accept((entry, inputStream, progressHandler) -> 0);
         };
     }
 
-    public int getForwardCount() {
-        return forwardCount.get();
+    public long awaitNew(final long lastAddedStoreId) {
+        long currentStoreId = lastAddedStoreId;
+        try {
+            lock.lockInterruptibly();
+            try {
+                currentStoreId = forwardCount.get();
+                while (currentStoreId <= lastAddedStoreId) {
+                    condition.await();
+                    currentStoreId = forwardCount.get();
+                }
+            } finally {
+                lock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.reset(e);
+        }
+        return currentStoreId;
     }
 
     public void clear() {
-        forwardCount.set(0);
+        try {
+            lock.lockInterruptibly();
+            try {
+                forwardCount.set(0);
+            } finally {
+                lock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.reset(e);
+        }
     }
 }

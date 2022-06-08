@@ -33,7 +33,6 @@ dependencies {
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-processor:stroom-processor-impl')
-    implementation project(':stroom-proxy:stroom-proxy-repo')
     implementation project(':stroom-meta:stroom-meta-mock')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-mock')

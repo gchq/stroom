@@ -3,10 +3,6 @@ package stroom.config.global.impl;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.ConfigHolder;
-import stroom.core.receive.ProxyAggregationConfig;
-import stroom.core.receive.ProxyAggregationRepoDbConfig;
-import stroom.proxy.repo.RepoConfig;
-import stroom.proxy.repo.RepoDbConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LambdaLogger;
@@ -33,9 +29,7 @@ public class TestConfigProvidersModule {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestConfigProvidersModule.class);
 
     private static final Set<Class<?>> SPECIAL_CASE_CLASSES = Set.of(
-            PathConfig.class,
-            RepoConfig.class,
-            RepoDbConfig.class);
+            PathConfig.class);
 
     @Test
     void testProviderMethodPresence() {
@@ -144,14 +138,14 @@ public class TestConfigProvidersModule {
                                 // StroomPathConfig is also mapped to PathConfig
                                 softAssertions.assertThat(config.getClass())
                                         .isEqualTo(StroomPathConfig.class);
-                            } else if (method.getName().equals("getRepoConfig")) {
-                                // StroomPathConfig is also mapped to PathConfig
-                                softAssertions.assertThat(config.getClass())
-                                        .isEqualTo(ProxyAggregationConfig.class);
-                            } else if (method.getName().equals("getRepoDbConfig")) {
-                                // StroomPathConfig is also mapped to PathConfig
-                                softAssertions.assertThat(config.getClass())
-                                        .isEqualTo(ProxyAggregationRepoDbConfig.class);
+//                            } else if (method.getName().equals("getRepoConfig")) {
+//                                // StroomPathConfig is also mapped to PathConfig
+//                                softAssertions.assertThat(config.getClass())
+//                                        .isEqualTo(ProxyAggregationConfig.class);
+//                            } else if (method.getName().equals("getRepoDbConfig")) {
+//                                // StroomPathConfig is also mapped to PathConfig
+//                                softAssertions.assertThat(config.getClass())
+//                                        .isEqualTo(ProxyAggregationRepoDbConfig.class);
                             } else {
                                 softAssertions.assertThat(config.getClass().getSimpleName())
                                         .withFailMessage(LogUtil.message("method {} returned {}, expecting {}",

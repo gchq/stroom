@@ -1,152 +1,85 @@
 package stroom.proxy.repo;
 
-import java.util.ArrayList;
-import java.util.List;
+import stroom.proxy.repo.dao.FeedDao;
 
-public class RepoSourceItem {
+public record RepoSourceItem(
+        RepoSource repoSource,
+        long itemId,
+        String name,
+        long feedId,
+        Long aggregateId,
+        long totalByteSize,
+        String extensions) {
 
-    private final RepoSource source;
-    private final String name;
-    private final String feedName;
-    private final String typeName;
-    private final Long aggregateId;
-    private long totalByteSize;
-    private final List<RepoSourceEntry> entries;
+    public static class RepoSourceItemBuilder {
 
-    private RepoSourceItem(final RepoSource source,
-                           final String name,
-                           final String feedName,
-                           final String typeName,
-                           final Long aggregateId,
-                           final long totalByteSize,
-                           final List<RepoSourceEntry> entries) {
-        this.source = source;
-        this.name = name;
-        this.feedName = feedName;
-        this.typeName = typeName;
-        this.aggregateId = aggregateId;
-        this.totalByteSize = totalByteSize;
-        this.entries = entries;
-    }
-
-    public RepoSource getSource() {
-        return source;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getFeedName() {
-        return feedName;
-    }
-
-    public String getTypeName() {
-        return typeName;
-    }
-
-    public Long getAggregateId() {
-        return aggregateId;
-    }
-
-    public long getTotalByteSize() {
-        return totalByteSize;
-    }
-
-    public List<RepoSourceEntry> getEntries() {
-        return entries;
-    }
-
-    public void addEntry(final RepoSourceEntry entry) {
-        this.entries.add(entry);
-        this.totalByteSize += entry.getByteSize();
-    }
-
-    @Override
-    public String toString() {
-        return "RepoSourceItem{" +
-                ", source=" + source +
-                ", name='" + name + '\'' +
-                ", feedName='" + feedName + '\'' +
-                ", typeName='" + typeName + '\'' +
-                ", aggregateId=" + aggregateId +
-                ", totalByteSize=" + totalByteSize +
-                ", entries=" + entries +
-                '}';
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public Builder copy() {
-        return new Builder(this);
-    }
-
-    public static class Builder {
-
-        private RepoSource source;
+        private RepoSource repoSource;
+        private long id;
         private String name;
         private String feedName;
         private String typeName;
         private Long aggregateId;
         private long totalByteSize;
-        private final List<RepoSourceEntry> entries;
+        private String extensions = "";
 
-        private Builder() {
-            entries = new ArrayList<>();
-        }
-
-        private Builder(final RepoSourceItem item) {
-            source = item.source;
-            name = item.name;
-            feedName = item.feedName;
-            typeName = item.typeName;
-            aggregateId = item.aggregateId;
-            totalByteSize = item.totalByteSize;
-            entries = new ArrayList<>(item.entries);
-        }
-
-        public Builder source(final RepoSource source) {
-            this.source = source;
+        public RepoSourceItemBuilder repoSource(RepoSource repoSource) {
+            this.repoSource = repoSource;
             return this;
         }
 
-        public Builder name(final String name) {
+        public RepoSourceItemBuilder id(final long id) {
+            this.id = id;
+            return this;
+        }
+
+        public RepoSourceItemBuilder name(final String name) {
             this.name = name;
             return this;
         }
 
-        public Builder feedName(final String feedName) {
+        public RepoSourceItemBuilder feedName(final String feedName) {
             this.feedName = feedName;
             return this;
         }
 
-        public Builder typeName(final String typeName) {
+        public RepoSourceItemBuilder typeName(final String typeName) {
             this.typeName = typeName;
             return this;
         }
 
-        public Builder aggregateId(final Long aggregateId) {
+        public RepoSourceItemBuilder aggregateId(final Long aggregateId) {
             this.aggregateId = aggregateId;
             return this;
         }
 
-        public Builder addEntry(final RepoSourceEntry entry) {
-            this.entries.add(entry);
-            this.totalByteSize += entry.getByteSize();
+        public RepoSourceItemBuilder addEntry(final String extension, final long byteSize) {
+            if (extensions.length() == 0) {
+                this.extensions = extension;
+            } else {
+                this.extensions = this.extensions + "," + extension;
+            }
+            this.totalByteSize += byteSize;
             return this;
         }
 
-        public RepoSourceItem build() {
+        public String getTypeName() {
+            return typeName;
+        }
+
+        public String getFeedName() {
+            return feedName;
+        }
+
+        public RepoSourceItem build(final FeedDao feedDao) {
+            final long feedId = feedDao.getId(new FeedKey(feedName, typeName));
             return new RepoSourceItem(
-                    source,
+                    repoSource,
+                    id,
                     name,
-                    feedName,
-                    typeName,
+                    feedId,
                     aggregateId,
                     totalByteSize,
-                    entries);
+                    extensions);
         }
     }
 }

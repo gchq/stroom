@@ -18,7 +18,6 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
-import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
@@ -940,7 +939,6 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PIPELINE) final PipelineConfig pipelineConfig,
                 @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
                 @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
-                @JsonProperty(PROP_NAME_PROXY_AGGREGATION) final ProxyAggregationConfig proxyAggregationConfig,
                 @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                 @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
                 @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
@@ -998,7 +996,6 @@ class TestConfigMapper {
                     pipelineConfig,
                     processorConfig,
                     propertyServiceConfig,
-                    proxyAggregationConfig,
                     publicUri,
                     receiveDataConfig,
                     searchConfig,

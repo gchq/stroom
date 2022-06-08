@@ -11,7 +11,7 @@ public class ProxyRepoTestModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new ProxyRepoDbModule());
+        install(new ProxyDbModule());
         install(new DbModule());
 
         final Path repoDir = FileUtil.createTempDirectory("stroom-proxy-repo");
@@ -23,6 +23,5 @@ public class ProxyRepoTestModule extends AbstractModule {
         bind(ForwarderDestinations.class).to(MockForwardDestinations.class);
         bind(Sender.class).to(MockSender.class);
         bind(ProgressLog.class).to(ProgressLogImpl.class);
-        bind(RepoDbConfig.class).to(ProxyRepoDbConfig.class);
     }
 }

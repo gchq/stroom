@@ -15,14 +15,7 @@ public class UncheckedInterruptedException extends RuntimeException {
         super(interruptedException.getMessage(), interruptedException);
     }
 
-//    public static void resetAndThrow(final InterruptedException e) throws UncheckedInterruptedException {
-//        LOGGER.debug(e.getMessage(), e);
-//        // Continue to interrupt the thread.
-//        Thread.currentThread().interrupt();
-//        throw new UncheckedInterruptedException(e);
-//    }
-
-    public static UncheckedInterruptedException create(final InterruptedException e) {
+    public static UncheckedInterruptedException reset(final InterruptedException e) {
         LOGGER.debug(e.getMessage(), e);
         // Continue to interrupt the thread.
         Thread.currentThread().interrupt();

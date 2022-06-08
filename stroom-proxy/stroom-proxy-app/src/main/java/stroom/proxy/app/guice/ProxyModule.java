@@ -26,7 +26,10 @@ import stroom.proxy.app.ProxyLifecycle;
 import stroom.proxy.app.RequestAuthenticatorImpl;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.RestClientConfigConverter;
+import stroom.proxy.app.event.SchemaEventResourceImpl;
+import stroom.proxy.app.event.TextEventServlet;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
+import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
@@ -37,7 +40,7 @@ import stroom.proxy.repo.ErrorReceiverImpl;
 import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProgressLog;
 import stroom.proxy.repo.ProgressLogImpl;
-import stroom.proxy.repo.ProxyRepoDbModule;
+import stroom.proxy.repo.ProxyDbModule;
 import stroom.proxy.repo.RepoDbDirProvider;
 import stroom.proxy.repo.RepoDbDirProviderImpl;
 import stroom.proxy.repo.RepoDirProvider;
@@ -117,10 +120,11 @@ public class ProxyModule extends AbstractModule {
     protected void configure() {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        bind(ProxyId.class).asEagerSingleton();
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new DbModule());
-        install(new ProxyRepoDbModule());
+        install(new ProxyDbModule());
         install(new MockCollectionModule());
 
         install(new DictionaryModule());
@@ -152,7 +156,6 @@ public class ProxyModule extends AbstractModule {
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
                 .bind(FeedStatusResourceImpl.class)
-                .bind(ForwarderDestinationsImpl.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
                 .bind(RemoteFeedStatusService.class);
@@ -165,14 +168,16 @@ public class ProxyModule extends AbstractModule {
                 .bind(DebugServlet.class)
                 .bind(ProxyStatusServlet.class)
                 .bind(ProxyWelcomeServlet.class)
-                .bind(ReceiveDataServlet.class);
+                .bind(ReceiveDataServlet.class)
+                .bind(TextEventServlet.class);
 
         AdminServletBinder.create(binder())
                 .bind(FilteredHealthCheckServlet.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ReceiveDataRuleSetResourceImpl.class)
-                .bind(FeedStatusResourceImpl.class);
+                .bind(FeedStatusResourceImpl.class)
+                .bind(SchemaEventResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)

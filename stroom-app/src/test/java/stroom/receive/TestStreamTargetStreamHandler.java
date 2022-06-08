@@ -28,7 +28,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.repo.ProgressHandler;
+import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
