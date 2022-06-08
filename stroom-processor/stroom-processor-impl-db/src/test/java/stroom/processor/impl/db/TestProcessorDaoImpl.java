@@ -112,11 +112,12 @@ class TestProcessorDaoImpl {
         final ProcessorFilter processorFilter1 = createProcessorFilter(processor1);
         createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED);
         createProcessorTask(processorFilter1, TaskStatus.ASSIGNED);
+        createProcessorTask(processorFilter1, TaskStatus.PROCESSING);
 
         Assertions.assertThat(getProcessorFilterCount(null))
                 .isEqualTo(1);
         Assertions.assertThat(getProcessorTaskCount(null))
-                .isEqualTo(2);
+                .isEqualTo(3);
 
         final Processor processor2 = createProcessor();
 
@@ -126,11 +127,12 @@ class TestProcessorDaoImpl {
         final ProcessorFilter processorFilter2 = createProcessorFilter(processor2);
         createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED);
         createProcessorTask(processorFilter2, TaskStatus.ASSIGNED);
+        createProcessorTask(processorFilter2, TaskStatus.PROCESSING);
 
         Assertions.assertThat(getProcessorFilterCount(null))
                 .isEqualTo(2);
         Assertions.assertThat(getProcessorTaskCount(null))
-                .isEqualTo(4);
+                .isEqualTo(6);
 
         processorDao.logicalDelete(processor1.getId());
 
@@ -140,7 +142,7 @@ class TestProcessorDaoImpl {
         Assertions.assertThat(getProcessorFilterCount(null))
                 .isEqualTo(2);
         Assertions.assertThat(getProcessorTaskCount(null))
-                .isEqualTo(4);
+                .isEqualTo(6);
 
         // Now make sure the right number have been set to a deleted state
         Assertions.assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
@@ -148,7 +150,7 @@ class TestProcessorDaoImpl {
         Assertions.assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
                 .isEqualTo(1);
         Assertions.assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
-                .isEqualTo(2);
+                .isEqualTo(4);
     }
 
     private Processor createProcessor() {
