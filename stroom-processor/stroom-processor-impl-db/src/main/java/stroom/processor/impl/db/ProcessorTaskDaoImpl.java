@@ -741,14 +741,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 status, nodeName, processorTask));
         final long now = System.currentTimeMillis();
 
-//        if (status.equals(TaskStatus.COMPLETE) || status.equals(TaskStatus.PROCESSING)) {
-//            LOGGER.warn("About to {} task {}, {}, sleeping",
-//                    status, processorTask.getId(), processorTask.getProcessorFilter().getProcessor().getId());
-//            ThreadUtil.sleep(15_000);
-//            LOGGER.warn("Done sleeping for {}, {}, {}",
-//                    status, processorTask.getId(), processorTask.getProcessorFilter().getProcessor().getId());
-//        }
-//
         final Integer nodeId;
         if (nodeName != null) {
             nodeId = processorNodeCache.getOrCreate(nodeName);
