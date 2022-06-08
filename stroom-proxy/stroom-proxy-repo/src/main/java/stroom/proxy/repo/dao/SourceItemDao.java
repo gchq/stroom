@@ -213,7 +213,7 @@ public class SourceItemDao implements Flushable {
     }
 
     public void deleteBySourceId(final DSLContext context, final long sourceId) {
-        Metrics.measure("Delete source entries", () -> {
+        Metrics.measure("Delete source entries by source id", () -> {
             context
                     .deleteFrom(SOURCE_ENTRY)
                     .where(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.in(
@@ -226,7 +226,7 @@ public class SourceItemDao implements Flushable {
         });
 
         // Delete source items.
-        Metrics.measure("Delete source items", () -> {
+        Metrics.measure("Delete source items by source id", () -> {
             context
                     .deleteFrom(SOURCE_ITEM)
                     .where(SOURCE_ITEM.FK_SOURCE_ID.eq(sourceId))
