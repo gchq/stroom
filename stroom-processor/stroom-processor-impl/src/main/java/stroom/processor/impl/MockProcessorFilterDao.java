@@ -40,18 +40,6 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
-    public boolean logicalDeleteAll(final int processorId) {
-        return dao.getMap()
-                .values()
-                .stream()
-                .filter(processorFilter -> processorFilter.getProcessor().getId().equals(processorId))
-                .anyMatch(processorFilter -> {
-                    processorFilter.setDeleted(true);
-                    return true;
-                });
-    }
-
-    @Override
     public boolean logicalDelete(final int id) {
         return fetch(id)
                 .map(processorFilter -> {

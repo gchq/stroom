@@ -161,15 +161,19 @@ public class DataProcessorTaskHandler {
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         } finally {
-            if (complete) {
-                processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
-                        startTime, System.currentTimeMillis());
-            } else {
-                processorTaskDao.changeTaskStatus(processorTask,
-                        nodeInfo.getThisNodeName(),
-                        TaskStatus.FAILED,
-                        startTime,
-                        System.currentTimeMillis());
+            // Null processorTask implies the task was (logically)? deleted before we completed so no point in
+            // changing status
+            if (processorTask != null) {
+                if (complete) {
+                    processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
+                            startTime, System.currentTimeMillis());
+                } else {
+                    processorTaskDao.changeTaskStatus(processorTask,
+                            nodeInfo.getThisNodeName(),
+                            TaskStatus.FAILED,
+                            startTime,
+                            System.currentTimeMillis());
+                }
             }
         }
 

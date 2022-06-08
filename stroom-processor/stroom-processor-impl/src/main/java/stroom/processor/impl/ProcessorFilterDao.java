@@ -10,6 +10,4 @@ public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
     ResultPage<ProcessorFilter> find(ExpressionCriteria criteria);
 
     boolean logicalDelete(int id);
-
-    boolean logicalDeleteAll(final int processorId);
 }

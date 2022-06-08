@@ -125,7 +125,9 @@ class ProcessorDaoImpl implements ProcessorDao {
                                         .innerJoin(PROCESSOR)
                                         .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                                         .where(PROCESSOR.ID.eq(id))))
-                        .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.UNPROCESSED.getPrimitiveValue()))
+                        .and(PROCESSOR_TASK.STATUS.in(
+                                TaskStatus.UNPROCESSED.getPrimitiveValue(),
+                                TaskStatus.ASSIGNED.getPrimitiveValue()))
                         .execute();
 
                 LOGGER.debug("Logically deleted {} tasks for processor Id {}",
