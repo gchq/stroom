@@ -132,39 +132,48 @@ public class DataProcessorTaskHandler {
                     // Change the task status.... and save
                     processorTask = processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(),
                             TaskStatus.PROCESSING, startTime, null);
-                    // Avoid having to do another fetch
-                    processorTask.setProcessorFilter(destProcessorFilter);
+                    if (processorTask != null) {
+                        // Avoid having to do another fetch
+                        processorTask.setProcessorFilter(destProcessorFilter);
 
-                    final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(new TaskType(
-                            destStreamProcessor.getTaskType()));
-                    final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
+                        final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(
+                                new TaskType(destStreamProcessor.getTaskType()));
+                        final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
 
-                    try {
-                        processorResult = dataProcessorTaskExecutor
-                                .exec(taskContext, destStreamProcessor, destProcessorFilter, processorTask, source);
-                        // Only record completion for this task if it was not
-                        // terminated.
-                        if (!taskContext.isTerminated()) {
-                            complete = true;
+                        try {
+                            processorResult = dataProcessorTaskExecutor
+                                    .exec(taskContext, destStreamProcessor, destProcessorFilter, processorTask, source);
+                            // Only record completion for this task if it was not
+                            // terminated.
+                            if (!taskContext.isTerminated()) {
+                                complete = true;
+                            }
+
+                        } catch (final RuntimeException e) {
+                            LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
                         }
-
-                    } catch (final RuntimeException e) {
-                        LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
+                    } else {
+                        LOGGER.debug("Null processorTask. " +
+                                "Task may have been logically/physically deleted so nothing to do");
                     }
                 }
             }
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         } finally {
-            if (complete) {
-                processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
-                        startTime, System.currentTimeMillis());
-            } else {
-                processorTaskDao.changeTaskStatus(processorTask,
-                        nodeInfo.getThisNodeName(),
-                        TaskStatus.FAILED,
-                        startTime,
-                        System.currentTimeMillis());
+            // Null processorTask implies the task was (logically)? deleted before we completed so no point in
+            // changing status
+            if (processorTask != null) {
+                if (complete) {
+                    processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
+                            startTime, System.currentTimeMillis());
+                } else {
+                    processorTaskDao.changeTaskStatus(processorTask,
+                            nodeInfo.getThisNodeName(),
+                            TaskStatus.FAILED,
+                            startTime,
+                            System.currentTimeMillis());
+                }
             }
         }
 

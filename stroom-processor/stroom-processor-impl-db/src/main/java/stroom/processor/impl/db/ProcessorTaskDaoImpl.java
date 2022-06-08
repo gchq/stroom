@@ -546,7 +546,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
                         .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
                         .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
-                        PROCESSOR_FILTER_TRACKER.ID))
+                                PROCESSOR_FILTER_TRACKER.ID))
                         .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                         .where(condition)
                         .orderBy(orderFields)
@@ -737,8 +737,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                           final Long startTime,
                                           final Long endTime) {
         LOGGER.debug(() -> LogUtil.message(
-                "changeTaskStatus() - Changing task status of {} to node={}, status={}",
-                processorTask, nodeName, status));
+                "changeTaskStatus({}) - Changing task status on node {}, {}",
+                status, nodeName, processorTask));
         final long now = System.currentTimeMillis();
 
         final Integer nodeId;
@@ -749,82 +749,93 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         }
 
         // Do everything within a single transaction.
-        final ProcessorTaskRecord result = JooqUtil.transactionResult(processorDbConnProvider, context -> {
-            ProcessorTaskRecord record = context.newRecord(PROCESSOR_TASK);
+        final ProcessorTaskRecord result = JooqUtil.transactionResultWithOptimisticLocking(
+                processorDbConnProvider, context -> {
+                    ProcessorTaskRecord record = context.newRecord(PROCESSOR_TASK);
 
-            try {
-                try {
-                    record.from(processorTask);
-                    record.setFkProcessorNodeId(nodeId);
-                    record.setStatus(status.getPrimitiveValue());
-                    record.setStatusTimeMs(now);
-                    record.setStartTimeMs(startTime);
-                    record.setEndTimeMs(endTime);
-                    record.update();
-
-                } catch (final RuntimeException e) {
-                    // Try this operation a few times.
-                    boolean success = false;
-                    RuntimeException lastError = null;
-
-                    // Try and do this up to 100 times.
-                    for (int tries = 0; tries < 100 && !success; tries++) {
-                        success = true;
-
+                    try {
                         try {
-                            if (LOGGER.isDebugEnabled()) {
-                                LOGGER.warn(() -> LogUtil.message(
-                                        "changeTaskStatus() - {} - Task has changed, attempting reload {}",
-                                        e.getMessage(), processorTask), e);
-                            } else {
-                                LOGGER.warn(() -> LogUtil.message(
-                                        "changeTaskStatus() - Task has changed, attempting reload {}", processorTask));
+                            record.from(processorTask);
+                            record.setFkProcessorNodeId(nodeId);
+                            record.setStatus(status.getPrimitiveValue());
+                            record.setStatusTimeMs(now);
+                            record.setStartTimeMs(startTime);
+                            record.setEndTimeMs(endTime);
+                            record.update();
+
+                        } catch (final RuntimeException e) {
+                            // Try this operation a few times.
+                            boolean success = false;
+                            RuntimeException lastError = null;
+
+                            // Try and do this up to 100 times.
+                            for (int tries = 0; tries < 100 && !success; tries++) {
+                                success = true;
+
+                                try {
+                                    if (LOGGER.isDebugEnabled()) {
+                                        LOGGER.warn(() -> LogUtil.message(
+                                                "changeTaskStatus({}) - {} - Task has changed, attempting reload {}",
+                                                status, e.getMessage(), processorTask), e);
+                                    } else {
+                                        LOGGER.warn(() -> LogUtil.message(
+                                                "changeTaskStatus({}) - Task has changed, attempting reload {}",
+                                                status, processorTask));
+                                    }
+
+                                    final Optional<ProcessorTaskRecord> optTaskRec = context
+                                            .selectFrom(PROCESSOR_TASK)
+                                            .where(PROCESSOR_TASK.ID.eq(record.getId()))
+                                            .fetchOptional();
+                                    LOGGER.debug("Actual DB record {}", optTaskRec);
+
+                                    if (optTaskRec.isEmpty()) {
+                                        LOGGER.warn(() -> LogUtil.message(
+                                                "changeTaskStatus({}) - Task does not exist, " +
+                                                        "task may have been physically deleted {}",
+                                                processorTask));
+                                        record = null;
+                                    } else if (TaskStatus.DELETED.getPrimitiveValue() == optTaskRec.get().getStatus()) {
+                                        LOGGER.warn(() -> LogUtil.message(
+                                                "changeTaskStatus({}) - Task has been logically deleted {}",
+                                                status,
+                                                processorTask));
+                                        record = null;
+                                    } else {
+                                        LOGGER.warn(() -> LogUtil.message(
+                                                "changeTaskStatus({}) - Re-loaded stream task {}",
+                                                status,
+                                                optTaskRec.get()));
+                                        record = optTaskRec.get();
+                                        record.setFkProcessorNodeId(nodeId);
+                                        record.setStatus(status.getPrimitiveValue());
+                                        record.setStatusTimeMs(now);
+                                        record.setStartTimeMs(startTime);
+                                        record.setEndTimeMs(endTime);
+                                        record.update();
+                                    }
+                                } catch (final RuntimeException e2) {
+                                    success = false;
+                                    lastError = e2;
+                                    // Wait before trying this operation again.
+                                    Thread.sleep(1000);
+                                }
                             }
 
-                            final Optional<ProcessorTaskRecord> optional = context
-                                    .selectFrom(PROCESSOR_TASK)
-                                    .where(PROCESSOR_TASK.ID.eq(record.getId()))
-                                    .fetchOptional();
-
-                            if (optional.isEmpty()) {
-                                LOGGER.warn(() -> LogUtil.message(
-                                        "changeTaskStatus() - Failed to reload task {}", processorTask));
-                            } else if (TaskStatus.DELETED.getPrimitiveValue() == optional.get().getStatus()) {
-                                LOGGER.warn(() -> LogUtil.message(
-                                        "changeTaskStatus() - Task has been deleted {}", processorTask));
-                            } else {
-                                LOGGER.warn(() -> LogUtil.message(
-                                        "changeTaskStatus() - Loaded stream task {}", optional.get()));
-                                record = optional.get();
-                                record.setFkProcessorNodeId(nodeId);
-                                record.setStatus(status.getPrimitiveValue());
-                                record.setStatusTimeMs(now);
-                                record.setStartTimeMs(startTime);
-                                record.setEndTimeMs(endTime);
-                                record.update();
+                            if (!success) {
+                                LOGGER.error("Error changing task status to {} for task '{}': {}",
+                                        status, processorTask, lastError.getMessage(), lastError);
                             }
-                        } catch (final RuntimeException e2) {
-                            success = false;
-                            lastError = e2;
-                            // Wait before trying this operation again.
-                            Thread.sleep(1000);
                         }
+                    } catch (final InterruptedException e) {
+                        LOGGER.error(e::getMessage, e);
+
+                        // Continue to interrupt this thread.
+                        Thread.currentThread().interrupt();
                     }
 
-                    if (!success) {
-                        LOGGER.error("Error changing task status for task '{}': {}",
-                                processorTask, lastError.getMessage(), lastError);
-                    }
-                }
-            } catch (final InterruptedException e) {
-                LOGGER.error(e::getMessage, e);
-
-                // Continue to interrupt this thread.
-                Thread.currentThread().interrupt();
-            }
-
-            return record;
-        });
+                    return record;
+                });
 
         return convert(result,
                 nodeName,

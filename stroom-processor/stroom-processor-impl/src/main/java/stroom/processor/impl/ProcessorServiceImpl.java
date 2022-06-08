@@ -19,6 +19,7 @@ package stroom.processor.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.security.api.SecurityContext;
@@ -28,22 +29,30 @@ import stroom.util.AuditUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Optional;
 import java.util.UUID;
 import javax.inject.Inject;
 
 public class ProcessorServiceImpl implements ProcessorService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorServiceImpl.class);
+
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
 
     private final SecurityContext securityContext;
     private final ProcessorDao processorDao;
+    private final ProcessorFilterService processorFilterService;
 
     @Inject
     ProcessorServiceImpl(final SecurityContext securityContext,
-                         final ProcessorDao processorDao) {
+                         final ProcessorDao processorDao,
+                         final ProcessorFilterService processorFilterService) {
         this.securityContext = securityContext;
         this.processorDao = processorDao;
+        this.processorFilterService = processorFilterService;
     }
 
     @Override
@@ -135,8 +144,29 @@ public class ProcessorServiceImpl implements ProcessorService {
 
     @Override
     public boolean delete(final int id) {
+        return securityContext.secureResult(PERMISSION, () -> {
+            // This will also 'delete' processor filters and UNPROCESSED tasks
+            return processorDao.logicalDelete(id);
+        });
+    }
+
+    @Override
+    public boolean deleteByPipelineUuid(final String pipelineUuid) {
         return securityContext.secureResult(PERMISSION, () ->
-                processorDao.logicalDelete(id));
+                processorDao.fetchByPipelineUuid(pipelineUuid)
+                        .map(processor -> {
+                            try {
+                                // This will also 'delete' processor filters and UNPROCESSED tasks
+                                return processorDao.logicalDelete(processor.getId());
+                            } catch (Exception e) {
+                                throw new RuntimeException("Error deleting filters and processor for pipelineUuid "
+                                        + pipelineUuid, e);
+                            }
+                        })
+                        .orElseGet(() -> {
+                            LOGGER.debug("No processor found with pipelineUuid {}", pipelineUuid);
+                            return false;
+                        }));
     }
 
     @Override
@@ -152,4 +182,5 @@ public class ProcessorServiceImpl implements ProcessorService {
             update(processor);
         });
     }
+
 }

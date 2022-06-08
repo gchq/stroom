@@ -196,6 +196,25 @@ public class NullSafe {
     }
 
     /**
+     * Allows you to test a value without worrying if the value is null, e.g.
+     * <pre><code>
+     *    boolean hasValues = NullSafe.test(myList, list -> !list.isEmpty());
+     * </code></pre>
+     *
+     * @return false if value is null
+     * else return the value of the predicate when applied
+     * to the non-null value.
+     */
+    public static <T> boolean test(final T value,
+                                   final Predicate<T> predicate) {
+        if (value == null) {
+            return false;
+        } else {
+            return predicate.test(value);
+        }
+    }
+
+    /**
      * Allows you to test some property of a value without worrying if the value is null, e.g.
      * <pre><code>
      *    boolean hasValues = NullSafe.test(myObject, MyObject::getItems, list -> !list.isEmpty());
