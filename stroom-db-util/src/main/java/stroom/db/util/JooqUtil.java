@@ -111,12 +111,12 @@ public final class JooqUtil {
     public static <R extends Record> int getTableCount(final DataSource dataSource,
                                                        final Table<R> table) {
 
-        return getTableCount(dataSource, table, null);
+        return getTableCountWhen(dataSource, table, null);
     }
 
-    public static <R extends Record> int getTableCount(final DataSource dataSource,
-                                                       final Table<R> table,
-                                                       final Condition condition) {
+    public static <R extends Record> int getTableCountWhen(final DataSource dataSource,
+                                                           final Table<R> table,
+                                                           final Condition condition) {
 
         try (final Connection connection = dataSource.getConnection()) {
             try {

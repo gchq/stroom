@@ -198,14 +198,14 @@ class TestProcessorDaoImpl {
     }
 
     private int getProcessorCount(final Condition condition) {
-        return JooqUtil.getTableCount(processorDbConnProvider, PROCESSOR, condition);
+        return JooqUtil.getTableCountWhen(processorDbConnProvider, PROCESSOR, condition);
     }
 
     private int getProcessorFilterCount(final Condition condition) {
-        return JooqUtil.getTableCount(processorDbConnProvider, PROCESSOR_FILTER, condition);
+        return JooqUtil.getTableCountWhen(processorDbConnProvider, PROCESSOR_FILTER, condition);
     }
 
     private int getProcessorTaskCount(final Condition condition) {
-        return JooqUtil.getTableCount(processorDbConnProvider, PROCESSOR_TASK, condition);
+        return JooqUtil.getTableCountWhen(processorDbConnProvider, PROCESSOR_TASK, condition);
     }
 }
