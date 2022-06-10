@@ -74,6 +74,7 @@ import stroom.util.guice.ServletBinder;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.BuildInfo;
 
+import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -120,6 +121,7 @@ public class ProxyModule extends AbstractModule {
     protected void configure() {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        bind(HealthCheckRegistry.class).toInstance(environment.healthChecks());
         bind(ProxyId.class).asEagerSingleton();
 
         install(new ProxyConfigModule(proxyConfigHolder));
