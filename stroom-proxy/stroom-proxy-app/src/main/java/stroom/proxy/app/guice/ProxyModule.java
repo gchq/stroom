@@ -121,6 +121,7 @@ public class ProxyModule extends AbstractModule {
     protected void configure() {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        bind(HealthCheckRegistry.class).toInstance(environment.healthChecks());
         bind(ProxyId.class).asEagerSingleton();
 
         install(new ProxyConfigModule(proxyConfigHolder));
