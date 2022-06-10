@@ -155,7 +155,6 @@ public class ProxyModule extends AbstractModule {
         bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
         bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
 
-        bind(HealthCheckRegistry.class).toInstance(environment.healthChecks());
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
                 .bind(FeedStatusResourceImpl.class)
