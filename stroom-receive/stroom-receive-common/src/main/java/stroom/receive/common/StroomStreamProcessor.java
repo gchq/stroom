@@ -173,7 +173,7 @@ public class StroomStreamProcessor {
                     // Handle an uncompressed stream.
                     processStream(inputStream, prefix);
                 } catch (final IOException e) {
-                    StroomStreamException.createAndThrow(e, globalAttributeMap);
+                    throw StroomStreamException.create(e, globalAttributeMap);
                 }
             }
         }
@@ -384,7 +384,7 @@ public class StroomStreamProcessor {
                 }
             }
         } catch (final IOException e) {
-            StroomStreamException.createAndThrow(e, globalAttributeMap);
+            throw StroomStreamException.create(e, globalAttributeMap);
         }
     }
 

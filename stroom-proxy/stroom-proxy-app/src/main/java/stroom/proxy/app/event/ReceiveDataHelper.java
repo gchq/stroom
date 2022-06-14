@@ -12,6 +12,7 @@ import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapValidator;
 import stroom.receive.common.StroomStreamException;
+import stroom.receive.common.StroomStreamStatus;
 import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.UserIdentity;
 import stroom.util.io.ByteCountInputStream;
@@ -125,14 +126,15 @@ public class ReceiveDataHelper {
                     }
                 }
             } catch (final StroomStreamException e) {
-                final int returnCode = e.getStroomStatusCode().getCode();
+                final StroomStreamStatus status = e.getStroomStreamStatus();
+                final int returnCode = status.getStroomStatusCode().getCode();
 
                 LOGGER.warn("\"handleException()\",{},\"{}\"",
                         CSVFormatter.format(attributeMap),
                         CSVFormatter.escape(e.getMessage()));
 
                 final long duration = System.currentTimeMillis() - startTimeMs;
-                if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA.equals(e.getStroomStatusCode())) {
+                if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA.equals(status.getStroomStatusCode())) {
                     logStream.log(
                             RECEIVE_LOG,
                             attributeMap,

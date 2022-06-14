@@ -76,7 +76,7 @@ public class TestReceiveDataServlet {
     private static boolean post(final HttpClient httpClient) {
         try {
             final HttpPost httpPost = new HttpPost("http://127.0.0.1:8090/stroom/noauth/datafeed");
-            httpPost.addHeader("Feed", "TEST-EVENTS");
+            httpPost.addHeader("Feed", "TEST-EVENTS2");
             httpPost.addHeader("System", "EXAMPLE_SYSTEM");
             httpPost.addHeader("Environment", "EXAMPLE_ENVIRONMENT");
             httpPost.setEntity(

@@ -17,6 +17,7 @@
 package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.xml.util.XMLWriter;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.logging.LambdaLogger;
@@ -132,8 +133,14 @@ public class TextEventServlet extends HttpServlet implements IsServlet {
             }
             response.setStatus(HttpStatus.SC_OK);
 
+        } catch (final StroomStreamException e) {
+            e.sendErrorResponse(response);
+
         } catch (final RuntimeException e) {
-            StroomStreamException.sendErrorResponse(request, response, e);
+            final StroomStreamException stroomStreamException =
+                    StroomStreamException.create(e,
+                            AttributeMapUtil.create(request));
+            stroomStreamException.sendErrorResponse(response);
         }
     }
 

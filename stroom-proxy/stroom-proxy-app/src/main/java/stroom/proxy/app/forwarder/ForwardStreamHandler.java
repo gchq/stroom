@@ -60,7 +60,7 @@ public class ForwardStreamHandler implements StreamHandler {
         startTimeMs = System.currentTimeMillis();
         attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
-        LOGGER.info(() -> "handleHeader() - " + forwardUrl + " Sending request " + attributeMap);
+        LOGGER.debug(() -> "handleHeader() - " + forwardUrl + " Sending request " + attributeMap);
 
         final URL url = new URL(forwardUrl);
         connection = (HttpURLConnection) url.openConnection();
@@ -118,7 +118,7 @@ public class ForwardStreamHandler implements StreamHandler {
     }
 
     void error() {
-        LOGGER.info(() -> "error() - " + forwardUrl);
+        LOGGER.debug(() -> "error() - " + forwardUrl);
         logAndDisconnect();
     }
 

@@ -62,7 +62,7 @@ class TestStroomStreamException {
 
         assertThatThrownBy(() -> {
             try {
-                StroomStreamException.createAndThrow(stroomStreamException, attributeMap);
+                throw StroomStreamException.create(stroomStreamException, attributeMap);
             } catch (Exception e) {
                 LOGGER.info("msg: {}", e.getMessage());
                 throw e;
@@ -89,7 +89,7 @@ class TestStroomStreamException {
 
         assertThatThrownBy(() -> {
             try {
-                StroomStreamException.createAndThrow(stroomStreamException, attributeMap);
+                throw StroomStreamException.create(stroomStreamException, attributeMap);
             } catch (Exception e) {
                 LOGGER.info("msg: {}", e.getMessage());
                 throw e;
@@ -116,7 +116,7 @@ class TestStroomStreamException {
                         "middle ex msg",
                         new RuntimeException("inner ex msg")));
 
-        final String msg = StroomStreamException.unwrapMessage(throwable);
+        final String msg = unwrapMessage(throwable);
 
         LOGGER.info("msg: {}", msg);
 
@@ -125,6 +125,28 @@ class TestStroomStreamException {
                 .contains("middle ex msg")
                 .contains("inner ex msg");
     }
+
+    protected static String unwrapMessage(final Throwable throwable) {
+        final StringBuilder stringBuilder = new StringBuilder();
+        unwrapMessage(stringBuilder, throwable, 10);
+        return stringBuilder.toString();
+    }
+
+    protected static void unwrapMessage(final StringBuilder stringBuilder,
+                                        final Throwable throwable,
+                                        final int depth) {
+        if (depth == 0 || throwable == null) {
+            return;
+        }
+        stringBuilder.append(throwable.getMessage());
+
+        final Throwable cause = throwable.getCause();
+        if (cause != null) {
+            stringBuilder.append(" - ");
+            unwrapMessage(stringBuilder, throwable.getCause(), depth - 1);
+        }
+    }
+
 
     private void doTest(final Exception exception,
                         final StroomStatusCode stroomStatusCode,
@@ -139,7 +161,7 @@ class TestStroomStreamException {
         AtomicReference<String> msgRef = new AtomicReference<>();
         assertThatThrownBy(() -> {
             try {
-                StroomStreamException.createAndThrow(exception, attributeMap);
+                throw StroomStreamException.create(exception, attributeMap);
             } catch (Exception e) {
                 LOGGER.info("msg: {}", e.getMessage());
                 msgRef.set(e.getMessage());

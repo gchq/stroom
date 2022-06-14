@@ -11,6 +11,7 @@ import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
+import stroom.receive.common.StroomStreamStatus;
 import stroom.util.io.StreamUtil;
 
 import org.junit.jupiter.api.Test;
@@ -94,8 +95,9 @@ class TestStroomStreamProcessor {
 
             stroomZipFile.close();
             fail("expecting error but wrote - " + msg);
-        } catch (final StroomStreamException ex) {
-            assertThat(ex.getStroomStatusCode())
+        } catch (final StroomStreamException e) {
+            final StroomStreamStatus status = e.getStroomStreamStatus();
+            assertThat(status.getStroomStatusCode())
                     .isEqualTo(StroomStatusCode.COMPRESSED_STREAM_INVALID);
         }
     }
@@ -139,8 +141,9 @@ class TestStroomStreamProcessor {
 
             stroomZipFile.close();
             fail("expecting error but wrote - " + msg);
-        } catch (final StroomStreamException ex) {
-            assertThat(ex.getStroomStatusCode())
+        } catch (final StroomStreamException e) {
+            final StroomStreamStatus status = e.getStroomStreamStatus();
+            assertThat(status.getStroomStatusCode())
                     .isEqualTo(StroomStatusCode.COMPRESSED_STREAM_INVALID);
         }
     }

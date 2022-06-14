@@ -174,10 +174,10 @@ public class AggregateForwarder {
                 });
             } catch (final RuntimeException ex) {
                 error.set(ex.getMessage());
-                LOGGER.warn(() -> "processFeedFiles() - Failed to send to feed " +
+                LOGGER.warn(() -> "Failed to send to feed " +
                         feedKey.feed() +
                         " ( " +
-                        ex +
+                        ex.getMessage() +
                         ")");
                 LOGGER.debug(() -> "processFeedFiles() - Debug trace " + info, ex);
             }
