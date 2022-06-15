@@ -124,6 +124,11 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
                 localDir, maxReaders, maxStoreSize, isReadAheadEnabled, isReaderBlockedByWriter);
     }
 
+    public ReferenceDataLmdbConfig withReaderBlockedByWriter(final boolean isReaderBlockedByWriter) {
+        return new ReferenceDataLmdbConfig(
+                localDir, maxReaders, maxStoreSize, isReadAheadEnabled, isReaderBlockedByWriter);
+    }
+
     @Override
     public String toString() {
         return "ReferenceDataLmdbConfig{" +

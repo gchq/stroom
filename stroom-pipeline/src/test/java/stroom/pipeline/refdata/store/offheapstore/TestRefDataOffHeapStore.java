@@ -41,6 +41,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
@@ -81,9 +82,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -136,7 +139,8 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
         referenceDataConfig = new ReferenceDataConfig()
                 .withLmdbConfig(new ReferenceDataLmdbConfig()
-                        .withLocalDir(dbDir.toAbsolutePath().toString()))
+                        .withLocalDir(dbDir.toAbsolutePath().toString())
+                        .withReaderBlockedByWriter(false))
                 .withMaxPutsBeforeCommit(500_000);
 
         injector = Guice.createInjector(
@@ -430,14 +434,115 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             LOGGER.debug("Finished running loadTask on thread {}", Thread.currentThread().getName());
         };
 
-        ExecutorService executorService = Executors.newFixedThreadPool(6);
-        List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, 10)
+        final ExecutorService executorService = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors());
+        final List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, 10)
                 .boxed()
                 .map(i -> {
                     LOGGER.debug("Running async task on thread {}", Thread.currentThread().getName());
                     final CompletableFuture<Void> future = CompletableFuture.runAsync(loadTask, executorService);
                     LOGGER.debug("Got future");
                     return future;
+                })
+                .collect(Collectors.toList());
+
+        futures.forEach(voidCompletableFuture -> {
+            try {
+                voidCompletableFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        LOGGER.debug("Finished all");
+    }
+
+    /**
+     * Test to make sure that multiple threads trying to load and purge the same data do not clash
+     */
+    @Test
+    void testConcurrentLoadAndPurge() {
+        final int refStreamDefCount = 5;
+        final long effectiveTimeMs = System.currentTimeMillis();
+        final int recCount = 1_000;
+        final int iterationCount = 200;
+        final int maxTaskSleepMs = 50;
+
+        final List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>(refStreamDefCount);
+        final List<MapDefinition> mapDefinitions = new ArrayList<>(refStreamDefCount);
+
+        for (int strmId = 0; strmId < refStreamDefCount; strmId++) {
+            final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition(strmId);
+            refStreamDefinitions.add(refStreamDefinition);
+            mapDefinitions.add(new MapDefinition(refStreamDefinition, "MyMap"));
+        }
+        final BiConsumer<RefStreamDefinition, MapDefinition> loadTask = (refStreamDefinition, mapDefinitionKey) -> {
+            LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
+            try {
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, refDataLoader -> {
+                    // Add a cheeky sleep to make the task take a bit longer
+                    ThreadUtil.sleep(ThreadLocalRandom.current().nextInt(maxTaskSleepMs));
+                    try {
+                        refDataLoader.setCommitInterval(200);
+                        final PutOutcome putOutcome = refDataLoader.initialise(true);
+                        assertThat(putOutcome.isSuccess())
+                                .isTrue();
+
+                        for (int i = 0; i < recCount; i++) {
+                            refDataLoader.put(mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
+                        }
+                        refDataLoader.completeProcessing();
+                        LOGGER.debug("Finished loading data");
+                    } catch (Exception e) {
+                        Assertions.fail("Error: " + e.getMessage());
+                    }
+
+                    LOGGER.debug("Getting values under lock");
+                    LOGGER.logDurationIfDebugEnabled(() -> {
+                        IntStream.range(0, recCount)
+                                .boxed()
+                                .sorted(Comparator.reverseOrder())
+                                .forEach(i -> {
+                                    Optional<RefDataValue> optValue = refDataStore.getValue(
+                                            mapDefinitionKey, "key" + i);
+                                    assertThat(optValue.isPresent())
+                                            .isTrue();
+                                });
+                    }, () -> LogUtil.message("Getting {} entries, twice", recCount));
+                });
+
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            LOGGER.debug("Finished running loadTask on thread {}", Thread.currentThread().getName());
+        };
+
+        final Consumer<RefStreamDefinition> purgeTask = (refStreamDefinition) -> {
+            ThreadUtil.sleep(ThreadLocalRandom.current().nextInt(maxTaskSleepMs));
+            LOGGER.debug("Running purgeTask on thread {}", Thread.currentThread().getName());
+            refDataStore.purge(refStreamDefinition.getStreamId());
+            LOGGER.debug("Finished running purgeTask on thread {}", Thread.currentThread().getName());
+        };
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors());
+
+        final Random random = new Random();
+        final List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, iterationCount)
+                .boxed()
+                .flatMap(i -> {
+                    final int randomInt = random.nextInt(refStreamDefCount);
+                    final RefStreamDefinition refStreamDefinition = refStreamDefinitions.get(randomInt);
+                    final MapDefinition mapDefinition = mapDefinitions.get(randomInt);
+
+                    final CompletableFuture<Void> loadFuture = CompletableFuture.runAsync(
+                            () -> loadTask.accept(refStreamDefinition, mapDefinition),
+                            executorService);
+                    final CompletableFuture<Void> purgeFuture = CompletableFuture.runAsync(
+                            () -> purgeTask.accept(refStreamDefinition),
+                            executorService);
+
+                    return Stream.of(loadFuture, purgeFuture);
                 })
                 .collect(Collectors.toList());
 
