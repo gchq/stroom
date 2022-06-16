@@ -27,7 +27,7 @@ public class FeedConfig extends AbstractConfig {
 
         feedDocCache = CacheConfig.builder()
                 .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofSeconds(10))
+                .expireAfterWrite(StroomDuration.ofMinutes(1))
                 .build();
     }
 
