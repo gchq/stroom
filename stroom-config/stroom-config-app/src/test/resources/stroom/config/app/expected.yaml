@@ -247,8 +247,8 @@ appConfig:
     enabled: false
   feed:
     feedDocCache:
-      expireAfterAccess: "PT10S"
-      expireAfterWrite: null
+      expireAfterAccess: null
+      expireAfterWrite: "PT1M"
       maximumSize: 1000
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     unknownClassification: "UNKNOWN CLASSIFICATION"
