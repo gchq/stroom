@@ -108,7 +108,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             .collect(Collectors.joining());
 
     private static final int REF_STREAM_DEF_COUNT = 2;
-    private static final int ENTRIES_PER_MAP_DEF = 500;
+    private static final int ENTRIES_PER_MAP_DEF = 50;
     private static final int MAPS_PER_REF_STREAM_DEF = 2;
 
     @Inject
