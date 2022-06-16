@@ -12,6 +12,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Change start.sh in stroom docker image to accept multiple arguments to support command utilities.
+
 * Issue **#2872** : Fix permission exception thrown when removing search store from cache.
 
 * Issue **#2889** : Change pipeline entity deletion to also logically delete the processor, processor filters and any unprocessed tasks.

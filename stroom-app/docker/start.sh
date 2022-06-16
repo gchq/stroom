@@ -5,9 +5,6 @@ BIND_MOUNT_CONFIG_FILE="${ROOT_DIR}/config/config.yml"
 FALLBACK_CONFIG_FILE="${ROOT_DIR}/config_fallback/config.yml"
 
 main() {
-  local dropwizard_command="${1:-server}"; shift
-  local dropwizard_command_args=( "$@" )
-
   # To allow us to run the container outside of a stack it needs a config file
   # to work with. We bake one into the image so that if the config volume
   # is not bind mounted we can fallback on the default one.
@@ -28,17 +25,17 @@ main() {
   java_opts="${java_opts} --add-opens java.base/java.lang=ALL-UNNAMED"
 
   echo "Starting stroom"
-  echo "Command:      [${dropwizard_command}]"
-  echo "Command args: [${dropwizard_command_args[*]}]"
-  echo "Config file:  [${config_file}]"
-  echo "JAVA_OPTS:    [${java_opts}]"
+  echo "Commands:    [$*]"
+  echo "Config file: [${config_file}]"
+  echo "JAVA_OPTS:   [${java_opts}]"
 
+  # All args passed to this script are the command and its optional args,
+  # e.g. 'server', 'migrate', 'reset_password -u joe -p pword'
   #shellcheck disable=2086
   java \
     ${java_opts} \
     -jar stroom-app-all.jar \
-    "${dropwizard_command}" \
-    "${dropwizard_command_args[@]}" \
+    "$@" \
     "${config_file}"
 }
 
