@@ -125,6 +125,16 @@ public class ReferenceDataConfig extends AbstractConfig {
                 effectiveStreamCache);
     }
 
+    public ReferenceDataConfig withMaxPurgeDeletesBeforeCommit(final int maxPurgeDeletesBeforeCommit) {
+        return new ReferenceDataConfig(
+                maxPutsBeforeCommit,
+                maxPurgeDeletesBeforeCommit,
+                purgeAge,
+                loadingLockStripes,
+                lmdbConfig,
+                effectiveStreamCache);
+    }
+
     public ReferenceDataConfig withEffectiveStreamCache(final CacheConfig effectiveStreamCache) {
         return new ReferenceDataConfig(
                 maxPutsBeforeCommit,

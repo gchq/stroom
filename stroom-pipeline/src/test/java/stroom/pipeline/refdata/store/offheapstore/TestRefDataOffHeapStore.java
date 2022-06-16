@@ -108,10 +108,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             .collect(Collectors.joining());
 
     private static final int REF_STREAM_DEF_COUNT = 2;
-    private static final int ENTRIES_PER_MAP_DEF = 5;
-    //    private static final int ENTRIES_PER_MAP_DEF = 10_000;
-    //    private static final int ENTRIES_PER_MAP_DEF = 100_000;
-//    private static final int ENTRIES_PER_MAP_DEF = 1_000_000;
+    private static final int ENTRIES_PER_MAP_DEF = 500;
     private static final int MAPS_PER_REF_STREAM_DEF = 2;
 
     @Inject
@@ -137,11 +134,15 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         dbDir = Files.createTempDirectory("stroom");
         LOGGER.debug("Creating LMDB environment in dbDir {}", dbDir.toAbsolutePath().toString());
 
+        // This should ensure batching is exercised, including partial batches
+        final int batchSize = (ENTRIES_PER_MAP_DEF / 2) - 1;
+        LOGGER.debug("Using batchSize {}", batchSize);
         referenceDataConfig = new ReferenceDataConfig()
                 .withLmdbConfig(new ReferenceDataLmdbConfig()
                         .withLocalDir(dbDir.toAbsolutePath().toString())
                         .withReaderBlockedByWriter(false))
-                .withMaxPutsBeforeCommit(500_000);
+                .withMaxPutsBeforeCommit(batchSize)
+                .withMaxPurgeDeletesBeforeCommit(batchSize);
 
         injector = Guice.createInjector(
                 new AbstractModule() {
