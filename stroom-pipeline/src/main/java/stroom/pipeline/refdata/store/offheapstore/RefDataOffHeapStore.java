@@ -66,6 +66,7 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.jetbrains.annotations.NotNull;
 import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
@@ -204,6 +205,66 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final int stripesCount = referenceDataConfigProvider.get().getLoadingLockStripes();
         LOGGER.debug("Initialising striped with {} stripes", stripesCount);
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(stripesCount);
+        purgePartialLoads();
+    }
+
+    private void purgePartialLoads() {
+
+        // Doesn't really matter about getting an holding a writeTxn here as we are still constructing the store
+        // and thus nothing else can use the store.
+        lmdbEnvironment.doWithWriteTxn(writeTxn -> {
+
+            // Get all the ref stream defs in a partially loaded/purged state
+            final List<RefStreamDefinition> refStreamDefinitions = getInvalidStreams(writeTxn);
+
+            if (!refStreamDefinitions.isEmpty()) {
+                LOGGER.info("Found {} ref streams that are partially loaded/purged. They will now be purged.",
+                        refStreamDefinitions.size());
+                final PurgeCounts purgeCounts = PurgeCounts.zero();
+                final Instant startTime = Instant.now();
+                for (final RefStreamDefinition refStreamDefinition : refStreamDefinitions) {
+                    try (final PooledByteBuffer refStreamDefPooledBuf = processingInfoDb.getPooledKeyBuffer()) {
+                        this.taskContext.info(() -> LogUtil.message(
+                                "Purging partially loaded/purged reference stream {}:{}",
+                                refStreamDefinition.getStreamId(), refStreamDefinition.getPartNumber()));
+                        final RefStreamPurgeCounts refStreamPurgeCounts = purgeRefStreamIfEligible(
+                                Instant.now(),
+                                refStreamDefPooledBuf.getByteBuffer(),
+                                refStreamDefinition);
+                        purgeCounts.increment(refStreamPurgeCounts);
+                    }
+                }
+                LAMBDA_LOGGER.info(() -> "Purge completed successfully - " +
+                        buildPurgeInfoString(startTime, purgeCounts));
+            }
+        });
+    }
+
+    private List<RefStreamDefinition> getInvalidStreams(final Txn<ByteBuffer> writeTxn) {
+
+        final Predicate<KeyVal<ByteBuffer>> statePredicate = keyVal -> {
+            final ProcessingState processingState =
+                    RefDataProcessingInfoSerde.extractProcessingState(keyVal.val());
+            final boolean isInvalid = ProcessingState.PURGE_IN_PROGRESS.equals(processingState)
+                    || ProcessingState.LOAD_IN_PROGRESS.equals(processingState);
+            if (LOGGER.isDebugEnabled() && isInvalid) {
+                final RefStreamDefinition refStreamDefinition = processingInfoDb.deserializeKey(keyVal.key());
+                LOGGER.debug("Found ref stream def {}:{} in state {}",
+                        refStreamDefinition.getStreamId(),
+                        refStreamDefinition.getPartNumber(),
+                        processingState);
+            }
+            return isInvalid;
+        };
+
+        return processingInfoDb.streamEntriesAsBytes(
+                writeTxn,
+                KeyRange.all(),
+                stream ->
+                        stream.filter(statePredicate)
+                                .map(keyVal ->
+                                        processingInfoDb.deserializeKey(keyVal.key()))
+                                .collect(Collectors.toList()));
     }
 
     private LmdbEnv createEnvironment(final ReferenceDataLmdbConfig lmdbConfig) {
