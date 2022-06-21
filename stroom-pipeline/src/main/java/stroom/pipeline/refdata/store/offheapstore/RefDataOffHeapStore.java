@@ -210,34 +210,35 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private void purgePartialLoads() {
 
-        // Doesn't really matter about getting an holding a writeTxn here as we are still constructing the store
-        // and thus nothing else can use the store.
-        lmdbEnvironment.doWithWriteTxn(writeTxn -> {
+        final Instant startTime = Instant.now();
+        // Get all the ref stream defs in a partially loaded/purged state
+        // It is only in exceptional circumstances that we get streams in this state so the list should
+        // not be big.
+        final List<RefStreamDefinition> refStreamDefinitions = lmdbEnvironment.getWithReadTxn(this::getInvalidStreams);
 
-            // Get all the ref stream defs in a partially loaded/purged state
-            final List<RefStreamDefinition> refStreamDefinitions = getInvalidStreams(writeTxn);
-
-            if (!refStreamDefinitions.isEmpty()) {
-                LOGGER.info("Found {} ref streams that are partially loaded/purged. They will now be purged.",
-                        refStreamDefinitions.size());
-                final PurgeCounts purgeCounts = PurgeCounts.zero();
-                final Instant startTime = Instant.now();
-                for (final RefStreamDefinition refStreamDefinition : refStreamDefinitions) {
-                    try (final PooledByteBuffer refStreamDefPooledBuf = processingInfoDb.getPooledKeyBuffer()) {
-                        this.taskContext.info(() -> LogUtil.message(
-                                "Purging partially loaded/purged reference stream {}:{}",
-                                refStreamDefinition.getStreamId(), refStreamDefinition.getPartNumber()));
-                        final RefStreamPurgeCounts refStreamPurgeCounts = purgeRefStreamIfEligible(
-                                Instant.now(),
-                                refStreamDefPooledBuf.getByteBuffer(),
-                                refStreamDefinition);
-                        purgeCounts.increment(refStreamPurgeCounts);
-                    }
+        if (!refStreamDefinitions.isEmpty()) {
+            LOGGER.info("Found {} ref streams that are partially loaded/purged. They will now be purged.",
+                    refStreamDefinitions.size());
+            AtomicReference<PurgeCounts> purgeCountsRef = new AtomicReference<>(PurgeCounts.ZERO);
+            for (final RefStreamDefinition refStreamDefinition : refStreamDefinitions) {
+                try (final PooledByteBuffer refStreamDefPooledBuf = processingInfoDb.getPooledKeyBuffer()) {
+                    this.taskContext.info(() -> LogUtil.message(
+                            "Purging partially loaded/purged reference stream {}:{}",
+                            refStreamDefinition.getStreamId(), refStreamDefinition.getPartNumber()));
+                    processingInfoDb.serializeKey(refStreamDefPooledBuf.getByteBuffer(), refStreamDefinition);
+                    final RefStreamPurgeCounts refStreamPurgeCounts = purgeRefStreamIfEligible(
+                            startTime,
+                            refStreamDefPooledBuf.getByteBuffer(),
+                            refStreamDefinition);
+                    purgeCountsRef.set(purgeCountsRef.get().increment(refStreamPurgeCounts));
                 }
-                LAMBDA_LOGGER.info(() -> "Purge completed successfully - " +
-                        buildPurgeInfoString(startTime, purgeCounts));
             }
-        });
+            LAMBDA_LOGGER.info(() -> "Purge of partial loads/purges completed successfully - " +
+                    buildPurgeInfoString(startTime, purgeCountsRef.get()));
+        } else {
+            LOGGER.info("Completed check for invalid ref loads/purges in {}",
+                    Duration.between(startTime, Instant.now()));
+        }
     }
 
     private List<RefStreamDefinition> getInvalidStreams(final Txn<ByteBuffer> writeTxn) {
@@ -847,18 +848,20 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 refStreamDefinition.getPartIndex());
 
         final String refStreamDefStr = LogUtil.message(
-                "stream {}, " +
-                        "effective time {}, " +
-                        "pipeline {}, " +
-                        "pipeline version {}, " +
-                        "create time {}, " +
-                        "access time {}",
+                "stream: {}, " +
+                        "effective time: {}, " +
+                        "pipeline: {}, " +
+                        "pipeline version: {}, " +
+                        "create time: {}, " +
+                        "access time: {}, " +
+                        "state: {}",
                 refStreamDefinition.getStreamId(),
                 refDataProcessingInfo.getEffectiveTime(),
                 DocRefUtil.createSimpleDocRefString(refStreamDefinition.getPipelineDocRef()),
                 refStreamDefinition.getPipelineVersion(),
                 refDataProcessingInfo.getCreateTime(),
-                refDataProcessingInfo.getLastAccessedTime());
+                refDataProcessingInfo.getLastAccessedTime(),
+                refDataProcessingInfo.getProcessingState());
 
         LOGGER.info("Purging refStreamDefinition with {}", refStreamDefStr);
 
