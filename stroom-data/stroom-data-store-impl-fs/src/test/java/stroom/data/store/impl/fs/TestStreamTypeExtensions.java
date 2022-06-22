@@ -39,5 +39,4 @@ class TestStreamTypeExtensions {
         Assertions.assertThat(streamTypeExtensions.getChildType("foo"))
                 .isNull();
     }
-
 }
