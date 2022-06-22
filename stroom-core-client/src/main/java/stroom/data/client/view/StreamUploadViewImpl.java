@@ -17,6 +17,7 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
+import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.item.client.StringListBox;
@@ -66,6 +67,8 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
                     type.clear();
                     if (streamTypes != null && !streamTypes.isEmpty()) {
                         type.addItems(streamTypes);
+                        // Default to raw events
+                        type.setSelected(StreamTypeNames.RAW_EVENTS);
                     }
                 })
                 .call(META_RESOURCE)

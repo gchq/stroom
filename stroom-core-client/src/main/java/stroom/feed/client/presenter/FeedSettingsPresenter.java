@@ -50,6 +50,8 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
     private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
+
+
     @Inject
     public FeedSettingsPresenter(final EventBus eventBus,
                                  final FeedSettingsView view,
@@ -84,6 +86,10 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
                     view.getReceivedType().clear();
                     if (streamTypes != null && !streamTypes.isEmpty()) {
                         view.getReceivedType().addItems(streamTypes);
+                        final FeedDoc feed = getEntity();
+                        if (feed != null) {
+                            view.getReceivedType().setSelected(feed.getStreamType());
+                        }
                     }
                 })
                 .call(META_RESOURCE)
