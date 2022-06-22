@@ -19,7 +19,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.hibernate.validator.constraints.NotEmpty;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
 
@@ -33,6 +35,9 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
     private final CacheConfig metaProcessorCache;
     private final CacheConfig metaTypeCache;
     private final Set<String> metaTypes;
+    // stream type name => legacy extension
+    // e.g. 'Transient Raw' => '.trevt'
+    private final Map<String, String> metaTypeLegacyExtensions;
 
     public MetaServiceConfig() {
         dbConfig = new MetaServiceDbConfig();
@@ -50,6 +55,7 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         metaTypes = new HashSet<>(StreamTypeNames.ALL_TYPE_NAMES);
+        metaTypeLegacyExtensions = Collections.emptyMap();
     }
 
     @SuppressWarnings("unused")
@@ -59,13 +65,15 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
                              @JsonProperty("metaFeedCache") final CacheConfig metaFeedCache,
                              @JsonProperty("metaProcessorCache") final CacheConfig metaProcessorCache,
                              @JsonProperty("metaTypeCache") final CacheConfig metaTypeCache,
-                             @JsonProperty("metaTypes") final Set<String> metaTypes) {
+                             @JsonProperty("metaTypes") final Set<String> metaTypes,
+                             @JsonProperty("metaTypeLegacyExtensions") Map<String, String> metaTypeLegacyExtensions) {
         this.dbConfig = dbConfig;
         this.metaValueConfig = metaValueConfig;
         this.metaFeedCache = metaFeedCache;
         this.metaProcessorCache = metaProcessorCache;
         this.metaTypeCache = metaTypeCache;
         this.metaTypes = metaTypes;
+        this.metaTypeLegacyExtensions = metaTypeLegacyExtensions;
     }
 
     @Override
@@ -102,11 +110,15 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
             StreamTypeNames.META,
             StreamTypeNames.ERROR,
             StreamTypeNames.CONTEXT,
-    }) // List should contain as a minimum all all those types that the java code reference
+    }) // List should contain as a minimum all those types that the java code reference
     @JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
             "in the default value for this property but can contain additional names.")
     public Set<String> getMetaTypes() {
         return metaTypes;
+    }
+
+    public Map<String, String> getMetaTypeLegacyExtensions() {
+        return metaTypeLegacyExtensions;
     }
 
     public MetaServiceConfig withMetaValueConfig(final MetaValueConfig metaValueConfig) {
@@ -116,7 +128,8 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
                 metaFeedCache,
                 metaProcessorCache,
                 metaTypeCache,
-                metaTypes);
+                metaTypes,
+                metaTypeLegacyExtensions);
     }
 
     @BootStrapConfig
