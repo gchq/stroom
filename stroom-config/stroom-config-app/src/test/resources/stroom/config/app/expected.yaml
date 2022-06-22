@@ -124,7 +124,16 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
-      metaTypeLegacyExtensions: {}
+      metaTypeExtensions:
+        Test Events: "tevt"
+        Test Reference: "tref"
+        Error: "err"
+        Raw Events: "revt"
+        Events: "evt"
+        Reference: "ref"
+        Records: "rec"
+        Detections: "dtxn"
+        Raw Reference: "rref"
       typePathCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null

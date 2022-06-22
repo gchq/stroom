@@ -1,5 +1,6 @@
 package stroom.data.store.impl.fs;
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
@@ -14,7 +15,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.validation.constraints.Pattern;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -31,6 +34,17 @@ public class FsVolumeConfig extends AbstractConfig {
             WeightedFreePercentRandomVolumeSelector.NAME + "|" +
             WeightedFreeRandomVolumeSelector.NAME + ")$";
 
+    private static final Map<String, String> DEFAULT_META_TYPE_EXTENSIONS = Map.of(
+            StreamTypeNames.RAW_EVENTS, "revt",
+            StreamTypeNames.RAW_REFERENCE, "rref",
+            StreamTypeNames.EVENTS, "evt",
+            StreamTypeNames.ERROR, "err",
+            StreamTypeNames.REFERENCE, "ref",
+            StreamTypeNames.TEST_EVENTS, "tevt",
+            StreamTypeNames.TEST_REFERENCE, "tref",
+            StreamTypeNames.DETECTIONS, "dtxn",
+            StreamTypeNames.RECORDS, "rec");
+
     private final String volumeSelector;
 
     // TODO 02/12/2021 AT: Make final
@@ -42,7 +56,8 @@ public class FsVolumeConfig extends AbstractConfig {
     private final CacheConfig typePathCache;
     // stream type name => legacy extension
     // e.g. 'Transient Raw' => '.trevt'
-    private final Map<String, String> metaTypeLegacyExtensions;
+    private final Map<String, String> metaTypeExtensions;
+//    private final Map<String, String> metaTypeExtensionsReverseMap;
 
     public FsVolumeConfig() {
         volumeSelector = "RoundRobin";
@@ -59,7 +74,7 @@ public class FsVolumeConfig extends AbstractConfig {
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
-        metaTypeLegacyExtensions = Collections.emptyMap();
+        metaTypeExtensions = DEFAULT_META_TYPE_EXTENSIONS;
     }
 
     @JsonCreator
@@ -71,14 +86,14 @@ public class FsVolumeConfig extends AbstractConfig {
             @JsonProperty("createDefaultStreamVolumesOnStart") final boolean createDefaultStreamVolumesOnStart,
             @JsonProperty("feedPathCache") final CacheConfig feedPathCache,
             @JsonProperty("typePathCache") final CacheConfig typePathCache,
-            @JsonProperty("metaTypeLegacyExtensions") Map<String, String> metaTypeLegacyExtensions) {
+            @JsonProperty("metaTypeExtensions") Map<String, String> metaTypeExtensions) {
         this.volumeSelector = volumeSelector;
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
         this.defaultStreamVolumeFilesystemUtilisation = defaultStreamVolumeFilesystemUtilisation;
         this.createDefaultStreamVolumesOnStart = createDefaultStreamVolumesOnStart;
         this.feedPathCache = feedPathCache;
         this.typePathCache = typePathCache;
-        this.metaTypeLegacyExtensions = metaTypeLegacyExtensions;
+        this.metaTypeExtensions = metaTypeExtensions;
     }
 
     @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
@@ -130,26 +145,25 @@ public class FsVolumeConfig extends AbstractConfig {
                 createDefaultStreamVolumesOnStart,
                 feedPathCache,
                 typePathCache,
-                metaTypeLegacyExtensions);
+                metaTypeExtensions);
     }
 
-    @JsonPropertyDescription("Map of meta type names to legacy file extension. This is to support file extensions " +
-            "used prior to Stroom v7. Stroom will first user the hard coded extensions (or .dat if no extension " +
-            "has been hard coded for the type). If it cannot find the file then it will use the legacy extension defined " +
-            "here to try to locate the file. This property should remain empty for installations of Stroom that " +
-            "started at v7 or greater.")
-    public Map<String, String> getMetaTypeLegacyExtensions() {
-        return metaTypeLegacyExtensions;
+    @JsonPropertyDescription("Map of meta type names to their file extension. " +
+            "You should only change this property if you need to support legacy file extensions used before Stroom v7. " +
+            "If a meta type does not have an entry in this map then the extension 'dat' will be used." +
+            "The extension is entered without the leading dot.")
+    public Map<String, String> getMetaTypeExtensions() {
+        return metaTypeExtensions;
     }
 
     @JsonIgnore
-    public Optional<String> getMetaTypeLegacyExtension(final String metaTypeName) {
-        if (metaTypeLegacyExtensions == null
+    public Optional<String> getMetaTypeExtension(final String metaTypeName) {
+        if (metaTypeExtensions == null
                 || metaTypeName == null
                 || metaTypeName.isBlank()) {
             return Optional.empty();
         } else {
-            return Optional.ofNullable(metaTypeLegacyExtensions.get(metaTypeName));
+            return Optional.ofNullable(metaTypeExtensions.get(metaTypeName));
         }
     }
 
@@ -160,7 +174,7 @@ public class FsVolumeConfig extends AbstractConfig {
                 ", createDefaultStreamVolumesOnStart=" + createDefaultStreamVolumesOnStart +
                 ", defaultStreamVolumePaths=" + "\"" + defaultStreamVolumePaths + "\"" +
                 ", defaultStreamVolumeFilesystemUtilisation=" + "\"" + defaultStreamVolumeFilesystemUtilisation + "\"" +
-                ", metaTypeLegacyExtensions=" + "\"" + metaTypeLegacyExtensions + "\"" +
+                ", metaTypeExtensions=" + "\"" + metaTypeExtensions + "\"" +
                 '}';
     }
 }
