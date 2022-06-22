@@ -17,6 +17,7 @@
 package stroom.pipeline.destination;
 
 import stroom.pipeline.errorhandler.ProcessException;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 
 import org.slf4j.Logger;
@@ -40,12 +41,15 @@ public class RollingDestinations {
 
     private final Provider<AppenderConfig> appenderConfigProvider;
     private final TaskContext taskContext;
+    private final SecurityContext securityContext;
 
     @Inject
     public RollingDestinations(final Provider<AppenderConfig> appenderConfigProvider,
-                               final TaskContext taskContext) {
+                               final TaskContext taskContext,
+                               final SecurityContext securityContext) {
         this.appenderConfigProvider = appenderConfigProvider;
         this.taskContext = taskContext;
+        this.securityContext = securityContext;
     }
 
     public RollingDestination borrow(final Object key,
@@ -152,47 +156,49 @@ public class RollingDestinations {
     private void rollAll(final boolean force) {
         LOGGER.debug("rollAll()");
 
-        final long currentTime = System.currentTimeMillis();
-        currentDestinations.forEach(1, (key, destination) -> {
-            // Try and lock this destination as we can't flush or roll it if
-            // another thread has the lock.
-            boolean rolled = false;
-            if (destination.tryLock()) {
-                try {
+        securityContext.asProcessingUser(() -> {
+            final long currentTime = System.currentTimeMillis();
+            currentDestinations.forEach(1, (key, destination) -> {
+                // Try and lock this destination as we can't flush or roll it if
+                // another thread has the lock.
+                boolean rolled = false;
+                if (destination.tryLock()) {
                     try {
-                        rolled = destination.tryFlushAndRoll(force, currentTime);
-                    } catch (final IOException | RuntimeException e) {
-                        rolled = true;
-                        LOGGER.error(e.getMessage(), e);
-                    }
+                        try {
+                            rolled = destination.tryFlushAndRoll(force, currentTime);
+                        } catch (final IOException | RuntimeException e) {
+                            rolled = true;
+                            LOGGER.error(e.getMessage(), e);
+                        }
 
-                    if (rolled) {
-                        removeDestination(key, destination);
-                    }
+                        if (rolled) {
+                            removeDestination(key, destination);
+                        }
 
-                } finally {
-                    destination.unlock();
+                    } finally {
+                        destination.unlock();
+                    }
                 }
-            }
 
-            if (force && !rolled) {
-                destination.lock();
-                try {
+                if (force && !rolled) {
+                    destination.lock();
                     try {
-                        rolled = destination.tryFlushAndRoll(force, currentTime);
-                    } catch (final IOException | RuntimeException e) {
-                        rolled = true;
-                        LOGGER.error(e.getMessage(), e);
-                    }
+                        try {
+                            rolled = destination.tryFlushAndRoll(force, currentTime);
+                        } catch (final IOException | RuntimeException e) {
+                            rolled = true;
+                            LOGGER.error(e.getMessage(), e);
+                        }
 
-                    if (rolled) {
-                        removeDestination(key, destination);
-                    }
+                        if (rolled) {
+                            removeDestination(key, destination);
+                        }
 
-                } finally {
-                    destination.unlock();
+                    } finally {
+                        destination.unlock();
+                    }
                 }
-            }
+            });
         });
     }
 }
