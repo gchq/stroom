@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import javax.validation.constraints.Pattern;
 
@@ -34,7 +35,8 @@ public class FsVolumeConfig extends AbstractConfig {
             WeightedFreePercentRandomVolumeSelector.NAME + "|" +
             WeightedFreeRandomVolumeSelector.NAME + ")$";
 
-    private static final Map<String, String> DEFAULT_META_TYPE_EXTENSIONS = Map.of(
+    // TreeMap for consistent ordering in the yaml
+    private static final Map<String, String> DEFAULT_META_TYPE_EXTENSIONS = new TreeMap<>(Map.of(
             StreamTypeNames.RAW_EVENTS, "revt",
             StreamTypeNames.RAW_REFERENCE, "rref",
             StreamTypeNames.EVENTS, "evt",
@@ -43,7 +45,7 @@ public class FsVolumeConfig extends AbstractConfig {
             StreamTypeNames.TEST_EVENTS, "tevt",
             StreamTypeNames.TEST_REFERENCE, "tref",
             StreamTypeNames.DETECTIONS, "dtxn",
-            StreamTypeNames.RECORDS, "rec");
+            StreamTypeNames.RECORDS, "rec"));
 
     private final String volumeSelector;
 

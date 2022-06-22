@@ -125,15 +125,15 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 1000
       metaTypeExtensions:
+        Detections: "dtxn"
+        Error: "err"
+        Events: "evt"
+        Raw Events: "revt"
+        Raw Reference: "rref"
+        Records: "rec"
+        Reference: "ref"
         Test Events: "tevt"
         Test Reference: "tref"
-        Error: "err"
-        Raw Events: "revt"
-        Events: "evt"
-        Reference: "ref"
-        Records: "rec"
-        Detections: "dtxn"
-        Raw Reference: "rref"
       typePathCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
