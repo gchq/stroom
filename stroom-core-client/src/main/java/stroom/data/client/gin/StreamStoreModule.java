@@ -30,7 +30,6 @@ import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
-import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
 import stroom.data.client.presenter.ItemNavigatorPresenter;
@@ -81,7 +80,6 @@ public class StreamStoreModule extends PluginModule {
 
     @Override
     protected void configure() {
-        bind(DataTypeUiManager.class).asEagerSingleton();
         bind(DataDisplaySupport.class).asEagerSingleton();
 
         bindPlugin(SourceTabPlugin.class);

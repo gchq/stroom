@@ -19,7 +19,6 @@ package stroom.feed.client.presenter;
 
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.event.DirtyKeyDownHander;
-import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -30,6 +29,7 @@ import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.feed.shared.FeedResource;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
+import stroom.meta.shared.MetaResource;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -48,16 +48,16 @@ import java.util.List;
 public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSettingsView, FeedDoc> {
 
     private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
+    private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     @Inject
     public FeedSettingsPresenter(final EventBus eventBus,
                                  final FeedSettingsView view,
-                                 final DataTypeUiManager streamTypeUiManager,
                                  final RestFactory restFactory) {
         super(eventBus, view);
 
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        final Rest<List<String>> encodingsRest = restFactory.create();
+        encodingsRest
                 .onSuccess(result -> {
                     view.getDataEncoding().clear();
                     view.getContextEncoding().clear();
@@ -78,8 +78,18 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
                 .call(FEED_RESOURCE)
                 .fetchSupportedEncodings();
 
+        final Rest<List<String>> streamTypesRest = restFactory.create();
+        streamTypesRest
+                .onSuccess(streamTypes -> {
+                    view.getReceivedType().clear();
+                    if (streamTypes != null && !streamTypes.isEmpty()) {
+                        view.getReceivedType().addItems(streamTypes);
+                    }
+                })
+                .call(META_RESOURCE)
+                .getTypes();
+
         view.getFeedStatus().addItems(FeedStatus.values());
-        view.getReceivedType().addItems(streamTypeUiManager.getRawStreamTypeList());
 
         // Add listeners for dirty events.
         final KeyDownHandler keyDownHandler = new DirtyKeyDownHander() {
