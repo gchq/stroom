@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 import javax.inject.Provider;
 
 class StreamTypeExtensions {
@@ -49,6 +50,7 @@ class StreamTypeExtensions {
 
     private final Provider<FsVolumeConfig> fsVolumeConfigProvider;
 
+    @Inject
     StreamTypeExtensions(final Provider<FsVolumeConfig> fsVolumeConfigProvider) {
         this.fsVolumeConfigProvider = fsVolumeConfigProvider;
     }
