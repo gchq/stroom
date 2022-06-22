@@ -19,7 +19,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.hibernate.validator.constraints.NotEmpty;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
 
@@ -102,12 +104,13 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
             StreamTypeNames.META,
             StreamTypeNames.ERROR,
             StreamTypeNames.CONTEXT,
-    }) // List should contain as a minimum all all those types that the java code reference
+    }) // List should contain as a minimum all those types that the java code reference
     @JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
             "in the default value for this property but can contain additional names.")
     public Set<String> getMetaTypes() {
         return metaTypes;
     }
+
 
     public MetaServiceConfig withMetaValueConfig(final MetaValueConfig metaValueConfig) {
         return new MetaServiceConfig(
