@@ -153,7 +153,9 @@ public class FsVolumeConfig extends AbstractConfig {
     @JsonPropertyDescription("Map of meta type names to their file extension. " +
             "You should only change this property if you need to support legacy file extensions used " +
             "before Stroom v7. If a meta type does not have an entry in this map then the extension " +
-            "'dat' will be used. The extension is entered without the leading dot.")
+            "'dat' will be used. The extension is entered without the leading dot. Changing the extension for a " +
+            "meta type would require manual renaming of existing files on the file system. Only do " +
+            "this if you understand the consequences.")
     public Map<String, String> getMetaTypeExtensions() {
         return metaTypeExtensions;
     }
