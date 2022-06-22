@@ -124,6 +124,7 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+      metaTypeLegacyExtensions: {}
       typePathCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null

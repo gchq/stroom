@@ -6,11 +6,15 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import javax.validation.constraints.Pattern;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -36,6 +40,9 @@ public class FsVolumeConfig extends AbstractConfig {
 
     private final CacheConfig feedPathCache;
     private final CacheConfig typePathCache;
+    // stream type name => legacy extension
+    // e.g. 'Transient Raw' => '.trevt'
+    private final Map<String, String> metaTypeLegacyExtensions;
 
     public FsVolumeConfig() {
         volumeSelector = "RoundRobin";
@@ -52,6 +59,7 @@ public class FsVolumeConfig extends AbstractConfig {
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
+        metaTypeLegacyExtensions = Collections.emptyMap();
     }
 
     @JsonCreator
@@ -62,13 +70,15 @@ public class FsVolumeConfig extends AbstractConfig {
             @JsonProperty("defaultStreamVolumeFilesystemUtilisation") final double defaultStreamVolumeFilesystemUtilisation,
             @JsonProperty("createDefaultStreamVolumesOnStart") final boolean createDefaultStreamVolumesOnStart,
             @JsonProperty("feedPathCache") final CacheConfig feedPathCache,
-            @JsonProperty("typePathCache") final CacheConfig typePathCache) {
+            @JsonProperty("typePathCache") final CacheConfig typePathCache,
+            @JsonProperty("metaTypeLegacyExtensions") Map<String, String> metaTypeLegacyExtensions) {
         this.volumeSelector = volumeSelector;
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
         this.defaultStreamVolumeFilesystemUtilisation = defaultStreamVolumeFilesystemUtilisation;
         this.createDefaultStreamVolumesOnStart = createDefaultStreamVolumesOnStart;
         this.feedPathCache = feedPathCache;
         this.typePathCache = typePathCache;
+        this.metaTypeLegacyExtensions = metaTypeLegacyExtensions;
     }
 
     @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
@@ -118,7 +128,29 @@ public class FsVolumeConfig extends AbstractConfig {
                 defaultStreamVolumePaths,
                 defaultStreamVolumeFilesystemUtilisation,
                 createDefaultStreamVolumesOnStart,
-                feedPathCache, typePathCache);
+                feedPathCache,
+                typePathCache,
+                metaTypeLegacyExtensions);
+    }
+
+    @JsonPropertyDescription("Map of meta type names to legacy file extension. This is to support file extensions " +
+            "used prior to Stroom v7. Stroom will first user the hard coded extensions (or .dat if no extension " +
+            "has been hard coded for the type). If it cannot find the file then it will use the legacy extension defined " +
+            "here to try to locate the file. This property should remain empty for installations of Stroom that " +
+            "started at v7 or greater.")
+    public Map<String, String> getMetaTypeLegacyExtensions() {
+        return metaTypeLegacyExtensions;
+    }
+
+    @JsonIgnore
+    public Optional<String> getMetaTypeLegacyExtension(final String metaTypeName) {
+        if (metaTypeLegacyExtensions == null
+                || metaTypeName == null
+                || metaTypeName.isBlank()) {
+            return Optional.empty();
+        } else {
+            return Optional.ofNullable(metaTypeLegacyExtensions.get(metaTypeName));
+        }
     }
 
     @Override
@@ -128,6 +160,7 @@ public class FsVolumeConfig extends AbstractConfig {
                 ", createDefaultStreamVolumesOnStart=" + createDefaultStreamVolumesOnStart +
                 ", defaultStreamVolumePaths=" + "\"" + defaultStreamVolumePaths + "\"" +
                 ", defaultStreamVolumeFilesystemUtilisation=" + "\"" + defaultStreamVolumeFilesystemUtilisation + "\"" +
+                ", metaTypeLegacyExtensions=" + "\"" + metaTypeLegacyExtensions + "\"" +
                 '}';
     }
 }

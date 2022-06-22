@@ -35,9 +35,6 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
     private final CacheConfig metaProcessorCache;
     private final CacheConfig metaTypeCache;
     private final Set<String> metaTypes;
-    // stream type name => legacy extension
-    // e.g. 'Transient Raw' => '.trevt'
-    private final Map<String, String> metaTypeLegacyExtensions;
 
     public MetaServiceConfig() {
         dbConfig = new MetaServiceDbConfig();
@@ -55,7 +52,6 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         metaTypes = new HashSet<>(StreamTypeNames.ALL_TYPE_NAMES);
-        metaTypeLegacyExtensions = Collections.emptyMap();
     }
 
     @SuppressWarnings("unused")
@@ -65,15 +61,13 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
                              @JsonProperty("metaFeedCache") final CacheConfig metaFeedCache,
                              @JsonProperty("metaProcessorCache") final CacheConfig metaProcessorCache,
                              @JsonProperty("metaTypeCache") final CacheConfig metaTypeCache,
-                             @JsonProperty("metaTypes") final Set<String> metaTypes,
-                             @JsonProperty("metaTypeLegacyExtensions") Map<String, String> metaTypeLegacyExtensions) {
+                             @JsonProperty("metaTypes") final Set<String> metaTypes) {
         this.dbConfig = dbConfig;
         this.metaValueConfig = metaValueConfig;
         this.metaFeedCache = metaFeedCache;
         this.metaProcessorCache = metaProcessorCache;
         this.metaTypeCache = metaTypeCache;
         this.metaTypes = metaTypes;
-        this.metaTypeLegacyExtensions = metaTypeLegacyExtensions;
     }
 
     @Override
@@ -117,14 +111,6 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
         return metaTypes;
     }
 
-    @JsonPropertyDescription("Map of meta type names to legacy file extension. This is to support file extensions " +
-            "used prior to Stroom v7. Stroom will first user the hard coded extensions (or .dat if no extension " +
-    "has been hard coded for the type). If it cannot find the file then it will use the legacy extension defined " +
-            "here to try to locate the file. This property should remain empty for installations of Stroom that " +
-            "started at v7 or greater.")
-    public Map<String, String> getMetaTypeLegacyExtensions() {
-        return metaTypeLegacyExtensions;
-    }
 
     public MetaServiceConfig withMetaValueConfig(final MetaValueConfig metaValueConfig) {
         return new MetaServiceConfig(
@@ -133,8 +119,7 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
                 metaFeedCache,
                 metaProcessorCache,
                 metaTypeCache,
-                metaTypes,
-                metaTypeLegacyExtensions);
+                metaTypes);
     }
 
     @BootStrapConfig
