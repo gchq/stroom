@@ -43,6 +43,7 @@ import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
+import stroom.util.NullSafe;
 import stroom.util.shared.Severity;
 
 import com.google.common.base.Strings;
@@ -243,7 +244,7 @@ public class StreamAppender extends AbstractAppender {
                     "stream belongs to will be used.",
             displayPriority = 2)
     public void setFeed(final DocRef feedRef) {
-        this.feed = feedRef.getName();
+        this.feed = NullSafe.get(feedRef, DocRef::getName);
     }
 
     @PipelineProperty(
