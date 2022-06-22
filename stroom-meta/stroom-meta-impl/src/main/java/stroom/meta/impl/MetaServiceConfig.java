@@ -117,6 +117,11 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
         return metaTypes;
     }
 
+    @JsonPropertyDescription("Map of meta type names to legacy file extension. This is to support file extensions " +
+            "used prior to Stroom v7. Stroom will first user the hard coded extensions (or .dat if no extension " +
+    "has been hard coded for the type). If it cannot find the file then it will use the legacy extension defined " +
+            "here to try to locate the file. This property should remain empty for installations of Stroom that " +
+            "started at v7 or greater.")
     public Map<String, String> getMetaTypeLegacyExtensions() {
         return metaTypeLegacyExtensions;
     }
