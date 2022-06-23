@@ -12,11 +12,17 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.LongAdder;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -29,6 +35,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private final LmdbEnvFactory lmdbEnvFactory;
     private final Provider<ResultStoreConfig> resultStoreConfigProvider;
     private final Provider<Executor> executorProvider;
+    private final Path localDir;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
@@ -38,6 +45,9 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.executorProvider = executorProvider;
+
+        // This config prop requires restart, so we can hold on to it
+        this.localDir = getLocalDir(resultStoreConfigProvider, pathCreator);
         // As result stores are transient they serve no purpose after shutdown so delete any that
         // may still be there
         cleanStoresDir(pathCreator);
@@ -83,7 +93,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
         }
     }
 
-    private void cleanStoresDir(final PathCreator pathCreator) {
+    private Path getLocalDir(final Provider<ResultStoreConfig> resultStoreConfigProvider,
+                             final PathCreator pathCreator) {
         final String dirFromConfig = NullSafe.get(
                 resultStoreConfigProvider.get(),
                 ResultStoreConfig::getLmdbConfig,
@@ -93,12 +104,68 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
         final String localDirStr = pathCreator.makeAbsolute(
                 pathCreator.replaceSystemProperties(dirFromConfig));
-        final Path localDir = Paths.get(localDirStr);
+        return Paths.get(localDirStr);
+    }
 
+    private void cleanStoresDir(final PathCreator pathCreator) {
         LOGGER.info("Deleting redundant search result stores from {}", localDir);
         // Delete contents.
         if (!FileUtil.deleteContents(localDir)) {
             throw new RuntimeException(LogUtil.message("Error deleting contents of {}", localDir));
         }
+    }
+
+    /**
+     * @return The size of all result stores. Assumes no other files are stored in the configured
+     * localDir.
+     */
+    @Override
+    public long getTotalSizeOnDisk() {
+        final LongAdder totalSizeBytes = new LongAdder();
+
+        LOGGER.debug("Getting total size in {}", localDir);
+
+        LOGGER.logDurationIfDebugEnabled(() -> {
+            try {
+                Files.walkFileTree(localDir, new FileVisitor<>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(final Path dir,
+                                                             final BasicFileAttributes attrs) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(final Path file,
+                                                     final BasicFileAttributes attrs) {
+                        if (Files.isRegularFile(file)) {
+                            totalSizeBytes.add(attrs.size());
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFileFailed(final Path file,
+                                                           final IOException exc) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(final Path dir,
+                                                              final IOException exc) {
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            } catch (IOException | RuntimeException e) {
+                LOGGER.error("Error calculating disk usage for path {}",
+                        localDir.normalize(), e);
+                totalSizeBytes.reset();
+                // Return -1
+                totalSizeBytes.decrement();
+            }
+        }, "Getting total size");
+
+        LOGGER.debug("total size is {} in {}", totalSizeBytes, localDir);
+
+        return totalSizeBytes.longValue();
     }
 }

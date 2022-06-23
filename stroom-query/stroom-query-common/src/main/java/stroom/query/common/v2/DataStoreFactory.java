@@ -17,4 +17,6 @@ public interface DataStoreFactory {
                      Sizes storeSize,
                      boolean producePayloads,
                      ErrorConsumer errorConsumer);
+
+    long getTotalSizeOnDisk();
 }

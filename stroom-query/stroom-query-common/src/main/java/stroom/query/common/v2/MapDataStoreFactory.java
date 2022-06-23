@@ -30,4 +30,10 @@ public class MapDataStoreFactory implements DataStoreFactory {
                 storeSize,
                 errorConsumer);
     }
+
+    @Override
+    public long getTotalSizeOnDisk() {
+        // Heap based so no disk used
+        return 0;
+    }
 }

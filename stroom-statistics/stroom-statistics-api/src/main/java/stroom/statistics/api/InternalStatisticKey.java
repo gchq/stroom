@@ -10,6 +10,7 @@ public enum InternalStatisticKey {
     METADATA_STREAMS_RECEIVED("Meta Data-Streams Received"),
     METADATA_STREAM_SIZE("Meta Data-Stream Size"),
     PIPELINE_STREAM_PROCESSOR("PipelineStreamProcessor"),
+    OFF_HEAP_STORE_SIZE("Off Heap Store Size"),
     STREAM_TASK_QUEUE_SIZE("Stream Task Queue Size"),
     VOLUMES("Volumes");
 
