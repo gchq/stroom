@@ -100,6 +100,10 @@ public class LmdbEnv implements AutoCloseable {
         }
     }
 
+    public static boolean isLmdbDataFile(final Path file) {
+        return file != null && file.endsWith("data.mdb");
+    }
+
     /**
      * @return The number of permits available for new read txns. For info purposes only,
      * not for concurrency control.

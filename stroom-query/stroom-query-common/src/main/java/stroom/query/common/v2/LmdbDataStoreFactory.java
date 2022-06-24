@@ -2,6 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.lmdb.LmdbConfig;
+import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
@@ -120,8 +121,9 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
      * localDir.
      */
     @Override
-    public long getTotalSizeOnDisk() {
+    public StoreSizeSummary getTotalSizeOnDisk() {
         final LongAdder totalSizeBytes = new LongAdder();
+        final LongAdder storeCount = new LongAdder();
 
         LOGGER.debug("Getting total size in {}", localDir);
 
@@ -139,6 +141,9 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                                                      final BasicFileAttributes attrs) {
                         if (Files.isRegularFile(file)) {
                             totalSizeBytes.add(attrs.size());
+                            if (LmdbEnv.isLmdbDataFile(file)) {
+                                storeCount.increment();
+                            }
                         }
                         return FileVisitResult.CONTINUE;
                     }
@@ -158,14 +163,16 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
             } catch (IOException | RuntimeException e) {
                 LOGGER.error("Error calculating disk usage for path {}",
                         localDir.normalize(), e);
+                // Return -1 to indicate a failure
                 totalSizeBytes.reset();
-                // Return -1
                 totalSizeBytes.decrement();
+                storeCount.reset();
+                storeCount.decrement();
             }
         }, "Getting total size");
 
         LOGGER.debug("total size is {} in {}", totalSizeBytes, localDir);
 
-        return totalSizeBytes.longValue();
+        return new StoreSizeSummary(totalSizeBytes.longValue(), storeCount.intValue());
     }
 }

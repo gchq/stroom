@@ -21,11 +21,12 @@ import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.state.RecordCountService;
 import stroom.query.common.v2.DataStoreFactory;
+import stroom.query.common.v2.DataStoreFactory.StoreSizeSummary;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.util.io.StreamUtil;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -33,7 +34,6 @@ import java.lang.management.MemoryUsage;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -113,7 +113,7 @@ class NodeStatusServiceUtil {
 
     private InternalStatisticEvent buildStatisticEvent(final InternalStatisticKey key,
                                                        final long timeMs,
-                                                       final Map<String, String> tags,
+                                                       final SortedMap<String, String> tags,
                                                        final String typeTagValue,
                                                        final double value) {
         // These stat events are being generated every minute so use a precision
@@ -126,21 +126,20 @@ class NodeStatusServiceUtil {
     public List<InternalStatisticEvent> buildNodeStatus() {
         List<InternalStatisticEvent> statisticEventList = new ArrayList<>();
 
-        Map<String, String> tags = ImmutableMap.of("Node", nodeInfo.getThisNodeName());
-
+        final SortedMap<String, String> tags = ImmutableSortedMap.of(
+                "Node", nodeInfo.getThisNodeName());
         final long nowEpochMs = System.currentTimeMillis();
 
         buildJavaMemoryStats(statisticEventList, tags, nowEpochMs);
-
         buildCpuStatEvents(statisticEventList, tags);
-
-        buildOffHeapStoreSizeStats(statisticEventList, tags, nowEpochMs);
+        buildRefDataStats(statisticEventList, tags, nowEpochMs);
+        buildSearchResultStoresStats(statisticEventList, tags, nowEpochMs);
 
         return statisticEventList;
     }
 
     private void buildJavaMemoryStats(final List<InternalStatisticEvent> statisticEventList,
-                                      final Map<String, String> tags,
+                                      final SortedMap<String, String> tags,
                                       final long nowEpochMs) {
         final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
         final MemoryUsage heapUsage = memoryMXBean.getHeapMemoryUsage();
@@ -197,25 +196,51 @@ class NodeStatusServiceUtil {
         }
     }
 
-    private void buildOffHeapStoreSizeStats(final List<InternalStatisticEvent> statisticEventList,
-                                            final Map<String, String> tags,
-                                            final long nowEpochMs) {
-        statisticEventList.add(buildStatisticEvent(InternalStatisticKey.OFF_HEAP_STORE_SIZE,
+    private void buildRefDataStats(final List<InternalStatisticEvent> statisticEventList,
+                                   final SortedMap<String, String> tags,
+                                   final long nowEpochMs) {
+
+        statisticEventList.add(InternalStatisticEvent.createValueStat(
+                InternalStatisticKey.REF_DATA_STORE_SIZE,
                 nowEpochMs,
                 tags,
-                "Reference Data",
                 refDataStore.getSizeOnDisk()));
 
-        statisticEventList.add(buildStatisticEvent(InternalStatisticKey.OFF_HEAP_STORE_SIZE,
+        final long combinedEntryCount = refDataStore.getKeyValueEntryCount()
+                + refDataStore.getKeyRangeValueEntryCount();
+        statisticEventList.add(InternalStatisticEvent.createValueStat(
+                InternalStatisticKey.REF_DATA_STORE_ENTRY_COUNT,
                 nowEpochMs,
                 tags,
-                "Search Results",
-                dataStoreFactory.getTotalSizeOnDisk()));
+                combinedEntryCount));
+
+        statisticEventList.add(InternalStatisticEvent.createValueStat(
+                InternalStatisticKey.REF_DATA_STORE_STREAM_COUNT,
+                nowEpochMs,
+                tags,
+                refDataStore.getProcessingInfoEntryCount()));
     }
 
+    private void buildSearchResultStoresStats(final List<InternalStatisticEvent> statisticEventList,
+                                              final SortedMap<String, String> tags,
+                                              final long nowEpochMs) {
+        final StoreSizeSummary storeSizeSummary = dataStoreFactory.getTotalSizeOnDisk();
+
+        statisticEventList.add(InternalStatisticEvent.createValueStat(
+                InternalStatisticKey.SEARCH_RESULTS_STORE_SIZE,
+                nowEpochMs,
+                tags,
+                storeSizeSummary.getTotalSizeOnDisk()));
+
+        statisticEventList.add(InternalStatisticEvent.createValueStat(
+                InternalStatisticKey.SEARCH_RESULTS_STORE_COUNT,
+                nowEpochMs,
+                tags,
+                storeSizeSummary.getStoreCount()));
+    }
 
     private void buildCpuStatEvents(final List<InternalStatisticEvent> statisticEventList,
-                                    final Map<String, String> tags) {
+                                    final SortedMap<String, String> tags) {
         long now;
         // Get the current CPU stats.
         final CPUStats cpuStats = createLinuxStats(readSystemStatsInfo());

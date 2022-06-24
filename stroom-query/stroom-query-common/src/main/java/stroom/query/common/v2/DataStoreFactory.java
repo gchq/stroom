@@ -18,5 +18,32 @@ public interface DataStoreFactory {
                      boolean producePayloads,
                      ErrorConsumer errorConsumer);
 
-    long getTotalSizeOnDisk();
+    StoreSizeSummary getTotalSizeOnDisk();
+
+    class StoreSizeSummary {
+        private final long totalSizeOnDisk;
+        private final int storeCount;
+
+        public StoreSizeSummary(final long totalSizeOnDisk,
+                                final int storeCount) {
+            this.totalSizeOnDisk = totalSizeOnDisk;
+            this.storeCount = storeCount;
+        }
+
+        public long getTotalSizeOnDisk() {
+            return totalSizeOnDisk;
+        }
+
+        public int getStoreCount() {
+            return storeCount;
+        }
+
+        @Override
+        public String toString() {
+            return "StoreSizeSummary{" +
+                    "totalSizeOnDisk=" + totalSizeOnDisk +
+                    ", storeCount=" + storeCount +
+                    '}';
+        }
+    }
 }

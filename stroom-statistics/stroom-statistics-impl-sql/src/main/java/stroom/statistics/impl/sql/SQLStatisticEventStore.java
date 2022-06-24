@@ -137,7 +137,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
         initPool(getObjectPoolConfig());
     }
 
-    // TODO could go futher up the chain so is store agnostic
+    // TODO could go further up the chain so is store agnostic
     public static RolledUpStatisticEvent generateTagRollUps(final StatisticEvent event,
                                                             final StatisticStoreDoc statisticsDataSource) {
         RolledUpStatisticEvent rolledUpStatisticEvent = null;
