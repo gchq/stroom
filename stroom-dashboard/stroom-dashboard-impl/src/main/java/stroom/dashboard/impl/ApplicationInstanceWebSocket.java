@@ -59,13 +59,9 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
         keepAlive(uuid);
     }
 
-    private boolean keepAlive(final String uuid) {
+    private void keepAlive(final String uuid) {
         LOGGER.debug(() -> "Keeping application instance alive with uuid = " + uuid);
-        final boolean ok = applicationInstanceManager.keepAlive(uuid);
-        if (!ok) {
-            LOGGER.error(() -> "Unable to keep application instance alive with uuid = " + uuid);
-        }
-        return ok;
+        applicationInstanceManager.keepAlive(uuid);
     }
 
     public void onError(final Session session, final Throwable thr) {
