@@ -17,6 +17,7 @@
 package stroom.index.impl;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
@@ -320,6 +321,10 @@ public class IndexShardManager {
                     }
                 }
             }
+        } catch (final DocumentNotFoundException e) {
+            // If there is no associated index then delete the shard.
+            setStatus(shard.getId(), IndexShardStatus.DELETED);
+
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
