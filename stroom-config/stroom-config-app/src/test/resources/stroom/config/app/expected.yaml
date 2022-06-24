@@ -775,6 +775,13 @@ appConfig:
       - type: "StroomStatsStore"
         uuid: "5535f493-29ae-4ee6-bba6-735aa3104136"
         name: "Meta Data-Streams Received"
+      offHeapStoreSize:
+      - type: "StatisticStore"
+        uuid: "e57959bf-0b2d-4008-98a7-ffcae4bbc4bb"
+        name: "Off Heap Store Size"
+      - type: "StroomStatsStore"
+        uuid: "TODO"
+        name: "Off Heap Store Size"
       pipelineStreamProcessor:
       - type: "StatisticStore"
         uuid: "946a80fc-a59a-11e6-bdc4-0242ac110002"
