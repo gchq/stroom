@@ -174,8 +174,7 @@ public class LmdbEnv implements AutoCloseable {
         try {
             writeTxnLock.lockInterruptibly();
         } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new UncheckedInterruptedException("Thread interrupted while waiting for write lock on "
+            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for write lock on "
                     + localDir.toAbsolutePath().normalize(), e);
         }
 
@@ -221,7 +220,7 @@ public class LmdbEnv implements AutoCloseable {
             LOGGER.trace("Opening new write txn");
             return new WriteTxn(writeTxnLock, env.txnWrite());
         } catch (final InterruptedException e) {
-            throw new UncheckedInterruptedException("Thread interrupted while waiting for write lock on "
+            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for write lock on "
                     + localDir.toAbsolutePath().normalize(), e);
         }
     }
@@ -247,7 +246,7 @@ public class LmdbEnv implements AutoCloseable {
 
             return new BatchingWriteTxn(writeTxnLock, env::txnWrite, batchSize);
         } catch (final InterruptedException e) {
-            throw new UncheckedInterruptedException("Thread interrupted while waiting for write lock on "
+            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for write lock on "
                     + localDir.toAbsolutePath().normalize(), e);
         }
     }
@@ -304,8 +303,8 @@ public class LmdbEnv implements AutoCloseable {
             }
 
         } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new UncheckedInterruptedException("Thread interrupted", e);
+            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for read permit on "
+                    + localDir.toAbsolutePath().normalize(), e);
         }
 
         if (postAcquireAction != null) {
@@ -333,8 +332,8 @@ public class LmdbEnv implements AutoCloseable {
             }
 
         } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new UncheckedInterruptedException("Thread interrupted", e);
+            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for read lock on "
+                    + localDir.toAbsolutePath().normalize(), e);
         }
 
         try {
