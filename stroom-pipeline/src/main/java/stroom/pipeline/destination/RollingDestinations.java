@@ -156,9 +156,10 @@ public class RollingDestinations {
     private void rollAll(final boolean force) {
         LOGGER.debug("rollAll()");
 
-        securityContext.asProcessingUser(() -> {
-            final long currentTime = System.currentTimeMillis();
-            currentDestinations.forEach(1, (key, destination) -> {
+        final long currentTime = System.currentTimeMillis();
+        currentDestinations.forEach(1, (key, destination) -> {
+            // We have to do this here as foreach runs multiple threads so each thread needs to run as proc user
+            securityContext.asProcessingUser(() -> {
                 // Try and lock this destination as we can't flush or roll it if
                 // another thread has the lock.
                 boolean rolled = false;
