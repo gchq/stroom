@@ -129,8 +129,9 @@ class HeapHistogramStatisticsExecutor {
                 (double) heapHistogramEntry.getInstances());
     }
 
-    private static SortedMap<String, String> buildTags(final Map.Entry<String, String> nodeTag,
-                                                       final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
+    private static SortedMap<String, String> buildTags(
+            final Map.Entry<String, String> nodeTag,
+            final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
 
         return ImmutableSortedMap.<String, String>naturalOrder()
                 .put(nodeTag)
