@@ -249,6 +249,7 @@ dependencies {
     testImplementation project(':stroom-event-logging:stroom-event-logging-impl')
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation project(':stroom-explorer:stroom-collection-mock')
+    testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
     testImplementation project(':stroom-explorer:stroom-explorer-api')
     testImplementation project(':stroom-explorer:stroom-explorer-impl')
     testImplementation project(':stroom-explorer:stroom-explorer-impl-db')

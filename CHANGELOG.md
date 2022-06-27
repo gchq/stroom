@@ -12,6 +12,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2902** : Release queued tasks if no longer master and from dead nodes.
+
+* Issue **#2925** : Remove order by from Attribute Value Data Retention job to try to speed it up. Also improve logging for the job.
+
+* Issue **#2924** : Fix feed name resolution from UUID in stream appenders.
+
+* Issue **#2870** : Fix delete of old processor filters and trackers.
+
 * Issue **#2912** : Prevent users from renaming feeds as this breaks the link with the files stored on the file system.
 
 * Issue **#2903** : Fix pipeline structure inheritance to hide dead inherited links.

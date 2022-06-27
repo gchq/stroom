@@ -38,6 +38,7 @@ import stroom.util.time.TimeUtils;
 
 import org.jooq.Condition;
 import org.jooq.Record1;
+import org.jooq.Record2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,7 @@ import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
+import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
@@ -128,7 +130,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         deleteDeletedTasksAndProcessors();
     }
 
-    private int deleteOldTasks(final Instant deleteThreshold) {
+    private void deleteOldTasks(final Instant deleteThreshold) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 Optional.of(PROCESSOR_TASK.STATUS.in(
                         TaskStatus.COMPLETE.getPrimitiveValue(),
@@ -136,32 +138,36 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                 Optional.of(PROCESSOR_TASK.CREATE_TIME_MS.isNull()
                         .or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))));
 
-        return JooqUtil.contextResult(processorDbConnProvider, context ->
+        JooqUtil.context(processorDbConnProvider, context ->
                 context
                         .deleteFrom(PROCESSOR_TASK)
                         .where(conditions)
                         .execute());
     }
 
-    private int deleteDeletedTasksAndProcessors() {
+    private void deleteDeletedTasksAndProcessors() {
         // Get deleted processors.
-        List<Integer> deletedProcessors = JooqUtil.contextResult(processorDbConnProvider, context -> context
-                        .select(PROCESSOR.ID)
-                        .from(PROCESSOR)
-                        .where(PROCESSOR.DELETED.eq(true))
-                        .fetch())
-                .map(Record1::value1);
+        final List<Integer> deletedProcessors =
+                JooqUtil.contextResult(processorDbConnProvider, context ->
+                                context
+                                        .select(PROCESSOR.ID)
+                                        .from(PROCESSOR)
+                                        .where(PROCESSOR.DELETED.eq(true))
+                                        .fetch())
+                        .map(Record1::value1);
 
-        List<Integer> deletedProcessorFilters = JooqUtil.contextResult(processorDbConnProvider, context -> context
-                        .select(PROCESSOR_FILTER.ID)
-                        .from(PROCESSOR_FILTER)
-                        .where(PROCESSOR_FILTER.DELETED.eq(true))
-                        .or(PROCESSOR_FILTER.FK_PROCESSOR_ID.in(deletedProcessors))
-                        .fetch())
-                .map(Record1::value1);
+        final List<Record2<Integer, Integer>> deletedProcessorFilters =
+                JooqUtil.contextResult(processorDbConnProvider, context ->
+                        context
+                                .select(PROCESSOR_FILTER.ID,
+                                        PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID)
+                                .from(PROCESSOR_FILTER)
+                                .where(PROCESSOR_FILTER.DELETED.eq(true))
+                                .or(PROCESSOR_FILTER.FK_PROCESSOR_ID.in(deletedProcessors))
+                                .fetch());
 
         // Delete tasks.
-        int count = JooqUtil.contextResult(processorDbConnProvider, context ->
+        JooqUtil.context(processorDbConnProvider, context ->
                 context
                         .deleteFrom(PROCESSOR_TASK)
                         .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue()))
@@ -169,13 +175,19 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                         .execute());
 
         // Delete filters one by one as there may still be some constraint failures.
-        for (final int id : deletedProcessorFilters) {
+        for (final Record2<Integer, Integer> record : deletedProcessorFilters) {
             try {
-                JooqUtil.context(processorDbConnProvider, context ->
-                        context
-                                .deleteFrom(PROCESSOR_FILTER)
-                                .where(PROCESSOR_FILTER.ID.eq(id))
-                                .execute());
+                JooqUtil.transaction(processorDbConnProvider, context -> {
+                    context
+                            .deleteFrom(PROCESSOR_FILTER)
+                            .where(PROCESSOR_FILTER.ID.eq(record.value1()))
+                            .execute();
+
+                    context
+                            .deleteFrom(PROCESSOR_FILTER_TRACKER)
+                            .where(PROCESSOR_FILTER_TRACKER.ID.eq(record.value2()))
+                            .execute();
+                });
             } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
             }
@@ -193,8 +205,6 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                 LOGGER.debug(e.getMessage(), e);
             }
         }
-
-        return count;
     }
 
     private void deleteOldFilters(final Instant deleteThreshold) {
@@ -223,7 +233,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                     // deleted that still have associated tasks.
                     try {
                         LOGGER.debug("deleteCompleteOrFailedTasks() - Removing old complete filter {}", filter);
-                        processorFilterDao.delete(filter.getId());
+                        processorFilterDao.logicalDelete(filter.getId());
 
                     } catch (final RuntimeException e) {
                         // The database constraint will not allow filters to be

@@ -6,6 +6,7 @@ import stroom.cache.impl.CacheModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.MockFeedModule;
 import stroom.importexport.impl.ImportExportModule;
@@ -48,6 +49,7 @@ public class MockServiceModule extends AbstractModule {
     protected void configure() {
         install(new MockActivityModule());
         install(new MockAlertModule());
+        install(new MockDocRefInfoModule());
         install(new CacheModule());
         install(new MockMetaModule());
         install(new MockStreamStoreModule());
