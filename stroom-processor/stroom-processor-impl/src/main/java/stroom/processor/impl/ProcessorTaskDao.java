@@ -12,6 +12,7 @@ import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
 import stroom.util.shared.ResultPage;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -29,10 +30,10 @@ public interface ProcessorTaskDao {
      * Retain task ownership
      *
      * @param retainForNodes    A set of nodes to retain task ownership for.
-     * @param statusOlderThanMs Change task ownership for tasks that have a status older than this.
+     * @param statusOlderThan Change task ownership for tasks that have a status older than this.
      */
     void retainOwnedTasks(Set<String> retainForNodes,
-                          Long statusOlderThanMs);
+                          Instant statusOlderThan);
 
     /**
      * Create new tasks for the specified filter and add them to the queue.

@@ -159,8 +159,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private volatile boolean allowAsyncTaskCreation = false;
     private volatile boolean allowTaskCreation = true;
 
-    private final Map<String, Long> lastNodeContactTime = new ConcurrentHashMap<>();
-    private long lastDisownedTasks = System.currentTimeMillis();
+    private final Map<String, Instant> lastNodeContactTime = new ConcurrentHashMap<>();
+    private Instant lastDisownedTasks = Instant.now();
 
     @Inject
     ProcessorTaskManagerImpl(final ProcessorFilterService processorFilterService,
@@ -495,21 +495,21 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 // by that node.
                 final Instant now = Instant.now();
                 final Set<String> activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now.toEpochMilli()));
-                final long disownTaskAgo = now.minus(processorConfig.getDisownDeadTasksAfter()).toEpochMilli();
-                if (lastDisownedTasks < disownTaskAgo) {
-                    lastDisownedTasks = now.toEpochMilli();
+                activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now));
+                final Instant disownTaskAge = now.minus(processorConfig.getDisownDeadTasksAfter());
+                if (lastDisownedTasks.isBefore(disownTaskAge)) {
+                    lastDisownedTasks = now;
 
                     // Remove nodes we haven't had contact with for 10 minutes.
                     lastNodeContactTime.forEach((k, v) -> {
-                        if (v < disownTaskAgo) {
+                        if (v.isBefore(disownTaskAge)) {
                             lastNodeContactTime.remove(k);
                         }
                     });
 
                     // Retain all tasks that have had their status updated in the last 10 minutes or belong to
                     // nodes we know have been active in the last 10 minutes.
-                    processorTaskDao.retainOwnedTasks(lastNodeContactTime.keySet(), disownTaskAgo);
+                    processorTaskDao.retainOwnedTasks(lastNodeContactTime.keySet(), disownTaskAge);
                 }
             }
         } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {

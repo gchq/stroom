@@ -16,6 +16,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,13 +36,13 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
 
     @Override
     public void retainOwnedTasks(final Set<String> retainForNodes,
-                                 final Long statusOlderThanMs) {
-        releaseTasks(null, retainForNodes, statusOlderThanMs);
+                                 final Instant statusOlderThan) {
+        releaseTasks(null, retainForNodes, statusOlderThan);
     }
 
     private void releaseTasks(final Set<String> releaseForNodes,
                               final Set<String> retainForNodes,
-                              final Long statusOlderThanMs) {
+                              final Instant statusOlderThan) {
         final long now = System.currentTimeMillis();
         dao.getMap().values().forEach(task -> {
             if (TaskStatus.UNPROCESSED.equals(task.getStatus()) ||
@@ -65,8 +66,8 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                     }
                 }
 
-                if (release && statusOlderThanMs != null) {
-                    if (statusOlderThanMs < task.getStatusTimeMs()) {
+                if (release && statusOlderThan != null) {
+                    if (statusOlderThan.toEpochMilli() < task.getStatusTimeMs()) {
                         release = false;
                     }
                 }

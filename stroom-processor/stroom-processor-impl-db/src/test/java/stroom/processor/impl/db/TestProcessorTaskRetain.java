@@ -6,6 +6,7 @@ import stroom.processor.shared.TaskStatus;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,19 +38,19 @@ class TestProcessorTaskRetain extends AbstractProcessorTest {
         assertThat(countOwned(NODE1)).isEqualTo(3);
         assertThat(countOwned(NODE2)).isEqualTo(3);
 
-        processorTaskDao.retainOwnedTasks(Set.of(NODE1, NODE2), System.currentTimeMillis());
+        processorTaskDao.retainOwnedTasks(Set.of(NODE1, NODE2), Instant.now());
 
         assertThat(countTasks()).isEqualTo(6);
         assertThat(countOwned(NODE1)).isEqualTo(3);
         assertThat(countOwned(NODE2)).isEqualTo(3);
 
-        processorTaskDao.retainOwnedTasks(Set.of(NODE1), System.currentTimeMillis() - 10000);
+        processorTaskDao.retainOwnedTasks(Set.of(NODE1), Instant.now().minusSeconds(10));
 
         assertThat(countTasks()).isEqualTo(6);
         assertThat(countOwned(NODE1)).isEqualTo(3);
         assertThat(countOwned(NODE2)).isEqualTo(3);
 
-        processorTaskDao.retainOwnedTasks(Set.of(NODE1), System.currentTimeMillis() + 10000);
+        processorTaskDao.retainOwnedTasks(Set.of(NODE1), Instant.now().plusSeconds(10));
 
         assertThat(countTasks()).isEqualTo(6);
         assertThat(countOwned(NODE1)).isEqualTo(3);

@@ -53,6 +53,7 @@ import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
 
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -254,14 +255,14 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
      * @param statusOlderThanMs Change task ownership for tasks that have a status older than this.
      */
     @Override
-    public void retainOwnedTasks(final Set<String> retainForNodes, final Long statusOlderThanMs) {
+    public void retainOwnedTasks(final Set<String> retainForNodes, final Instant statusOlderThan) {
         LOGGER.info(() -> "Retaining owned tasks");
-        releaseTasks(null, retainForNodes, statusOlderThanMs);
+        releaseTasks(null, retainForNodes, statusOlderThan);
     }
 
     private void releaseTasks(final Set<String> releaseForNodes,
                               final Set<String> retainForNodes,
-                              final Long statusOlderThanMs) {
+                              final Instant statusOlderThan) {
         final List<Condition> conditions = new ArrayList<>();
         if (releaseForNodes != null) {
             // Release tasks for the specified nodes.
@@ -275,9 +276,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             conditions.add(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.notIn(nodeIdSet));
         }
 
-        if (statusOlderThanMs != null) {
+        if (statusOlderThan != null) {
             // Only change tasks that have not been changed for a certain amount of time.
-            conditions.add(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThanMs));
+            conditions.add(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThan.toEpochMilli()));
         }
 
         // Only alter tasks that are marked as unprocessed, assigned or processing,
