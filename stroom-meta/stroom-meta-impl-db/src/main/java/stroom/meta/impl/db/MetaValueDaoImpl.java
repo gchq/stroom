@@ -27,6 +27,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 
 import org.jooq.BatchBindStep;
@@ -88,7 +89,11 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
 
                                         return Optional.of(row);
                                     } catch (final NumberFormatException e) {
-                                        LOGGER.debug(e::getMessage, e);
+                                        LOGGER.debug(() ->
+                                                LogUtil.message("Ignoring meta attribute value with key: {}, " +
+                                                                "value: {} as value can't be converted to a number. {}",
+                                                        entry.getKey(), entry.getValue(), e.getMessage()));
+                                        // Silently ignore entries with non-numeric values
                                         return Optional.empty();
                                     }
                                 }))
