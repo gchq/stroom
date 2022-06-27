@@ -68,6 +68,7 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -83,7 +84,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -121,10 +121,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final SecurityContext securityContext;
     private final ClusterLockService clusterLockService;
     private final TargetNodeSetFactory targetNodeSetFactory;
+    private final ProcessorConfig processorConfig;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
-
-    private final ReentrantLock createTasksLock = new ReentrantLock();
 
     /**
      * Our filter cache
@@ -161,7 +160,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private volatile boolean allowTaskCreation = true;
 
     private final Map<String, Long> lastNodeContactTime = new ConcurrentHashMap<>();
-    private long lastReleaseOwnedTasks = System.currentTimeMillis();
+    private long lastDisownedTasks = System.currentTimeMillis();
 
     @Inject
     ProcessorTaskManagerImpl(final ProcessorFilterService processorFilterService,
@@ -177,7 +176,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final EventSearch eventSearch,
                              final SecurityContext securityContext,
                              final ClusterLockService clusterLockService,
-                             final TargetNodeSetFactory targetNodeSetFactory) {
+                             final TargetNodeSetFactory targetNodeSetFactory,
+                             final ProcessorConfig processorConfig) {
 
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
@@ -193,12 +193,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.securityContext = securityContext;
         this.clusterLockService = clusterLockService;
         this.targetNodeSetFactory = targetNodeSetFactory;
+        this.processorConfig = processorConfig;
     }
 
     @Override
-    public void startup() {
+    public synchronized void startup() {
         // It shouldn't be possible to create tasks during startup.
-        createTasksLock.lock();
         try {
             // Anything that we owned release
             // Lock the cluster so that only this node is able to release owned tasks at this time.
@@ -208,24 +208,20 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
-            createTasksLock.unlock();
             allowAsyncTaskCreation = true;
             allowTaskCreation = true;
         }
     }
 
     @Override
-    public void shutdown() {
+    public synchronized void shutdown() {
         // It shouldn't be possible to create tasks during shutdown.
-        createTasksLock.lock();
         try {
             allowAsyncTaskCreation = false;
             allowTaskCreation = false;
             clearTaskStore();
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-        } finally {
-            createTasksLock.unlock();
         }
     }
 
@@ -464,7 +460,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         createTasks(taskContext))).run();
     }
 
-    private void createTasks(final TaskContext taskContext) {
+    private synchronized void createTasks(final TaskContext taskContext) {
         // We need to make sure that only 1 thread at a time is allowed to
         // create tasks. This should always be the case in production but some
         // tests will call this directly while scheduled execution could also be
@@ -472,7 +468,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // to be in the middle of creating tasks when another node assumes master
         // status and tries to create tasks too. Thus, a db backed cluster lock
         // is needed
-        createTasksLock.lock();
         try {
             if (allowTaskCreation) {
 
@@ -485,53 +480,55 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-        } finally {
-            createTasksLock.unlock();
         }
     }
 
-    public void releaseQueuedTasks() {
-        createTasksLock.lock();
+    public void disownDeadTasks() {
         try {
             final String node = nodeInfo.getThisNodeName();
             final String masterNode = targetNodeSetFactory.getMasterNode();
-            if (node != null) {
-                if (node.equals(masterNode)) {
-                    // If this is the master node then see if there are any nodes that we haven't had contact with
-                    // for some time.
+            if (node != null && node.equals(masterNode)) {
+                // If this is the master node then see if there are any nodes that we haven't had contact with
+                // for some time.
 
-                    // IF we haven't had contact with a node for 10 minutes then forcibly release the tasks owned
-                    // by that node.
-                    final long now = System.currentTimeMillis();
-                    final Set<String> activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                    activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now));
-                    final long tenMinutesAgo = now - 600_000;
-                    if (lastReleaseOwnedTasks < tenMinutesAgo) {
-                        lastReleaseOwnedTasks = now;
+                // IF we haven't had contact with a node for 10 minutes then forcibly release the tasks owned
+                // by that node.
+                final Instant now = Instant.now();
+                final Set<String> activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now.toEpochMilli()));
+                final long disownTaskAgo = now.minus(processorConfig.getDisownDeadTasksAfter()).toEpochMilli();
+                if (lastDisownedTasks < disownTaskAgo) {
+                    lastDisownedTasks = now.toEpochMilli();
 
-                        // Remove nodes we haven't had contact with for 10 minutes.
-                        lastNodeContactTime.forEach((k, v) -> {
-                            if (v < tenMinutesAgo) {
-                                lastNodeContactTime.remove(k);
-                            }
-                        });
+                    // Remove nodes we haven't had contact with for 10 minutes.
+                    lastNodeContactTime.forEach((k, v) -> {
+                        if (v < disownTaskAgo) {
+                            lastNodeContactTime.remove(k);
+                        }
+                    });
 
-                        // Retain all tasks that have had their status updated in the last 10 minutes or belong to
-                        // nodes we know have been active in the last 10 minutes.
-                        processorTaskDao.retainOwnedTasks(lastNodeContactTime.keySet(), tenMinutesAgo);
-                    }
-
-                } else {
-                    // This is no longer the master node so release all tasks.
-                    if (queueMap.size() > 0) {
-                        releaseAll();
-                    }
+                    // Retain all tasks that have had their status updated in the last 10 minutes or belong to
+                    // nodes we know have been active in the last 10 minutes.
+                    processorTaskDao.retainOwnedTasks(lastNodeContactTime.keySet(), disownTaskAgo);
                 }
             }
         } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
             LOGGER.debug(e.getMessage(), e);
-        } finally {
-            createTasksLock.unlock();
+        }
+    }
+
+    public synchronized void releaseOldQueuedTasks() {
+        if (queueMap.size() > 0) {
+            try {
+                final String node = nodeInfo.getThisNodeName();
+                final String masterNode = targetNodeSetFactory.getMasterNode();
+                if (node != null && !node.equals(masterNode)) {
+                    // This is no longer the master node so release all tasks.
+                    releaseAll();
+                }
+            } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
+                LOGGER.debug(e.getMessage(), e);
+            }
         }
     }
 
@@ -628,8 +625,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             }
         }
 
-        // We must be the master node so set a time in the future to run a
-        // delete
+        // We must be the master node so set a time in the future to run delete.
         scheduleDelete();
 
 //        // Set the last stream details for the next call to this method.

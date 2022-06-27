@@ -76,8 +76,14 @@ public class ProcessorModule extends AbstractModule {
                         .description("Physically delete processor tasks that have been logically " +
                                 "deleted or complete based on age (stroom.processor.deletePurgeAge)")
                         .schedule(PERIODIC, "1m"))
-                .bindJobTo(ProcessorTaskManagerReleaseOwnedTasks.class, builder -> builder
-                        .name("Processor Task Manager Release Queued")
+                .bindJobTo(ProcessorTaskManagerDisownDeadTasks.class, builder -> builder
+                        .name("Processor Task Manager Disown Dead Tasks")
+                        .description("Tasks that seem to be stuck processing due to the death of a processing node " +
+                                "are disowned and added back to the task queue for processing after " +
+                                "(stroom.processor.disownDeadTasksAfter)")
+                        .schedule(PERIODIC, "1m"))
+                .bindJobTo(ProcessorTaskManagerReleaseOldQueuedTasks.class, builder -> builder
+                        .name("Processor Task Manager Release Old Queued Tasks")
                         .description("Release queued tasks from old master nodes")
                         .schedule(PERIODIC, "1m"));
 
@@ -118,11 +124,19 @@ public class ProcessorModule extends AbstractModule {
         }
     }
 
-    private static class ProcessorTaskManagerReleaseOwnedTasks extends RunnableWrapper {
+    private static class ProcessorTaskManagerDisownDeadTasks extends RunnableWrapper {
 
         @Inject
-        ProcessorTaskManagerReleaseOwnedTasks(final ProcessorTaskManagerImpl processorTaskManager) {
-            super(processorTaskManager::releaseQueuedTasks);
+        ProcessorTaskManagerDisownDeadTasks(final ProcessorTaskManagerImpl processorTaskManager) {
+            super(processorTaskManager::disownDeadTasks);
+        }
+    }
+
+    private static class ProcessorTaskManagerReleaseOldQueuedTasks extends RunnableWrapper {
+
+        @Inject
+        ProcessorTaskManagerReleaseOldQueuedTasks(final ProcessorTaskManagerImpl processorTaskManager) {
+            super(processorTaskManager::releaseOldQueuedTasks);
         }
     }
 }
