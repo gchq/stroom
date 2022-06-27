@@ -124,7 +124,7 @@ public class SqliteJooqHelper {
                                     transactionLock.unlock();
                                 }
                             } catch (final InterruptedException e) {
-                                throw UncheckedInterruptedException.reset(e);
+                                throw UncheckedInterruptedException.create(e);
                             }
                         })));
     }
@@ -237,7 +237,7 @@ public class SqliteJooqHelper {
             }
 
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
     }
 

@@ -63,7 +63,7 @@ public class RecordQueue implements Flushable {
                 readLock.unlock();
             }
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
     }
 
@@ -89,7 +89,7 @@ public class RecordQueue implements Flushable {
                 writeLock.unlock();
             }
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
     }
 
@@ -106,7 +106,7 @@ public class RecordQueue implements Flushable {
                 writeLock.unlock();
             }
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
     }
 
@@ -153,7 +153,7 @@ public class RecordQueue implements Flushable {
                 readLock.unlock();
             }
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
         return batch;
     }
@@ -188,7 +188,7 @@ public class RecordQueue implements Flushable {
                 readLock.unlock();
             }
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
         return batch;
     }

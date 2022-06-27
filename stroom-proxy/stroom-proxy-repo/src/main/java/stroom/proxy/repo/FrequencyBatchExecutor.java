@@ -63,7 +63,7 @@ public class FrequencyBatchExecutor<T> implements Managed {
                     try {
                         queue.put(item);
                     } catch (final InterruptedException e) {
-                        throw UncheckedInterruptedException.reset(e);
+                        throw UncheckedInterruptedException.create(e);
                     }
                 });
             } catch (final RuntimeException e) {
@@ -78,7 +78,7 @@ public class FrequencyBatchExecutor<T> implements Managed {
                 final T t = queue.take();
                 consumer.accept(t);
             } catch (final InterruptedException e) {
-                throw UncheckedInterruptedException.reset(e);
+                throw UncheckedInterruptedException.create(e);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }

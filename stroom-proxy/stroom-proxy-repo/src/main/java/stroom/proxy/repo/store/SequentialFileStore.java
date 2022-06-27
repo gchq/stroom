@@ -111,7 +111,7 @@ public class SequentialFileStore {
                 lock.unlock();
             }
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
         return currentStoreId;
     }
@@ -155,7 +155,7 @@ public class SequentialFileStore {
                 }
             }
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
     }
 

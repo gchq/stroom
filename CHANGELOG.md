@@ -12,6 +12,28 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2912** : Prevent users from renaming feeds as this breaks the link with the files stored on the file system.
+
+* Issue **#2903** : Fix pipeline structure inheritance to hide dead inherited links.
+
+* Issue **#2906** : Fix rolling appenders failing due to "no logged in user".
+
+* Issue **#2916** : Change LMDB thread interrupted messages from ERROR to DEBUG.
+
+* Issue **#2914** : Propagate useAsRead to sub tasks.
+
+* Issue **#2877** : Handle missing index when performing shard retention.
+
+* Issue **#2896** : Improve application instance error handling.
+
+* Issue **#2900** : Move stream type to file extension mappings into config (`stroom.data.filesystemVolume.metaTypeExtensions`) to allow use of legacy file extensions.
+
+* Issue **#2906** : Fix RollingStreamAppender failing to roll on timed basis.
+
+* Issue **#2904** : Fix NPE when setting the feed to null on the StreamAppender.
+
+* Issue **#2901** : Change stream type drop downs on feed setting and stream upload to included all stream types.
+
 * Change start.sh in stroom docker image to accept multiple arguments to support command utilities.
 
 * Issue **#2872** : Fix permission exception thrown when removing search store from cache.

@@ -128,6 +128,16 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+      metaTypeExtensions:
+        Detections: "dtxn"
+        Error: "err"
+        Events: "evt"
+        Raw Events: "revt"
+        Raw Reference: "rref"
+        Records: "rec"
+        Reference: "ref"
+        Test Events: "tevt"
+        Test Reference: "tref"
       typePathCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
@@ -472,6 +482,7 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     deleteAge: "P1D"
+    disownDeadTasksAfter: "PT10M"
     fillTaskQueue: true
     processorCache:
       expireAfterAccess: "PT10S"

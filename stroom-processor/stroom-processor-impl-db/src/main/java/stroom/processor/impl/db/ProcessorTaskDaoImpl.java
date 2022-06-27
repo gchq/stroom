@@ -18,7 +18,6 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
-import stroom.node.api.NodeInfo;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.CreatedTasks;
@@ -54,12 +53,14 @@ import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -121,7 +122,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private static final Object[] PROCESSOR_TASK_VALUES = new Object[PROCESSOR_TASK_COLUMNS.length];
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
-    private final NodeInfo nodeInfo;
     private final ProcessorNodeCache processorNodeCache;
     private final ProcessorFeedCache processorFeedCache;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao;
@@ -133,8 +133,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final ValueMapper valueMapper;
 
     @Inject
-    ProcessorTaskDaoImpl(final NodeInfo nodeInfo,
-                         final ProcessorNodeCache processorNodeCache,
+    ProcessorTaskDaoImpl(final ProcessorNodeCache processorNodeCache,
                          final ProcessorFeedCache processorFeedCache,
                          final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao,
                          final ProcessorConfig processorConfig,
@@ -142,7 +141,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                          final ProcessorFilterMarshaller marshaller,
                          final ExpressionMapperFactory expressionMapperFactory,
                          final DocRefInfoService docRefInfoService) {
-        this.nodeInfo = nodeInfo;
         this.processorNodeCache = processorNodeCache;
         this.processorFeedCache = processorFeedCache;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
@@ -225,36 +223,83 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return ValString.create(val);
     }
 
+    private Set<Integer> getNodeIdSet(final Set<String> nodeNames) {
+        final Set<Integer> set = new HashSet<>();
+        for (final String nodeName : nodeNames) {
+            final Integer nodeId = processorNodeCache.getOrCreate(nodeName);
+            if (nodeId != null) {
+                set.add(nodeId);
+            }
+        }
+        return set;
+    }
+
     /**
-     * Anything that we owned release. Should be done under cluster lock
+     * Release tasks and make them unowned.
+     *
+     * @param nodeName The node name to release task ownership for.
      */
     @Override
-    public void releaseOwnedTasks() {
-        LOGGER.info(() -> "Releasing owned tasks for node " + nodeInfo.getThisNodeName());
+    public void releaseOwnedTasks(final String nodeName) {
+        LOGGER.info(() -> "Releasing owned tasks for " + nodeName);
+        releaseTasks(Set.of(nodeName), null, null);
+    }
 
-        final Integer nodeId = processorNodeCache.getOrCreate(nodeInfo.getThisNodeName());
+    /**
+     * Retain task ownership
+     *
+     * @param retainForNodes    A set of nodes to retain task ownership for.
+     * @param statusOlderThanMs Change task ownership for tasks that have a status older than this.
+     */
+    @Override
+    public void retainOwnedTasks(final Set<String> retainForNodes, final Instant statusOlderThan) {
+        LOGGER.info(() -> "Retaining owned tasks");
+        releaseTasks(null, retainForNodes, statusOlderThan);
+    }
 
+    private void releaseTasks(final Set<String> releaseForNodes,
+                              final Set<String> retainForNodes,
+                              final Instant statusOlderThan) {
+        final List<Condition> conditions = new ArrayList<>();
+        if (releaseForNodes != null) {
+            // Release tasks for the specified nodes.
+            final Set<Integer> nodeIdSet = getNodeIdSet(releaseForNodes);
+            conditions.add(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.in(nodeIdSet));
+        }
+
+        if (retainForNodes != null) {
+            // Keep tasks ownership for active nodes.
+            final Set<Integer> nodeIdSet = getNodeIdSet(retainForNodes);
+            conditions.add(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.notIn(nodeIdSet));
+        }
+
+        if (statusOlderThan != null) {
+            // Only change tasks that have not been changed for a certain amount of time.
+            conditions.add(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThan.toEpochMilli()));
+        }
+
+        // Only alter tasks that are marked as unprocessed, assigned or processing,
+        // i.e. ignore complete and failed tasks.
         final Set<Byte> statusSet = Set.of(
                 TaskStatus.UNPROCESSED.getPrimitiveValue(),
                 TaskStatus.ASSIGNED.getPrimitiveValue(),
                 TaskStatus.PROCESSING.getPrimitiveValue());
         final Selection<Byte> selection = Selection.selectNone();
         selection.setSet(statusSet);
-
-        final Collection<Condition> conditions = JooqUtil.conditions(
-                Optional.of(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)),
-                JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, selection));
+        final Optional<Condition> statusCondition = JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, selection);
+        statusCondition.ifPresent(conditions::add);
 
         final int results = JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .update(PROCESSOR_TASK)
                 .set(PROCESSOR_TASK.STATUS, TaskStatus.UNPROCESSED.getPrimitiveValue())
                 .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
                 .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, (Integer) null)
+                .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                 .where(conditions)
                 .execute());
 
-        LOGGER.info(() -> "Set " + results + " tasks back to UNPROCESSED (Reprocess), NULL that were " +
-                "UNPROCESSED, ASSIGNED, PROCESSING for node " + nodeInfo.getThisNodeName());
+        LOGGER.info(() -> "Set " + results + " tasks back to UNPROCESSED that were " +
+                "UNPROCESSED, ASSIGNED, PROCESSING");
     }
 
     /**

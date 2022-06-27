@@ -91,14 +91,12 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
         return applicationInstance;
     }
 
-    public boolean keepAlive(final String uuid) {
+    public void keepAlive(final String uuid) {
         final Optional<ApplicationInstance> optional = cache.getOptional(uuid);
         if (optional.isEmpty()) {
-            LOGGER.error("Expected application instance not found: " + uuid);
-            return false;
+            throw new RuntimeException("Expected application instance not found: " + uuid);
         }
         LOGGER.debug(() -> "Keep application instance alive: " + optional.get());
-        return true;
     }
 
     public boolean remove(final String uuid) {

@@ -6,7 +6,7 @@ public class ThreadUtil {
         try {
             Thread.sleep(millis);
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
     }
 
@@ -14,7 +14,7 @@ public class ThreadUtil {
         try {
             Thread.sleep(millis, nanos);
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
     }
 }

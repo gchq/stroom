@@ -40,6 +40,7 @@ public class TaskContextImpl implements TaskContext {
     private final TaskId taskId;
     private final String name;
     private final UserIdentity userIdentity;
+    private final boolean useAsRead;
     private final AtomicBoolean stop;
     private final Set<TaskContextImpl> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -52,6 +53,7 @@ public class TaskContextImpl implements TaskContext {
     public TaskContextImpl(final TaskId taskId,
                            final String name,
                            final UserIdentity userIdentity,
+                           final boolean useAsRead,
                            final AtomicBoolean stop) {
         Objects.requireNonNull(taskId, "Task has null id");
         Objects.requireNonNull(name, "Task has null name");
@@ -59,6 +61,7 @@ public class TaskContextImpl implements TaskContext {
 
         this.taskId = taskId;
         this.userIdentity = userIdentity;
+        this.useAsRead = useAsRead;
         this.name = name;
         this.stop = stop;
 
@@ -135,6 +138,10 @@ public class TaskContextImpl implements TaskContext {
 
     UserIdentity getUserIdentity() {
         return userIdentity;
+    }
+
+    boolean isUseAsRead() {
+        return useAsRead;
     }
 
     String getUserId() {

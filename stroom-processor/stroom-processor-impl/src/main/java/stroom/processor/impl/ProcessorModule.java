@@ -75,6 +75,16 @@ public class ProcessorModule extends AbstractModule {
                         .name("Processor Task Retention")
                         .description("Physically delete processor tasks that have been logically " +
                                 "deleted or complete based on age (stroom.processor.deletePurgeAge)")
+                        .schedule(PERIODIC, "1m"))
+                .bindJobTo(ProcessorTaskManagerDisownDeadTasks.class, builder -> builder
+                        .name("Processor Task Manager Disown Dead Tasks")
+                        .description("Tasks that seem to be stuck processing due to the death of a processing node " +
+                                "are disowned and added back to the task queue for processing after " +
+                                "(stroom.processor.disownDeadTasksAfter)")
+                        .schedule(PERIODIC, "1m"))
+                .bindJobTo(ProcessorTaskManagerReleaseOldQueuedTasks.class, builder -> builder
+                        .name("Processor Task Manager Release Old Queued Tasks")
+                        .description("Release queued tasks from old master nodes")
                         .schedule(PERIODIC, "1m"));
 
         LifecycleBinder.create(binder())
@@ -111,6 +121,22 @@ public class ProcessorModule extends AbstractModule {
         @Inject
         ProcessorTaskManagerShutdown(final ProcessorTaskManagerImpl processorTaskManager) {
             super(processorTaskManager::shutdown);
+        }
+    }
+
+    private static class ProcessorTaskManagerDisownDeadTasks extends RunnableWrapper {
+
+        @Inject
+        ProcessorTaskManagerDisownDeadTasks(final ProcessorTaskManagerImpl processorTaskManager) {
+            super(processorTaskManager::disownDeadTasks);
+        }
+    }
+
+    private static class ProcessorTaskManagerReleaseOldQueuedTasks extends RunnableWrapper {
+
+        @Inject
+        ProcessorTaskManagerReleaseOldQueuedTasks(final ProcessorTaskManagerImpl processorTaskManager) {
+            super(processorTaskManager::releaseOldQueuedTasks);
         }
     }
 }

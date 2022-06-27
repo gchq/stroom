@@ -33,7 +33,7 @@ class DirManager {
                 directoryLock.unlock();
             }
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
     }
 
@@ -59,7 +59,7 @@ class DirManager {
                 directoryLock.unlock();
             }
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.reset(e);
+            throw UncheckedInterruptedException.create(e);
         }
     }
 }

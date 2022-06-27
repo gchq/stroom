@@ -20,6 +20,7 @@ package stroom.pipeline.structure.testclient.presenter;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
@@ -176,6 +177,95 @@ class TestPipelineModel {
         override.addLink("test2", "test3");
 
         test(baseStack, override, 0, 1, 0, 0, 0, 0, 0, 0);
+    }
+
+    @Test
+    void testInheritanceRemoveRejoin() {
+        final PipelineElementType sourceType = new PipelineElementType(
+                "Source",
+                null,
+                new String[]{
+                        PipelineElementType.ROLE_SOURCE,
+                        PipelineElementType.ROLE_HAS_TARGETS,
+                        PipelineElementType.VISABILITY_SIMPLE},
+                ElementIcons.STREAM);
+        final PipelineElementType parserType = new PipelineElementType(
+                "CombinedParser",
+                Category.PARSER,
+                new String[]{
+                        PipelineElementType.ROLE_PARSER,
+                        PipelineElementType.ROLE_HAS_TARGETS,
+                        PipelineElementType.VISABILITY_SIMPLE,
+                        PipelineElementType.VISABILITY_STEPPING,
+                        PipelineElementType.ROLE_MUTATOR,
+                        PipelineElementType.ROLE_HAS_CODE},
+                ElementIcons.TEXT);
+        final PipelineElementType xsltType = new PipelineElementType(
+                "XSLTFilter",
+                Category.FILTER,
+                new String[]{
+                        PipelineElementType.ROLE_TARGET,
+                        PipelineElementType.ROLE_HAS_TARGETS,
+                        PipelineElementType.VISABILITY_SIMPLE,
+                        PipelineElementType.VISABILITY_STEPPING,
+                        PipelineElementType.ROLE_MUTATOR,
+                        PipelineElementType.ROLE_HAS_CODE},
+                ElementIcons.XSLT);
+        final PipelineElementType schemaType = new PipelineElementType(
+                "SchemaFilter",
+                Category.FILTER,
+                new String[]{
+                        PipelineElementType.ROLE_TARGET,
+                        PipelineElementType.ROLE_HAS_TARGETS,
+                        PipelineElementType.VISABILITY_STEPPING,
+                        PipelineElementType.ROLE_VALIDATOR},
+                ElementIcons.XSD);
+        final PipelineElementType writerType = new PipelineElementType(
+                "XMLWriter",
+                Category.WRITER,
+                new String[]{
+                        PipelineElementType.ROLE_TARGET,
+                        PipelineElementType.ROLE_HAS_TARGETS,
+                        PipelineElementType.ROLE_WRITER,
+                        PipelineElementType.ROLE_MUTATOR,
+                        PipelineElementType.VISABILITY_STEPPING},
+                ElementIcons.XML);
+        final PipelineElementType appenderType = new PipelineElementType(
+                "StreamAppender",
+                Category.DESTINATION,
+                new String[]{
+                        PipelineElementType.ROLE_TARGET,
+                        PipelineElementType.ROLE_DESTINATION,
+                        PipelineElementType.VISABILITY_STEPPING},
+                ElementIcons.STREAM);
+
+
+        final List<PipelineData> baseStack = new ArrayList<>();
+
+        final PipelineData base = new PipelineData();
+        base.addElement(sourceType, "Source");
+        base.addElement(parserType, "combinedParser");
+        base.addElement(xsltType, "xsltFilter1");
+        base.addElement(xsltType, "xsltFilter2");
+        base.addElement(xsltType, "xsltFilter3");
+        base.addElement(schemaType, "schemaFilter");
+        base.addElement(writerType, "xmlWriter");
+        base.addElement(appenderType, "streamAppender");
+        base.addLink("Source", "combinedParser");
+        base.addLink("combinedParser", "xsltFilter1");
+        base.addLink("xsltFilter1", "xsltFilter2");
+        base.addLink("xsltFilter2", "xsltFilter3");
+        base.addLink("xsltFilter3", "schemaFilter");
+        base.addLink("schemaFilter", "xmlWriter");
+        base.addLink("xmlWriter", "streamAppender");
+        baseStack.add(base);
+
+        final PipelineData override = new PipelineData();
+        override.removeElement(xsltType, "xsltFilter2");
+        override.addLink("xsltFilter1", "schemaFilter");
+        override.removeLink("xsltFilter1", "xsltFilter2");
+
+        test(baseStack, override, 0, 1, 0, 0, 0, 0, 1, 1);
     }
 
     @Test
