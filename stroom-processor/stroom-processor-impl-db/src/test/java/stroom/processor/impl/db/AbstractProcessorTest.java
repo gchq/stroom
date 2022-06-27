@@ -25,15 +25,18 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.db.ForceLegacyMigration;
+import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.jooq.Condition;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.inject.Inject;
 
@@ -59,6 +62,9 @@ class AbstractProcessorTest {
     protected ProcessorNodeCache processorNodeCache;
     @Inject
     protected ProcessorFeedCache processorFeedCache;
+
+    @Inject
+    protected Set<Clearable> clearables;
 
     @BeforeEach
     void beforeEach() {
@@ -96,6 +102,11 @@ class AbstractProcessorTest {
                     }
                 });
         injector.injectMembers(this);
+    }
+
+    @AfterEach
+    void clear() {
+        clearables.forEach(Clearable::clear);
     }
 
     protected int countTasks() {
