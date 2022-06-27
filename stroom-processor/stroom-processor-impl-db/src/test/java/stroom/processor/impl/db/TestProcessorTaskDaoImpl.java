@@ -7,15 +7,18 @@ import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
+import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.security.mock.MockSecurityContextModule;
@@ -31,6 +34,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.inject.Inject;
 
@@ -39,21 +44,24 @@ import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
-class TestProcessorDaoImpl {
+class TestProcessorTaskDaoImpl {
+
+    private static final String NODE1 = "node1";
+    private static final String NODE2 = "node2";
+    private static final String FEED = "MY_FEED";
 
     @Inject
     private ProcessorDao processorDao;
     @Inject
     private ProcessorFilterDao processorFilterDao;
     @Inject
+    private ProcessorTaskDao processorTaskDao;
+    @Inject
     private ProcessorDbConnProvider processorDbConnProvider;
     @Inject
     private ProcessorNodeCache processorNodeCache;
     @Inject
     private ProcessorFeedCache processorFeedCache;
-
-    private int feedId;
-    private int nodeId;
 
     @BeforeEach
     void beforeEach() {
@@ -91,13 +99,10 @@ class TestProcessorDaoImpl {
                     }
                 });
         injector.injectMembers(this);
-
-        nodeId = processorNodeCache.getOrCreate("node1");
-        feedId = processorFeedCache.getOrCreate("MY_FEED");
     }
 
     @Test
-    void logicalDelete() {
+    void testReleaseOwned() {
         assertThat(getProcessorCount(null))
                 .isEqualTo(0);
 
@@ -107,47 +112,102 @@ class TestProcessorDaoImpl {
                 .isEqualTo(1);
 
         final ProcessorFilter processorFilter1 = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED);
-        createProcessorTask(processorFilter1, TaskStatus.ASSIGNED);
-        createProcessorTask(processorFilter1, TaskStatus.PROCESSING);
-
         assertThat(getProcessorFilterCount(null))
                 .isEqualTo(1);
-        assertThat(getProcessorTaskCount(null))
-                .isEqualTo(3);
 
-        final Processor processor2 = createProcessor();
+        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
+
+        assertThat(countTasks()).isEqualTo(3);
+        assertThat(countOwned(NODE1)).isEqualTo(3);
+
+        processorTaskDao.releaseOwnedTasks(NODE1);
+
+        assertThat(countTasks()).isEqualTo(3);
+        assertThat(countOwned(NODE1)).isEqualTo(0);
+        assertThat(countOwned(null)).isEqualTo(3);
+
+        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE2, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE2, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE2, FEED);
+
+        assertThat(countTasks()).isEqualTo(6);
+        assertThat(countOwned(NODE1)).isEqualTo(0);
+        assertThat(countOwned(NODE2)).isEqualTo(3);
+        assertThat(countOwned(null)).isEqualTo(3);
+
+        processorTaskDao.releaseOwnedTasks(NODE1);
+
+        assertThat(countTasks()).isEqualTo(6);
+        assertThat(countOwned(NODE1)).isEqualTo(0);
+        assertThat(countOwned(NODE2)).isEqualTo(3);
+        assertThat(countOwned(null)).isEqualTo(3);
+    }
+
+    @Test
+    void testRetainOwned() {
+        assertThat(getProcessorCount(null))
+                .isEqualTo(0);
+
+        final Processor processor1 = createProcessor();
 
         assertThat(getProcessorCount(null))
-                .isEqualTo(2);
-
-        final ProcessorFilter processorFilter2 = createProcessorFilter(processor2);
-        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED);
-        createProcessorTask(processorFilter2, TaskStatus.ASSIGNED);
-        createProcessorTask(processorFilter2, TaskStatus.PROCESSING);
-
-        assertThat(getProcessorFilterCount(null))
-                .isEqualTo(2);
-        assertThat(getProcessorTaskCount(null))
-                .isEqualTo(6);
-
-        processorDao.logicalDelete(processor1.getId());
-
-        // No change to row counts as they have been logically deleted
-        assertThat(getProcessorCount(null))
-                .isEqualTo(2);
-        assertThat(getProcessorFilterCount(null))
-                .isEqualTo(2);
-        assertThat(getProcessorTaskCount(null))
-                .isEqualTo(6);
-
-        // Now make sure the right number have been set to a deleted state
-        assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
                 .isEqualTo(1);
-        assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
+
+        final ProcessorFilter processorFilter1 = createProcessorFilter(processor1);
+        assertThat(getProcessorFilterCount(null))
                 .isEqualTo(1);
-        assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
-                .isEqualTo(4);
+
+        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE2, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE2, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE2, FEED);
+
+        assertThat(countTasks()).isEqualTo(6);
+        assertThat(countOwned(NODE1)).isEqualTo(3);
+        assertThat(countOwned(NODE2)).isEqualTo(3);
+
+        processorTaskDao.retainOwnedTasks(Set.of(NODE1, NODE2), System.currentTimeMillis());
+
+        assertThat(countTasks()).isEqualTo(6);
+        assertThat(countOwned(NODE1)).isEqualTo(3);
+        assertThat(countOwned(NODE2)).isEqualTo(3);
+
+        processorTaskDao.retainOwnedTasks(Set.of(NODE1), System.currentTimeMillis() - 10000);
+
+        assertThat(countTasks()).isEqualTo(6);
+        assertThat(countOwned(NODE1)).isEqualTo(3);
+        assertThat(countOwned(NODE2)).isEqualTo(3);
+
+        processorTaskDao.retainOwnedTasks(Set.of(NODE1), System.currentTimeMillis() + 10000);
+
+        assertThat(countTasks()).isEqualTo(6);
+        assertThat(countOwned(NODE1)).isEqualTo(3);
+        assertThat(countOwned(NODE2)).isEqualTo(0);
+        assertThat(countOwned(null)).isEqualTo(3);
+    }
+
+    private int countTasks() {
+        final List<ProcessorTask> list = processorTaskDao.find(new ExpressionCriteria()).getValues();
+        return list.size();
+    }
+
+    private int countOwned(final String nodeName) {
+        int count = 0;
+        List<ProcessorTask> list = processorTaskDao.find(new ExpressionCriteria()).getValues();
+        for (final ProcessorTask task : list) {
+            if (task.getNodeName() == null) {
+                if (nodeName == null) {
+                    count++;
+                }
+            } else if (task.getNodeName().equals(nodeName)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private Processor createProcessor() {
@@ -180,13 +240,17 @@ class TestProcessorDaoImpl {
     }
 
     private void createProcessorTask(final ProcessorFilter processorFilter,
-                                     final TaskStatus taskStatus) {
-
+                                     final TaskStatus taskStatus,
+                                     final String nodeName,
+                                     final String feedName) {
+        final long now = System.currentTimeMillis();
         final ProcessorTaskRecord processorTaskRecord = PROCESSOR_TASK.newRecord();
+        processorTaskRecord.setCreateTimeMs(now);
         processorTaskRecord.setFkProcessorFilterId(processorFilter.getId());
-        processorTaskRecord.setFkProcessorNodeId(nodeId);
-        processorTaskRecord.setFkProcessorFeedId(feedId);
+        processorTaskRecord.setFkProcessorNodeId(processorNodeCache.getOrCreate(nodeName));
+        processorTaskRecord.setFkProcessorFeedId(processorFeedCache.getOrCreate(feedName));
         processorTaskRecord.setStatus(taskStatus.getPrimitiveValue());
+        processorTaskRecord.setStatusTimeMs(now);
         processorTaskRecord.setMetaId(123L);
         processorTaskRecord.setData("my data");
 
@@ -202,9 +266,5 @@ class TestProcessorDaoImpl {
 
     private int getProcessorFilterCount(final Condition condition) {
         return JooqUtil.getTableCountWhen(processorDbConnProvider, PROCESSOR_FILTER, condition);
-    }
-
-    private int getProcessorTaskCount(final Condition condition) {
-        return JooqUtil.getTableCountWhen(processorDbConnProvider, PROCESSOR_TASK, condition);
     }
 }

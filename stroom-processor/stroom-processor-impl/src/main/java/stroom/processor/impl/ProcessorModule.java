@@ -75,6 +75,10 @@ public class ProcessorModule extends AbstractModule {
                         .name("Processor Task Retention")
                         .description("Physically delete processor tasks that have been logically " +
                                 "deleted or complete based on age (stroom.processor.deletePurgeAge)")
+                        .schedule(PERIODIC, "1m"))
+                .bindJobTo(ProcessorTaskManagerReleaseOwnedTasks.class, builder -> builder
+                        .name("Processor Task Manager Release Queued")
+                        .description("Release queued tasks from old master nodes")
                         .schedule(PERIODIC, "1m"));
 
         LifecycleBinder.create(binder())
@@ -111,6 +115,14 @@ public class ProcessorModule extends AbstractModule {
         @Inject
         ProcessorTaskManagerShutdown(final ProcessorTaskManagerImpl processorTaskManager) {
             super(processorTaskManager::shutdown);
+        }
+    }
+
+    private static class ProcessorTaskManagerReleaseOwnedTasks extends RunnableWrapper {
+
+        @Inject
+        ProcessorTaskManagerReleaseOwnedTasks(final ProcessorTaskManagerImpl processorTaskManager) {
+            super(processorTaskManager::releaseQueuedTasks);
         }
     }
 }

@@ -18,6 +18,9 @@
 package stroom.processor.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
@@ -117,6 +120,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final EventSearch eventSearch;
     private final SecurityContext securityContext;
     private final ClusterLockService clusterLockService;
+    private final TargetNodeSetFactory targetNodeSetFactory;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -169,7 +173,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final MetaService metaService,
                              final EventSearch eventSearch,
                              final SecurityContext securityContext,
-                             final ClusterLockService clusterLockService) {
+                             final ClusterLockService clusterLockService,
+                             final TargetNodeSetFactory targetNodeSetFactory) {
 
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
@@ -184,6 +189,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.eventSearch = eventSearch;
         this.securityContext = securityContext;
         this.clusterLockService = clusterLockService;
+        this.targetNodeSetFactory = targetNodeSetFactory;
     }
 
     @Override
@@ -193,8 +199,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         try {
             // Anything that we owned release
             // Lock the cluster so that only this node is able to release owned tasks at this time.
-            LOGGER.info(() -> "Locking cluster to release owned tasks for node " + nodeInfo.getThisNodeName());
-            clusterLockService.lock(LOCK_NAME, processorTaskDao::releaseOwnedTasks);
+            final String nodeName = nodeInfo.getThisNodeName();
+            LOGGER.info(() -> "Locking cluster to release owned tasks for node " + nodeName);
+            clusterLockService.lock(LOCK_NAME, () -> processorTaskDao.releaseOwnedTasks(nodeName));
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
@@ -220,7 +227,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     }
 
     /**
-     * Return back the next task to do. Called by worker threads. Also assigns
+     * Return the next task to perform. Called by worker threads. Also assigns
      * the task to the node asking for the job
      */
     @Override
@@ -327,6 +334,22 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     null);
         } catch (final RuntimeException e) {
             LOGGER.error("abandon() - {}", processorTask, e);
+        }
+    }
+
+    private void releaseAll() {
+        for (final Entry<ProcessorFilter, ProcessorTaskQueue> entry : queueMap.entrySet()) {
+            final ProcessorFilter filter = entry.getKey();
+            if (filter != null) {
+                final ProcessorTaskQueue queue = queueMap.remove(filter);
+                if (queue != null) {
+                    ProcessorTask streamTask = queue.poll();
+                    while (streamTask != null) {
+                        release(streamTask);
+                        streamTask = queue.poll();
+                    }
+                }
+            }
         }
     }
 
@@ -442,16 +465,16 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // We need to make sure that only 1 thread at a time is allowed to
         // create tasks. This should always be the case in production but some
         // tests will call this directly while scheduled execution could also be
-        // running. Also if the master node changes it is possible for one master
+        // running. Also, if the master node changes it is possible for one master
         // to be in the middle of creating tasks when another node assumes master
-        // status and tries to create tasks too. Thus a db backed cluster lock
+        // status and tries to create tasks too. Thus, a db backed cluster lock
         // is needed
         createTasksLock.lock();
         try {
             if (allowTaskCreation) {
 
                 // We need an overarching cluster lock for all task creation
-                // Some of the task creation is async but we will wait for that
+                // Some task creation is async, but we will wait for that
                 // to complete so all task creation is encapsulated by this lock
                 LOGGER.debug("Locking cluster to create tasks");
                 clusterLockService.lock(LOCK_NAME, () ->
@@ -459,6 +482,52 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
+        } finally {
+            createTasksLock.unlock();
+        }
+    }
+
+    private final Map<String, Long> lastNodeContactTime = new ConcurrentHashMap<>();
+    private long lastReleaseOwnedTasks = System.currentTimeMillis();
+
+    public void releaseQueuedTasks() {
+        createTasksLock.lock();
+        try {
+            final String node = nodeInfo.getThisNodeName();
+            final String masterNode = targetNodeSetFactory.getMasterNode();
+            if (node != null) {
+                if (node.equals(masterNode)) {
+                    // If this is the master node then see if there are any nodes that we haven't had contact with
+                    // for some time.
+
+                    // IF we haven't had contact with a node for 10 minutes then forcibly release the tasks owned
+                    // by that node.
+                    final long now = System.currentTimeMillis();
+                    final Set<String> activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                    activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now));
+                    final long tenMinutesAgo = now - 600_000;
+                    if (lastReleaseOwnedTasks < tenMinutesAgo) {
+                        // Remove nodes we haven't had contact with for 10 minutes.
+                        lastNodeContactTime.forEach((k, v) -> {
+                            if (v < tenMinutesAgo) {
+                                lastNodeContactTime.remove(k);
+                            }
+                        });
+
+                        // Retain all tasks that have had their status updated in the last 10 minutes or belong to
+                        // nodes we know have been active in the last 10 minutes.
+                        processorTaskDao.retainOwnedTasks(lastNodeContactTime.keySet(), tenMinutesAgo);
+                    }
+
+                } else {
+                    // This is no longer the master node so release all tasks.
+                    if (queueMap.size() > 0) {
+                        releaseAll();
+                    }
+                }
+            }
+        } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
+            LOGGER.debug(e.getMessage(), e);
         } finally {
             createTasksLock.unlock();
         }
