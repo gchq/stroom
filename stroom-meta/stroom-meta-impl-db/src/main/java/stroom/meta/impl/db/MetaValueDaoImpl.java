@@ -101,12 +101,16 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 .map(Optional::get);
 
         final List<Row> records = stream.collect(Collectors.toList());
-        if (metaValueConfigProvider.get().isAddAsync()) {
-            final Optional<List<Row>> optional = add(records, metaValueConfigProvider.get()
-                    .getFlushBatchSize());
-            optional.ifPresent(this::insertRecords);
+        if (records.isEmpty()) {
+            LOGGER.debug("records is empty");
         } else {
-            insertRecords(records);
+            if (metaValueConfigProvider.get().isAddAsync()) {
+                final Optional<List<Row>> optional = add(records, metaValueConfigProvider.get()
+                        .getFlushBatchSize());
+                optional.ifPresent(this::insertRecords);
+            } else {
+                insertRecords(records);
+            }
         }
     }
 
