@@ -160,6 +160,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private volatile boolean allowAsyncTaskCreation = false;
     private volatile boolean allowTaskCreation = true;
 
+    private final Map<String, Long> lastNodeContactTime = new ConcurrentHashMap<>();
+    private long lastReleaseOwnedTasks = System.currentTimeMillis();
+
     @Inject
     ProcessorTaskManagerImpl(final ProcessorFilterService processorFilterService,
                              final ProcessorFilterTrackerDao processorFilterTrackerDao,
@@ -486,9 +489,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             createTasksLock.unlock();
         }
     }
-
-    private final Map<String, Long> lastNodeContactTime = new ConcurrentHashMap<>();
-    private long lastReleaseOwnedTasks = System.currentTimeMillis();
 
     public void releaseQueuedTasks() {
         createTasksLock.lock();
