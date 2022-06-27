@@ -507,6 +507,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now));
                     final long tenMinutesAgo = now - 600_000;
                     if (lastReleaseOwnedTasks < tenMinutesAgo) {
+                        lastReleaseOwnedTasks = now;
+
                         // Remove nodes we haven't had contact with for 10 minutes.
                         lastNodeContactTime.forEach((k, v) -> {
                             if (v < tenMinutesAgo) {
