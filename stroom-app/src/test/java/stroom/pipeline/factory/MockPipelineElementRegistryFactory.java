@@ -158,6 +158,7 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
                         null,
                         null,
                         null,
+                        null,
                         null);
             }
             if (elementClass.equals(FileAppender.class)) {
@@ -166,9 +167,9 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
 
             return elementClass.getConstructor().newInstance();
         } catch (final NoSuchMethodException
-                | InvocationTargetException
-                | IllegalAccessException
-                | InstantiationException e) {
+                       | InvocationTargetException
+                       | IllegalAccessException
+                       | InstantiationException e) {
             throw new PipelineFactoryException(e);
         }
     }

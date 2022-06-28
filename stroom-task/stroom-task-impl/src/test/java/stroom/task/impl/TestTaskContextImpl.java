@@ -73,6 +73,6 @@ class TestTaskContextImpl {
             public String getSessionId() {
                 return null;
             }
-        }, new AtomicBoolean());
+        }, false, new AtomicBoolean());
     }
 }
