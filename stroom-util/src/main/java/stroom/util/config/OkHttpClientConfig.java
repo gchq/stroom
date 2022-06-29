@@ -4,6 +4,8 @@ import stroom.util.cert.SSLConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -14,17 +16,26 @@ import java.util.List;
  * An abstraction of some of the configuration available on OkHttpClient.Builder
  */
 @JsonPropertyOrder(alphabetic = true)
+@JsonInclude(Include.NON_NULL)
 public class OkHttpClientConfig {
 
+    @JsonProperty
     private final SSLConfig sslConfig;
-
+    @JsonProperty
     private final List<String> httpProtocols;
+    @JsonProperty
     private final StroomDuration callTimeout;
+    @JsonProperty
     private final StroomDuration connectionTimeout;
+    @JsonProperty
     private final StroomDuration readTimeout;
+    @JsonProperty
     private final StroomDuration writeTimeout;
+    @JsonProperty
     private final Boolean followRedirects;
+    @JsonProperty
     private final Boolean followSslRedirects;
+    @JsonProperty
     private final Boolean retryOnConnectionFailure;
 
     @JsonCreator
@@ -47,7 +58,6 @@ public class OkHttpClientConfig {
         this.followSslRedirects = followSslRedirects;
         this.retryOnConnectionFailure = retryOnConnectionFailure;
     }
-
 
     @JsonPropertyDescription("SSL configuration for the http client.")
     public SSLConfig getSslConfig() {
