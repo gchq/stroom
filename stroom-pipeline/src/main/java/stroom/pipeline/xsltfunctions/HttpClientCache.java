@@ -166,9 +166,10 @@ public class HttpClientCache {
         if (!NullSafe.isEmptyCollection(clientConfig.getHttpProtocols())) {
             final List<Protocol> protocols = clientConfig.getHttpProtocols()
                     .stream()
+                    .map(String::toLowerCase)
                     .map(protocolStr -> {
                         // No idea why okhttp uses "h2" for http 2.0, so cater for it manually
-                        if ("http/2".equalsIgnoreCase(protocolStr)) {
+                        if ("http/2".equals(protocolStr)) {
                             return Protocol.HTTP_2;
                         } else {
                             try {
