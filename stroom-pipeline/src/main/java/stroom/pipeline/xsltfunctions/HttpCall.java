@@ -85,7 +85,7 @@ class HttpCall extends StroomExtensionFunctionCall {
     private String buildErrorMessage(final Throwable t) {
         // Config contains passwords so mask their values
         final String cleanedErrorMsg = t.getMessage()
-                .replaceAll( "(\"[^\"]+Password\"\\s*:\\s*)\"[^\"]+\"",
+                .replaceAll("(\"[^\"]+Password\"\\s*:\\s*)\"[^\"]+\"",
                         "$1\"XXXXXX\"");
 
         return LogUtil.message(
