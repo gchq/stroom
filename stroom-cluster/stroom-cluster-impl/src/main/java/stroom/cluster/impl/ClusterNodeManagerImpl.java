@@ -62,7 +62,6 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
 
     private static final int ONE_SECOND = 1000;
     private static final int ONE_MINUTE = 60 * ONE_SECOND;
-    private static final int TEN_MINUTES = 10 * ONE_MINUTE;
     /**
      * The amount of time in milliseconds we will delay before re-querying
      * state.
@@ -116,7 +115,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         } else {
             // Determine if the current state should be re-evaluated as it is
             // older than 10 minutes.
-            final long expiryTime = System.currentTimeMillis() - TEN_MINUTES;
+            final long expiryTime = System.currentTimeMillis() - ONE_MINUTE;
             if (clusterState.getUpdateTime() < expiryTime) {
                 updateClusterStateAsync(0, false);
             }
