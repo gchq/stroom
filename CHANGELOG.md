@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.214] - 2022-06-29
+
+* Issue **#2931** : Set cluster state update frequency to 1m.
+
+
 ## [v7.0-beta.213] - 2022-06-29
 
 * Issue **#2933** : Change structure of config object for http-call function to allow setting various HTTP client configuration properties, including HTTP protocol version.
@@ -4457,7 +4462,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.213...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.214...HEAD
+[v7.0-beta.214]: https://github.com/gchq/stroom/compare/v7.0-beta.213...v7.0-beta.214
 [v7.0-beta.213]: https://github.com/gchq/stroom/compare/v7.0-beta.212...v7.0-beta.213
 [v7.0-beta.212]: https://github.com/gchq/stroom/compare/v7.0-beta.211...v7.0-beta.212
 [v7.0-beta.211]: https://github.com/gchq/stroom/compare/v7.0-beta.210...v7.0-beta.211
