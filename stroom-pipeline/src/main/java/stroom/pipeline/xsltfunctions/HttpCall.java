@@ -1,7 +1,9 @@
 package stroom.pipeline.xsltfunctions;
 
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
 import net.sf.saxon.Configuration;
@@ -32,6 +34,7 @@ class HttpCall extends StroomExtensionFunctionCall {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpCall.class);
 
+    public static final String FUNCTION_NAME = "http-call";
     private static final AttributesImpl EMPTY_ATTS = new AttributesImpl();
     private static final String URI = "stroom-http";
     private static final String HEADER_DELIMITER = "\n";
@@ -60,21 +63,33 @@ class HttpCall extends StroomExtensionFunctionCall {
 
         } else {
             try {
-                try {
-                    try (final Response response = execute(url, headers, mediaType, data, clientConfig)) {
-                        sequence = createSequence(context, response);
-                    }
-                } catch (final IOException e) {
-                    LOGGER.trace(e::getMessage, e);
-                    sequence = createError(context, "Could not make request: " + e.getMessage());
+                try (final Response response = execute(url, headers, mediaType, data, clientConfig)) {
+                    sequence = createSequence(context, response);
                 }
-            } catch (final SAXException e2) {
-                LOGGER.trace(e2::getMessage, e2);
-                log(context, Severity.ERROR, e2.getMessage(), e2);
+            } catch (final Exception e) {
+                final String msg = buildErrorMessage(e);
+                LOGGER.trace(msg, e);
+                log(context, Severity.ERROR, msg, e);
+                try {
+                    sequence = createError(context, msg);
+                } catch (SAXException ex) {
+                    LOGGER.trace(msg, e);
+                    log(context, Severity.ERROR, msg, e);
+                }
             }
         }
 
         return sequence;
+    }
+
+    private String buildErrorMessage(final Throwable t) {
+        // Config contains passwords so mask their values
+        final String cleanedErrorMsg = t.getMessage()
+                .replaceAll( "(\"[^\"]+Password\"\\s*:\\s*)\"[^\"]+\"",
+                        "$1\"XXXXXX\"");
+
+        return LogUtil.message(
+                "Error calling XSLT function {}(): {}", FUNCTION_NAME, cleanedErrorMsg);
     }
 
     Response execute(final String url,
@@ -107,7 +122,12 @@ class HttpCall extends StroomExtensionFunctionCall {
 
         final Request request = builder.build();
 
-        return client.newCall(request).execute();
+        try {
+            return client.newCall(request).execute();
+        } catch (IOException e) {
+            throw new ProcessException(LogUtil.message(
+                    "Error sending request to \"{}\": {}", url, e.getMessage()), e);
+        }
     }
 
     private Sequence createSequence(final XPathContext context, final Response response) throws SAXException {

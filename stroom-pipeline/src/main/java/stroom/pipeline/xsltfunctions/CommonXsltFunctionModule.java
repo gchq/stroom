@@ -319,7 +319,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HttpCallFunction(final Provider<HttpCall> functionCallProvider) {
             super(
-                    "http-call",
+                    HttpCall.FUNCTION_NAME,
                     1,
                     5,
                     new SequenceType[]{
