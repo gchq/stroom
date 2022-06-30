@@ -463,7 +463,6 @@ public class SearchModel {
                 .builder()
                 .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                 .search(search)
-                .queryKey(currentQueryKey)
                 .componentResultRequests(requests)
                 .dateTimeLocale(timeZones.getTimeZone())
                 .applicationInstanceUuid(applicationInstance.getInstanceUuid())
