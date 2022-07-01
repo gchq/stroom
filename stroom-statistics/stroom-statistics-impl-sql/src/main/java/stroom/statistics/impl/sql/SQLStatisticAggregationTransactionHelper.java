@@ -562,7 +562,7 @@ public class SQLStatisticAggregationTransactionHelper {
                 // tableName);
                 statement.execute(sql);
 
-                LOGGER.debug("Truncated table {} in {}ms", tableName, logExecutionTime.getDuration());
+                LOGGER.debug("Truncated table {} in {}ms", tableName, logExecutionTime.getDurationMs());
 
             } catch (final SQLException sqlException) {
                 LOGGER.error("truncating table {}", tableName, sqlException);
@@ -578,7 +578,7 @@ public class SQLStatisticAggregationTransactionHelper {
             try (final Statement statement = connection.createStatement()) {
                 final String sql = CLEAR_TABLE_SQL + tableName;
                 statement.execute(sql);
-                LOGGER.debug("Cleared table {} in {}ms", tableName, logExecutionTime.getDuration());
+                LOGGER.debug("Cleared table {} in {}ms", tableName, logExecutionTime.getDurationMs());
 
             } catch (final SQLException sqlException) {
                 LOGGER.error("Clearing table {}", tableName, sqlException);

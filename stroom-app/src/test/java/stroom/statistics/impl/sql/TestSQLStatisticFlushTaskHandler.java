@@ -22,16 +22,26 @@ import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogExecutionTime;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple3;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.TestFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +49,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticFlushTaskHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSQLStatisticFlushTaskHandler.class);
 
     @Inject
     private SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
@@ -61,7 +71,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
                     .isEqualTo(0);
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
+                    sqlStatisticValueBatchSaveService, taskContextFactory, securityContext, SQLStatisticsConfig::new);
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -88,7 +98,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
                 .isEqualTo(0);
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
+                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext, SQLStatisticsConfig::new);
 
         final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -111,7 +121,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
                     .isEqualTo(0);
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
+                    sqlStatisticValueBatchSaveService, taskContextFactory, securityContext, SQLStatisticsConfig::new);
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -130,7 +140,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
                 .isEqualTo(0);
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
+                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext, SQLStatisticsConfig::new);
 
         SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -160,6 +170,85 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
         assertThat(getRowCount())
                 .isEqualTo(0);
+    }
+
+    @Disabled // manual testing only, too slow for CI
+    @TestFactory
+    Stream<DynamicTest> testBatchSavePerformance() throws SQLException {
+        final int iterations = 20;
+        final int batchSize = 5_000;
+
+        final Consumer<List<SQLStatValSourceDO>> saveBatchStatisticValueSource_string =
+                sqlStatisticValueBatchSaveService::saveBatchStatisticValueSource_String;
+        final Consumer<List<SQLStatValSourceDO>> saveBatchStatisticValueSource_singlePreparedStatement =
+                sqlStatisticValueBatchSaveService::saveBatchStatisticValueSource_SinglePreparedStatement;
+        final Consumer<List<SQLStatValSourceDO>> saveBatchStatisticValueSource_batchPreparedStatement = batch -> {
+            try {
+                sqlStatisticValueBatchSaveService
+                        .saveBatchStatisticValueSource_BatchPreparedStatement(batch);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+
+        final List<Tuple3<String, Integer, Consumer<List<SQLStatValSourceDO>>>> batchConsumers =
+                List.of(
+                        Tuple.of("string",
+                                batchSize,
+                                saveBatchStatisticValueSource_string),
+                        Tuple.of("single_prep_stmt",
+                                7_000,
+                                saveBatchStatisticValueSource_singlePreparedStatement),
+                        Tuple.of("single_prep_stmt",
+                                8_000,
+                                saveBatchStatisticValueSource_singlePreparedStatement),
+                        Tuple.of("single_prep_stmt",
+                                9_000,
+                                saveBatchStatisticValueSource_singlePreparedStatement),
+                        Tuple.of("single_prep_stmt",
+                                10_000,
+                                saveBatchStatisticValueSource_singlePreparedStatement),
+                        Tuple.of("single_prep_stmt",
+                                11_000,
+                                saveBatchStatisticValueSource_singlePreparedStatement));
+//                Tuple.of("batch_prep_stmt", saveBatchStatisticValueSource_batchPreparedStatement));
+
+//        ThreadUtil.sleep(3_000);
+
+        return batchConsumers.stream()
+                .map(tuple3 ->
+                        DynamicTest.dynamicTest(
+                                tuple3._1 + " (" + tuple3._2 + ")", () ->
+                                        doBatchSaveTest(tuple3._3, tuple3._2, iterations)));
+    }
+
+    private void doBatchSaveTest(final Consumer<List<SQLStatValSourceDO>> batchConsumer,
+                                 final int batchSize,
+                                 final int iterations) {
+        final LogExecutionTime logExecutionTime = LogExecutionTime.start();
+        for (int l = 0; l < iterations; l++) {
+            final List<SQLStatValSourceDO> batch = new ArrayList<>();
+            for (int i = 0; i < batchSize; i++) {
+                long value = System.currentTimeMillis();
+                long count = 100;
+
+                final SQLStatValSourceDO statisticValueSource = SQLStatValSourceDO.createValueStat(
+                        System.currentTimeMillis(),
+                        "BATCHTEST" + i,
+                        value,
+                        count);
+
+                batch.add(statisticValueSource);
+            }
+
+            LOGGER.logDurationIfInfoEnabled(() -> {
+                batchConsumer.accept(batch);
+            }, "Inserting " + batchSize + " stats");
+        }
+        LOGGER.info("Total time :" + logExecutionTime.getDuration()
+                + " rate: "
+                + ((double) batchSize) * iterations / logExecutionTime.getDurationMs() * 1000
+                + "/sec");
     }
 
     private RolledUpStatisticEvent buildGoodEvent(final int id) {

@@ -678,7 +678,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
+                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext, SQLStatisticsConfig::new);
         taskHandler.exec(sqlStatisticAggregateMap);
     }
 

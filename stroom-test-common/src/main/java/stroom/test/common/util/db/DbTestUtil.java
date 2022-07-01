@@ -158,6 +158,7 @@ public class DbTestUtil {
                         .scheme(dbUrl.getScheme())
                         .host(effectiveHost)
                         .port(effectivePort)
+                        .query(dbUrl.getQuery())
                         .build()
                         .toString();
 

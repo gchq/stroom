@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.Min;
 
 @JsonPropertyOrder(alphabetic = true)
 public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
@@ -23,6 +24,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
     private final SQLStatisticsDbConfig dbConfig;
     private final String docRefType;
     private final SearchConfig searchConfig;
+    private final int statisticFlushBatchSize;
     private final int statisticAggregationBatchSize;
     // TODO 29/11/2021 AT: Make final
     private StroomDuration maxProcessingAge;
@@ -33,7 +35,8 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
         dbConfig = new SQLStatisticsDbConfig();
         docRefType = "StatisticStore";
         searchConfig = new SearchConfig();
-        statisticAggregationBatchSize = 1000000;
+        statisticFlushBatchSize = 8_000;
+        statisticAggregationBatchSize = 1_000_000;
         maxProcessingAge = null;
         dataSourceCache = CacheConfig.builder()
                 .maximumSize(100L)
@@ -48,6 +51,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
             @JsonProperty("db") final SQLStatisticsDbConfig dbConfig,
             @JsonProperty("docRefType") final String docRefType,
             @JsonProperty("search") final SearchConfig searchConfig,
+            @JsonProperty("statisticFlushBatchSize") final int statisticFlushBatchSize,
             @JsonProperty("statisticAggregationBatchSize") final int statisticAggregationBatchSize,
             @JsonProperty("maxProcessingAge") final StroomDuration maxProcessingAge,
             @JsonProperty("dataSourceCache") final CacheConfig dataSourceCache,
@@ -56,6 +60,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
         this.dbConfig = dbConfig;
         this.docRefType = docRefType;
         this.searchConfig = searchConfig;
+        this.statisticFlushBatchSize = statisticFlushBatchSize;
         this.statisticAggregationBatchSize = statisticAggregationBatchSize;
         this.maxProcessingAge = maxProcessingAge;
         this.dataSourceCache = dataSourceCache;
@@ -78,6 +83,15 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
         return searchConfig;
     }
 
+    @Min(1)
+    @JsonPropertyDescription("Number of statistic events to write to SQL_STAT_VAL_SRC in one batch. " +
+            "Sweet spot seems to be around 8-10k. Too high a number and there is a risk of the SQL statement " +
+            "being too large for MySQL.")
+    public int getStatisticFlushBatchSize() {
+        return statisticFlushBatchSize;
+    }
+
+    @Min(1)
     @JsonPropertyDescription("Number of SQL_STAT_VAL_SRC records to merge into SQL_STAT_VAL in one batch")
     public int getStatisticAggregationBatchSize() {
         return statisticAggregationBatchSize;
@@ -112,6 +126,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
                 dbConfig,
                 docRefType,
                 searchConfig,
+                statisticFlushBatchSize,
                 statisticAggregationBatchSize,
                 maxProcessingAge,
                 dataSourceCache, slowQueryWarningThreshold);
