@@ -22,6 +22,7 @@ import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -292,43 +293,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
     private void deleteRows() throws SQLException {
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(
-                    "delete from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
-                preparedStatement.execute();
-            }
+            DbTestUtil.truncateTables(connection, List.of(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME));
         }
     }
-
-
-//    private static class MockTaskMonitor implements TaskMonitor {
-//        private static final long serialVersionUID = -8415095958756818805L;
-//
-//        @Override
-//        public Monitor getParent() {
-//            return null;
-//        }
-//
-//        @Override
-//        public void addTerminateHandler(final TerminateHandler handler) {
-//        }
-//
-//        @Override
-//        public void terminate() {
-//        }
-//
-//        @Override
-//        public boolean isTerminated() {
-//            return false;
-//        }
-//
-//        @Override
-//        public String getInfo() {
-//            return null;
-//        }
-//
-//        @Override
-//        public void info(final Object... args) {
-//            // do nothing
-//        }
-//    }
 }
