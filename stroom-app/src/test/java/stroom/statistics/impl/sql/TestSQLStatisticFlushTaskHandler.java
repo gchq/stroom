@@ -38,6 +38,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -251,9 +252,10 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
         final int iterations = 100_000;
         final int keysPerIteration = 2;
         final int tagValuesPerKey = 2;
-        final int eventFreqSecs = 1;
+        final long initialEventDeltaMs = 1_000;
+        final long eventDeltaDeltaMs = 20;
         final int flushWorkerThreads = 4;
-        final int flushWorkers = 4;
+        final int flushWorkers = 1;
         final int expectedEventCount = iterations * keysPerIteration * tagValuesPerKey * flushWorkers;
         final Instant startTime = Instant.from(
                 ZonedDateTime.of(
@@ -290,9 +292,13 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
                 aggregateMapRef.set(new SQLStatisticAggregateMap());
             };
             Instant time = startTime;
+            long eventDeltaMs = initialEventDeltaMs;
             long eventCount = 0;
             for (int i = 0; i < iterations; i++) {
-                time = startTime.minus(i * eventFreqSecs, ChronoUnit.SECONDS);
+//                time = startTime.minus(i * eventFreqSecs, ChronoUnit.SECONDS);
+                time = time.minus(eventDeltaMs, ChronoUnit.MILLIS);
+                // Make the gaps between events a bit bigger each time so we span a longer period
+                eventDeltaMs += eventDeltaDeltaMs;
                 for (int j = 0; j < keysPerIteration; j++) {
                     for (int k = 0; k < tagValuesPerKey; k++) {
 
@@ -323,7 +329,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
             if (aggregateMapRef.get().size() > 0) {
                 doFlush.run();
             }
-            LOGGER.info("Earliest time: {}", time);
+            LOGGER.info("Earliest time: {}, eventDeltaMs: {}", time, Duration.ofMillis(eventDeltaMs));
         };
 
         final Executor flushWorkersExecutor = Executors.newFixedThreadPool(flushWorkerThreads);
@@ -354,12 +360,20 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
                 "Aggregate");
 
         LOGGER.info("------------------------------------------------------------");
-        LOGGER.info("Test settings:\niterations: {}, \nkeysPerIteration: {}, \ntagValuesPerKey: {}, " +
-                        "\neventFreqSecs: {}, \nflushWorkerThreads: {}, \nflushWorkers: {}",
+        LOGGER.info("""
+                        Test settings:
+                        iterations: {},
+                        keysPerIteration: {},
+                        tagValuesPerKey: {},
+                        initialEventDeltaMs: {},
+                        eventDeltaDeltaMs: {},
+                        flushWorkerThreads: {},
+                        flushWorkers: {}""",
                 iterations,
                 keysPerIteration,
                 tagValuesPerKey,
-                eventFreqSecs,
+                initialEventDeltaMs,
+                eventDeltaDeltaMs,
                 flushWorkerThreads,
                 flushWorkers);
         LOGGER.info("Total event count flushed: {}", totalEventCount);
