@@ -21,7 +21,7 @@ import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.task.api.TaskContextFactory;
-import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.AbstractStatisticsCoreIntegrationTest;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -39,16 +39,26 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
+class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegrationTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSQLStatisticFlushTaskHandler.class);
 
@@ -62,13 +72,15 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     private SecurityContext securityContext;
     @Inject
     private TaskContextFactory taskContextFactory;
+    @Inject
+    private SQLStatisticsConfig sqlStatisticsConfig;
 
     @Test
     void testExec_tenGoodRowsTwoBad() {
         assertThatThrownBy(() -> {
-            deleteRows();
+            deleteStatValSrcRows();
 
-            assertThat(getRowCount())
+            assertThat(getStatValSrcRowCount())
                     .isEqualTo(0);
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
@@ -93,9 +105,9 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
     @Test
     void testExec_threeGoodRows() throws StatisticsEventValidationException, SQLException {
-        deleteRows();
+        deleteStatValSrcRows();
 
-        assertThat(getRowCount())
+        assertThat(getStatValSrcRowCount())
                 .isEqualTo(0);
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
@@ -109,16 +121,16 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
         taskHandler.exec(aggregateMap);
 
-        assertThat(getRowCount())
+        assertThat(getStatValSrcRowCount())
                 .isEqualTo(3);
     }
 
     @Test
     void testExec_twoBadRows() {
         assertThatThrownBy(() -> {
-            deleteRows();
+            deleteStatValSrcRows();
 
-            assertThat(getRowCount())
+            assertThat(getStatValSrcRowCount())
                     .isEqualTo(0);
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
@@ -135,9 +147,9 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
     @Test
     void testExec_hugeNumbers() throws StatisticsEventValidationException, SQLException {
-        deleteRows();
+        deleteStatValSrcRows();
 
-        assertThat(getRowCount())
+        assertThat(getStatValSrcRowCount())
                 .isEqualTo(0);
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
@@ -150,12 +162,12 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
         taskHandler.exec(aggregateMap);
 
-        assertThat(getRowCount())
+        assertThat(getStatValSrcRowCount())
                 .isEqualTo(1);
 
         sqlStatisticAggregationManager.aggregate(Instant.now());
 
-        assertThat(getRowCount())
+        assertThat(getStatValSrcRowCount())
                 .isEqualTo(0);
 
         aggregateMap = new SQLStatisticAggregateMap();
@@ -164,12 +176,12 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
         taskHandler.exec(aggregateMap);
 
-        assertThat(getRowCount())
+        assertThat(getStatValSrcRowCount())
                 .isEqualTo(1);
 
         sqlStatisticAggregationManager.aggregate(Instant.now());
 
-        assertThat(getRowCount())
+        assertThat(getStatValSrcRowCount())
                 .isEqualTo(0);
     }
 
@@ -221,6 +233,130 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
                         DynamicTest.dynamicTest(
                                 tuple3._1 + " (" + tuple3._2 + ")", () ->
                                         doBatchSaveTest(tuple3._3, tuple3._2, iterations)));
+    }
+
+    @Disabled // Manual running only, too slow for CI
+    @Test
+    void testFlushAndAggregatePerformance() throws SQLException {
+
+        final LogExecutionTime totalRunTime = LogExecutionTime.start();
+        final List<String> tagNames = List.of("Tag1", "Tag2");
+        // Make sure each flush call executes two and a bit batches
+        final int flushLimit = (int) (sqlStatisticsConfig.getStatisticFlushBatchSize() * 2.5);
+        final int iterations = 5_000;
+        final int keysPerIteration = 2;
+        final int tagValuesPerKey = 2;
+        final int eventFreqSecs = 1;
+        final int flushWorkerThreads = 2;
+        final int flushWorkers = 4;
+        final int expectedEventCount = iterations * keysPerIteration * tagValuesPerKey * flushWorkers;
+        final Instant startTime = Instant.from(
+                ZonedDateTime.of(
+                        2022,
+                        6,
+                        30,
+                        12,
+                        0,
+                        0,
+                        0,
+                        ZoneOffset.UTC));
+        final LongAdder totalEventCount = new LongAdder();
+
+        LOGGER.info("Start time: {}", startTime);
+
+        clearAllStatTables();
+
+        assertThat(getStatValSrcRowCount())
+                .isEqualTo(0);
+
+        final SQLStatisticFlushTaskHandler sqlStatisticFlushTaskHandler = new SQLStatisticFlushTaskHandler(
+                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext, () -> sqlStatisticsConfig);
+
+        final Runnable flushRunnable = () -> {
+            final AtomicReference<SQLStatisticAggregateMap> aggregateMapRef = new AtomicReference<>(
+                    new SQLStatisticAggregateMap());
+
+            final Runnable doFlush = () -> {
+                final SQLStatisticAggregateMap map = aggregateMapRef.get();
+                LOGGER.logDurationIfInfoEnabled(() ->
+                                sqlStatisticFlushTaskHandler.exec(map),
+                        "Flush");
+                totalEventCount.add(map.size());
+                aggregateMapRef.set(new SQLStatisticAggregateMap());
+            };
+            Instant time = startTime;
+            long eventCount = 0;
+            for (int i = 0; i < iterations; i++) {
+                time = startTime.minus(i * eventFreqSecs, ChronoUnit.SECONDS);
+                for (int j = 0; j < keysPerIteration; j++) {
+                    for (int k = 0; k < tagValuesPerKey; k++) {
+
+                        final int finalK = k;
+                        final List<StatisticTag> tags = tagNames.stream()
+                                .map(name -> new StatisticTag(name, "Val" + finalK))
+                                .collect(Collectors.toList());
+
+                        final StatisticEvent event = StatisticEvent.createCount(
+                                time.toEpochMilli(), "StatKey" + j, tags, 10);
+
+                        try {
+                            aggregateMapRef.get().addRolledUpEvent(
+                                    new RolledUpStatisticEvent(event),
+                                    1_000);
+                        } catch (StatisticsEventValidationException e) {
+                            throw new RuntimeException(e);
+                        }
+                        eventCount++;
+                        if (eventCount >= flushLimit) {
+                            doFlush.run();
+                            eventCount = 0;
+                        }
+                    }
+                }
+            }
+
+            if (aggregateMapRef.get().size() > 0) {
+                doFlush.run();
+            }
+        };
+
+        final Executor flushWorkersExecutor = Executors.newFixedThreadPool(flushWorkerThreads);
+        final CountDownLatch countDownLatch = new CountDownLatch(flushWorkers);
+
+        for (int i = 0; i < flushWorkers; i++) {
+            final int finalI = i;
+            CompletableFuture.runAsync(() -> {
+                LOGGER.info("Running flush worker {}", finalI);
+                flushRunnable.run();
+                countDownLatch.countDown();
+                if (countDownLatch.getCount() == 0) {
+                    LOGGER.info("Finished last flush");
+                }
+            }, flushWorkersExecutor);
+        }
+
+        // Keep running aggregation until all flushes have finished
+        LogExecutionTime totalAggTime = LogExecutionTime.start();
+        while (countDownLatch.getCount() > 0) {
+            LOGGER.logDurationIfInfoEnabled(() ->
+                            sqlStatisticAggregationManager.aggregate(Instant.now()),
+                    "Aggregate");
+        }
+        LOGGER.info("Flushing finished, running final aggregation");
+        LOGGER.logDurationIfInfoEnabled(() ->
+                        sqlStatisticAggregationManager.aggregate(Instant.now()),
+                "Aggregate");
+
+        LOGGER.info("------------------------------------------------------------");
+        LOGGER.info("Total agg time: {}", totalAggTime.getDuration());
+        LOGGER.info("Event count: {}", totalEventCount);
+        LOGGER.info("Total run time: {}", totalRunTime.getDuration());
+        LOGGER.info("------------------------------------------------------------");
+
+        assertThat(getStatValSrcRowCount())
+                .isEqualTo(0);
+        assertThat(totalEventCount.longValue())
+                .isEqualTo(expectedEventCount);
     }
 
     private void doBatchSaveTest(final Consumer<List<SQLStatValSourceDO>> batchConsumer,
@@ -277,7 +413,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
         return new RolledUpStatisticEvent(goodEvent);
     }
 
-    private int getRowCount() throws SQLException {
+    private int getStatValSrcRowCount() throws SQLException {
         int count;
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
@@ -291,9 +427,30 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
         return count;
     }
 
-    private void deleteRows() throws SQLException {
+    private void deleteStatValSrcRows() throws SQLException {
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             DbTestUtil.truncateTables(connection, List.of(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME));
+        }
+    }
+
+    private void deleteStatValRows() throws SQLException {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
+            DbTestUtil.truncateTables(connection, List.of(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME));
+        }
+    }
+
+    private void deleteStatValKeyRows() throws SQLException {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
+            DbTestUtil.truncateTables(connection, List.of(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME));
+        }
+    }
+
+    private void clearAllStatTables() throws SQLException {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
+            DbTestUtil.truncateTables(connection, List.of(
+                    SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME,
+                    SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME,
+                    SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME));
         }
     }
 }
