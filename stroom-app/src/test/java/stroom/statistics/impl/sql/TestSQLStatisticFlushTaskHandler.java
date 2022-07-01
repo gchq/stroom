@@ -235,6 +235,11 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
                                         doBatchSaveTest(tuple3._3, tuple3._2, iterations)));
     }
 
+    /**
+     * The aim of this test is for multiple threads to be flushing stats into SQL_STAT_VAL_SRC
+     * and for the main thread to be constantly running the aggregation to exercise contention
+     * on any db locks.
+     */
     @Disabled // Manual running only, too slow for CI
     @Test
     void testFlushAndAggregatePerformance() throws SQLException {
@@ -243,11 +248,11 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
         final List<String> tagNames = List.of("Tag1", "Tag2");
         // Make sure each flush call executes two and a bit batches
         final int flushLimit = (int) (sqlStatisticsConfig.getStatisticFlushBatchSize() * 2.5);
-        final int iterations = 5_000;
+        final int iterations = 100_000;
         final int keysPerIteration = 2;
         final int tagValuesPerKey = 2;
         final int eventFreqSecs = 1;
-        final int flushWorkerThreads = 2;
+        final int flushWorkerThreads = 4;
         final int flushWorkers = 4;
         final int expectedEventCount = iterations * keysPerIteration * tagValuesPerKey * flushWorkers;
         final Instant startTime = Instant.from(
@@ -318,6 +323,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
             if (aggregateMapRef.get().size() > 0) {
                 doFlush.run();
             }
+            LOGGER.info("Earliest time: {}", time);
         };
 
         final Executor flushWorkersExecutor = Executors.newFixedThreadPool(flushWorkerThreads);
@@ -336,7 +342,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
         }
 
         // Keep running aggregation until all flushes have finished
-        LogExecutionTime totalAggTime = LogExecutionTime.start();
+        final LogExecutionTime totalAggTime = LogExecutionTime.start();
         while (countDownLatch.getCount() > 0) {
             LOGGER.logDurationIfInfoEnabled(() ->
                             sqlStatisticAggregationManager.aggregate(Instant.now()),
@@ -348,9 +354,17 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
                 "Aggregate");
 
         LOGGER.info("------------------------------------------------------------");
+        LOGGER.info("Test settings:\niterations: {}, \nkeysPerIteration: {}, \ntagValuesPerKey: {}, " +
+                        "\neventFreqSecs: {}, \nflushWorkerThreads: {}, \nflushWorkers: {}",
+                iterations,
+                keysPerIteration,
+                tagValuesPerKey,
+                eventFreqSecs,
+                flushWorkerThreads,
+                flushWorkers);
+        LOGGER.info("Total event count flushed: {}", totalEventCount);
         LOGGER.info("Total agg time: {}", totalAggTime.getDuration());
-        LOGGER.info("Event count: {}", totalEventCount);
-        LOGGER.info("Total run time: {}", totalRunTime.getDuration());
+        LOGGER.info("Total test run time: {}", totalRunTime.getDuration());
         LOGGER.info("------------------------------------------------------------");
 
         assertThat(getStatValSrcRowCount())
