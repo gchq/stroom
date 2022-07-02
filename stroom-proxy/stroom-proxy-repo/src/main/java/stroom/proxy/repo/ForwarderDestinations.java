@@ -8,5 +8,5 @@ public interface ForwarderDestinations {
 
     List<String> getDestinationNames();
 
-    StreamHandlers getProvider(String forwardUrl);
+    StreamHandlers getProvider(String name);
 }

@@ -1,23 +1,27 @@
 package stroom.proxy.app;
 
-import stroom.proxy.app.forwarder.ForwarderConfig;
+import stroom.proxy.app.forwarder.ForwardConfig;
 import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.repo.FileScannerConfig;
 import stroom.proxy.repo.LogStreamConfig;
+import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.proxy.repo.ProxyRepoDbConfig;
-import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.validation.constraints.AssertTrue;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -32,73 +36,81 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     private final boolean useDefaultOpenIdCredentials;
     private final boolean haltBootOnConfigValidationFailure;
+    private final String proxyId;
     private final String contentDir;
 
     private final ProxyPathConfig pathConfig;
-    private final ProxyRepoDbConfig proxyDbConfig;
+    private final ProxyDbConfig proxyDbConfig;
     private final ReceiveDataConfig receiveDataConfig;
     private final ProxyRepoConfig proxyRepoConfig;
-    private final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig;
+    private final List<FileScannerConfig> fileScanners;
     private final AggregatorConfig aggregatorConfig;
-    private final ForwarderConfig forwarderConfig;
+    private final List<ForwardConfig> forwardDestinations;
     private final LogStreamConfig logStreamConfig;
     private final ContentSyncConfig contentSyncConfig;
     private final FeedStatusConfig feedStatusConfig;
     private final RestClientConfig restClientConfig;
     private final ThreadConfig threadConfig;
+    private final StroomDuration retryFrequency;
 
     public ProxyConfig() {
         useDefaultOpenIdCredentials = DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS;
         haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
+        proxyId = null;
         contentDir = DEFAULT_CONTENT_DIR;
 
         pathConfig = new ProxyPathConfig();
-        proxyDbConfig = new ProxyRepoDbConfig();
+        proxyDbConfig = new ProxyDbConfig();
         receiveDataConfig = new ReceiveDataConfig();
         proxyRepoConfig = new ProxyRepoConfig();
-        proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
+        fileScanners = Collections.emptyList();
         aggregatorConfig = new AggregatorConfig();
-        forwarderConfig = new ForwarderConfig();
+        forwardDestinations = Collections.emptyList();
         logStreamConfig = new LogStreamConfig();
         contentSyncConfig = new ContentSyncConfig();
         feedStatusConfig = new FeedStatusConfig();
         restClientConfig = new RestClientConfig();
         threadConfig = new ThreadConfig();
+        retryFrequency = StroomDuration.ofMinutes(1);
     }
 
     @JsonCreator
     public ProxyConfig(
             @JsonProperty("useDefaultOpenIdCredentials") final boolean useDefaultOpenIdCredentials,
             @JsonProperty("haltBootOnConfigValidationFailure") final boolean haltBootOnConfigValidationFailure,
+            @JsonProperty("proxyId") final String proxyId,
             @JsonProperty("contentDir") final String contentDir,
             @JsonProperty("path") final ProxyPathConfig pathConfig,
-            @JsonProperty("db") final ProxyRepoDbConfig proxyDbConfig,
+            @JsonProperty("db") final ProxyDbConfig proxyDbConfig,
             @JsonProperty("receiveDataConfig") final ReceiveDataConfig receiveDataConfig,
             @JsonProperty("repository") final ProxyRepoConfig proxyRepoConfig,
-            @JsonProperty("scanner") final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig,
+            @JsonProperty("fileScanners") final List<FileScannerConfig> fileScanners,
             @JsonProperty("aggregator") final AggregatorConfig aggregatorConfig,
-            @JsonProperty("forwarder") final ForwarderConfig forwarderConfig,
+            @JsonProperty("forwardDestinations") final List<ForwardConfig> forwardDestinations,
             @JsonProperty("logStream") final LogStreamConfig logStreamConfig,
             @JsonProperty("contentSync") final ContentSyncConfig contentSyncConfig,
             @JsonProperty("feedStatus") final FeedStatusConfig feedStatusConfig,
             @JsonProperty("restClient") final RestClientConfig restClientConfig,
-            @JsonProperty("threads") final ThreadConfig threadConfig) {
+            @JsonProperty("threads") final ThreadConfig threadConfig,
+            @JsonProperty("retryFrequency") final StroomDuration retryFrequency) {
 
         this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+        this.proxyId = proxyId;
         this.contentDir = contentDir;
         this.pathConfig = pathConfig;
         this.proxyDbConfig = proxyDbConfig;
         this.receiveDataConfig = receiveDataConfig;
         this.proxyRepoConfig = proxyRepoConfig;
-        this.proxyRepoFileScannerConfig = proxyRepoFileScannerConfig;
+        this.fileScanners = fileScanners;
         this.aggregatorConfig = aggregatorConfig;
-        this.forwarderConfig = forwarderConfig;
+        this.forwardDestinations = forwardDestinations;
         this.logStreamConfig = logStreamConfig;
         this.contentSyncConfig = contentSyncConfig;
         this.feedStatusConfig = feedStatusConfig;
         this.restClientConfig = restClientConfig;
         this.threadConfig = threadConfig;
+        this.retryFrequency = retryFrequency;
     }
 
     @AssertTrue(
@@ -123,6 +135,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     }
 
     @JsonProperty
+    public String getProxyId() {
+        return proxyId;
+    }
+
+    @JsonProperty
     public String getContentDir() {
         return contentDir;
     }
@@ -133,7 +150,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     }
 
     @JsonProperty("db")
-    public ProxyRepoDbConfig getProxyDbConfig() {
+    public ProxyDbConfig getProxyDbConfig() {
         return proxyDbConfig;
     }
 
@@ -147,9 +164,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxyRepoConfig;
     }
 
-    @JsonProperty("scanner")
-    public ProxyRepoFileScannerConfig getProxyRepoFileScannerConfig() {
-        return proxyRepoFileScannerConfig;
+    @JsonProperty("fileScanners")
+    public List<FileScannerConfig> getFileScanners() {
+        return fileScanners;
     }
 
     @JsonProperty("aggregator")
@@ -157,9 +174,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return aggregatorConfig;
     }
 
-    @JsonProperty("forwarder")
-    public ForwarderConfig getForwarderConfig() {
-        return forwarderConfig;
+    @JsonProperty("forwardDestinations")
+    public List<ForwardConfig> getForwardDestinations() {
+        return forwardDestinations;
     }
 
     @JsonProperty("logStream")
@@ -187,6 +204,12 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return threadConfig;
     }
 
+    @JsonPropertyDescription("How often do we want to retry forwarding data that fails to forward?")
+    @JsonProperty
+    public StroomDuration getRetryFrequency() {
+        return retryFrequency;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -195,97 +218,109 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         private Boolean useDefaultOpenIdCredentials = DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS;
         private Boolean haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
+        private String proxyId;
         private String contentDir = DEFAULT_CONTENT_DIR;
 
         private ProxyPathConfig pathConfig = new ProxyPathConfig();
-        private ProxyRepoDbConfig proxyDbConfig = new ProxyRepoDbConfig();
+        private ProxyDbConfig proxyDbConfig = new ProxyDbConfig();
         private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
         private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
-        private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
+        private List<FileScannerConfig> fileScanners = new ArrayList<>();
         private AggregatorConfig aggregatorConfig = new AggregatorConfig();
-        private ForwarderConfig forwarderConfig = new ForwarderConfig();
+        private List<ForwardConfig> forwardDestinations = new ArrayList<>();
         private LogStreamConfig logStreamConfig = new LogStreamConfig();
         private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
         private RestClientConfig restClientConfig = new RestClientConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
+        private StroomDuration retryFrequency = StroomDuration.ofMinutes(1);
 
         private Builder() {
 
         }
 
-        public Builder withUseDefaultOpenIdCredentials(final Boolean useDefaultOpenIdCredentials) {
+        public Builder useDefaultOpenIdCredentials(final Boolean useDefaultOpenIdCredentials) {
             this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
             return this;
         }
 
-        public Builder withHaltBootOnConfigValidationFailure(final Boolean haltBootOnConfigValidationFailure) {
+        public Builder haltBootOnConfigValidationFailure(final Boolean haltBootOnConfigValidationFailure) {
             this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
             return this;
         }
 
-        public Builder withContentDir(final String contentDir) {
+        public Builder proxyId(final String proxyId) {
+            this.proxyId = proxyId;
+            return this;
+        }
+
+        public Builder contentDir(final String contentDir) {
             this.contentDir = contentDir;
             return this;
         }
 
-        public Builder withPathConfig(final ProxyPathConfig pathConfig) {
+        public Builder pathConfig(final ProxyPathConfig pathConfig) {
             this.pathConfig = pathConfig;
             return this;
         }
 
-        public Builder withProxyDbConfig(final ProxyRepoDbConfig proxyDbConfig) {
+        public Builder proxyDbConfig(final ProxyDbConfig proxyDbConfig) {
             this.proxyDbConfig = proxyDbConfig;
             return this;
         }
 
-        public Builder withReceiveDataConfig(final ReceiveDataConfig receiveDataConfig) {
+        public Builder receiveDataConfig(final ReceiveDataConfig receiveDataConfig) {
             this.receiveDataConfig = receiveDataConfig;
             return this;
         }
 
-        public Builder withProxyRepoConfig(final ProxyRepoConfig proxyRepoConfig) {
+        public Builder proxyRepoConfig(final ProxyRepoConfig proxyRepoConfig) {
             this.proxyRepoConfig = proxyRepoConfig;
             return this;
         }
 
-        public Builder withProxyRepoFileScannerConfig(final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig) {
-            this.proxyRepoFileScannerConfig = proxyRepoFileScannerConfig;
+        public Builder addFileScanner(final FileScannerConfig fileScannerConfig) {
+            this.fileScanners.add(fileScannerConfig);
             return this;
         }
 
-        public Builder withAggregatorConfig(final AggregatorConfig aggregatorConfig) {
+        public Builder aggregatorConfig(final AggregatorConfig aggregatorConfig) {
             this.aggregatorConfig = aggregatorConfig;
             return this;
         }
 
-        public Builder withForwarderConfig(final ForwarderConfig forwarderConfig) {
-            this.forwarderConfig = forwarderConfig;
+        public Builder addForwardDestination(final ForwardConfig forwarderConfig) {
+            this.forwardDestinations.add(forwarderConfig);
             return this;
         }
 
-        public Builder withLogStreamConfig(final LogStreamConfig logStreamConfig) {
+        public Builder logStreamConfig(final LogStreamConfig logStreamConfig) {
             this.logStreamConfig = logStreamConfig;
             return this;
         }
 
-        public Builder withContentSyncConfig(final ContentSyncConfig contentSyncConfig) {
+        public Builder contentSyncConfig(final ContentSyncConfig contentSyncConfig) {
             this.contentSyncConfig = contentSyncConfig;
             return this;
         }
 
-        public Builder withFeedStatusConfig(final FeedStatusConfig feedStatusConfig) {
+        public Builder feedStatusConfig(final FeedStatusConfig feedStatusConfig) {
             this.feedStatusConfig = feedStatusConfig;
             return this;
         }
 
-        public Builder withRestClientConfig(final RestClientConfig restClientConfig) {
+        public Builder restClientConfig(final RestClientConfig restClientConfig) {
             this.restClientConfig = restClientConfig;
             return this;
         }
 
-        public Builder withThreadConfig(final ThreadConfig threadConfig) {
+        public Builder threadConfig(final ThreadConfig threadConfig) {
             this.threadConfig = threadConfig;
+            return this;
+        }
+
+        public Builder retryFrequency(final StroomDuration retryFrequency) {
+            this.retryFrequency = retryFrequency;
             return this;
         }
 
@@ -293,19 +328,21 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return new ProxyConfig(
                     useDefaultOpenIdCredentials,
                     haltBootOnConfigValidationFailure,
+                    proxyId,
                     contentDir,
                     pathConfig,
                     proxyDbConfig,
                     receiveDataConfig,
                     proxyRepoConfig,
-                    proxyRepoFileScannerConfig,
+                    fileScanners,
                     aggregatorConfig,
-                    forwarderConfig,
+                    forwardDestinations,
                     logStreamConfig,
                     contentSyncConfig,
                     feedStatusConfig,
                     restClientConfig,
-                    threadConfig);
+                    threadConfig,
+                    retryFrequency);
         }
     }
 }

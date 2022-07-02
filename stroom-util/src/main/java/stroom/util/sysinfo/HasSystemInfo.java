@@ -1,5 +1,12 @@
 package stroom.util.sysinfo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 public interface HasSystemInfo {
 
     /**
@@ -18,4 +25,64 @@ public interface HasSystemInfo {
      * VIEW_SYSTEM_INFO_PERMISSION are required.
      */
     SystemInfoResult getSystemInfo();
+
+    default SystemInfoResult getSystemInfo(final Map<String, String> params) {
+        if (params == null || params.isEmpty()) {
+            return getSystemInfo();
+        } else {
+            throw new UnsupportedOperationException("This system info provider does not support parameters");
+        }
+    }
+
+    // TODO Change this to a list of ParamInfo
+    default List<ParamInfo> getParamInfo() {
+        return Collections.emptyList();
+    }
+
+    class ParamInfo {
+
+        private final String name;
+        private final String description;
+        private final ParamType paramType;
+
+        public ParamInfo(final String name,
+                         final String description,
+                         final ParamType paramType) {
+            this.name = Objects.requireNonNull(name);
+            this.description = Objects.requireNonNull(description);
+            this.paramType = Objects.requireNonNull(paramType);
+        }
+
+        public static ParamInfo optionalParam(final String name,
+                                              final String description) {
+            return new ParamInfo(name, description, ParamType.OPTIONAL);
+        }
+
+        public static ParamInfo mandatoryParam(final String name,
+                                               final String description) {
+            return new ParamInfo(name, description, ParamType.MANDATORY);
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public ParamType getParamType() {
+            return paramType;
+        }
+
+        @JsonIgnore
+        public boolean isMandatory() {
+            return ParamType.MANDATORY.equals(paramType);
+        }
+    }
+
+    enum ParamType {
+        OPTIONAL,
+        MANDATORY
+    }
 }

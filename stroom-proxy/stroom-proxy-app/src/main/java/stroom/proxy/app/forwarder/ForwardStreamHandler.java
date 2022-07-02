@@ -7,6 +7,7 @@ import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.SSLUtil;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,29 +45,29 @@ public class ForwardStreamHandler implements StreamHandler {
     private long totalBytesSent = 0;
 
     public ForwardStreamHandler(final LogStream logStream,
-                                final ForwardDestinationConfig forwardDestinationConfig,
+                                final ForwardHttpPostConfig config,
                                 final SSLSocketFactory sslSocketFactory,
                                 final String userAgent,
                                 final AttributeMap attributeMap) throws IOException {
         this.logStream = logStream;
-        this.forwardUrl = forwardDestinationConfig.getForwardUrl();
-        this.forwardDelayMs = forwardDestinationConfig.getForwardDelayMs();
+        this.forwardUrl = config.getForwardUrl();
+        this.forwardDelayMs = config.getForwardDelayMs();
         this.attributeMap = attributeMap;
 
-        final Integer forwardTimeoutMs = forwardDestinationConfig.getForwardTimeoutMs();
-        final Integer forwardChunkSize = forwardDestinationConfig.getForwardChunkSize();
+        final Integer forwardTimeoutMs = config.getForwardTimeoutMs();
+        final Integer forwardChunkSize = config.getForwardChunkSize();
 
         startTimeMs = System.currentTimeMillis();
         attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
-        LOGGER.info(() -> "handleHeader() - " + forwardUrl + " Sending request " + attributeMap);
+        LOGGER.debug(() -> "handleHeader() - " + forwardUrl + " Sending request " + attributeMap);
 
         final URL url = new URL(forwardUrl);
         connection = (HttpURLConnection) url.openConnection();
 
         connection.setRequestProperty("User-Agent", userAgent);
         if (sslSocketFactory != null) {
-            SSLUtil.applySSLConfiguration(connection, sslSocketFactory, forwardDestinationConfig.getSslConfig());
+            SSLUtil.applySSLConfiguration(connection, sslSocketFactory, config.getSslConfig());
         }
 
         if (forwardTimeoutMs != null) {
@@ -107,15 +108,8 @@ public class ForwardStreamHandler implements StreamHandler {
         totalBytesSent += bytesSent;
 
         if (forwardDelayMs != null) {
-            try {
-                LOGGER.debug(() -> "handleEntryData() - adding delay " + forwardDelayMs);
-                Thread.sleep(forwardDelayMs);
-            } catch (final InterruptedException e) {
-                LOGGER.error(e::getMessage, e);
-
-                // Continue to interrupt this thread.
-                Thread.currentThread().interrupt();
-            }
+            LOGGER.debug(() -> "handleEntryData() - adding delay " + forwardDelayMs);
+            ThreadUtil.sleep(forwardDelayMs);
         }
 
         zipOutputStream.closeEntry();
@@ -124,7 +118,7 @@ public class ForwardStreamHandler implements StreamHandler {
     }
 
     void error() {
-        LOGGER.info(() -> "error() - " + forwardUrl);
+        LOGGER.debug(() -> "error() - " + forwardUrl);
         logAndDisconnect();
     }
 

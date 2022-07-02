@@ -22,8 +22,13 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandler;
 import stroom.task.shared.TaskId;
+import stroom.util.NullSafe;
 
+import org.slf4j.Logger;
+
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,6 +40,7 @@ public class TaskContextImpl implements TaskContext {
     private final TaskId taskId;
     private final String name;
     private final UserIdentity userIdentity;
+    private final boolean useAsRead;
     private final AtomicBoolean stop;
     private final Set<TaskContextImpl> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -47,6 +53,7 @@ public class TaskContextImpl implements TaskContext {
     public TaskContextImpl(final TaskId taskId,
                            final String name,
                            final UserIdentity userIdentity,
+                           final boolean useAsRead,
                            final AtomicBoolean stop) {
         Objects.requireNonNull(taskId, "Task has null id");
         Objects.requireNonNull(name, "Task has null name");
@@ -54,6 +61,7 @@ public class TaskContextImpl implements TaskContext {
 
         this.taskId = taskId;
         this.userIdentity = userIdentity;
+        this.useAsRead = useAsRead;
         this.name = name;
         this.stop = stop;
 
@@ -63,6 +71,38 @@ public class TaskContextImpl implements TaskContext {
     @Override
     public void info(final Supplier<String> messageSupplier) {
         this.messageSupplier = messageSupplier;
+    }
+
+    @Override
+    public void info(final Supplier<String> messageSupplier, final Logger logger) {
+        this.messageSupplier = messageSupplier;
+
+        if (logger != null && logger.isDebugEnabled() && messageSupplier != null) {
+            logger.debug("Task stack: {}, user: {}, task: {}, info: {}",
+                    getTaskHierarchy(),
+                    NullSafe.get(userIdentity, UserIdentity::getId),
+                    name,
+                    messageSupplier.get());
+        }
+    }
+
+    private String getTaskHierarchy() {
+        if (taskId == null) {
+            return "";
+        } else {
+            final List<String> taskIds = new ArrayList<>();
+            TaskId currTaskId = this.taskId;
+            while (currTaskId != null) {
+                taskIds.add(currTaskId.getId());
+                currTaskId = currTaskId.getParentId();
+                // In case we get a huge hierarchy
+                if (currTaskId != null && taskIds.size() >= 10) {
+                    taskIds.add("...");
+                    break;
+                }
+            }
+            return String.join(" < ", taskIds);
+        }
     }
 
     @Override
@@ -98,6 +138,10 @@ public class TaskContextImpl implements TaskContext {
 
     UserIdentity getUserIdentity() {
         return userIdentity;
+    }
+
+    boolean isUseAsRead() {
+        return useAsRead;
     }
 
     String getUserId() {

@@ -1,74 +1,71 @@
 package stroom.proxy.app.forwarder;
 
+import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.ForwarderDestinations;
-import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.StreamHandlers;
-import stroom.util.HasHealthCheck;
-import stroom.util.cert.SSLUtil;
-import stroom.util.io.PathCreator;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.BuildInfo;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 /**
  * Handler class that forwards the request to a URL.
  */
 @Singleton
-public class ForwarderDestinationsImpl implements ForwarderDestinations, HasHealthCheck {
+public class ForwarderDestinationsImpl implements ForwarderDestinations {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ForwarderDestinationsImpl.class);
 
-    private static final String USER_AGENT_FORMAT = "stroom-proxy/{} java/{}";
-
-    private final Provider<ForwarderConfig> forwarderConfigProvider;
-    private final Provider<BuildInfo> buildInfoProvider;
-    private final Map<String, ForwardStreamHandlers> providers;
-    private final String userAgentString;
+    private final Map<String, StreamHandlers> providers;
 
     @Inject
-    public ForwarderDestinationsImpl(final LogStream logStream,
-                                     final Provider<ForwarderConfig> forwarderConfigProvider,
+    public ForwarderDestinationsImpl(final ProxyConfig proxyConfig,
                                      final ProxyRepoConfig proxyRepoConfig,
-                                     final Provider<BuildInfo> buildInfoProvider,
-                                     final PathCreator pathCreator) {
-        this.forwarderConfigProvider = forwarderConfigProvider;
-        this.buildInfoProvider = buildInfoProvider;
-        final ForwarderConfig forwarderConfig = forwarderConfigProvider.get();
+                                     final ForwardHttpPostHandlersFactory forwardHttpPostHandlersFactory,
+                                     final ForwardFileHandlersFactory forwardFileHandlersFactory) {
+        // Get forwarding destinations.
+        List<ForwardConfig> forwardDestinations = proxyConfig.getForwardDestinations();
+        if (forwardDestinations != null) {
+            // Ensure unique names.
+            final Set<String> names = new HashSet<>();
+            forwardDestinations.forEach(dest -> {
+                if (dest.getName() == null || dest.getName().isBlank()) {
+                    throw new RuntimeException("A destination has a null or empty name.");
+                }
+                if (names.contains(dest.getName())) {
+                    throw new RuntimeException("Duplicate destination name \"" + dest.getName() + "\" found.");
+                }
+                names.add(dest.getName());
+            });
 
-        // Set the user agent string to something like
-        // stroom-proxy/v6.0-beta.46 java/1.8.0_181
-        userAgentString = getUserAgentString(forwarderConfig.getUserAgent());
+            // Filter out disabled.
+            forwardDestinations = forwardDestinations.stream().filter(ForwardConfig::isEnabled).toList();
+        } else {
+            forwardDestinations = Collections.emptyList();
+        }
 
-        if (forwarderConfig.isForwardingEnabled()) {
-            if (forwarderConfig.getForwardDestinations().isEmpty()) {
-                throw new RuntimeException("Forward is enabled but no forward URLs have been configured " +
-                        "in 'forwardUrl'");
-            }
-            LOGGER.info("Initialising ForwardStreamHandlerFactory with user agent string [{}]", userAgentString);
-
-            this.providers = forwarderConfig.getForwardDestinations()
+        if (forwardDestinations.size() > 0) {
+            this.providers = forwardDestinations
                     .stream()
-                    .map(config ->
-                            new ForwardStreamHandlers(logStream, userAgentString, config, pathCreator))
-                    .collect(Collectors.toMap(f -> f.getConfig().getForwardUrl(), Function.identity()));
+                    .collect(Collectors.toMap(ForwardConfig::getName, f -> {
+                        if (f instanceof ForwardHttpPostConfig) {
+                            return forwardHttpPostHandlersFactory.create((ForwardHttpPostConfig) f);
+                        } else if (f instanceof ForwardFileConfig) {
+                            return forwardFileHandlersFactory.create((ForwardFileConfig) f);
+                        }
+                        throw new RuntimeException("Unknown config type");
+                    }));
         } else {
             LOGGER.info("Forwarding of streams is disabled");
             this.providers = Collections.emptyMap();
@@ -85,53 +82,7 @@ public class ForwarderDestinationsImpl implements ForwarderDestinations, HasHeal
     }
 
     @Override
-    public StreamHandlers getProvider(final String forwardUrl) {
-        return providers.get(forwardUrl);
-    }
-
-    @Override
-    public HealthCheck.Result getHealth() {
-        final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
-
-        final AtomicBoolean allHealthy = new AtomicBoolean(true);
-
-        final ForwarderConfig forwarderConfig = forwarderConfigProvider.get();
-        resultBuilder
-                .withDetail("forwardingEnabled", forwarderConfig.isForwardingEnabled());
-
-        if (forwarderConfig.isForwardingEnabled()) {
-            final Map<String, String> postResults = new ConcurrentHashMap<>();
-            // parallelStream so we can hit multiple URLs concurrently
-            providers.values().forEach(destination -> {
-                final String url = destination.getConfig().getForwardUrl();
-                final Optional<String> errorMsg = SSLUtil.checkUrlHealth(
-                        url, destination.getSslSocketFactory(), destination.getConfig().getSslConfig(), "POST");
-
-                if (errorMsg.isPresent()) {
-                    allHealthy.set(false);
-                }
-                postResults.put(url, errorMsg.orElse("Healthy"));
-            });
-            resultBuilder
-                    .withDetail("forwardUrls", postResults);
-        }
-
-        if (allHealthy.get()) {
-            resultBuilder.healthy();
-        } else {
-            resultBuilder.unhealthy();
-        }
-        return resultBuilder.build();
-    }
-
-    private String getUserAgentString(final String userAgentFromConfig) {
-        if (userAgentFromConfig != null && !userAgentFromConfig.isEmpty()) {
-            return userAgentFromConfig;
-        } else {
-            // Construct something like
-            // stroom-proxy/v6.0-beta.46 java/1.8.0_181
-            return LogUtil.message(USER_AGENT_FORMAT,
-                    buildInfoProvider.get().getBuildVersion(), System.getProperty("java.version"));
-        }
+    public StreamHandlers getProvider(final String name) {
+        return providers.get(name);
     }
 }

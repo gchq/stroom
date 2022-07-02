@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class SearchableStore implements Store {
 
@@ -75,7 +76,13 @@ class SearchableStore implements Store {
         final FieldIndex fieldIndex = coprocessors.getFieldIndex();
         final AbstractField[] fieldArray = new AbstractField[fieldIndex.size()];
         for (int i = 0; i < fieldArray.length; i++) {
-            fieldArray[i] = fieldMap.get(fieldIndex.getField(i));
+            final String fieldName = fieldIndex.getField(i);
+            final AbstractField field = fieldMap.get(fieldName);
+            if (field == null) {
+                throw new RuntimeException("Field '" + fieldName + "' is not valid for this datasource");
+            } else {
+                fieldArray[i] = field;
+            }
         }
 
         final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
@@ -160,9 +167,10 @@ class SearchableStore implements Store {
 
     @Override
     public List<String> getErrors() {
-        return errors
-                .stream()
-                .map(ExceptionStringUtil::getMessage)
+        return Stream.concat(
+                        errors.stream()
+                                .map(ExceptionStringUtil::getMessage),
+                        coprocessors.getErrorConsumer().stream())
                 .collect(Collectors.toList());
     }
 

@@ -7766,6 +7766,36 @@
         "tags" : [ "System Info" ]
       }
     },
+    "/systemInfo/v1/params/{name}" : {
+      "get" : {
+        "operationId" : "getSystemInfoParams",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ParamInfo"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets the parameters for this system info provider",
+        "tags" : [ "System Info" ]
+      }
+    },
     "/systemInfo/v1/{name}" : {
       "get" : {
         "operationId" : "getSystemInfoByName",
@@ -12709,6 +12739,21 @@
         },
         "required" : [ "key", "value" ]
       },
+      "ParamInfo" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "paramType" : {
+            "type" : "string",
+            "enum" : [ "OPTIONAL", "MANDATORY" ]
+          }
+        }
+      },
       "PasswordPolicyConfig" : {
         "type" : "object",
         "properties" : {
@@ -15890,6 +15935,10 @@
           },
           "activity" : {
             "$ref" : "#/components/schemas/ActivityConfig"
+          },
+          "applicationInstanceKeepAliveIntervalMs" : {
+            "type" : "integer",
+            "format" : "int32"
           },
           "defaultMaxResults" : {
             "type" : "string"

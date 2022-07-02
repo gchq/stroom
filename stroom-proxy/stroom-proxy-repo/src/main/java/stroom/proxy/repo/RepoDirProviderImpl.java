@@ -14,7 +14,7 @@ public class RepoDirProviderImpl implements RepoDirProvider {
     private final Path repoDir;
 
     @Inject
-    RepoDirProviderImpl(final RepoConfig repoConfig,
+    RepoDirProviderImpl(final ProxyRepoConfig repoConfig,
                         final PathCreator pathCreator) {
         if (Strings.isNullOrEmpty(repoConfig.getRepoDir())) {
             throw new RuntimeException("No repo directory have been provided in 'repoDir'");

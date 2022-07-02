@@ -57,6 +57,11 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
+    public boolean isUseAsRead() {
+        return false;
+    }
+
+    @Override
     public boolean hasAppPermission(final String permission) {
         return true;
     }

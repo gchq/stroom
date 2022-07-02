@@ -173,7 +173,7 @@ public class StroomStreamProcessor {
                     // Handle an uncompressed stream.
                     processStream(inputStream, prefix);
                 } catch (final IOException e) {
-                    StroomStreamException.createAndThrow(e, globalAttributeMap);
+                    throw StroomStreamException.create(e, globalAttributeMap);
                 }
             }
         }
@@ -199,11 +199,10 @@ public class StroomStreamProcessor {
 
     private void processStream(InputStream inputStream, final String prefix) throws IOException {
         try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream)) {
-            // Read an initial buffer full so we can see if there is any un-compressed data
-            // Some apps that roll log files may create a gziped rolled log from an empty live log
+            // Read an initial buffer full so we can see if there is any data
             bufferedInputStream.mark(1);
             if (bufferedInputStream.read() == -1) {
-                LOGGER.warn("process() - Skipping Zero Content in GZIP stream" + globalAttributeMap);
+                LOGGER.warn("process() - Skipping Zero Content Stream" + globalAttributeMap);
             } else {
                 bufferedInputStream.reset();
 
@@ -385,7 +384,7 @@ public class StroomStreamProcessor {
                 }
             }
         } catch (final IOException e) {
-            StroomStreamException.createAndThrow(e, globalAttributeMap);
+            throw StroomStreamException.create(e, globalAttributeMap);
         }
     }
 

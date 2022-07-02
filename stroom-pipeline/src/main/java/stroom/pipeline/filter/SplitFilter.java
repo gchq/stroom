@@ -40,8 +40,18 @@ import javax.inject.Inject;
  * for all split out instances. A split instance will fire start and end
  * document SAX events before and after a split out instance.
  */
-@ConfigurableElement(type = "SplitFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.SPLIT)
+@ConfigurableElement(
+        type = "SplitFilter",
+        description = """
+                Splits multi-record source data into smaller groups of records prior to delivery to an XSLT.
+                This allows the XSLT to process data more efficiently than loading a potentially huge input \
+                stream into memory.
+                """,
+        category = Category.FILTER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS},
+        icon = ElementIcons.SPLIT)
 public class SplitFilter extends AbstractXMLFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SplitFilter.class);

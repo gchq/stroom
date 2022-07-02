@@ -26,7 +26,7 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
-    public static final Index AGGREGATE_FEED_TYPE_INDEX = Internal.createIndex(DSL.name("aggregate_feed_type_index"), Aggregate.AGGREGATE, new OrderField[] { Aggregate.AGGREGATE.FEED_NAME, Aggregate.AGGREGATE.TYPE_NAME }, false);
+    public static final Index EXAMINED_ITEM_COUNT_INDEX = Internal.createIndex(DSL.name("examined_item_count_index"), Source.SOURCE, new OrderField[] { Source.SOURCE.EXAMINED, Source.SOURCE.ITEM_COUNT }, false);
     public static final Index NEW_POSITION_AGGREGATE_INDEX = Internal.createIndex(DSL.name("new_position_aggregate_index"), Aggregate.AGGREGATE, new OrderField[] { Aggregate.AGGREGATE.NEW_POSITION }, true);
     public static final Index NEW_POSITION_FORWARD_AGGREGATE_INDEX = Internal.createIndex(DSL.name("new_position_forward_aggregate_index"), ForwardAggregate.FORWARD_AGGREGATE, new OrderField[] { ForwardAggregate.FORWARD_AGGREGATE.NEW_POSITION }, true);
     public static final Index NEW_POSITION_FORWARD_SOURCE_INDEX = Internal.createIndex(DSL.name("new_position_forward_source_index"), ForwardSource.FORWARD_SOURCE, new OrderField[] { ForwardSource.FORWARD_SOURCE.NEW_POSITION }, true);
@@ -34,5 +34,6 @@ public class Indexes {
     public static final Index NEW_POSITION_SOURCE_ITEM_INDEX = Internal.createIndex(DSL.name("new_position_source_item_index"), SourceItem.SOURCE_ITEM, new OrderField[] { SourceItem.SOURCE_ITEM.NEW_POSITION }, true);
     public static final Index RETRY_POSITION_FORWARD_AGGREGATE_INDEX = Internal.createIndex(DSL.name("retry_position_forward_aggregate_index"), ForwardAggregate.FORWARD_AGGREGATE, new OrderField[] { ForwardAggregate.FORWARD_AGGREGATE.RETRY_POSITION }, true);
     public static final Index RETRY_POSITION_FORWARD_SOURCE_INDEX = Internal.createIndex(DSL.name("retry_position_forward_source_index"), ForwardSource.FORWARD_SOURCE, new OrderField[] { ForwardSource.FORWARD_SOURCE.RETRY_POSITION }, true);
-    public static final Index SOURCE_PATH_INDEX = Internal.createIndex(DSL.name("source_path_index"), Source.SOURCE, new OrderField[] { Source.SOURCE.PATH }, true);
+    public static final Index SOURCE_FILE_STORE_ID = Internal.createIndex(DSL.name("source_file_store_id"), Source.SOURCE, new OrderField[] { Source.SOURCE.FILE_STORE_ID }, true);
+    public static final Index SOURCE_ITEM_AGGREGATE_ID = Internal.createIndex(DSL.name("source_item_aggregate_id"), SourceItem.SOURCE_ITEM, new OrderField[] { SourceItem.SOURCE_ITEM.FK_AGGREGATE_ID }, false);
 }

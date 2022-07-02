@@ -1,6 +1,6 @@
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.dao.ForwardUrlDao;
+import stroom.proxy.repo.dao.ForwardDestDao;
 import stroom.proxy.repo.dao.SourceDao;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -20,15 +20,13 @@ public class TestStoreAndForward {
     @Inject
     private SourceDao sourceDao;
     @Inject
-    private ProxyRepo proxyRepo;
-    @Inject
     private RepoSources proxyRepoSources;
     @Inject
     private RepoSourceItems proxyRepoSourceEntries;
     @Inject
     private SourceForwarder sourceForwarder;
     @Inject
-    private ForwardUrlDao forwardUrlDao;
+    private ForwardDestDao forwardDestDao;
     @Inject
     private Cleanup cleanup;
     @Inject
@@ -45,14 +43,17 @@ public class TestStoreAndForward {
     @Test
     void test() {
         // Add source
-        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
+        proxyRepoSources.addSource(1L, "test", null, null);
+        proxyRepoSources.flush();
         assertThat(sourceDao.countSources()).isOne();
-        assertThat(sourceDao.getDeletableSources().size()).isZero();
+        assertThat(sourceDao.countDeletableSources()).isZero();
 
         // Now forward the sources.
-        sourceForwarder.createAllForwardRecords();
+        sourceForwarder.createAllForwardSources();
+        sourceForwarder.flush();
         sourceForwarder.forwardAll();
-        assertThat(sourceDao.getDeletableSources().size()).isOne();
+        sourceForwarder.flush();
+        assertThat(sourceDao.countDeletableSources()).isOne();
 
         assertThat(sourceDao.countSources()).isOne();
         cleanup.cleanupSources();

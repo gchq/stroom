@@ -21,6 +21,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.WrappedSegmentOutputStream;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -44,6 +45,7 @@ import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
+import stroom.util.NullSafe;
 import stroom.util.shared.Severity;
 
 import com.google.common.base.Strings;
@@ -68,8 +70,9 @@ public class StreamAppender extends AbstractAppender {
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
     private final RecordCount recordCount;
+    private final DocRefInfoService docRefInfoService;
 
-    private String feed;
+    private DocRef feedRef;
     private String streamType;
     private boolean segmentOutput = true;
     private Target streamTarget;
@@ -85,7 +88,8 @@ public class StreamAppender extends AbstractAppender {
                           final MetaService metaService,
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
-                          final RecordCount recordCount) {
+                          final RecordCount recordCount,
+                          final DocRefInfoService docRefInfoService) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
@@ -94,25 +98,29 @@ public class StreamAppender extends AbstractAppender {
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaData = metaData;
         this.recordCount = recordCount;
+        this.docRefInfoService = docRefInfoService;
     }
 
     @Override
     protected OutputStream createOutputStream() {
         final Meta parentMeta = metaHolder.getMeta();
 
-        if (Strings.isNullOrEmpty(feed)) {
-            if (parentMeta == null) {
-                fatal("Unable to determine feed as no parent set");
-            } else if (Strings.isNullOrEmpty(parentMeta.getFeedName())) {
-                fatal("Parent has no feed name");
-            } else {
-                feed = parentMeta.getFeedName();
+        String feed = null;
+        if (feedRef != null) {
+            feed = docRefInfoService.name(feedRef).orElse(null);
+            if (Strings.isNullOrEmpty(feed)) {
+                fatal("Feed not found");
             }
+
+        } else if (parentMeta == null) {
+            fatal("Unable to determine feed as no parent set");
+        } else if (Strings.isNullOrEmpty(parentMeta.getFeedName())) {
+            fatal("Parent has no feed name");
+        } else {
+            // Use current feed if none other has been specified.
+            feed = parentMeta.getFeedName();
         }
 
-        if (Strings.isNullOrEmpty(feed)) {
-            fatal("Feed not specified");
-        }
         if (Strings.isNullOrEmpty(streamType)) {
             fatal("Stream type not specified");
         }
@@ -249,7 +257,7 @@ public class StreamAppender extends AbstractAppender {
                     "stream belongs to will be used.",
             displayPriority = 2)
     public void setFeed(final DocRef feedRef) {
-        this.feed = feedRef.getName();
+        this.feedRef = feedRef;
     }
 
     @PipelineProperty(

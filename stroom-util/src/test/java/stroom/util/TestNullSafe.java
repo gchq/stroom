@@ -208,6 +208,31 @@ class TestNullSafe {
     }
 
     @Test
+    void testTest0NonNullTrue() {
+        Assertions.assertThat(
+                        NullSafe.test(
+                                "foo",
+                                str -> str.equals("foo")))
+                .isTrue();
+    }
+
+    @Test
+    void testTest0NonNullFalse() {
+        Assertions.assertThat(NullSafe.test(
+                        "foo",
+                        str -> str.equals("bar")))
+                .isFalse();
+    }
+
+    @Test
+    void testTest0Null() {
+        Assertions.assertThat(NullSafe.test(
+                        null,
+                        str -> str.equals("foo")))
+                .isFalse();
+    }
+
+    @Test
     void testTest1NonNullTrue() {
         Assertions.assertThat(NullSafe.test(
                         nonNullLevel1,

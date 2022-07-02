@@ -13,8 +13,6 @@ import javax.inject.Singleton;
 public class ThreadConfig extends AbstractConfig implements IsProxyConfig {
 
     private int examineSourceThreadCount = 3;
-    private int aggregatorThreadCount = 2;
-    private int createForwardRecordThreadCount = 2;
     private int forwardThreadCount = 10;
     private int forwardRetryThreadCount = 2;
 
@@ -26,26 +24,6 @@ public class ThreadConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty
     public void setExamineSourceThreadCount(final int examineSourceThreadCount) {
         this.examineSourceThreadCount = examineSourceThreadCount;
-    }
-
-    @JsonProperty
-    public int getAggregatorThreadCount() {
-        return aggregatorThreadCount;
-    }
-
-    @JsonProperty
-    public void setAggregatorThreadCount(final int aggregatorThreadCount) {
-        this.aggregatorThreadCount = aggregatorThreadCount;
-    }
-
-    @JsonProperty
-    public int getCreateForwardRecordThreadCount() {
-        return createForwardRecordThreadCount;
-    }
-
-    @JsonProperty
-    public void setCreateForwardRecordThreadCount(final int createForwardRecordThreadCount) {
-        this.createForwardRecordThreadCount = createForwardRecordThreadCount;
     }
 
     @JsonProperty

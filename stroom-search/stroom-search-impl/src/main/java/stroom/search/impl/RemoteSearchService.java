@@ -7,6 +7,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;
@@ -82,7 +83,9 @@ public class RemoteSearchService {
                     final ClusterSearchTaskHandler clusterSearchTaskHandler =
                             clusterSearchTaskHandlerProvider.get();
                     final CountDownLatch countDownLatch = new CountDownLatch(1);
-                    final Runnable runnable = taskContextFactory.context(clusterSearchTask.getTaskName(),
+                    final Runnable runnable = taskContextFactory.context(
+                            clusterSearchTask.getTaskName(),
+                            TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> {
                                 try {
                                     taskContext.getTaskId().setParentId(clusterSearchTask.getSourceTaskId());

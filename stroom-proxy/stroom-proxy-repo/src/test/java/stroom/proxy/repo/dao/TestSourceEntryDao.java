@@ -1,10 +1,10 @@
 package stroom.proxy.repo.dao;
 
-import stroom.data.zip.StroomZipFileType;
+import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.RepoSource;
-import stroom.proxy.repo.RepoSourceEntry;
 import stroom.proxy.repo.RepoSourceItem;
+import stroom.proxy.repo.queue.Batch;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -12,10 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
@@ -25,6 +23,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(ProxyRepoTestModule.class)
 public class TestSourceEntryDao {
 
+    @Inject
+    private SqliteJooqHelper jooq;
+    @Inject
+    private FeedDao feedDao;
     @Inject
     private SourceDao sourceDao;
     @Inject
@@ -39,43 +41,41 @@ public class TestSourceEntryDao {
     @Test
     void testSourceEntry() {
         assertThat(sourceDao.countSources()).isZero();
-        assertThat(sourceItemDao.countEntries()).isZero();
-        assertThat(sourceDao.pathExists("test")).isFalse();
 
-        sourceDao.addSource("test", "test", "test", System.currentTimeMillis());
+        sourceDao.addSource(1L, "test", "test");
+        sourceDao.flush();
 
-        final Optional<RepoSource> optionalSource = sourceDao.getNewSource(0, TimeUnit.MILLISECONDS);
-        assertThat(optionalSource.isPresent()).isTrue();
+        final Batch<RepoSource> sources = sourceDao.getNewSources(0, TimeUnit.MILLISECONDS);
+        assertThat(sources.list().isEmpty()).isFalse();
+        assertThat(sourceDao.countDeletableSources()).isZero();
 
-        final RepoSource source = optionalSource.get();
-        assertThat(source.getSourcePath()).isEqualTo("test");
+        final RepoSource source = sources.list().get(0);
+        assertThat(source.fileStoreId()).isEqualTo(1L);
 
+        final long feedId = feedDao.getId(new FeedKey("testFeed", "Raw Events"));
         final Map<String, RepoSourceItem> itemNameMap = new HashMap<>();
         for (int i = 0; i < 100; i++) {
-            final RepoSourceItem sourceItemRecord = RepoSourceItem
-                    .builder()
-                    .source(source)
-                    .name("item" + i)
-                    .feedName("testFeed")
-                    .typeName("Raw Events")
-                    .build();
-            itemNameMap.put(sourceItemRecord.getName(), sourceItemRecord);
-
-            for (int j = 0; j < 10; j++) {
-                final RepoSourceEntry entry = RepoSourceEntry
-                        .builder()
-                        .type(StroomZipFileType.DATA)
-                        .extension("dat")
-                        .byteSize(100L)
-                        .build();
-                sourceItemRecord.addEntry(entry);
-            }
+            final RepoSourceItem sourceItemRecord = new RepoSourceItem(
+                    source,
+                    i,
+                    "item" + i,
+                    feedId,
+                    null,
+                    0,
+                    "dat");
+            itemNameMap.put(sourceItemRecord.name(), sourceItemRecord);
         }
 
-        sourceItemDao.addItems(Paths.get("test"), source.getId(), itemNameMap.values());
-        assertThat(sourceDao.getDeletableSources().size()).isZero();
+        sourceItemDao.addItems(source, itemNameMap.values());
+        sourceItemDao.flush();
 
-        sourceDao.deleteSource(source.getId());
+        assertThat(sourceDao.countDeletableSources()).isZero();
+        jooq.transaction(context -> sourceItemDao.deleteBySourceId(context, source.id()));
+        assertThat(sourceDao.countDeletableSources()).isZero();
+        jooq.transaction(context -> sourceDao.setSourceExamined(context, source.id(), true, 0));
+        assertThat(sourceDao.countDeletableSources()).isOne();
+
+        sourceDao.deleteSources();
         assertThat(sourceDao.countSources()).isZero();
 
         sourceDao.clear();

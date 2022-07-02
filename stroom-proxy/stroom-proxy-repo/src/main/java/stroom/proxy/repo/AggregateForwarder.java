@@ -18,15 +18,17 @@ package stroom.proxy.repo;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.repo.dao.FeedDao;
 import stroom.proxy.repo.dao.ForwardAggregateDao;
+import stroom.proxy.repo.dao.SourceItemDao;
+import stroom.proxy.repo.queue.Batch;
+import stroom.proxy.repo.queue.BatchUtil;
 import stroom.receive.common.StreamHandlers;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -40,9 +42,11 @@ public class AggregateForwarder {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AggregateForwarder.class);
     private static final String PROXY_FORWARD_ID = "ProxyForwardId";
 
+    private final FeedDao feedDao;
+    private final SourceItemDao sourceItemDao;
     private final Aggregator aggregator;
     private final ForwardAggregateDao forwardAggregateDao;
-    private final ForwardUrls forwardUrls;
+    private final ForwardDestinations forwardDestinations;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
     private final ForwarderDestinations forwarderDestinations;
     private final Sender sender;
@@ -51,16 +55,19 @@ public class AggregateForwarder {
     private volatile String hostName = null;
 
     @Inject
-    AggregateForwarder(final Aggregator aggregator,
+    AggregateForwarder(final FeedDao feedDao,
+                       final SourceItemDao sourceItemDao,
+                       final Aggregator aggregator,
                        final ForwardAggregateDao forwardAggregateDao,
-                       final ForwardUrls forwardUrls,
+                       final ForwardDestinations forwardDestinations,
                        final ForwarderDestinations forwarderDestinations,
                        final Sender sender,
                        final ProgressLog progressLog) {
-
+        this.feedDao = feedDao;
+        this.sourceItemDao = sourceItemDao;
         this.aggregator = aggregator;
         this.forwardAggregateDao = forwardAggregateDao;
-        this.forwardUrls = forwardUrls;
+        this.forwardDestinations = forwardDestinations;
 
         this.forwarderDestinations = forwarderDestinations;
         this.sender = sender;
@@ -71,100 +78,106 @@ public class AggregateForwarder {
 
     private void init() {
         // Add forward records for new forward URLs.
-        forwardAggregateDao.addNewForwardAggregates(forwardUrls.getNewForwardUrls());
+        forwardAggregateDao.addNewForwardAggregates(forwardDestinations.getNewForwardDests());
 
         // Remove forward records for forward URLs that are no longer in use.
-        forwardAggregateDao.removeOldForwardAggregates(forwardUrls.getOldForwardUrls());
+        forwardAggregateDao.removeOldForwardAggregates(forwardDestinations.getOldForwardDests());
     }
 
-    public void createAllForwardRecords() {
-        QueueUtil.consumeAll(() -> aggregator.getCompleteAggregate(0, TimeUnit.MILLISECONDS),
-                this::createForwardRecord);
+//    public void createAllForwardRecords() {
+//        final Batch<Aggregate> aggregates = aggregator.getCompleteAggregates(0, TimeUnit.MILLISECONDS);
+//        createForwardRecord(aggregates);
+//    }
+
+    public synchronized void createAllForwardAggregates() {
+        BatchUtil.transfer(aggregator::getCompleteAggregates, this::createForwardAggregates);
     }
 
-    public void createNextForwardRecord() {
-        aggregator.getCompleteAggregate().ifPresent(this::createForwardRecord);
-    }
-
-    private void createForwardRecord(final Aggregate aggregate) {
+    private void createForwardAggregates(final Batch<Aggregate> batch) {
         // Forward to all remaining places.
         progressLog.increment("AggregateForwarder - createForwardRecord");
-        forwardAggregateDao.createForwardAggregates(aggregate.getId(), forwardUrls.getForwardUrls());
+        forwardAggregateDao.createForwardAggregates(batch, forwardDestinations.getForwardDests());
     }
 
     public void forwardAll() {
-        QueueUtil.consumeAll(() -> forwardAggregateDao.getNewForwardAggregate(0, TimeUnit.MILLISECONDS),
-                this::forwardAggregate);
+        BatchUtil.transferEach(
+                () -> forwardAggregateDao.getNewForwardAggregates(0, TimeUnit.SECONDS),
+                this::forward);
+
+//        QueueUtil.consumeAll(() -> forwardAggregateDao.getNewForwardAggregate(0, TimeUnit.MILLISECONDS),
+//                this::forwardAggregate);
     }
 
-    public void forwardNext() {
-        forwardAggregateDao.getNewForwardAggregate().ifPresent(this::forwardAggregate);
+//    public void forwardNext() {
+//        forwardAggregateDao.getNewForwardAggregate().ifPresent(this::forwardAggregate);
+//    }
+//
+//    private void forwardAggregate(final ForwardAggregate forwardAggregate) {
+//        progressLog.increment("AggregateForwarder - forwardAggregate");
+//        forward(forwardAggregate);
+//    }
+
+    public Batch<ForwardAggregate> getNewForwardAggregates() {
+        return forwardAggregateDao.getNewForwardAggregates();
     }
 
-    private void forwardAggregate(final ForwardAggregate forwardAggregate) {
-        progressLog.increment("AggregateForwarder - forwardAggregate");
+    public Batch<ForwardAggregate> getRetryForwardAggregates() {
+        return forwardAggregateDao.getRetryForwardAggregate();
+    }
+
+    public void forwardRetry(final ForwardAggregate forwardAggregate,
+                             final long retryFrequency) {
+        final long oldest = System.currentTimeMillis() - retryFrequency;
+        progressLog.increment("AggregateForwarder - forwardRetry");
+
+        final long updateTime = forwardAggregate.getUpdateTimeMs();
+        final long delay = updateTime - oldest;
+        // Wait until the item is old enough before sending.
+        if (delay > 0) {
+            ThreadUtil.sleep(delay);
+        }
         forward(forwardAggregate);
     }
 
-    public void forwardRetry(final long oldest) {
-        final Optional<ForwardAggregate> optionalForwardAggregate = forwardAggregateDao.getRetryForwardAggregate();
-        optionalForwardAggregate.ifPresent(forwardAggregate -> {
-            progressLog.increment("AggregateForwarder - forwardRetry");
-
-            final long updateTime = forwardAggregate.getUpdateTimeMs();
-            final long delay = updateTime - oldest;
-            // Wait until the item is old enough before sending.
-            if (delay > 0) {
-                try {
-                    Thread.sleep(delay);
-                } catch (final InterruptedException e) {
-                    // Continue to interrupt.
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException(e.getMessage(), e);
-                }
-            }
-            forward(forwardAggregate);
-        });
-    }
-
-    void forward(final ForwardAggregate forwardAggregate) {
+    public void forward(final ForwardAggregate forwardAggregate) {
         final Aggregate aggregate = forwardAggregate.getAggregate();
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();
 
-        final Map<RepoSource, List<RepoSourceItem>> items = aggregator.getItems(aggregate.getId());
-        if (items.size() > 0) {
+        final Items items = sourceItemDao.fetchSourceItemsByAggregateId(aggregate.id());
+        if (items.map().size() > 0) {
+            final FeedKey feedKey = feedDao.getKey(aggregate.feedId());
             final long thisPostId = proxyForwardId.incrementAndGet();
-            final String info = thisPostId + " " + aggregate.getFeedName() + " - " + aggregate.getTypeName();
+            final String info = thisPostId + " " + feedKey.feed() + " - " + feedKey.type();
             LOGGER.debug(() -> "processFeedFiles() - proxyForwardId " + info);
 
             final AttributeMap attributeMap = new AttributeMap();
             attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
             attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, getHostName());
-            attributeMap.put(StandardHeaderArguments.FEED, aggregate.getFeedName());
-            if (aggregate.getTypeName() != null) {
-                attributeMap.put(StandardHeaderArguments.TYPE, aggregate.getTypeName());
+            attributeMap.put(StandardHeaderArguments.FEED, feedKey.feed());
+            if (feedKey.type() != null) {
+                attributeMap.put(StandardHeaderArguments.TYPE, feedKey.type());
             }
             if (LOGGER.isDebugEnabled()) {
                 attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
             }
 
             final StreamHandlers streamHandlers =
-                    forwarderDestinations.getProvider(forwardAggregate.getForwardUrl().getUrl());
+                    forwarderDestinations.getProvider(forwardAggregate.getForwardDest().getName());
 
             // Start the POST
             try {
-                streamHandlers.handle(aggregate.getFeedName(), aggregate.getTypeName(), attributeMap, handler -> {
+                streamHandlers.handle(feedKey.feed(), feedKey.type(), attributeMap, handler -> {
                     sender.sendDataToHandler(items, handler);
                     success.set(true);
                     progressLog.increment("AggregateForwarder - forward");
                 });
             } catch (final RuntimeException ex) {
                 error.set(ex.getMessage());
-                LOGGER.warn(() -> "processFeedFiles() - Failed to send to feed " +
-                        aggregate.getFeedName() +
+                LOGGER.warn(() -> "Failed to send to feed " +
+                        feedKey.feed() +
                         " ( " +
-                        ex +
+                        ex.getMessage() +
                         ")");
                 LOGGER.debug(() -> "processFeedFiles() - Debug trace " + info, ex);
             }
@@ -193,5 +206,9 @@ public class AggregateForwarder {
 
     public void clear() {
         forwardAggregateDao.clear();
+    }
+
+    public void flush() {
+        forwardAggregateDao.flush();
     }
 }

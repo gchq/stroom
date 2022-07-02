@@ -20,6 +20,7 @@ package stroom.pipeline.writer;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -47,9 +48,19 @@ import javax.inject.Inject;
 /**
  * Joins text instances into a single text instance.
  */
-@ConfigurableElement(type = "RollingStreamAppender", category = Category.DESTINATION, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
-        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
+@ConfigurableElement(
+        type = "RollingStreamAppender",
+        description = """
+                A destination used to write one or more output streams to a new stream which is then rolled \
+                when it reaches a certain size or age.
+                A new stream will be created after the size or age criteria has been met.
+                """,
+        category = Category.DESTINATION,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_DESTINATION,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = ElementIcons.STREAM)
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
 
     private final Store streamStore;
@@ -57,6 +68,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private final MetaService metaService;
     private final StreamProcessorHolder streamProcessorHolder;
     private final NodeInfo nodeInfo;
+    private final DocRefInfoService docRefInfoService;
 
     private DocRef feedRef;
     private String feed;
@@ -71,13 +83,15 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                           final MetaHolder metaHolder,
                           final MetaService metaService,
                           final StreamProcessorHolder streamProcessorHolder,
-                          final NodeInfo nodeInfo) {
+                          final NodeInfo nodeInfo,
+                          final DocRefInfoService docRefInfoService) {
         super(destinations);
         this.streamStore = streamStore;
         this.metaHolder = metaHolder;
         this.metaService = metaService;
         this.streamProcessorHolder = streamProcessorHolder;
         this.nodeInfo = nodeInfo;
+        this.docRefInfoService = docRefInfoService;
     }
 
     @Override
@@ -120,25 +134,32 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     @Override
     protected void validateSpecificSettings() {
         if (feed == null) {
-            if (feedRef != null && !Strings.isNullOrEmpty(feedRef.getName())) {
-                feed = feedRef.getName();
+            if (feedRef != null) {
+                feed = docRefInfoService.name(feedRef).orElse(null);
+                if (Strings.isNullOrEmpty(feed)) {
+                    fatal("Feed not found");
+                }
+
             } else {
                 final Meta parentMeta = metaHolder.getMeta();
                 if (parentMeta == null) {
-                    throw new ProcessException("Unable to determine feed as no parent stream set");
+                    fatal("Unable to determine feed as no parent set");
+                } else if (Strings.isNullOrEmpty(parentMeta.getFeedName())) {
+                    fatal("Parent has no feed name");
+                } else {
+                    // Use current feed if none other has been specified.
+                    feed = parentMeta.getFeedName();
                 }
-
-                // Use current feed if none other has been specified.
-                feed = parentMeta.getFeedName();
             }
         }
 
-        if (Strings.isNullOrEmpty(feed)) {
-            throw new ProcessException("Feed not specified or not found");
-        }
         if (Strings.isNullOrEmpty(streamType)) {
             throw new ProcessException("Stream type not specified");
         }
+    }
+
+    private void fatal(final String message) {
+        throw new ProcessException(message);
     }
 
     @PipelineProperty(

@@ -1,5 +1,7 @@
 package stroom.proxy.app;
 
+import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
 import io.dropwizard.configuration.ConfigurationException;
@@ -15,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,18 +34,34 @@ public abstract class AbstractApplicationTest {
 
         // The key/trust store paths will not be available in travis so null them out
         config.getProxyConfig()
-                .getForwarderConfig()
                 .getForwardDestinations()
-                .forEach(forwardDestinationConfig ->
-                        forwardDestinationConfig.setSslConfig(null));
+                .forEach(forwardDestinationConfig -> {
+                    if (forwardDestinationConfig instanceof ForwardHttpPostConfig) {
+                        ((ForwardHttpPostConfig) forwardDestinationConfig).setSslConfig(null);
+                    }
+                });
 
         config.getProxyConfig()
                 .getRestClientConfig()
                 .setTlsConfiguration(null);
 
         // If the home/temp paths don't exist then startup will exit, killing the rest of the tests
-        final Path proxyHomeDir = Paths.get(config.getProxyConfig().getPathConfig().getHome());
-        final Path proxyTempDir = Paths.get(config.getProxyConfig().getPathConfig().getTemp());
+        final ProxyPathConfig proxyPathConfig = config.getProxyConfig().getPathConfig();
+        try {
+            final Path temp = Files.createTempDirectory("stroom-proxy");
+            final Path homeDir = temp.resolve("home");
+            final Path tempDir = temp.resolve("temp");
+            Files.createDirectories(homeDir);
+            Files.createDirectories(tempDir);
+
+            proxyPathConfig.setHome(FileUtil.getCanonicalPath(homeDir));
+            proxyPathConfig.setTemp(FileUtil.getCanonicalPath(tempDir));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        final Path proxyHomeDir = Paths.get(proxyPathConfig.getHome());
+        final Path proxyTempDir = Paths.get(proxyPathConfig.getTemp());
 
         try {
             Files.createDirectories(proxyHomeDir);

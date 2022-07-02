@@ -1,7 +1,7 @@
 package stroom.proxy.repo.dao;
 
 import stroom.proxy.repo.ProxyRepoTestModule;
-import stroom.proxy.repo.QueueUtil;
+import stroom.proxy.repo.queue.BatchUtil;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -23,44 +23,45 @@ public class TestForwardSourceDao {
     @Inject
     private ForwardSourceDao forwardSourceDao;
     @Inject
-    private ForwardUrlDao forwardUrlDao;
+    private ForwardDestDao forwardDestDao;
 
     @BeforeEach
     void beforeEach() {
         sourceDao.clear();
         forwardSourceDao.clear();
-        forwardUrlDao.clear();
+        forwardDestDao.clear();
     }
 
     @Test
     void testForwardSource() {
         assertThat(sourceDao.countSources()).isZero();
         assertThat(forwardSourceDao.countForwardSource()).isZero();
-        assertThat(forwardUrlDao.countForwardUrl()).isZero();
-        assertThat(sourceDao.pathExists("test")).isFalse();
+        assertThat(forwardDestDao.countForwardDest()).isZero();
+//        assertThat(sourceDao.pathExists("test")).isFalse();
 
-        sourceDao.addSource("test", "test", "test", System.currentTimeMillis());
-        assertThat(sourceDao.getDeletableSources().size()).isZero();
+        sourceDao.addSource(1L, "test", "test");
+        assertThat(sourceDao.countDeletableSources()).isZero();
 
         // Create forward sources.
-        forwardUrlDao.getForwardUrlId("test");
-        assertThat(forwardUrlDao.countForwardUrl()).isOne();
-        QueueUtil.consumeAll(
-                () -> sourceDao.getNewSource(0, TimeUnit.MILLISECONDS),
-                s -> forwardSourceDao.createForwardSources(s.getId(),
-                        forwardUrlDao.getAllForwardUrls())
+        forwardDestDao.getForwardDestId("test");
+        assertThat(forwardDestDao.countForwardDest()).isOne();
+        BatchUtil.transfer(
+                () -> sourceDao.getNewSources(0, TimeUnit.MILLISECONDS),
+                batch -> forwardSourceDao.createForwardSources(batch,
+                        forwardDestDao.getAllForwardDests())
         );
 
         // Mark all as forwarded.
-        QueueUtil.consumeAll(
-                () -> forwardSourceDao.getNewForwardSource(0, TimeUnit.MILLISECONDS),
+        BatchUtil.transferEach(
+                () -> forwardSourceDao.getNewForwardSources(0, TimeUnit.MILLISECONDS),
                 forwardSource -> forwardSourceDao.update(forwardSource.copy().tries(1).success(true).build())
         );
 
-        sourceDao.getDeletableSources().forEach(s -> sourceDao.deleteSource(s.getId()));
+        sourceDao.countDeletableSources();
+        sourceDao.deleteSources();
 
         assertThat(forwardSourceDao.countForwardSource()).isZero();
         assertThat(sourceDao.countSources()).isZero();
-        assertThat(sourceDao.pathExists("test")).isFalse();
+//        assertThat(sourceDao.pathExists("test")).isFalse();
     }
 }

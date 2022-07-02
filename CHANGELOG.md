@@ -12,7 +12,59 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-* Fix failing test.
+* Issue **#2902** : Release queued tasks if no longer master and from dead nodes.
+
+* Issue **#2925** : Remove order by from Attribute Value Data Retention job to try to speed it up. Also improve logging for the job.
+
+* Issue **#2924** : Fix feed name resolution from UUID in stream appenders.
+
+* Issue **#2870** : Fix delete of old processor filters and trackers.
+
+* Issue **#2912** : Prevent users from renaming feeds as this breaks the link with the files stored on the file system.
+
+* Issue **#2903** : Fix pipeline structure inheritance to hide dead inherited links.
+
+* Issue **#2906** : Fix rolling appenders failing due to "no logged in user".
+
+* Issue **#2916** : Change LMDB thread interrupted messages from ERROR to DEBUG.
+
+* Issue **#2914** : Propagate useAsRead to sub tasks.
+
+* Issue **#2877** : Handle missing index when performing shard retention.
+
+* Issue **#2896** : Improve application instance error handling.
+
+* Issue **#2900** : Move stream type to file extension mappings into config (`stroom.data.filesystemVolume.metaTypeExtensions`) to allow use of legacy file extensions.
+
+* Issue **#2906** : Fix RollingStreamAppender failing to roll on timed basis.
+
+* Issue **#2904** : Fix NPE when setting the feed to null on the StreamAppender.
+
+* Issue **#2901** : Change stream type drop downs on feed setting and stream upload to included all stream types.
+
+* Change start.sh in stroom docker image to accept multiple arguments to support command utilities.
+
+* Issue **#2872** : Fix permission exception thrown when removing search store from cache.
+
+* Issue **#2889** : Change pipeline entity deletion to also logically delete the processor, processor filters and any unprocessed tasks.
+
+* Change the shard system info provider to only query the shard if the node has ownership.
+
+* Issue **#2879** : Prevent shards closing during read.
+
+* Issue **#2879** : Prevent interrupts during index shard use.
+
+* Issue **#2888** : Fix error when paging and then filtering on the dependencies screen.
+
+* Add system info provider for index shards.
+
+* Issue **#2883** : Fix issue of search errors not being shown in the UI.
+
+* Issue **#2879** : Prevent interrupting threads that may be reading search index shards.
+
+* Issue **#2874** : Add debug logging for shard writing/reading.
+
+* Issue **#2881** : Fix broken CLI commands, e.g. `reset_password`.
 
 * No changes, failed build.
 

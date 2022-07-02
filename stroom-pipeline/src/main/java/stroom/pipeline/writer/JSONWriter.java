@@ -43,8 +43,13 @@ import javax.inject.Inject;
  */
 @ConfigurableElement(
         type = "JSONWriter",
+        description = """
+                Writer to convert XML data conforming to the http://www.w3.org/2013/XSL/json XML Schema \
+                into JSON format.
+                """,
         category = Category.WRITER,
-        roles = {PipelineElementType.ROLE_TARGET,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_WRITER,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.VISABILITY_STEPPING},

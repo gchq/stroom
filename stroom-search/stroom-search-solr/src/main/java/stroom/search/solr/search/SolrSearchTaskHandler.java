@@ -51,6 +51,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import javax.inject.Inject;
 
 public class SolrSearchTaskHandler {
@@ -74,7 +75,7 @@ public class SolrSearchTaskHandler {
                        final FieldIndex fieldIndex,
                        final ValuesConsumer valuesConsumer,
                        final ErrorConsumer errorConsumer,
-                       final AtomicLong hitCount) {
+                       final LongAdder hitCount) {
         if (!Thread.currentThread().isInterrupted()) {
             taskContext.reset();
             taskContext.info(() -> "Searching Solr index");
@@ -94,7 +95,7 @@ public class SolrSearchTaskHandler {
                              final FieldIndex fieldIndex,
                              final ValuesConsumer valuesConsumer,
                              final ErrorConsumer errorConsumer,
-                             final AtomicLong hitCount) {
+                             final LongAdder hitCount) {
         final CachedSolrIndex cachedSolrIndex = solrIndex;
         final SolrIndexDoc solrIndexDoc = cachedSolrIndex.getIndex();
         final SolrConnectionConfig connectionConfig = solrIndexDoc.getSolrConnectionConfig();
@@ -179,7 +180,7 @@ public class SolrSearchTaskHandler {
                                  final FieldIndex fieldIndex,
                                  final ValuesConsumer valuesConsumer,
                                  final ErrorConsumer errorConsumer,
-                                 final AtomicLong hitCount,
+                                 final LongAdder hitCount,
                                  final SolrIndexDoc solrIndexDoc,
                                  final SolrConnectionConfig connectionConfig) {
 
@@ -197,7 +198,7 @@ public class SolrSearchTaskHandler {
                         callback);
                 final DocListInfo docListInfo = callback.getDocListInfo();
                 LOGGER.debug(() -> "streamingSearch() - response=" + response);
-                LOGGER.debug(() -> "hitCount=" + hitCount.get());
+                LOGGER.debug(() -> "hitCount=" + hitCount.longValue());
 //                LOGGER.debug(() -> "documentCount=" + task.getTracker().getDocumentCount());
 
                 // Make sure we got back what we expected to.
@@ -230,14 +231,14 @@ public class SolrSearchTaskHandler {
 
     private static class Callback extends StreamingResponseCallback {
 
-        private final AtomicLong hitCount;
+        private final LongAdder hitCount;
         private final String[] fieldNames;
         private final ValuesConsumer valuesConsumer;
         private final ErrorConsumer errorConsumer;
 
         private DocListInfo docListInfo;
 
-        Callback(final AtomicLong hitCount,
+        Callback(final LongAdder hitCount,
                  final String[] fieldNames,
                  final ValuesConsumer valuesConsumer,
                  final ErrorConsumer errorConsumer) {
@@ -250,7 +251,7 @@ public class SolrSearchTaskHandler {
         @Override
         public void streamSolrDocument(final SolrDocument doc) {
             try {
-                hitCount.incrementAndGet();
+                hitCount.increment();
 
                 Val[] values = null;
                 for (int i = 0; i < fieldNames.length; i++) {
