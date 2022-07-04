@@ -819,12 +819,17 @@ appConfig:
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
       docRefType: "StatisticStore"
+      inMemAggregatorPoolSize: 10
+      inMemFinalAggregatorSizeThreshold: 1000000
+      inMemPooledAggregatorAgeThreshold: "PT5M"
+      inMemPooledAggregatorSizeThreshold: 1000000
       maxProcessingAge: null
       search:
         fetchSize: 5000
         maxResults: 100000
       slowQueryWarningThreshold: "PT1S"
       statisticAggregationBatchSize: 1000000
+      statisticFlushBatchSize: 8000
   ui:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"

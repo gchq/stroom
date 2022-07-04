@@ -32,19 +32,22 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
+import javax.annotation.concurrent.NotThreadSafe;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 
+@NotThreadSafe // Each thread should construct its own instance for each call to exec
 public class SQLStatisticFlushTaskHandler {
 
     /**
      * The number of records to flush to the DB in one go.
      */
-    private static final int BATCH_SIZE = 5000;
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticFlushTaskHandler.class);
     private final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
+    private final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider;
 
     private LogExecutionTime logExecutionTime;
     private int counter;
@@ -54,10 +57,12 @@ public class SQLStatisticFlushTaskHandler {
     @Inject
     public SQLStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
                                         final TaskContextFactory taskContextFactory,
-                                        final SecurityContext securityContext) {
+                                        final SecurityContext securityContext,
+                                        final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider) {
         this.sqlStatisticValueBatchSaveService = sqlStatisticValueBatchSaveService;
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
+        this.sqlStatisticsConfigProvider = sqlStatisticsConfigProvider;
     }
 
     public void exec(final SQLStatisticAggregateMap map) {
@@ -77,9 +82,10 @@ public class SQLStatisticFlushTaskHandler {
             total = map.size();
 
             final int mapSize = map.size();
+            final int batchSize = sqlStatisticsConfigProvider.get().getStatisticFlushBatchSize();
 
             final Supplier<String> messageSupplier = () ->
-                    "Flushing " + mapSize + " statistics with batch size " + BATCH_SIZE;
+                    "Flushing " + mapSize + " statistics with batch size " + batchSize;
             LOGGER.info(messageSupplier);
             taskContext.info(messageSupplier);
 
@@ -91,7 +97,11 @@ public class SQLStatisticFlushTaskHandler {
                     final String name = entry.getKey().getName();
                     final long count = entry.getValue().longValue();
 
-                    addEntry(taskContext, batchInsert, SQLStatValSourceDO.createCountStat(ms, name, count));
+                    addEntryToBatch(
+                            taskContext,
+                            batchInsert,
+                            SQLStatValSourceDO.createCountStat(ms, name, count),
+                            batchSize);
                 } else {
                     LOGGER.warn("Thread interrupted");
                 }
@@ -104,7 +114,11 @@ public class SQLStatisticFlushTaskHandler {
                     final long value = (long) entry.getValue().getValue();
                     final long count = entry.getValue().getCount();
 
-                    addEntry(taskContext, batchInsert, SQLStatValSourceDO.createValueStat(ms, name, value, count));
+                    addEntryToBatch(
+                            taskContext,
+                            batchInsert,
+                            SQLStatValSourceDO.createValueStat(ms, name, value, count),
+                            batchSize);
                 } else {
                     LOGGER.warn("Thread interrupted");
                 }
@@ -118,12 +132,13 @@ public class SQLStatisticFlushTaskHandler {
         }
     }
 
-    private void addEntry(final TaskContext taskContext,
-                          final List<SQLStatValSourceDO> batchInsert,
-                          final SQLStatValSourceDO insert) {
+    private void addEntryToBatch(final TaskContext taskContext,
+                                 final List<SQLStatValSourceDO> batchInsert,
+                                 final SQLStatValSourceDO insert,
+                                 final int batchSize) {
         batchInsert.add(insert);
         counter++;
-        if (batchInsert.size() >= BATCH_SIZE) {
+        if (batchInsert.size() >= batchSize) {
             doSaveBatch(taskContext, batchInsert);
         }
     }
@@ -131,7 +146,7 @@ public class SQLStatisticFlushTaskHandler {
     private void doSaveBatch(final TaskContext taskContext,
                              final List<SQLStatValSourceDO> batchInsert) {
         try {
-            final int seconds = (int) (logExecutionTime.getDuration() / 1000L);
+            final int seconds = (int) (logExecutionTime.getDurationMs() / 1000L);
 
             if (seconds > 0) {
                 taskContext.info(() -> LogUtil.message("Saving {}/{} ({}/sec)",
@@ -144,17 +159,17 @@ public class SQLStatisticFlushTaskHandler {
                         ModelStringUtil.formatCsv(total)));
             }
 
-            sqlStatisticValueBatchSaveService.saveBatchStatisticValueSource_String(batchInsert);
+            sqlStatisticValueBatchSaveService.saveBatchStatisticValueSource_SinglePreparedStatement(batchInsert);
 
             savedCount += batchInsert.size();
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
             LOGGER.warn(() -> LogUtil.message(
-                    "doSaveBatch() - Failed to insert {} records will try slower PreparedStatement method - {}",
+                    "doSaveBatch() - Failed to insert {} records will try slower one row at a time method - {}",
                     batchInsert.size(), e.getMessage()));
 
             try {
-                sqlStatisticValueBatchSaveService.saveBatchStatisticValueSource_PreparedStatement(batchInsert);
+                sqlStatisticValueBatchSaveService.saveBatchStatisticValueSource_BatchPreparedStatement(batchInsert);
                 savedCount += batchInsert.size();
             } catch (final SQLException e2) {
                 int[] successfulInserts = new int[0];

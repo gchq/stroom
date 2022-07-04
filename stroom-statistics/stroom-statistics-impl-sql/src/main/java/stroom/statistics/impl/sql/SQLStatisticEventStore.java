@@ -48,7 +48,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -61,13 +60,10 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
 
-    private static final int DEFAULT_POOL_SIZE = 10;
-    private static final long DEFAULT_SIZE_THRESHOLD = 1000000L;
     private static final Set<String> BLACK_LISTED_INDEX_FIELDS = Collections.emptySet();
     /**
-     * Keep half the time out our SQL insert threshold
+     * Keep half the time out of our SQL insert threshold
      */
-    private static final long DEFAULT_AGE_MS_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
     private final StatisticStoreValidator statisticsDataSourceValidator;
     private final StatisticStoreCache statisticsDataSourceCache;
     private final SQLStatisticCache statisticCache;
@@ -92,9 +88,6 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
      * select * from test where name REGEXP '¬Tag1¬Val1(¬|$)';
      */
 
-    private long poolAgeMsThreshold = DEFAULT_AGE_MS_THRESHOLD;
-    private long aggregatorSizeThreshold = DEFAULT_SIZE_THRESHOLD;
-    private int poolSize = DEFAULT_POOL_SIZE;
     private GenericObjectPool<SQLStatisticAggregateMap> objectPool;
     private AtomicBoolean isShutdown = new AtomicBoolean(false);
 
@@ -112,29 +105,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
         this.securityContext = securityContext;
         this.taskContext = taskContext;
 
-        initPool(getObjectPoolConfig());
-    }
-
-    SQLStatisticEventStore(final int poolSize,
-                           final long aggregatorSizeThreshold,
-                           final long poolAgeMsThreshold,
-                           final StatisticStoreValidator statisticsDataSourceValidator,
-                           final StatisticStoreCache statisticsDataSourceCache,
-                           final SQLStatisticCache statisticCache,
-                           final Provider<SQLStatisticsConfig> configProvider,
-                           final SecurityContext securityContext,
-                           final TaskContext taskContext) {
-        this.statisticsDataSourceValidator = statisticsDataSourceValidator;
-        this.statisticsDataSourceCache = statisticsDataSourceCache;
-        this.statisticCache = statisticCache;
-        this.aggregatorSizeThreshold = aggregatorSizeThreshold;
-        this.poolAgeMsThreshold = poolAgeMsThreshold;
-        this.poolSize = poolSize;
-        this.configProvider = configProvider;
-        this.securityContext = securityContext;
-        this.taskContext = taskContext;
-
-        initPool(getObjectPoolConfig());
+        initPool(getObjectPoolConfig(configProvider.get()));
     }
 
     // TODO could go futher up the chain so is store agnostic
@@ -198,17 +169,19 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
         return BLACK_LISTED_INDEX_FIELDS;
     }
 
-    private GenericObjectPoolConfig<SQLStatisticAggregateMap> getObjectPoolConfig() {
+    private GenericObjectPoolConfig<SQLStatisticAggregateMap> getObjectPoolConfig(
+            final SQLStatisticsConfig sqlStatisticsConfig) {
+
         final GenericObjectPoolConfig<SQLStatisticAggregateMap> config = new GenericObjectPoolConfig<>();
         // Max number of idle items .... same as our pool size
-        config.setMaxIdle(poolSize);
+        config.setMaxIdle(sqlStatisticsConfig.getInMemAggregatorPoolSize());
         // Pool size
-        config.setMaxTotal(poolSize);
+        config.setMaxTotal(sqlStatisticsConfig.getInMemAggregatorPoolSize());
         // Returns the minimum amount of time an object may sit idle in the pool
         // before it is eligible for eviction by the idle object evictor
         // Here if it is idle for 10 min's it will simply return It will also
         // return by validateObject if it is simple more than 10min old
-        config.setMinEvictableIdleTimeMillis(poolAgeMsThreshold);
+        config.setMinEvictableIdleTimeMillis(sqlStatisticsConfig.getInMemPooledAggregatorAgeThreshold().toMillis());
         // Check for idle objects never .... we will do this with task sytstem
         config.setTimeBetweenEvictionRunsMillis(0);
         // Must cause other threads to block to wait for a object
@@ -258,7 +231,8 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
     }
 
     @Override
-    public void putEvents(final List<StatisticEvent> statisticEvents, final StatisticStore statisticStore) {
+    public void putEvents(final List<StatisticEvent> statisticEvents,
+                          final StatisticStore statisticStore) {
         Objects.requireNonNull(statisticEvents);
         Objects.requireNonNull(statisticStore);
 
@@ -306,7 +280,6 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
         } else {
             LOGGER.error("Unable to proccess batch of statistic events with size {} as the system is shutting down",
                     statisticEvents.size());
-
         }
     }
 
@@ -543,16 +516,17 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
          * Should we give this item back to the pool
          */
         @Override
-        public boolean validateObject(final PooledObject<SQLStatisticAggregateMap> p) {
-            if (p.getObject().size() >= aggregatorSizeThreshold) {
+        public boolean validateObject(final PooledObject<SQLStatisticAggregateMap> pooledObject) {
+            final SQLStatisticsConfig sqlStatisticsConfig = configProvider.get();
+            if (pooledObject.getObject().size() >= sqlStatisticsConfig.getInMemPooledAggregatorSizeThreshold()) {
                 return false;
             }
-            final long age = System.currentTimeMillis() - p.getCreateTime();
-            if (age > poolAgeMsThreshold) {
+            final long pooledObjectAgeMs = System.currentTimeMillis() - pooledObject.getCreateTime();
+            if (pooledObjectAgeMs > sqlStatisticsConfig.getInMemPooledAggregatorAgeThreshold().toMillis()) {
                 return false;
             }
 
-            return super.validateObject(p);
+            return super.validateObject(pooledObject);
         }
     }
 }
