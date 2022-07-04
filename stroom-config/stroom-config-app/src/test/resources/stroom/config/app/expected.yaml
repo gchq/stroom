@@ -819,6 +819,10 @@ appConfig:
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
       docRefType: "StatisticStore"
+      inMemAggregatorPoolSize: 10
+      inMemFinalAggregatorSizeThreshold: 1000000
+      inMemPooledAggregatorAgeThreshold: "PT5M"
+      inMemPooledAggregatorSizeThreshold: 1000000
       maxProcessingAge: null
       search:
         fetchSize: 5000

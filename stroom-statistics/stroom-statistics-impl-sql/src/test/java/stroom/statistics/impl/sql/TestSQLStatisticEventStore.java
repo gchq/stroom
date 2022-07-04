@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.inject.Provider;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,7 +60,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
         public StatisticStoreDoc getStatisticsDataSource(final String statisticName) {
             final StatisticStoreDoc statisticsDataSource = new StatisticStoreDoc();
             statisticsDataSource.setName(statisticName);
-            statisticsDataSource.setPrecision(1000L);
+            statisticsDataSource.setPrecision(1_000L);
 
             return statisticsDataSource;
         }
@@ -95,13 +97,16 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
     void test() throws InterruptedException {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
-        final SQLStatisticEventStore store = new SQLStatisticEventStore(5,
-                10,
-                10000,
+        final Provider<SQLStatisticsConfig> configProvider = () -> getSqlStatisticsConfig()
+                .withInMemAggregatorPoolSize(5)
+                .withInMemPooledAggregatorSizeThreshold(10)
+                .withInMemPooledAggregatorAgeThreshold(StroomDuration.ofSeconds(10));
+
+        final SQLStatisticEventStore store = new SQLStatisticEventStore(
                 null,
                 mockStatisticsDataSourceCache,
                 null,
-                this::getSqlStatisticsConfig,
+                configProvider,
                 securityContext,
                 new SimpleTaskContext()) {
             @Override
@@ -134,14 +139,15 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
     void testIdle() throws InterruptedException {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
+        final Provider<SQLStatisticsConfig> configProvider = () -> getSqlStatisticsConfig()
+                .withInMemAggregatorPoolSize(10)
+                .withInMemPooledAggregatorSizeThreshold(10)
+                .withInMemPooledAggregatorAgeThreshold(StroomDuration.ofMillis(100));
         final SQLStatisticEventStore store = new SQLStatisticEventStore(
-                10,
-                10,
-                100,
                 null,
                 mockStatisticsDataSourceCache,
                 null,
-                this::getSqlStatisticsConfig,
+                configProvider,
                 securityContext,
                 new SimpleTaskContext()) {
             @Override
@@ -222,14 +228,15 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
 
     private void processEvents(final int eventCount, final int expectedProcessedCount, final long firstEventTimeMs,
                                final long eventTimeDeltaMs) {
+        final Provider<SQLStatisticsConfig> configProvider = () -> getSqlStatisticsConfig()
+                .withInMemAggregatorPoolSize(1)
+                .withInMemPooledAggregatorSizeThreshold(1)
+                .withInMemPooledAggregatorAgeThreshold(StroomDuration.ofMinutes(10));
         final SQLStatisticEventStore store = new SQLStatisticEventStore(
-                1,
-                1,
-                10000,
                 null,
                 mockStatisticsDataSourceCache,
                 mockSqlStatisticCache,
-                this::getSqlStatisticsConfig,
+                configProvider,
                 securityContext,
                 new SimpleTaskContext());
 

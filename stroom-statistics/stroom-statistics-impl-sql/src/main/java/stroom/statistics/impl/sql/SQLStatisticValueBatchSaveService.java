@@ -145,9 +145,10 @@ class SQLStatisticValueBatchSaveService {
                                     final LogExecutionTime logExecutionTime) {
         final int batchSize = batch.size();
         final Duration duration = logExecutionTime.getDuration();
-        LOGGER.debug("{}() - Saved {} records in {} ({}/sec)",
+        LOGGER.debug("{}() - Inserted {} records into {} in {} ({}/sec)",
                 name,
                 batchSize,
+                SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME,
                 duration,
                 ((double) batchSize) / duration.toMillis() * 1_000);
     }
