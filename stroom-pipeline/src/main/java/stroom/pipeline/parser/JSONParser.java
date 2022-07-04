@@ -30,10 +30,19 @@ import org.xml.sax.XMLReader;
 
 import javax.inject.Inject;
 
-@ConfigurableElement(type = "JSONParser", category = Category.PARSER, roles = {
-        PipelineElementType.ROLE_PARSER,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.JSON)
+@ConfigurableElement(
+        type = "JSONParser",
+        category = Category.PARSER,
+        description = """
+                A built-in parser for JSON source data in JSON fragment format into an XML document.
+                """,
+        roles = {
+                PipelineElementType.ROLE_PARSER,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE,
+                PipelineElementType.VISABILITY_STEPPING,
+                PipelineElementType.ROLE_MUTATOR},
+        icon = ElementIcons.JSON)
 public class JSONParser extends AbstractParser {
 
     private JSONFactoryConfig config = new JSONFactoryConfig();

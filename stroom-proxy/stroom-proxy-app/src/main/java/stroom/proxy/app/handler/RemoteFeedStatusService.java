@@ -75,79 +75,79 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        // Assume ok to receive by default.
-        GetFeedStatusResponse effectiveFeedStatusResponse = GetFeedStatusResponse.createOKRecieveResponse();
+        final CachedResponse cachedResponse = lastKnownResponse.compute(request, (k, v) -> {
+            CachedResponse result = v;
 
-        final CachedResponse cachedResponse = lastKnownResponse.get(request);
+            if (result == null || result.getCreationTime() < System.currentTimeMillis() - ONE_MINUTE) {
+                try {
+                    final GetFeedStatusResponse response = callFeedStatus(request);
+                    result = new CachedResponse(System.currentTimeMillis(), response);
 
-        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-        final String url = feedStatusConfig.getFeedStatusUrl();
-        final String apiKey = getApiKey();
+                } catch (final Exception e) {
+                    LOGGER.debug("Unable to check remote feed service", e);
+                    // Get the last response we received.
+                    if (result != null) {
+                        LOGGER.error(
+                                "Unable to check remote feed service ({}).... will use last response ({}) - {}",
+                                request, result, e.getMessage());
 
-        if (cachedResponse != null && cachedResponse.getCreationTime() >= System.currentTimeMillis() - ONE_MINUTE) {
-            effectiveFeedStatusResponse = cachedResponse.getResponse();
-
-        } else if (url != null && url.trim().length() > 0) {
-            try {
-                if (apiKey == null || apiKey.trim().length() == 0) {
-                    throw new RuntimeException("Missing API key in the feed status configuration");
-                }
-
-                LOGGER.info("Checking feed status for {} using url '{}'", request.getFeedName(), url);
-                effectiveFeedStatusResponse = sendRequest(request, response -> {
-                    GetFeedStatusResponse feedStatusResponse = null;
-                    if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
-                        LOGGER.error(response.getStatusInfo().getReasonPhrase());
                     } else {
-                        feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
+                        // Assume ok to receive by default.
+                        result = new CachedResponse(System.currentTimeMillis(),
+                                GetFeedStatusResponse.createOKRecieveResponse());
+                        LOGGER.error("Unable to check remote feed service ({}).... will assume OK ({}) - {}",
+                                request, result, e.getMessage());
                     }
-                    if (feedStatusResponse == null) {
-                        // If we can't get a feed status response then we will assume ok.
-                        feedStatusResponse = GetFeedStatusResponse.createOKRecieveResponse();
-                    }
-                    return feedStatusResponse;
-                });
-            } catch (final Exception e) {
-                LOGGER.debug("Unable to check remote feed service", e);
-                // Get the last response we received.
-                if (cachedResponse != null) {
-                    LOGGER.error(
-                            "Unable to check remote feed service ({}).... will use last response ({}) - {}",
-                            request, effectiveFeedStatusResponse, e.getMessage());
-                    effectiveFeedStatusResponse = cachedResponse.getResponse();
 
-                } else {
-                    LOGGER.error("Unable to check remote feed service ({}).... will assume OK ({}) - {}",
-                            request, effectiveFeedStatusResponse, e.getMessage());
+                    LOGGER.error("Error checking feed status", e);
                 }
-
-                LOGGER.error("Error checking feed status", e);
             }
 
-            // Cache the response for next time.
-            lastKnownResponse.put(request, new CachedResponse(System.currentTimeMillis(), effectiveFeedStatusResponse));
-        }
+            return result;
+        });
 
-        return effectiveFeedStatusResponse;
+        return cachedResponse.getResponse();
     }
 
-    private GetFeedStatusResponse sendRequest(final GetFeedStatusRequest request,
+    private GetFeedStatusResponse callFeedStatus(final GetFeedStatusRequest request) {
+        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+        final String url = feedStatusConfig.getFeedStatusUrl();
+        if (url == null || url.trim().length() == 0) {
+            throw new RuntimeException("Missing remote status URL in feed status configuration");
+        }
+
+        final String apiKey = getApiKey();
+        if (apiKey == null || apiKey.trim().length() == 0) {
+            throw new RuntimeException("Missing API key in the feed status configuration");
+        }
+
+        LOGGER.info("Checking feed status for {} using url '{}'", request.getFeedName(), url);
+        return sendRequest(url, apiKey, request, response -> {
+            GetFeedStatusResponse feedStatusResponse = null;
+            if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
+                LOGGER.error(response.getStatusInfo().getReasonPhrase());
+            } else {
+                feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
+            }
+            if (feedStatusResponse == null) {
+                // If we can't get a feed status response then we will assume ok.
+                feedStatusResponse = GetFeedStatusResponse.createOKRecieveResponse();
+            }
+            return feedStatusResponse;
+        });
+    }
+
+    private GetFeedStatusResponse sendRequest(final String url,
+                                              final String apiKey,
+                                              final GetFeedStatusRequest request,
                                               final Function<Response, GetFeedStatusResponse> responseConsumer) {
         LOGGER.debug("Sending request {}", request);
-        final String apiKey = getApiKey();
-        final String url = feedStatusConfigProvider.get().getFeedStatusUrl();
-
-        try {
-            final Response response = feedStatusWebTarget
-                    .request(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                    .post(Entity.json(request));
-            try {
-                LOGGER.debug("Received response {}", response);
-                return responseConsumer.apply(response);
-            } finally {
-                response.close();
-            }
+        try (final Response response = feedStatusWebTarget
+                .request(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .post(Entity.json(request))) {
+            LOGGER.debug("Received response {}", response);
+            return responseConsumer.apply(response);
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error sending request {} to {}{}: {}",
@@ -173,7 +173,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         } else {
             final GetFeedStatusRequest request = new GetFeedStatusRequest("DUMMY_FEED", "dummy DN");
             try {
-                sendRequest(request, response -> {
+                sendRequest(url, apiKey, request, response -> {
                     int responseCode = response.getStatusInfo().getStatusCode();
                     // Even though we have sent a dummy feed we should get back a 200 with something like
                     //{

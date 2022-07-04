@@ -59,12 +59,15 @@ class FsPathHelper {
 
     private final FsFeedPathDao fileSystemFeedPaths;
     private final FsTypePathDao fileSystemTypePaths;
+    private final StreamTypeExtensions streamTypeExtensions;
 
     @Inject
     FsPathHelper(final FsFeedPathDao fileSystemFeedPaths,
-                 final FsTypePathDao fileSystemTypePaths) {
+                 final FsTypePathDao fileSystemTypePaths,
+                 final StreamTypeExtensions streamTypeExtensions) {
         this.fileSystemFeedPaths = fileSystemFeedPaths;
         this.fileSystemTypePaths = fileSystemTypePaths;
+        this.streamTypeExtensions = streamTypeExtensions;
     }
 
     long getId(final Path path) {
@@ -192,7 +195,7 @@ class FsPathHelper {
                 FILE_SEPERATOR_CHAR +
                 paddedId +
                 "." +
-                StreamTypeExtensions.getExtension(streamTypeName) +
+                streamTypeExtensions.getExtension(streamTypeName) +
                 "." +
                 getFileStoreType(streamTypeName);
 
@@ -217,19 +220,19 @@ class FsPathHelper {
         // Drop ".dat" or ".bgz"
         builder.setLength(builder.lastIndexOf("."));
         builder.append(".");
-        builder.append(StreamTypeExtensions.getExtension(streamTypeName));
+        builder.append(streamTypeExtensions.getExtension(streamTypeName));
         builder.append(".");
         builder.append(getFileStoreType(streamTypeName));
         return Paths.get(builder.toString());
     }
 
-    String decodeStreamType(final Path path) {
+    String decodeChildStreamType(final Path path) {
         Objects.requireNonNull(path);
 
         final Pattern internalTypesPattern = Pattern.compile("\\.(" +
-                StreamTypeExtensions.getExtension(InternalStreamTypeNames.BOUNDARY_INDEX) + "|" +
-                StreamTypeExtensions.getExtension(InternalStreamTypeNames.SEGMENT_INDEX) + "|" +
-                StreamTypeExtensions.getExtension(InternalStreamTypeNames.MANIFEST) + ")");
+                streamTypeExtensions.getExtension(InternalStreamTypeNames.BOUNDARY_INDEX) + "|" +
+                streamTypeExtensions.getExtension(InternalStreamTypeNames.SEGMENT_INDEX) + "|" +
+                streamTypeExtensions.getExtension(InternalStreamTypeNames.MANIFEST) + ")");
 
         // remove the internal types e.g. .revt.bdy. => .revt.
         final String pathStr = internalTypesPattern.matcher(path.toString())
@@ -239,7 +242,7 @@ class FsPathHelper {
 
         if (splits.length >= 3) {
             final String typeExt = splits[splits.length - 2];
-            return StreamTypeExtensions.getType(typeExt);
+            return streamTypeExtensions.getChildType(typeExt);
         } else {
             throw new RuntimeException("Unable to extract type from " + pathStr);
         }

@@ -60,6 +60,13 @@ public interface SecurityContext {
     boolean isProcessingUser();
 
     /**
+     * Find out if we are running with elevated permissions.
+     *
+     * @return True if we are running in use as read mode.
+     */
+    boolean isUseAsRead();
+
+    /**
      * Check if the user associated with this security context has the requested
      * permission to use the specified functionality.
      *

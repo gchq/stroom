@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -111,6 +112,13 @@ public final class JooqUtil {
     public static <R extends Record> int getTableCount(final DataSource dataSource,
                                                        final Table<R> table) {
 
+        return getTableCountWhen(dataSource, table, null);
+    }
+
+    public static <R extends Record> int getTableCountWhen(final DataSource dataSource,
+                                                           final Table<R> table,
+                                                           final Condition condition) {
+
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 checkDataSource(dataSource);
@@ -118,9 +126,9 @@ public final class JooqUtil {
                 return context
                         .selectCount()
                         .from(table)
-                        .fetchOptional()
-                        .map(Record1::value1)
-                        .orElse(0);
+                        .where(Objects.requireNonNullElseGet(condition, DSL::trueCondition))
+                        .fetchOne()
+                        .value1();
             } finally {
                 releaseDataSource();
             }
@@ -129,7 +137,8 @@ public final class JooqUtil {
         }
     }
 
-    public static <R> R contextResult(final DataSource dataSource, final Function<DSLContext, R> function) {
+    public static <R> R contextResult(final DataSource dataSource,
+                                      final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
             try {
@@ -208,13 +217,28 @@ public final class JooqUtil {
     public static <R extends UpdatableRecord<R>, T> R tryCreate(final DataSource dataSource,
                                                                 final R record,
                                                                 final TableField<R, T> keyField) {
-        return tryCreate(dataSource, record, keyField, null);
+        return tryCreate(dataSource, record, keyField, null, null);
+    }
+
+    public static <R extends UpdatableRecord<R>, T> R tryCreate(final DataSource dataSource,
+                                                                final R record,
+                                                                final TableField<R, T> keyField,
+                                                                final Consumer<R> onCreateAction) {
+        return tryCreate(dataSource, record, keyField, null, onCreateAction);
     }
 
     public static <R extends UpdatableRecord<R>, T1, T2> R tryCreate(final DataSource dataSource,
                                                                      final R record,
                                                                      final TableField<R, T1> keyField1,
                                                                      final TableField<R, T2> keyField2) {
+        return tryCreate(dataSource, record, keyField1, keyField2, null);
+    }
+
+    public static <R extends UpdatableRecord<R>, T1, T2> R tryCreate(final DataSource dataSource,
+                                                                     final R record,
+                                                                     final TableField<R, T1> keyField1,
+                                                                     final TableField<R, T2> keyField2,
+                                                                     final Consumer<R> onCreateAction) {
         R persistedRecord;
         LOGGER.debug(() -> "Creating a " + record.getTable() + " record if it doesn't already exist" + record);
         try (final Connection connection = dataSource.getConnection()) {
@@ -226,6 +250,9 @@ public final class JooqUtil {
                     // Attempt to write the record, which may already be there
                     record.insert();
                     persistedRecord = record;
+                    if (onCreateAction != null) {
+                        onCreateAction.accept(persistedRecord);
+                    }
                 } catch (RuntimeException e) {
                     if (e instanceof DataAccessException
                             && e.getCause() != null
@@ -459,7 +486,7 @@ public final class JooqUtil {
 
         // Combine conditions.
         final Optional<Condition> condition = fromCondition.map(c1 ->
-                toCondition.map(c1::and).orElse(c1))
+                        toCondition.map(c1::and).orElse(c1))
                 .or(() -> toCondition);
         return convertMatchNull(field, matchNull, condition);
     }
@@ -654,5 +681,49 @@ public final class JooqUtil {
 
     private static void releaseDataSource() {
         DATA_SOURCE_THREAD_LOCAL.set(null);
+    }
+
+    public static <T> Optional<T> getMinId(final DSLContext context,
+                                           final Table<?> table,
+                                           final Field<T> idField) {
+        return context
+                .select(DSL.min(idField))
+                .from(table)
+                .fetchOptional()
+                .map(Record1::value1);
+    }
+
+    public static <T> Optional<T> getMaxId(final DSLContext context,
+                                           final Table<?> table,
+                                           final Field<T> idField) {
+        return context
+                .select(DSL.max(idField))
+                .from(table)
+                .fetchOptional()
+                .map(Record1::value1);
+    }
+
+    public static int count(final DSLContext context,
+                            final Table<?> table) {
+        return context
+                .select(DSL.count())
+                .from(table)
+                .fetchOptional()
+                .map(Record1::value1)
+                .orElse(0);
+    }
+
+    public static int deleteAll(final DSLContext context,
+                                final Table<?> table) {
+        return context
+                .deleteFrom(table)
+                .execute();
+    }
+
+    public static void checkEmpty(final DSLContext context,
+                                  final Table<?> table) {
+        if (count(context, table) > 0) {
+            throw new RuntimeException("Unexpected data");
+        }
     }
 }

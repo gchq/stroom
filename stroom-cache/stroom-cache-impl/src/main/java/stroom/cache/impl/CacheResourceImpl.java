@@ -27,6 +27,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
@@ -169,13 +170,16 @@ class CacheResourceImpl implements CacheResource {
 
         return taskContextFactory.get().contextResult(
                 LogUtil.message("Clear cache [{}] on all active nodes", cacheName),
+                TerminateHandlerFactory.NOOP_FACTORY,
                 parentContext -> {
                     final Long count = allNodes.stream()
                             .map(nodeName -> {
                                 final Supplier<Long> supplier = taskContextFactory.get()
-                                        .childContextResult(parentContext,
+                                        .childContextResult(
+                                                parentContext,
                                                 LogUtil.message("Clearing cache [{}] on node [{}]",
                                                         cacheName, nodeName),
+                                                TerminateHandlerFactory.NOOP_FACTORY,
                                                 taskContext ->
                                                         clearCache(cacheName, nodeName));
 

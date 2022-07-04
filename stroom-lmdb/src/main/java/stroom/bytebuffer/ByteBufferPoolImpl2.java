@@ -258,7 +258,7 @@ public class ByteBufferPoolImpl2 implements ByteBufferPool {
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName())
+            SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
                     .addDetail("Size", getCurrentPoolSize())
                     .addDetail("Largest buffer", largestBufferInPool.get());
 
@@ -286,7 +286,7 @@ public class ByteBufferPoolImpl2 implements ByteBufferPool {
 
             return builder.build();
         } catch (RuntimeException e) {
-            return SystemInfoResult.builder().name(getSystemInfoName())
+            return SystemInfoResult.builder(this)
                     .addError(e)
                     .build();
         }

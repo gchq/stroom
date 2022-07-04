@@ -64,7 +64,7 @@ public class Servlets {
                     String.join(", ", duplicatePaths)));
         }
 
-        LOGGER.info("Adding servlets:");
+        LOGGER.info("Adding servlets to application path/port:");
 
         final Set<String> allPaths = new HashSet<>();
 

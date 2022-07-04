@@ -72,10 +72,10 @@ public class StroomStreamException extends RuntimeException {
 
     private static RuntimeException unwrap(final Throwable ex) {
         if (ex instanceof ZipException) {
-            throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ex.getMessage());
+            return new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ex.getMessage());
         }
         if (ex instanceof DataFormatException) {
-            throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ex.getMessage());
+            return new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ex.getMessage());
         }
         if (ex instanceof StroomStreamException) {
             return (StroomStreamException) ex;

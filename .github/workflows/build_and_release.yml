@@ -27,6 +27,11 @@ jobs:
           # See https://github.com/actions/runner/issues/712
           ref: ${{ github.ref }} 
 
+        # Make sure the wrapper jar has not been tampered with
+      - name: Validate gradle wrapper jar
+        id: validate_gradle_wrapper
+        uses: gradle/wrapper-validation-action@v1
+
         # Set variables in github's special env file which are then automatically 
         # read into env vars in each subsequent step
       - name: Set Environment Variables
@@ -125,13 +130,13 @@ jobs:
           path: "**/test-results/**/*.xml"
           retention-days: 5
 
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          files: "**/test-results/**/*.xml"
-
-
+#      - name: Publish Unit Test Results
+#        uses: EnricoMi/publish-unit-test-result-action@v1
+#        if: always()
+#        with:
+#          files: "**/test-results/**/*.xml"
+#
+#
 #      - name: Upload Test Results
 #        if: always()
 #        uses: actions/upload-artifact@v3

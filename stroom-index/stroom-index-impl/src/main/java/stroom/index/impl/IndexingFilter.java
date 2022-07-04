@@ -54,8 +54,17 @@ import javax.inject.Inject;
 /**
  * The index filter... takes the index XML and builds the LUCENE documents
  */
-@ConfigurableElement(type = "IndexingFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.INDEX)
+@ConfigurableElement(
+        type = "IndexingFilter",
+        category = Category.FILTER,
+        description = """
+                A filter to send source data to an index.
+                """,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE},
+        icon = ElementIcons.INDEX)
 class IndexingFilter extends AbstractXMLFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexingFilter.class);

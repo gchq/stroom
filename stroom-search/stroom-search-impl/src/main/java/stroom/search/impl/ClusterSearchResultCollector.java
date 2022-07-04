@@ -209,8 +209,8 @@ public class ClusterSearchResultCollector implements Store {
 
     @Override
     public List<String> getErrors() {
-        if (errors.size() == 0) {
-            return null;
+        if (errors.size() == 0 && !coprocessors.getErrorConsumer().hasErrors()) {
+            return Collections.emptyList();
         }
 
         final List<String> err = new ArrayList<>();
@@ -226,6 +226,8 @@ public class ClusterSearchResultCollector implements Store {
                 }
             }
         }
+        // Add any errors from the coprocessors
+        err.addAll(coprocessors.getErrorConsumer().getErrors());
 
         return err;
     }

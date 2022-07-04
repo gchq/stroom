@@ -12,9 +12,6 @@ import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 
 import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
@@ -32,7 +29,6 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
 
     private final SecurityContext securityContext;
     private final ApplicationInstanceManager applicationInstanceManager;
-    private volatile ScheduledExecutorService executorService;
 
     @Inject
     public ApplicationInstanceWebSocket(final SecurityContext securityContext,
@@ -59,26 +55,13 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
         // Ensure a user is logged in.
         checkLogin();
 
-        if (executorService == null) {
-            final String uuid = message;
-            if (keepAlive(uuid)) {
-                executorService = Executors.newScheduledThreadPool(1);
-                executorService.scheduleWithFixedDelay(() -> {
-                    if (!keepAlive(uuid)) {
-                        executorService.shutdown();
-                    }
-                }, 1, 1, TimeUnit.SECONDS);
-            }
-        }
+        final String uuid = message;
+        keepAlive(uuid);
     }
 
-    private boolean keepAlive(final String uuid) {
+    private void keepAlive(final String uuid) {
         LOGGER.debug(() -> "Keeping application instance alive with uuid = " + uuid);
-        final boolean ok = applicationInstanceManager.keepAlive(uuid);
-        if (!ok) {
-            LOGGER.error(() -> "Unable to keep application instance alive with uuid = " + uuid);
-        }
-        return ok;
+        applicationInstanceManager.keepAlive(uuid);
     }
 
     public void onError(final Session session, final Throwable thr) {
@@ -88,9 +71,6 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
     public synchronized void onClose(final Session session, final CloseReason cr) {
         LOGGER.debug(() -> "Closing web socket at " + PATH
                 + ", sessionId: " + session.getId());
-        if (executorService != null) {
-            executorService.shutdown();
-        }
     }
 
     private void checkLogin() {

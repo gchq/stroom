@@ -40,6 +40,7 @@ import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.query.api.v2.DateTimeSettings;
@@ -59,7 +60,9 @@ import stroom.security.shared.PermissionNames;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.EntityServiceExceptionUtil;
+import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -216,10 +219,7 @@ class DashboardServiceImpl implements DashboardService {
                 }
 
                 // Generate the export file
-                String fileName = request.getQueryKey().getUuid();
-                fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
-                fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
-                fileName = fileName + ".json";
+                String fileName = getQueryFileName(request);
 
                 final ResourceKey resourceKey = resourceStore.createTempFile(fileName);
                 final Path outputFile = resourceStore.getTempFile(resourceKey);
@@ -232,6 +232,7 @@ class DashboardServiceImpl implements DashboardService {
             }
         });
     }
+
 
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request) {
@@ -276,10 +277,7 @@ class DashboardServiceImpl implements DashboardService {
                 final TableResult tableResult = (TableResult) result;
 
                 // Import file.
-                String fileName = queryKey.toString();
-                fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
-                fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
-                fileName = fileName + "." + request.getFileType().getExtension();
+                String fileName = getResultsFilename(request);
 
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
@@ -316,6 +314,33 @@ class DashboardServiceImpl implements DashboardService {
 
             return new ResourceGeneration(resourceKey, new ArrayList<>());
         });
+    }
+
+    private String getResultsFilename(final DownloadSearchResultsRequest request) {
+        final DashboardSearchRequest searchRequest = request.getSearchRequest();
+        final String basename = request.getComponentId() + "__" + searchRequest.getQueryKey().getUuid();
+        return getFileName(basename, request.getFileType().getExtension());
+    }
+
+    private String getQueryFileName(final DashboardSearchRequest request) {
+        final DocRefInfo dashDocRefInfo = dashboardStore.info(request.getDashboardUuid());
+        final String dashboardName = NullSafe.getOrElse(
+                dashDocRefInfo,
+                DocRefInfo::getDocRef,
+                DocRef::getName,
+                request.getDashboardUuid());
+        final String basename = dashboardName + "__" + request.getComponentId();
+        return getFileName(basename, "json");
+    }
+
+    private String getFileName(final String baseName,
+                               final String extension) {
+        String fileName = baseName;
+        fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
+        fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
+        fileName = fileName.replace(" ", "_");
+        fileName = fileName + "." + extension;
+        return fileName;
     }
 
     private void download(final List<Field> fields,
@@ -364,6 +389,7 @@ class DashboardServiceImpl implements DashboardService {
                 try {
                     final Supplier<DashboardSearchResponse> supplier = taskContextFactory.contextResult(
                             "Dashboard Search",
+                            TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> {
                                 DashboardSearchResponse searchResponse;
                                 try {

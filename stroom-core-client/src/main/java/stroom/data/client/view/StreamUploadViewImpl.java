@@ -16,12 +16,16 @@
 
 package stroom.data.client.view;
 
-import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
+import stroom.data.shared.StreamTypeNames;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.item.client.StringListBox;
+import stroom.meta.shared.MetaResource;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -33,7 +37,11 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
+import java.util.List;
+
 public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
+
+    private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private final Widget widget;
     @UiField
@@ -51,14 +59,23 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
 
     @Inject
     public StreamUploadViewImpl(final Binder binder,
-                                final DataTypeUiManager streamTypeUiManager,
+                                final RestFactory restFactory,
                                 final UserPreferencesManager userPreferencesManager) {
         effective = new MyDateBox(userPreferencesManager.isUtc());
         type = new StringListBox();
 
-        for (final String st : streamTypeUiManager.getRawStreamTypeList()) {
-            type.addItem(st);
-        }
+        final Rest<List<String>> streamTypesRest = restFactory.create();
+        streamTypesRest
+                .onSuccess(streamTypes -> {
+                    type.clear();
+                    if (streamTypes != null && !streamTypes.isEmpty()) {
+                        type.addItems(streamTypes);
+                        // Default to raw events
+                        type.setSelected(StreamTypeNames.RAW_EVENTS);
+                    }
+                })
+                .call(META_RESOURCE)
+                .getTypes();
         widget = binder.createAndBindUi(this);
 
         grid.getRowFormatter().getElement(0).getStyle().setHeight(100, Unit.PCT);

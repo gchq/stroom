@@ -93,6 +93,7 @@ projList.each { p ->
 }
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {
+    group "gwt"
     dependsOn 'gwtClean'
 
     def module = 'stroom.dashboard.DashboardApp'
@@ -149,6 +150,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
 }
 
 task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
+    group "gwt"
     def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
 
     doFirst {
@@ -194,6 +196,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
 }
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
+    group "gwt"
     def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
 
 //    def dirs = []
@@ -251,6 +254,7 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 }
 
 task gwtClean {
+    group "gwt"
     doLast {
 //        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
 //        delete unitCacheDir

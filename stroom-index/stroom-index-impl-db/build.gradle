@@ -28,6 +28,7 @@ dependencies {
 
     runtimeOnly libs.mysql_connector_java
 
+    testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-index:stroom-index-mock')
 

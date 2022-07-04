@@ -115,8 +115,8 @@ class TestExplorerTreePerformance {
                 lastChild.set(expandTree(findExplorerNodeCriteria, count));
             }, "Expand all");
 
-            final User user = userService.createUser("testuser");
-            final User userGroup = userService.createUserGroup("testusergroup");
+            final User user = userService.getOrCreateUser("testuser");
+            final User userGroup = userService.getOrCreateUserGroup("testusergroup");
             userService.addUserToGroup(user.getUuid(), userGroup.getUuid());
             documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(),
                     user.getUuid(),

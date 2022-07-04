@@ -36,4 +36,6 @@ public interface ProcessorService extends HasIntCrud<Processor> {
     ResultPage<Processor> find(ExpressionCriteria criteria);
 
     void setEnabled(Integer id, Boolean enabled);
+
+    boolean deleteByPipelineUuid(final String pipelineUuid);
 }

@@ -60,6 +60,9 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
     }
 
     void migrate(final Connection connection) throws Exception {
+        findStreamCriteriaJaxb = JAXBContext.newInstance(OldFindStreamCriteria.class);
+        queryDataJaxb = JAXBContext.newInstance(QueryData.class);
+
         // Get all the existing stream criteria
         final Map<Long, String> findStreamCriteriaStrById = new HashMap<>();
         final Map<Long, OldFindStreamCriteria> findStreamCriteriaById = new HashMap<>();

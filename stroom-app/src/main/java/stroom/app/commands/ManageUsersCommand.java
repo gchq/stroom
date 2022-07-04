@@ -215,9 +215,9 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                             },
                             () -> {
                                 if (isGroup) {
-                                    userService.createUserGroup(name);
+                                    userService.getOrCreateUserGroup(name);
                                 } else {
-                                    userService.createUser(name);
+                                    userService.getOrCreateUser(name);
                                 }
                                 logCreateUserOrGroupEvent(name, true, null, isGroup);
                             });
