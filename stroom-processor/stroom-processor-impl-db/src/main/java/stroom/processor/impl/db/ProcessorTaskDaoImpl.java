@@ -359,6 +359,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     .update(PROCESSOR_TASK)
                     .set(PROCESSOR_TASK.STATUS, TaskStatus.UNPROCESSED.getPrimitiveValue())
                     .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
+                    .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, (Integer) null)
                     .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                     .where(PROCESSOR_TASK.ID.eq(record.value1()))
                     .and(PROCESSOR_TASK.VERSION.eq(record.value2()))
