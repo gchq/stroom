@@ -1314,7 +1314,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
             final ReferenceDataConfig referenceDataConfig = referenceDataConfigProvider.get();
 
-            final SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName())
+            final SystemInfoResult.Builder builder = SystemInfoResult.builder(this::getSystemInfo)
                     .addDetail("Path", lmdbEnvironment.getLocalDir().toAbsolutePath().normalize())
                     .addDetail("Environment max size", referenceDataConfig.getLmdbConfig().getMaxStoreSize())
                     .addDetail("Environment current size",
@@ -1342,7 +1342,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             });
             return builder.build();
         } catch (RuntimeException e) {
-            return SystemInfoResult.builder().name(getSystemInfoName())
+            return SystemInfoResult.builder(this)
                     .addError(e)
                     .build();
         }

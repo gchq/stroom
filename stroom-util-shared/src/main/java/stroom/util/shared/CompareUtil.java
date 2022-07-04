@@ -152,6 +152,19 @@ public final class CompareUtil {
         return getNullSafeComparator(extractor1, extractor2, String.CASE_INSENSITIVE_ORDER);
     }
 
+    public static <T1, T2 extends Comparable<T2>> Comparator<T1> getNullSafeComparator(
+            final Function<T1, T2> extractor) {
+
+        // Sort with nulls first but also handle null intermediate values
+        return Comparator.comparing(extractor, Comparator.nullsFirst(Comparator.naturalOrder()));
+    }
+
+    public static <T1, T2, T3 extends Comparable<T3>> Comparator<T1> getNullSafeComparator(
+            final Function<T1, T2> extractor1,
+            final Function<T2, T3> extractor2) {
+        return getNullSafeComparator(extractor1, extractor2, Comparator.naturalOrder());
+    }
+
     public static <T1, T2, T3 extends Comparable<T3>> Comparator<T1> getNullSafeComparator(
             final Function<T1, T2> extractor1,
             final Function<T2, T3> extractor2,

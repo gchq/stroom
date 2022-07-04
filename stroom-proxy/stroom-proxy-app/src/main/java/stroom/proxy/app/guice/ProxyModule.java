@@ -11,6 +11,7 @@ import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
+import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
@@ -51,6 +52,7 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.guice.AdminServletBinder;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
@@ -61,6 +63,7 @@ import stroom.util.io.BufferFactory;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.BuildInfo;
 
+import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -107,6 +110,7 @@ public class ProxyModule extends AbstractModule {
     protected void configure() {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        bind(HealthCheckRegistry.class).toInstance(environment.healthChecks());
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new MockCollectionModule());
@@ -151,6 +155,9 @@ public class ProxyModule extends AbstractModule {
                 .bind(ProxyStatusServlet.class)
                 .bind(ProxyWelcomeServlet.class)
                 .bind(ReceiveDataServlet.class);
+
+        AdminServletBinder.create(binder())
+                .bind(FilteredHealthCheckServlet.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ReceiveDataRuleSetResourceImpl.class)

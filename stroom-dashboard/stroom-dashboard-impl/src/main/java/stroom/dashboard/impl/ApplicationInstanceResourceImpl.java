@@ -20,6 +20,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.instance.shared.ApplicationInstanceInfo;
 import stroom.instance.shared.ApplicationInstanceResource;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -53,15 +54,15 @@ class ApplicationInstanceResourceImpl implements ApplicationInstanceResource {
     @AutoLogged(OperationType.UNLOGGED)
     public Boolean keepAlive(final ApplicationInstanceInfo applicationInstanceInfo) {
         LOGGER.trace(() -> "keepAlive() - " + applicationInstanceInfo);
-        final Boolean result = provider.get().keepAlive(applicationInstanceInfo.getUuid());
-        if (result) {
-            try {
-                Thread.sleep(1000);
-            } catch (final InterruptedException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
+        try {
+            provider.get().keepAlive(applicationInstanceInfo.getUuid());
+            ThreadUtil.sleep(1000);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            return false;
         }
-        return result;
+
+        return true;
     }
 
     @Override

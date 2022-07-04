@@ -96,4 +96,40 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
         // Create a parser with the merged config.
         pipelineFactory.create(pipelineData3, new SimpleTaskContext());
     }
+
+    @Test
+    void testOverride2() {
+        final PipelineFactory pipelineFactory = new PipelineFactory(
+                elementRegistryFactory,
+                elementRegistryFactory,
+                new SimpleProcessorFactory());
+
+        final String data1 = StroomPipelineTestFileUtil
+                .getString("TestPipelineFactory/TestBasePipeline.Pipeline.data.xml");
+        final String data2 = StroomPipelineTestFileUtil.getString(
+                "TestPipelineFactory/TestChildPipeline.Pipeline.data.xml");
+        final String data3 = StroomPipelineTestFileUtil.getString(
+                "TestPipelineFactory/TestChildCombinedPipeline.Pipeline.data.xml");
+
+        final PipelineDoc pipeline1 = PipelineTestUtil.createBasicPipeline(data1);
+        final PipelineDoc pipeline2 = PipelineTestUtil.createBasicPipeline(data2);
+
+        assertThat(pipelineSerialiser.getXmlFromPipelineData(pipeline1.getPipelineData())).isEqualTo(data1);
+        assertThat(pipelineSerialiser.getXmlFromPipelineData(pipeline2.getPipelineData())).isEqualTo(data2);
+
+        // Now merge the pipeline data into a single config.
+        final PipelineDataMerger pipelineDataMerger = new PipelineDataMerger();
+        pipelineDataMerger.merge(pipeline1.getPipelineData(), pipeline2.getPipelineData());
+        final PipelineData pipelineData3 = pipelineDataMerger.createMergedData();
+        PipelineDataUtil.normalise(pipelineData3);
+
+        // Take a look at the merged config.
+        final PipelineDoc pipeline3 = new PipelineDoc();
+        pipeline3.setPipelineData(pipelineData3);
+
+        assertThat(pipelineSerialiser.getXmlFromPipelineData(pipeline3.getPipelineData())).isEqualTo(data3);
+
+        // Create a parser with the merged config.
+        pipelineFactory.create(pipelineData3, new SimpleTaskContext());
+    }
 }

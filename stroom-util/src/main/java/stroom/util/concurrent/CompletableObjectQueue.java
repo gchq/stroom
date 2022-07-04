@@ -5,28 +5,36 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class CompletableIntQueue {
+public class CompletableObjectQueue<T> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CompletableIntQueue.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CompletableObjectQueue.class);
     private static final CompleteException COMPLETE = new CompleteException();
 
     private final ArrayBlockingQueue<Object> queue;
 
-    public CompletableIntQueue(final int capacity) {
+    public CompletableObjectQueue(final int capacity) {
         queue = new ArrayBlockingQueue<>(capacity);
     }
 
-    public void put(final int value) throws InterruptedException {
-        queue.put(value);
+    public void put(final T value) {
+        try {
+            queue.put(value);
+        } catch (final InterruptedException e) {
+            LOGGER.error(e::getMessage, e);
+        }
     }
 
-    public int take() throws InterruptedException, CompleteException {
-        final Object object = queue.take();
-        if (COMPLETE == object) {
-            complete();
-            throw COMPLETE;
+    @SuppressWarnings("unchecked")
+    public T take() {
+        try {
+            final Object object = queue.take();
+            if (COMPLETE != object) {
+                return (T) object;
+            }
+        } catch (final InterruptedException e) {
+            LOGGER.error(e::getMessage, e);
         }
-        return (int) object;
+        return null;
     }
 
     public void complete() {
@@ -34,8 +42,6 @@ public class CompletableIntQueue {
             queue.put(COMPLETE);
         } catch (final InterruptedException e) {
             LOGGER.trace(e::getMessage, e);
-            // Keep interrupting this thread.
-            Thread.currentThread().interrupt();
         }
     }
 

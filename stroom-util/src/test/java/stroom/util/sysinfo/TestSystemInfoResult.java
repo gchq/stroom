@@ -1,7 +1,4 @@
-package stroom.util;
-
-import stroom.util.sysinfo.SystemInfoResult;
-import stroom.util.sysinfo.SystemInfoResultList;
+package stroom.util.sysinfo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

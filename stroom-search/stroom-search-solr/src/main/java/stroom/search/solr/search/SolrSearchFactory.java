@@ -22,7 +22,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import javax.inject.Inject;
 
 public class SolrSearchFactory {
@@ -60,7 +60,7 @@ public class SolrSearchFactory {
                                           final StoredDataQueue storedDataQueue,
                                           final ErrorConsumer errorConsumer,
                                           final TaskContext parentContext,
-                                          final AtomicLong hitCount,
+                                          final LongAdder hitCount,
                                           final String dateTimeLocale) {
         // Make sure we have been given a query.
         if (query.getExpression() == null) {

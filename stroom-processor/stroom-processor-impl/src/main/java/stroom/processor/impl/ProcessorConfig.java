@@ -34,6 +34,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
     private final CacheConfig processorNodeCache;
     private final CacheConfig processorFeedCache;
 
+    private final StroomDuration disownDeadTasksAfter;
+
     public ProcessorConfig() {
         dbConfig = new ProcessorDbConfig();
         assignTasks = true;
@@ -59,6 +61,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
+        disownDeadTasksAfter = StroomDuration.ofMinutes(10);
     }
 
     @SuppressWarnings("unused")
@@ -73,7 +76,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                            @JsonProperty("processorCache") final CacheConfig processorCache,
                            @JsonProperty("processorFilterCache") final CacheConfig processorFilterCache,
                            @JsonProperty("processorNodeCache") final CacheConfig processorNodeCache,
-                           @JsonProperty("processorFeedCache") final CacheConfig processorFeedCache) {
+                           @JsonProperty("processorFeedCache") final CacheConfig processorFeedCache,
+                           @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter) {
         this.dbConfig = dbConfig;
         this.assignTasks = assignTasks;
         this.createTasks = createTasks;
@@ -85,6 +89,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         this.processorFilterCache = processorFilterCache;
         this.processorNodeCache = processorNodeCache;
         this.processorFeedCache = processorFeedCache;
+        this.disownDeadTasksAfter = disownDeadTasksAfter;
     }
 
     @Override
@@ -149,6 +154,11 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
 
     public CacheConfig getProcessorFeedCache() {
         return processorFeedCache;
+    }
+
+    @JsonPropertyDescription("How long to wait before we remove ownership of tasks from nodes that appear to have died")
+    public StroomDuration getDisownDeadTasksAfter() {
+        return disownDeadTasksAfter;
     }
 
     @Override

@@ -24,6 +24,12 @@ dependencies {
     // Stroom external bintray libs
     compile project(':stroom-docref')
 
+    testCompile project(':stroom-cache:stroom-cache-impl')
+    testCompile project(':stroom-security:stroom-security-mock')
+    testCompile project(':stroom-task:stroom-task-mock')
+    testCompile project(':stroom-test-common')
+    testCompile project(':stroom-cluster:stroom-cluster-lock-mock')
+
     // 3rd party libs
     compile libs.dropwizard_metrics_healthchecks
     compile libs.flyway_core

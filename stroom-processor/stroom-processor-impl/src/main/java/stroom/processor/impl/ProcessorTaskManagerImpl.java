@@ -18,6 +18,9 @@
 package stroom.processor.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
@@ -65,6 +68,7 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -80,7 +84,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -99,6 +102,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskManagerImpl.class);
 
     private static final String LOCK_NAME = "ProcessorTaskManager";
+    private static final int MAX_ERROR_LENGTH = 200;
 
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
@@ -117,10 +121,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final EventSearch eventSearch;
     private final SecurityContext securityContext;
     private final ClusterLockService clusterLockService;
+    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final ProcessorConfig processorConfig;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
-
-    private final ReentrantLock createTasksLock = new ReentrantLock();
 
     /**
      * Our filter cache
@@ -156,6 +160,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private volatile boolean allowAsyncTaskCreation = false;
     private volatile boolean allowTaskCreation = true;
 
+    private final Map<String, Instant> lastNodeContactTime = new ConcurrentHashMap<>();
+    private Instant lastDisownedTasks = Instant.now();
+
     @Inject
     ProcessorTaskManagerImpl(final ProcessorFilterService processorFilterService,
                              final ProcessorFilterTrackerDao processorFilterTrackerDao,
@@ -169,7 +176,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final MetaService metaService,
                              final EventSearch eventSearch,
                              final SecurityContext securityContext,
-                             final ClusterLockService clusterLockService) {
+                             final ClusterLockService clusterLockService,
+                             final TargetNodeSetFactory targetNodeSetFactory,
+                             final ProcessorConfig processorConfig) {
 
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
@@ -184,43 +193,41 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.eventSearch = eventSearch;
         this.securityContext = securityContext;
         this.clusterLockService = clusterLockService;
+        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.processorConfig = processorConfig;
     }
 
     @Override
-    public void startup() {
+    public synchronized void startup() {
         // It shouldn't be possible to create tasks during startup.
-        createTasksLock.lock();
         try {
             // Anything that we owned release
             // Lock the cluster so that only this node is able to release owned tasks at this time.
-            LOGGER.info(() -> "Locking cluster to release owned tasks for node " + nodeInfo.getThisNodeName());
-            clusterLockService.lock(LOCK_NAME, processorTaskDao::releaseOwnedTasks);
+            final String nodeName = nodeInfo.getThisNodeName();
+            LOGGER.info(() -> "Locking cluster to release owned tasks for node " + nodeName);
+            clusterLockService.lock(LOCK_NAME, () -> processorTaskDao.releaseOwnedTasks(nodeName));
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
-            createTasksLock.unlock();
             allowAsyncTaskCreation = true;
             allowTaskCreation = true;
         }
     }
 
     @Override
-    public void shutdown() {
+    public synchronized void shutdown() {
         // It shouldn't be possible to create tasks during shutdown.
-        createTasksLock.lock();
         try {
             allowAsyncTaskCreation = false;
             allowTaskCreation = false;
             clearTaskStore();
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-        } finally {
-            createTasksLock.unlock();
         }
     }
 
     /**
-     * Return back the next task to do. Called by worker threads. Also assigns
+     * Return the next task to perform. Called by worker threads. Also assigns
      * the task to the node asking for the job
      */
     @Override
@@ -327,6 +334,22 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     null);
         } catch (final RuntimeException e) {
             LOGGER.error("abandon() - {}", processorTask, e);
+        }
+    }
+
+    private void releaseAll() {
+        for (final Entry<ProcessorFilter, ProcessorTaskQueue> entry : queueMap.entrySet()) {
+            final ProcessorFilter filter = entry.getKey();
+            if (filter != null) {
+                final ProcessorTaskQueue queue = queueMap.remove(filter);
+                if (queue != null) {
+                    ProcessorTask streamTask = queue.poll();
+                    while (streamTask != null) {
+                        release(streamTask);
+                        streamTask = queue.poll();
+                    }
+                }
+            }
         }
     }
 
@@ -438,20 +461,19 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         createTasks(taskContext))).run();
     }
 
-    private void createTasks(final TaskContext taskContext) {
+    private synchronized void createTasks(final TaskContext taskContext) {
         // We need to make sure that only 1 thread at a time is allowed to
         // create tasks. This should always be the case in production but some
         // tests will call this directly while scheduled execution could also be
-        // running. Also if the master node changes it is possible for one master
+        // running. Also, if the master node changes it is possible for one master
         // to be in the middle of creating tasks when another node assumes master
-        // status and tries to create tasks too. Thus a db backed cluster lock
+        // status and tries to create tasks too. Thus, a db backed cluster lock
         // is needed
-        createTasksLock.lock();
         try {
             if (allowTaskCreation) {
 
                 // We need an overarching cluster lock for all task creation
-                // Some of the task creation is async but we will wait for that
+                // Some task creation is async, but we will wait for that
                 // to complete so all task creation is encapsulated by this lock
                 LOGGER.debug("Locking cluster to create tasks");
                 clusterLockService.lock(LOCK_NAME, () ->
@@ -459,8 +481,55 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-        } finally {
-            createTasksLock.unlock();
+        }
+    }
+
+    public void disownDeadTasks() {
+        try {
+            final String node = nodeInfo.getThisNodeName();
+            final String masterNode = targetNodeSetFactory.getMasterNode();
+            if (node != null && node.equals(masterNode)) {
+                // If this is the master node then see if there are any nodes that we haven't had contact with
+                // for some time.
+
+                // IF we haven't had contact with a node for 10 minutes then forcibly release the tasks owned
+                // by that node.
+                final Instant now = Instant.now();
+                final Set<String> activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now));
+                final Instant disownTaskAge = now.minus(processorConfig.getDisownDeadTasksAfter());
+                if (lastDisownedTasks.isBefore(disownTaskAge)) {
+                    lastDisownedTasks = now;
+
+                    // Remove nodes we haven't had contact with for 10 minutes.
+                    lastNodeContactTime.forEach((k, v) -> {
+                        if (v.isBefore(disownTaskAge)) {
+                            lastNodeContactTime.remove(k);
+                        }
+                    });
+
+                    // Retain all tasks that have had their status updated in the last 10 minutes or belong to
+                    // nodes we know have been active in the last 10 minutes.
+                    processorTaskDao.retainOwnedTasks(lastNodeContactTime.keySet(), disownTaskAge);
+                }
+            }
+        } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+    }
+
+    public synchronized void releaseOldQueuedTasks() {
+        if (queueMap.size() > 0) {
+            try {
+                final String node = nodeInfo.getThisNodeName();
+                final String masterNode = targetNodeSetFactory.getMasterNode();
+                if (node != null && !node.equals(masterNode)) {
+                    // This is no longer the master node so release all tasks.
+                    releaseAll();
+                }
+            } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
+                LOGGER.debug(e.getMessage(), e);
+            }
         }
     }
 
@@ -557,8 +626,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             }
         }
 
-        // We must be the master node so set a time in the future to run a
-        // delete
+        // We must be the master node so set a time in the future to run delete.
         scheduleDelete();
 
 //        // Set the last stream details for the next call to this method.
@@ -724,7 +792,11 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 optionalProcessorFilter = processorFilterService.fetch(filter.getId());
                 optionalProcessorFilter.ifPresent(loadedFilter -> {
                     ProcessorFilterTracker tracker = loadedFilter.getProcessorFilterTracker();
-                    tracker.setStatus("Error: " + e);
+                    String error = e.toString();
+                    if (error.length() > MAX_ERROR_LENGTH) {
+                        error = error.substring(0, MAX_ERROR_LENGTH) + "...";
+                    }
+                    tracker.setStatus("Error: " + error);
                     processorFilterTrackerDao.update(tracker);
                 });
             } catch (final RuntimeException e2) {

@@ -28,8 +28,12 @@ import stroom.util.shared.Severity;
 import java.io.Reader;
 import javax.inject.Inject;
 
-@ConfigurableElement(type = "InvalidXMLCharFilterReader",
+@ConfigurableElement(
+        type = "InvalidXMLCharFilterReader",
         category = Category.READER,
+        description = """
+                Strips out any characters that are not within the standard XML character set.
+                """,
         roles = {
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.ROLE_READER,

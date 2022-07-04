@@ -29,14 +29,12 @@ import stroom.util.AuditUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
-import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
@@ -59,8 +57,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 @Singleton
-@EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
-public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Handler {
+public class NodeServiceImpl implements NodeService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeServiceImpl.class);
 
@@ -68,7 +65,6 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     private final NodeDao nodeDao;
     private final NodeInfo nodeInfo;
     private final UriFactory uriFactory;
-    private volatile Node thisNode;
     private final EntityEventBus entityEventBus;
     private final WebTargetFactory webTargetFactory;
 
@@ -87,7 +83,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         this.webTargetFactory = webTargetFactory;
 
         // Ensure the node record for this node is in the DB
-        securityContext.asProcessingUser(this::ensureNodeCreated);
+        refreshNode();
     }
 
     Node update(final Node node) {
@@ -258,77 +254,34 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     }
 
     Node getNode(final String nodeName) {
-        return securityContext.secureResult(() -> {
-            return nodeDao.getNode(nodeName);
-        });
-    }
-
-    private void ensureNodeCreated() {
-        // Ensure we have created a node for ourselves.
-        getThisNode();
-    }
-
-    Node getThisNode() {
-        if (thisNode == null) {
-            synchronized (this) {
-                if (thisNode == null) {
-                    refreshNode();
-                }
-
-                if (thisNode == null) {
-                    throw new RuntimeException("Default node not set");
-                }
-            }
-        } else {
-            if (!uriFactory.nodeUri("").toString().equals(thisNode.getUrl())) {
-                // Endpoint url has changed in config so update the node record
-                refreshNode();
-            }
-        }
-
-        return thisNode;
+        return securityContext.secureResult(() -> nodeDao.getNode(nodeName));
     }
 
     private synchronized void refreshNode() {
-
-        final String nodeName = nodeInfo.getThisNodeName();
-        if (nodeName == null || nodeName.isEmpty()) {
-            throw new RuntimeException("Node name is not configured");
-        }
-        // See if we have a node record in the DB, we won't on first boot
-        thisNode = nodeDao.getNode(nodeName);
-
-        // Get the node endpoint URL from config or determine it
-        final String endpointUrl = uriFactory.nodeUri("").toString();
-        if (thisNode == null) {
-            // This will start a new mini transaction to create the node record
-            final Node node = new Node();
-            node.setName(nodeName);
-            node.setUrl(endpointUrl);
-            LOGGER.info("Creating node record for {} with endpoint url {}",
-                    node.getName(), node.getUrl());
-            thisNode = nodeDao.create(node);
-        } else if (!endpointUrl.equals(thisNode.getUrl())) {
-            // Endpoint URL in the DB is out of date so update it
-            thisNode.setUrl(endpointUrl);
-            LOGGER.info("Updating node endpoint url to {} for node {}", endpointUrl, thisNode.getName());
-            update(thisNode);
-        }
-    }
-
-    @Override
-    public void onChange(final EntityEvent event) {
-        final Node node = thisNode;
-        if (node != null) {
-            if (Node.ENTITY_TYPE.equals(event.getDocRef().getType()) &&
-                    String.valueOf(node.getId()).equals(event.getDocRef().getUuid())) {
-                thisNode = null;
+        securityContext.asProcessingUser(() -> {
+            final String nodeName = nodeInfo.getThisNodeName();
+            LOGGER.info("Creating node in DB with name: " + nodeName);
+            if (nodeName == null || nodeName.isEmpty()) {
+                throw new RuntimeException("Node name is not configured");
             }
-        }
-    }
-
-    @Override
-    public void clear() {
-        thisNode = null;
+            // See if we have a node record in the DB, we won't on first boot
+            Node thisNode = nodeDao.getNode(nodeName);
+            // Get the node endpoint URL from config or determine it
+            final String endpointUrl = uriFactory.nodeUri("").toString();
+            if (thisNode == null) {
+                // This will start a new mini transaction to create the node record
+                final Node node = new Node();
+                node.setName(nodeName);
+                node.setUrl(endpointUrl);
+                LOGGER.info("Creating node record for {} with endpoint url {}",
+                        node.getName(), node.getUrl());
+                nodeDao.create(node);
+            } else if (!endpointUrl.equals(thisNode.getUrl())) {
+                // Endpoint URL in the DB is out of date so update it
+                thisNode.setUrl(endpointUrl);
+                LOGGER.info("Updating node endpoint url to {} for node {}", endpointUrl, thisNode.getName());
+                update(thisNode);
+            }
+        });
     }
 }

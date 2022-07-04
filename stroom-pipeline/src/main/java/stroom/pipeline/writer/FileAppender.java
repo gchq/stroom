@@ -43,6 +43,11 @@ import javax.inject.Inject;
  */
 @ConfigurableElement(
         type = "FileAppender",
+        description = """
+                A destination used to write an output stream to a file on the file system.
+                If multiple paths are specified in the 'outputPaths' property it will pick one at random to \
+                write to.
+                """,
         category = Category.DESTINATION,
         roles = {
                 PipelineElementType.ROLE_TARGET,

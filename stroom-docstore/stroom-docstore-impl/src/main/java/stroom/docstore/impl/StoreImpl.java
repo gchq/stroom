@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
@@ -574,8 +575,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                                 uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
             }
         } else {
-            throw new RuntimeException(LogUtil.message("No document found for UUID {} in store {}",
-                    uuid, persistence.getClass().getSimpleName()));
+            throw new DocumentNotFoundException(new DocRef(type, uuid));
         }
     }
 
@@ -611,7 +611,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                     // Perform version check to ensure the item hasn't been updated by somebody
                     // else before we try to update it.
                     if (data == null) {
-                        throw new RuntimeException("Document does not exist " + docRef);
+                        throw new DocumentNotFoundException(docRef);
                     }
 
                     final D existingDocument = serialiser.read(data);

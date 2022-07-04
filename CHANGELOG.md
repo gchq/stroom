@@ -12,6 +12,154 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.214] - 2022-06-29
+
+* Issue **#2931** : Set cluster state update frequency to 1m.
+
+
+## [v7.0-beta.213] - 2022-06-29
+
+* Issue **#2933** : Change structure of config object for http-call function to allow setting various HTTP client configuration properties, including HTTP protocol version.
+
+
+## [v7.0-beta.212] - 2022-06-27
+
+* Issue **#2902** : Release queued tasks if no longer master and from dead nodes.
+
+* Issue **#2925** : Remove order by from Attribute Value Data Retention job to try to speed it up. Also improve logging for the job.
+
+* Issue **#2924** : Fix feed name resolution from UUID in stream appenders.
+
+* Issue **#2870** : Fix delete of old processor filters and trackers.
+
+
+## [v7.0-beta.211] - 2022-06-24
+
+* Issue **#2912** : Prevent users from renaming feeds as this breaks the link with the files stored on the file system.
+
+* Issue **#2903** : Fix pipeline structure inheritance to hide dead inherited links.
+
+* Issue **#2906** : Fix rolling appenders failing due to "no logged in user".
+
+* Issue **#2916** : Change LMDB thread interrupted messages from ERROR to DEBUG.
+
+* Issue **#2914** : Propagate useAsRead to sub tasks.
+
+* Issue **#2877** : Handle missing index when performing shard retention.
+
+* Issue **#2896** : Improve application instance error handling.
+
+
+## [v7.0-beta.210] - 2022-06-23
+
+* Issue **#2900** : Move stream type to file extension mappings into config (`stroom.data.filesystemVolume.metaTypeExtensions`) to allow use of legacy file extensions.
+
+* Issue **#2906** : Fix RollingStreamAppender failing to roll on timed basis.
+
+* Issue **#2904** : Fix NPE when setting the feed to null on the StreamAppender.
+
+* Issue **#2901** : Change stream type drop downs on feed setting and stream upload to included all stream types.
+
+
+## [v7.0-beta.209] - 2022-06-10
+
+* Change start.sh in stroom docker image to accept multiple arguments to support command utilities.
+
+
+## [v7.0-beta.208] - 2022-06-08
+
+* Issue **#2872** : Fix permission exception thrown when removing search store from cache.
+
+* Issue **#2889** : Change pipeline entity deletion to also logically delete the processor, processor filters and any unprocessed tasks.
+
+
+## [v7.0-beta.207] - 2022-05-26
+
+* Change the shard system info provider to only query the shard if the node has ownership.
+
+* Issue **#2879** : Prevent shards closing during read.
+
+* Issue **#2879** : Prevent interrupts during index shard use.
+
+* Issue **#2888** : Fix error when paging and then filtering on the dependencies screen.
+
+
+## [v7.0-beta.206] - 2022-05-25
+
+* Add system info provider for index shards.
+
+
+## [v7.0-beta.205] - 2022-05-24
+
+* Issue **#2883** : Fix issue of search errors not being shown in the UI.
+
+* Issue **#2879** : Prevent interrupting threads that may be reading search index shards.
+
+
+## [v7.0-beta.204] - 2022-05-20
+
+* Issue **#2874** : Add debug logging for shard writing/reading.
+
+* Issue **#2881** : Fix broken CLI commands, e.g. `reset_password`.
+
+
+## [v7.0-beta.203] - 2022-05-04
+
+* Fix failing test.
+
+
+## [v7.0-beta.202] - 2022-05-04
+
+* No changes, failed build.
+
+
+## [v7.0-beta.201] - 2022-05-04
+
+* Issue **#2855** : Add propety `stroom.index.writer.slowIndexWriteWarningThreshold` to configure the threshold for warning about slow index shard writes.
+
+* Issue **#2856** : Strip `[` and `]` from IPv6 addresses in the logged events to ensure schema compliance.
+
+* Issue **#2857** : Add `/stroomAdmin/filteredhealthcheck` and `/proxyAdmin/filteredhealthcheck` servlets to allow filtering of the health checks that are run.
+
+* Issue **#2863** : Fix UI hanging when data viewer navigation buttons are clicked repeatedly and very quickly.
+
+
+## [v7.0-beta.200] - 2022-04-27
+
+* Issue **#2839** : Fix invalid event XML generated when adding user perms to an entity with no perms (i.e. System entity).
+
+* Issue **#2843** : Fix NPE when logging in to a user with no password.
+
+* Increase column width for _Sign in Failures_ column on Manage Accounts screen so the sort icon is visible.
+
+* Issue **#2840** : Fix various issues with sorting on Manage Accounts screen.
+
+* Issue **#2841** : Fix issues with sorting/filtering on API Keys screen.
+
+* Increase User Id column width on API Keys screen.
+
+* Issue **#2847** : Fix download of dashboard query and results.
+
+* Issue **#2838** : Change web socket code to avoid errors for expected cases.
+
+* Issue **#2851** : Add configuration property `stroom.statistics.sql.slowQueryWarningThreshold` to configure slow statistics sql query warning threshold.
+
+
+## [v7.0-beta.199] - 2022-04-14
+
+* Issue **#2827** : Fix Format feature in editor when comment contains unmatched double quote.
+
+* Issue **#2830** : Change logging of document permission changes to log a single event containing the full before/after state of the doc's perms.
+
+* Issue **#2830** : Ensure the creation of a stroom user record is only logged once.
+
+* Issue **#2830** : When cascading document permissions, only log the change for the top level but mark it with the cascade setting.
+
+* Issue **#2816** : Fix missing navigation controls when viewing a multi part stream where a middle part is binary and the rest are text.
+
+* Add missing Singlton annotation to ProxyConfigProvider.
+
+
 ## [v7.0-beta.198] - 2022-03-30
 
 * Issue **#2822** : Add application instance management to keep track of active queries.
@@ -4314,7 +4462,23 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.198...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.214...HEAD
+[v7.0-beta.214]: https://github.com/gchq/stroom/compare/v7.0-beta.213...v7.0-beta.214
+[v7.0-beta.213]: https://github.com/gchq/stroom/compare/v7.0-beta.212...v7.0-beta.213
+[v7.0-beta.212]: https://github.com/gchq/stroom/compare/v7.0-beta.211...v7.0-beta.212
+[v7.0-beta.211]: https://github.com/gchq/stroom/compare/v7.0-beta.210...v7.0-beta.211
+[v7.0-beta.210]: https://github.com/gchq/stroom/compare/v7.0-beta.209...v7.0-beta.210
+[v7.0-beta.209]: https://github.com/gchq/stroom/compare/v7.0-beta.208...v7.0-beta.209
+[v7.0-beta.208]: https://github.com/gchq/stroom/compare/v7.0-beta.207...v7.0-beta.208
+[v7.0-beta.207]: https://github.com/gchq/stroom/compare/v7.0-beta.206...v7.0-beta.207
+[v7.0-beta.206]: https://github.com/gchq/stroom/compare/v7.0-beta.205...v7.0-beta.206
+[v7.0-beta.205]: https://github.com/gchq/stroom/compare/v7.0-beta.204...v7.0-beta.205
+[v7.0-beta.204]: https://github.com/gchq/stroom/compare/v7.0-beta.203...v7.0-beta.204
+[v7.0-beta.203]: https://github.com/gchq/stroom/compare/v7.0-beta.202...v7.0-beta.203
+[v7.0-beta.202]: https://github.com/gchq/stroom/compare/v7.0-beta.201...v7.0-beta.202
+[v7.0-beta.201]: https://github.com/gchq/stroom/compare/v7.0-beta.200...v7.0-beta.201
+[v7.0-beta.200]: https://github.com/gchq/stroom/compare/v7.0-beta.199...v7.0-beta.200
+[v7.0-beta.199]: https://github.com/gchq/stroom/compare/v7.0-beta.198...v7.0-beta.199
 [v7.0-beta.198]: https://github.com/gchq/stroom/compare/v7.0-beta.197...v7.0-beta.198
 [v7.0-beta.197]: https://github.com/gchq/stroom/compare/v7.0-beta.196...v7.0-beta.197
 [v7.0-beta.196]: https://github.com/gchq/stroom/compare/v7.0-beta.195...v7.0-beta.196

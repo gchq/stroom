@@ -111,7 +111,7 @@ appConfig:
         prepStmtCacheSqlLimit: 256
   dashboard:
     applicationInstanceCache:
-      expireAfterAccess: "PT1M"
+      expireAfterAccess: "PT5M"
       expireAfterWrite: null
       maximumSize: null
   data:
@@ -124,6 +124,16 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+      metaTypeExtensions:
+        Detections: "dtxn"
+        Error: "err"
+        Events: "evt"
+        Raw Events: "revt"
+        Raw Reference: "rref"
+        Records: "rec"
+        Reference: "ref"
+        Test Events: "tevt"
+        Test Reference: "tref"
       typePathCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
@@ -247,8 +257,8 @@ appConfig:
     enabled: false
   feed:
     feedDocCache:
-      expireAfterAccess: "PT10S"
-      expireAfterWrite: null
+      expireAfterAccess: null
+      expireAfterWrite: "PT1M"
       maximumSize: 1000
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     unknownClassification: "UNKNOWN CLASSIFICATION"
@@ -282,6 +292,7 @@ appConfig:
         minItems: 0
         timeToIdle: "PT0S"
         timeToLive: "PT0S"
+      slowIndexWriteWarningThreshold: "PT1S"
   job:
     db:
       connection:
@@ -448,6 +459,7 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     deleteAge: "P1D"
+    disownDeadTasksAfter: "PT10M"
     fillTaskQueue: true
     processorCache:
       expireAfterAccess: "PT10S"
@@ -811,6 +823,7 @@ appConfig:
       search:
         fetchSize: 5000
         maxResults: 100000
+      slowQueryWarningThreshold: "PT1S"
       statisticAggregationBatchSize: 1000000
   ui:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
@@ -825,6 +838,7 @@ appConfig:
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
+    applicationInstanceKeepAliveIntervalMs: 60000
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
     helpSubPathJobs: "/user-guide/jobs/"

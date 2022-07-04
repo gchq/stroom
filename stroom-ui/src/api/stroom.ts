@@ -1799,6 +1799,12 @@ export interface Param {
   value: string;
 }
 
+export interface ParamInfo {
+  description?: string;
+  name?: string;
+  paramType?: "OPTIONAL" | "MANDATORY";
+}
+
 export interface PasswordPolicyConfig {
   allowPasswordResets?: boolean;
   forcePasswordChangeOnFirstLogin?: boolean;
@@ -3325,6 +3331,9 @@ export interface TokenResultPage {
 export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
+
+  /** @format int32 */
+  applicationInstanceKeepAliveIntervalMs?: number;
   defaultMaxResults?: string;
   helpSubPathExpressions?: string;
   helpSubPathJobs?: string;
@@ -8146,6 +8155,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     getSystemInfoNames: (params: RequestParams = {}) =>
       this.request<any, string[]>({
         path: `/systemInfo/v1/names`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags System Info
+     * @name GetSystemInfoParams
+     * @summary Gets the parameters for this system info provider
+     * @request GET:/systemInfo/v1/params/{name}
+     * @secure
+     */
+    getSystemInfoParams: (name: string, params: RequestParams = {}) =>
+      this.request<any, ParamInfo[]>({
+        path: `/systemInfo/v1/params/${name}`,
         method: "GET",
         secure: true,
         ...params,

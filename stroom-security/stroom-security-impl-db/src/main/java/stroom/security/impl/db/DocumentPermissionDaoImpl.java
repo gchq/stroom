@@ -7,6 +7,7 @@ import stroom.security.impl.UserDocumentPermissions;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
 
@@ -88,6 +89,23 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                 .and(DOC_PERMISSION.PERMISSION.eq(permission))
                 .execute()
         );
+    }
+
+    @Override
+    public void removePermissions(final String docRefUuid,
+                                  final String userUuid,
+                                  final Set<String> permissions) {
+        if (permissions != null && !permissions.isEmpty()) {
+            Objects.requireNonNull(docRefUuid);
+            Objects.requireNonNull(userUuid);
+            JooqUtil.context(securityDbConnProvider, context -> context
+                    .deleteFrom(DOC_PERMISSION)
+                    .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
+                    .and(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
+                    .and(DOC_PERMISSION.PERMISSION.in(permissions))
+                    .execute()
+            );
+        }
     }
 
     @Override

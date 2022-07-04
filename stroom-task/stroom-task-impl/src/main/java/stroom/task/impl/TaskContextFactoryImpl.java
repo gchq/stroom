@@ -49,6 +49,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         return createFromConsumer(
                 null,
                 securityContext.getUserIdentity(),
+                securityContext.isUseAsRead(),
                 taskName,
                 DEFAULT_TERMINATE_HANDLER_FACTORY,
                 consumer);
@@ -62,6 +63,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         return createFromConsumer(
                 getTaskId(parent),
                 getUserIdentity(parent),
+                isUseAsRead(parent),
                 taskName,
                 DEFAULT_TERMINATE_HANDLER_FACTORY,
                 consumer);
@@ -72,6 +74,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         return createFromFunction(
                 null,
                 securityContext.getUserIdentity(),
+                securityContext.isUseAsRead(),
                 taskName,
                 DEFAULT_TERMINATE_HANDLER_FACTORY,
                 function);
@@ -85,6 +88,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         return createFromFunction(
                 getTaskId(parent),
                 getUserIdentity(parent),
+                isUseAsRead(parent),
                 taskName,
                 DEFAULT_TERMINATE_HANDLER_FACTORY,
                 function);
@@ -97,6 +101,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         return createFromConsumer(
                 null,
                 securityContext.getUserIdentity(),
+                securityContext.isUseAsRead(),
                 taskName,
                 terminateHandlerFactory,
                 consumer);
@@ -111,6 +116,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         return createFromConsumer(
                 getTaskId(parent),
                 getUserIdentity(parent),
+                isUseAsRead(parent),
                 taskName,
                 terminateHandlerFactory,
                 consumer);
@@ -123,6 +129,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         return createFromFunction(
                 null,
                 securityContext.getUserIdentity(),
+                securityContext.isUseAsRead(),
                 taskName,
                 terminateHandlerFactory,
                 function);
@@ -137,6 +144,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         return createFromFunction(
                 getTaskId(parent),
                 getUserIdentity(parent),
+                isUseAsRead(parent),
                 taskName,
                 terminateHandlerFactory,
                 function);
@@ -156,6 +164,13 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         return null;
     }
 
+    private boolean isUseAsRead(final TaskContext taskContext) {
+        if (taskContext instanceof TaskContextImpl) {
+            return ((TaskContextImpl) taskContext).isUseAsRead();
+        }
+        return securityContext.isUseAsRead();
+    }
+
     private UserIdentity getUserIdentity(final TaskContext taskContext) {
         if (taskContext instanceof TaskContextImpl) {
             return ((TaskContextImpl) taskContext).getUserIdentity();
@@ -165,12 +180,14 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
 
     private Runnable createFromConsumer(final TaskId parentTaskId,
                                         final UserIdentity userIdentity,
+                                        final boolean useAsRead,
                                         final String taskName,
                                         final TerminateHandlerFactory terminateHandlerFactory,
                                         final Consumer<TaskContext> consumer) {
         final Supplier<Void> supplierOut = createFromFunction(
                 parentTaskId,
                 userIdentity,
+                useAsRead,
                 taskName,
                 terminateHandlerFactory,
                 taskContext -> {
@@ -182,20 +199,22 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
 
     private <R> Supplier<R> createFromFunction(final TaskId parentTaskId,
                                                final UserIdentity userIdentity,
+                                               final boolean useAsRead,
                                                final String taskName,
                                                final TerminateHandlerFactory terminateHandlerFactory,
                                                final Function<TaskContext, R> function) {
-        return wrap(parentTaskId, userIdentity, taskName, terminateHandlerFactory, function);
+        return wrap(parentTaskId, userIdentity, useAsRead, taskName, terminateHandlerFactory, function);
     }
 
     private <R> Supplier<R> wrap(final TaskId parentTaskId,
                                  final UserIdentity userIdentity,
+                                 final boolean useAsRead,
                                  final String taskName,
                                  final TerminateHandlerFactory terminateHandlerFactory,
                                  final Function<TaskContext, R> function) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final TaskId taskId = TaskIdFactory.create(parentTaskId);
-        final TaskContextImpl subTaskContext = new TaskContextImpl(taskId, taskName, userIdentity, stop);
+        final TaskContextImpl subTaskContext = new TaskContextImpl(taskId, taskName, userIdentity, useAsRead, stop);
 
         return () -> {
             R result;
@@ -249,14 +268,24 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
                     throw new TaskTerminatedException(stop.get());
                 }
 
-                result = securityContext.asUserResult(userIdentity, () -> pipelineScopeRunnable.scopeResult(() -> {
-                    CurrentTaskContext.pushContext(subTaskContext);
-                    try {
-                        return LOGGER.logDurationIfDebugEnabled(() -> function.apply(subTaskContext), () -> taskName);
-                    } finally {
-                        CurrentTaskContext.popContext();
+                final Function<TaskContextImpl, R> pipelineScopeFunction = (tc) ->
+                        pipelineScopeRunnable.scopeResult(() -> {
+                            CurrentTaskContext.pushContext(tc);
+                            try {
+                                return LOGGER.logDurationIfDebugEnabled(() -> function.apply(tc),
+                                        () -> taskName);
+                            } finally {
+                                CurrentTaskContext.popContext();
+                            }
+                        });
+
+                result = securityContext.asUserResult(userIdentity, () -> {
+                    if (useAsRead) {
+                        return securityContext.useAsReadResult(() -> pipelineScopeFunction.apply(subTaskContext));
+                    } else {
+                        return pipelineScopeFunction.apply(subTaskContext);
                     }
-                }));
+                });
 
             } catch (final Throwable t) {
                 try {
@@ -281,7 +310,18 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
                 try {
                     subTaskContext.setThread(null);
                     subTaskContext.setTerminateHandler(null);
-                    terminateHandler.onDestroy();
+
+                    // Make sure we don't continue to interrupt a thread after the task context is out of scope.
+                    if (currentThread.isInterrupted()) {
+                        LOGGER.debug("Clearing interrupted state");
+                        if (Thread.interrupted()) {
+                            if (currentThread.isInterrupted()) {
+                                LOGGER.error("Unable to clear interrupted state");
+                            } else {
+                                LOGGER.debug("Cleared interrupted state");
+                            }
+                        }
+                    }
                 } finally {
 //                    currentThread.setName(oldThreadName);
                 }

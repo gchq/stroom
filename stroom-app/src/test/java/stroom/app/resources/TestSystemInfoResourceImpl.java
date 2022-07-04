@@ -33,8 +33,8 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
     @Test
     void getAll() {
 
-        final HasSystemInfo systemInfoSupplier1 = getSystemInfoSupplier(buildSystemInfoResult("name1"));
-        final HasSystemInfo systemInfoSupplier2 = getSystemInfoSupplier(buildSystemInfoResult("name2"));
+        final HasSystemInfo systemInfoSupplier1 = getSystemInfoSupplier("name1");
+        final HasSystemInfo systemInfoSupplier2 = getSystemInfoSupplier("name2");
 
         final SystemInfoResultList expectedResults = SystemInfoResultList.of(
                 systemInfoSupplier1.getSystemInfo(),
@@ -52,26 +52,21 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
         final SystemInfoResultList result = doGetTest("/", SystemInfoResultList.class, expectedResults);
     }
 
-    private SystemInfoResult buildSystemInfoResult(final String name) {
-        return SystemInfoResult.builder()
-                .name(name)
-                .addDetail("key1", "value1")
-                .addDetail("key2", "value2")
-                .build();
-    }
-
     @NotNull
-    private HasSystemInfo getSystemInfoSupplier(final SystemInfoResult systemInfoResult) {
+    private HasSystemInfo getSystemInfoSupplier(final String name) {
 
         return new HasSystemInfo() {
             @Override
             public String getSystemInfoName() {
-                return systemInfoResult.getName();
+                return name;
             }
 
             @Override
             public SystemInfoResult getSystemInfo() {
-                return systemInfoResult;
+                return SystemInfoResult.builder(this)
+                        .addDetail("key1", "value1")
+                        .addDetail("key2", "value2")
+                        .build();
             }
         };
     }

@@ -16,6 +16,8 @@
 
 package stroom.editor.client.model;
 
+import java.util.Objects;
+
 /**
  * A class for formatting XML. This class attempts to recognise XML
  * elements within text and then use this knowledge format the XML
@@ -314,28 +316,27 @@ public class XmlFormatter {
 
             // Test the element type when we think we are at the end of the
             // element.
-            if (c == '"') {
+            if (c == '"' && !startsWith(sb, COMMENT_START)) {
                 // Toggle the fact that we are now either in or out of an
                 // attribute value.
                 inAttValue = !inAttValue;
 
             } else if (!inAttValue && c == '>') {
-                final String element = sb.toString();
-                if (element.startsWith(COMMENT_START)) {
+                if (startsWith(sb, COMMENT_START)) {
                     elementType = ElementType.COMMENT;
-                } else if (element.startsWith(PI_START)) {
+                } else if (startsWith(sb, PI_START)) {
                     elementType = ElementType.PI;
-                } else if (element.startsWith(END_ELEMENT_START)) {
+                } else if (startsWith(sb, END_ELEMENT_START)) {
                     elementType = ElementType.END;
-                } else if (element.endsWith(EMPTY_ELEMENT_END)) {
+                } else if (endsWith(sb, EMPTY_ELEMENT_END)) {
                     elementType = ElementType.EMPTY;
-                } else if (element.startsWith(DOCTYPE_START)) {
+                } else if (startsWith(sb, DOCTYPE_START)) {
                     elementType = ElementType.DOCTYPE;
                 }
 
                 if (elementType == ElementType.COMMENT) {
                     // Don't break out of a comment unless --> is found.
-                    if (element.endsWith("-->")) {
+                    if (endsWith(sb, "-->")) {
                         return elementType;
                     }
                 } else {
@@ -418,6 +419,19 @@ public class XmlFormatter {
             index--;
         }
         sb.setLength(index + 1);
+    }
+
+    private boolean startsWith(final StringBuilder stringBuilder, final String prefix) {
+        Objects.requireNonNull(stringBuilder);
+        Objects.requireNonNull(prefix);
+        return stringBuilder.indexOf(prefix) == 0;
+    }
+
+    private boolean endsWith(final StringBuilder stringBuilder, final String suffix) {
+        Objects.requireNonNull(stringBuilder);
+        Objects.requireNonNull(suffix);
+        final int expectedSuffixPos = stringBuilder.length() - suffix.length();
+        return stringBuilder.indexOf(suffix) == expectedSuffixPos;
     }
 
     private void write(final String string) {

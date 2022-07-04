@@ -33,6 +33,9 @@ import javax.inject.Inject;
 
 @ConfigurableElement(
         type = "FindReplaceFilter",
+        description = """
+                Replaces strings or regexes with new strings.
+                """,
         category = Category.READER,
         roles = {
                 PipelineElementType.ROLE_TARGET,

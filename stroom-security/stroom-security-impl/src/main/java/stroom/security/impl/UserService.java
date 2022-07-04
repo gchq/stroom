@@ -23,11 +23,21 @@ import stroom.security.shared.User;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public interface UserService {
-    User createUser(String name);
 
-    User createUserGroup(String name);
+    default User getOrCreateUser(String name) {
+        return getOrCreateUser(name, null);
+    }
+
+    User getOrCreateUser(String name, final Consumer<User> onCreateAction);
+
+    default User getOrCreateUserGroup(String name) {
+        return getOrCreateUserGroup(name, null);
+    }
+
+    User getOrCreateUserGroup(String name, final Consumer<User> onCreateAction);
 
     Optional<User> getUserByName(String name);
 

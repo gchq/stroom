@@ -1,6 +1,7 @@
 package stroom.docstore.impl.db;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
 

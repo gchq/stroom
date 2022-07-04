@@ -461,6 +461,7 @@ public class SearchModel {
 
         return DashboardSearchRequest
                 .builder()
+                .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                 .search(search)
                 .componentResultRequests(requests)
                 .dateTimeLocale(timeZones.getTimeZone())

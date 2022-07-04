@@ -50,10 +50,20 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-@ConfigurableElement(type = "DSParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.TEXT)
+@ConfigurableElement(
+        type = "DSParser",
+        category = Category.PARSER,
+        description = """
+                A parser for data that uses Data Splitter code.
+                """,
+        roles = {
+                PipelineElementType.ROLE_PARSER,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE,
+                PipelineElementType.VISABILITY_STEPPING,
+                PipelineElementType.ROLE_MUTATOR,
+                PipelineElementType.ROLE_HAS_CODE},
+        icon = ElementIcons.TEXT)
 public class DSParser extends AbstractParser implements SupportsCodeInjection {
 
     private final ParserFactoryPool parserFactoryPool;

@@ -69,6 +69,9 @@ import javax.xml.transform.stream.StreamResult;
  */
 @ConfigurableElement(
         type = "XMLWriter",
+        description = """
+                Writer to convert XML events data into XML output in the specified character encoding.
+                """,
         category = Category.WRITER,
         roles = {
                 PipelineElementType.ROLE_TARGET,

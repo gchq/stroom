@@ -33,6 +33,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorFilterUtil;
+import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
@@ -52,11 +53,14 @@ public class PipelineStoreImpl implements PipelineStore {
 
     private final Store<PipelineDoc> store;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
+    private final Provider<ProcessorService> processorServiceProvider;
 
     @Inject
     public PipelineStoreImpl(final StoreFactory storeFactory,
                              final PipelineSerialiser serialiser,
-                             final Provider<ProcessorFilterService> processorFilterServiceProvider) {
+                             final Provider<ProcessorFilterService> processorFilterServiceProvider,
+                             final Provider<ProcessorService> processorServiceProvider) {
+        this.processorServiceProvider = processorServiceProvider;
         this.store = storeFactory.createStore(serialiser, PipelineDoc.DOCUMENT_TYPE, PipelineDoc.class);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
     }
@@ -88,6 +92,10 @@ public class PipelineStoreImpl implements PipelineStore {
 
     @Override
     public void deleteDocument(final String uuid) {
+        // First we need to logically delete any child processors
+        // which will in turn also logically delete any associated processor filters
+        processorServiceProvider.get().deleteByPipelineUuid(uuid);
+
         store.deleteDocument(uuid);
     }
 

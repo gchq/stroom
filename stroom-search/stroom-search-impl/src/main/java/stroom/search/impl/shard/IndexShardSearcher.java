@@ -66,9 +66,10 @@ public class IndexShardSearcher {
             // able to search documents that have not yet been flushed to disk.
             if (indexWriter != null) {
                 try {
+                    LOGGER.debug("Using provided writer");
                     searcherManager = openWithWriter(indexWriter);
                 } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage());
+                    LOGGER.debug(e.getMessage());
                 }
             }
 
@@ -76,6 +77,7 @@ public class IndexShardSearcher {
             // and use the index shard directory.
             if (searcherManager == null) {
                 final Path dir = IndexShardUtil.getIndexPath(indexShard);
+                LOGGER.debug("No provided writer so opening a new searcher at {}", dir);
 
                 if (!Files.isDirectory(dir)) {
                     throw new SearchException("Index shard directory not found: " + FileUtil.getCanonicalPath(

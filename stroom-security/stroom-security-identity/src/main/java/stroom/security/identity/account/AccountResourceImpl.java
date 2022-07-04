@@ -23,6 +23,7 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
@@ -99,7 +100,8 @@ class AccountResourceImpl implements AccountResource {
     @Timed
     @Override
     public AccountResultPage search(final SearchAccountRequest request) {
-        if (request.getQuickFilter() == null || request.getQuickFilter().isBlank()) {
+        if (NullSafe.isBlankString(request, SearchAccountRequest::getQuickFilter)
+                && NullSafe.isEmptyCollection(request, SearchAccountRequest::getSortList)) {
             return list();
         } else {
 

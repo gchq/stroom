@@ -34,6 +34,7 @@ dependencies {
     testCompile libs.guice_extension
     testCompile libs.junit_jupiter_api
     testCompile libs.dropwizard_validation
+    testCompile libs.vavr
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime
