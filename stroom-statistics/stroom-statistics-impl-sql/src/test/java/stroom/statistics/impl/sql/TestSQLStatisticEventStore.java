@@ -40,7 +40,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
 import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -226,7 +225,9 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
 
     }
 
-    private void processEvents(final int eventCount, final int expectedProcessedCount, final long firstEventTimeMs,
+    private void processEvents(final int eventCount,
+                               final int expectedProcessedCount,
+                               final long firstEventTimeMs,
                                final long eventTimeDeltaMs) {
         final Provider<SQLStatisticsConfig> configProvider = () -> getSqlStatisticsConfig()
                 .withInMemAggregatorPoolSize(1)

@@ -112,7 +112,8 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
     @Min(1)
     @JsonPropertyDescription("Maximum size (number of entries) of each aggregator in the pool of in-memory " +
             "aggregator maps. " +
-            "Once an aggregator has reached this size it will be merged into the final stage of in-memory aggregation." +
+            "Once an aggregator has reached this size it will be merged into the final stage of in-memory " +
+            "aggregation." +
             "This pool of aggregators is the first stage of in-memory statistic aggregation.")
     public int getInMemPooledAggregatorSizeThreshold() {
         return inMemPooledAggregatorSizeThreshold;
