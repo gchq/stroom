@@ -15,17 +15,17 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
 
     @Test
     void testReleaseOwnedTasks() {
-        assertThat(getProcessorCount(null))
-                .isEqualTo(0);
+        assertThat(getProcessorCount(null)).isZero();
+        assertThat(countTasks()).isZero();
+        assertThat(countOwned(NODE1)).isZero();
+        assertThat(countOwned(NODE2)).isZero();
 
         final Processor processor1 = createProcessor();
 
-        assertThat(getProcessorCount(null))
-                .isEqualTo(1);
+        assertThat(getProcessorCount(null)).isOne();
 
         final ProcessorFilter processorFilter1 = createProcessorFilter(processor1);
-        assertThat(getProcessorFilterCount(null))
-                .isEqualTo(1);
+        assertThat(getProcessorFilterCount(null)).isOne();
 
         createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
@@ -37,7 +37,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         processorTaskDao.releaseOwnedTasks(NODE1);
 
         assertThat(countTasks()).isEqualTo(3);
-        assertThat(countOwned(NODE1)).isEqualTo(0);
+        assertThat(countOwned(NODE1)).isZero();
         assertThat(countOwned(null)).isEqualTo(3);
 
         createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE2, FEED);
@@ -45,31 +45,31 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE2, FEED);
 
         assertThat(countTasks()).isEqualTo(6);
-        assertThat(countOwned(NODE1)).isEqualTo(0);
+        assertThat(countOwned(NODE1)).isZero();
         assertThat(countOwned(NODE2)).isEqualTo(3);
         assertThat(countOwned(null)).isEqualTo(3);
 
         processorTaskDao.releaseOwnedTasks(NODE1);
 
         assertThat(countTasks()).isEqualTo(6);
-        assertThat(countOwned(NODE1)).isEqualTo(0);
+        assertThat(countOwned(NODE1)).isZero();
         assertThat(countOwned(NODE2)).isEqualTo(3);
         assertThat(countOwned(null)).isEqualTo(3);
     }
 
     @Test
     void testRetainOwnedTasks() {
-        assertThat(getProcessorCount(null))
-                .isEqualTo(0);
+        assertThat(getProcessorCount(null)).isZero();
+        assertThat(countTasks()).isZero();
+        assertThat(countOwned(NODE1)).isZero();
+        assertThat(countOwned(NODE2)).isZero();
 
         final Processor processor1 = createProcessor();
 
-        assertThat(getProcessorCount(null))
-                .isEqualTo(1);
+        assertThat(getProcessorCount(null)).isOne();
 
         final ProcessorFilter processorFilter1 = createProcessorFilter(processor1);
-        assertThat(getProcessorFilterCount(null))
-                .isEqualTo(1);
+        assertThat(getProcessorFilterCount(null)).isOne();
 
         createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
@@ -98,7 +98,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
 
         assertThat(countTasks()).isEqualTo(6);
         assertThat(countOwned(NODE1)).isEqualTo(3);
-        assertThat(countOwned(NODE2)).isEqualTo(0);
+        assertThat(countOwned(NODE2)).isZero();
         assertThat(countOwned(null)).isEqualTo(3);
     }
 }
