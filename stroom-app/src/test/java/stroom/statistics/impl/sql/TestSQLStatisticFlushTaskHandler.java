@@ -255,7 +255,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
         final long initialEventDeltaMs = 1_000;
         final long eventDeltaDeltaMs = 20;
         final int flushWorkerThreads = 4;
-        final int flushWorkers = 1;
+        final int flushWorkers = 4;
         final int expectedEventCount = iterations * keysPerIteration * tagValuesPerKey * flushWorkers;
         final Instant startTime = Instant.from(
                 ZonedDateTime.of(
