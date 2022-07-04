@@ -240,6 +240,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
      * The aim of this test is for multiple threads to be flushing stats into SQL_STAT_VAL_SRC
      * and for the main thread to be constantly running the aggregation to exercise contention
      * on any db locks.
+     * Useful for testing the performance of the two process when running concurrently.
      */
     @Disabled // Manual running only, too slow for CI
     @Test
