@@ -355,7 +355,7 @@ public class SQLStatisticAggregationTransactionHelper {
             if (optBatchMaxId.isEmpty()) {
                 LOGGER.debug("No rows found in {}, nothing to do for stage 1",
                         SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);
-                
+
             } else {
                 final long batchMaxId = optBatchMaxId.get();
                 // Fill the STAT_KEY table with any new Keys
