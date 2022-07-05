@@ -410,8 +410,10 @@ class ExpressionTokeniser {
     static class Token implements Param {
 
         // refuses to compile if I create the reverse comparator in one step, who knows why
-        private static final Comparator<Type> IDENTIFIER_LENGTH_COMPARATOR = Comparator.comparing(t -> t.identifier.length);
-        private static final Comparator<Type> IDENTIFIER_LENGTH_COMPARATOR_REVERSED = IDENTIFIER_LENGTH_COMPARATOR.reversed();
+        private static final Comparator<Type> IDENTIFIER_LENGTH_COMPARATOR =
+                Comparator.comparing(t -> t.identifier.length);
+        private static final Comparator<Type> IDENTIFIER_LENGTH_COMPARATOR_REVERSED =
+                IDENTIFIER_LENGTH_COMPARATOR.reversed();
 
         // array of simple tokens reverse sorted on identifier length
         static final Type[] SIMPLE_TOKENS = Stream.of(
