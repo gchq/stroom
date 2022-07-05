@@ -12,6 +12,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.12] - 2022-07-05
+
+* Issue **#2834** : Fix `countGroups` search table expression.
+
+* Issue **#2961** : Fix sorting on selector and countGroups columns.
+
 * Issue **#2938** : Fix StreamId error when querying annotations data source.
 
 * Issue **#2944** : Truncate error messages for processor_filter_tracker status to fit DB.
@@ -4249,7 +4255,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.12...HEAD
+[v7.1-beta.12]: https://github.com/gchq/stroom/compare/v7.1-beta.11...v7.1-beta.12
 [v7.1-beta.11]: https://github.com/gchq/stroom/compare/v7.1-beta.10...v7.1-beta.11
 [v7.1-beta.10]: https://github.com/gchq/stroom/compare/v7.1-beta.9...v7.1-beta.10
 [v7.1-beta.9]: https://github.com/gchq/stroom/compare/v7.1-beta.8...v7.1-beta.9
