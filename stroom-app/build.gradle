@@ -233,6 +233,7 @@ dependencies {
     testImplementation project(':stroom-activity:stroom-activity-api')
     testImplementation project(':stroom-activity:stroom-activity-mock')
     testImplementation project(':stroom-alert:stroom-alert-mock')
+    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
     testImplementation project(':stroom-config:stroom-config-app')
     testImplementation project(':stroom-config:stroom-config-global-impl')
     testImplementation project(':stroom-core')
