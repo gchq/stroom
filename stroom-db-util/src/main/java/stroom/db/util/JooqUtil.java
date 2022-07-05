@@ -632,7 +632,7 @@ public final class JooqUtil {
      * @return A runtime exception.
      */
     private static RuntimeException convertException(final Exception e) {
-        return convertException(e, true);
+        return convertException(e, false);
     }
 
     private static RuntimeException convertException(final Exception e, final boolean logError) {

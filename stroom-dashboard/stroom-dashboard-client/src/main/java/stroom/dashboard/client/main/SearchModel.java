@@ -479,7 +479,6 @@ public class SearchModel {
                 .builder()
                 .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                 .search(search)
-                .queryKey(currentQueryKey)
                 .componentResultRequests(requests)
                 .dateTimeSettings(getDateTimeSettings())
                 .applicationInstanceUuid(applicationInstance.getInstanceUuid())

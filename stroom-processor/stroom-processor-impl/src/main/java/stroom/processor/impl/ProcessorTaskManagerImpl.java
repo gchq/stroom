@@ -104,6 +104,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskManagerImpl.class);
 
     private static final String LOCK_NAME = "ProcessorTaskManager";
+    private static final int MAX_ERROR_LENGTH = 200;
 
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
@@ -771,7 +772,11 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 optionalProcessorFilter = processorFilterService.fetch(filter.getId());
                 optionalProcessorFilter.ifPresent(loadedFilter -> {
                     ProcessorFilterTracker tracker = loadedFilter.getProcessorFilterTracker();
-                    tracker.setStatus("Error: " + e);
+                    String error = e.toString();
+                    if (error.length() > MAX_ERROR_LENGTH) {
+                        error = error.substring(0, MAX_ERROR_LENGTH) + "...";
+                    }
+                    tracker.setStatus("Error: " + error);
                     processorFilterTrackerDao.update(tracker);
                 });
             } catch (final RuntimeException e2) {

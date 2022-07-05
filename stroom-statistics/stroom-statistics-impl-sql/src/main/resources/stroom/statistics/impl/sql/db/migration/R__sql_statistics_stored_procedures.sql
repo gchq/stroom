@@ -10,6 +10,7 @@ CREATE PROCEDURE `stage1Upsert` (
     IN p_precision tinyint,
     IN p_valueType tinyint,
     IN p_aggregateToMs bigint,
+    IN p_batch_max_id bigint,
     OUT p_rowCount int)
 BEGIN
     DECLARE change_count INT DEFAULT 0;
@@ -34,7 +35,7 @@ BEGIN
             JOIN SQL_STAT_KEY SSK ON (SSK.NAME = SSVS.NAME)
             WHERE SSVS.TIME_MS < p_aggregateToMs
             AND SSVS.VAL_TP = p_valueType
-            AND SSVS.PROCESSING = 1
+            AND SSVS.ID <= p_batch_max_id
             GROUP BY
                 FK_SQL_STAT_KEY_ID,
                 TIME_MS_RND,
