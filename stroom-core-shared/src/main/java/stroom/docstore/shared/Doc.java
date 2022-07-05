@@ -64,8 +64,8 @@ public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
                @JsonProperty("uuid") final String uuid,
                @JsonProperty("name") final String name,
                @JsonProperty("version") final String version,
-               @JsonProperty("createTime") final Long createTimeMs,
-               @JsonProperty("updateTime") final Long updateTimeMs,
+               @JsonProperty("createTimeMs") final Long createTimeMs,
+               @JsonProperty("updateTimeMs") final Long updateTimeMs,
                @JsonProperty("createUser") final String createUser,
                @JsonProperty("updateUser") final String updateUser) {
         this.type = type;
