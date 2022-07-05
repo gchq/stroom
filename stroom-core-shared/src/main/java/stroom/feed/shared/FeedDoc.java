@@ -36,8 +36,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "version",
         "createTime",
         "updateTime",
-        "createUser",
-        "updateUser",
+        "createTimeMs",
+        "updateTimeMs",
         "description",
         "classification",
         "encoding",
@@ -80,8 +80,8 @@ public class FeedDoc extends Doc {
                    @JsonProperty("uuid") final String uuid,
                    @JsonProperty("name") final String name,
                    @JsonProperty("version") final String version,
-                   @JsonProperty("createTime") final Long createTime,
-                   @JsonProperty("updateTime") final Long updateTime,
+                   @JsonProperty("createTimeMs") final Long createTimeMs,
+                   @JsonProperty("updateTimeMs") final Long updateTimeMs,
                    @JsonProperty("createUser") final String createUser,
                    @JsonProperty("updateUser") final String updateUser,
                    @JsonProperty("description") final String description,
@@ -92,7 +92,7 @@ public class FeedDoc extends Doc {
                    @JsonProperty("reference") final boolean reference,
                    @JsonProperty("streamType") final String streamType,
                    @JsonProperty("status") final FeedStatus status) {
-        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.classification = classification;
         this.encoding = encoding;
