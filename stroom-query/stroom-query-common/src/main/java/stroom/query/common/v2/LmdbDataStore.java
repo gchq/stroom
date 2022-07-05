@@ -79,7 +79,7 @@ public class LmdbDataStore implements DataStore {
     private final Dbi<ByteBuffer> dbi;
 
     private final CompiledField[] compiledFields;
-    private final CompiledSorter<HasGenerators>[] compiledSorters;
+    private final CompiledSorter<Item>[] compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
     private final AtomicLong totalResultCount = new AtomicLong();
@@ -144,7 +144,7 @@ public class LmdbDataStore implements DataStore {
 
         // Find out if we have any sorting.
         boolean hasSort = false;
-        for (final CompiledSorter<HasGenerators> sorter : compiledSorters) {
+        for (final CompiledSorter<Item> sorter : compiledSorters) {
             if (sorter != null) {
                 hasSort = true;
                 break;
@@ -663,14 +663,14 @@ public class LmdbDataStore implements DataStore {
         private final Dbi<ByteBuffer> dbi;
         private final Txn<ByteBuffer> readTxn;
         private final CompiledField[] compiledFields;
-        private final CompiledSorter<HasGenerators>[] compiledSorters;
+        private final CompiledSorter<Item>[] compiledSorters;
         private final Sizes maxResults;
         private final QueryKey queryKey;
 
         public LmdbData(final Dbi<ByteBuffer> dbi,
                         final Txn<ByteBuffer> readTxn,
                         final CompiledField[] compiledFields,
-                        final CompiledSorter<HasGenerators>[] compiledSorters,
+                        final CompiledSorter<Item>[] compiledSorters,
                         final Sizes maxResults,
                         final QueryKey queryKey) {
             this.dbi = dbi;
@@ -732,7 +732,7 @@ public class LmdbDataStore implements DataStore {
             } else {
                 maxSize = Integer.MAX_VALUE;
             }
-            final CompiledSorter<HasGenerators> sorter = compiledSorters[depth];
+            final CompiledSorter<Item> sorter = compiledSorters[depth];
 
             boolean trimmed = true;
             boolean inRange = true;
@@ -845,7 +845,7 @@ public class LmdbDataStore implements DataStore {
             array = new ItemImpl[minArraySize];
         }
 
-        void sortAndTrim(final CompiledSorter<HasGenerators> sorter,
+        void sortAndTrim(final CompiledSorter<Item> sorter,
                          final int trimmedSize,
                          final boolean trimTop) {
             if (sorter != null && size > 0) {
@@ -903,7 +903,7 @@ public class LmdbDataStore implements DataStore {
 
     }
 
-    public static class ItemImpl implements Item, HasGenerators {
+    public static class ItemImpl implements Item {
 
         private final LmdbData data;
         private final Key key;
@@ -1015,11 +1015,6 @@ public class LmdbDataStore implements DataStore {
             }
 
             return val;
-        }
-
-        @Override
-        public Generator[] getGenerators() {
-            return generators;
         }
     }
 

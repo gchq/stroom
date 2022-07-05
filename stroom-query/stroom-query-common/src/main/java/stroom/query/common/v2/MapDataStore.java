@@ -493,7 +493,7 @@ public class MapDataStore implements DataStore, Data {
         }
     }
 
-    public static class ItemImpl implements Item, HasGenerators {
+    public static class ItemImpl implements Item {
 
         private final MapDataStore dataStore;
         private final Key key;
@@ -513,15 +513,8 @@ public class MapDataStore implements DataStore, Data {
         }
 
         @Override
-        public Generator[] getGenerators() {
-            return generators;
-        }
-
-        @Override
         public Val getValue(final int index, final boolean evaluateChildren) {
             Val val = null;
-
-            final Generator[] generators = getGenerators();
 
             if (index >= 0 && index < generators.length) {
                 final Generator generator = generators[index];
@@ -619,9 +612,9 @@ public class MapDataStore implements DataStore, Data {
         @Override
         public Stream<ItemImpl> apply(final Stream<ItemImpl> stream) {
             final Map<Key, Generator[]> groupingMap = new ConcurrentHashMap<>();
-            stream.forEach(unpackedItem -> {
-                final Key rawKey = unpackedItem.getKey();
-                final Generator[] generators = unpackedItem.getGenerators();
+            stream.forEach(item -> {
+                final Key rawKey = item.getKey();
+                final Generator[] generators = item.generators;
 
                 groupingMap.compute(rawKey, (k, v) -> {
                     Generator[] result = v;
