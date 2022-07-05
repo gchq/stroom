@@ -101,8 +101,8 @@ public class CompiledSorter<E extends HasGenerators> implements Comparator<E>, F
 
             int res = 0;
             if (g1 != null && g2 != null) {
-                final Val v1 = g1.eval();
-                final Val v2 = g2.eval();
+                final Val v1 = g1.eval(null);
+                final Val v2 = g2.eval(null);
                 res = compiledSort.getComparator().compare(v1, v2);
             } else if (g1 != null) {
                 res = 1;

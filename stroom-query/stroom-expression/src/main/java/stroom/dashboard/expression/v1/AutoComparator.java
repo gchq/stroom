@@ -3,6 +3,7 @@ package stroom.dashboard.expression.v1;
 import java.util.Comparator;
 
 public class AutoComparator implements Comparator<Val> {
+
     @Override
     public int compare(final Val o1, final Val o2) {
         if (o1 == null && o2 == null) {

@@ -70,7 +70,7 @@ class TestGenerators {
         for (final Generator value : generators) {
             if (value != null) {
                 try {
-                    sb.append(value.eval().toString());
+                    sb.append(value.eval(null).toString());
                 } catch (final RuntimeException e) {
                     // if the evaluation of the generator fails record the class of the exception
                     // so we can see which one has a problem

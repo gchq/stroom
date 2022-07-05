@@ -190,7 +190,7 @@ public class FlatResultCreator implements ResultCreator {
                         for (final Field field : fields) {
                             if (field.getGroup() != null) {
                                 groupFields.computeIfAbsent(field.getGroup(), k ->
-                                        new ArrayList<>())
+                                                new ArrayList<>())
                                         .add(field);
                             }
                         }
@@ -268,7 +268,7 @@ public class FlatResultCreator implements ResultCreator {
                 // functions where necessary.
                 int i = 0;
                 for (final Field field : fields) {
-                    final Val val = item.getValue(i);
+                    final Val val = item.getValue(i, true);
                     Object result = null;
                     if (val != null) {
                         // Convert all list into fully resolved
@@ -411,7 +411,7 @@ public class FlatResultCreator implements ResultCreator {
                             final int index = parentFieldIndices[i];
                             if (index != -1) {
                                 // TODO : @66 Currently evaluating more values than will be needed.
-                                final Val val = item.getValue(index);
+                                final Val val = item.getValue(index, true);
                                 values[i] = val;
                             }
                         }

@@ -22,8 +22,8 @@ import java.util.Optional;
 
 public final class ValString implements Val {
 
-    static final ValString EMPTY = new ValString("");
     public static final Type TYPE = Type.STRING;
+    static final ValString EMPTY = new ValString("");
     private final String value;
     private transient Optional<Double> optionalDouble;
     private transient Optional<Long> optionalLong;

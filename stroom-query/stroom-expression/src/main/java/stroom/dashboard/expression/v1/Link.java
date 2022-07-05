@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import java.util.function.Supplier;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Link.NAME,
@@ -79,7 +81,6 @@ class Link extends AbstractLink {
 
     private static final class LinkGen extends AbstractLinkGen {
 
-        private static final long serialVersionUID = 217968020285584214L;
 
         LinkGen(final Generator[] childGenerators) {
             super(childGenerators);
@@ -93,20 +94,20 @@ class Link extends AbstractLink {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             Val link = ValNull.INSTANCE;
 
             if (childGenerators.length == 1) {
-                final Val url = childGenerators[0].eval();
+                final Val url = childGenerators[0].eval(childDataSupplier);
                 link = makeLink(url, url, ValNull.INSTANCE);
             } else if (childGenerators.length == 2) {
-                final Val text = childGenerators[0].eval();
-                final Val url = childGenerators[1].eval();
+                final Val text = childGenerators[0].eval(childDataSupplier);
+                final Val url = childGenerators[1].eval(childDataSupplier);
                 link = makeLink(text, url, ValNull.INSTANCE);
             } else if (childGenerators.length == 3) {
-                final Val text = childGenerators[0].eval();
-                final Val url = childGenerators[1].eval();
-                final Val type = childGenerators[2].eval();
+                final Val text = childGenerators[0].eval(childDataSupplier);
+                final Val url = childGenerators[1].eval(childDataSupplier);
+                final Val type = childGenerators[2].eval(childDataSupplier);
                 link = makeLink(text, url, type);
             }
 

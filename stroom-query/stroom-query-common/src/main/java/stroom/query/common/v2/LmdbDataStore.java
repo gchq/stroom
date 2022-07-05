@@ -17,19 +17,15 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Any.AnySelector;
-import stroom.dashboard.expression.v1.Bottom.BottomSelector;
+import stroom.dashboard.expression.v1.ChildData;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.Last.LastSelector;
-import stroom.dashboard.expression.v1.Nth.NthSelector;
-import stroom.dashboard.expression.v1.Selection;
-import stroom.dashboard.expression.v1.Selector;
-import stroom.dashboard.expression.v1.Top.TopSelector;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnvFactory;
@@ -66,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import javax.inject.Provider;
 
@@ -208,7 +205,7 @@ public class LmdbDataStore implements DataStore {
 
                             // If we are filtering then we need to evaluate this field
                             // now so that we can filter the resultant value.
-                            value = generator.eval();
+                            value = generator.eval(null);
 
                             if (!compiledFilter.match(value.toString())) {
                                 // We want to exclude this item so get out of this method ASAP.
@@ -223,7 +220,7 @@ public class LmdbDataStore implements DataStore {
                         if (value == null) {
                             generator = expression.createGenerator();
                             generator.set(values);
-                            value = generator.eval();
+                            value = generator.eval(null);
                         }
                         groupValues[groupIndex++] = value;
                     }
@@ -565,168 +562,6 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
-    private static class LmdbData implements Data {
-
-        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbData.class);
-
-        private final Dbi<ByteBuffer> dbi;
-        private final Txn<ByteBuffer> readTxn;
-        private final CompiledField[] compiledFields;
-        private final CompiledSorter<HasGenerators>[] compiledSorters;
-        private final Sizes maxResults;
-        private final QueryKey queryKey;
-
-        public LmdbData(final Dbi<ByteBuffer> dbi,
-                        final Txn<ByteBuffer> readTxn,
-                        final CompiledField[] compiledFields,
-                        final CompiledSorter<HasGenerators>[] compiledSorters,
-                        final Sizes maxResults,
-                        final QueryKey queryKey) {
-            this.dbi = dbi;
-            this.readTxn = readTxn;
-            this.compiledFields = compiledFields;
-            this.compiledSorters = compiledSorters;
-            this.maxResults = maxResults;
-            this.queryKey = queryKey;
-        }
-
-        /**
-         * Get root items from the data store.
-         *
-         * @return Root items.
-         */
-        @Override
-        public Items get() {
-            LOGGER.trace("get() called");
-            return get(Key.root());
-        }
-
-        /**
-         * Get child items from the data store for the provided parent key.
-         * Synchronised with clear to prevent a shutdown happening while reads are going on.
-         *
-         * @param parentKey The parent key to get child items for.
-         * @return The child items for the parent key.
-         */
-        @Override
-        public Items get(final Key parentKey) {
-            SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET);
-            LOGGER.trace("get() called for parentKey: {}", parentKey);
-
-            return Metrics.measure("get", () -> {
-                final int depth = parentKey.size();
-                final int trimmedSize = maxResults.size(depth);
-
-                final ItemArrayList list = getChildren(parentKey, depth, trimmedSize, true, false);
-
-                return new Items() {
-                    @Override
-                    @Nonnull
-                    public Iterator<Item> iterator() {
-                        return new Iterator<>() {
-                            private int pos = 0;
-
-                            @Override
-                            public boolean hasNext() {
-                                return list.size > pos;
-                            }
-
-                            @Override
-                            public Item next() {
-                                return list.array[pos++];
-                            }
-                        };
-                    }
-
-                    @Override
-                    public int size() {
-                        return list.size();
-                    }
-                };
-            });
-        }
-
-        private ItemArrayList getChildren(final Key parentKey,
-                                          final int depth,
-                                          final int trimmedSize,
-                                          final boolean allowSort,
-                                          final boolean trimTop) {
-            SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
-            // If we don't have any children at the requested depth then return an empty list.
-            if (compiledSorters.length <= depth) {
-                return ItemArrayList.EMPTY;
-            }
-
-            final ItemArrayList list = new ItemArrayList(10);
-
-            final ByteBuffer start = LmdbKey.createKeyStem(depth, parentKey);
-            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(start);
-
-            final int maxSize;
-            if (trimmedSize < Integer.MAX_VALUE / 2) {
-                maxSize = Math.max(1000, trimmedSize * 2);
-            } else {
-                maxSize = Integer.MAX_VALUE;
-            }
-            final CompiledSorter<HasGenerators> sorter = compiledSorters[depth];
-
-            final AtomicBoolean trimmed = new AtomicBoolean(true);
-            final AtomicBoolean inRange = new AtomicBoolean(true);
-
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn, keyRange)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-
-                while (iterator.hasNext()
-                        && inRange.get()
-                        && !Thread.currentThread().isInterrupted()) {
-
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
-
-                    // Make sure the first part of the row key matches the start key we are looking for.
-                    boolean match = true;
-                    for (int i = 0; i < start.remaining() && match; i++) {
-                        if (start.get(i) != keyVal.key().get(i)) {
-                            match = false;
-                        }
-                    }
-
-                    if (match) {
-                        final ByteBuffer valueBuffer = keyVal.val();
-                        try (final UnsafeByteBufferInput input = new UnsafeByteBufferInput(valueBuffer)) {
-                            while (!input.end() && inRange.get()) {
-                                final LmdbValue rowValue = LmdbValue.read(compiledFields, input);
-                                final Key key = rowValue.getKey();
-                                if (key.getParent().equals(parentKey)) {
-                                    final Generator[] generators = rowValue.getGenerators().getGenerators();
-                                    list.add(new ItemImpl(this, key, generators));
-                                    if (!allowSort && list.size >= trimmedSize) {
-                                        // Stop without sorting etc.
-                                        inRange.set(false);
-
-                                    } else {
-                                        trimmed.set(false);
-                                        if (list.size() > maxSize) {
-                                            list.sortAndTrim(sorter, trimmedSize, trimTop);
-                                            trimmed.set(true);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        inRange.set(false);
-                    }
-                }
-            }
-
-            if (!trimmed.get()) {
-                list.sortAndTrim(sorter, trimmedSize, trimTop);
-            }
-
-            return list;
-        }
-    }
-
     /**
      * Clear the data store.
      * Synchronised with get() to prevent a shutdown happening while reads are going on.
@@ -821,15 +656,191 @@ public class LmdbDataStore implements DataStore {
         payloadCreator.writePayload(output);
     }
 
-    private static class ItemArrayList {
+    private static class LmdbData implements Data {
 
-        private static final ItemArrayList EMPTY = new ItemArrayList(0);
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbData.class);
+
+        private final Dbi<ByteBuffer> dbi;
+        private final Txn<ByteBuffer> readTxn;
+        private final CompiledField[] compiledFields;
+        private final CompiledSorter<HasGenerators>[] compiledSorters;
+        private final Sizes maxResults;
+        private final QueryKey queryKey;
+
+        public LmdbData(final Dbi<ByteBuffer> dbi,
+                        final Txn<ByteBuffer> readTxn,
+                        final CompiledField[] compiledFields,
+                        final CompiledSorter<HasGenerators>[] compiledSorters,
+                        final Sizes maxResults,
+                        final QueryKey queryKey) {
+            this.dbi = dbi;
+            this.readTxn = readTxn;
+            this.compiledFields = compiledFields;
+            this.compiledSorters = compiledSorters;
+            this.maxResults = maxResults;
+            this.queryKey = queryKey;
+        }
+
+        /**
+         * Get root items from the data store.
+         *
+         * @return Root items.
+         */
+        @Override
+        public Items get() {
+            LOGGER.trace("get() called");
+            return get(Key.root());
+        }
+
+        /**
+         * Get child items from the data store for the provided parent key.
+         * Synchronised with clear to prevent a shutdown happening while reads are going on.
+         *
+         * @param parentKey The parent key to get child items for.
+         * @return The child items for the parent key.
+         */
+        @Override
+        public Items get(final Key parentKey) {
+            SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET);
+            LOGGER.trace("get() called for parentKey: {}", parentKey);
+
+            return Metrics.measure("get", () -> {
+                final int depth = parentKey.size();
+                final int trimmedSize = maxResults.size(depth);
+                return getChildren(parentKey, depth, trimmedSize, false);
+            });
+        }
+
+        private ItemsImpl getChildren(final Key parentKey,
+                                      final int depth,
+                                      final int trimmedSize,
+                                      final boolean trimTop) {
+            SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
+            // If we don't have any children at the requested depth then return an empty list.
+            if (compiledSorters.length <= depth) {
+                return ItemsImpl.EMPTY;
+            }
+
+            final ItemsImpl list = new ItemsImpl(10);
+
+            final ByteBuffer start = LmdbKey.createKeyStem(depth, parentKey);
+            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(start);
+
+            final int maxSize;
+            if (trimmedSize < Integer.MAX_VALUE / 2) {
+                maxSize = Math.max(1000, trimmedSize * 2);
+            } else {
+                maxSize = Integer.MAX_VALUE;
+            }
+            final CompiledSorter<HasGenerators> sorter = compiledSorters[depth];
+
+            boolean trimmed = true;
+            boolean inRange = true;
+
+            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn, keyRange)) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+
+                while (iterator.hasNext()
+                        && inRange
+                        && !Thread.currentThread().isInterrupted()) {
+
+                    final KeyVal<ByteBuffer> keyVal = iterator.next();
+
+                    // Make sure the first part of the row key matches the start key we are looking for.
+                    boolean match = true;
+                    for (int i = 0; i < start.remaining() && match; i++) {
+                        if (start.get(i) != keyVal.key().get(i)) {
+                            match = false;
+                        }
+                    }
+
+                    if (match) {
+                        final ByteBuffer valueBuffer = keyVal.val();
+                        try (final UnsafeByteBufferInput input = new UnsafeByteBufferInput(valueBuffer)) {
+                            while (!input.end() && inRange) {
+                                final LmdbValue rowValue = LmdbValue.read(compiledFields, input);
+                                final Key key = rowValue.getKey();
+                                if (key.getParent().equals(parentKey)) {
+                                    final Generator[] generators = rowValue.getGenerators().getGenerators();
+                                    list.add(new ItemImpl(this, key, generators));
+                                    if (list.size >= trimmedSize && sorter == null) {
+                                        // Stop without sorting etc.
+                                        inRange = false;
+
+                                    } else {
+                                        trimmed = false;
+                                        if (list.size() > maxSize) {
+                                            list.sortAndTrim(sorter, trimmedSize, trimTop);
+                                            trimmed = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        inRange = false;
+                    }
+                }
+            }
+
+            if (!trimmed) {
+                list.sortAndTrim(sorter, trimmedSize, trimTop);
+            }
+
+            return list;
+        }
+
+        private long countChildren(final Key parentKey,
+                                   final int depth) {
+            long count = 0;
+
+            // If we don't have any children at the requested depth then return 0.
+            if (compiledSorters.length <= depth) {
+                return 0;
+            }
+
+            final ByteBuffer start = LmdbKey.createKeyStem(depth, parentKey);
+            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(start);
+
+            boolean inRange = true;
+            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn, keyRange)) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+
+                while (iterator.hasNext()
+                        && inRange
+                        && !Thread.currentThread().isInterrupted()) {
+
+                    final KeyVal<ByteBuffer> keyVal = iterator.next();
+
+                    // Make sure the first part of the row key matches the start key we are looking for.
+                    boolean match = true;
+                    for (int i = 0; i < start.remaining() && match; i++) {
+                        if (start.get(i) != keyVal.key().get(i)) {
+                            match = false;
+                        }
+                    }
+
+                    if (match) {
+                        count++;
+                    } else {
+                        inRange = false;
+                    }
+                }
+            }
+
+            return count;
+        }
+    }
+
+    private static class ItemsImpl implements Items {
+
+        private static final ItemsImpl EMPTY = new ItemsImpl(0);
 
         private final int minArraySize;
         private ItemImpl[] array;
         private int size;
 
-        public ItemArrayList(final int minArraySize) {
+        public ItemsImpl(final int minArraySize) {
             this.minArraySize = minArraySize;
             array = new ItemImpl[minArraySize];
         }
@@ -862,13 +873,34 @@ public class LmdbDataStore implements DataStore {
             array[size++] = item;
         }
 
-        ItemImpl get(final int index) {
+        @Override
+        public Item get(final int index) {
             return array[index];
         }
 
-        int size() {
+        @Override
+        public int size() {
             return size;
         }
+
+        @Override
+        @Nonnull
+        public Iterator<Item> iterator() {
+            return new Iterator<>() {
+                private int pos = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return size > pos;
+                }
+
+                @Override
+                public Item next() {
+                    return array[pos++];
+                }
+            };
+        }
+
     }
 
     public static class ItemImpl implements Item, HasGenerators {
@@ -891,58 +923,95 @@ public class LmdbDataStore implements DataStore {
         }
 
         @Override
-        public Val getValue(final int index) {
+        public Val getValue(final int index, final boolean evaluateChildren) {
             Val val = null;
 
             final Generator generator = generators[index];
-            if (generator instanceof Selector) {
-                if (key.isGrouped()) {
-                    int maxRows = 1;
-                    boolean sort = true;
-                    boolean trimTop = false;
-
-                    if (generator instanceof AnySelector) {
-                        sort = false;
-//                    } else if (generator instanceof FirstSelector) {
-                    } else if (generator instanceof LastSelector) {
-                        trimTop = true;
-                    } else if (generator instanceof TopSelector) {
-                        maxRows = ((TopSelector) generator).getLimit();
-                    } else if (generator instanceof BottomSelector) {
-                        maxRows = ((BottomSelector) generator).getLimit();
-                        trimTop = true;
-                    } else if (generator instanceof NthSelector) {
-                        maxRows = ((NthSelector) generator).getPos() + 1;
-                    }
-
-                    final ItemArrayList items = data.getChildren(
-                            key,
-                            key.size(),
-                            maxRows,
-                            sort,
-                            trimTop);
-
-                    final Selector selector = (Selector) generator;
-                    val = selector.select(new Selection<>() {
-                        @Override
-                        public int size() {
-                            return items.size;
+            if (generator != null) {
+                if (evaluateChildren) {
+                    final Supplier<ChildData> childDataSupplier = () -> {
+                        // If we don't have any children at the requested depth then return null.
+                        if (data.compiledSorters.length <= key.size()) {
+                            return null;
                         }
 
-                        @Override
-                        public Val get(final int pos) {
-                            if (pos < items.size) {
-                                return items.get(pos).generators[index].eval();
+                        return new ChildData() {
+                            @Override
+                            public Val first() {
+                                return singleValue(1, false);
                             }
-                            return ValNull.INSTANCE;
-                        }
-                    });
+
+                            @Override
+                            public Val last() {
+                                return singleValue(1, true);
+                            }
+
+                            @Override
+                            public Val nth(final int pos) {
+                                return singleValue(pos + 1, false);
+                            }
+
+                            @Override
+                            public Val top(final String delimiter, final int limit) {
+                                return join(delimiter, limit, false);
+                            }
+
+                            @Override
+                            public Val bottom(final String delimiter, final int limit) {
+                                return join(delimiter, limit, true);
+                            }
+
+                            @Override
+                            public Val count() {
+                                final long count = data.countChildren(
+                                        key,
+                                        key.size());
+                                if (count <= 0) {
+                                    return ValNull.INSTANCE;
+                                }
+                                return ValLong.create(count);
+                            }
+
+                            private Val singleValue(final int trimmedSize, final boolean trimTop) {
+                                final Items items = data.getChildren(
+                                        key,
+                                        key.size(),
+                                        trimmedSize,
+                                        trimTop);
+                                if (items != null && items.size() == trimmedSize) {
+                                    return items.get(trimmedSize - 1).getValue(index, false);
+                                }
+                                return ValNull.INSTANCE;
+                            }
+
+                            private Val join(final String delimiter, final int limit, final boolean trimTop) {
+                                final Items items = data.getChildren(
+                                        key,
+                                        key.size(),
+                                        limit,
+                                        trimTop);
+                                if (items != null && items.size() > 0) {
+                                    final StringBuilder sb = new StringBuilder();
+                                    for (final Item item : items) {
+                                        final Val val = item.getValue(index, false);
+                                        if (val.type().isValue()) {
+                                            if (sb.length() > 0) {
+                                                sb.append(delimiter);
+                                            }
+                                            sb.append(val);
+                                        }
+                                    }
+                                    return ValString.create(sb.toString());
+                                }
+                                return ValNull.INSTANCE;
+                            }
+                        };
+                    };
+                    val = generator.eval(childDataSupplier);
 
                 } else {
-                    val = generator.eval();
+                    val = generator.eval(null);
                 }
-            } else if (generator != null) {
-                val = generator.eval();
             }
 
             return val;

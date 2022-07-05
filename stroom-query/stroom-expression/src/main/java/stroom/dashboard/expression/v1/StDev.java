@@ -22,6 +22,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -90,7 +91,6 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
 
     private static final class AggregateGen extends AbstractSingleChildGenerator {
 
-        private static final long serialVersionUID = -6770724151493320673L;
 
         private final List<Double> list = new ArrayList<>();
 
@@ -101,14 +101,14 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
         @Override
         public void set(final Val[] values) {
             childGenerator.set(values);
-            final Double d = childGenerator.eval().toDouble();
+            final Double d = childGenerator.eval(null).toDouble();
             if (d != null) {
                 list.add(d);
             }
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             if (list.size() == 0) {
                 return ValNull.INSTANCE;
             }
@@ -152,7 +152,6 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
 
     private static final class Gen extends AbstractManyChildGenerator {
 
-        private static final long serialVersionUID = -6770724151493320673L;
 
         Gen(final Generator[] generators) {
             super(generators);
@@ -166,10 +165,10 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             final List<Double> list = new ArrayList<>(childGenerators.length);
             for (final Generator gen : childGenerators) {
-                final Val val = gen.eval();
+                final Val val = gen.eval(childDataSupplier);
                 if (!val.type().isValue()) {
                     return val;
                 }
