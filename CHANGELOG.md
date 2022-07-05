@@ -12,6 +12,28 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2938** : Fix StreamId error when querying annotations data source.
+
+* Issue **#2944** : Truncate error messages for processor_filter_tracker status to fit DB.
+
+* Issue **#2935** : Remove query UUID in query download.
+
+* Issue **#2945** : Fix deadlock updating processor task by updating individually.
+
+* Issue **#2946** : Add property `statisticFlushBatchSize`.
+
+* Issue **#2946** : Change SQL Statistics flush to use single large prepared statements for more efficient inserts to SQL_STAT_VAL_SRC.
+
+* Issue **#2954** : Stop logging SQL exceptions as errors in JooqUtil.
+
+* Issue **#2948** : Processing tasks will complete normally when data deleted.
+
+* Issue **#2946** : Add statistics properties `inMemAggregatorPoolSize`, `inMemPooledAggregatorSizeThreshold`, `inMemPooledAggregatorAgeThreshold` and `inMemFinalAggregatorSizeThreshold`.
+
+* Issue **#2931** : Set cluster state update frequency to 1m.
+
+* Issue **#2933** : Change structure of config object for http-call function to allow setting various HTTP client configuration properties, including HTTP protocol version.
+
 * Issue **#2902** : Release queued tasks if no longer master and from dead nodes.
 
 * Issue **#2925** : Remove order by from Attribute Value Data Retention job to try to speed it up. Also improve logging for the job.

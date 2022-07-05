@@ -1,6 +1,11 @@
 package stroom.util.sysinfo;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,15 +44,21 @@ public interface HasSystemInfo {
         return Collections.emptyList();
     }
 
+    @JsonPropertyOrder(alphabetic = true)
+    @JsonInclude(Include.NON_NULL)
     class ParamInfo {
 
+        @JsonProperty
         private final String name;
+        @JsonProperty
         private final String description;
+        @JsonProperty
         private final ParamType paramType;
 
-        public ParamInfo(final String name,
-                         final String description,
-                         final ParamType paramType) {
+        @JsonCreator
+        public ParamInfo(@JsonProperty("name") final String name,
+                         @JsonProperty("description") final String description,
+                         @JsonProperty("paramType") final ParamType paramType) {
             this.name = Objects.requireNonNull(name);
             this.description = Objects.requireNonNull(description);
             this.paramType = Objects.requireNonNull(paramType);

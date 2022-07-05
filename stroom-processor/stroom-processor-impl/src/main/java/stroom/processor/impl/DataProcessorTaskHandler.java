@@ -19,7 +19,9 @@ package stroom.processor.impl;
 
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.api.ProcessorResult;
@@ -42,6 +44,7 @@ import java.util.Collections;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.ws.rs.ProcessingException;
 
 public class DataProcessorTaskHandler {
 
@@ -52,6 +55,7 @@ public class DataProcessorTaskHandler {
     private final ProcessorFilterCache processorFilterCache;
     private final ProcessorTaskDao processorTaskDao;
     private final Store streamStore;
+    private final MetaService metaService;
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
@@ -62,6 +66,7 @@ public class DataProcessorTaskHandler {
                              final ProcessorFilterCache processorFilterCache,
                              final ProcessorTaskDao processorTaskDao,
                              final Store streamStore,
+                             final MetaService metaService,
                              final NodeInfo nodeInfo,
                              final SecurityContext securityContext,
                              final TaskContextFactory taskContextFactory) {
@@ -70,6 +75,7 @@ public class DataProcessorTaskHandler {
         this.processorFilterCache = processorFilterCache;
         this.processorTaskDao = processorTaskDao;
         this.streamStore = streamStore;
+        this.metaService = metaService;
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
@@ -100,66 +106,79 @@ public class DataProcessorTaskHandler {
 
         // Open the stream source.
         try (Source source = streamStore.openSource(processorTask.getMetaId())) {
-            if (source != null) {
-                final Meta meta = source.getMeta();
+            if (source == null) {
+                throw new ProcessingException("Source not found for " + processorTask.getMetaId());
+            }
 
-                Processor destStreamProcessor = null;
-                ProcessorFilter destProcessorFilter = null;
-                if (processorTask.getProcessorFilter() != null) {
-                    destProcessorFilter = processorFilterCache.get(processorTask.getProcessorFilter().getId()).orElse(
-                            null);
-                    if (destProcessorFilter != null) {
-                        destStreamProcessor = processorCache
-                                .get(destProcessorFilter.getProcessor().getId()).orElse(null);
-                    }
+            final Meta meta = source.getMeta();
+
+            Processor destStreamProcessor = null;
+            ProcessorFilter destProcessorFilter = null;
+            if (processorTask.getProcessorFilter() != null) {
+                destProcessorFilter = processorFilterCache.get(processorTask.getProcessorFilter().getId()).orElse(
+                        null);
+                if (destProcessorFilter != null) {
+                    destStreamProcessor = processorCache
+                            .get(destProcessorFilter.getProcessor().getId()).orElse(null);
                 }
-                if (destProcessorFilter == null || destStreamProcessor == null) {
-                    throw new RuntimeException("No dest processor has been loaded.");
+            }
+            if (destProcessorFilter == null || destStreamProcessor == null) {
+                throw new ProcessingException("No dest processor has been loaded.");
+            }
+
+            log(taskContext, meta, destStreamProcessor);
+
+            // Don't process any streams that we have already created
+            if (meta.getProcessorUuid() != null && meta.getProcessorUuid().equals(destStreamProcessor.getUuid())) {
+                complete = true;
+                // Have to do the if as processorTask is not final so can't use a lambda
+                if (LOGGER.isWarnEnabled()) {
+                    LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}",
+                            meta, destStreamProcessor);
                 }
 
-                log(taskContext, meta, destStreamProcessor);
+            } else {
+                // Change the task status.... and save
+                processorTask = processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(),
+                        TaskStatus.PROCESSING, startTime, null);
+                if (processorTask != null) {
+                    // Avoid having to do another fetch
+                    processorTask.setProcessorFilter(destProcessorFilter);
 
-                // Don't process any streams that we have already created
-                if (meta.getProcessorUuid() != null && meta.getProcessorUuid().equals(destStreamProcessor.getUuid())) {
-                    complete = true;
-                    // Have to do the if as processorTask is not final so can't use a lambda
-                    if (LOGGER.isWarnEnabled()) {
-                        LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}",
-                                meta, destStreamProcessor);
-                    }
+                    final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(
+                            new TaskType(destStreamProcessor.getTaskType()));
+                    final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
 
-                } else {
-                    // Change the task status.... and save
-                    processorTask = processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(),
-                            TaskStatus.PROCESSING, startTime, null);
-                    if (processorTask != null) {
-                        // Avoid having to do another fetch
-                        processorTask.setProcessorFilter(destProcessorFilter);
-
-                        final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(
-                                new TaskType(destStreamProcessor.getTaskType()));
-                        final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
-
-                        try {
-                            processorResult = dataProcessorTaskExecutor
-                                    .exec(taskContext, destStreamProcessor, destProcessorFilter, processorTask, source);
-                            // Only record completion for this task if it was not
-                            // terminated.
-                            if (!taskContext.isTerminated()) {
-                                complete = true;
-                            }
-
-                        } catch (final RuntimeException e) {
-                            LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
+                    try {
+                        processorResult = dataProcessorTaskExecutor
+                                .exec(taskContext, destStreamProcessor, destProcessorFilter, processorTask, source);
+                        // Only record completion for this task if it was not
+                        // terminated.
+                        if (!taskContext.isTerminated()) {
+                            complete = true;
                         }
-                    } else {
-                        LOGGER.debug("Null processorTask. " +
-                                "Task may have been logically/physically deleted so nothing to do");
+
+                    } catch (final RuntimeException e) {
+                        throw new ProcessingException("Task failed " + destStreamProcessor + " " + meta, e);
                     }
+                } else {
+                    LOGGER.debug("Null processorTask. " +
+                            "Task may have been logically/physically deleted so nothing to do");
                 }
             }
         } catch (final IOException | RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
+            // Check to see if the meta has been deleted.
+            final Meta meta = securityContext.asProcessingUserResult(() ->
+                    metaService.getMeta(task.getMetaId(), true));
+
+            // If meta has been deleted then allow normal completion.
+            if (meta == null || meta.getStatus().equals(Status.DELETED)) {
+                LOGGER.debug(e::getMessage, e);
+                complete = true;
+
+            } else {
+                LOGGER.error(e::getMessage, e);
+            }
         } finally {
             // Null processorTask implies the task was (logically)? deleted before we completed so no point in
             // changing status

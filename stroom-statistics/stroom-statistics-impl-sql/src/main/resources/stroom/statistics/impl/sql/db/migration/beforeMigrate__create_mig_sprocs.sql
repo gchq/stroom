@@ -249,6 +249,41 @@ BEGIN
     END IF;
 END $$
 
+
+-- --------------------------------------------------
+
+DROP PROCEDURE IF EXISTS statistics_drop_index_v1 $$
+
+-- e.g. statistics_drop_index_v1('MY_TABLE', 'MY_IDX');
+CREATE PROCEDURE statistics_drop_index_v1 (
+    p_table_name varchar(64),
+    p_index_name varchar(64)
+)
+BEGIN
+    DECLARE object_count integer;
+
+    SELECT COUNT(1)
+    INTO object_count
+    FROM information_schema.statistics
+    WHERE table_schema = database()
+    AND table_name = p_table_name
+    AND index_name = p_index_name;
+
+    IF object_count = 0 THEN
+        SELECT CONCAT(
+            'Index ',
+            p_index_name,
+            ' does not exist on table ',
+            database(),
+            '.',
+            p_table_name);
+    ELSE
+        CALL statistics_run_sql_v1(CONCAT(
+            'alter table ', database(), '.', p_table_name,
+            ' drop index ', p_index_name));
+    END IF;
+END $$
+
 DELIMITER ;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

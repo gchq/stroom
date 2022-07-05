@@ -566,7 +566,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                             final ProcessorTask task = taskMap.get(oldMeta.getProcessorTaskId());
                             if (task == null ||
                                     TaskStatus.COMPLETE.equals(task.getStatus()) ||
-                                    TaskStatus.FAILED.equals(task.getStatus()) ||
                                     TaskStatus.DELETED.equals(task.getStatus())) {
                                 // If the task associated with the other output is complete in some way then delete the
                                 // output.

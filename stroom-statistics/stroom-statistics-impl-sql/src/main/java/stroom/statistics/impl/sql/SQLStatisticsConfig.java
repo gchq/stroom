@@ -6,6 +6,8 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.statistics.impl.sql.search.SearchConfig;
 import stroom.util.cache.CacheConfig;
+import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -17,12 +19,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import javax.annotation.Nullable;
+import javax.validation.constraints.Min;
+
 @JsonPropertyOrder(alphabetic = true)
 public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     private final SQLStatisticsDbConfig dbConfig;
     private final String docRefType;
     private final SearchConfig searchConfig;
+    private final int inMemAggregatorPoolSize;
+    private final int inMemPooledAggregatorSizeThreshold;
+    private final int inMemFinalAggregatorSizeThreshold;
+    private final StroomDuration inMemPooledAggregatorAgeThreshold;
+    private final int statisticFlushBatchSize;
     private final int statisticAggregationBatchSize;
     // TODO 29/11/2021 AT: Make final
     private StroomDuration maxProcessingAge;
@@ -33,7 +43,12 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
         dbConfig = new SQLStatisticsDbConfig();
         docRefType = "StatisticStore";
         searchConfig = new SearchConfig();
-        statisticAggregationBatchSize = 1000000;
+        inMemAggregatorPoolSize = 10;
+        inMemPooledAggregatorSizeThreshold = 1_000_000;
+        inMemPooledAggregatorAgeThreshold = StroomDuration.ofMinutes(5);
+        inMemFinalAggregatorSizeThreshold = 1_000_000;
+        statisticFlushBatchSize = 8_000;
+        statisticAggregationBatchSize = 1_000_000;
         maxProcessingAge = null;
         dataSourceCache = CacheConfig.builder()
                 .maximumSize(100L)
@@ -48,6 +63,11 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
             @JsonProperty("db") final SQLStatisticsDbConfig dbConfig,
             @JsonProperty("docRefType") final String docRefType,
             @JsonProperty("search") final SearchConfig searchConfig,
+            @JsonProperty("inMemAggregatorPoolSize") final int inMemAggregatorPoolSize,
+            @JsonProperty("inMemPooledAggregatorSizeThreshold") final int inMemPooledAggregatorSizeThreshold,
+            @JsonProperty("inMemPooledAggregatorAgeThreshold") final StroomDuration inMemPooledAggregatorAgeThreshold,
+            @JsonProperty("inMemFinalAggregatorSizeThreshold") final int inMemFinalAggregatorSizeThreshold,
+            @JsonProperty("statisticFlushBatchSize") final int statisticFlushBatchSize,
             @JsonProperty("statisticAggregationBatchSize") final int statisticAggregationBatchSize,
             @JsonProperty("maxProcessingAge") final StroomDuration maxProcessingAge,
             @JsonProperty("dataSourceCache") final CacheConfig dataSourceCache,
@@ -56,6 +76,11 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
         this.dbConfig = dbConfig;
         this.docRefType = docRefType;
         this.searchConfig = searchConfig;
+        this.inMemAggregatorPoolSize = inMemAggregatorPoolSize;
+        this.inMemPooledAggregatorSizeThreshold = inMemPooledAggregatorSizeThreshold;
+        this.inMemPooledAggregatorAgeThreshold = inMemPooledAggregatorAgeThreshold;
+        this.inMemFinalAggregatorSizeThreshold = inMemFinalAggregatorSizeThreshold;
+        this.statisticFlushBatchSize = statisticFlushBatchSize;
         this.statisticAggregationBatchSize = statisticAggregationBatchSize;
         this.maxProcessingAge = maxProcessingAge;
         this.dataSourceCache = dataSourceCache;
@@ -78,6 +103,48 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
         return searchConfig;
     }
 
+    @RequiresRestart(RestartScope.SYSTEM)
+    @Min(1)
+    @JsonPropertyDescription("Number of pooled in-memory aggregators in the pool." +
+            "This pool of aggregators is the first stage of in-memory statistic aggregation.")
+    public int getInMemAggregatorPoolSize() {
+        return inMemAggregatorPoolSize;
+    }
+
+    @Min(1)
+    @JsonPropertyDescription("Maximum size (number of entries) of each aggregator in the pool of in-memory " +
+            "aggregator maps. " +
+            "Once an aggregator has reached this size it will be merged into the final stage of in-memory " +
+            "aggregation." +
+            "This pool of aggregators is the first stage of in-memory statistic aggregation.")
+    public int getInMemPooledAggregatorSizeThreshold() {
+        return inMemPooledAggregatorSizeThreshold;
+    }
+
+    @JsonPropertyDescription("Maximum age of each aggregator in the pool of in-memory aggregator maps. " +
+            "Once an aggregator has reached this age it will be merged into the final stage of in-memory aggregation." +
+            "This pool of aggregators is the first stage of in-memory statistic aggregation.")
+    public StroomDuration getInMemPooledAggregatorAgeThreshold() {
+        return inMemPooledAggregatorAgeThreshold;
+    }
+
+    @Min(1)
+    @JsonPropertyDescription("Maximum size (number of entries) of the final in-memory aggregator map." +
+            "Once an aggregator has reached this size it will be flushed to the database." +
+            "This aggregator is the final stage of in-memory statistic aggregation.")
+    public int getInMemFinalAggregatorSizeThreshold() {
+        return inMemFinalAggregatorSizeThreshold;
+    }
+
+    @Min(1)
+    @JsonPropertyDescription("Number of statistic events to write to SQL_STAT_VAL_SRC in one batch. " +
+            "Sweet spot seems to be around 8-10k. Too high a number and there is a risk of the SQL statement " +
+            "being too large for MySQL.")
+    public int getStatisticFlushBatchSize() {
+        return statisticFlushBatchSize;
+    }
+
+    @Min(1)
     @JsonPropertyDescription("Number of SQL_STAT_VAL_SRC records to merge into SQL_STAT_VAL in one batch")
     public int getStatisticAggregationBatchSize() {
         return statisticAggregationBatchSize;
@@ -112,9 +179,85 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
                 dbConfig,
                 docRefType,
                 searchConfig,
+                inMemAggregatorPoolSize,
+                inMemPooledAggregatorSizeThreshold,
+                inMemPooledAggregatorAgeThreshold,
+                inMemFinalAggregatorSizeThreshold,
+                statisticFlushBatchSize,
                 statisticAggregationBatchSize,
                 maxProcessingAge,
-                dataSourceCache, slowQueryWarningThreshold);
+                dataSourceCache,
+                slowQueryWarningThreshold);
+    }
+
+    public SQLStatisticsConfig withInMemAggregatorPoolSize(final int inMemAggregatorPoolSize) {
+        return new SQLStatisticsConfig(
+                dbConfig,
+                docRefType,
+                searchConfig,
+                inMemAggregatorPoolSize,
+                inMemPooledAggregatorSizeThreshold,
+                inMemPooledAggregatorAgeThreshold,
+                inMemFinalAggregatorSizeThreshold,
+                statisticFlushBatchSize,
+                statisticAggregationBatchSize,
+                maxProcessingAge,
+                dataSourceCache,
+                slowQueryWarningThreshold);
+    }
+
+    public SQLStatisticsConfig withInMemPooledAggregatorSizeThreshold(
+            final int inMemPooledAggregatorSizeThreshold) {
+
+        return new SQLStatisticsConfig(
+                dbConfig,
+                docRefType,
+                searchConfig,
+                inMemAggregatorPoolSize,
+                inMemPooledAggregatorSizeThreshold,
+                inMemPooledAggregatorAgeThreshold,
+                inMemFinalAggregatorSizeThreshold,
+                statisticFlushBatchSize,
+                statisticAggregationBatchSize,
+                maxProcessingAge,
+                dataSourceCache,
+                slowQueryWarningThreshold);
+    }
+
+    public SQLStatisticsConfig withInMemPooledAggregatorAgeThreshold(
+            final StroomDuration inMemPooledAggregatorAgeThreshold) {
+
+        return new SQLStatisticsConfig(
+                dbConfig,
+                docRefType,
+                searchConfig,
+                inMemAggregatorPoolSize,
+                inMemPooledAggregatorSizeThreshold,
+                inMemPooledAggregatorAgeThreshold,
+                inMemFinalAggregatorSizeThreshold,
+                statisticFlushBatchSize,
+                statisticAggregationBatchSize,
+                maxProcessingAge,
+                dataSourceCache,
+                slowQueryWarningThreshold);
+    }
+
+    public SQLStatisticsConfig withInMemFinalAggregatorSizeThreshold(
+            final int inMemFinalAggregatorSizeThreshold) {
+
+        return new SQLStatisticsConfig(
+                dbConfig,
+                docRefType,
+                searchConfig,
+                inMemAggregatorPoolSize,
+                inMemPooledAggregatorSizeThreshold,
+                inMemPooledAggregatorAgeThreshold,
+                inMemFinalAggregatorSizeThreshold,
+                statisticFlushBatchSize,
+                statisticAggregationBatchSize,
+                maxProcessingAge,
+                dataSourceCache,
+                slowQueryWarningThreshold);
     }
 
     @Override
@@ -123,8 +266,15 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
                 "dbConfig=" + dbConfig +
                 ", docRefType='" + docRefType + '\'' +
                 ", searchConfig=" + searchConfig +
+                ", inMemAggregatorPoolSize=" + inMemAggregatorPoolSize +
+                ", inMemPooledAggregatorSizeThreshold=" + inMemPooledAggregatorSizeThreshold +
+                ", inMemFinalAggregatorSizeThreshold=" + inMemFinalAggregatorSizeThreshold +
+                ", inMemPooledAggregatorAgeThreshold=" + inMemPooledAggregatorAgeThreshold +
+                ", statisticFlushBatchSize=" + statisticFlushBatchSize +
                 ", statisticAggregationBatchSize=" + statisticAggregationBatchSize +
-                ", maxProcessingAge='" + maxProcessingAge + '\'' +
+                ", maxProcessingAge=" + maxProcessingAge +
+                ", dataSourceCache=" + dataSourceCache +
+                ", slowQueryWarningThreshold=" + slowQueryWarningThreshold +
                 '}';
     }
 

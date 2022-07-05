@@ -164,6 +164,7 @@ public class DbTestUtil {
                         .scheme(dbUrl.getScheme())
                         .host(effectiveHost)
                         .port(effectivePort)
+                        .query(dbUrl.getQuery())
                         .build()
                         .toString();
 
@@ -452,9 +453,17 @@ public class DbTestUtil {
         clearTables(connection, tables);
     }
 
-    private static void clearTables(final Connection connection, final List<String> tableNames) {
+    public static void clearTables(final Connection connection, final List<String> tableNames) {
         List<String> deleteStatements = tableNames.stream()
                 .map(tableName -> "DELETE FROM " + tableName)
+                .collect(Collectors.toList());
+
+        executeStatementsWithNoConstraints(connection, deleteStatements);
+    }
+
+    public static void truncateTables(final Connection connection, final List<String> tableNames) {
+        List<String> deleteStatements = tableNames.stream()
+                .map(tableName -> "TRUNCATE TABLE " + tableName)
                 .collect(Collectors.toList());
 
         executeStatementsWithNoConstraints(connection, deleteStatements);
