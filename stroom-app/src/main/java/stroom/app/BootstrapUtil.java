@@ -127,6 +127,12 @@ public class BootstrapUtil {
                                     .sorted()
                                     .collect(Collectors.joining("\n"))));
 
+                    LOGGER.info("""
+
+                            -----------------------------------------------------------
+                              Completed database migrations
+                            -----------------------------------------------------------""");
+
                     return injector;
                 });
     }

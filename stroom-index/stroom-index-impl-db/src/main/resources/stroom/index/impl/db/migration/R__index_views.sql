@@ -18,7 +18,7 @@ select
         when 0 then 'Active'
         when 1 then 'Inactive'
         when 3 then 'Closed'
-        else concat('UNKNOWN STATE (', iv.state, ')')
+        else concat('ERROR: UNKNOWN STATE (', iv.state, ')')
         end index_volume_state,
     iv.bytes_limit,
     iv.bytes_used,
@@ -52,7 +52,7 @@ select
         when 30 then 'New'
         when 99 then 'Deleted'
         when 100 then 'Corrupt'
-        else concat('UNKNOWN STATE (', s.status, ')')
+        else concat('ERROR: UNKNOWN STATE (', s.status, ')')
         end index_shard_status,
     s.index_version,
     s.partition_name,
