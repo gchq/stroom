@@ -13,9 +13,9 @@ select
     v.content_extension,
     json_extract(v.meta_data, '$.type') doc_type,
     json_extract(v.meta_data, '$.version') version,
-    from_unixtime(json_extract(v.meta_data, '$.createTimeMs') / 1000) createTime,
+    from_unixtime(json_extract(v.meta_data, '$.createTime') / 1000) createTime,
     json_extract(v.meta_data, '$.createUser') createUser,
-    from_unixtime(json_extract(v.meta_data, '$.updateTimeMs') / 1000) updateTime,
+    from_unixtime(json_extract(v.meta_data, '$.updateTime') / 1000) updateTime,
     json_extract(v.meta_data, '$.updateUser') updateUser,
     json_remove(
         v.meta_data,
@@ -23,8 +23,8 @@ select
         '$.name',
         '$.type',
         '$.version',
-        '$.createTimeMs',
-        '$.createUserMs',
+        '$.createTime',
+        '$.createUser',
         '$.updateTime',
         '$.updateUser') bespoke_meta_data,
     v.content_data
