@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTimeMs", "updateTimeMs", "createUser", "updateUser"})
 @JsonInclude(Include.NON_NULL)
 public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
 

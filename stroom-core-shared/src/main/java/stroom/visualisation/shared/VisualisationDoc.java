@@ -32,8 +32,8 @@ import java.util.Objects;
         "uuid",
         "name",
         "version",
-        "createTime",
-        "updateTime",
+        "createTimeMs",
+        "updateTimeMs",
         "createUser",
         "updateUser",
         "description",
@@ -62,15 +62,15 @@ public class VisualisationDoc extends Doc {
                             @JsonProperty("uuid") final String uuid,
                             @JsonProperty("name") final String name,
                             @JsonProperty("version") final String version,
-                            @JsonProperty("createTime") final Long createTime,
-                            @JsonProperty("updateTime") final Long updateTime,
+                            @JsonProperty("createTimeMs") final Long createTimeMs,
+                            @JsonProperty("updateTimeMs") final Long updateTimeMs,
                             @JsonProperty("createUser") final String createUser,
                             @JsonProperty("updateUser") final String updateUser,
                             @JsonProperty("description") final String description,
                             @JsonProperty("functionName") final String functionName,
                             @JsonProperty("scriptRef") final DocRef scriptRef,
                             @JsonProperty("settings") final String settings) {
-        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.functionName = functionName;
         this.scriptRef = scriptRef;
