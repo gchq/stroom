@@ -34,7 +34,16 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "rules"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTimeMs",
+        "updateTimeMs",
+        "createUser",
+        "updateUser",
+        "rules"})
 @JsonInclude(Include.NON_NULL)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataRetentionPolicy", propOrder = {"rules"})
