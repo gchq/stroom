@@ -206,7 +206,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             // Lock the cluster so that only this node is able to release owned tasks at this time.
             final String nodeName = nodeInfo.getThisNodeName();
             LOGGER.info(() -> "Locking cluster to release owned tasks for node " + nodeName);
-            clusterLockService.lock(LOCK_NAME, () -> processorTaskDao.releaseOwnedTasks(nodeName));
+            processorTaskDao.releaseOwnedTasks(nodeName);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         } finally {
