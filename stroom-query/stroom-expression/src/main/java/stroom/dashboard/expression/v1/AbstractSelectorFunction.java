@@ -16,10 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
 
-abstract class AbstractSelectorFunction extends AbstractFunction implements Serializable {
+abstract class AbstractSelectorFunction extends AbstractFunction {
+
     private Function function;
 
     public AbstractSelectorFunction(final String name, final int minParams, final int maxParams) {
@@ -55,7 +55,7 @@ abstract class AbstractSelectorFunction extends AbstractFunction implements Seri
     }
 
     @Override
-    public boolean isChildSelector() {
+    public boolean requiresChildData() {
         return true;
     }
 }

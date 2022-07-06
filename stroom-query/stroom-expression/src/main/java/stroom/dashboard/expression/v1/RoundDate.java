@@ -59,7 +59,6 @@ abstract class RoundDate extends AbstractFunction {
 
     public abstract static class RoundDateCalculator implements RoundCalculator {
 
-        private static final long serialVersionUID = 1099553839843710283L;
 
         @Override
         public Val calc(final Val value) {

@@ -68,7 +68,7 @@ public class Expression implements Function {
     }
 
     @Override
-    public boolean isChildSelector() {
-        return function.isChildSelector();
+    public boolean requiresChildData() {
+        return function.requiresChildData();
     }
 }

@@ -464,7 +464,7 @@ class TestSearchResultCreation {
         dataStore.getData(data -> {
             final Items dataItems = data.get();
             final Item dataItem = dataItems.iterator().next();
-            final Val val = dataItem.getValue(2);
+            final Val val = dataItem.getValue(2, true);
             assertThat(val.toLong())
                     .isEqualTo(count);
         });

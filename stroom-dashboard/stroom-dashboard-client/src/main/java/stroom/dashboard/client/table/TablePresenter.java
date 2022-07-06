@@ -26,6 +26,7 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DataSourceFieldsMap;
+import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
@@ -299,27 +300,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     .addSelectionChangeHandler(selectionHandler);
 
             final List<Field> addFields = new ArrayList<>();
-            if (currentSearchModel.getIndexLoader().getIndexFieldNames() != null) {
-                for (final String indexFieldName : currentSearchModel.getIndexLoader().getIndexFieldNames()) {
+            final IndexLoader indexLoader = currentSearchModel.getIndexLoader();
+            if (indexLoader.getIndexFieldNames() != null) {
+                final DataSourceFieldsMap indexFieldsMap = indexLoader.getDataSourceFieldsMap();
+                for (final String indexFieldName : indexLoader.getIndexFieldNames()) {
                     final Builder fieldBuilder = Field.builder();
                     fieldBuilder.name(indexFieldName);
-                    final String fieldParam = ParamUtil.makeParam(indexFieldName);
 
-                    if (indexFieldName.startsWith("annotation:")) {
-                        final AbstractField dataSourceField = currentSearchModel.getIndexLoader()
-                                .getDataSourceFieldsMap().get(indexFieldName);
-                        if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
-                            fieldBuilder.expression("annotation(formatDate(" + fieldParam + "), ${annotation:Id})");
-                        } else {
-                            fieldBuilder.expression("annotation(" +
-                                    fieldParam +
-                                    ", ${annotation:Id}, ${StreamId}, ${EventId})");
-                        }
+                    final String expression;
+                    if (indexFieldName.startsWith("annotation:") && indexFieldsMap != null) {
+                        // Turn 'annotation:.*' fields into annotation links that make use of either the special
+                        // eventId/streamId fields (so event results can link back to annotations) OR
+                        // the annotation:Id field so Annotations datasource results can link back.
+                        expression = buildAnnotationFieldExpression(indexFieldsMap, indexFieldName);
                     } else {
-                        fieldBuilder.expression(fieldParam);
+                        expression = ParamUtil.makeParam(indexFieldName);
                     }
+                    fieldBuilder.expression(expression);
 
-                    final DataSourceFieldsMap indexFieldsMap = getIndexFieldsMap();
                     if (indexFieldsMap != null) {
                         final AbstractField indexField = indexFieldsMap.get(indexFieldName);
                         if (indexField != null) {
@@ -391,6 +389,33 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     popupPosition,
                     popupUiHandlers,
                     target);
+        }
+    }
+
+    private String buildAnnotationFieldExpression(final DataSourceFieldsMap indexFieldsMap,
+                                                  final String indexFieldName) {
+        final AbstractField dataSourceField = indexFieldsMap.get(indexFieldName);
+        String fieldParam = ParamUtil.makeParam(indexFieldName);
+        if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
+            fieldParam = "formatDate(" + fieldParam + ")";
+        }
+        final Set<String> allFieldNames = indexFieldsMap.keySet();
+
+        final List<String> params = new ArrayList<>();
+        params.add(fieldParam);
+        addFieldIfPresent(params, allFieldNames, "annotation:Id");
+        addFieldIfPresent(params, allFieldNames, "StreamId");
+        addFieldIfPresent(params, allFieldNames, "EventId");
+
+        final String argsStr = String.join(", ", params);
+        return "annotation(" + argsStr + ")";
+    }
+
+    private void addFieldIfPresent(final List<String> params,
+                                   final Set<String> allFields,
+                                   final String fieldName) {
+        if (allFields.contains(fieldName)) {
+            params.add(ParamUtil.makeParam(fieldName));
         }
     }
 

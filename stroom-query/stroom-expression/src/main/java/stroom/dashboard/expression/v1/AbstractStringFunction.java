@@ -16,11 +16,11 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
+import java.util.function.Supplier;
 
-abstract class AbstractStringFunction extends AbstractFunction implements Serializable {
-    private static final long serialVersionUID = -305845496003936297L;
+abstract class AbstractStringFunction extends AbstractFunction {
+
     private Generator gen;
     private Function function;
     private boolean hasAggregate;
@@ -58,8 +58,14 @@ abstract class AbstractStringFunction extends AbstractFunction implements Serial
         return hasAggregate;
     }
 
+    abstract Operation getOperation();
+
+    interface Operation {
+
+        String apply(String value);
+    }
+
     private static final class Gen extends AbstractSingleChildGenerator {
-        private static final long serialVersionUID = 8153777070911899616L;
 
         private final Operation operation;
 
@@ -74,19 +80,13 @@ abstract class AbstractStringFunction extends AbstractFunction implements Serial
         }
 
         @Override
-        public Val eval() {
-            final Val val = childGenerator.eval();
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerator.eval(childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }
 
             return ValString.create(operation.apply(val.toString()));
         }
-    }
-
-    abstract Operation getOperation();
-
-    interface Operation extends Serializable {
-        String apply(String value);
     }
 }

@@ -22,6 +22,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -125,7 +126,6 @@ class Joining extends AbstractFunction {
 
     private static class Gen extends AbstractSingleChildGenerator {
 
-        private static final long serialVersionUID = 8153777070911899616L;
 
         private final String delimiter;
         private final int limit;
@@ -142,7 +142,7 @@ class Joining extends AbstractFunction {
             childGenerator.set(values);
 
             if (list.size() < limit) {
-                final Val val = childGenerator.eval();
+                final Val val = childGenerator.eval(null);
                 final String value = val.toString();
                 if (value != null) {
                     list.add(value);
@@ -151,7 +151,7 @@ class Joining extends AbstractFunction {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             return ValString.create(String.join(delimiter, list));
         }
 

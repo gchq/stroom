@@ -12,6 +12,27 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.215] - 2022-07-04
+
+* Issue **#2938** : Fix StreamId error when querying annotations data source.
+
+* Issue **#2944** : Truncate error messages for processor_filter_tracker status to fit DB.
+
+* Issue **#2935** : Remove query UUID in query download.
+
+* Issue **#2945** : Fix deadlock updating processor task by updating individually.
+
+* Issue **#2946** : Add property `statisticFlushBatchSize`.
+
+* Issue **#2946** : Change SQL Statistics flush to use single large prepared statements for more efficient inserts to SQL_STAT_VAL_SRC.
+
+* Issue **#2954** : Stop logging SQL exceptions as errors in JooqUtil.
+
+* Issue **#2948** : Processing tasks will complete normally when data deleted.
+
+* Issue **#2946** : Add statistics properties `inMemAggregatorPoolSize`, `inMemPooledAggregatorSizeThreshold`, `inMemPooledAggregatorAgeThreshold` and `inMemFinalAggregatorSizeThreshold`.
+
+
 ## [v7.0-beta.214] - 2022-06-29
 
 * Issue **#2931** : Set cluster state update frequency to 1m.
@@ -4462,7 +4483,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.214...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.215...HEAD
+[v7.0-beta.215]: https://github.com/gchq/stroom/compare/v7.0-beta.214...v7.0-beta.215
 [v7.0-beta.214]: https://github.com/gchq/stroom/compare/v7.0-beta.213...v7.0-beta.214
 [v7.0-beta.213]: https://github.com/gchq/stroom/compare/v7.0-beta.212...v7.0-beta.213
 [v7.0-beta.212]: https://github.com/gchq/stroom/compare/v7.0-beta.211...v7.0-beta.212

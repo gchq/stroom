@@ -18,34 +18,28 @@ package stroom.dashboard.expression.v1;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionParserSelections extends AbstractExpressionParserTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionParserSelections.class);
-
     @Test
     void testAny() {
         createGenerator("any(${val1})", gen -> {
             gen.set(getVals(300));
-            Val out = gen.eval();
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("any(${val1})", child -> {
-                    child.set(getVals(300));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toDouble()).isEqualTo(300, Offset.offset(0D));
+            final List<Val> childValues = IntStream
+                    .rangeClosed(1, 10)
+                    .mapToObj(ValLong::create)
+                    .collect(Collectors.toList());
+            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
+            // Check that any just returns the cell value ignoring children.
+            assertThat(gen.eval(childDataSupplier).toDouble()).isEqualTo(300, Offset.offset(0D));
         });
     }
 
@@ -53,21 +47,15 @@ class TestExpressionParserSelections extends AbstractExpressionParserTest {
     void testFirst() {
         createGenerator("first(${val1})", gen -> {
             gen.set(getVals(300));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("first(${val1})", child -> {
-                    child.set(getVals(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toDouble()).isEqualTo(1, Offset.offset(0D));
+            final List<Val> childValues = IntStream
+                    .rangeClosed(1, 10)
+                    .mapToObj(ValLong::create)
+                    .collect(Collectors.toList());
+            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
+            assertThat(gen.eval(childDataSupplier).toDouble()).isEqualTo(1, Offset.offset(0D));
         });
     }
 
@@ -75,21 +63,15 @@ class TestExpressionParserSelections extends AbstractExpressionParserTest {
     void testLast() {
         createGenerator("last(${val1})", gen -> {
             gen.set(getVals(300));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("last(${val1})", child -> {
-                    child.set(getVals(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toDouble()).isEqualTo(10, Offset.offset(0D));
+            final List<Val> childValues = IntStream
+                    .rangeClosed(1, 10)
+                    .mapToObj(ValLong::create)
+                    .collect(Collectors.toList());
+            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
+            assertThat(gen.eval(childDataSupplier).toDouble()).isEqualTo(10, Offset.offset(0D));
         });
     }
 
@@ -97,21 +79,15 @@ class TestExpressionParserSelections extends AbstractExpressionParserTest {
     void testNth() {
         createGenerator("nth(${val1}, 7)", gen -> {
             gen.set(getVals(300));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("nth(${val1}, 7)", child -> {
-                    child.set(getVals(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toDouble()).isEqualTo(7, Offset.offset(0D));
+            final List<Val> childValues = IntStream
+                    .rangeClosed(1, 10)
+                    .mapToObj(ValLong::create)
+                    .collect(Collectors.toList());
+            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
+            assertThat(gen.eval(childDataSupplier).toDouble()).isEqualTo(7, Offset.offset(0D));
         });
     }
 
@@ -119,21 +95,15 @@ class TestExpressionParserSelections extends AbstractExpressionParserTest {
     void testTop() {
         createGenerator("top(${val1}, ',', 3)", gen -> {
             gen.set(getVals(300));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("top(${val1}, ',', 3)", child -> {
-                    child.set(getVals(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toString()).isEqualTo("1,2,3");
+            final List<Val> childValues = IntStream
+                    .rangeClosed(1, 10)
+                    .mapToObj(ValLong::create)
+                    .collect(Collectors.toList());
+            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
+            assertThat(gen.eval(childDataSupplier).toString()).isEqualTo("1,2,3");
         });
     }
 
@@ -141,21 +111,15 @@ class TestExpressionParserSelections extends AbstractExpressionParserTest {
     void testTopSmall() {
         createGenerator("top(${val1}, ',', 3)", gen -> {
             gen.set(getVals(300));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-            final Generator[] children = new Generator[2];
-            for (int i = 0; i < 2; i++) {
-                final int idx = i;
-                createGenerator("top(${val1}, ',', 3)", child -> {
-                    child.set(getVals(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toString()).isEqualTo("1,2");
+            final List<Val> childValues = IntStream
+                    .rangeClosed(1, 2)
+                    .mapToObj(ValLong::create)
+                    .collect(Collectors.toList());
+            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
+            assertThat(gen.eval(childDataSupplier).toString()).isEqualTo("1,2");
         });
     }
 
@@ -163,21 +127,15 @@ class TestExpressionParserSelections extends AbstractExpressionParserTest {
     void testBottom() {
         createGenerator("bottom(${val1}, ',', 3)", gen -> {
             gen.set(getVals(300));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-            final Generator[] children = new Generator[10];
-            for (int i = 0; i < 10; i++) {
-                final int idx = i;
-                createGenerator("bottom(${val1}, ',', 3)", child -> {
-                    child.set(getVals(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toString()).isEqualTo("8,9,10");
+            final List<Val> childValues = IntStream
+                    .rangeClosed(1, 10)
+                    .mapToObj(ValLong::create)
+                    .collect(Collectors.toList());
+            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
+            assertThat(gen.eval(childDataSupplier).toString()).isEqualTo("8,9,10");
         });
     }
 
@@ -185,21 +143,15 @@ class TestExpressionParserSelections extends AbstractExpressionParserTest {
     void testBottomSmall() {
         createGenerator("bottom(${val1}, ',', 3)", gen -> {
             gen.set(getVals(300));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-            final Generator[] children = new Generator[2];
-            for (int i = 0; i < 2; i++) {
-                final int idx = i;
-                createGenerator("bottom(${val1}, ',', 3)", child -> {
-                    child.set(getVals(idx + 1));
-                    children[idx] = child;
-                });
-            }
-
-            final Selector selector = (Selector) gen;
-            final Val selected = selector.select(createSelection(children));
-            assertThat(selected.toString()).isEqualTo("1,2");
+            final List<Val> childValues = IntStream
+                    .rangeClosed(1, 2)
+                    .mapToObj(ValLong::create)
+                    .collect(Collectors.toList());
+            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
+            assertThat(gen.eval(childDataSupplier).toString()).isEqualTo("1,2");
         });
     }
 }

@@ -21,7 +21,7 @@ import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContextFactory;
-import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.AbstractStatisticsCoreIntegrationTest;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.time.StroomDuration;
 
@@ -42,7 +42,7 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
+class TestSQLStatisticAggregationManager extends AbstractStatisticsCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticAggregationManager.class);
     private static final long STAT_VALUE = 10L;
@@ -678,7 +678,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
+                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext, SQLStatisticsConfig::new);
         taskHandler.exec(sqlStatisticAggregateMap);
     }
 

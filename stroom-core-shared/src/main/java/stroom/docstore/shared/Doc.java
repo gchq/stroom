@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTimeMs", "updateTimeMs", "createUser", "updateUser"})
 @JsonInclude(Include.NON_NULL)
 public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
 
@@ -42,9 +42,9 @@ public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
     @JsonProperty
     private String version;
     @JsonProperty
-    private Long createTime;
+    private Long createTimeMs;
     @JsonProperty
-    private Long updateTime;
+    private Long updateTimeMs;
     @JsonProperty
     private String createUser;
     @JsonProperty
@@ -64,16 +64,16 @@ public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
                @JsonProperty("uuid") final String uuid,
                @JsonProperty("name") final String name,
                @JsonProperty("version") final String version,
-               @JsonProperty("createTime") final Long createTime,
-               @JsonProperty("updateTime") final Long updateTime,
+               @JsonProperty("createTimeMs") final Long createTimeMs,
+               @JsonProperty("updateTimeMs") final Long updateTimeMs,
                @JsonProperty("createUser") final String createUser,
                @JsonProperty("updateUser") final String updateUser) {
         this.type = type;
         this.uuid = uuid;
         this.name = name;
         this.version = version;
-        this.createTime = createTime;
-        this.updateTime = updateTime;
+        this.createTimeMs = createTimeMs;
+        this.updateTimeMs = updateTimeMs;
         this.createUser = createUser;
         this.updateUser = updateUser;
     }
@@ -113,22 +113,22 @@ public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
 
     @Override
     public Long getCreateTimeMs() {
-        return createTime;
+        return createTimeMs;
     }
 
     @Override
     public void setCreateTimeMs(final Long createTime) {
-        this.createTime = createTime;
+        this.createTimeMs = createTime;
     }
 
     @Override
     public Long getUpdateTimeMs() {
-        return updateTime;
+        return updateTimeMs;
     }
 
     @Override
     public void setUpdateTimeMs(final Long updateTime) {
-        this.updateTime = updateTime;
+        this.updateTimeMs = updateTime;
     }
 
     @Override
@@ -164,15 +164,15 @@ public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
                 Objects.equals(uuid, doc.uuid) &&
                 Objects.equals(name, doc.name) &&
                 Objects.equals(version, doc.version) &&
-                Objects.equals(createTime, doc.createTime) &&
-                Objects.equals(updateTime, doc.updateTime) &&
+                Objects.equals(createTimeMs, doc.createTimeMs) &&
+                Objects.equals(updateTimeMs, doc.updateTimeMs) &&
                 Objects.equals(createUser, doc.createUser) &&
                 Objects.equals(updateUser, doc.updateUser);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        return Objects.hash(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
     }
 
     @Override

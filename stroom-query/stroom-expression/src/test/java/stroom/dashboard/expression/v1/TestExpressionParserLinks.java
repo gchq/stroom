@@ -17,14 +17,10 @@
 package stroom.dashboard.expression.v1;
 
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionParserLinks extends AbstractExpressionParserTest {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionParserLinks.class);
 
     @Test
     void testLink1() {
@@ -34,7 +30,7 @@ class TestExpressionParserLinks extends AbstractExpressionParserTest {
 
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             final String str = out.toString();
             assertThat(str).isEqualTo("[Title](http%3A%2F%2Fwww.somehost.com%2Fsomepath)");
 
@@ -55,7 +51,7 @@ class TestExpressionParserLinks extends AbstractExpressionParserTest {
 
             gen.set(getVals("this"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             final String str = out.toString();
             assertThat(str).isEqualTo("[Title](http%3A%2F%2Fwww.somehost.com%2Fsomepath){browser}");
 
@@ -79,7 +75,7 @@ class TestExpressionParserLinks extends AbstractExpressionParserTest {
 
             gen.set(getVals(expectedText, expectedUrl));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             final String str = out.toString();
             assertThat(str).isEqualTo(
                     "[t%7Dhis+%5Bis%5D+a+tit%28le+w%7Bit%7Dh+%28brack%5Bets%29](http%3A%2F%2Fwww.somehost.com%2Fsomepath%3Fk1%3Dv1%26k%5B2%5D%3D%7Bv2%7D){browser}");
@@ -102,7 +98,7 @@ class TestExpressionParserLinks extends AbstractExpressionParserTest {
 
             gen.set(getVals("2014-02-22T12:12:12.000Z"));
 
-            final Val out = gen.eval();
+            final Val out = gen.eval(null);
             final String str = out.toString();
             assertThat(str).isEqualTo(
                     "[blah](%3Fuuid%3Dabcdefg%26params%3Ddt%253D2014-02-23T00%253A00%253A00.000Z%252B1h){dashboard}");
@@ -128,7 +124,7 @@ class TestExpressionParserLinks extends AbstractExpressionParserTest {
 
                     gen.set(getVals(expectedText, expectedUrl));
 
-                    final Val out = gen.eval();
+                    final Val out = gen.eval(null);
                     final String str = out.toString();
                     assertThat(str).isEqualTo(
                             "[blah](%3FannotationId%3D1%26streamId%3D2%26eventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");
@@ -155,7 +151,7 @@ class TestExpressionParserLinks extends AbstractExpressionParserTest {
 
                     gen.set(getVals(expectedText, expectedUrl));
 
-                    final Val out = gen.eval();
+                    final Val out = gen.eval(null);
                     final String str = out.toString();
                     assertThat(str).isEqualTo(
                             "[blah](%3FannotationId%3D1%26StreamId%3D2%26EventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");

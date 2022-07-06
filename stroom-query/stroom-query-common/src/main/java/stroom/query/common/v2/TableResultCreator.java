@@ -221,7 +221,7 @@ public class TableResultCreator implements ResultCreator {
             final List<String> stringValues = new ArrayList<>(fields.length);
             for (int i = 0; i < fields.length; i++) {
                 final Field field = fields[i];
-                final Val val = item.getValue(i);
+                final Val val = item.getValue(i, true);
                 final String string = fieldFormatter.format(field, val);
                 stringValues.add(string);
             }
@@ -256,16 +256,20 @@ public class TableResultCreator implements ResultCreator {
         public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
                                                   final TableSettings tableSettings) {
             // Create conditional formatting expression matcher.
-            List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
-            if (rules != null) {
-                rules = rules
-                        .stream()
-                        .filter(ConditionalFormattingRule::isEnabled)
-                        .collect(Collectors.toList());
-                if (rules.size() > 0) {
-                    final ConditionalFormattingExpressionMatcher expressionMatcher =
-                            new ConditionalFormattingExpressionMatcher(tableSettings.getFields());
-                    return Optional.of(new ConditionalFormattingRowCreator(fieldFormatter, rules, expressionMatcher));
+            if (tableSettings != null) {
+                List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
+                if (rules != null) {
+                    rules = rules
+                            .stream()
+                            .filter(ConditionalFormattingRule::isEnabled)
+                            .collect(Collectors.toList());
+                    if (rules.size() > 0) {
+                        final ConditionalFormattingExpressionMatcher expressionMatcher =
+                                new ConditionalFormattingExpressionMatcher(tableSettings.getFields());
+                        return Optional.of(new ConditionalFormattingRowCreator(fieldFormatter,
+                                rules,
+                                expressionMatcher));
+                    }
                 }
             }
 
@@ -283,7 +287,7 @@ public class TableResultCreator implements ResultCreator {
             final List<String> stringValues = new ArrayList<>(fields.length);
             for (int i = 0; i < fields.length; i++) {
                 final Field field = fields[i];
-                final Val val = item.getValue(i);
+                final Val val = item.getValue(i, true);
                 final String string = fieldFormatter.format(field, val);
                 stringValues.add(string);
                 fieldIdToValueMap.put(field.getName(), string);

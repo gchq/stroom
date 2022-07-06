@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
 
 @FunctionDef(
@@ -39,10 +38,9 @@ import java.text.ParseException;
                                         "Position is one based.",
                                 argType = ValInteger.class)
                 }))
-public class Nth extends AbstractSelectorFunction implements Serializable {
+public class Nth extends AbstractSelectorFunction {
 
     static final String NAME = "nth";
-    private static final long serialVersionUID = -305845496003936297L;
 
     private int pos;
 
@@ -65,9 +63,7 @@ public class Nth extends AbstractSelectorFunction implements Serializable {
         return new NthSelector(super.createGenerator(), pos);
     }
 
-    public static class NthSelector extends Selector {
-
-        private static final long serialVersionUID = 8153777070911899616L;
+    static class NthSelector extends Selector {
 
         private final int pos;
 
@@ -76,15 +72,9 @@ public class Nth extends AbstractSelectorFunction implements Serializable {
             this.pos = pos;
         }
 
-        public Val select(final Selection<Val> selection) {
-            if (selection.size() > pos) {
-                return selection.get(pos);
-            }
-            return ValNull.INSTANCE;
-        }
-
-        public int getPos() {
-            return pos;
+        @Override
+        Val select(final ChildData childData) {
+            return childData.nth(pos);
         }
     }
 }

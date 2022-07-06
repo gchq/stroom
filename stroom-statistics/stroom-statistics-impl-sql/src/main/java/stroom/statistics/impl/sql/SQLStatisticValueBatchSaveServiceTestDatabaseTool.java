@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,13 +65,12 @@ public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseT
 
                     batch.add(statisticValueSource);
                 }
-
-                statisticValueBatchSaveService.saveBatchStatisticValueSource_PreparedStatement(batch);
-                statisticValueBatchSaveService.saveBatchStatisticValueSource_String(batch);
+                statisticValueBatchSaveService.saveBatchStatisticValueSource_SinglePreparedStatement(batch);
             }
             LOGGER.info("run() - took {}", logExecutionTime);
-        } catch (final SQLException e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
+            System.exit(1);
         }
     }
 }
