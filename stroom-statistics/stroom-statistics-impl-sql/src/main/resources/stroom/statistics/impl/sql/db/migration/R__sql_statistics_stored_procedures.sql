@@ -126,15 +126,16 @@ CREATE PROCEDURE `stage2Upsert` (
     IN p_aggregateToMs bigint,
     OUT p_rowCount int)
 BEGIN
+    SET @rounded_aggregate_to = ROUND(p_aggregateToMs, p_targetSqlPrecision);
+
     CREATE TEMPORARY TABLE TEMP_AGG AS (
---    CREATE TABLE TEMP_AGG AS (
         SELECT
             FK_SQL_STAT_KEY_ID,
             TIME_MS,
             SUM(COALESCE(VAL,0)) AS VAL,
             SUM(COALESCE(CT,0)) AS CT
         FROM (
-            SELECT  -- existing values at correct precision
+            SELECT -- existing values at correct precision
                 SSVO.TIME_MS,
                 SSVO.VAL,
                 SSVO.CT,
@@ -142,7 +143,7 @@ BEGIN
             FROM SQL_STAT_VAL SSVO
             WHERE SSVO.PRES = p_targetPrecision  -- target pres
             AND SSVO.VAL_TP = p_valueType
-            AND SSVO.TIME_MS <= ROUND(p_aggregateToMs, p_targetSqlPrecision)  -- only pick up records up to the point we are interested in
+            AND SSVO.TIME_MS <= @rounded_aggregate_to  -- only pick up records up to the point we are interested in
             UNION ALL
             SELECT
                 ROUND(SSVN.TIME_MS, p_targetSqlPrecision),  -- target pres, e.g. -9
@@ -150,9 +151,9 @@ BEGIN
                 SSVN.CT,
                 SSVN.FK_SQL_STAT_KEY_ID
             FROM SQL_STAT_VAL SSVN
-            WHERE SSVN.TIME_MS < p_aggregateToMs
-            AND SSVN.PRES = p_lastPrecision  -- old PRES
+            WHERE SSVN.PRES = p_lastPrecision  -- old PRES
             AND SSVN.VAL_TP = p_valueType
+            AND SSVN.TIME_MS < p_aggregateToMs
         ) ROUNDED
         GROUP BY
             ROUNDED.FK_SQL_STAT_KEY_ID,
@@ -186,3 +187,5 @@ END //
 DELIMITER ;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set tabstop=4 shiftwidth=4 expandtab:

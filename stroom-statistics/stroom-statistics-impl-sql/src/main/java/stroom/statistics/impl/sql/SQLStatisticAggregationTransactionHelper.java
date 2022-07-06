@@ -77,41 +77,35 @@ public class SQLStatisticAggregationTransactionHelper {
 
     private static final String AGGREGATE = "AGGREGATE";
 
-    private static final String AGGREGATE_COUNT = "" +
+    private static final String AGGREGATE_COUNT = condenseSql("" +
             "SELECT COUNT(*) " +
-            "FROM SQL_STAT_VAL_SRC ";
+            "FROM SQL_STAT_VAL_SRC ");
 
-    private static final String DELETE_OLD_STATS = "" +
+    private static final String DELETE_OLD_STATS = condenseSql("" +
             "DELETE FROM SQL_STAT_VAL " +
-            "WHERE TIME_MS < ? ";
+            "WHERE PRES = ? " +
+            "AND VAL_TP = ? " +
+            "AND TIME_MS < ? ");
 
-    private static final String DELETE_UNUSED_KEYS = "" +
+    private static final String DELETE_UNUSED_KEYS = condenseSql("" +
             "DELETE FROM SQL_STAT_KEY " +
             "WHERE NOT EXISTS ( " +
             "        SELECT null " +
             "        FROM SQL_STAT_VAL " +
             "        WHERE FK_SQL_STAT_KEY_ID = SQL_STAT_KEY.ID " +
-            ")";
-
-    // Mark a batch of n records as 'processing' so we can work on them in
-    // isolation
-//    private static final String STAGE1_MARK_PROCESSING = "" +
-//            "UPDATE SQL_STAT_VAL_SRC " +
-//            "SET " +
-//            "PROCESSING = 1 " +
-//            "LIMIT ? ";
+            ")");
 
     // Find the highest ID out of the bottom n rows of the table. This ID or below then marks
     // the batch to work on. This means we always work on the oldest n rows which is fairer
-    // and avoids conflict the the new rows being added to the top of the table.
-    private static final String STAGE1_ESTABLISH_BATCH = "" +
+    // and avoids conflict with the new rows being added to the top of the table.
+    private static final String STAGE1_ESTABLISH_BATCH = condenseSql("" +
             "SELECT MAX(ID) " +
             "FROM SQL_STAT_VAL_SRC " +
             "ORDER BY ID DESC " +
-            "LIMIT ? ";
+            "LIMIT ? ");
 
     // @formatter:off
-    private static final String STAGE1_AGGREGATE_SOURCE_KEY = "" +
+    private static final String STAGE1_AGGREGATE_SOURCE_KEY = condenseSql("" +
             "INSERT INTO SQL_STAT_KEY (NAME, VER) " +
             "SELECT " +
             "    DISTINCT(SSVS.NAME), " +
@@ -119,7 +113,7 @@ public class SQLStatisticAggregationTransactionHelper {
             "FROM SQL_STAT_VAL_SRC SSVS " +
             "LEFT OUTER JOIN SQL_STAT_KEY SSK on (SSK.NAME = SSVS.NAME) " +
             "WHERE SSVS.ID <= ? " +
-            "AND SSK.ID IS NULL";
+            "AND SSK.ID IS NULL");
 
     // grab the oldest n records from SVS and aggregate those records with the
     // right time range
@@ -129,24 +123,24 @@ public class SQLStatisticAggregationTransactionHelper {
     // PRES, VAL_TP
     private static final String SPROC_STAGE1_UPSERT = "{call stage1Upsert (?, ?, ?, ?, ?, ?)}";
 
-    private static final String STAGE1_AGGREGATE_DELETE_SOURCE = "" +
+    private static final String STAGE1_AGGREGATE_DELETE_SOURCE = condenseSql("" +
             "DELETE FROM SQL_STAT_VAL_SRC " +
             "WHERE ID <= ? " +
             "AND TIME_MS < ? " +
-            "AND VAL_TP = ?";
+            "AND VAL_TP = ?");
 
     // Find if records exist in STAT_VAL older than a given age for a given
     // precision
-    private static final String STAGE2_FIND_ROWS_TO_MOVE = "" +
+    private static final String STAGE2_FIND_ROWS_TO_MOVE = condenseSql("" +
             "SELECT " +
             "   EXISTS( " +
             "       SELECT " +
             "           NULL " +
-            "       FROM SQL_STAT_VAL SSV" +
-            "       WHERE SSV.TIME_MS < ? " +
-            "       AND SSV.PRES = ? " + // old PRES
+            "       FROM SQL_STAT_VAL SSV " +
+            "       WHERE SSV.PRES = ? " + // old PRES
             "       AND SSV.VAL_TP = ? " +
-            "   ) ";
+            "       AND SSV.TIME_MS < ? " +
+            "   )");
 
     // Copy stats from one precision to a coarser precision, aggregating them
     // with any stats
@@ -155,17 +149,16 @@ public class SQLStatisticAggregationTransactionHelper {
 
     // Delete records from STAT_VAL older than a certain threshold for a given
     // precision
-    private static final String STAGE2_AGGREGATE_DELETE_OLD_PRECISION = "" +
+    private static final String STAGE2_AGGREGATE_DELETE_OLD_PRECISION = condenseSql("" +
             "DELETE FROM SQL_STAT_VAL " +
             "WHERE TIME_MS < ? " +
             "AND PRES = ? " +
-            "AND VAL_TP = ?";
+            "AND VAL_TP = ?");
 
     private final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     private final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider;
     private final ConnectionUtil connectionUtil;
 
-    // @formatter:on
     private final AggregateConfig[] aggregateConfig = new AggregateConfig[]{
             // Stuff Older than a month move to month precision
 
@@ -273,13 +266,12 @@ public class SQLStatisticAggregationTransactionHelper {
         }
     }
 
-    public Long deleteOldStats(final TaskContext taskContext) throws SQLException {
-        return deleteOldStats(Instant.now(), taskContext);
-    }
-
     public Long deleteOldStats(final Instant timeNow,
                                final TaskContext taskContext) throws SQLException {
-        final AggregateConfig mostCoarseLevel = new AggregateConfig(StatisticType.COUNT, MS_MONTH, MONTH_PRECISION,
+        final AggregateConfig mostCoarseLevel = new AggregateConfig(
+                StatisticType.COUNT,
+                MS_MONTH,
+                MONTH_PRECISION,
                 DEFAULT_PRECISION);
 
         final StroomDuration maxProcessingAge = sqlStatisticsConfigProvider.get().getMaxProcessingAge();
@@ -291,16 +283,39 @@ public class SQLStatisticAggregationTransactionHelper {
             // everything older than that time bucket
             final long oldestTimeBucketToKeep = mostCoarseLevel.getAggregateToMs(
                     timeNow.minus(maxProcessingAge.getDuration()));
+
             try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-                final long rowsAffected = doAggregateSQL_Update(
-                        connection,
-                        taskContext,
-                        "",
-                        DELETE_OLD_STATS,
-                        Collections.singletonList(oldestTimeBucketToKeep));
-                LOGGER.info("Deleted {} stats with a time older than {}", rowsAffected,
+                long totalRowsAffected = 0;
+                // Do one delete per level so we can interrupt sooner and can use the
+                // PK index more efficiently, i.e. (PRES = X AND VAL_TP = Y AND TIME_MS <= Z)
+                for (final AggregateConfig level : aggregateConfig) {
+
+                    final long rowsAffected = doAggregateSQL_Update(
+                            connection,
+                            taskContext,
+                            "",
+                            DELETE_OLD_STATS,
+                            List.of(
+                                    level.getSQLPrecision(),
+                                    level.getValueType().getPrimitiveValue(),
+                                    oldestTimeBucketToKeep));
+
+                    LOGGER.debug(() -> LogUtil.message(
+                            "Deleted {} stats with precision {}, type: {} " +
+                                    "and a time older than {}",
+                            rowsAffected,
+                            level.getSQLPrecision(),
+                            level.getValueType(),
+                            DateUtil.createNormalDateTimeString(oldestTimeBucketToKeep)));
+
+                    totalRowsAffected += rowsAffected;
+                    if (Thread.currentThread().isInterrupted()) {
+                        LOGGER.debug("Thread interrupted");
+                    }
+                }
+                LOGGER.info("Deleted {} stats with a time older than {}", totalRowsAffected,
                         DateUtil.createNormalDateTimeString(oldestTimeBucketToKeep));
-                return rowsAffected;
+                return totalRowsAffected;
             }
         } else {
             return 0L;
@@ -329,7 +344,7 @@ public class SQLStatisticAggregationTransactionHelper {
                     Collections.emptyList());
 
             LOGGER.debug(() -> LogUtil.message("deleteUnusedKeys - {} in {} - {}",
-                    ModelStringUtil.formatCsv(count), time, cleanSqlForLogs(sql)));
+                    ModelStringUtil.formatCsv(count), time, condenseSql(sql)));
 
             return count;
         }
@@ -449,7 +464,7 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         taskContext.info(() -> prefix + "\n " + SPROC_STAGE1_UPSERT);
 
-        LOGGER.debug(() -> ">>> " + cleanSqlForLogs(SPROC_STAGE1_UPSERT));
+        LOGGER.debug(() -> ">>> " + condenseSql(SPROC_STAGE1_UPSERT));
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE1_UPSERT)) {
             // Set IN parameters
             stmt.setByte(1, sqlPrecision);
@@ -487,7 +502,7 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         taskContext.info(() -> prefix + "\n " + SPROC_STAGE2_UPSERT);
 
-        LOGGER.debug(">>> " + cleanSqlForLogs(SPROC_STAGE2_UPSERT));
+        LOGGER.debug(">>> " + condenseSql(SPROC_STAGE2_UPSERT));
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE2_UPSERT)) {
             // Set IN parameters
             stmt.setByte(1, targetPrecision);
@@ -513,7 +528,9 @@ public class SQLStatisticAggregationTransactionHelper {
         return count;
     }
 
-    public void aggregateConfigStage2(final TaskContext taskContext, final String prefix, final Instant timeNow)
+    public void aggregateConfigStage2(final TaskContext taskContext,
+                                      final String prefix,
+                                      final Instant timeNow)
             throws SQLException {
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             // Stage 2 is about moving stats from one precision in STAT_VAL to a
@@ -632,11 +649,17 @@ public class SQLStatisticAggregationTransactionHelper {
                 sqlString.append(c);
             }
         }
-        return cleanSqlForLogs(sqlString.toString());
+        return condenseSql(sqlString.toString());
     }
 
-    private static String cleanSqlForLogs(final String sql) {
-        return sql.replaceAll("\\s+", " ");
+
+    /**
+     * Replace all contiguous white space with one space so we can format the SQL nicely
+     * in source but store have java hold it in condensed form.
+     */
+    static String condenseSql(final String sql) {
+        return sql.replaceAll("\\s+", " ")
+                .trim();
     }
 
     public static class AggregateConfig {
