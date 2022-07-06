@@ -13,9 +13,9 @@ select
     v.content_extension,
     json_extract(v.meta_data, '$.type') doc_type,
     json_extract(v.meta_data, '$.version') version,
-    from_unixtime(json_extract(v.meta_data, '$.createTime') / 1000) createTime,
+    from_unixtime(json_extract(v.meta_data, '$.createTimeMs') / 1000) createTime,
     json_extract(v.meta_data, '$.createUser') createUser,
-    from_unixtime(json_extract(v.meta_data, '$.updateTime') / 1000) updateTime,
+    from_unixtime(json_extract(v.meta_data, '$.updateTimeMs') / 1000) updateTime,
     json_extract(v.meta_data, '$.updateUser') updateUser,
     json_remove(
         v.meta_data,
@@ -23,10 +23,10 @@ select
         '$.name',
         '$.type',
         '$.version',
-        '$.createTime',
-        '$.createUser',
+        '$.createTimeMs',
+        '$.createUserMs',
         '$.updateTime',
-        '$.updateUser') meta_data,
+        '$.updateUser') bespoke_meta_data,
     v.content_data
 from
     (select
@@ -37,7 +37,9 @@ from
         convert(dm.data using UTF8MB4) meta_data,
         convert(dd.data using UTF8MB4) content_data
     from doc dm
-    left join doc dd on dm.uuid = dd.uuid and dd.ext != dm.ext
+    left join doc dd
+        on dm.uuid = dd.uuid
+        and dd.ext != dm.ext
     where dm.ext = 'meta') v;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
