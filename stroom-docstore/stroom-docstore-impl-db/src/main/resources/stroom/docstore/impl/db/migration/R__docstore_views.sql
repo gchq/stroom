@@ -37,7 +37,7 @@ from
         convert(dm.data using UTF8MB4) meta_data,
         convert(dd.data using UTF8MB4) content_data
     from doc dm
-    inner join doc dd on dm.uuid = dd.uuid and dd.ext != dm.ext
+    left join doc dd on dm.uuid = dd.uuid and dd.ext != dm.ext
     where dm.ext = 'meta') v;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
