@@ -351,9 +351,10 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
         // Keep running aggregation until all flushes have finished
         final LogExecutionTime totalAggTime = LogExecutionTime.start();
         while (countDownLatch.getCount() > 0) {
-            LOGGER.logDurationIfInfoEnabled(() ->
-                            sqlStatisticAggregationManager.aggregate(Instant.now()),
-                    "Aggregate");
+            sqlStatisticAggregationManager.aggregate(Instant.now());
+//                    LOGGER.logDurationIfInfoEnabled(() ->
+//                            sqlStatisticAggregationManager.aggregate(Instant.now()),
+//                    "Aggregate");
         }
         LOGGER.info("Flushing finished, running final aggregation");
         LOGGER.logDurationIfInfoEnabled(() ->

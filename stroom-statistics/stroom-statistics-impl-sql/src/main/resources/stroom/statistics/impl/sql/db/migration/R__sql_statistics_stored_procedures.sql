@@ -126,8 +126,10 @@ CREATE PROCEDURE `stage2Upsert` (
     IN p_aggregateToMs bigint,
     OUT p_rowCount int)
 BEGIN
+    -- TODO Don't think we need to do this as java has already rounded it
     SET @rounded_aggregate_to = ROUND(p_aggregateToMs, p_targetSqlPrecision);
 
+    -- TODO Are we using < or <= for TIME_MS ?
     CREATE TEMPORARY TABLE TEMP_AGG AS (
         SELECT
             FK_SQL_STAT_KEY_ID,
@@ -135,29 +137,34 @@ BEGIN
             SUM(COALESCE(VAL,0)) AS VAL,
             SUM(COALESCE(CT,0)) AS CT
         FROM (
-            SELECT -- existing values at correct precision
-                SSVO.TIME_MS,
-                SSVO.VAL,
-                SSVO.CT,
-                SSVO.FK_SQL_STAT_KEY_ID
-            FROM SQL_STAT_VAL SSVO
-            WHERE SSVO.PRES = p_targetPrecision  -- target pres
-            AND SSVO.VAL_TP = p_valueType
-            AND SSVO.TIME_MS <= @rounded_aggregate_to  -- only pick up records up to the point we are interested in
+            (   -- existing values at correct precision
+                SELECT
+                    SSVO.TIME_MS,
+                    SSVO.VAL,
+                    SSVO.CT,
+                    SSVO.FK_SQL_STAT_KEY_ID
+                FROM SQL_STAT_VAL SSVO
+                WHERE SSVO.PRES = p_targetPrecision  -- target pres
+                AND SSVO.VAL_TP = p_valueType
+                AND SSVO.TIME_MS <= @rounded_aggregate_to  -- only pick up records up to the point we are interested in
+            )
             UNION ALL
-            SELECT
-                ROUND(SSVN.TIME_MS, p_targetSqlPrecision),  -- target pres, e.g. -9
-                SSVN.VAL,
-                SSVN.CT,
-                SSVN.FK_SQL_STAT_KEY_ID
-            FROM SQL_STAT_VAL SSVN
-            WHERE SSVN.PRES = p_lastPrecision  -- old PRES
-            AND SSVN.VAL_TP = p_valueType
-            AND SSVN.TIME_MS < p_aggregateToMs
+            (   -- values at a finer precision that need to be aggregated into the target precision
+                SELECT
+                    ROUND(SSVN.TIME_MS, p_targetSqlPrecision),  -- target pres, e.g. -9
+                    SSVN.VAL,
+                    SSVN.CT,
+                    SSVN.FK_SQL_STAT_KEY_ID
+                FROM SQL_STAT_VAL SSVN
+                WHERE SSVN.PRES = p_lastPrecision  -- old PRES
+                AND SSVN.VAL_TP = p_valueType
+                AND SSVN.TIME_MS < p_aggregateToMs
+            )
         ) ROUNDED
         GROUP BY
             ROUNDED.FK_SQL_STAT_KEY_ID,
             ROUNDED.TIME_MS
+        LIMIT 1000
     );
 
     INSERT INTO SQL_STAT_VAL (

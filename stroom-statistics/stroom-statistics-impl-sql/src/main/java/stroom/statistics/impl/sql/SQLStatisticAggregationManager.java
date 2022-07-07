@@ -80,9 +80,13 @@ class SQLStatisticAggregationManager {
         guard.lock();
         try {
             LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = {}", timeNow);
+            long totalStage1Count = 0;
+            long totalStage2Count = 0;
+            long oldStatsDeletedCount = 0;
+            int unusedKeysDeletedCount = 0;
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
             try {
-                helper.deleteOldStats(timeNow, taskContext);
+                oldStatsDeletedCount = helper.deleteOldStats(timeNow, taskContext);
 
                 long processedCount;
                 int iteration = 0;
@@ -95,21 +99,32 @@ class SQLStatisticAggregationManager {
                             "Iteration: " + ++iteration + "",
                             batchSize,
                             timeNow);
+                    totalStage1Count += processedCount;
 
                 } while (processedCount == batchSize && !Thread.currentThread().isInterrupted());
 
                 if (!Thread.currentThread().isInterrupted()) {
-                    helper.aggregateConfigStage2(taskContext, "Final Reduce", timeNow);
+                    totalStage2Count = helper.aggregateConfigStage2(
+                            taskContext, "Final Reduce", timeNow);
                 }
 
                 // We hold the cluster lock so can safely deleted orphaned stat keys
-                helper.deleteUnusedKeys(taskContext);
+                unusedKeysDeletedCount = helper.deleteUnusedKeys(taskContext);
 
             } catch (final SQLException ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             } finally {
-                LOGGER.debug("aggregate() - Finished for SQL stats in {} timeNowOverride = {}",
-                        logExecutionTime, timeNow);
+                LOGGER.info("Finished SQL stats aggregation in {}, " +
+                                "oldStatsDeletedCount: {}, " +
+                                "totalStage1Count: {}, " +
+                                "totalStage2Count: {}, " +
+                                "unusedKeysDeletedCount: {} (timeNowOverride = {})",
+                        logExecutionTime,
+                        oldStatsDeletedCount,
+                        totalStage1Count,
+                        totalStage2Count,
+                        unusedKeysDeletedCount,
+                        timeNow);
             }
         } finally {
             guard.unlock();

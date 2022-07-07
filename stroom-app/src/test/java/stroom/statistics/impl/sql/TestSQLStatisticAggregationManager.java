@@ -516,7 +516,7 @@ class TestSQLStatisticAggregationManager extends AbstractStatisticsCoreIntegrati
         final Instant startDate = LocalDateTime.of(
                 2016, 12, 13, 11, 59, 3)
                 .toInstant(ZoneOffset.UTC);
-        //the number of different satst names to use in the test
+        //the number of different stats names to use in the test
         final int statNameCount = 4;
         //the number of different data points per stat name
         final int timesCount = 100;
@@ -606,7 +606,9 @@ class TestSQLStatisticAggregationManager extends AbstractStatisticsCoreIntegrati
                 .isZero();
     }
 
-    private void loadData(final Instant startDate, final int statNameCount, final int timesCount,
+    private void loadData(final Instant startDate,
+                          final int statNameCount,
+                          final int timesCount,
                           final StatisticType statisticType) throws SQLException {
 
         LOGGER.info("Filling STAT_VAL_SRC");

@@ -17,14 +17,22 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
-CALL statistics_create_non_unique_index_v1(
-    'SQL_STAT_KEY',
-    'SQL_STAT_KEY_NAME_ID',
-    'NAME, ID');
 
 -- Idempotent
--- We need an index that starts with the FK for constraint checks and most
+-- Having the idx on time_ms is causing contention between inserts and the agg stage1
+-- possibly as new data coming in has similar time_ms to data being aggregated so they
+-- are fighting over locks in similar places in the index.
+-- All the stage 1 aggregation sql filters on the PK so just rely on that index and any
+-- new inserts will be locking other parts of the index as the PK value is always increasing.
+CALL statistics_drop_index_v1(
+    'SQL_STAT_VAL_SRC',
+    'SQL_STAT_VAL_SRC_TIME_MS');
+
+-- Idempotent
+-- We need an index that starts with the FK to satisfy constraint checks and most
 -- search queries will be FK_SQL_STAT_KEY_ID = X AND TIME_MS >= Y AND TIME_MS < Z
+-- so it can jump to the right FK_SQL_STAT_KEY_ID branch of the idx then range scan
+-- the times.
 CALL statistics_create_non_unique_index_v1(
     'SQL_STAT_VAL',
     'SQL_STAT_VAL_FK_SQL_STAT_KEY_ID_TIME_MS',

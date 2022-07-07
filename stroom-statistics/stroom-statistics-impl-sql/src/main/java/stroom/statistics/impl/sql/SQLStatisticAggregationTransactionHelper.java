@@ -266,7 +266,7 @@ public class SQLStatisticAggregationTransactionHelper {
         }
     }
 
-    public Long deleteOldStats(final Instant timeNow,
+    public long deleteOldStats(final Instant timeNow,
                                final TaskContext taskContext) throws SQLException {
         final AggregateConfig mostCoarseLevel = new AggregateConfig(
                 StatisticType.COUNT,
@@ -276,27 +276,31 @@ public class SQLStatisticAggregationTransactionHelper {
 
         final StroomDuration maxProcessingAge = sqlStatisticsConfigProvider.get().getMaxProcessingAge();
 
-        LOGGER.debug("Deleting stats using a max processing age of {}ms", maxProcessingAge);
-
         if (maxProcessingAge != null) {
+            LOGGER.debug("Deleting stats using a max processing age of {}ms", maxProcessingAge);
             // convert the max age into a time bucket so we can delete
             // everything older than that time bucket
             final long oldestTimeBucketToKeep = mostCoarseLevel.getAggregateToMs(
                     timeNow.minus(maxProcessingAge.getDuration()));
-
             try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
                 long totalRowsAffected = 0;
                 // Do one delete per level so we can interrupt sooner and can use the
                 // PK index more efficiently, i.e. (PRES = X AND VAL_TP = Y AND TIME_MS <= Z)
                 for (final AggregateConfig level : aggregateConfig) {
+                final String prefix = LogUtil.message(
+                        "Deleting stats. Precision {}, type: {} " +
+                                "and a time older than {}",
+                        level.getPrecision(),
+                        level.getValueType(),
+                        DateUtil.createNormalDateTimeString(oldestTimeBucketToKeep));
 
-                    final long rowsAffected = doAggregateSQL_Update(
-                            connection,
-                            taskContext,
-                            "",
-                            DELETE_OLD_STATS,
+                final long rowsAffected = doAggregateSQL_Update(
+                        connection,
+                        taskContext,
+                        prefix,
+                        DELETE_OLD_STATS,
                             List.of(
-                                    level.getSQLPrecision(),
+                                    level.getPrecision(),
                                     level.getValueType().getPrimitiveValue(),
                                     oldestTimeBucketToKeep));
 
@@ -304,7 +308,7 @@ public class SQLStatisticAggregationTransactionHelper {
                             "Deleted {} stats with precision {}, type: {} " +
                                     "and a time older than {}",
                             rowsAffected,
-                            level.getSQLPrecision(),
+                            level.getPrecision(),
                             level.getValueType(),
                             DateUtil.createNormalDateTimeString(oldestTimeBucketToKeep)));
 
@@ -318,6 +322,7 @@ public class SQLStatisticAggregationTransactionHelper {
                 return totalRowsAffected;
             }
         } else {
+            LOGGER.debug("No maxProcessingAge configured so don't delete any old stats");
             return 0L;
         }
     }
@@ -411,7 +416,7 @@ public class SQLStatisticAggregationTransactionHelper {
                         // the grouped stats and the CNT column
                         // gets the count of the number of records in the group
 
-                        final int rowsAffectedOnUpsert = callUpsert1(
+                        int rowsAffectedOnUpsert = callUpsert1(
                                 connection,
                                 taskContext,
                                 newPrefix,
@@ -442,6 +447,10 @@ public class SQLStatisticAggregationTransactionHelper {
                                             "rows in SQL_STAT_VAL, may have lost some stats",
                                     rowsAffectedOnDelete);
                         }
+                    }
+
+                    if (Thread.currentThread().isInterrupted()) {
+                        LOGGER.debug("Thread interrupted. Safely stopping here.");
                     }
                 }
             }
@@ -528,10 +537,11 @@ public class SQLStatisticAggregationTransactionHelper {
         return count;
     }
 
-    public void aggregateConfigStage2(final TaskContext taskContext,
+    public long aggregateConfigStage2(final TaskContext taskContext,
                                       final String prefix,
                                       final Instant timeNow)
             throws SQLException {
+        long totalCount = 0;
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             // Stage 2 is about moving stats from one precision in STAT_VAL to a
             // coarser one once they have become too old for their current
@@ -563,7 +573,10 @@ public class SQLStatisticAggregationTransactionHelper {
                             taskContext,
                             newPrefix,
                             STAGE2_FIND_ROWS_TO_MOVE,
-                            Arrays.asList(aggregateToMs, lastPrecision, valueType));
+                            Arrays.asList(
+                                    lastPrecision,
+                                    valueType,
+                                    aggregateToMs));
 
                     if (rowsExist.filter(i -> i == 1).isPresent()) {
                         // Find any stats that are too old for their current
@@ -572,6 +585,7 @@ public class SQLStatisticAggregationTransactionHelper {
                         // required. Does an update or
                         // insert depending on if the target precision has a
                         // record or not.
+
                         final int upsertCount = callUpsert2(connection,
                                 taskContext,
                                 newPrefix,
@@ -584,16 +598,27 @@ public class SQLStatisticAggregationTransactionHelper {
                         if (upsertCount > 0) {
                             // now delete the old stats that we just copied up
                             // into the new precision
-                            doAggregateSQL_Update(connection, taskContext, newPrefix,
+                            doAggregateSQL_Update(
+                                    connection,
+                                    taskContext,
+                                    newPrefix,
                                     STAGE2_AGGREGATE_DELETE_OLD_PRECISION,
-                                    Arrays.asList(aggregateToMs, lastPrecision, valueType));
+                                    Arrays.asList(
+                                            aggregateToMs,
+                                            lastPrecision,
+                                            valueType));
+                            totalCount += upsertCount;
                         }
                     } else {
                         LOGGER.debug("No rows to move");
                     }
                 }
+                if (Thread.currentThread().isInterrupted()) {
+                    LOGGER.debug("Thread interrupted. Safely stopping here.");
+                }
             }
         }
+        return totalCount;
     }
 
     public void truncateTable(final String tableName) throws SQLException {
@@ -691,6 +716,9 @@ public class SQLStatisticAggregationTransactionHelper {
             return precision;
         }
 
+        /**
+         * Used for the MySQL ROUND(number , precision) func
+         */
         public byte getSQLPrecision() {
             return (byte) (-1 * precision);
         }
