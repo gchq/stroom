@@ -22,6 +22,7 @@ import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -77,13 +78,16 @@ public class ElasticSearchResultCollector implements Store {
 
     public void start() {
         // Start asynchronous search execution.
-        final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
-            // Don't begin execution if we have been asked to complete already.
-            if (!coprocessors.getCompletionState().isComplete()) {
-                final ElasticAsyncSearchTaskHandler searchHandler = elasticAsyncSearchTaskHandlerProvider.get();
-                searchHandler.search(taskContext, task, coprocessors, this);
-            }
-        });
+        final Runnable runnable = taskContextFactory.context(
+                TASK_NAME,
+                TerminateHandlerFactory.NOOP_FACTORY,
+                taskContext -> {
+                    // Don't begin execution if we have been asked to complete already.
+                    if (!coprocessors.getCompletionState().isComplete()) {
+                        final ElasticAsyncSearchTaskHandler searchHandler = elasticAsyncSearchTaskHandlerProvider.get();
+                        searchHandler.search(taskContext, task, coprocessors, this);
+                    }
+                });
         CompletableFuture
                 .runAsync(runnable, executor)
                 .whenComplete((result, t) -> {

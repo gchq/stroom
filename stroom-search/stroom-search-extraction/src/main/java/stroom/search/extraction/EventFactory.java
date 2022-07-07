@@ -19,22 +19,15 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.common.v2.SearchProgressLog;
-import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 
-class StreamMapCreator {
+class EventFactory {
 
-    private final QueryKey queryKey;
     private final int streamIdIndex;
     private final int eventIdIndex;
 
     private ExtractionException error;
 
-    StreamMapCreator(final QueryKey queryKey,
-                     final FieldIndex fieldIndex) {
-        this.queryKey = queryKey;
-
+    EventFactory(final FieldIndex fieldIndex) {
         // First get the index in the stored data of the stream and event id fields.
         streamIdIndex = getFieldIndex(fieldIndex, IndexConstants.STREAM_ID);
         eventIdIndex = getFieldIndex(fieldIndex, IndexConstants.EVENT_ID);
@@ -55,23 +48,21 @@ class StreamMapCreator {
         return index;
     }
 
-    void addEvent(final StreamEventMap streamEventMap, final Val[] storedData) {
+    Event create(final Val[] storedData) {
         if (error != null) {
             throw error;
-        } else {
-            final long longStreamId = getLong(storedData, streamIdIndex);
-            if (longStreamId == -1) {
-                throw new ExtractionException("No stream id supplied");
-            }
-            final long longEventId = getLong(storedData, eventIdIndex);
-            if (longEventId == -1) {
-                throw new ExtractionException("No event id supplied");
-            }
-
-            final Event event = new Event(longStreamId, longEventId, storedData);
-            SearchProgressLog.increment(queryKey, SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
-            streamEventMap.put(event);
         }
+
+        final long longStreamId = getLong(storedData, streamIdIndex);
+        if (longStreamId == -1) {
+            throw new ExtractionException("No stream id supplied");
+        }
+        final long longEventId = getLong(storedData, eventIdIndex);
+        if (longEventId == -1) {
+            throw new ExtractionException("No event id supplied");
+        }
+
+        return new Event(longStreamId, longEventId, storedData);
     }
 
     private long getLong(final Val[] storedData, final int index) {
