@@ -350,15 +350,25 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
 
         // Keep running aggregation until all flushes have finished
         final LogExecutionTime totalAggTime = LogExecutionTime.start();
+        Instant aggregationNow = startTime;
         while (countDownLatch.getCount() > 0) {
-            LOGGER.logDurationIfInfoEnabled(() ->
-                            sqlStatisticAggregationManager.aggregate(Instant.now()),
-                    "Aggregate");
+            sqlStatisticAggregationManager.aggregate(aggregationNow);
         }
         LOGGER.info("Flushing finished, running final aggregation");
-        LOGGER.logDurationIfInfoEnabled(() ->
-                        sqlStatisticAggregationManager.aggregate(Instant.now()),
-                "Aggregate");
+        sqlStatisticAggregationManager.aggregate(aggregationNow);
+
+        LOGGER.info("Running aggregation 2 hours after start time");
+        aggregationNow = aggregationNow.plus(2, ChronoUnit.HOURS);
+        // This ensures we run stage 2 agg.
+        sqlStatisticAggregationManager.aggregate(aggregationNow);
+
+        LOGGER.info("Running aggregation 2 days after the last time");
+        aggregationNow = aggregationNow.plus(2, ChronoUnit.DAYS);
+        sqlStatisticAggregationManager.aggregate(aggregationNow);
+
+        LOGGER.info("Running aggregation 40 days after the last time");
+        aggregationNow = aggregationNow.plus(40, ChronoUnit.DAYS);
+        sqlStatisticAggregationManager.aggregate(aggregationNow);
 
         LOGGER.info("------------------------------------------------------------");
         LOGGER.info("""
