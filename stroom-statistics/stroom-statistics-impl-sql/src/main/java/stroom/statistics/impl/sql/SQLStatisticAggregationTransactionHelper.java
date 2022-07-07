@@ -287,18 +287,18 @@ public class SQLStatisticAggregationTransactionHelper {
                 // Do one delete per level so we can interrupt sooner and can use the
                 // PK index more efficiently, i.e. (PRES = X AND VAL_TP = Y AND TIME_MS <= Z)
                 for (final AggregateConfig level : aggregateConfig) {
-                final String prefix = LogUtil.message(
-                        "Deleting stats. Precision {}, type: {} " +
-                                "and a time older than {}",
-                        level.getPrecision(),
-                        level.getValueType(),
-                        DateUtil.createNormalDateTimeString(oldestTimeBucketToKeep));
+                    final String prefix = LogUtil.message(
+                            "Deleting stats. Precision {}, type: {} " +
+                                    "and a time older than {}",
+                            level.getPrecision(),
+                            level.getValueType(),
+                            DateUtil.createNormalDateTimeString(oldestTimeBucketToKeep));
 
-                final long rowsAffected = doAggregateSQL_Update(
-                        connection,
-                        taskContext,
-                        prefix,
-                        DELETE_OLD_STATS,
+                    final long rowsAffected = doAggregateSQL_Update(
+                            connection,
+                            taskContext,
+                            prefix,
+                            DELETE_OLD_STATS,
                             List.of(
                                     level.getPrecision(),
                                     level.getValueType().getPrimitiveValue(),
