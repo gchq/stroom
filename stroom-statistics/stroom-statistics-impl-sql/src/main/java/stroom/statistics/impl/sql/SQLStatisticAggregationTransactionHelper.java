@@ -148,7 +148,7 @@ public class SQLStatisticAggregationTransactionHelper {
     // with any stats
     // in the target precision if there are any
     private static final String SPROC_STAGE2_UPSERT =
-            "{call stage2Upsert (?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+            "{call stage2Upsert (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
     private final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     private final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider;
@@ -533,21 +533,25 @@ public class SQLStatisticAggregationTransactionHelper {
             stmt.setByte(4, valueType);
             stmt.setLong(5, aggregateToMs);
             stmt.setInt(6, batchSize);
-
+            stmt.setBoolean(7, LOGGER.isTraceEnabled());
             // Set OUT parameters
-            stmt.registerOutParameter(7, Types.INTEGER);
-            stmt.registerOutParameter(8, Types.INTEGER);
-            stmt.registerOutParameter(9, Types.VARCHAR);
+            final int upsertCountParamNum = 8;
+            final int deleteCountParamNum = 9;
+            final int logParamNum = 10;
+            stmt.registerOutParameter(upsertCountParamNum, Types.INTEGER);
+            stmt.registerOutParameter(deleteCountParamNum, Types.INTEGER);
+            stmt.registerOutParameter(logParamNum, Types.VARCHAR);
 
             // Execute stored procedure
             stmt.execute();
 
             // Get the OUT parameter
-            upsertCount = stmt.getInt(7);
-            deleteCount = stmt.getInt(8);
+            upsertCount = stmt.getInt(upsertCountParamNum);
+            deleteCount = stmt.getInt(deleteCountParamNum);
 
+            // If trace is enabled the sproc will return useful logging
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("stage2Upsert log:{}", stmt.getString(9));
+                LOGGER.trace("stage2Upsert log:{}", stmt.getString(logParamNum));
             }
         } catch (final SQLException sqlException) {
             LOGGER.error("callUpsert2", sqlException);

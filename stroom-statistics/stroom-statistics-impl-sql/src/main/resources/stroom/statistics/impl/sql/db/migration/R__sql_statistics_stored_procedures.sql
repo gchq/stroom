@@ -3,22 +3,6 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 DELIMITER //
 
-
-DROP PROCEDURE IF EXISTS `log_string_value` //
-
-CREATE PROCEDURE `log_string_value` (
-    INOUT p_log VARCHAR(1000),
-    IN p_is_trace_enabled BOOLEAN,
-    IN p_name VARCHAR(1000),
-    IN p_value VARCHAR(1000))
-BEGIN
-
-    IF p_is_trace_enabled THEN
-        SET p_log = CONCAT(p_log, '\n', p_name, ': ', COALESCE(p_value, 'null'));
-    END IF;
-
-END //
-
 -- -----------------------------------------------------------------------
 
 DROP PROCEDURE IF EXISTS `log_num_value` //
@@ -29,11 +13,9 @@ CREATE PROCEDURE `log_num_value` (
     IN p_name VARCHAR(1000),
     IN p_value BIGINT)
 BEGIN
-
     IF p_is_trace_enabled THEN
-        SET p_log = CONCAT(p_log, '\n', p_name, ': ', COALESCE(p_value, 'null'));
+        SET p_log = CONCAT(p_log, '\n', p_name, ': ', COALESCE(p_value, -1));
     END IF;
-
 END //
 
 -- -----------------------------------------------------------------------
@@ -172,6 +154,7 @@ CREATE PROCEDURE `stage2Upsert` (
     IN p_valueType TINYINT,
     IN p_aggregateToMs BIGINT,
     IN p_batch_size INT,
+    IN p_is_trace_enabled BOOLEAN,
     OUT p_upsertCount INT,
     OUT p_deleteCount INT,
     OUT p_log VARCHAR(1000))
@@ -193,10 +176,12 @@ BEGIN
     SET v_val = 0;
     SET v_ct = 0;
 
-    SET v_log = CONCAT(v_log, '\n', 'p_valueType: ', COALESCE(p_valueType, 'null'));
-    SET v_log = CONCAT(v_log, '\n', 'p_targetPrecision: ', COALESCE(p_targetPrecision, 'null'));
-    SET v_log = CONCAT(v_log, '\n', 'p_lastPrecision: ', COALESCE(p_lastPrecision, 'null'));
-    SET v_log = CONCAT(v_log, '\n', 'p_batch_size: ', COALESCE(p_batch_size, 'null'));
+    IF p_is_trace_enabled THEN
+        CALL log_num_value(v_log, p_is_trace_enabled, 'p_valueType', p_valueType);
+        CALL log_num_value(v_log, p_is_trace_enabled, 'p_targetPrecision', p_targetPrecision);
+        CALL log_num_value(v_log, p_is_trace_enabled, 'p_lastPrecision', p_lastPrecision);
+        CALL log_num_value(v_log, p_is_trace_enabled, 'p_batch_size', p_batch_size);
+    END IF;
 
     -- Check if there are any rows that need moving to a new
     -- precision for this time range, precision
@@ -213,42 +198,21 @@ BEGIN
        )
     INTO v_data_exists;
 
-    SET v_log = CONCAT(v_log, '\n', 'v_data_exists: ', COALESCE(v_data_exists, 'null'));
-
-    SELECT COUNT(*)
-    INTO v_old_data_count
-    FROM SQL_STAT_VAL SSV
-    WHERE SSV.PRES = p_lastPrecision  -- old PRES
-    AND SSV.VAL_TP = p_valueType
-    AND SSV.TIME_MS < p_aggregateToMs;
-
-    SET v_log = CONCAT(v_log, '\n', 'v_old_data_count: ', COALESCE(v_old_data_count, 'null'));
-
-    SELECT
-        SUM(COALESCE(VAL, 0)),
-        SUM(COALESCE(CT, 0))
-    INTO v_val, v_ct
-    FROM
-        SQL_STAT_VAL
-    WHERE PRES = p_targetPrecision
-    AND VAL_TP = p_valueType;
-
-    SET v_log = CONCAT(v_log, '\n', 'v_val: ', COALESCE(v_val, 0));
-    SET v_log = CONCAT(v_log, '\n', 'v_ct: ', COALESCE(v_ct, 0));
-
-    SELECT
-        SUM(COALESCE(VAL, 0)),
-        SUM(COALESCE(CT, 0))
-    INTO v_val, v_ct
-    FROM
-        SQL_STAT_VAL
-    WHERE PRES = p_lastPrecision
-    AND VAL_TP = p_valueType;
-
-    SET v_log = CONCAT(v_log, '\n', 'v_val: ', COALESCE(v_val, 0));
-    SET v_log = CONCAT(v_log, '\n', 'v_ct: ', COALESCE(v_ct, 0));
-
     IF v_data_exists = 1 THEN
+
+        IF p_is_trace_enabled THEN
+            CALL log_num_value(v_log, p_is_trace_enabled, 'v_data_exists', v_data_exists);
+
+            SELECT COUNT(*)
+            INTO v_old_data_count
+            FROM SQL_STAT_VAL SSV
+            WHERE SSV.PRES = p_lastPrecision  -- old PRES
+            AND SSV.VAL_TP = p_valueType
+            AND SSV.TIME_MS < p_aggregateToMs;
+
+            CALL log_num_value(v_log, p_is_trace_enabled, 'v_old_data_count', v_old_data_count);
+        END IF;
+
         -- We have at least one record that needs moving to a coarser time bucket so
         -- process the row up to p_aggregateToMs in batches.
         -- This means we can run agg stage 2 in smaller batches to make stopping it quicker.
@@ -273,21 +237,21 @@ BEGIN
         SET v_rounded_batch_min_time_ms = ROUND(v_batch_min_time_ms, p_targetSqlPrecision);
         SET v_rounded_batch_max_time_ms = ROUND(v_batch_max_time_ms, p_targetSqlPrecision);
 
-        SET v_log = CONCAT(v_log, '\n', 'v_batch_min_time_ms: ', COALESCE(v_batch_min_time_ms, 'null'));
-        SET v_log = CONCAT(v_log, '\n', 'v_batch_max_time_ms: ', COALESCE(v_batch_max_time_ms, 'null'));
-        SET v_log = CONCAT(v_log, '\n', 'v_rounded_batch_min_time_ms: ', COALESCE(v_rounded_batch_min_time_ms, 'null'));
-        SET v_log = CONCAT(v_log, '\n', 'v_rounded_batch_max_time_ms: ', COALESCE(v_rounded_batch_max_time_ms, 'null'));
+        IF p_is_trace_enabled THEN
+            CALL log_num_value(v_log, p_is_trace_enabled, 'v_batch_min_time_ms', v_batch_min_time_ms);
+            CALL log_num_value(v_log, p_is_trace_enabled, 'v_batch_max_time_ms', v_batch_max_time_ms);
+            CALL log_num_value(v_log, p_is_trace_enabled, 'v_rounded_batch_min_time_ms', v_rounded_batch_min_time_ms);
+            CALL log_num_value(v_log, p_is_trace_enabled, 'v_rounded_batch_max_time_ms', v_rounded_batch_max_time_ms);
 
-        SELECT COUNT(*)
-        INTO v_old_data_count_in_batch
-        FROM SQL_STAT_VAL SSV
-        WHERE SSV.PRES = p_lastPrecision  -- old PRES
-        AND SSV.VAL_TP = p_valueType
-        AND SSV.TIME_MS <= v_batch_max_time_ms;
+            SELECT COUNT(*)
+            INTO v_old_data_count_in_batch
+            FROM SQL_STAT_VAL SSV
+            WHERE SSV.PRES = p_lastPrecision  -- old PRES
+            AND SSV.VAL_TP = p_valueType
+            AND SSV.TIME_MS <= v_batch_max_time_ms;
 
-        SET v_log = CONCAT(v_log, '\n', 'v_old_data_count_in_batch: ', COALESCE(v_old_data_count_in_batch, 'null'));
---        SET @rounded_aggregate_to = ROUND(p_aggregateToMs, p_targetSqlPrecision);
---        SET v_log = CONCAT(v_log, '\n', 'rounded_aggregate_to: ', COALESCE(@rounded_aggregate_to, 'null'));
+            CALL log_num_value(v_log, p_is_trace_enabled, 'v_old_data_count_in_batch', v_old_data_count_in_batch);
+        END IF;
 
         -- Combine the aggregates from the existing data in the target precision with the data that
         -- needs to be moved to the target precision.
@@ -308,8 +272,6 @@ BEGIN
                     FROM SQL_STAT_VAL SSVO
                     WHERE SSVO.PRES = p_targetPrecision  -- target pres
                     AND SSVO.VAL_TP = p_valueType
---                    AND SSVO.TIME_MS <= v_batch_max_time_ms  -- only pick up records up to the point we are interested in
---                    AND SSVO.TIME_MS <= @rounded_aggregate_to  -- only pick up records up to the point we are interested in
                     AND SSVO.TIME_MS <= v_rounded_batch_max_time_ms  -- only pick up records up to the point we are interested in
                     AND SSVO.TIME_MS >= v_rounded_batch_max_time_ms  -- only pick up records up to the point we are interested in
                 )
@@ -328,7 +290,6 @@ BEGIN
                     WHERE SSVN.PRES = p_lastPrecision  -- old PRES
                     AND SSVN.VAL_TP = p_valueType
                     AND SSVN.TIME_MS <= v_batch_max_time_ms -- Only work on data up to our batch limit
---                    AND SSVN.TIME_MS < p_aggregateToMs
                 )
             ) ROUNDED
             GROUP BY
@@ -358,21 +319,9 @@ BEGIN
             CT = VALUES(CT);
 
         SET p_upsertCount = ROW_COUNT();
-        SET v_log = CONCAT(v_log, '\n', 'p_upsertCount: ', COALESCE(p_upsertCount, 'null'));
+        CALL log_num_value(v_log, p_is_trace_enabled, 'p_upsertCount', p_upsertCount);
 
         DROP TEMPORARY TABLE TEMP_AGG;
-
-        SELECT
-            SUM(COALESCE(VAL, 0)),
-            SUM(COALESCE(CT, 0))
-        INTO v_val, v_ct
-        FROM
-            SQL_STAT_VAL
-        WHERE PRES = p_targetPrecision
-        AND VAL_TP = p_valueType;
-
-        SET v_log = CONCAT(v_log, '\n', 'v_val: ', COALESCE(v_val, 0));
-        SET v_log = CONCAT(v_log, '\n', 'v_ct: ', COALESCE(v_ct, 0));
 
         IF p_upsertCount > 0 THEN
             -- Now delete all the records that we have aggregated up to a courser level
@@ -382,23 +331,10 @@ BEGIN
             AND TIME_MS <= v_batch_max_time_ms;
 
             SET p_deleteCount = ROW_COUNT();
-            SET v_log = CONCAT(v_log, '\n', 'p_deleteCount: ', COALESCE(p_deleteCount, 0));
-
+            CALL log_num_value(v_log, p_is_trace_enabled, 'p_deleteCount', p_deleteCount);
         ELSE
             SET p_deleteCount = 0;
         END IF;
-
-        SELECT
-            SUM(COALESCE(VAL, 0)),
-            SUM(COALESCE(CT, 0))
-        INTO v_val, v_ct
-        FROM
-            SQL_STAT_VAL
-        WHERE PRES = p_lastPrecision
-        AND VAL_TP = p_valueType;
-
-        SET v_log = CONCAT(v_log, '\n', 'v_val: ', COALESCE(v_val, 0));
-        SET v_log = CONCAT(v_log, '\n', 'v_ct: ', COALESCE(v_ct, 0));
     END IF;
 
     SET p_log = v_log;
