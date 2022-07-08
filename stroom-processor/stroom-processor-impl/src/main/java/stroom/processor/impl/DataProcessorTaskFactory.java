@@ -16,10 +16,8 @@
 
 package stroom.processor.impl;
 
+import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.NodeInfo;
-import stroom.cluster.task.api.NodeNotFoundException;
-import stroom.cluster.task.api.NullClusterStateException;
-import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryDescription;
@@ -48,17 +46,17 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProcessorTaskFactory.class);
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Data Processor#", 1);
 
-    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final ClusterService clusterService;
     private final ProcessorTaskResource processorTaskResource;
     private final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider;
     private final NodeInfo nodeInfo;
 
     @Inject
-    DataProcessorTaskFactory(final TargetNodeSetFactory targetNodeSetFactory,
+    DataProcessorTaskFactory(final ClusterService clusterService,
                              final ProcessorTaskResource processorTaskResource,
                              final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider,
                              final NodeInfo nodeInfo) {
-        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.clusterService = clusterService;
         this.processorTaskResource = processorTaskResource;
         this.dataProcessorTaskHandlerProvider = dataProcessorTaskHandlerProvider;
         this.nodeInfo = nodeInfo;
@@ -67,29 +65,27 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     @Override
     public List<DistributedTask> fetch(final String nodeName, final int count) {
         try {
-            if (targetNodeSetFactory.isClusterStateInitialised()) {
-                final String masterNode = targetNodeSetFactory.getLeaderNode();
-                LOGGER.debug("masterNode: {}", masterNode);
-                final ProcessorTaskList processorTaskList = processorTaskResource
-                        .assignTasks(masterNode, new AssignTasksRequest(nodeName, count));
+            final String leader = clusterService.getLeader();
+            LOGGER.debug("masterNode: {}", leader);
+            final ProcessorTaskList processorTaskList = processorTaskResource
+                    .assignTasks(leader, new AssignTasksRequest(nodeName, count));
 
-                return processorTaskList
-                        .getList()
-                        .stream()
-                        .map(processorTask -> {
-                            final Runnable runnable = () -> {
-                                final DataProcessorTaskHandler dataProcessorTaskHandler =
-                                        dataProcessorTaskHandlerProvider.get();
-                                dataProcessorTaskHandler.exec(processorTask);
-                            };
-                            return new DistributedDataProcessorTask(JobNames.DATA_PROCESSOR,
-                                    runnable,
-                                    THREAD_POOL,
-                                    processorTask);
-                        })
-                        .collect(Collectors.toList());
-            }
-        } catch (final RuntimeException | NullClusterStateException | NodeNotFoundException e) {
+            return processorTaskList
+                    .getList()
+                    .stream()
+                    .map(processorTask -> {
+                        final Runnable runnable = () -> {
+                            final DataProcessorTaskHandler dataProcessorTaskHandler =
+                                    dataProcessorTaskHandlerProvider.get();
+                            dataProcessorTaskHandler.exec(processorTask);
+                        };
+                        return new DistributedDataProcessorTask(JobNames.DATA_PROCESSOR,
+                                runnable,
+                                THREAD_POOL,
+                                processorTask);
+                    })
+                    .collect(Collectors.toList());
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 
@@ -99,22 +95,20 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     @Override
     public Boolean abandon(final String nodeName, final List<DistributedTask> tasks) {
         try {
-            if (targetNodeSetFactory.isClusterStateInitialised()) {
-                final String masterNode = targetNodeSetFactory.getLeaderNode();
+            final String leader = clusterService.getLeader();
 
-                final List<ProcessorTask> processorTasks = tasks
-                        .stream()
-                        .map(distributedTask -> (DistributedDataProcessorTask) distributedTask)
-                        .map(DistributedDataProcessorTask::getProcessorTask)
-                        .collect(Collectors.toList());
+            final List<ProcessorTask> processorTasks = tasks
+                    .stream()
+                    .map(distributedTask -> (DistributedDataProcessorTask) distributedTask)
+                    .map(DistributedDataProcessorTask::getProcessorTask)
+                    .collect(Collectors.toList());
 
-                final ProcessorTaskList processorTaskList = new ProcessorTaskList(nodeInfo.getThisNodeName(),
-                        processorTasks);
+            final ProcessorTaskList processorTaskList = new ProcessorTaskList(nodeInfo.getThisNodeName(),
+                    processorTasks);
 
-                return processorTaskResource
-                        .abandonTasks(masterNode, processorTaskList);
-            }
-        } catch (final RuntimeException | NullClusterStateException | NodeNotFoundException e) {
+            return processorTaskResource
+                    .abandonTasks(leader, processorTaskList);
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
 

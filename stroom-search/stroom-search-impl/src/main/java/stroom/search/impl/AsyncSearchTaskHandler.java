@@ -17,11 +17,9 @@
 
 package stroom.search.impl;
 
+import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
 import stroom.cluster.task.api.ClusterTaskTerminator;
-import stroom.cluster.task.api.NodeNotFoundException;
-import stroom.cluster.task.api.NullClusterStateException;
-import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.index.impl.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
@@ -56,7 +54,7 @@ class AsyncSearchTaskHandler {
 
     public static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search");
 
-    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final ClusterService clusterService;
     private final IndexShardService indexShardService;
     private final TaskManager taskManager;
     private final ClusterTaskTerminator clusterTaskTerminator;
@@ -68,7 +66,7 @@ class AsyncSearchTaskHandler {
     private final Provider<RemoteNodeSearch> remoteNodeSearchProvider;
 
     @Inject
-    AsyncSearchTaskHandler(final TargetNodeSetFactory targetNodeSetFactory,
+    AsyncSearchTaskHandler(final ClusterService clusterService,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
                            final ClusterTaskTerminator clusterTaskTerminator,
@@ -78,7 +76,7 @@ class AsyncSearchTaskHandler {
                            final EndpointUrlService endpointUrlService,
                            final Provider<LocalNodeSearch> localNodeSearchProvider,
                            final Provider<RemoteNodeSearch> remoteNodeSearchProvider) {
-        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.clusterService = clusterService;
         this.indexShardService = indexShardService;
         this.taskManager = taskManager;
         this.clusterTaskTerminator = clusterTaskTerminator;
@@ -95,7 +93,7 @@ class AsyncSearchTaskHandler {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
             if (!parentContext.isTerminated()) {
-                final String sourceNode = targetNodeSetFactory.getSourceNode();
+                final String local = clusterService.getLocal();
                 final Map<String, List<Long>> shardMap = new HashMap<>();
 
                 // Create an async call that will terminate the whole task if the coprocessors decide they have enough
@@ -106,7 +104,7 @@ class AsyncSearchTaskHandler {
                 try {
                     // Get the nodes that we are going to send the search request
                     // to.
-                    final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                    final Set<String> targetNodes = clusterService.getMembers();
                     parentContext.info(task::getSearchName);
                     final Query query = task.getQuery();
 
@@ -150,7 +148,7 @@ class AsyncSearchTaskHandler {
                                         } else {
                                             nodeSearch = remoteNodeSearchProvider.get();
                                         }
-                                        nodeSearch.searchNode(sourceNode,
+                                        nodeSearch.searchNode(local,
                                                 nodeName,
                                                 shards,
                                                 task,
@@ -174,8 +172,8 @@ class AsyncSearchTaskHandler {
                     all.join();
                     LOGGER.debug(() -> "Done waiting for completion");
 
-                } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
-                    resultCollector.onFailure(sourceNode, e);
+                } catch (final RuntimeException e) {
+                    resultCollector.onFailure(local, e);
 
                 } finally {
                     parentContext.info(() -> task.getSearchName() + " - complete");

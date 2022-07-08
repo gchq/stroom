@@ -19,9 +19,6 @@ package stroom.processor.impl;
 
 import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.NodeInfo;
-import stroom.cluster.task.api.NodeNotFoundException;
-import stroom.cluster.task.api.NullClusterStateException;
-import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
@@ -122,7 +119,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final EventSearch eventSearch;
     private final SecurityContext securityContext;
     private final ClusterService clusterService;
-    private final TargetNodeSetFactory targetNodeSetFactory;
     private final ProcessorConfig processorConfig;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
@@ -177,7 +173,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final EventSearch eventSearch,
                              final SecurityContext securityContext,
                              final ClusterService clusterService,
-                             final TargetNodeSetFactory targetNodeSetFactory,
                              final ProcessorConfig processorConfig) {
 
         this.processorFilterService = processorFilterService;
@@ -193,7 +188,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.eventSearch = eventSearch;
         this.securityContext = securityContext;
         this.clusterService = clusterService;
-        this.targetNodeSetFactory = targetNodeSetFactory;
         this.processorConfig = processorConfig;
     }
 
@@ -487,15 +481,15 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     public void disownDeadTasks() {
         try {
             final String node = nodeInfo.getThisNodeName();
-            final String masterNode = targetNodeSetFactory.getLeaderNode();
-            if (node != null && node.equals(masterNode)) {
+            final String leader = clusterService.getLeader();
+            if (node != null && node.equals(leader)) {
                 // If this is the master node then see if there are any nodes that we haven't had contact with
                 // for some time.
 
                 // IF we haven't had contact with a node for 10 minutes then forcibly release the tasks owned
                 // by that node.
                 final Instant now = Instant.now();
-                final Set<String> activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                final Set<String> activeNodes = clusterService.getMembers();
                 activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now));
                 final Instant disownTaskAge = now.minus(processorConfig.getDisownDeadTasksAfter());
                 if (lastDisownedTasks.isBefore(disownTaskAge)) {
@@ -513,7 +507,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     processorTaskDao.retainOwnedTasks(lastNodeContactTime.keySet(), disownTaskAge);
                 }
             }
-        } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
+        } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
         }
     }
@@ -522,12 +516,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         if (queueMap.size() > 0) {
             try {
                 final String node = nodeInfo.getThisNodeName();
-                final String masterNode = targetNodeSetFactory.getLeaderNode();
-                if (node != null && !node.equals(masterNode)) {
+                final String leader = clusterService.getLeader();
+                if (node != null && !node.equals(leader)) {
                     // This is no longer the master node so release all tasks.
                     releaseAll();
                 }
-            } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
+            } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
             }
         }

@@ -16,7 +16,6 @@
 
 package stroom.job.impl;
 
-import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.shared.Job;
@@ -64,7 +63,6 @@ class DistributedTaskFetcher {
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final SecurityContext securityContext;
     private final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry;
-    private final TargetNodeSetFactory targetNodeSetFactory;
 
     private long lastFetch;
     private final ReentrantLock lock = new ReentrantLock();
@@ -76,14 +74,12 @@ class DistributedTaskFetcher {
                            final TaskContextFactory taskContextFactory,
                            final JobNodeTrackerCache jobNodeTrackerCache,
                            final SecurityContext securityContext,
-                           final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry,
-                           final TargetNodeSetFactory targetNodeSetFactory) {
+                           final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry) {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.securityContext = securityContext;
         this.distributedTaskFactoryRegistry = distributedTaskFactoryRegistry;
-        this.targetNodeSetFactory = targetNodeSetFactory;
     }
 
     /**
@@ -188,32 +184,30 @@ class DistributedTaskFetcher {
 
         // If there are some tasks we need to get then get them.
         if (count > 0 || forceFetch) {
-            if (targetNodeSetFactory.isClusterStateInitialised()) {
-                for (final Entry<String, DistributedTaskFactory> entry :
-                        distributedTaskFactoryRegistry.getFactoryMap().entrySet()) {
+            for (final Entry<String, DistributedTaskFactory> entry :
+                    distributedTaskFactoryRegistry.getFactoryMap().entrySet()) {
 
-                    final String jobName = entry.getKey();
-                    final DistributedTaskFactory distributedTaskFactory = entry.getValue();
+                final String jobName = entry.getKey();
+                final DistributedTaskFactory distributedTaskFactory = entry.getValue();
 
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Task request: node=\"" + nodeName + "\"");
-                        if (LOGGER.isTraceEnabled()) {
-                            final String trace = "\nTask request: node=\"" + nodeName + "\"\n"
-                                    + distributedTaskFactory;
-                            LOGGER.trace(trace);
-                        }
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Task request: node=\"" + nodeName + "\"");
+                    if (LOGGER.isTraceEnabled()) {
+                        final String trace = "\nTask request: node=\"" + nodeName + "\"\n"
+                                + distributedTaskFactory;
+                        LOGGER.trace(trace);
                     }
-
-                    final List<DistributedTask> tasks = distributedTaskFactory.fetch(
-                            nodeName,
-                            count);
-                    handleResult(nodeName, jobName, tasks);
-                    executingTaskCount += tasks.size();
                 }
 
-                // Remember the last fetch time.
-                lastFetch = now;
+                final List<DistributedTask> tasks = distributedTaskFactory.fetch(
+                        nodeName,
+                        count);
+                handleResult(nodeName, jobName, tasks);
+                executingTaskCount += tasks.size();
             }
+
+            // Remember the last fetch time.
+            lastFetch = now;
         }
         return executingTaskCount;
     }

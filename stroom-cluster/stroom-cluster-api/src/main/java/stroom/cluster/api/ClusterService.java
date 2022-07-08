@@ -13,9 +13,9 @@ public interface ClusterService {
 
     void tryLock(String lockName, Runnable runnable);
 
-    Optional<String> getLeaderNodeName();
+    String getLeader();
 
-    Optional<String> getLocalNodeName();
+    String getLocal();
 
-    Set<String> getNodeNames();
+    Set<String> getMembers();
 }

@@ -1,8 +1,6 @@
 package stroom.task.impl;
 
-import stroom.cluster.task.api.NodeNotFoundException;
-import stroom.cluster.task.api.NullClusterStateException;
-import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.cluster.api.ClusterService;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
@@ -46,7 +44,7 @@ class SearchableTaskProgress implements Searchable {
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
-    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final ClusterService clusterService;
     private final TaskResource taskResource;
     private final SecurityContext securityContext;
     private final ExpressionMatcherFactory expressionMatcherFactory;
@@ -54,13 +52,13 @@ class SearchableTaskProgress implements Searchable {
     @Inject
     SearchableTaskProgress(final Executor executor,
                            final TaskContextFactory taskContextFactory,
-                           final TargetNodeSetFactory targetNodeSetFactory,
+                           final ClusterService clusterService,
                            final TaskResource taskResource,
                            final SecurityContext securityContext,
                            final ExpressionMatcherFactory expressionMatcherFactory) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
-        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.clusterService = clusterService;
         this.taskResource = taskResource;
         this.securityContext = securityContext;
         this.expressionMatcherFactory = expressionMatcherFactory;
@@ -134,7 +132,7 @@ class SearchableTaskProgress implements Searchable {
 
             try {
                 // Get the nodes that we are going to send the entity event to.
-                final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                final Set<String> targetNodes = clusterService.getMembers();
 
                 final CountDownLatch countDownLatch = new CountDownLatch(targetNodes.size());
 
@@ -158,7 +156,7 @@ class SearchableTaskProgress implements Searchable {
                 // Wait for all requests to complete.
                 countDownLatch.await();
 
-            } catch (final NullClusterStateException | NodeNotFoundException | InterruptedException e) {
+            } catch (final InterruptedException e) {
                 LOGGER.warn(e.getMessage());
                 LOGGER.debug(e.getMessage(), e);
             } catch (final RuntimeException e) {

@@ -481,7 +481,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private List<String> getNodeList(final String nodeName) {
         return nodeName == null
-                ? new ArrayList<>(clusterService.getNodeNames())
+                ? new ArrayList<>(clusterService.getMembers())
                 : Collections.singletonList(nodeName);
     }
 

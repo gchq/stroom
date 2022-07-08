@@ -17,7 +17,6 @@
 package stroom.cluster.task.impl;
 
 import stroom.cluster.task.api.ClusterTaskTerminator;
-import stroom.cluster.task.api.TargetNodeSetFactory;
 
 import com.google.inject.AbstractModule;
 
@@ -26,7 +25,6 @@ public class ClusterTaskModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ClusterTaskTerminator.class).to(ClusterTaskTerminatorImpl.class);
-        bind(TargetNodeSetFactory.class).to(TargetNodeSetFactoryImpl.class);
     }
 
     @Override

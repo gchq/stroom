@@ -108,12 +108,12 @@ class NodeResourceImpl implements NodeResource {
                     .find(new FindNodeCriteria())
                     .getValues();
 
-            final String leaderNode = clusterServiceProvider.get().getLeaderNodeName().orElse(null);
+            final String leader = clusterServiceProvider.get().getLeader();
 
             final List<NodeStatusResult> resultList = nodes.stream()
                     .sorted(Comparator.comparing(Node::getName))
                     .map(node ->
-                            new NodeStatusResult(node, node.getName().equals(leaderNode)))
+                            new NodeStatusResult(node, node.getName().equals(leader)))
                     .collect(Collectors.toList());
             response = new FetchNodeStatusResponse(resultList);
 

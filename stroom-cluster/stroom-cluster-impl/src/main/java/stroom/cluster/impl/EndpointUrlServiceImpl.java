@@ -15,7 +15,7 @@ public class EndpointUrlServiceImpl implements EndpointUrlService {
 
     @Override
     public Set<String> getNodeNames() {
-        return clusterService.getNodeNames();
+        return clusterService.getMembers();
     }
 
     /**
@@ -31,7 +31,7 @@ public class EndpointUrlServiceImpl implements EndpointUrlService {
             throw new RuntimeException("Remote node '" + nodeName + "' has no URL set");
         }
 
-        final String thisNodeUrl = clusterService.getBaseEndpointUrl(clusterService.getLocalNodeName().orElseThrow());
+        final String thisNodeUrl = clusterService.getBaseEndpointUrl(clusterService.getLocal());
         if (url.equals(thisNodeUrl)) {
             throw new RuntimeException("Remote node '" + nodeName + "' is using the same URL as this node");
         }
@@ -50,7 +50,7 @@ public class EndpointUrlServiceImpl implements EndpointUrlService {
      */
     @Override
     public boolean shouldExecuteLocally(final String nodeName) {
-        final String thisNodeName = clusterService.getLocalNodeName().orElse(null);
+        final String thisNodeName = clusterService.getLocal();
         if (thisNodeName == null) {
             throw new RuntimeException("This node has no name");
         }

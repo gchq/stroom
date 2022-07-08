@@ -16,9 +16,7 @@
 
 package stroom.security.impl.event;
 
-import stroom.cluster.task.api.NodeNotFoundException;
-import stroom.cluster.task.api.NullClusterStateException;
-import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.cluster.api.ClusterService;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 
@@ -38,7 +36,7 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
-    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final ClusterService clusterService;
     private final SecurityContext securityContext;
     private final PermissionChangeEventHandlers permissionChangeEventHandlers;
     private final PermissionChangeResource permissionChangeResource;
@@ -48,13 +46,13 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
     @Inject
     PermissionChangeEventBusImpl(final Executor executor,
                                  final TaskContextFactory taskContextFactory,
-                                 final TargetNodeSetFactory targetNodeSetFactory,
+                                 final ClusterService clusterService,
                                  final SecurityContext securityContext,
                                  final PermissionChangeEventHandlers permissionChangeEventHandlers,
                                  final PermissionChangeResource permissionChangeResource) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
-        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.clusterService = clusterService;
         this.securityContext = securityContext;
         this.permissionChangeEventHandlers = permissionChangeEventHandlers;
         this.permissionChangeResource = permissionChangeResource;
@@ -92,19 +90,16 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
         securityContext.secure(() -> {
             try {
                 // Get this node.
-                final String sourceNode = targetNodeSetFactory.getSourceNode();
+                final String local = clusterService.getLocal();
 
                 // Get the nodes that we are going to send the entity event to.
-                final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                final Set<String> targetNodes = clusterService.getMembers();
 
                 // Only send the event to remote nodes and not this one.
-                targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
+                targetNodes.stream().filter(targetNode -> !targetNode.equals(local)).forEach(targetNode -> {
                     // Send the entity event.
                     permissionChangeResource.fireChange(targetNode, new PermissionChangeRequest(event));
                 });
-            } catch (final NullClusterStateException | NodeNotFoundException e) {
-                LOGGER.warn(e.getMessage());
-                LOGGER.debug(e.getMessage(), e);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }

@@ -13,7 +13,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -54,21 +53,23 @@ public class ClusterServiceImpl implements ClusterService {
                 .getMembers());
     }
 
-    private Optional<Member> getLeader() {
+    private Member getLeaderMember() {
         return instance
                 .getCluster()
                 .getMembers()
                 .stream()
-                .findFirst();
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No cluster members exist"));
     }
 
-    private Optional<Member> getLocal() {
+    private Member getLocalMember() {
         return instance
                 .getCluster()
                 .getMembers()
                 .stream()
                 .filter(Member::localMember)
-                .findFirst();
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No cluster members exist"));
     }
 
     public String getBaseEndpointUrl(final String nodeName) {
@@ -94,37 +95,33 @@ public class ClusterServiceImpl implements ClusterService {
         return member.getAttribute(NODE_ENDPOINT_URL);
     }
 
-    private Optional<String> getNodeName(final Member member) {
-        return Optional.ofNullable(member.getAttribute("NODE_NAME"));
+    private String getNodeName(final Member member) {
+        return member.getAttribute("NODE_NAME");
     }
 
     @Override
-    public Optional<String> getLeaderNodeName() {
-        return getLeader().flatMap(this::getNodeName);
+    public String getLeader() {
+        return getNodeName(getLeaderMember());
     }
 
     @Override
-    public Optional<String> getLocalNodeName() {
-        return getLocal().flatMap(this::getNodeName);
+    public String getLocal() {
+        return getNodeName(getLocalMember());
     }
 
     @Override
-    public Set<String> getNodeNames() {
+    public Set<String> getMembers() {
         return instance
                 .getCluster()
                 .getMembers()
                 .stream()
                 .map(this::getNodeName)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
                 .collect(Collectors.toSet());
     }
 
     @Override
     public boolean isLeader() {
-        return getLeader()
-                .map(Member::localMember)
-                .orElse(false);
+        return getLeader().equals(getLocal());
     }
 
     @Override

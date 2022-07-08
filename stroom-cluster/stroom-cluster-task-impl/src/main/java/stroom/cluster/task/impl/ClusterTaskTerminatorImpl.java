@@ -1,9 +1,7 @@
 package stroom.cluster.task.impl;
 
+import stroom.cluster.api.ClusterService;
 import stroom.cluster.task.api.ClusterTaskTerminator;
-import stroom.cluster.task.api.NodeNotFoundException;
-import stroom.cluster.task.api.NullClusterStateException;
-import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.shared.FindTaskCriteria;
@@ -25,19 +23,19 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
-    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final ClusterService clusterService;
     private final TaskResource taskResource;
     private final SecurityContext securityContext;
 
     @Inject
     ClusterTaskTerminatorImpl(final Executor executor,
                               final TaskContextFactory taskContextFactory,
-                              final TargetNodeSetFactory targetNodeSetFactory,
+                              final ClusterService clusterService,
                               final TaskResource taskResource,
                               final SecurityContext securityContext) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
-        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.clusterService = clusterService;
         this.taskResource = taskResource;
         this.securityContext = securityContext;
     }
@@ -66,7 +64,7 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
 
             try {
                 // Get the nodes that we are going to send the entity event to.
-                final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                final Set<String> targetNodes = clusterService.getMembers();
 
                 // Only send the event to remote nodes and not this one.
                 // Send the entity event.
@@ -87,10 +85,6 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
                             });
                     CompletableFuture.runAsync(runnable, executor);
                 });
-
-            } catch (final NullClusterStateException | NodeNotFoundException e) {
-                LOGGER.warn(e.getMessage());
-                LOGGER.debug(e.getMessage(), e);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }

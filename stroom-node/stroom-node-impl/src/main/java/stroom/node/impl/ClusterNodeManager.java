@@ -83,10 +83,10 @@ public class ClusterNodeManager {
                 .collect(Collectors.toList());
         final ClusterState clusterState = new ClusterState();
         clusterState.setAllNodes(allNodeNames);
-        final Collection<String> enabledNodes = clusterService.getNodeNames();
+        final Collection<String> enabledNodes = clusterService.getMembers();
         clusterState.setEnabledNodes(enabledNodes);
-        clusterState.setMasterNodeName(clusterService.getLeaderNodeName().orElse(null));
-        clusterState.setEnabledNodes(clusterService.getNodeNames());
+        clusterState.setMasterNodeName(clusterService.getLeader());
+        clusterState.setEnabledNodes(clusterService.getMembers());
 
         clusterState.setUpdateTime(System.currentTimeMillis());
         return clusterState;

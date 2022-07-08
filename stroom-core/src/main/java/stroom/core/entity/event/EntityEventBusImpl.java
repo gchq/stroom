@@ -16,9 +16,7 @@
 
 package stroom.core.entity.event;
 
-import stroom.cluster.task.api.NodeNotFoundException;
-import stroom.cluster.task.api.NullClusterStateException;
-import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.cluster.api.ClusterService;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -42,7 +40,7 @@ class EntityEventBusImpl implements EntityEventBus {
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
-    private final Provider<TargetNodeSetFactory> targetNodeSetFactoryProvider;
+    private final Provider<ClusterService> clusterServiceProvider;
     private final SecurityContext securityContext;
     private final EntityEventHandler entityEventHandler;
     private final EntityEventResource entityEventResource;
@@ -52,13 +50,13 @@ class EntityEventBusImpl implements EntityEventBus {
     @Inject
     EntityEventBusImpl(final Executor executor,
                        final TaskContextFactory taskContextFactory,
-                       final Provider<TargetNodeSetFactory> targetNodeSetFactoryProvider,
+                       final Provider<ClusterService> clusterServiceProvider,
                        final SecurityContext securityContext,
                        final EntityEventHandler entityEventHandler,
                        final EntityEventResource entityEventResource) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
-        this.targetNodeSetFactoryProvider = targetNodeSetFactoryProvider;
+        this.clusterServiceProvider = clusterServiceProvider;
         this.securityContext = securityContext;
         this.entityEventHandler = entityEventHandler;
         this.entityEventResource = entityEventResource;
@@ -110,18 +108,18 @@ class EntityEventBusImpl implements EntityEventBus {
     private void fireRemote(final EntityEvent entityEvent,
                             final TaskContext parentTaskContext) {
         try {
-            final TargetNodeSetFactory targetNodeSetFactory = targetNodeSetFactoryProvider.get();
+            final ClusterService clusterService = clusterServiceProvider.get();
 
             // Get this node.
-            final String sourceNode = targetNodeSetFactory.getSourceNode();
+            final String local = clusterService.getLocal();
 
             // Get the nodes that we are going to send the entity event to.
-            final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+            final Set<String> targetNodes = clusterService.getMembers();
 
             // Only send the event to remote nodes and not this one.
             CompletableFuture.allOf(targetNodes
                     .stream()
-                    .filter(targetNode -> !targetNode.equals(sourceNode))
+                    .filter(targetNode -> !targetNode.equals(local))
                     .map(targetNode -> {
                         // Send the entity event asynchronously.
                         final Runnable runnable = taskContextFactory.childContext(
@@ -131,9 +129,6 @@ class EntityEventBusImpl implements EntityEventBus {
                         );
                         return CompletableFuture.runAsync(runnable, executor);
                     }).toArray(CompletableFuture[]::new)).join();
-        } catch (final NullClusterStateException | NodeNotFoundException e) {
-            LOGGER.warn(e.getMessage());
-            LOGGER.debug(e.getMessage(), e);
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }

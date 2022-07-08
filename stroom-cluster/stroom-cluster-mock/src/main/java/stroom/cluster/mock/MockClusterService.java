@@ -4,7 +4,6 @@ import stroom.cluster.api.ClusterRole;
 import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.NodeInfo;
 
-import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 
@@ -38,17 +37,17 @@ public class MockClusterService implements ClusterService {
     }
 
     @Override
-    public Optional<String> getLeaderNodeName() {
-        return Optional.of(nodeInfo.getThisNodeName());
+    public String getLeader() {
+        return nodeInfo.getThisNodeName();
     }
 
     @Override
-    public Optional<String> getLocalNodeName() {
-        return Optional.of(nodeInfo.getThisNodeName());
+    public String getLocal() {
+        return nodeInfo.getThisNodeName();
     }
 
     @Override
-    public Set<String> getNodeNames() {
+    public Set<String> getMembers() {
         return Set.of(nodeInfo.getThisNodeName());
     }
 }
