@@ -828,8 +828,8 @@ appConfig:
         fetchSize: 5000
         maxResults: 100000
       slowQueryWarningThreshold: "PT1S"
-      statisticAggregationBatchSize: 100000
-      statisticAggregationStageTwoBatchSize: 100000
+      statisticAggregationBatchSize: 1000000
+      statisticAggregationStageTwoBatchSize: 200000
       statisticFlushBatchSize: 8000
   ui:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
