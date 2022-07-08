@@ -33,10 +33,12 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -95,14 +97,27 @@ public class SQLStatisticAggregationTransactionHelper {
             "        WHERE FK_SQL_STAT_KEY_ID = SQL_STAT_KEY.ID " +
             ")");
 
-    // Find the highest ID out of the bottom n rows of the table. This ID or below then marks
+    // Find the highest ID out of the top n rows of the table. This ID or below then marks
     // the batch to work on. This means we always work on the oldest n rows which is fairer
     // and avoids conflict with the new rows being added to the top of the table.
-    private static final String STAGE1_ESTABLISH_BATCH = condenseSql("" +
-            "SELECT MAX(ID) " +
-            "FROM SQL_STAT_VAL_SRC " +
-            "ORDER BY ID DESC " +
-            "LIMIT ? ");
+    // TODO The max on a sub-select triggers a 'filesort' which may not be optimal.
+    //   Other options are:
+    //   select id from SQL_STAT_VAL_SRC order by id limit ?,1;  where ? is batch size - 1 but
+    //     this will return null if there are less rows than batch size.
+    //   select max(id), count(1) from SQL_STAT_VAL_SRC;  then if count is less than batch size
+    //     use the max(id) else use the limit ?,1 approach with ? = count - 1
+    // For info these are timings (secs) for various approaches to getting the max id of the top n ids
+    // with 1.6 mil rows.
+    // | 0.03840500 | select max(id), count(1) from SQL_STAT_VAL_SRC                                    |
+    // | 0.11568625 | select id from SQL_STAT_VAL_SRC order by id limit 999999,1                        |
+    // | 0.42600850 | select max(id) from (select id from SQL_STAT_VAL_SRC order by id limit 1000000) v |
+    private static final String STAGE1_ESTABLISH_BATCH = condenseSql("""
+            SELECT MAX(ID) \
+            FROM
+                (SELECT ID
+                FROM SQL_STAT_VAL_SRC \
+                ORDER BY ID\
+                LIMIT ?) v""");
 
     // @formatter:off
     private static final String STAGE1_AGGREGATE_SOURCE_KEY = condenseSql("" +
@@ -129,31 +144,11 @@ public class SQLStatisticAggregationTransactionHelper {
             "AND TIME_MS < ? " +
             "AND VAL_TP = ?");
 
-    // Find if records exist in STAT_VAL older than a given age for a given
-    // precision
-    private static final String STAGE2_FIND_ROWS_TO_MOVE = condenseSql("" +
-            "SELECT " +
-            "   EXISTS( " +
-            "       SELECT " +
-            "           NULL " +
-            "       FROM SQL_STAT_VAL SSV " +
-            "       WHERE SSV.PRES = ? " + // old PRES
-            "       AND SSV.VAL_TP = ? " +
-            "       AND SSV.TIME_MS < ? " +
-            "   )");
-
     // Copy stats from one precision to a coarser precision, aggregating them
     // with any stats
     // in the target precision if there are any
-    private static final String SPROC_STAGE2_UPSERT = "{call stage2Upsert (?, ?, ?, ?, ?, ?)}";
-
-    // Delete records from STAT_VAL older than a certain threshold for a given
-    // precision
-    private static final String STAGE2_AGGREGATE_DELETE_OLD_PRECISION = condenseSql("" +
-            "DELETE FROM SQL_STAT_VAL " +
-            "WHERE TIME_MS < ? " +
-            "AND PRES = ? " +
-            "AND VAL_TP = ?");
+    private static final String SPROC_STAGE2_UPSERT =
+            "{call stage2Upsert (?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
     private final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     private final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider;
@@ -317,7 +312,7 @@ public class SQLStatisticAggregationTransactionHelper {
                         LOGGER.debug("Thread interrupted");
                     }
                 }
-                LOGGER.info("Deleted {} stats with a time older than {}", totalRowsAffected,
+                LOGGER.debug("Deleted {} stats with a time older than {}", totalRowsAffected,
                         DateUtil.createNormalDateTimeString(oldestTimeBucketToKeep));
                 return totalRowsAffected;
             }
@@ -400,11 +395,13 @@ public class SQLStatisticAggregationTransactionHelper {
                         final String bucketSizeStr = ModelStringUtil.formatDurationString(bucketSize);
                         final long aggregateToMs = level.getAggregateToMs(timeNow);
 
-                        final String newPrefix = prefix + " Source "
-                                + level.getValueType() + " < "
-                                + DateUtil.createNormalDateTimeString(aggregateToMs)
-                                + " P=" + level.getPrecision()
-                                + " (Size " + bucketSizeStr + ")";
+                        final String newPrefix = prefix
+                                + " type: " + level.getValueType()
+                                + " aggregateTo: < " + DateUtil.createNormalDateTimeString(aggregateToMs)
+                                + " Precision: " + level.getPrecision()
+                                + " (Bucket size " + bucketSizeStr + ")"
+                                + " batchMaxId: " + batchMaxId
+                                + " batchSize: " + batchSize;
 
                         // insert a batch of data in STAT_VAL_SRC into
                         // SQL_STAT_VAL_TMP,
@@ -425,6 +422,8 @@ public class SQLStatisticAggregationTransactionHelper {
                                 level.getValueType().getPrimitiveValue(),
                                 aggregateToMs,
                                 batchMaxId);
+                        LOGGER.debug("rowsAffectedOnUpsert: {}", rowsAffectedOnUpsert);
+                        processCount += rowsAffectedOnUpsert;
 
                         // delete records from STAT_VAL_SRC up to maxSrcId and below
                         // aggregateToMs,
@@ -439,6 +438,7 @@ public class SQLStatisticAggregationTransactionHelper {
                                     List.of(batchMaxId,
                                             aggregateToMs,
                                             level.getValueType().getPrimitiveValue()));
+                            LOGGER.debug("rowsAffectedOnDelete: {}", rowsAffectedOnDelete);
                         }
 
                         if (rowsAffectedOnUpsert > 0 && rowsAffectedOnDelete == 0) {
@@ -449,16 +449,18 @@ public class SQLStatisticAggregationTransactionHelper {
                         }
                     }
 
+                    // If we bail here then we have ensured all keys for our batch, merged all data for
+                    // this aggregateConfig into SQL_STAT_VAL and deleted the SQL_STAT_VAL_SRC rows
+                    // for this aggregateConfig.  Thus, next time round it can just form a new batch
+                    // with whatever is left.
                     if (Thread.currentThread().isInterrupted()) {
-                        LOGGER.debug("Thread interrupted. Safely stopping here.");
+                        LOGGER.debug("Thread interrupted during stage 1 aggregation. Safely stopping here.");
+                        break;
                     }
                 }
             }
-
         }
-
         return processCount;
-
     }
 
     private int callUpsert1(final Connection connection,
@@ -471,9 +473,8 @@ public class SQLStatisticAggregationTransactionHelper {
                             final long batchMaxId) throws SQLException {
         int count;
         final LogExecutionTime time = new LogExecutionTime();
-        taskContext.info(() -> prefix + "\n " + SPROC_STAGE1_UPSERT);
+        taskContext.info(() -> prefix);
 
-        LOGGER.debug(() -> ">>> " + condenseSql(SPROC_STAGE1_UPSERT));
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE1_UPSERT)) {
             // Set IN parameters
             stmt.setByte(1, sqlPrecision);
@@ -506,12 +507,24 @@ public class SQLStatisticAggregationTransactionHelper {
                             final byte targetSqlPrecision,
                             final byte lastPrecision,
                             final byte valueType,
-                            final long aggregateToMs) throws SQLException {
-        int count;
+                            final long aggregateToMs,
+                            final int batchSize,
+                            final int iteration) throws SQLException {
+        int upsertCount;
+        int deleteCount;
         final LogExecutionTime time = new LogExecutionTime();
-        taskContext.info(() -> prefix + "\n " + SPROC_STAGE2_UPSERT);
 
-        LOGGER.debug(">>> " + condenseSql(SPROC_STAGE2_UPSERT));
+        final Supplier<String> infoSupplier = () -> prefix +
+                " - Type: " + valueType
+                + ", aggregateTo: < " + DateUtil.createNormalDateTimeString(aggregateToMs)
+                + ", Precision: " + lastPrecision + "=>" + targetPrecision
+                + ", iteration: " + iteration
+                + ", batchSize: " + batchSize;
+        LOGGER.debug(() -> LogUtil.message("aggregateToMs: {} ({})",
+                aggregateToMs, Instant.ofEpochMilli(aggregateToMs)));
+
+        taskContext.info(infoSupplier);
+
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE2_UPSERT)) {
             // Set IN parameters
             stmt.setByte(1, targetPrecision);
@@ -519,36 +532,51 @@ public class SQLStatisticAggregationTransactionHelper {
             stmt.setByte(3, lastPrecision);
             stmt.setByte(4, valueType);
             stmt.setLong(5, aggregateToMs);
+            stmt.setInt(6, batchSize);
 
-            // Set OUT parameter
-            stmt.registerOutParameter(6, Types.INTEGER);
+            // Set OUT parameters
+            stmt.registerOutParameter(7, Types.INTEGER);
+            stmt.registerOutParameter(8, Types.INTEGER);
+            stmt.registerOutParameter(9, Types.VARCHAR);
 
             // Execute stored procedure
             stmt.execute();
 
             // Get the OUT parameter
-            count = stmt.getInt(6);
+            upsertCount = stmt.getInt(7);
+            deleteCount = stmt.getInt(8);
+
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("stage2Upsert log:{}", stmt.getString(9));
+            }
         } catch (final SQLException sqlException) {
             LOGGER.error("callUpsert2", sqlException);
             throw sqlException;
         }
 
-        LOGGER.debug("callUpsert2 - {} - {} in {}", prefix, ModelStringUtil.formatCsv(count), time);
-        return count;
+        LOGGER.debug(() -> LogUtil.message("callUpsert2 - {} - upsertCount: {}, deleteCount: {} in {}",
+                infoSupplier.get(),
+                ModelStringUtil.formatCsv(upsertCount),
+                ModelStringUtil.formatCsv(deleteCount),
+                time));
+        // The deleteCount is what we care about as that tells us how many were moved up to the next
+        // level
+        return deleteCount;
     }
 
     public long aggregateConfigStage2(final TaskContext taskContext,
                                       final String prefix,
+                                      final int stage2BatchSize,
                                       final Instant timeNow)
             throws SQLException {
         long totalCount = 0;
+        List<Integer> iterationsLog = new ArrayList<>(aggregateConfig.length);
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             // Stage 2 is about moving stats from one precision in STAT_VAL to a
             // coarser one once they have become too old for their current
             // precision
             for (final AggregateConfig level : aggregateConfig) {
-                final long bucketSize = (long) Math.pow(10, level.getPrecision());
-                final String bucketSizeStr = ModelStringUtil.formatDurationString(bucketSize);
                 final long aggregateToMs = level.getAggregateToMs(timeNow);
                 final byte targetPrecision = level.getPrecision();
                 final byte lastPrecision = level.getLastPrecision();
@@ -558,66 +586,39 @@ public class SQLStatisticAggregationTransactionHelper {
                 // if statement to ignore the case of DEFAULT->DEFAULT where
                 // there is nothing to roll up
                 if (targetPrecision != lastPrecision) {
-                    final String newPrefix = prefix + " Existing " + level.getValueType() + " < "
-                            + DateUtil.createNormalDateTimeString(aggregateToMs) + " P=" + level.getLastPrecision()
-                            + ">" + level.getPrecision() + " (Size " + bucketSizeStr + ")";
 
-                    // check if there are any rows that need moving to a new
-                    // precision for this time range, precision
-                    // and value type, returns zero if none exist, one
-                    // otherwise. Don't car how many rows there are
-                    // just that there are more than zero. This stops the upsert
-                    // from changing rows for no reason.
-                    final Optional<Long> rowsExist = doLongSelect(
-                            connection,
-                            taskContext,
-                            newPrefix,
-                            STAGE2_FIND_ROWS_TO_MOVE,
-                            Arrays.asList(
-                                    lastPrecision,
-                                    valueType,
-                                    aggregateToMs));
-
-                    if (rowsExist.filter(i -> i == 1).isPresent()) {
-                        // Find any stats that are too old for their current
-                        // precision and roll them up into a
-                        // coarser precision, aggregating with existing stats if
-                        // required. Does an update or
-                        // insert depending on if the target precision has a
-                        // record or not.
-
-                        final int upsertCount = callUpsert2(connection,
+                    int deleteCount;
+                    int iteration = 0;
+                    // Keep calling it till it finds no data to process
+                    do {
+                        deleteCount = callUpsert2(
+                                connection,
                                 taskContext,
-                                newPrefix,
+                                prefix,
                                 targetPrecision,
                                 targetSqlPrecision,
                                 lastPrecision,
                                 valueType,
-                                aggregateToMs);
+                                aggregateToMs,
+                                stage2BatchSize,
+                                ++iteration);
 
-                        if (upsertCount > 0) {
-                            // now delete the old stats that we just copied up
-                            // into the new precision
-                            doAggregateSQL_Update(
-                                    connection,
-                                    taskContext,
-                                    newPrefix,
-                                    STAGE2_AGGREGATE_DELETE_OLD_PRECISION,
-                                    Arrays.asList(
-                                            aggregateToMs,
-                                            lastPrecision,
-                                            valueType));
-                            totalCount += upsertCount;
-                        }
-                    } else {
-                        LOGGER.debug("No rows to move");
-                    }
+                        totalCount += deleteCount;
+                    } while (deleteCount >= stage2BatchSize);
+                    iterationsLog.add(iteration);
                 }
                 if (Thread.currentThread().isInterrupted()) {
                     LOGGER.debug("Thread interrupted. Safely stopping here.");
                 }
             }
         }
+        LOGGER.info("Completed stage 2 aggregation with max iterations {} in {}{}",
+                iterationsLog.stream().max(Comparator.naturalOrder()).orElse(0),
+                logExecutionTime.getDuration(),
+                (Thread.currentThread().isInterrupted()
+                        ? " INTERRUPTED"
+                        : ""));
+
         return totalCount;
     }
 
@@ -628,9 +629,6 @@ public class SQLStatisticAggregationTransactionHelper {
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final Statement statement = connection.createStatement()) {
                 final String sql = TRUNCATE_TABLE_SQL + tableName;
-                // (TRUNCATE_TABLE_SQL
-                // +
-                // tableName);
                 statement.execute(sql);
 
                 LOGGER.debug("Truncated table {} in {}ms", tableName, logExecutionTime.getDurationMs());

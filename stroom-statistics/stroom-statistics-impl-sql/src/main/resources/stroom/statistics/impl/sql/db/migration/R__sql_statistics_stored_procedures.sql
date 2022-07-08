@@ -3,8 +3,47 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 DELIMITER //
 
+
+DROP PROCEDURE IF EXISTS `log_string_value` //
+
+CREATE PROCEDURE `log_string_value` (
+    INOUT p_log VARCHAR(1000),
+    IN p_is_trace_enabled BOOLEAN,
+    IN p_name VARCHAR(1000),
+    IN p_value VARCHAR(1000))
+BEGIN
+
+    IF p_is_trace_enabled THEN
+        SET p_log = CONCAT(p_log, '\n', p_name, ': ', COALESCE(p_value, 'null'));
+    END IF;
+
+END //
+
+-- -----------------------------------------------------------------------
+
+DROP PROCEDURE IF EXISTS `log_num_value` //
+
+CREATE PROCEDURE `log_num_value` (
+    INOUT p_log VARCHAR(1000),
+    IN p_is_trace_enabled BOOLEAN,
+    IN p_name VARCHAR(1000),
+    IN p_value BIGINT)
+BEGIN
+
+    IF p_is_trace_enabled THEN
+        SET p_log = CONCAT(p_log, '\n', p_name, ': ', COALESCE(p_value, 'null'));
+    END IF;
+
+END //
+
+-- -----------------------------------------------------------------------
+
 DROP PROCEDURE IF EXISTS `stage1Upsert` //
 
+-- This sproc merges rows from SQL_STAT_VAL_SRC into SQL_STAT_VAL,
+-- either by adding a new row or by merging the existing aggregate with
+-- the aggregate of the grouped rows from SQL_STAT_VAL_SRC.
+-- Must only be run one node and one thread.
 CREATE PROCEDURE `stage1Upsert` (
     IN p_sqlPrecision tinyint,
     IN p_precision tinyint,
@@ -15,6 +54,7 @@ CREATE PROCEDURE `stage1Upsert` (
 BEGIN
     DECLARE change_count INT DEFAULT 0;
 
+    -- Build the new and merged aggregate counts/values in a temp table
     CREATE TEMPORARY TABLE TEMP_AGG AS (
         SELECT
             SSVT.FK_SQL_STAT_KEY_ID as FK_SQL_STAT_KEY_ID,
@@ -33,9 +73,9 @@ BEGIN
                 SSK.ID as FK_SQL_STAT_KEY_ID
             FROM SQL_STAT_VAL_SRC SSVS
             JOIN SQL_STAT_KEY SSK ON (SSK.NAME = SSVS.NAME)
-            WHERE SSVS.TIME_MS < p_aggregateToMs
-            AND SSVS.VAL_TP = p_valueType
-            AND SSVS.ID <= p_batch_max_id
+            WHERE SSVS.ID <= p_batch_max_id -- Use PK as a batching mechanism
+            AND SSVS.TIME_MS < p_aggregateToMs -- Filter within our batch
+            AND SSVS.VAL_TP = p_valueType -- Filter within our batch
             GROUP BY
                 FK_SQL_STAT_KEY_ID,
                 TIME_MS_RND,
@@ -51,6 +91,7 @@ BEGIN
         )
     );
 
+    -- Merge the temp table contents into SQL_STAT_VAL
     INSERT INTO SQL_STAT_VAL (
         FK_SQL_STAT_KEY_ID,
         TIME_MS,
@@ -116,79 +157,251 @@ BEGIN
     DROP TEMPORARY TABLE TEMP_AGG;
 END //
 
+-- -----------------------------------------------------------------------
+
 DROP PROCEDURE IF EXISTS `stage2Upsert` //
 
+-- Moves data at one precision to another (e.g. HOUR => DAY),
+-- merging the re-computed fine grained stats into the existing course
+-- grained stats (if there are any).
+-- Must only be run one node and one thread.
 CREATE PROCEDURE `stage2Upsert` (
-    IN p_targetPrecision tinyint,
-    IN p_targetSqlPrecision tinyint,
-    IN p_lastPrecision tinyint,
-    IN p_valueType tinyint,
-    IN p_aggregateToMs bigint,
-    OUT p_rowCount int)
+    IN p_targetPrecision TINYINT,
+    IN p_targetSqlPrecision TINYINT,
+    IN p_lastPrecision TINYINT,
+    IN p_valueType TINYINT,
+    IN p_aggregateToMs BIGINT,
+    IN p_batch_size INT,
+    OUT p_upsertCount INT,
+    OUT p_deleteCount INT,
+    OUT p_log VARCHAR(1000))
 BEGIN
-    -- TODO Don't think we need to do this as java has already rounded it
-    SET @rounded_aggregate_to = ROUND(p_aggregateToMs, p_targetSqlPrecision);
+    DECLARE v_batch_min_time_ms BIGINT;
+    DECLARE v_batch_max_time_ms BIGINT;
+    DECLARE v_rounded_batch_min_time_ms BIGINT;
+    DECLARE v_rounded_batch_max_time_ms BIGINT;
+    DECLARE v_old_data_count INT;
+    DECLARE v_old_data_count_in_batch INT;
+    DECLARE v_data_exists TINYINT;
+    DECLARE v_log VARCHAR(1000);
+    DECLARE v_val BIGINT;
+    DECLARE v_ct BIGINT;
 
-    -- TODO Are we using < or <= for TIME_MS ?
-    CREATE TEMPORARY TABLE TEMP_AGG AS (
+    SET v_log = '';
+    SET p_upsertCount = 0;
+    SET p_deleteCount = 0;
+    SET v_val = 0;
+    SET v_ct = 0;
+
+    SET v_log = CONCAT(v_log, '\n', 'p_valueType: ', COALESCE(p_valueType, 'null'));
+    SET v_log = CONCAT(v_log, '\n', 'p_targetPrecision: ', COALESCE(p_targetPrecision, 'null'));
+    SET v_log = CONCAT(v_log, '\n', 'p_lastPrecision: ', COALESCE(p_lastPrecision, 'null'));
+    SET v_log = CONCAT(v_log, '\n', 'p_batch_size: ', COALESCE(p_batch_size, 'null'));
+
+    -- Check if there are any rows that need moving to a new
+    -- precision for this time range, precision
+    -- and value type, returns zero if none exist, one
+    -- otherwise.
+    SELECT
+       EXISTS (
+           SELECT
+               NULL
+           FROM SQL_STAT_VAL SSV
+           WHERE SSV.PRES = p_lastPrecision
+           AND SSV.VAL_TP = p_valueType
+           AND SSV.TIME_MS < p_aggregateToMs
+       )
+    INTO v_data_exists;
+
+    SET v_log = CONCAT(v_log, '\n', 'v_data_exists: ', COALESCE(v_data_exists, 'null'));
+
+    SELECT COUNT(*)
+    INTO v_old_data_count
+    FROM SQL_STAT_VAL SSV
+    WHERE SSV.PRES = p_lastPrecision  -- old PRES
+    AND SSV.VAL_TP = p_valueType
+    AND SSV.TIME_MS < p_aggregateToMs;
+
+    SET v_log = CONCAT(v_log, '\n', 'v_old_data_count: ', COALESCE(v_old_data_count, 'null'));
+
+    SELECT
+        SUM(COALESCE(VAL, 0)),
+        SUM(COALESCE(CT, 0))
+    INTO v_val, v_ct
+    FROM
+        SQL_STAT_VAL
+    WHERE PRES = p_targetPrecision
+    AND VAL_TP = p_valueType;
+
+    SET v_log = CONCAT(v_log, '\n', 'v_val: ', COALESCE(v_val, 0));
+    SET v_log = CONCAT(v_log, '\n', 'v_ct: ', COALESCE(v_ct, 0));
+
+    SELECT
+        SUM(COALESCE(VAL, 0)),
+        SUM(COALESCE(CT, 0))
+    INTO v_val, v_ct
+    FROM
+        SQL_STAT_VAL
+    WHERE PRES = p_lastPrecision
+    AND VAL_TP = p_valueType;
+
+    SET v_log = CONCAT(v_log, '\n', 'v_val: ', COALESCE(v_val, 0));
+    SET v_log = CONCAT(v_log, '\n', 'v_ct: ', COALESCE(v_ct, 0));
+
+    IF v_data_exists = 1 THEN
+        -- We have at least one record that needs moving to a coarser time bucket so
+        -- process the row up to p_aggregateToMs in batches.
+        -- This means we can run agg stage 2 in smaller batches to make stopping it quicker.
+        -- We grab the latest time of the oldest N rows that are below the aggregation threshold
+        -- and then work off that time in the rest of the sql.
         SELECT
+            MIN(TIME_MS),
+            MAX(TIME_MS)
+        INTO
+            v_batch_min_time_ms,
+            v_batch_max_time_ms
+        FROM (
+            SELECT
+                ssv.TIME_MS
+            FROM SQL_STAT_VAL ssv
+            WHERE ssv.PRES = p_lastPrecision
+            AND ssv.VAL_TP = p_valueType
+            AND ssv.TIME_MS < p_aggregateToMs
+            ORDER BY ssv.TIME_MS
+            LIMIT p_batch_size) v;
+
+        SET v_rounded_batch_min_time_ms = ROUND(v_batch_min_time_ms, p_targetSqlPrecision);
+        SET v_rounded_batch_max_time_ms = ROUND(v_batch_max_time_ms, p_targetSqlPrecision);
+
+        SET v_log = CONCAT(v_log, '\n', 'v_batch_min_time_ms: ', COALESCE(v_batch_min_time_ms, 'null'));
+        SET v_log = CONCAT(v_log, '\n', 'v_batch_max_time_ms: ', COALESCE(v_batch_max_time_ms, 'null'));
+        SET v_log = CONCAT(v_log, '\n', 'v_rounded_batch_min_time_ms: ', COALESCE(v_rounded_batch_min_time_ms, 'null'));
+        SET v_log = CONCAT(v_log, '\n', 'v_rounded_batch_max_time_ms: ', COALESCE(v_rounded_batch_max_time_ms, 'null'));
+
+        SELECT COUNT(*)
+        INTO v_old_data_count_in_batch
+        FROM SQL_STAT_VAL SSV
+        WHERE SSV.PRES = p_lastPrecision  -- old PRES
+        AND SSV.VAL_TP = p_valueType
+        AND SSV.TIME_MS <= v_batch_max_time_ms;
+
+        SET v_log = CONCAT(v_log, '\n', 'v_old_data_count_in_batch: ', COALESCE(v_old_data_count_in_batch, 'null'));
+--        SET @rounded_aggregate_to = ROUND(p_aggregateToMs, p_targetSqlPrecision);
+--        SET v_log = CONCAT(v_log, '\n', 'rounded_aggregate_to: ', COALESCE(@rounded_aggregate_to, 'null'));
+
+        -- Combine the aggregates from the existing data in the target precision with the data that
+        -- needs to be moved to the target precision.
+        -- Inserted into a temp table as we had issue with the ON DUPLICATE KEY
+        CREATE TEMPORARY TABLE TEMP_AGG AS (
+            SELECT
+                FK_SQL_STAT_KEY_ID,
+                TIME_MS,
+                SUM(COALESCE(VAL,0)) AS VAL,
+                SUM(COALESCE(CT,0)) AS CT
+            FROM (
+                (   -- existing values at correct precision
+                    SELECT
+                        SSVO.TIME_MS,
+                        SSVO.VAL,
+                        SSVO.CT,
+                        SSVO.FK_SQL_STAT_KEY_ID
+                    FROM SQL_STAT_VAL SSVO
+                    WHERE SSVO.PRES = p_targetPrecision  -- target pres
+                    AND SSVO.VAL_TP = p_valueType
+--                    AND SSVO.TIME_MS <= v_batch_max_time_ms  -- only pick up records up to the point we are interested in
+--                    AND SSVO.TIME_MS <= @rounded_aggregate_to  -- only pick up records up to the point we are interested in
+                    AND SSVO.TIME_MS <= v_rounded_batch_max_time_ms  -- only pick up records up to the point we are interested in
+                    AND SSVO.TIME_MS >= v_rounded_batch_max_time_ms  -- only pick up records up to the point we are interested in
+                )
+                UNION ALL
+                (   -- values at a finer precision that need to be aggregated into the target precision
+                    -- The times get rounded to the same precision as the ones selected in the other half
+                    -- of the union.
+                    -- We don't need to use v_batch_min_time_ms as that data below that point will have been
+                    -- deleted in a previous batch.
+                    SELECT
+                        ROUND(SSVN.TIME_MS, p_targetSqlPrecision),  -- pres, e.g. -9
+                        SSVN.VAL,
+                        SSVN.CT,
+                        SSVN.FK_SQL_STAT_KEY_ID
+                    FROM SQL_STAT_VAL SSVN
+                    WHERE SSVN.PRES = p_lastPrecision  -- old PRES
+                    AND SSVN.VAL_TP = p_valueType
+                    AND SSVN.TIME_MS <= v_batch_max_time_ms -- Only work on data up to our batch limit
+--                    AND SSVN.TIME_MS < p_aggregateToMs
+                )
+            ) ROUNDED
+            GROUP BY
+                ROUNDED.FK_SQL_STAT_KEY_ID,
+                ROUNDED.TIME_MS
+        );
+
+        -- Merge the (re-)?computed stats into SQL_STAT_VAL either replacing what is
+        -- there or inserting new
+        INSERT INTO SQL_STAT_VAL (
             FK_SQL_STAT_KEY_ID,
             TIME_MS,
-            SUM(COALESCE(VAL,0)) AS VAL,
-            SUM(COALESCE(CT,0)) AS CT
-        FROM (
-            (   -- existing values at correct precision
-                SELECT
-                    SSVO.TIME_MS,
-                    SSVO.VAL,
-                    SSVO.CT,
-                    SSVO.FK_SQL_STAT_KEY_ID
-                FROM SQL_STAT_VAL SSVO
-                WHERE SSVO.PRES = p_targetPrecision  -- target pres
-                AND SSVO.VAL_TP = p_valueType
-                AND SSVO.TIME_MS <= @rounded_aggregate_to  -- only pick up records up to the point we are interested in
-            )
-            UNION ALL
-            (   -- values at a finer precision that need to be aggregated into the target precision
-                SELECT
-                    ROUND(SSVN.TIME_MS, p_targetSqlPrecision),  -- target pres, e.g. -9
-                    SSVN.VAL,
-                    SSVN.CT,
-                    SSVN.FK_SQL_STAT_KEY_ID
-                FROM SQL_STAT_VAL SSVN
-                WHERE SSVN.PRES = p_lastPrecision  -- old PRES
-                AND SSVN.VAL_TP = p_valueType
-                AND SSVN.TIME_MS < p_aggregateToMs
-            )
-        ) ROUNDED
-        GROUP BY
-            ROUNDED.FK_SQL_STAT_KEY_ID,
-            ROUNDED.TIME_MS
-        LIMIT 1000
-    );
+            PRES,
+            VAL_TP,
+            VAL,
+            CT)
+        SELECT
+            TEMP_AGG.FK_SQL_STAT_KEY_ID,
+            TEMP_AGG.TIME_MS,
+            p_targetPrecision as PRES, -- target pres
+            p_valueType as VAL_TP,
+            TEMP_AGG.VAL AS VAL,
+            TEMP_AGG.CT AS CT
+        FROM TEMP_AGG
+        ON DUPLICATE KEY UPDATE
+            VAL = VALUES(VAL),
+            CT = VALUES(CT);
 
-    INSERT INTO SQL_STAT_VAL (
-        FK_SQL_STAT_KEY_ID,
-        TIME_MS,
-        PRES,
-        VAL_TP,
-        VAL,
-        CT)
-    SELECT
-        TEMP_AGG.FK_SQL_STAT_KEY_ID,
-        TEMP_AGG.TIME_MS,
-        p_targetPrecision as PRES, -- target pres
-        p_valueType as VAL_TP,
-        TEMP_AGG.VAL AS VAL,
-        TEMP_AGG.CT AS CT
-    FROM TEMP_AGG
-    ON DUPLICATE KEY UPDATE
-        VAL = VALUES(VAL),
-        CT = VALUES(CT);
+        SET p_upsertCount = ROW_COUNT();
+        SET v_log = CONCAT(v_log, '\n', 'p_upsertCount: ', COALESCE(p_upsertCount, 'null'));
 
-    SET p_rowCount = ROW_COUNT();
+        DROP TEMPORARY TABLE TEMP_AGG;
 
-    DROP TEMPORARY TABLE TEMP_AGG;
+        SELECT
+            SUM(COALESCE(VAL, 0)),
+            SUM(COALESCE(CT, 0))
+        INTO v_val, v_ct
+        FROM
+            SQL_STAT_VAL
+        WHERE PRES = p_targetPrecision
+        AND VAL_TP = p_valueType;
+
+        SET v_log = CONCAT(v_log, '\n', 'v_val: ', COALESCE(v_val, 0));
+        SET v_log = CONCAT(v_log, '\n', 'v_ct: ', COALESCE(v_ct, 0));
+
+        IF p_upsertCount > 0 THEN
+            -- Now delete all the records that we have aggregated up to a courser level
+            DELETE FROM SQL_STAT_VAL
+            WHERE PRES = p_lastPrecision
+            AND VAL_TP = p_valueType
+            AND TIME_MS <= v_batch_max_time_ms;
+
+            SET p_deleteCount = ROW_COUNT();
+            SET v_log = CONCAT(v_log, '\n', 'p_deleteCount: ', COALESCE(p_deleteCount, 0));
+
+        ELSE
+            SET p_deleteCount = 0;
+        END IF;
+
+        SELECT
+            SUM(COALESCE(VAL, 0)),
+            SUM(COALESCE(CT, 0))
+        INTO v_val, v_ct
+        FROM
+            SQL_STAT_VAL
+        WHERE PRES = p_lastPrecision
+        AND VAL_TP = p_valueType;
+
+        SET v_log = CONCAT(v_log, '\n', 'v_val: ', COALESCE(v_val, 0));
+        SET v_log = CONCAT(v_log, '\n', 'v_ct: ', COALESCE(v_ct, 0));
+    END IF;
+
+    SET p_log = v_log;
 END //
 
 DELIMITER ;

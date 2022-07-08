@@ -19,6 +19,7 @@ package stroom.statistics.impl.sql;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ModelStringUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,8 @@ class SQLStatisticAggregationManager {
     private final ClusterLockService clusterLockService;
     private final SQLStatisticAggregationTransactionHelper helper;
     private final TaskContext taskContext;
-    private int batchSize;
+    private int stage1BatchSize;
+    private int stage2BatchSize;
 
     @Inject
     SQLStatisticAggregationManager(final ClusterLockService clusterLockService,
@@ -53,7 +55,8 @@ class SQLStatisticAggregationManager {
                                    final SQLStatisticsConfig sqlStatisticsConfig) {
         this.clusterLockService = clusterLockService;
         this.helper = helper;
-        this.batchSize = sqlStatisticsConfig.getStatisticAggregationBatchSize();
+        this.stage1BatchSize = sqlStatisticsConfig.getStatisticAggregationBatchSize();
+        this.stage2BatchSize = sqlStatisticsConfig.getStatisticAggregationStageTwoBatchSize();
         this.taskContext = taskContext;
     }
 
@@ -79,7 +82,12 @@ class SQLStatisticAggregationManager {
     void aggregate(final Instant timeNow) {
         guard.lock();
         try {
-            LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = {}", timeNow);
+            LOGGER.info("Starting statistics aggregation " +
+                    "(stage1BatchSize: {}, stage2BatchSize: {}, timeNow: {})",
+                    ModelStringUtil.formatCsv(stage1BatchSize),
+                    ModelStringUtil.formatCsv(stage2BatchSize),
+                    timeNow);
+
             long totalStage1Count = 0;
             long totalStage2Count = 0;
             long oldStatsDeletedCount = 0;
@@ -91,21 +99,29 @@ class SQLStatisticAggregationManager {
                 long processedCount;
                 int iteration = 0;
                 // Process batches of records until we have processed one
-                // that
-                // was not a full batch
+                // that was not a full batch
                 do {
                     processedCount = helper.aggregateConfigStage1(
                             taskContext,
-                            "Iteration: " + ++iteration + "",
-                            batchSize,
+                            "Aggregation Stage 1 - Iteration: " + ++iteration + "",
+                            stage1BatchSize,
                             timeNow);
                     totalStage1Count += processedCount;
 
-                } while (processedCount == batchSize && !Thread.currentThread().isInterrupted());
+                } while (processedCount > 0 && !Thread.currentThread().isInterrupted());
+                LOGGER.info("Completed stage 1 aggregation with {} iterations in {}{}",
+                        iteration,
+                        logExecutionTime.getDuration(),
+                        (Thread.currentThread().isInterrupted()
+                                ? " INTERRUPTED"
+                                : ""));
 
                 if (!Thread.currentThread().isInterrupted()) {
                     totalStage2Count = helper.aggregateConfigStage2(
-                            taskContext, "Final Reduce", timeNow);
+                            taskContext,
+                            "Aggregation Stage 2",
+                            stage2BatchSize,
+                            timeNow);
                 }
 
                 // We hold the cluster lock so can safely deleted orphaned stat keys
@@ -118,12 +134,15 @@ class SQLStatisticAggregationManager {
                                 "oldStatsDeletedCount: {}, " +
                                 "totalStage1Count: {}, " +
                                 "totalStage2Count: {}, " +
-                                "unusedKeysDeletedCount: {} (timeNowOverride = {})",
-                        logExecutionTime,
-                        oldStatsDeletedCount,
-                        totalStage1Count,
-                        totalStage2Count,
-                        unusedKeysDeletedCount,
+                                "unusedKeysDeletedCount: {} " +
+                                "(stage1BatchSize: {}, stage2BatchSize: {}, timeNowOverride: {})",
+                        logExecutionTime.getDuration(),
+                        ModelStringUtil.formatCsv(oldStatsDeletedCount),
+                        ModelStringUtil.formatCsv(totalStage1Count),
+                        ModelStringUtil.formatCsv(totalStage2Count),
+                        ModelStringUtil.formatCsv(unusedKeysDeletedCount),
+                        ModelStringUtil.formatCsv(stage1BatchSize),
+                        ModelStringUtil.formatCsv(stage2BatchSize),
                         timeNow);
             }
         } finally {
@@ -131,7 +150,17 @@ class SQLStatisticAggregationManager {
         }
     }
 
-    void setBatchSize(final int batchSize) {
-        this.batchSize = batchSize;
+    /**
+     * For testing
+     */
+    void setStage1BatchSize(final int batchSize) {
+        this.stage1BatchSize = batchSize;
+    }
+
+    /**
+     * For testing
+     */
+    public void setStage2BatchSize(final int stage2BatchSize) {
+        this.stage2BatchSize = stage2BatchSize;
     }
 }
