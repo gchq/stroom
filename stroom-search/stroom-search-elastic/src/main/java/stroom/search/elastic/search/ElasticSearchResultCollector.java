@@ -20,6 +20,7 @@ import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandlerFactory;
@@ -44,6 +45,10 @@ public class ElasticSearchResultCollector implements Store {
     private final ElasticAsyncSearchTask task;
     private final Coprocessors coprocessors;
     private final Sizes maxResultSizes;
+
+    private volatile ElasticAsyncSearchTaskHandler asyncSearchTaskHandler;
+    private volatile TaskContext taskContext;
+    private volatile boolean complete;
 
     private ElasticSearchResultCollector(
             final Executor executor,
@@ -82,10 +87,12 @@ public class ElasticSearchResultCollector implements Store {
                 TASK_NAME,
                 TerminateHandlerFactory.NOOP_FACTORY,
                 taskContext -> {
+                    this.taskContext = taskContext;
+                    this.asyncSearchTaskHandler = elasticAsyncSearchTaskHandlerProvider.get();
+
                     // Don't begin execution if we have been asked to complete already.
-                    if (!coprocessors.getCompletionState().isComplete()) {
-                        final ElasticAsyncSearchTaskHandler searchHandler = elasticAsyncSearchTaskHandlerProvider.get();
-                        searchHandler.search(taskContext, task, coprocessors, this);
+                    if (!complete) {
+                        asyncSearchTaskHandler.search(taskContext, task, coprocessors, this);
                     }
                 });
         CompletableFuture
@@ -112,6 +119,13 @@ public class ElasticSearchResultCollector implements Store {
 
     @Override
     public void destroy() {
+        LOGGER.trace(() -> "destroy()", new RuntimeException("destroy"));
+        complete = true;
+        if (asyncSearchTaskHandler != null) {
+            asyncSearchTaskHandler.terminateTasks(task, taskContext.getTaskId());
+        }
+
+        LOGGER.trace(() -> "coprocessors.clear()");
         coprocessors.clear();
     }
 
