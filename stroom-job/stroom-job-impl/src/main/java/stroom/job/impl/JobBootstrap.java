@@ -17,12 +17,12 @@
 
 package stroom.job.impl;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterService;
+import stroom.cluster.api.NodeInfo;
 import stroom.job.api.ScheduledJob;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
-import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
@@ -49,7 +49,7 @@ class JobBootstrap {
     private final JobDao jobDao;
     private final JobNodeDao jobNodeDao;
     private final Provider<JobSystemConfig> jobSystemConfigProvider;
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
     private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
     private final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap;
@@ -59,7 +59,7 @@ class JobBootstrap {
     JobBootstrap(final JobDao jobDao,
                  final JobNodeDao jobNodeDao,
                  final Provider<JobSystemConfig> jobSystemConfigProvider,
-                 final ClusterLockService clusterLockService,
+                 final ClusterService clusterService,
                  final SecurityContext securityContext,
                  final NodeInfo nodeInfo,
                  final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap,
@@ -67,7 +67,7 @@ class JobBootstrap {
         this.jobDao = jobDao;
         this.jobNodeDao = jobNodeDao;
         this.jobSystemConfigProvider = jobSystemConfigProvider;
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
         this.scheduledJobsMap = scheduledJobsMap;
@@ -79,7 +79,7 @@ class JobBootstrap {
 
         // Lock the cluster so only 1 node at a time can call the following code.
         LOGGER.trace(() -> "Locking the cluster");
-        securityContext.asProcessingUser(() -> clusterLockService.lock(LOCK_NAME, () -> {
+        securityContext.asProcessingUser(() -> clusterService.lock(LOCK_NAME, () -> {
             final String nodeName = nodeInfo.getThisNodeName();
 
             final List<JobNode> existingJobNodes = jobNodeDao.find(new FindJobNodeCriteria()).getValues();

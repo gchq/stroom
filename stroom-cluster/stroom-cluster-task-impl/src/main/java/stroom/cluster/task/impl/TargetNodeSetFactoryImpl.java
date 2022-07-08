@@ -16,18 +16,10 @@
 
 package stroom.cluster.task.impl;
 
-import stroom.cluster.api.ClusterNodeManager;
-import stroom.cluster.api.ClusterState;
+import stroom.cluster.api.ClusterService;
 import stroom.cluster.task.api.NodeNotFoundException;
-import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.cluster.task.api.TargetType;
-import stroom.node.api.NodeInfo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -35,111 +27,32 @@ import javax.inject.Singleton;
 @Singleton
 public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TargetNodeSetFactoryImpl.class);
-
-    private static final Long ONE_MINUTE = 60000L;
-
-    private final NodeInfo nodeInfo;
-    private final ClusterNodeManager clusterNodeManager;
-
-    private volatile long lastClusterStateWarn;
+    private final ClusterService clusterService;
 
     @Inject
-    public TargetNodeSetFactoryImpl(final NodeInfo nodeInfo, final ClusterNodeManager clusterNodeManager) {
-        this.nodeInfo = nodeInfo;
-        this.clusterNodeManager = clusterNodeManager;
+    public TargetNodeSetFactoryImpl(final ClusterService clusterService) {
+        this.clusterService = clusterService;
     }
 
     @Override
     public String getSourceNode() {
-        return nodeInfo.getThisNodeName();
+        return clusterService.getLocalNodeName().orElseThrow(() ->
+                new RuntimeException("Local node cannot be found"));
     }
 
     @Override
-    public String getMasterNode() throws NullClusterStateException, NodeNotFoundException {
-        final ClusterState clusterState = getClusterState();
-        if (clusterState.getMasterNodeName() != null) {
-            return clusterState.getMasterNodeName();
-        } else {
-            throw new NodeNotFoundException("No master node can be found");
-        }
-    }
-
-    //    @Override
-    public Set<String> getMasterTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
-        return Collections.singleton(getMasterNode());
+    public String getLeaderNode() throws NodeNotFoundException {
+        return clusterService.getLeaderNodeName().orElseThrow(() ->
+                new NodeNotFoundException("Leader node cannot be found"));
     }
 
     @Override
-    public Set<String> getEnabledActiveTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
-        final ClusterState clusterState = getClusterState();
-        final Set<String> nodes = clusterState.getEnabledActiveNodes();
-        if (nodes != null && nodes.size() > 0) {
-            return Set.copyOf(nodes);
-        } else {
-            throw new NodeNotFoundException("No enabled and active nodes can be found");
-        }
-    }
-
-    @Override
-    public Set<String> getEnabledTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
-        final ClusterState clusterState = getClusterState();
-        final Set<String> nodes = clusterState.getEnabledNodes();
-        if (nodes != null && nodes.size() > 0) {
-            return Set.copyOf(nodes);
-        } else {
-            throw new NodeNotFoundException("No enabled nodes can be found");
-        }
-    }
-
-    //    @Override
-    public Set<String> getAllNodeSet() throws NullClusterStateException, NodeNotFoundException {
-        final ClusterState clusterState = getClusterState();
-        final Set<String> nodes = clusterState.getAllNodes();
-        if (nodes != null && nodes.size() > 0) {
-            return Set.copyOf(nodes);
-        } else {
-            throw new NodeNotFoundException("No nodes can be found");
-        }
-    }
-
-    public Set<String> getTargetNodesByType(final TargetType targetType)
-            throws NullClusterStateException, NodeNotFoundException {
-        switch (targetType) {
-            case MASTER:
-                return getMasterTargetNodeSet();
-            case ACTIVE:
-                return getEnabledActiveTargetNodeSet();
-            case ENABLED:
-                return getEnabledTargetNodeSet();
-        }
-
-        return null;
-    }
-
-    public ClusterState getClusterState() throws NullClusterStateException {
-        final ClusterState clusterState = clusterNodeManager.getClusterState();
-        if (clusterState == null) {
-            throw new NullClusterStateException();
-        }
-        return clusterState;
+    public Set<String> getEnabledActiveTargetNodeSet() {
+        return clusterService.getNodeNames();
     }
 
     @Override
     public boolean isClusterStateInitialised() {
-        boolean initialised = true;
-        try {
-            getClusterState();
-        } catch (final NullClusterStateException e) {
-            initialised = false;
-            final long now = System.currentTimeMillis();
-            if (lastClusterStateWarn < now - ONE_MINUTE) {
-                lastClusterStateWarn = now;
-                LOGGER.warn(e.getMessage());
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
-        return initialised;
+        return true;
     }
 }

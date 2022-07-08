@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.search.elastic'
 dependencies {
     implementation project(':stroom-annotation:stroom-annotation-api')
     implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')

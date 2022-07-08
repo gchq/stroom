@@ -5,7 +5,7 @@ dependencies {
     implementation project(':stroom-alert:stroom-alert-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-cluster:stroom-cluster-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-impl-db')
+    implementation project(':stroom-cluster:stroom-cluster-impl')
     implementation project(':stroom-config:stroom-config-app')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core')

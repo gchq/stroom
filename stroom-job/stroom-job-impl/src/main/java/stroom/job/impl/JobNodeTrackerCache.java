@@ -17,9 +17,9 @@
 
 package stroom.job.impl;
 
+import stroom.cluster.api.NodeInfo;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
-import stroom.node.api.NodeInfo;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;

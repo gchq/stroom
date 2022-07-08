@@ -17,7 +17,8 @@
 
 package stroom.search.elastic;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterRoles;
+import stroom.cluster.api.ClusterService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionUtil;
@@ -56,7 +57,7 @@ public class ElasticIndexRetentionExecutor {
     private final ElasticIndexService elasticIndexService;
     private final ElasticClientCache elasticClientCache;
     private final WordListProvider dictionaryStore;
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
     private final TaskContextFactory taskContextFactory;
 
     @Inject
@@ -67,7 +68,7 @@ public class ElasticIndexRetentionExecutor {
             final ElasticIndexService elasticIndexService,
             final ElasticClientCache elasticClientCache,
             final WordListProvider dictionaryStore,
-            final ClusterLockService clusterLockService,
+            final ClusterService clusterService,
             final TaskContextFactory taskContextFactory
     ) {
         this.elasticClusterStore = elasticClusterStore;
@@ -76,7 +77,7 @@ public class ElasticIndexRetentionExecutor {
         this.elasticIndexService = elasticIndexService;
         this.elasticClientCache = elasticClientCache;
         this.dictionaryStore = dictionaryStore;
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
         this.taskContextFactory = taskContextFactory;
     }
 
@@ -89,21 +90,23 @@ public class ElasticIndexRetentionExecutor {
 
         info(taskContext, () -> "Start");
 
-        clusterLockService.tryLock(LOCK_NAME, () -> {
-            try {
-                if (!Thread.currentThread().isInterrupted()) {
-                    final List<DocRef> docRefs = elasticIndexStore.list();
+        if (clusterService.isLeaderForRole(ClusterRoles.ELASTIC_INDEX_RETENTION)) {
+            clusterService.tryLock(LOCK_NAME, () -> {
+                try {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        final List<DocRef> docRefs = elasticIndexStore.list();
 
-                    if (docRefs != null) {
-                        docRefs.forEach(docRef -> performRetention(taskContext, docRef));
+                        if (docRefs != null) {
+                            docRefs.forEach(docRef -> performRetention(taskContext, docRef));
+                        }
+
+                        info(taskContext, () -> "Finished in " + logExecutionTime);
                     }
-
-                    info(taskContext, () -> "Finished in " + logExecutionTime);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-            }
-        });
+            });
+        }
     }
 
     private void performRetention(final TaskContext taskContext, final DocRef docRef) {

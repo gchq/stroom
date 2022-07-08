@@ -18,12 +18,12 @@
 package stroom.config.global.impl;
 
 
+import stroom.cluster.api.NodeInfo;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
-import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
@@ -139,10 +139,10 @@ public class GlobalConfigService {
                     FIELD_MAPPERS);
 
             return QuickFilterPredicateFactory.filterStream(
-                    criteria.getQuickFilterInput(),
-                    FIELD_MAPPERS,
-                    configMapper.getGlobalProperties().stream(),
-                    optConfigPropertyComparator.orElse(null))
+                            criteria.getQuickFilterInput(),
+                            FIELD_MAPPERS,
+                            configMapper.getGlobalProperties().stream(),
+                            optConfigPropertyComparator.orElse(null))
                     .collect(ListConfigResponse.collector(
                             pageRequest,
                             (configProperties, pageResponse) ->

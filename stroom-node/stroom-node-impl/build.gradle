@@ -21,6 +21,7 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.guice5
+    implementation libs.hazelcast
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind
@@ -31,7 +32,8 @@ dependencies {
     implementation libs.restygwt
     implementation libs.slf4j_api
     implementation libs.ws_rs_api
-    
+
+    testImplementation project(':stroom-cluster:stroom-cluster-mock')
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
     testImplementation libs.jersey_server

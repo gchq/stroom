@@ -16,12 +16,12 @@
 
 package stroom.processor.impl;
 
+import stroom.cluster.api.RemoteRestService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.node.api.NodeService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.AssignTasksRequest;
 import stroom.processor.shared.ProcessorTask;
@@ -48,17 +48,17 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
 
     private final Provider<ProcessorTaskService> processorTaskServiceProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
-    private final Provider<NodeService> nodeServiceProvider;
+    private final Provider<RemoteRestService> remoteRestServiceProvider;
     private final Provider<ProcessorTaskManager> processorTaskManagerProvider;
 
     @Inject
     ProcessorTaskResourceImpl(final Provider<ProcessorTaskService> processorTaskServiceProvider,
                               final Provider<DocumentEventLog> documentEventLogProvider,
-                              final Provider<NodeService> nodeServiceProvider,
+                              final Provider<RemoteRestService> remoteRestServiceProvider,
                               final Provider<ProcessorTaskManager> processorTaskManagerProvider) {
         this.processorTaskServiceProvider = processorTaskServiceProvider;
         this.documentEventLogProvider = documentEventLogProvider;
-        this.nodeServiceProvider = nodeServiceProvider;
+        this.remoteRestServiceProvider = remoteRestServiceProvider;
         this.processorTaskManagerProvider = processorTaskManagerProvider;
     }
 
@@ -125,7 +125,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public ProcessorTaskList assignTasks(final String nodeName, final AssignTasksRequest request) {
-        final ProcessorTaskList processorTaskList = nodeServiceProvider.get()
+        final ProcessorTaskList processorTaskList = remoteRestServiceProvider.get()
                 .remoteRestResult(
                         nodeName,
                         ProcessorTaskList.class,
@@ -144,7 +144,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public Boolean abandonTasks(final String nodeName, final ProcessorTaskList request) {
-        final Boolean result = nodeServiceProvider.get()
+        final Boolean result = remoteRestServiceProvider.get()
                 .remoteRestResult(
                         nodeName,
                         Boolean.class,

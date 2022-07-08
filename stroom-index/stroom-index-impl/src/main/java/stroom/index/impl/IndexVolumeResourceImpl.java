@@ -1,12 +1,12 @@
 package stroom.index.impl;
 
+import stroom.cluster.api.EndpointUrlService;
+import stroom.cluster.api.RemoteRestService;
+import stroom.cluster.api.RemoteRestUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeResource;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.rest.RestUtil;
@@ -26,18 +26,15 @@ import javax.ws.rs.core.Response.Status;
 class IndexVolumeResourceImpl implements IndexVolumeResource {
 
     private final Provider<IndexVolumeService> indexVolumeServiceProvider;
-    private final Provider<NodeService> nodeServiceProvider;
-    private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<EndpointUrlService> endpointUrlServiceProvider;
     private final Provider<WebTargetFactory> webTargetFactoryProvider;
 
     @Inject
     public IndexVolumeResourceImpl(final Provider<IndexVolumeService> indexVolumeServiceProvider,
-                                   final Provider<NodeService> nodeServiceProvider,
-                                   final Provider<NodeInfo> nodeInfoProvider,
+                                   final Provider<EndpointUrlService> endpointUrlServiceProvider,
                                    final Provider<WebTargetFactory> webTargetFactoryProvider) {
         this.indexVolumeServiceProvider = indexVolumeServiceProvider;
-        this.nodeServiceProvider = nodeServiceProvider;
-        this.nodeInfoProvider = nodeInfoProvider;
+        this.endpointUrlServiceProvider = endpointUrlServiceProvider;
         this.webTargetFactoryProvider = webTargetFactoryProvider;
     }
 
@@ -71,11 +68,11 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
         // If this is the node that was contacted then just resolve it locally
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
+        final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
+        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
             indexVolumeServiceProvider.get().rescan();
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(),
-                    nodeServiceProvider.get(), nodeName)
+            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     IndexVolumeResource.BASE_PATH,
                     IndexVolumeResource.RESCAN_SUB_PATH);
@@ -94,7 +91,7 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
 
                 return response.readEntity(Boolean.class);
             } catch (final Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
 

@@ -18,7 +18,7 @@
 package stroom.processor.impl;
 
 
-import stroom.node.api.NodeInfo;
+import stroom.cluster.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 

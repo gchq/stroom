@@ -18,6 +18,7 @@
 package stroom.pipeline.task;
 
 
+import stroom.cluster.api.NodeInfo;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
@@ -37,7 +38,6 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
-import stroom.node.api.NodeInfo;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;

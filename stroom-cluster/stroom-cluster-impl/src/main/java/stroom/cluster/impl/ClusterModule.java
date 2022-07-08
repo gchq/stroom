@@ -16,27 +16,21 @@
 
 package stroom.cluster.impl;
 
-import stroom.cluster.api.ClusterNodeManager;
-import stroom.lifecycle.api.LifecycleBinder;
-import stroom.util.RunnableWrapper;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.guice.GuiceUtil;
+import stroom.cluster.api.ClusterService;
+import stroom.cluster.api.EndpointUrlService;
+import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.RemoteRestService;
 
 import com.google.inject.AbstractModule;
-
-import javax.inject.Inject;
 
 public class ClusterModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ClusterNodeManager.class).to(ClusterNodeManagerImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(ClusterNodeManagerImpl.class);
-
-        LifecycleBinder.create(binder())
-                .bindStartupTaskTo(ClusterNodeManagerInit.class);
+        bind(ClusterService.class).to(ClusterServiceImpl.class);
+        bind(NodeInfo.class).to(NodeInfoImpl.class);
+        bind(EndpointUrlService.class).to(EndpointUrlServiceImpl.class);
+        bind(RemoteRestService.class).to(RemoteRestServiceImpl.class);
     }
 
     @Override
@@ -50,13 +44,5 @@ public class ClusterModule extends AbstractModule {
     @Override
     public int hashCode() {
         return 0;
-    }
-
-    private static class ClusterNodeManagerInit extends RunnableWrapper {
-
-        @Inject
-        ClusterNodeManagerInit(final ClusterNodeManagerImpl clusterNodeManager) {
-            super(clusterNodeManager::init);
-        }
     }
 }

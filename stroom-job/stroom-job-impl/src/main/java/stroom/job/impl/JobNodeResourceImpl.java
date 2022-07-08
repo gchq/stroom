@@ -16,6 +16,8 @@
 
 package stroom.job.impl;
 
+import stroom.cluster.api.EndpointUrlService;
+import stroom.cluster.api.RemoteRestUtil;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
@@ -23,9 +25,6 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.JobNodeResource;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
@@ -48,27 +47,24 @@ import javax.ws.rs.core.Response;
 class JobNodeResourceImpl implements JobNodeResource {
 
     private final Provider<JobNodeService> jobNodeServiceProvider;
-    private final Provider<NodeService> nodeServiceProvider;
-    private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<EndpointUrlService> endpointUrlServiceProvider;
     private final Provider<WebTargetFactory> webTargetFactoryProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
     JobNodeResourceImpl(final Provider<JobNodeService> jobNodeServiceProvider,
-                        final Provider<NodeService> nodeServiceProvider,
-                        final Provider<NodeInfo> nodeInfoProvider,
+                        final Provider<EndpointUrlService> endpointUrlServiceProvider,
                         final Provider<WebTargetFactory> webTargetFactoryProvider,
                         final Provider<DocumentEventLog> documentEventLogProvider) {
         this.jobNodeServiceProvider = jobNodeServiceProvider;
-        this.nodeServiceProvider = nodeServiceProvider;
-        this.nodeInfoProvider = nodeInfoProvider;
+        this.endpointUrlServiceProvider = endpointUrlServiceProvider;
         this.webTargetFactoryProvider = webTargetFactoryProvider;
         this.documentEventLogProvider = documentEventLogProvider;
     }
 
     @Override
     public JobNodeListResponse list(final String jobName, final String nodeName) {
-        JobNodeListResponse response = null;
+        JobNodeListResponse response;
 
         And.Builder<Void> andBuilder = And.builder();
 
@@ -120,12 +116,12 @@ class JobNodeResourceImpl implements JobNodeResource {
     public JobNodeInfo info(final String jobName, final String nodeName) {
         JobNodeInfo jobNodeInfo;
         // If this is the node that was contacted then just return our local info.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
+        final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
+        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
             jobNodeInfo = jobNodeServiceProvider.get().getInfo(jobName);
 
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(),
-                    nodeServiceProvider.get(), nodeName) +
+            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName) +
                     ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
             try {
                 WebTarget webTarget = webTargetFactoryProvider.get().create(url);
@@ -142,7 +138,7 @@ class JobNodeResourceImpl implements JobNodeResource {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
             } catch (final Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
 

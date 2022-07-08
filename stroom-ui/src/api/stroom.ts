@@ -347,13 +347,6 @@ export interface CheckDocumentPermissionRequest {
 
 export type ClearDocumentPermissionsEvent = PermissionChangeEvent & { documentUuid?: string };
 
-export interface ClusterLockKey {
-  /** @format int64 */
-  creationTime?: number;
-  name?: string;
-  nodeName?: string;
-}
-
 export interface ClusterNodeInfo {
   buildInfo?: BuildInfo;
 
@@ -4739,64 +4732,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         method: "GET",
         query: query,
         secure: true,
-        ...params,
-      }),
-  };
-  cluster = {
-    /**
-     * No description
-     *
-     * @tags Cluster lock
-     * @name KeepClusterLockAlive
-     * @summary Keep a lock alive
-     * @request PUT:/cluster/lock/v1/keepALive/{nodeName}
-     * @secure
-     */
-    keepClusterLockAlive: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/cluster/lock/v1/keepALive/${nodeName}`,
-        method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Cluster lock
-     * @name ReleaseClusterLock
-     * @summary Release a lock
-     * @request PUT:/cluster/lock/v1/release/{nodeName}
-     * @secure
-     */
-    releaseClusterLock: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/cluster/lock/v1/release/${nodeName}`,
-        method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Cluster lock
-     * @name TryClusterLock
-     * @summary Try to lock
-     * @request PUT:/cluster/lock/v1/try/{nodeName}
-     * @secure
-     */
-    tryClusterLock: (nodeName: string, data: ClusterLockKey, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/cluster/lock/v1/try/${nodeName}`,
-        method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
         ...params,
       }),
   };

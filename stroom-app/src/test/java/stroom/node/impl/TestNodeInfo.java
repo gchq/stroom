@@ -17,7 +17,7 @@
 package stroom.node.impl;
 
 
-import stroom.node.api.NodeInfo;
+import stroom.cluster.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import org.junit.jupiter.api.Test;

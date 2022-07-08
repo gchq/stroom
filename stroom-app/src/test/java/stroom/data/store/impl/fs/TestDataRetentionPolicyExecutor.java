@@ -17,6 +17,7 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.cluster.api.NodeInfo;
 import stroom.data.retention.impl.DataRetentionPolicyExecutor;
 import stroom.data.retention.impl.DataRetentionRulesService;
 import stroom.data.retention.shared.DataRetentionRule;
@@ -32,7 +33,6 @@ import stroom.index.impl.selection.VolumeConfig;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;

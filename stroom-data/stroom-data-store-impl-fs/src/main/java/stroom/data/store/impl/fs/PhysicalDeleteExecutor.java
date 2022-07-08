@@ -16,7 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterRoles;
+import stroom.cluster.api.ClusterService;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.PhysicalDelete;
@@ -63,7 +64,7 @@ public class PhysicalDeleteExecutor {
     private static final String TASK_NAME = "Fs Delete Executor";
     private static final String LOCK_NAME = "FsDeleteExecutor";
 
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
     private final DataStoreServiceConfig dataStoreServiceConfig;
     private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
@@ -76,7 +77,7 @@ public class PhysicalDeleteExecutor {
 
     @Inject
     PhysicalDeleteExecutor(
-            final ClusterLockService clusterLockService,
+            final ClusterService clusterService,
             final DataStoreServiceConfig dataStoreServiceConfig,
             final FsPathHelper fileSystemStreamPathHelper,
             final MetaService metaService,
@@ -86,7 +87,7 @@ public class PhysicalDeleteExecutor {
             final TaskContext taskContext,
             final ExecutorProvider executorProvider,
             final DataStoreServiceConfig config) {
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
         this.dataStoreServiceConfig = dataStoreServiceConfig;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
@@ -100,20 +101,22 @@ public class PhysicalDeleteExecutor {
 
     public void exec() {
         LOGGER.info(() -> TASK_NAME + " - start");
-        clusterLockService.tryLock(LOCK_NAME, () -> {
-            try {
-                if (!Thread.currentThread().isInterrupted()) {
-                    final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                    final long deleteThresholdEpochMs = getDeleteThresholdEpochMs(dataStoreServiceConfig);
-                    if (deleteThresholdEpochMs > 0) {
-                        delete(deleteThresholdEpochMs);
+        if (clusterService.isLeaderForRole(ClusterRoles.PHYSICAL_FILE_DELETE)) {
+            clusterService.tryLock(LOCK_NAME, () -> {
+                try {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+                        final long deleteThresholdEpochMs = getDeleteThresholdEpochMs(dataStoreServiceConfig);
+                        if (deleteThresholdEpochMs > 0) {
+                            delete(deleteThresholdEpochMs);
+                        }
+                        LOGGER.info("{} - finished in {}", TASK_NAME, logExecutionTime);
                     }
-                    LOGGER.info("{} - finished in {}", TASK_NAME, logExecutionTime);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-            }
-        });
+            });
+        }
     }
 
     public void delete(final long deleteThresholdEpochMs) {

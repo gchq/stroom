@@ -1,13 +1,14 @@
 ext.moduleName = 'stroom.task.impl'
 
 dependencies {
+    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-    implementation project(':stroom-node:stroom-node-api')
+//    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-search:stroom-expression-matcher')

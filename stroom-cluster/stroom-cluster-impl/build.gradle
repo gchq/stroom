@@ -1,18 +1,21 @@
 ext.moduleName = 'stroom.cluster.impl'
 
 dependencies {
+    implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-    implementation project(':stroom-node:stroom-node-api')
+//    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     
     implementation libs.guice5
+    implementation libs.hazelcast
     implementation libs.javax_inject
     implementation libs.restygwt
     implementation libs.slf4j_api
     implementation libs.vavr
+    implementation libs.ws_rs_api
 }

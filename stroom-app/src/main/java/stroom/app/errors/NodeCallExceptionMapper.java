@@ -21,7 +21,7 @@
 
 package stroom.app.errors;
 
-import stroom.node.api.NodeCallException;
+import stroom.cluster.api.NodeCallException;
 
 import io.dropwizard.jersey.errors.ErrorMessage;
 import org.slf4j.Logger;

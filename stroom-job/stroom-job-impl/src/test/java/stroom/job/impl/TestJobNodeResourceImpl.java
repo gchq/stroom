@@ -1,13 +1,14 @@
 package stroom.job.impl;
 
+import stroom.cluster.api.ClusterService;
+import stroom.cluster.api.EndpointUrlService;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.JobNodeResource;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.test.common.util.test.MockEndpointUrlService;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.ResourcePaths;
 
@@ -344,32 +345,14 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         jobNodeServiceMap.put(node.getNodeName(), jobNodeService);
 
         // Set up the NodeService mock
-        final NodeService nodeService = createNamedMock(NodeService.class, node);
-
-        when(nodeService.isEnabled(Mockito.anyString()))
-                .then(invocation ->
-                        allNodes.stream()
-                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
-                                .anyMatch(TestNode::isEnabled));
-
-        when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-                .then(invocation -> baseEndPointUrls.get(invocation.getArgument(0)));
-
-        // Set up the NodeInfo mock
-
-        final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, node);
-
-        when(nodeInfo.getThisNodeName())
-                .thenReturn(node.getNodeName());
-
+        final EndpointUrlService endpointUrlService = new MockEndpointUrlService(node, allNodes, baseEndPointUrls);
         final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, node);
 
         documentEventLogMap.put(node.getNodeName(), documentEventLog);
 
         return new JobNodeResourceImpl(
                 () -> jobNodeService,
-                () -> nodeService,
-                () -> nodeInfo,
+                () -> endpointUrlService,
                 () -> webTargetFactory(),
                 () -> documentEventLog);
     }

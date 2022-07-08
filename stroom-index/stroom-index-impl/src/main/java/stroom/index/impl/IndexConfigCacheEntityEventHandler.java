@@ -17,11 +17,11 @@
 
 package stroom.index.impl;
 
+import stroom.cluster.api.NodeInfo;
 import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
-import stroom.node.api.NodeInfo;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.ResultPage;

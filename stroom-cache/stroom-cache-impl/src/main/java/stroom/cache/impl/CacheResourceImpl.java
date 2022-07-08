@@ -20,12 +20,10 @@ import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
+import stroom.cluster.api.EndpointUrlService;
+import stroom.cluster.api.RemoteRestUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.node.api.FindNodeCriteria;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.jersey.UriBuilderUtil;
@@ -55,20 +53,17 @@ class CacheResourceImpl implements CacheResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheResourceImpl.class);
 
-    private final Provider<NodeService> nodeService;
-    private final Provider<NodeInfo> nodeInfo;
+    private final Provider<EndpointUrlService> endpointUrlServiceProvider;
     private final Provider<WebTargetFactory> webTargetFactory;
     private final Provider<CacheManagerService> cacheManagerService;
     private final Provider<TaskContextFactory> taskContextFactory;
 
     @Inject
-    CacheResourceImpl(final Provider<NodeService> nodeService,
-                      final Provider<NodeInfo> nodeInfo,
+    CacheResourceImpl(final Provider<EndpointUrlService> endpointUrlServiceProvider,
                       final Provider<WebTargetFactory> webTargetFactory,
                       final Provider<CacheManagerService> cacheManagerService,
                       final Provider<TaskContextFactory> taskContextFactory) {
-        this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
+        this.endpointUrlServiceProvider = endpointUrlServiceProvider;
         this.webTargetFactory = webTargetFactory;
         this.cacheManagerService = cacheManagerService;
         this.taskContextFactory = taskContextFactory;
@@ -80,10 +75,11 @@ class CacheResourceImpl implements CacheResource {
         CacheNamesResponse result;
 
         // If this is the node that was contacted then just return our local info.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
+        final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
+        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
             result = new CacheNamesResponse(cacheManagerService.get().getCacheNames());
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
+            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.LIST_PATH);
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);
@@ -99,7 +95,7 @@ class CacheResourceImpl implements CacheResource {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
             } catch (Exception e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
 
@@ -111,14 +107,15 @@ class CacheResourceImpl implements CacheResource {
     public CacheInfoResponse info(final String cacheName, final String nodeName) {
         CacheInfoResponse result;
         // If this is the node that was contacted then just return our local info.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
+        final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
+        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(cacheName, null));
             final List<CacheInfo> list = cacheManagerService.get().find(criteria);
             result = new CacheInfoResponse(list);
 
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
+            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.INFO_PATH);
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);
@@ -135,7 +132,7 @@ class CacheResourceImpl implements CacheResource {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
             } catch (Exception e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
 
@@ -160,10 +157,8 @@ class CacheResourceImpl implements CacheResource {
     }
 
     private Long clearCacheOnAllNodes(final String cacheName) {
-
-        final FindNodeCriteria criteria = new FindNodeCriteria();
-        criteria.setEnabled(true);
-        final List<String> allNodes = nodeService.get().findNodeNames(FindNodeCriteria.allEnabled());
+        final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
+        final Set<String> allNodes = endpointUrlService.getNodeNames();
 
         final Set<String> failedNodes = new ConcurrentSkipListSet<>();
         final AtomicReference<Throwable> exception = new AtomicReference<>();
@@ -217,14 +212,15 @@ class CacheResourceImpl implements CacheResource {
         Objects.requireNonNull(nodeName);
 
         final Long result;
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
+        final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
+        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
             // local node
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(cacheName, null));
             result = cacheManagerService.get().clear(criteria);
 
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
+            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.BASE_PATH);
 
             try {
@@ -239,7 +235,7 @@ class CacheResourceImpl implements CacheResource {
                 }
                 result = response.readEntity(Long.class);
             } catch (Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
         return result;

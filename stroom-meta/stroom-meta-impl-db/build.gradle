@@ -1,8 +1,8 @@
 ext.moduleName = 'stroom.meta.impl.db'
 
 dependencies {
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-retention-api')
@@ -13,6 +13,7 @@ dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-meta:stroom-meta-impl')
     implementation project(':stroom-meta:stroom-meta-impl-db-jooq')
+//    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
@@ -29,7 +30,7 @@ dependencies {
     implementation libs.vavr
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
-    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
+    testImplementation project(':stroom-cluster:stroom-cluster-mock')
     testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation project(':stroom-explorer:stroom-collection-mock')

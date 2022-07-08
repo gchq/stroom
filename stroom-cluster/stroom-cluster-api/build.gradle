@@ -1,13 +1,10 @@
 ext.moduleName = 'stroom.cluster.api'
 
 dependencies {
-    implementation project(':stroom-core-shared')
-//    implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-//    implementation libs.guice5
-//    implementation libs.jackson_annotations
     implementation libs.jackson_annotations
     implementation libs.javax_inject
+    implementation libs.ws_rs_api
 }

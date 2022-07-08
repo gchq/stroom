@@ -16,11 +16,10 @@
 
 package stroom.core.entity.event;
 
+import stroom.cluster.api.EndpointUrlService;
+import stroom.cluster.api.RemoteRestUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
@@ -36,18 +35,15 @@ import javax.ws.rs.core.Response;
 @AutoLogged(OperationType.UNLOGGED)
 class EntityEventResourceImpl implements EntityEventResource {
 
-    private final Provider<NodeService> nodeServiceProvider;
-    private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<EndpointUrlService> endpointUrlServiceProvider;
     private final Provider<WebTargetFactory> webTargetFactoryProvider;
     private final Provider<EntityEventHandler> entityEventHandlerProvider;
 
     @Inject
-    EntityEventResourceImpl(final Provider<NodeService> nodeServiceProvider,
-                            final Provider<NodeInfo> nodeInfoProvider,
+    EntityEventResourceImpl(final Provider<EndpointUrlService> endpointUrlServiceProvider,
                             final Provider<WebTargetFactory> webTargetFactoryProvider,
                             final Provider<EntityEventHandler> entityEventHandlerProvider) {
-        this.nodeServiceProvider = nodeServiceProvider;
-        this.nodeInfoProvider = nodeInfoProvider;
+        this.endpointUrlServiceProvider = endpointUrlServiceProvider;
         this.webTargetFactoryProvider = webTargetFactoryProvider;
         this.entityEventHandlerProvider = entityEventHandlerProvider;
     }
@@ -55,13 +51,12 @@ class EntityEventResourceImpl implements EntityEventResource {
     @Override
     public Boolean fireEvent(final String nodeName, final EntityEvent entityEvent) {
         // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
+        final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
+        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
             entityEventHandlerProvider.get().fireLocally(entityEvent);
             return true;
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(),
-                    nodeServiceProvider.get(),
-                    nodeName)
+            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     EntityEventResource.BASE_PATH,
                     nodeName);
@@ -79,7 +74,7 @@ class EntityEventResourceImpl implements EntityEventResource {
                 Objects.requireNonNull(success, "Null success");
                 return success;
             } catch (Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
     }

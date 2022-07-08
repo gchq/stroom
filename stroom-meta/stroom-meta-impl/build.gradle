@@ -1,8 +1,7 @@
 ext.moduleName = 'stroom.meta.impl'
 
 dependencies {
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-mock')
+    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-retention-api')
@@ -13,6 +12,7 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-meta:stroom-meta-api')
+//    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
@@ -35,7 +35,8 @@ dependencies {
     implementation libs.ws_rs_api
 
     runtimeOnly libs.mysql_connector_java
-    
+
+//    testImplementation project(':stroom-cluster:stroom-cluster-impl')
     testImplementation project(':stroom-security:stroom-security-mock')
     
     testImplementation libs.assertj_core

@@ -1,6 +1,0 @@
-ext.moduleName = 'stroom.cluster.lock.mock'
-
-dependencies {
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation libs.guice5
-}

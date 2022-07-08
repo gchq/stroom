@@ -16,15 +16,14 @@
 
 package stroom.node.impl;
 
-import stroom.cluster.api.ClusterNodeManager;
-import stroom.cluster.api.ClusterState;
+import stroom.cluster.api.ClusterService;
+import stroom.cluster.api.EndpointUrlService;
+import stroom.cluster.api.RemoteRestService;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.FindNodeCriteria;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.Node;
@@ -36,10 +35,10 @@ import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -50,17 +49,23 @@ import javax.ws.rs.client.SyncInvoker;
 class NodeResourceImpl implements NodeResource {
 
     private final Provider<NodeServiceImpl> nodeServiceProvider;
-    private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<EndpointUrlService> endpointUrlServiceProvider;
+    private final Provider<RemoteRestService> remoteRestServiceProvider;
+    private final Provider<ClusterService> clusterServiceProvider;
     private final Provider<ClusterNodeManager> clusterNodeManagerProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
 
     @Inject
     NodeResourceImpl(final Provider<NodeServiceImpl> nodeServiceProvider,
-                     final Provider<NodeInfo> nodeInfoProvider,
+                     final Provider<EndpointUrlService> endpointUrlServiceProvider,
+                     final Provider<RemoteRestService> remoteRestServiceProvider,
+                     final Provider<ClusterService> clusterServiceProvider,
                      final Provider<ClusterNodeManager> clusterNodeManagerProvider,
                      final Provider<DocumentEventLog> documentEventLogProvider) {
         this.nodeServiceProvider = nodeServiceProvider;
-        this.nodeInfoProvider = nodeInfoProvider;
+        this.endpointUrlServiceProvider = endpointUrlServiceProvider;
+        this.remoteRestServiceProvider = remoteRestServiceProvider;
+        this.clusterServiceProvider = clusterServiceProvider;
         this.clusterNodeManagerProvider = clusterNodeManagerProvider;
         this.documentEventLogProvider = documentEventLogProvider;
     }
@@ -82,12 +87,7 @@ class NodeResourceImpl implements NodeResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public List<String> listEnabledNodes() {
-        return find().getValues()
-                .stream()
-                .map(NodeStatusResult::getNode)
-                .filter(Node::isEnabled)
-                .map(Node::getName)
-                .collect(Collectors.toList());
+        return new ArrayList<>(endpointUrlServiceProvider.get().getNodeNames());
     }
 
     @Override
@@ -108,13 +108,12 @@ class NodeResourceImpl implements NodeResource {
                     .find(new FindNodeCriteria())
                     .getValues();
 
-            final ClusterState clusterState = clusterNodeManagerProvider.get().getClusterState();
-            final String masterNodeName = clusterState.getMasterNodeName();
+            final String leaderNode = clusterServiceProvider.get().getLeaderNodeName().orElse(null);
 
             final List<NodeStatusResult> resultList = nodes.stream()
                     .sorted(Comparator.comparing(Node::getName))
                     .map(node ->
-                            new NodeStatusResult(node, node.getName().equals(masterNodeName)))
+                            new NodeStatusResult(node, node.getName().equals(leaderNode)))
                     .collect(Collectors.toList());
             response = new FetchNodeStatusResponse(resultList);
 
@@ -140,7 +139,7 @@ class NodeResourceImpl implements NodeResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public ClusterNodeInfo info(final String nodeName) {
-        ClusterNodeInfo clusterNodeInfo = null;
+        ClusterNodeInfo clusterNodeInfo;
 
         final Supplier<String> pathSupplier = () -> ResourcePaths.buildAuthenticatedApiPath(
                 NodeResource.BASE_PATH,
@@ -151,7 +150,7 @@ class NodeResourceImpl implements NodeResource {
         try {
             final long now = System.currentTimeMillis();
 
-            clusterNodeInfo = nodeServiceProvider.get().remoteRestResult(
+            clusterNodeInfo = remoteRestServiceProvider.get().remoteRestResult(
                     nodeName,
                     ClusterNodeInfo.class,
                     pathSupplier,
@@ -160,10 +159,8 @@ class NodeResourceImpl implements NodeResource {
                     SyncInvoker::get);
 
             if (clusterNodeInfo == null) {
-                final String url = NodeCallUtil.getBaseEndpointUrl(
-                        nodeInfoProvider.get(),
-                        nodeServiceProvider.get(),
-                        nodeName) + pathSupplier.get();
+                final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
+                final String url = endpointUrlService.getRemoteEndpointUrl(nodeName) + pathSupplier.get();
                 throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
             }
 
@@ -183,7 +180,7 @@ class NodeResourceImpl implements NodeResource {
     public Long ping(final String nodeName) {
         final long now = System.currentTimeMillis();
 
-        final Long ping = nodeServiceProvider.get().remoteRestResult(
+        final Long ping = remoteRestServiceProvider.get().remoteRestResult(
                 nodeName,
                 Long.class,
                 () -> ResourcePaths.buildAuthenticatedApiPath(
@@ -204,40 +201,40 @@ class NodeResourceImpl implements NodeResource {
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public boolean setPriority(final String nodeName, final Integer priority) {
-        modifyNode(nodeName, node -> node.setPriority(priority));
+//        modifyNode(nodeName, node -> node.setPriority(priority));
         return true;
     }
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public boolean setEnabled(final String nodeName, final Boolean enabled) {
-        modifyNode(nodeName, node -> node.setEnabled(enabled));
+//        modifyNode(nodeName, node -> node.setEnabled(enabled));
         return true;
     }
 
-    private void modifyNode(final String nodeName,
-                            final Consumer<Node> mutation) {
-        Node node = null;
-        Node before = null;
-        Node after = null;
-        final NodeServiceImpl nodeService = nodeServiceProvider.get();
-        final DocumentEventLog documentEventLog = documentEventLogProvider.get();
-
-        try {
-            // Get the before version.
-            before = nodeService.getNode(nodeName);
-            node = nodeService.getNode(nodeName);
-            if (node == null) {
-                throw new RuntimeException("Unknown node: " + nodeName);
-            }
-            mutation.accept(node);
-            after = nodeService.update(node);
-
-            documentEventLog.update(before, after, null);
-
-        } catch (final RuntimeException e) {
-            documentEventLog.update(before, after, e);
-            throw e;
-        }
-    }
+//    private void modifyNode(final String nodeName,
+//                            final Consumer<Node> mutation) {
+//        Node node = null;
+//        Node before = null;
+//        Node after = null;
+//        final NodeServiceImpl nodeService = nodeServiceProvider.get();
+//        final DocumentEventLog documentEventLog = documentEventLogProvider.get();
+//
+//        try {
+//            // Get the before version.
+//            before = nodeService.getNode(nodeName);
+//            node = nodeService.getNode(nodeName);
+//            if (node == null) {
+//                throw new RuntimeException("Unknown node: " + nodeName);
+//            }
+//            mutation.accept(node);
+//            after = nodeService.update(node);
+//
+//            documentEventLog.update(before, after, null);
+//
+//        } catch (final RuntimeException e) {
+//            documentEventLog.update(before, after, e);
+//            throw e;
+//        }
+//    }
 }

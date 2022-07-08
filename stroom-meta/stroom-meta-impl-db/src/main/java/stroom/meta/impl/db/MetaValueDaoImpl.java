@@ -16,7 +16,8 @@
 
 package stroom.meta.impl.db;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterRoles;
+import stroom.cluster.api.ClusterService;
 import stroom.db.util.JooqUtil;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.impl.MetaKeyDao;
@@ -58,7 +59,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     private final MetaDbConnProvider metaDbConnProvider;
     private final MetaKeyDao metaKeyService;
     private final Provider<MetaValueConfig> metaValueConfigProvider;
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
     private final TaskContext taskContext;
 
     private volatile List<Row> queue = new ArrayList<>();
@@ -67,12 +68,12 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     MetaValueDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                      final MetaKeyDao metaKeyService,
                      final Provider<MetaValueConfig> metaValueConfigProvider,
-                     final ClusterLockService clusterLockService,
+                     final ClusterService clusterService,
                      final TaskContext taskContext) {
         this.metaDbConnProvider = metaDbConnProvider;
         this.metaKeyService = metaKeyService;
         this.metaValueConfigProvider = metaValueConfigProvider;
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
         this.taskContext = taskContext;
     }
 
@@ -160,24 +161,26 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     public void deleteOldValues() {
         // Acquire a cluster lock before performing a batch delete to reduce db contention and to let a
         // single node do the job.
-        clusterLockService.tryLock(LOCK_NAME, () -> {
-            taskContext.info(() -> "Deleting old meta values");
-            final long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
-            final int batchSize = metaValueConfigProvider.get().getDeleteBatchSize();
-            LOGGER.debug(() ->
-                    "Processing batch age " + createTimeThresholdEpochMs + ", batch size is " + batchSize);
-            final LongAdder totalCount = new LongAdder();
-            int count = batchSize;
-            while (count >= batchSize) {
-                if (Thread.currentThread().isInterrupted()) {
-                    LOGGER.warn("Aborting meta value deletion due to thread interruption. " +
-                            "Deletion will continue as normal on the next run. Deleted so far: " +
-                            totalCount + ".");
-                    break;
+        if (clusterService.isLeaderForRole(ClusterRoles.META_DELETE)) {
+            clusterService.tryLock(LOCK_NAME, () -> {
+                taskContext.info(() -> "Deleting old meta values");
+                final long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
+                final int batchSize = metaValueConfigProvider.get().getDeleteBatchSize();
+                LOGGER.debug(() ->
+                        "Processing batch age " + createTimeThresholdEpochMs + ", batch size is " + batchSize);
+                final LongAdder totalCount = new LongAdder();
+                int count = batchSize;
+                while (count >= batchSize) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        LOGGER.warn("Aborting meta value deletion due to thread interruption. " +
+                                "Deletion will continue as normal on the next run. Deleted so far: " +
+                                totalCount + ".");
+                        break;
+                    }
+                    count = deleteBatchOfOldValues(createTimeThresholdEpochMs, batchSize, totalCount);
                 }
-                count = deleteBatchOfOldValues(createTimeThresholdEpochMs, batchSize, totalCount);
-            }
-        });
+            });
+        }
     }
 
     private int deleteBatchOfOldValues(final long createTimeThresholdEpochMs,

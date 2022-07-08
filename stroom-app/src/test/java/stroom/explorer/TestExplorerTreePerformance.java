@@ -17,7 +17,7 @@
 package stroom.explorer;
 
 import stroom.app.guice.CoreModule;
-import stroom.cluster.impl.MockClusterModule;
+import stroom.cluster.mock.MockClusterModule;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;

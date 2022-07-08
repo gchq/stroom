@@ -16,13 +16,13 @@
 
 package stroom.processor.impl;
 
+import stroom.cluster.api.NodeInfo;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryDescription;
-import stroom.node.api.NodeInfo;
 import stroom.processor.api.JobNames;
 import stroom.processor.shared.AssignTasksRequest;
 import stroom.processor.shared.ProcessorTask;
@@ -68,7 +68,7 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     public List<DistributedTask> fetch(final String nodeName, final int count) {
         try {
             if (targetNodeSetFactory.isClusterStateInitialised()) {
-                final String masterNode = targetNodeSetFactory.getMasterNode();
+                final String masterNode = targetNodeSetFactory.getLeaderNode();
                 LOGGER.debug("masterNode: {}", masterNode);
                 final ProcessorTaskList processorTaskList = processorTaskResource
                         .assignTasks(masterNode, new AssignTasksRequest(nodeName, count));
@@ -100,7 +100,7 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     public Boolean abandon(final String nodeName, final List<DistributedTask> tasks) {
         try {
             if (targetNodeSetFactory.isClusterStateInitialised()) {
-                final String masterNode = targetNodeSetFactory.getMasterNode();
+                final String masterNode = targetNodeSetFactory.getLeaderNode();
 
                 final List<ProcessorTask> processorTasks = tasks
                         .stream()

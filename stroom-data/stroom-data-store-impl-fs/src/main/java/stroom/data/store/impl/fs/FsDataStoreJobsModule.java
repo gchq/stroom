@@ -16,7 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterRoles;
+import stroom.cluster.api.ClusterService;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 
@@ -53,24 +54,36 @@ public class FsDataStoreJobsModule extends AbstractModule {
     private static class DataDelete extends RunnableWrapper {
 
         @Inject
-        DataDelete(final PhysicalDeleteExecutor physicalDeleteExecutor, final ClusterLockService clusterLockService) {
-            super(() -> clusterLockService.tryLock("Data Delete", physicalDeleteExecutor::exec));
+        DataDelete(final PhysicalDeleteExecutor physicalDeleteExecutor, final ClusterService clusterService) {
+            super(() -> {
+                if (clusterService.isLeaderForRole(ClusterRoles.DATA_DELETE)) {
+                    clusterService.tryLock("Data Delete", physicalDeleteExecutor::exec);
+                }
+            });
         }
     }
 
     private static class OrphanFileFinder extends RunnableWrapper {
 
         @Inject
-        OrphanFileFinder(final FsOrphanFileFinderExecutor executor, final ClusterLockService clusterLockService) {
-            super(() -> clusterLockService.tryLock(FsOrphanFileFinderExecutor.TASK_NAME, executor::scan));
+        OrphanFileFinder(final FsOrphanFileFinderExecutor executor, final ClusterService clusterService) {
+            super(() -> {
+                if (clusterService.isLeaderForRole(ClusterRoles.FIND_ORPHAN_FILES)) {
+                    clusterService.tryLock(FsOrphanFileFinderExecutor.TASK_NAME, executor::scan);
+                }
+            });
         }
     }
 
     private static class OrphanMetaFinder extends RunnableWrapper {
 
         @Inject
-        OrphanMetaFinder(final FsOrphanMetaFinderExecutor executor, final ClusterLockService clusterLockService) {
-            super(() -> clusterLockService.tryLock(FsOrphanMetaFinderExecutor.TASK_NAME, executor::scan));
+        OrphanMetaFinder(final FsOrphanMetaFinderExecutor executor, final ClusterService clusterService) {
+            super(() -> {
+                if (clusterService.isLeaderForRole(ClusterRoles.FIND_ORPHAN_FILES)) {
+                    clusterService.tryLock(FsOrphanMetaFinderExecutor.TASK_NAME, executor::scan);
+                }
+            });
         }
     }
 }

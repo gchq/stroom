@@ -1,12 +1,13 @@
 package stroom.security.impl;
 
-import stroom.node.api.FindNodeCriteria;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
+import stroom.cluster.api.ClusterService;
+import stroom.cluster.api.EndpointUrlService;
+import stroom.cluster.api.NodeInfo;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.test.common.util.test.MockEndpointUrlService;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -90,20 +91,19 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
                                            final List<TestNode> allNodes,
                                            final Map<String, String> baseEndPointUrls) {
         // Set up the NodeService mock
-        final NodeService nodeService = Mockito.mock(NodeService.class,
-                NodeService.class.getName() + "_" + node.getNodeName());
+        final EndpointUrlService endpointUrlService = new MockEndpointUrlService(node, allNodes, baseEndPointUrls);
 
-        when(nodeService.isEnabled(Mockito.anyString()))
-                .thenAnswer(invocation ->
-                        allNodes.stream()
-                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
-                                .anyMatch(TestNode::isEnabled));
+//        when(nodeService.isEnabled(Mockito.anyString()))
+//                .thenAnswer(invocation ->
+//                        allNodes.stream()
+//                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
+//                                .anyMatch(TestNode::isEnabled));
 
-        when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-                .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
-
-        when(nodeService.findNodeNames(Mockito.any(FindNodeCriteria.class)))
-                .thenReturn(List.of("node1", "node2"));
+//        when(endpointUrlService.getBaseEndpointUrl(Mockito.anyString()))
+//                .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
+//
+//        when(clusterService.findNodeNames(Mockito.any(FindNodeCriteria.class)))
+//                .thenReturn(List.of("node1", "node2"));
 
         // Set up the NodeInfo mock
 
@@ -115,7 +115,7 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
 
         final SessionListService sessionListService = new SessionListListener(
                 nodeInfo,
-                nodeService,
+                endpointUrlService,
                 new SimpleTaskContextFactory(),
                 webTargetFactory());
 

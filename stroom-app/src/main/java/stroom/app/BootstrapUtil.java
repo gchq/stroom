@@ -1,8 +1,6 @@
 package stroom.app;
 
 import stroom.app.guice.BootStrapModule;
-import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.common.AbstractDbConfig;
@@ -11,6 +9,8 @@ import stroom.config.common.ConnectionConfig;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
 import stroom.db.util.JooqUtil;
+import stroom.legacy.db.ClusterLockConfig;
+import stroom.legacy.db.ClusterLockConfig.ClusterLockDbConfig;
 import stroom.util.BuildInfoProvider;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
@@ -335,6 +335,7 @@ public class BootstrapUtil {
         }
     }
 
+    // TODO : @66 REMOVE CLUSTER LOCK DB CONFIG
     private static ConnectionConfig getClusterLockConnectionConfig(final Config config) {
         final CommonDbConfig yamlCommonDbConfig = Objects.requireNonNullElse(
                 config.getYamlAppConfig().getCommonDbConfig(),

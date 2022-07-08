@@ -5,9 +5,9 @@ import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
+import stroom.cluster.api.EndpointUrlService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.test.common.util.test.MockEndpointUrlService;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.ResourcePaths;
 
@@ -50,25 +50,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                                          final Map<String, String> baseEndPointUrls) {
 
         // Set up the NodeService mock
-        final NodeService nodeService = Mockito.mock(NodeService.class,
-                NodeService.class.getName() + "_" + node.getNodeName());
-
-        when(nodeService.isEnabled(Mockito.anyString()))
-                .thenAnswer(invocation ->
-                        allNodes.stream()
-                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
-                                .anyMatch(TestNode::isEnabled));
-
-        when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-                .thenAnswer(invocation -> baseEndPointUrls.get(invocation.getArgument(0)));
-
-        // Set up the NodeInfo mock
-
-        final NodeInfo nodeInfo = Mockito.mock(NodeInfo.class,
-                NodeInfo.class.getName() + "_" + node.getNodeName());
-
-        when(nodeInfo.getThisNodeName())
-                .thenReturn(node.getNodeName());
+        final EndpointUrlService endpointUrlService = new MockEndpointUrlService(node, allNodes, baseEndPointUrls);
 
         // Set up the CacheManagerService mock
 
@@ -97,8 +79,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
         // Now create the service
 
         return new CacheResourceImpl(
-                () -> nodeService,
-                () -> nodeInfo,
+                () -> endpointUrlService,
                 AbstractMultiNodeResourceTest::webTargetFactory,
                 () -> cacheManagerService,
                 null);

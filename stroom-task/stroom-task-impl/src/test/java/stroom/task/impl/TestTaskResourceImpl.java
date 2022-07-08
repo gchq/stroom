@@ -1,8 +1,8 @@
 package stroom.task.impl;
 
+import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.RemoteRestService;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindTaskProgressRequest;
@@ -18,7 +18,6 @@ import stroom.util.shared.ResourcePaths;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
@@ -263,16 +262,16 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
                 .thenReturn(UUID.randomUUID().toString());
 
         // Set up the NodeService mock
-        final NodeService nodeService = createNamedMock(NodeService.class, node);
+        final RemoteRestService remoteRestService = createNamedMock(RemoteRestService.class, node);
 
-        when(nodeService.isEnabled(Mockito.anyString()))
-                .then(invocation ->
-                        allNodes.stream()
-                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
-                                .anyMatch(TestNode::isEnabled));
-
-        when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-                .then(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
+//        when(nodeService.isEnabled(Mockito.anyString()))
+//                .then(invocation ->
+//                        allNodes.stream()
+//                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
+//                                .anyMatch(TestNode::isEnabled));
+//
+//        when(remoteRestService.getBaseEndpointUrl(Mockito.anyString()))
+//                .then(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
 
         // Set up the NodeInfo mock
 
@@ -288,7 +287,7 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         return new TaskResourceImpl(
                 () -> taskManager,
                 () -> sessionIdProvider,
-                () -> nodeService);
+                () -> remoteRestService);
     }
 
     private TaskProgress buildTaskProgress(final String taskId, final String nodeName) {

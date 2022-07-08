@@ -17,7 +17,8 @@
 
 package stroom.search.solr;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterRoles;
+import stroom.cluster.api.ClusterService;
 import stroom.docref.DocRef;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.task.api.TaskContext;
@@ -42,36 +43,38 @@ public class SolrIndexOptimiseExecutor {
 
     private final SolrIndexStore solrIndexStore;
     private final SolrIndexClientCache solrIndexClientCache;
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
     private final TaskContext taskContext;
 
     @Inject
     public SolrIndexOptimiseExecutor(final SolrIndexStore solrIndexStore,
                                      final SolrIndexClientCache solrIndexClientCache,
-                                     final ClusterLockService clusterLockService,
+                                     final ClusterService clusterService,
                                      final TaskContext taskContext) {
         this.solrIndexStore = solrIndexStore;
         this.solrIndexClientCache = solrIndexClientCache;
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
         this.taskContext = taskContext;
     }
 
     public void exec() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         info(() -> "Start");
-        clusterLockService.tryLock(LOCK_NAME, () -> {
-            try {
-                if (!Thread.currentThread().isInterrupted()) {
-                    final List<DocRef> docRefs = solrIndexStore.list();
-                    if (docRefs != null) {
-                        docRefs.forEach(this::performRetention);
+        if (clusterService.isLeaderForRole(ClusterRoles.SOLR_INDEX_OPTIMISE)) {
+            clusterService.tryLock(LOCK_NAME, () -> {
+                try {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        final List<DocRef> docRefs = solrIndexStore.list();
+                        if (docRefs != null) {
+                            docRefs.forEach(this::performRetention);
+                        }
+                        info(() -> "Finished in " + logExecutionTime);
                     }
-                    info(() -> "Finished in " + logExecutionTime);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-            }
-        });
+            });
+        }
     }
 
     private void performRetention(final DocRef docRef) {

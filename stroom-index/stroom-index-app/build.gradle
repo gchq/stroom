@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.index.app'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
@@ -14,7 +15,7 @@ dependencies {
     implementation project(':stroom-index:stroom-index-impl-db')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-    implementation project(':stroom-node:stroom-node-api')
+//    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')

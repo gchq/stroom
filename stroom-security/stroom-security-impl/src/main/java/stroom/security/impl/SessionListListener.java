@@ -16,10 +16,9 @@
 
 package stroom.security.impl;
 
-import stroom.node.api.FindNodeCriteria;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
+import stroom.cluster.api.EndpointUrlService;
+import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.RemoteRestUtil;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.SessionDetails;
 import stroom.security.shared.SessionListResponse;
@@ -57,17 +56,17 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     private final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
 
     private final NodeInfo nodeInfo;
-    private final NodeService nodeService;
+    private final EndpointUrlService endpointUrlService;
     private final TaskContextFactory taskContextFactory;
     private final WebTargetFactory webTargetFactory;
 
     @Inject
     SessionListListener(final NodeInfo nodeInfo,
-                        final NodeService nodeService,
+                        final EndpointUrlService endpointUrlService,
                         final TaskContextFactory taskContextFactory,
                         final WebTargetFactory webTargetFactory) {
         this.nodeInfo = nodeInfo;
-        this.nodeService = nodeService;
+        this.endpointUrlService = endpointUrlService;
         this.taskContextFactory = taskContextFactory;
         this.webTargetFactory = webTargetFactory;
     }
@@ -87,24 +86,6 @@ class SessionListListener implements HttpSessionListener, SessionListService {
         sessionMap.remove(httpSession.getId());
     }
 
-//    public ResultPage<SessionDetails> find(final BaseCriteria criteria) {
-//        final ArrayList<SessionDetails> rtn = new ArrayList<>();
-//        for (final HttpSession httpSession : sessionMap.values()) {
-//
-//            final UserIdentity userIdentity = UserIdentitySessionUtil.get(httpSession);
-//
-//            final SessionDetails sessionDetails = new SessionDetails(
-//                    userIdentity != null ? userIdentity.getId() : null,
-//                    httpSession.getCreationTime(),
-//                    httpSession.getLastAccessedTime(),
-//                    UserAgentSessionUtil.get(httpSession),
-//                    nodeInfo.getThisNodeName());
-//
-//            rtn.add(sessionDetails);
-//        }
-//        return ResultPage.createUnboundedList(rtn);
-//    }
-
     public SessionListResponse listSessions(final String nodeName) {
         LOGGER.debug("listSessions(\"{}\") called", nodeName);
         // TODO add audit logging?
@@ -112,14 +93,14 @@ class SessionListListener implements HttpSessionListener, SessionListService {
 
         final SessionListResponse sessionList;
 
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
             // This is our node so execute locally
             sessionList = listSessionsOnThisNode();
 
         } else {
             // This is a different node so make a rest call to it to get the result
 
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName) +
+            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName) +
                     ResourcePaths.buildAuthenticatedApiPath(
                             SessionResource.BASE_PATH,
                             SessionResource.LIST_PATH_PART);
@@ -138,7 +119,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
 
                 sessionList = response.readEntity(SessionListResponse.class);
             } catch (Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
         return sessionList;
@@ -160,7 +141,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
 
     public SessionListResponse listSessions() {
         return taskContextFactory.contextResult("Get session list on all active nodes", parentTaskContext ->
-                nodeService.findNodeNames(FindNodeCriteria.allEnabled())
+                endpointUrlService.getNodeNames()
                         .stream()
                         .map(nodeName -> {
                             final Supplier<SessionListResponse> listSessionsOnNodeTask =

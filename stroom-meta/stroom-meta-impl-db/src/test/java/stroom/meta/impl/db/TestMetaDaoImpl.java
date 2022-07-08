@@ -18,7 +18,7 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.impl.CacheModule;
-import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.cluster.mock.MockClusterModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dictionary.mock.MockWordListProviderModule;
@@ -86,7 +86,7 @@ class TestMetaDaoImpl {
                         new MetaTestModule(),
                         new MetaDbModule(),
                         new MetaDaoModule(),
-                        new MockClusterLockModule(),
+                        new MockClusterModule(),
                         new MockSecurityContextModule(),
                         new MockTaskModule(),
                         new MockCollectionModule(),

@@ -17,6 +17,7 @@
 
 package stroom.search.impl;
 
+import stroom.cluster.api.EndpointUrlService;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
@@ -25,8 +26,6 @@ import stroom.index.impl.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -64,7 +63,7 @@ class AsyncSearchTaskHandler {
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
-    private final NodeInfo nodeInfo;
+    private final EndpointUrlService endpointUrlService;
     private final Provider<LocalNodeSearch> localNodeSearchProvider;
     private final Provider<RemoteNodeSearch> remoteNodeSearchProvider;
 
@@ -76,7 +75,7 @@ class AsyncSearchTaskHandler {
                            final SecurityContext securityContext,
                            final ExecutorProvider executorProvider,
                            final TaskContextFactory taskContextFactory,
-                           final NodeInfo nodeInfo,
+                           final EndpointUrlService endpointUrlService,
                            final Provider<LocalNodeSearch> localNodeSearchProvider,
                            final Provider<RemoteNodeSearch> remoteNodeSearchProvider) {
         this.targetNodeSetFactory = targetNodeSetFactory;
@@ -86,7 +85,7 @@ class AsyncSearchTaskHandler {
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
-        this.nodeInfo = nodeInfo;
+        this.endpointUrlService = endpointUrlService;
         this.localNodeSearchProvider = localNodeSearchProvider;
         this.remoteNodeSearchProvider = remoteNodeSearchProvider;
     }
@@ -107,7 +106,7 @@ class AsyncSearchTaskHandler {
                 try {
                     // Get the nodes that we are going to send the search request
                     // to.
-                    final Set<String> targetNodes = targetNodeSetFactory.getEnabledTargetNodeSet();
+                    final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
                     parentContext.info(task::getSearchName);
                     final Query query = task.getQuery();
 
@@ -146,7 +145,7 @@ class AsyncSearchTaskHandler {
                                     "Search node: " + nodeName,
                                     taskContext -> {
                                         final NodeSearch nodeSearch;
-                                        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+                                        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
                                             nodeSearch = localNodeSearchProvider.get();
                                         } else {
                                             nodeSearch = remoteNodeSearchProvider.get();

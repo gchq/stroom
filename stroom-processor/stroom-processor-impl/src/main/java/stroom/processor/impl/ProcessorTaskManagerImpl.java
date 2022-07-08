@@ -17,7 +17,8 @@
 
 package stroom.processor.impl;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterService;
+import stroom.cluster.api.NodeInfo;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
@@ -28,7 +29,6 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
-import stroom.node.api.NodeInfo;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.Limits;
@@ -121,7 +121,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final MetaService metaService;
     private final EventSearch eventSearch;
     private final SecurityContext securityContext;
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final ProcessorConfig processorConfig;
 
@@ -176,7 +176,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final MetaService metaService,
                              final EventSearch eventSearch,
                              final SecurityContext securityContext,
-                             final ClusterLockService clusterLockService,
+                             final ClusterService clusterService,
                              final TargetNodeSetFactory targetNodeSetFactory,
                              final ProcessorConfig processorConfig) {
 
@@ -192,7 +192,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.metaService = metaService;
         this.eventSearch = eventSearch;
         this.securityContext = securityContext;
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.processorConfig = processorConfig;
     }
@@ -205,7 +205,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             // Lock the cluster so that only this node is able to release owned tasks at this time.
             final String nodeName = nodeInfo.getThisNodeName();
             LOGGER.info(() -> "Locking cluster to release owned tasks for node " + nodeName);
-            clusterLockService.lock(LOCK_NAME, () -> processorTaskDao.releaseOwnedTasks(nodeName));
+            clusterService.lock(LOCK_NAME, () -> processorTaskDao.releaseOwnedTasks(nodeName));
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         } finally {
@@ -477,7 +477,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 // Some task creation is async, but we will wait for that
                 // to complete so all task creation is encapsulated by this lock
                 LOGGER.debug(() -> "Locking cluster to create tasks");
-                clusterLockService.lock(LOCK_NAME, () -> doCreateTasks(taskContext));
+                clusterService.lock(LOCK_NAME, () -> doCreateTasks(taskContext));
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
@@ -487,7 +487,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     public void disownDeadTasks() {
         try {
             final String node = nodeInfo.getThisNodeName();
-            final String masterNode = targetNodeSetFactory.getMasterNode();
+            final String masterNode = targetNodeSetFactory.getLeaderNode();
             if (node != null && node.equals(masterNode)) {
                 // If this is the master node then see if there are any nodes that we haven't had contact with
                 // for some time.
@@ -522,7 +522,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         if (queueMap.size() > 0) {
             try {
                 final String node = nodeInfo.getThisNodeName();
-                final String masterNode = targetNodeSetFactory.getMasterNode();
+                final String masterNode = targetNodeSetFactory.getLeaderNode();
                 if (node != null && !node.equals(masterNode)) {
                     // This is no longer the master node so release all tasks.
                     releaseAll();

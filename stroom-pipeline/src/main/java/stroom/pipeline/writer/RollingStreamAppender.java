@@ -17,6 +17,7 @@
 
 package stroom.pipeline.writer;
 
+import stroom.cluster.api.NodeInfo;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
@@ -24,7 +25,6 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
-import stroom.node.api.NodeInfo;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;

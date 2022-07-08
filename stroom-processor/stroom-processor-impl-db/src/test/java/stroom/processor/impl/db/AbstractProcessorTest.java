@@ -1,7 +1,8 @@
 package stroom.processor.impl.db;
 
 import stroom.cache.impl.CacheModule;
-import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.cluster.api.NodeInfo;
+import stroom.cluster.mock.MockClusterModule;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -9,7 +10,6 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
@@ -73,7 +73,7 @@ class AbstractProcessorTest {
                 new ProcessorDbModule(),
                 new CacheModule(),
                 new MockTaskModule(),
-                new MockClusterLockModule(),
+                new MockClusterModule(),
                 new DbTestModule(),
                 new MockSecurityContextModule(),
                 new AbstractModule() {
@@ -90,8 +90,6 @@ class AbstractProcessorTest {
                                 .toInstance(expressionMapperFactory);
                         bind(DocRefInfoService.class)
                                 .toInstance(Mockito.mock(DocRefInfoService.class));
-                        bind(NodeInfo.class)
-                                .toInstance(Mockito.mock(NodeInfo.class));
                         bind(ProcessorTaskManager.class)
                                 .toInstance(Mockito.mock(ProcessorTaskManager.class));
                         bind(DocumentEventLog.class)

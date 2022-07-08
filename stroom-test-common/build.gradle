@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.test.common'
 
 dependencies {
+    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')

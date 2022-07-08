@@ -17,7 +17,8 @@
 
 package stroom.processor.impl.db;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterRoles;
+import stroom.cluster.api.ClusterService;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorConfig;
@@ -62,7 +63,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private static final String LOCK_NAME = "ProcessorTaskDeleteExecutor";
 
     private final ProcessorDbConnProvider processorDbConnProvider;
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
     private final ProcessorConfig processorConfig;
     private final ProcessorFilterDao processorFilterDao;
     private final ProcessorTaskManager processorTaskManager;
@@ -70,13 +71,13 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
 
     @Inject
     ProcessorTaskDeleteExecutorImpl(final ProcessorDbConnProvider processorDbConnProvider,
-                                    final ClusterLockService clusterLockService,
+                                    final ClusterService clusterService,
                                     final ProcessorConfig processorConfig,
                                     final ProcessorFilterDao processorFilterDao,
                                     final ProcessorTaskManager processorTaskManager,
                                     final TaskContext taskContext) {
         this.processorDbConnProvider = processorDbConnProvider;
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
         this.processorConfig = processorConfig;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskManager = processorTaskManager;
@@ -104,23 +105,25 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
 
     final void lockAndDelete() {
         LOGGER.info(TASK_NAME + " - start");
-        clusterLockService.tryLock(LOCK_NAME, () -> {
-            try {
-                if (!Thread.currentThread().isInterrupted()) {
-                    final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        if (clusterService.isLeaderForRole(ClusterRoles.PROCESSOR_TASK_DELETE)) {
+            clusterService.tryLock(LOCK_NAME, () -> {
+                try {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-                    final StroomDuration deleteAge = processorConfig.getDeleteAge();
+                        final StroomDuration deleteAge = processorConfig.getDeleteAge();
 
-                    if (!deleteAge.isZero()) {
-                        final Instant deleteThreshold = TimeUtils.durationToThreshold(deleteAge);
-                        delete(deleteThreshold);
+                        if (!deleteAge.isZero()) {
+                            final Instant deleteThreshold = TimeUtils.durationToThreshold(deleteAge);
+                            delete(deleteThreshold);
+                        }
+                        LOGGER.info(TASK_NAME + " - finished in {}", logExecutionTime);
                     }
-                    LOGGER.info(TASK_NAME + " - finished in {}", logExecutionTime);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        });
+            });
+        }
     }
 
     @Override

@@ -16,7 +16,8 @@
 
 package stroom.data.retention.impl;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterRoles;
+import stroom.cluster.api.ClusterService;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionCreationTimeUtil;
 import stroom.data.retention.api.DataRetentionRuleAction;
@@ -93,7 +94,7 @@ public class DataRetentionPolicyExecutor {
     public static final String JOB_NAME = "Policy Based Data Retention";
     private static final String LOCK_NAME = "DataRetentionExecutor";
 
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
     private final Provider<DataRetentionRules> dataRetentionRulesProvider;
     private final DataRetentionConfig policyConfig;
     private final MetaService metaService;
@@ -101,12 +102,12 @@ public class DataRetentionPolicyExecutor {
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
-    DataRetentionPolicyExecutor(final ClusterLockService clusterLockService,
+    DataRetentionPolicyExecutor(final ClusterService clusterService,
                                 final Provider<DataRetentionRules> dataRetentionRulesProvider,
                                 final DataRetentionConfig policyConfig,
                                 final MetaService metaService,
                                 final TaskContext taskContext) {
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
         this.dataRetentionRulesProvider = dataRetentionRulesProvider;
         this.policyConfig = policyConfig;
         this.metaService = metaService;
@@ -121,22 +122,24 @@ public class DataRetentionPolicyExecutor {
      * Pkg private so we can test with a known now time
      */
     void exec(final Instant now) {
-        clusterLockService.tryLock(LOCK_NAME, () -> {
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-            try {
-                info(() -> "Starting data retention process");
-                // MUST truncate down to millis as the DB stores in millis and TimePeriod
-                // also truncates to millis so we need to work to a consistent precision else
-                // some of the date logic fails due to micro second differences
-                process(now.truncatedTo(ChronoUnit.MILLIS));
-                info(() -> "Finished data retention process in " + logExecutionTime);
-            } catch (final TaskTerminatedException e) {
-                LOGGER.debug("Task terminated", e);
-                LOGGER.error(JOB_NAME + " - Task terminated after " + logExecutionTime);
-            } catch (final RuntimeException e) {
-                LOGGER.error(JOB_NAME + " - Error enforcing data retention policies: {}", e.getMessage(), e);
-            }
-        });
+        if (clusterService.isLeaderForRole(ClusterRoles.DATA_RETENTION)) {
+            clusterService.tryLock(LOCK_NAME, () -> {
+                final LogExecutionTime logExecutionTime = new LogExecutionTime();
+                try {
+                    info(() -> "Starting data retention process");
+                    // MUST truncate down to millis as the DB stores in millis and TimePeriod
+                    // also truncates to millis so we need to work to a consistent precision else
+                    // some of the date logic fails due to micro second differences
+                    process(now.truncatedTo(ChronoUnit.MILLIS));
+                    info(() -> "Finished data retention process in " + logExecutionTime);
+                } catch (final TaskTerminatedException e) {
+                    LOGGER.debug("Task terminated", e);
+                    LOGGER.error(JOB_NAME + " - Task terminated after " + logExecutionTime);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(JOB_NAME + " - Error enforcing data retention policies: {}", e.getMessage(), e);
+                }
+            });
+        }
     }
 
     private synchronized void process(final Instant now) {

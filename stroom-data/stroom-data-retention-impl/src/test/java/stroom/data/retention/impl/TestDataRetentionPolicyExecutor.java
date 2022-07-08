@@ -1,7 +1,8 @@
 package stroom.data.retention.impl;
 
-import stroom.cluster.lock.api.ClusterLockService;
-import stroom.cluster.lock.mock.MockClusterLockService;
+import stroom.cluster.api.ClusterService;
+import stroom.cluster.mock.MockClusterService;
+import stroom.cluster.mock.MockNodeInfo;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionCreationTimeUtil;
 import stroom.data.retention.api.DataRetentionRuleAction;
@@ -54,7 +55,7 @@ class TestDataRetentionPolicyExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionPolicyExecutor.class);
     private static final String RULES_VERSION = "1234567";
 
-    private final ClusterLockService clusterLockService = new MockClusterLockService();
+    private final ClusterService clusterService = new MockClusterService(new MockNodeInfo());
     private final DataRetentionConfig dataRetentionConfig = new DataRetentionConfig();
     private final TaskContext taskContext = new SimpleTaskContext();
 
@@ -572,7 +573,7 @@ class TestDataRetentionPolicyExecutor {
 
     private DataRetentionPolicyExecutor createExecutor(final List<DataRetentionRule> rules) {
         return new DataRetentionPolicyExecutor(
-                clusterLockService,
+                clusterService,
                 () -> buildRules(rules),
                 dataRetentionConfig,
                 metaService,

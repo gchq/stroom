@@ -16,7 +16,7 @@
 
 package stroom.task.impl;
 
-import stroom.node.api.NodeInfo;
+import stroom.cluster.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskManager;

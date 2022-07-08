@@ -16,10 +16,10 @@
 
 package stroom.task.impl;
 
+import stroom.cluster.api.RemoteRestService;
 import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.node.api.NodeService;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindTaskProgressRequest;
 import stroom.task.shared.TaskProgress;
@@ -48,15 +48,15 @@ class TaskResourceImpl implements TaskResource {
 
     private final Provider<TaskManagerImpl> taskManagerProvider;
     private final Provider<SessionIdProvider> sessionIdProvider;
-    private final Provider<NodeService> nodeServiceProvider;
+    private final Provider<RemoteRestService> remoteRestServiceProvider;
 
     @Inject
     TaskResourceImpl(final Provider<TaskManagerImpl> taskManagerProvider,
                      final Provider<SessionIdProvider> sessionIdProvider,
-                     final Provider<NodeService> nodeServiceProvider) {
+                     final Provider<RemoteRestService> remoteRestServiceProvider) {
         this.taskManagerProvider = taskManagerProvider;
         this.sessionIdProvider = sessionIdProvider;
-        this.nodeServiceProvider = nodeServiceProvider;
+        this.remoteRestServiceProvider = remoteRestServiceProvider;
     }
 
     @Override
@@ -68,7 +68,7 @@ class TaskResourceImpl implements TaskResource {
     @Override
     public TaskProgressResponse find(final String nodeName, final FindTaskProgressRequest request) {
         try {
-            return nodeServiceProvider.get()
+            return remoteRestServiceProvider.get()
                     .remoteRestResult(
                             nodeName,
                             TaskProgressResponse.class,
@@ -115,7 +115,7 @@ class TaskResourceImpl implements TaskResource {
     @AutoLogged(value = OperationType.PROCESS, verb = "Terminating",
             decorator = TerminateDecorator.class)
     public Boolean terminate(final String nodeName, final TerminateTaskProgressRequest request) {
-        nodeServiceProvider.get()
+        remoteRestServiceProvider.get()
                 .remoteRestCall(
                         nodeName,
                         () -> ResourcePaths.buildAuthenticatedApiPath(

@@ -18,7 +18,7 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.impl.CacheModule;
-import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.cluster.mock.MockClusterModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
@@ -63,32 +63,34 @@ class TestMetaValueDaoImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-                new MetaModule(),
-                new MetaDbModule(),
-                new MetaDaoModule(),
-                new MockClusterLockModule(),
-                new MockSecurityContextModule(),
-                new MockCollectionModule(),
-                new MockDocRefInfoModule(),
-                new MockWordListProviderModule(),
-                new CacheModule(),
-                new DbTestModule(),
-                new MetaTestModule(),
-                new MockTaskModule(),
-                new MockStroomEventLoggingModule(),
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(MetaServiceConfig.class).toProvider(() ->
-                                getMetaServiceConfig());
-                        bind(MetaValueConfig.class).toProvider(() ->
-                                getMetaValueConfig());
-                    }
-                })
+                        new MetaModule(),
+                        new MetaDbModule(),
+                        new MetaDaoModule(),
+                        new MockClusterModule(),
+                        new MockSecurityContextModule(),
+                        new MockCollectionModule(),
+                        new MockDocRefInfoModule(),
+                        new MockWordListProviderModule(),
+                        new CacheModule(),
+                        new DbTestModule(),
+                        new MetaTestModule(),
+                        new MockTaskModule(),
+                        new MockStroomEventLoggingModule(),
+                        createAbstractModule())
                 .injectMembers(this);
         setAddAsync(false);
         // Delete everything
         cleanup.cleanup();
+    }
+
+    private AbstractModule createAbstractModule() {
+        return new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(MetaServiceConfig.class).toProvider(() -> getMetaServiceConfig());
+                bind(MetaValueConfig.class).toProvider(() -> getMetaValueConfig());
+            }
+        };
     }
 
     @AfterEach

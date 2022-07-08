@@ -1,6 +1,6 @@
 package stroom.node.impl;
 
-import stroom.node.api.NodeInfo;
+import stroom.cluster.api.NodeInfo;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;

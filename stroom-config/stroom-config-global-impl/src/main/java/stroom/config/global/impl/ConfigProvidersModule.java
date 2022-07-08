@@ -54,19 +54,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.cluster.api.ClusterConfig getClusterConfig(
+    stroom.cluster.impl.ClusterConfig getClusterConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.cluster.api.ClusterConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.cluster.lock.impl.db.ClusterLockConfig getClusterLockConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.cluster.lock.impl.db.ClusterLockConfig.class);
+                stroom.cluster.impl.ClusterConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -310,6 +301,15 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.kafka.impl.KafkaConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.legacy.db.ClusterLockConfig getClusterLockConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.legacy.db.ClusterLockConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

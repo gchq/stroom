@@ -1,6 +1,7 @@
 package stroom.config.global.impl;
 
-import stroom.config.common.UriFactory;
+import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.RemoteRestService;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
@@ -11,8 +12,6 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -47,24 +46,21 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<GlobalConfigService> globalConfigServiceProvider;
-    private final Provider<NodeService> nodeServiceProvider;
+    private final Provider<RemoteRestService> remoteRestServiceProvider;
     private final Provider<UiConfig> uiConfig;
-    private final Provider<UriFactory> uriFactory;
     private final Provider<NodeInfo> nodeInfoProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
                              final Provider<GlobalConfigService> globalConfigServiceProvider,
-                             final Provider<NodeService> nodeServiceProvider,
+                             final Provider<RemoteRestService> remoteRestServiceProvider,
                              final Provider<UiConfig> uiConfig,
-                             final Provider<UriFactory> uriFactory,
                              final Provider<NodeInfo> nodeInfoProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
-        this.nodeServiceProvider = Objects.requireNonNull(nodeServiceProvider);
+        this.remoteRestServiceProvider = Objects.requireNonNull(remoteRestServiceProvider);
         this.uiConfig = uiConfig;
-        this.uriFactory = uriFactory;
         this.nodeInfoProvider = nodeInfoProvider;
     }
 
@@ -124,7 +120,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     public ListConfigResponse listByNode(final String nodeName,
                                          final GlobalConfigCriteria criteria) {
         LOGGER.debug("listByNode called for node: {}, criteria: {}", nodeName, criteria);
-        return nodeServiceProvider.get().remoteRestResult(
+        return remoteRestServiceProvider.get().remoteRestResult(
                 nodeName,
                 ListConfigResponse.class,
                 () -> ResourcePaths.buildAuthenticatedApiPath(
@@ -186,7 +182,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         RestUtil.requireNonNull(propertyPath, "propertyName not supplied");
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
-        return nodeServiceProvider.get().remoteRestResult(
+        return remoteRestServiceProvider.get().remoteRestResult(
                 nodeName,
                 () -> ResourcePaths.buildAuthenticatedApiPath(
                         GlobalConfigResource.BASE_PATH,

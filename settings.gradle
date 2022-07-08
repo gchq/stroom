@@ -47,10 +47,7 @@ include 'stroom-cache:stroom-cache-impl'
 // Cluster
 include 'stroom-cluster:stroom-cluster-api'
 include 'stroom-cluster:stroom-cluster-impl'
-include 'stroom-cluster:stroom-cluster-lock-api'
-include 'stroom-cluster:stroom-cluster-lock-impl-db'
-include 'stroom-cluster:stroom-cluster-lock-impl-db-jooq'
-include 'stroom-cluster:stroom-cluster-lock-mock'
+include 'stroom-cluster:stroom-cluster-mock'
 include 'stroom-cluster:stroom-cluster-task-api'
 include 'stroom-cluster:stroom-cluster-task-impl'
 
@@ -272,3 +269,6 @@ include 'stroom-util-shared'
 
 
 include 'stroom-ssl-test'
+include 'stroom-cluster:stroom-cluster-mock'
+findProject(':stroom-cluster:stroom-cluster-mock')?.name = 'stroom-cluster-mock'
+

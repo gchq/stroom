@@ -1,6 +1,6 @@
 package stroom.explorer.impl;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterService;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
@@ -45,17 +45,17 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     private final ExplorerTreeDao explorerTreeDao;
     private final DocumentPermissionService documentPermissionService;
     private final SecurityContext securityContext;
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
 
     @Inject
     ExplorerNodeServiceImpl(final ExplorerTreeDao explorerTreeDao,
                             final DocumentPermissionService documentPermissionService,
                             final SecurityContext securityContext,
-                            final ClusterLockService clusterLockService) {
+                            final ClusterService clusterService) {
         this.explorerTreeDao = explorerTreeDao;
         this.documentPermissionService = documentPermissionService;
         this.securityContext = securityContext;
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
     }
 
     @Override
@@ -71,7 +71,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         } else {
             // Doesn't exist so get a cluster lock then check again
             // in case another node beat us to it
-            clusterLockService.lock(LOCK_NAME, () -> {
+            clusterService.lock(LOCK_NAME, () -> {
                 if (!explorerTreeDao.doesNodeExist(rootNode)) {
                     LOGGER.info("Creating explorer root node in the database {}", rootNode);
                     try {

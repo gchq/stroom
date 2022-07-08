@@ -16,7 +16,7 @@
 
 package stroom.search.impl;
 
-import stroom.node.api.NodeInfo;
+import stroom.cluster.api.NodeInfo;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;

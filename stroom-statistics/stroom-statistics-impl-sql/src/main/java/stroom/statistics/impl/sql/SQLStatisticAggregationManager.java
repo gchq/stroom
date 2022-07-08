@@ -16,7 +16,8 @@
 
 package stroom.statistics.impl.sql;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterRoles;
+import stroom.cluster.api.ClusterService;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LogExecutionTime;
 
@@ -41,17 +42,17 @@ class SQLStatisticAggregationManager {
      */
     private static final String LOCK_NAME = "SQLStatisticAggregationManager";
     private static final ReentrantLock guard = new ReentrantLock();
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
     private final SQLStatisticAggregationTransactionHelper helper;
     private final TaskContext taskContext;
     private int batchSize;
 
     @Inject
-    SQLStatisticAggregationManager(final ClusterLockService clusterLockService,
+    SQLStatisticAggregationManager(final ClusterService clusterService,
                                    final SQLStatisticAggregationTransactionHelper helper,
                                    final TaskContext taskContext,
                                    final SQLStatisticsConfig sqlStatisticsConfig) {
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
         this.helper = helper;
         this.batchSize = sqlStatisticsConfig.getStatisticAggregationBatchSize();
         this.taskContext = taskContext;
@@ -59,15 +60,17 @@ class SQLStatisticAggregationManager {
 
     void aggregate() {
         LOGGER.info("SQL Statistic Aggregation - start");
-        clusterLockService.tryLock(LOCK_NAME, () -> {
-            try {
-                final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                aggregate(Instant.now());
-                LOGGER.info("SQL Statistic Aggregation - finished in {}", logExecutionTime);
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        });
+        if (clusterService.isLeaderForRole(ClusterRoles.SQL_STATISTIC_AGGREGATION)) {
+            clusterService.tryLock(LOCK_NAME, () -> {
+                try {
+                    final LogExecutionTime logExecutionTime = new LogExecutionTime();
+                    aggregate(Instant.now());
+                    LOGGER.info("SQL Statistic Aggregation - finished in {}", logExecutionTime);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            });
+        }
     }
 
     /**

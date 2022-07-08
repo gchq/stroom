@@ -18,9 +18,8 @@
 package stroom.node.impl;
 
 
+import stroom.cluster.api.NodeInfo;
 import stroom.node.api.FindNodeCriteria;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import org.junit.jupiter.api.Test;
@@ -34,13 +33,13 @@ class TestNodeService extends AbstractCoreIntegrationTest {
     @Inject
     private NodeInfo nodeInfo;
     @Inject
-    private NodeService nodeService;
+    private NodeServiceImpl nodeService;
 
     @Test
     void testBasic() {
         assertThat(nodeInfo.getThisNodeName()).isNotNull();
         assertThat(nodeInfo.getThisNodeName()).isEqualTo("node1a");
         assertThat(nodeService).isInstanceOf(NodeServiceImpl.class);
-        assertThat(nodeService.findNodeNames(new FindNodeCriteria()).size() > 0).isTrue();
+        assertThat(nodeService.find(new FindNodeCriteria()).size() > 0).isTrue();
     }
 }

@@ -1,12 +1,13 @@
 package stroom.data.store.impl.fs;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterRoles;
+import stroom.cluster.api.ClusterService;
+import stroom.cluster.api.NodeInfo;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.docref.DocRef;
-import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;
@@ -81,7 +82,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private final SecurityContext securityContext;
     private final Provider<FsVolumeConfig> volumeConfigProvider;
     private final InternalStatisticsReceiver statisticsReceiver;
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
     private final Provider<EntityEventBus> entityEventBusProvider;
     private final PathCreator pathCreator;
     private final AtomicReference<VolumeList> currentVolumeList = new AtomicReference<>();
@@ -97,7 +98,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                            final SecurityContext securityContext,
                            final Provider<FsVolumeConfig> volumeConfigProvider,
                            final InternalStatisticsReceiver statisticsReceiver,
-                           final ClusterLockService clusterLockService,
+                           final ClusterService clusterService,
                            final Provider<EntityEventBus> entityEventBusProvider,
                            final PathCreator pathCreator,
                            final NodeInfo nodeInfo,
@@ -107,7 +108,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         this.securityContext = securityContext;
         this.volumeConfigProvider = volumeConfigProvider;
         this.statisticsReceiver = statisticsReceiver;
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
         this.entityEventBusProvider = entityEventBusProvider;
         this.pathCreator = pathCreator;
         this.nodeInfo = nodeInfo;
@@ -328,7 +329,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     void updateStatus() {
         // Only one node needs to do this, so if it doesn't get the lock
         // another one will
-        clusterLockService.tryLock(LOCK_NAME, this::refresh);
+        if (clusterService.isLeaderForRole(ClusterRoles.REFRESH_FS_VOLUMES)) {
+            clusterService.tryLock(LOCK_NAME, this::refresh);
+        }
     }
 
     private synchronized VolumeList refresh() {

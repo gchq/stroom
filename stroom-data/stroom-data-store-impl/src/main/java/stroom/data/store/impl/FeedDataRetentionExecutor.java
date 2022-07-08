@@ -17,7 +17,7 @@
 
 package stroom.data.store.impl;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterService;
 import stroom.meta.api.MetaService;
 
 import org.slf4j.Logger;
@@ -35,20 +35,20 @@ public class FeedDataRetentionExecutor {
     private static final int DELETE_STREAM_BATCH_SIZE = 1000;
 
     private final MetaService metaService;
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
 
     @Inject
     FeedDataRetentionExecutor(final MetaService metaService,
-                              final ClusterLockService clusterLockService) {
+                              final ClusterService clusterService) {
         this.metaService = metaService;
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
     }
 
     // TODO : @66 Reimplement feed based data retention???
     public void exec() {
 //        final LogExecutionTime logExecutionTime = new LogExecutionTime();
 //        LOGGER.info("Stream Retention Executor - start");
-//        if (clusterLockService.tryLock(LOCK_NAME)) {
+//        if (clusterService.tryLock(LOCK_NAME)) {
 //            try {
 //                final List<DocRef> feedRefs = feedStore.list();
 //                for (final DocRef feedRef : feedRefs) {
@@ -60,7 +60,7 @@ public class FeedDataRetentionExecutor {
 //            } catch (final RuntimeException e) {
 //                LOGGER.error(e.getMessage(), e);
 //            } finally {
-//                clusterLockService.releaseLock(LOCK_NAME);
+//                clusterService.releaseLock(LOCK_NAME);
 //            }
 //        } else {
 //            LOGGER.info("Stream Retention Executor - Skipped as did not get lock in {}", logExecutionTime);

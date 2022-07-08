@@ -1,5 +1,6 @@
 package stroom.search.impl.shard;
 
+import stroom.cluster.api.NodeInfo;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
@@ -13,7 +14,6 @@ import stroom.index.shared.IndexShard;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
-import stroom.node.api.NodeInfo;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.sysinfo.HasSystemInfo;

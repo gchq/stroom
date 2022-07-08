@@ -2,13 +2,13 @@ ext.moduleName = 'stroom.processor.impl.db'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
-    implementation project(':stroom-node:stroom-node-api')
+//    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-processor:stroom-processor-impl')
     implementation project(':stroom-processor:stroom-processor-impl-db-jooq')
@@ -32,7 +32,7 @@ dependencies {
     implementation libs.slf4j_api
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
-    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
+    testImplementation project(':stroom-cluster:stroom-cluster-mock')
     testImplementation project(':stroom-event-logging:stroom-event-logging-api')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-task:stroom-task-mock')

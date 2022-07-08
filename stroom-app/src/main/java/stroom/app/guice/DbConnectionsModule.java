@@ -1,5 +1,7 @@
 package stroom.app.guice;
 
+import stroom.legacy.db.ClusterLockDbModule;
+
 import com.google.inject.AbstractModule;
 
 public class DbConnectionsModule extends AbstractModule {
@@ -11,7 +13,7 @@ public class DbConnectionsModule extends AbstractModule {
         // All the modules for the DB connections
         install(new stroom.activity.impl.db.ActivityDbModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
-        install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
+        install(new ClusterLockDbModule());
         install(new stroom.config.global.impl.db.GlobalConfigDbModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
         install(new stroom.docstore.impl.db.DocStoreDBPersistenceDbModule());

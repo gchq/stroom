@@ -4,6 +4,7 @@ import stroom.app.guice.CoreModule;
 import stroom.app.guice.DbConnectionsModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
+import stroom.cluster.mock.MockClusterModule;
 import stroom.config.global.impl.GlobalConfigBootstrapModule;
 import stroom.config.global.impl.db.GlobalConfigDaoModule;
 import stroom.index.VolumeTestConfigModule;
@@ -29,7 +30,7 @@ public class CoreTestModule extends AbstractModule {
         install(new UriFactoryModule());
         install(new CoreModule());
         install(new ResourceModule());
-        install(new stroom.cluster.impl.MockClusterModule());
+        install(new MockClusterModule());
         install(new VolumeTestConfigModule());
         install(new MockSecurityContextModule());
         install(new MockMetaStatisticsModule());

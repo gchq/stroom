@@ -1,6 +1,8 @@
 package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
+import stroom.cluster.api.ClusterService;
+import stroom.cluster.api.RemoteRestService;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
@@ -19,8 +21,6 @@ import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedStore;
-import stroom.node.api.FindNodeCriteria;
-import stroom.node.api.NodeService;
 import stroom.pipeline.refdata.RefDataLookupRequest.ReferenceLoader;
 import stroom.pipeline.refdata.store.ProcessingInfoResponse;
 import stroom.pipeline.refdata.store.RefDataStore;
@@ -57,6 +57,7 @@ import net.sf.saxon.event.Receiver;
 
 import java.io.StringWriter;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -166,7 +167,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final TaskContextFactory taskContextFactory;
     private final RefDataValueProxyConsumerFactory.Factory refDataValueProxyConsumerFactoryFactory;
     private final ByteBufferPool byteBufferPool;
-    private final NodeService nodeService;
+    private final ClusterService clusterService;
+    private final RemoteRestService remoteRestService;
 
     @Inject
     public ReferenceDataServiceImpl(final RefDataStoreFactory refDataStoreFactory,
@@ -178,7 +180,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final TaskContextFactory taskContextFactory,
                                     final Factory refDataValueProxyConsumerFactoryFactory,
                                     final ByteBufferPool byteBufferPool,
-                                    final NodeService nodeService) {
+                                    final ClusterService clusterService,
+                                    final RemoteRestService remoteRestService) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.securityContext = securityContext;
         this.feedStore = feedStore;
@@ -188,7 +191,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         this.taskContextFactory = taskContextFactory;
         this.refDataValueProxyConsumerFactoryFactory = refDataValueProxyConsumerFactoryFactory;
         this.byteBufferPool = byteBufferPool;
-        this.nodeService = nodeService;
+        this.clusterService = clusterService;
+        this.remoteRestService = remoteRestService;
     }
 
     @Override
@@ -302,7 +306,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                             parentTaskContext,
                                             "Reference Data Purge on node " + nodeName2,
                                             taskContext -> {
-                                                nodeService.remoteRestCall(
+                                                remoteRestService.remoteRestCall(
                                                         nodeName2,
                                                         () -> ResourcePaths.buildAuthenticatedApiPath(
                                                                 ReferenceDataResource.BASE_PATH,
@@ -370,7 +374,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                             parentTaskContext,
                                             "Reference Data Purge on node " + nodeName2,
                                             taskContext -> {
-                                                nodeService.remoteRestCall(
+                                                remoteRestService.remoteRestCall(
                                                         nodeName2,
                                                         () -> ResourcePaths.buildAuthenticatedApiPath(
                                                                 ReferenceDataResource.BASE_PATH,
@@ -437,7 +441,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                             parentTaskContext,
                                             "Reference Data Purge on node " + nodeName2,
                                             taskContext -> {
-                                                nodeService.remoteRestCall(
+                                                remoteRestService.remoteRestCall(
                                                         nodeName2,
                                                         () -> ResourcePaths.buildAuthenticatedApiPath(
                                                                 ReferenceDataResource.BASE_PATH,
@@ -477,7 +481,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private List<String> getNodeList(final String nodeName) {
         return nodeName == null
-                ? nodeService.findNodeNames(new FindNodeCriteria())
+                ? new ArrayList<>(clusterService.getNodeNames())
                 : Collections.singletonList(nodeName);
     }
 

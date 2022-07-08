@@ -760,34 +760,34 @@ public class DefaultProperties {
                 .requireRestart(true)
                 .build());
 
-        // CLUSTER COMMUNICATION 
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.clusterCallUseLocal")
-                .value("true")
-                .description("Do local calls when calling our own local services (true is an optimisation)")
-                .editable(true)
-                .requireRestart(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.clusterCallReadTimeout")
-                .value("30s")
-                .description("Time in ms (but can be specified as 10s, 1m) before throwing read timeout")
-                .editable(true)
-                .requireRestart(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.clusterCallIgnoreSSLHostnameVerifier")
-                .value("true")
-                .description("If cluster calls are using SSL then choose if we want to ignore host name verification")
-                .editable(true)
-                .requireRestart(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.clusterResponseTimeout")
-                .value("30s")
-                .description("Time in ms (but can be specified as 10s, 1m) before giving up on cluster results")
-                .editable(true)
-                .build());
+//        // CLUSTER COMMUNICATION
+//        list.add(new GlobalProperty.Builder()
+//                .name("stroom.clusterCallUseLocal")
+//                .value("true")
+//                .description("Do local calls when calling our own local services (true is an optimisation)")
+//                .editable(true)
+//                .requireRestart(true)
+//                .build());
+//        list.add(new GlobalProperty.Builder()
+//                .name("stroom.clusterCallReadTimeout")
+//                .value("30s")
+//                .description("Time in ms (but can be specified as 10s, 1m) before throwing read timeout")
+//                .editable(true)
+//                .requireRestart(true)
+//                .build());
+//        list.add(new GlobalProperty.Builder()
+//                .name("stroom.clusterCallIgnoreSSLHostnameVerifier")
+//                .value("true")
+//                .description("If cluster calls are using SSL then choose if we want to ignore host name verification")
+//                .editable(true)
+//                .requireRestart(true)
+//                .build());
+//        list.add(new GlobalProperty.Builder()
+//                .name("stroom.clusterResponseTimeout")
+//                .value("30s")
+//                .description("Time in ms (but can be specified as 10s, 1m) before giving up on cluster results")
+//                .editable(true)
+//                .build());
 
         // EXPORT 
         list.add(new GlobalProperty.Builder()

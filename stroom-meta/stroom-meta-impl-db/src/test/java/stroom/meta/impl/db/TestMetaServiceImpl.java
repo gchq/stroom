@@ -1,7 +1,7 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.impl.CacheModule;
-import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.cluster.mock.MockClusterModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionRuleAction;
@@ -96,7 +96,7 @@ class TestMetaServiceImpl {
                         new MetaModule(),
                         new MetaDbModule(),
                         new MetaDaoModule(),
-                        new MockClusterLockModule(),
+                        new MockClusterModule(),
                         new MockSecurityContextModule(),
                         new MockCollectionModule(),
                         new MockDocRefInfoModule(),

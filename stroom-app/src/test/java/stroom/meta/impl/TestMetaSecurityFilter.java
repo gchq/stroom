@@ -20,6 +20,7 @@ package stroom.meta.impl;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
+import stroom.cluster.mock.MockClusterModule;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
@@ -54,7 +55,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(UriFactoryModule.class)
 @IncludeModule(CoreModule.class)
 @IncludeModule(ResourceModule.class)
-@IncludeModule(stroom.cluster.impl.MockClusterModule.class)
+@IncludeModule(MockClusterModule.class)
 @IncludeModule(VolumeTestConfigModule.class)
 @IncludeModule(SecurityContextModule.class)
 @IncludeModule(MockMetaStatisticsModule.class)

@@ -1,8 +1,7 @@
 package stroom.search.impl;
 
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
+import stroom.cluster.api.EndpointUrlService;
+import stroom.cluster.api.RemoteRestUtil;
 import stroom.query.api.v2.Query;
 import stroom.task.api.TaskContext;
 import stroom.util.jersey.UriBuilderUtil;
@@ -27,16 +26,13 @@ public class RemoteNodeSearch implements NodeSearch {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteNodeSearch.class);
 
-    private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
+    private final EndpointUrlService endpointUrlService;
     private final WebTargetFactory webTargetFactory;
 
     @Inject
-    public RemoteNodeSearch(final NodeService nodeService,
-                            final NodeInfo nodeInfo,
+    public RemoteNodeSearch(final EndpointUrlService endpointUrlService,
                             final WebTargetFactory webTargetFactory) {
-        this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
+        this.endpointUrlService = endpointUrlService;
         this.webTargetFactory = webTargetFactory;
     }
 
@@ -110,7 +106,7 @@ public class RemoteNodeSearch implements NodeSearch {
     }
 
     private Boolean startRemoteSearch(final String nodeName, final ClusterSearchTask clusterSearchTask) {
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+        final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 RemoteSearchResource.BASE_PATH,
                 RemoteSearchResource.START_PATH_PART);
@@ -129,7 +125,7 @@ public class RemoteNodeSearch implements NodeSearch {
             return response.readEntity(Boolean.class);
         } catch (Throwable e) {
             LOGGER.debug(e::getMessage, e);
-            throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+            throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
     }
 
@@ -137,7 +133,7 @@ public class RemoteNodeSearch implements NodeSearch {
                                      final String queryKey,
                                      final ClusterSearchResultCollector resultCollector) throws IOException {
         boolean complete;
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+        final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 RemoteSearchResource.BASE_PATH,
                 RemoteSearchResource.POLL_PATH_PART);
@@ -157,7 +153,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
     private Boolean destroyRemoteSearch(final String nodeName,
                                         final String queryKey) {
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+        final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 RemoteSearchResource.BASE_PATH,
                 RemoteSearchResource.DESTROY_PATH_PART);
@@ -178,7 +174,7 @@ public class RemoteNodeSearch implements NodeSearch {
             return response.readEntity(Boolean.class);
         } catch (Throwable e) {
             LOGGER.debug(e::getMessage, e);
-            throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+            throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
     }
 }

@@ -1,5 +1,7 @@
 package stroom.config.global.impl;
 
+import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.RemoteRestService;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -7,8 +9,6 @@ import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.mock.MockStroomEventLoggingService;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.filter.FilterFieldMapper;
@@ -363,31 +363,31 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         globalConfigServiceMap.put(node.getNodeName(), globalConfigService);
 
         // Set up the NodeService mock
-        final NodeService nodeService = createNamedMock(NodeService.class, node);
+        final RemoteRestService remoteRestService = createNamedMock(RemoteRestService.class, node);
 
-        when(nodeService.isEnabled(Mockito.anyString()))
-                .thenAnswer(invocation ->
-                        allNodes.stream()
-                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
-                                .anyMatch(TestNode::isEnabled));
-
-        when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-                .thenAnswer(invocation ->
-                        baseEndPointUrls.get(invocation.getArgument(0)));
-
-//        when(nodeService.remoteRestResult(
-//                Mockito.anyString(),
-//                Mockito.anyString(),
-//                Mockito.any(),
-//                Mockito.any(),
-//                Mockito.any())).thenCallRealMethod();
+//        when(nodeService.isEnabled(Mockito.anyString()))
+//                .thenAnswer(invocation ->
+//                        allNodes.stream()
+//                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
+//                                .anyMatch(TestNode::isEnabled));
 //
-//        when(nodeService.remoteRestResult(
+//        when(clusterService.getBaseEndpointUrl(Mockito.anyString()))
+//                .thenAnswer(invocation ->
+//                        baseEndPointUrls.get(invocation.getArgument(0)));
+
+//        when(remoteRestService.remoteRestResult(
 //                Mockito.anyString(),
-//                Mockito.any(Class.class),
+//                Mockito.anyString(),
 //                Mockito.any(),
 //                Mockito.any(),
 //                Mockito.any())).thenCallRealMethod();
+
+        when(remoteRestService.remoteRestResult(
+                Mockito.anyString(),
+                Mockito.any(Class.class),
+                Mockito.any(),
+                Mockito.any(),
+                Mockito.any())).thenCallRealMethod();
 
         // Set up the NodeInfo mock
 
@@ -399,9 +399,8 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         return new GlobalConfigResourceImpl(
                 () -> stroomEventLoggingService,
                 () -> globalConfigService,
-                () -> nodeService,
+                () -> remoteRestService,
                 UiConfig::new,
-                null,
                 () -> nodeInfo);
     }
 }

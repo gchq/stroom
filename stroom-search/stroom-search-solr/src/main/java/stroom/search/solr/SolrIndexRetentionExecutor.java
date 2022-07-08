@@ -17,7 +17,8 @@
 
 package stroom.search.solr;
 
-import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.api.ClusterRoles;
+import stroom.cluster.api.ClusterService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionUtil;
@@ -54,7 +55,7 @@ public class SolrIndexRetentionExecutor {
     private final SolrIndexCache solrIndexCache;
     private final SolrIndexClientCache solrIndexClientCache;
     private final WordListProvider dictionaryStore;
-    private final ClusterLockService clusterLockService;
+    private final ClusterService clusterService;
     private final Provider<SolrSearchConfig> searchConfigProvider;
     private final TaskContext taskContext;
 
@@ -63,14 +64,14 @@ public class SolrIndexRetentionExecutor {
                                       final SolrIndexCache solrIndexCache,
                                       final SolrIndexClientCache solrIndexClientCache,
                                       final WordListProvider dictionaryStore,
-                                      final ClusterLockService clusterLockService,
+                                      final ClusterService clusterService,
                                       final Provider<SolrSearchConfig> searchConfigProvider,
                                       final TaskContext taskContext) {
         this.solrIndexStore = solrIndexStore;
         this.solrIndexCache = solrIndexCache;
         this.solrIndexClientCache = solrIndexClientCache;
         this.dictionaryStore = dictionaryStore;
-        this.clusterLockService = clusterLockService;
+        this.clusterService = clusterService;
         this.searchConfigProvider = searchConfigProvider;
         this.taskContext = taskContext;
     }
@@ -78,19 +79,21 @@ public class SolrIndexRetentionExecutor {
     public void exec() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         info(() -> "Start");
-        clusterLockService.tryLock(LOCK_NAME, () -> {
-            try {
-                if (!Thread.currentThread().isInterrupted()) {
-                    final List<DocRef> docRefs = solrIndexStore.list();
-                    if (docRefs != null) {
-                        docRefs.forEach(this::performRetention);
+        if (clusterService.isLeaderForRole(ClusterRoles.SOLR_INDEX_RETENTION)) {
+            clusterService.tryLock(LOCK_NAME, () -> {
+                try {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        final List<DocRef> docRefs = solrIndexStore.list();
+                        if (docRefs != null) {
+                            docRefs.forEach(this::performRetention);
+                        }
+                        info(() -> "Finished in " + logExecutionTime);
                     }
-                    info(() -> "Finished in " + logExecutionTime);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-            }
-        });
+            });
+        }
     }
 
     private void performRetention(final DocRef docRef) {

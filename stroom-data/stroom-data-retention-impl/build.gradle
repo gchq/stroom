@@ -1,7 +1,7 @@
 ext.moduleName = 'stroom.data.retention.impl'
 
 dependencies {
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-retention-api')
 //    implementation project(':stroom-dictionary:stroom-dictionary-api')
@@ -12,6 +12,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-meta:stroom-meta-api')
+//    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
@@ -25,7 +26,8 @@ dependencies {
     implementation libs.swagger_annotations
     implementation libs.vavr
 
-    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
+    testImplementation project(':stroom-cluster:stroom-cluster-mock')
+//    testImplementation project(':stroom-node:stroom-node-mock')
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api

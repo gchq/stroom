@@ -19,8 +19,6 @@ package stroom.node.impl;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.Schedule;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.pipeline.writer.ExtendedPathCreator;
@@ -36,8 +34,7 @@ public class NodeModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(NodeInfo.class).to(NodeInfoImpl.class);
-        bind(NodeService.class).to(NodeServiceImpl.class);
+        bind(NodeServiceImpl.class).asEagerSingleton();
         bind(NodeResource.class).to(NodeResourceImpl.class);
         bind(PathCreator.class).to(ExtendedPathCreator.class);
 

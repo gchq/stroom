@@ -1,0 +1,9 @@
+ext.moduleName = 'stroom.cluster.mock'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-cluster:stroom-cluster-api')
+
+    implementation libs.guice5
+    implementation libs.ws_rs_api
+}

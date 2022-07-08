@@ -14,7 +14,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.cache.impl.CacheResourceModule());
-        install(new stroom.cluster.lock.impl.db.ClusterLockModule());
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.config.global.impl.ConfigProvidersModule());
         install(new stroom.config.global.impl.GlobalConfigModule());

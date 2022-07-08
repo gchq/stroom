@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Disabled;
 //        stroom.index.TestIndexStoreImpl.class,
 //        stroom.index.TestIndexShardServiceImpl.class,
 //        stroom.index.TestIndexShardWriterImpl.class,
-//        stroom.jobsystem.TestClusterLockService.class,
+//        stroom.jobsystem.TestClusterService.class,
 //        stroom.jobsystem.TestJobNodeService.class,
 //        stroom.node.TestDefaultNodeFactory.class,
 //        stroom.node.TestDefaultNodeService.class,

@@ -17,10 +17,10 @@
 
 package stroom.processor.impl;
 
+import stroom.cluster.api.NodeInfo;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.shared.Meta;
-import stroom.node.api.NodeInfo;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
