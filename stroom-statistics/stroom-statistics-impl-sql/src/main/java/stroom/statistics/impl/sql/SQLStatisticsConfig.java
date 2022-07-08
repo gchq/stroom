@@ -150,7 +150,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
 
     @Min(1)
     @JsonPropertyDescription("Number of SQL_STAT_VAL_SRC records to merge into SQL_STAT_VAL in one batch" +
-            "Typically a larger number is more efficient.")
+            "Typically a larger number is more efficient but this may lead to more lock wait issues.")
     public int getStatisticAggregationBatchSize() {
         return statisticAggregationBatchSize;
     }
