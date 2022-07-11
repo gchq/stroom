@@ -26,16 +26,19 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.PageResponse;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.ButtonCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -48,7 +51,10 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
 
     private final RestFactory restFactory;
     private final Set<String> allNames = new HashSet<>();
-    private DelayedUpdate delayedUpdate;
+    private final DelayedUpdate delayedUpdate;
+
+    private Range range;
+    private Consumer<CacheNamesResponse> dataConsumer;
 
     @Inject
     public CacheListPresenter(final EventBus eventBus,
@@ -56,6 +62,7 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
                               final NodeManager nodeManager) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.restFactory = restFactory;
+        this.delayedUpdate = new DelayedUpdate(this::update);
 
         // Name
         getView().addResizableColumn(new Column<String, String>(new TextCell()) {
@@ -83,11 +90,11 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
         final RestDataProvider<String, CacheNamesResponse> dataProvider =
                 new RestDataProvider<String, CacheNamesResponse>(getEventBus()) {
                     @Override
-                    protected void exec(final Consumer<CacheNamesResponse> dataConsumer,
+                    protected void exec(final Range range,
+                                        final Consumer<CacheNamesResponse> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
-                        if (delayedUpdate == null) {
-                            delayedUpdate = new DelayedUpdate(() -> combineNodeTasks(dataConsumer));
-                        }
+                        CacheListPresenter.this.range = range;
+                        CacheListPresenter.this.dataConsumer = dataConsumer;
                         delayedUpdate.reset();
                         nodeManager.listAllNodes(nodeNames -> fetchNamesForNodes(nodeNames), throwableConsumer);
                     }
@@ -110,10 +117,15 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
         }
     }
 
-    private void combineNodeTasks(final Consumer<CacheNamesResponse> dataConsumer) {
-        // Combine data from all nodes.
+    private void update() {
         final List<String> list = allNames.stream().sorted().collect(Collectors.toList());
-        final CacheNamesResponse response = new CacheNamesResponse(list);
+        final long total = list.size();
+        final List<String> trimmed = new ArrayList<>();
+        for (int i = range.getStart(); i < range.getStart() + range.getLength() && i < list.size(); i++) {
+            trimmed.add(list.get(i));
+        }
+        final CacheNamesResponse response = new CacheNamesResponse(trimmed,
+                new PageResponse(range.getStart(), trimmed.size(), total, true));
         dataConsumer.accept(response);
     }
 

@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -28,6 +29,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.util.client.BorderUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -35,6 +37,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -57,12 +60,18 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         initTableColumns();
 
         final FindFsVolumeCriteria criteria = FindFsVolumeCriteria.matchAll();
-        dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(eventBus, criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<FsVolume>> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<FsVolume>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
+                CriteriaUtil.setRange(criteria, range);
                 final Rest<ResultPage<FsVolume>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(FS_VOLUME_RESOURCE).find(criteria);
+                rest
+                        .onSuccess(dataConsumer)
+                        .onFailure(throwableConsumer)
+                        .call(FS_VOLUME_RESOURCE)
+                        .find(criteria);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
