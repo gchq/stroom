@@ -58,7 +58,13 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     @Override
     public Optional<RefDataValue> supplyValue() {
         LOGGER.trace("supplyValue()");
-        return refDataStore.getValue(mapDefinition, key);
+        try {
+            return refDataStore.getValue(mapDefinition, key);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error supplying value for key [{}], {}: {}",
+                    key, mapDefinition, e.getMessage()), e);
+        }
     }
 
     /**
@@ -75,7 +81,8 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
             return refDataStore.consumeValueBytes(mapDefinition, key, typedByteBufferConsumer);
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message(
-                    "Error consuming ref data value bytes for {}: {}", mapDefinition, e.getMessage()), e);
+                    "Error consuming ref data value bytes for key [{}], {}: {}",
+                    key, mapDefinition, e.getMessage()), e);
         }
     }
 
@@ -92,7 +99,8 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
             return refDataValueProxyConsumer.consume(this);
         } catch (XPathException e) {
             throw new RuntimeException(LogUtil.message(
-                    "Error handling reference data value for {}: {}", mapDefinition, e.getMessage()), e);
+                    "Error consuming reference data value for key [{}], {}: {}",
+                    key, mapDefinition, e.getMessage()), e);
         }
     }
 
