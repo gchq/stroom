@@ -16,6 +16,7 @@
 
 package stroom.index.client.presenter;
 
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -32,6 +33,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -55,14 +57,18 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridVie
         initTableColumns();
 
         final ExpressionCriteria criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<IndexVolumeGroup, ResultPage<IndexVolumeGroup>>(eventBus,
-                criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<IndexVolumeGroup, ResultPage<IndexVolumeGroup>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<IndexVolumeGroup>> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<IndexVolumeGroup>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
+                CriteriaUtil.setRange(criteria, range);
                 final Rest<ResultPage<IndexVolumeGroup>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_VOLUME_GROUP_RESOURCE).find(
-                        criteria);
+                rest
+                        .onSuccess(dataConsumer)
+                        .onFailure(throwableConsumer)
+                        .call(INDEX_VOLUME_GROUP_RESOURCE)
+                        .find(criteria);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
