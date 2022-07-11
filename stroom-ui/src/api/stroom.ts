@@ -838,17 +838,11 @@ export interface ElasticClusterDoc {
   connection?: ElasticConnectionConfig;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -878,9 +872,6 @@ export interface ElasticIndexDoc {
   clusterRef?: DocRef;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -897,9 +888,6 @@ export interface ElasticIndexDoc {
   /** @format int32 */
   searchSlices?: number;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;

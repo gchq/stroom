@@ -7170,9 +7170,6 @@ components:
       properties:
         connection:
           $ref: '#/components/schemas/ElasticConnectionConfig'
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -7184,9 +7181,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -7226,9 +7220,6 @@ components:
       properties:
         clusterRef:
           $ref: '#/components/schemas/DocRef'
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -7254,9 +7245,6 @@ components:
           format: int32
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
