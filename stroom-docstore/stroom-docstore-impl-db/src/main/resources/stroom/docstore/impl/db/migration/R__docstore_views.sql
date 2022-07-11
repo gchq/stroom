@@ -57,7 +57,7 @@ select
     json_value(vd.bespoke_meta_data, '$.classification') classification,
     json_value(vd.bespoke_meta_data, '$.encoding') encoding,
     json_value(vd.bespoke_meta_data, '$.contextEncoding') context_encoding,
-    json_value(vd.bespoke_meta_data, '$.retentionDayAge') retention_day_ge,
+    json_value(vd.bespoke_meta_data, '$.retentionDayAge') retention_day_age,
     json_value(vd.bespoke_meta_data, '$.reference') is_reference,
     json_value(vd.bespoke_meta_data, '$.streamType') streamType,
     json_value(vd.bespoke_meta_data, '$.status') status
