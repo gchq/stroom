@@ -150,7 +150,8 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
 
     @Min(1)
     @JsonPropertyDescription("Number of SQL_STAT_VAL_SRC records to merge into SQL_STAT_VAL in one batch" +
-            "Typically a larger number is more efficient but this may lead to more lock wait issues.")
+            "Typically a larger number is more efficient but means it will take longer which can delay a clean " +
+            "shutdown of stroom. Higher numbers may also lead to database lock contention and lock wait errors.")
     public int getStatisticAggregationBatchSize() {
         return statisticAggregationBatchSize;
     }
@@ -158,7 +159,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
     @Min(1)
     @JsonPropertyDescription("Number of SQL_STAT_VAL records to move to a coarser aggregation level in one batch. " +
             "Typically a larger number is more efficient but means it will take longer which can delay a clean " +
-            "shutdown of stroom.")
+            "shutdown of stroom. Higher numbers may also lead to database lock contention and lock wait errors.")
     public int getStatisticAggregationStageTwoBatchSize() {
         return statisticAggregationStageTwoBatchSize;
     }

@@ -261,7 +261,8 @@ class TestSQLStatisticAggregationManager extends AbstractStatisticsCoreIntegrati
         // final long startDateMs =
         // DateUtil.parseNormalDateTimeString("2015-01-01T00:00:00.000Z");
         //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
-        final Instant startDate = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
+        final Instant startDate = LocalDateTime.of(
+                2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
         final int statNameCount = 4;
         final int timesCount = 10;
         final int numberOfDifferentPrecisions = 3;
@@ -438,11 +439,12 @@ class TestSQLStatisticAggregationManager extends AbstractStatisticsCoreIntegrati
     @Test
     void testDeletingOldStats() throws SQLException {
         final StatisticType statisticType = StatisticType.VALUE;
-        //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
-        final Instant startDate = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
-        //the number of different satst names to use in the test
+        // Use a fixed start date to avoid any oddities caused by the power of 10 rounding
+        final Instant startDate = LocalDateTime.of(
+                2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
+        // the number of different stats names to use in the test
         final int statNameCount = 4;
-        //the number of different data points per stat name
+        // the number of different data points per stat name
         final int timesCount = 100;
         final int numberOfDifferentPrecisions = 3 + 1;
         final int totalFlushCount = statNameCount * timesCount * numberOfDifferentPrecisions;

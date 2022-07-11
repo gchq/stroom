@@ -113,7 +113,7 @@ class SQLStatisticAggregationManager {
                         iteration,
                         logExecutionTime.getDuration(),
                         (Thread.currentThread().isInterrupted()
-                                ? " INTERRUPTED"
+                                ? " (INTERRUPTED)"
                                 : ""));
 
                 if (!Thread.currentThread().isInterrupted()) {

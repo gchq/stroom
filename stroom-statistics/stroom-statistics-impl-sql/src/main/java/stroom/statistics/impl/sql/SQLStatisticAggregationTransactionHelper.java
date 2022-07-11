@@ -593,7 +593,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
                     int deleteCount;
                     int iteration = 0;
-                    // Keep calling it till it finds no data to process
+                    // Keep calling it till we get a partial batch
                     do {
                         deleteCount = callUpsert2(
                                 connection,
@@ -620,7 +620,7 @@ public class SQLStatisticAggregationTransactionHelper {
                 iterationsLog.stream().max(Comparator.naturalOrder()).orElse(0),
                 logExecutionTime.getDuration(),
                 (Thread.currentThread().isInterrupted()
-                        ? " INTERRUPTED"
+                        ? " (INTERRUPTED)"
                         : ""));
 
         return totalCount;
