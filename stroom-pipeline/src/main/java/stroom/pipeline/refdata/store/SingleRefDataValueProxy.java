@@ -71,7 +71,12 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     @Override
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
         LOGGER.trace("consumeBytes(...)");
-        return refDataStore.consumeValueBytes(mapDefinition, key, typedByteBufferConsumer);
+        try {
+            return refDataStore.consumeValueBytes(mapDefinition, key, typedByteBufferConsumer);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error consuming ref data value bytes for {}: {}", mapDefinition, e.getMessage()), e);
+        }
     }
 
     @Override
@@ -87,7 +92,7 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
             return refDataValueProxyConsumer.consume(this);
         } catch (XPathException e) {
             throw new RuntimeException(LogUtil.message(
-                    "Error handling reference data value: {}", e.getMessage()), e);
+                    "Error handling reference data value for {}: {}", mapDefinition, e.getMessage()), e);
         }
     }
 
