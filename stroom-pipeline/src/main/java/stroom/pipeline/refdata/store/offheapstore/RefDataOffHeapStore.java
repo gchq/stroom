@@ -65,6 +65,7 @@ import com.google.common.util.concurrent.Striped;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
@@ -204,6 +205,67 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final int stripesCount = referenceDataConfigProvider.get().getLoadingLockStripes();
         LOGGER.debug("Initialising striped with {} stripes", stripesCount);
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(stripesCount);
+        purgePartialLoads();
+    }
+
+    private void purgePartialLoads() {
+
+        final Instant startTime = Instant.now();
+        // Get all the ref stream defs in a partially loaded/purged state
+        // It is only in exceptional circumstances that we get streams in this state so the list should
+        // not be big.
+        final List<RefStreamDefinition> refStreamDefinitions = lmdbEnvironment.getWithReadTxn(this::getInvalidStreams);
+
+        if (!refStreamDefinitions.isEmpty()) {
+            LOGGER.info("Found {} ref streams that are partially loaded/purged. They will now be purged.",
+                    refStreamDefinitions.size());
+            AtomicReference<PurgeCounts> purgeCountsRef = new AtomicReference<>(PurgeCounts.ZERO);
+            for (final RefStreamDefinition refStreamDefinition : refStreamDefinitions) {
+                try (final PooledByteBuffer refStreamDefPooledBuf = processingInfoDb.getPooledKeyBuffer()) {
+                    this.taskContext.info(() -> LogUtil.message(
+                            "Purging partially loaded/purged reference stream {}:{}",
+                            refStreamDefinition.getStreamId(), refStreamDefinition.getPartNumber()));
+                    processingInfoDb.serializeKey(refStreamDefPooledBuf.getByteBuffer(), refStreamDefinition);
+                    final RefStreamPurgeCounts refStreamPurgeCounts = purgeRefStreamIfEligible(
+                            startTime,
+                            refStreamDefPooledBuf.getByteBuffer(),
+                            refStreamDefinition);
+                    purgeCountsRef.set(purgeCountsRef.get().increment(refStreamPurgeCounts));
+                }
+            }
+            LAMBDA_LOGGER.info(() -> "Purge of partial loads/purges completed successfully - " +
+                    buildPurgeInfoString(startTime, purgeCountsRef.get()));
+        } else {
+            LOGGER.info("Completed check for invalid ref loads/purges in {}",
+                    Duration.between(startTime, Instant.now()));
+        }
+    }
+
+    private List<RefStreamDefinition> getInvalidStreams(final Txn<ByteBuffer> writeTxn) {
+
+        final Predicate<KeyVal<ByteBuffer>> statePredicate = keyVal -> {
+            final ProcessingState processingState =
+                    RefDataProcessingInfoSerde.extractProcessingState(keyVal.val());
+            final boolean isInvalid = ProcessingState.PURGE_IN_PROGRESS.equals(processingState)
+                    || ProcessingState.LOAD_IN_PROGRESS.equals(processingState);
+            if (LOGGER.isDebugEnabled() && isInvalid) {
+                final RefStreamDefinition refStreamDefinition = processingInfoDb.deserializeKey(keyVal.key());
+                LOGGER.debug("Found ref stream def {}:{} in state {}",
+                        refStreamDefinition.getStreamId(),
+                        refStreamDefinition.getPartNumber(),
+                        processingState);
+            }
+            return isInvalid;
+        };
+
+        return processingInfoDb.streamEntriesAsBytes(
+                writeTxn,
+                KeyRange.all(),
+                stream ->
+                        stream.filter(statePredicate)
+                                .map(keyVal ->
+                                        processingInfoDb.deserializeKey(keyVal.key()))
+                                .collect(Collectors.toList()));
     }
 
     private LmdbEnv createEnvironment(final ReferenceDataLmdbConfig lmdbConfig) {
@@ -491,14 +553,16 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                         "Unable to purge {} ref stream definitions",
                         purgeCounts.refStreamDefsFailedCount));
             } else if (purgeCounts.refStreamDefsDeletedCount > 0) {
-                LAMBDA_LOGGER.info(() -> "Purge completed successfully. " +
+                LAMBDA_LOGGER.info(() -> "Purge completed successfully - " +
                         buildPurgeInfoString(startTime, purgeCounts));
+            } else {
+                LAMBDA_LOGGER.info(() -> "Purge completed with no data to purge.");
             }
         } catch (TaskTerminatedException e) {
             // Expected behaviour so just rethrow, stopping it being picked up by the other
             // catch block
             LOGGER.debug("Purge terminated", e);
-            LAMBDA_LOGGER.warn(() -> "Purge terminated. " +
+            LAMBDA_LOGGER.warn(() -> "Purge terminated - " +
                     buildPurgeInfoString(startTime, countsRef.get()));
             throw e;
         } catch (Exception e) {
@@ -550,7 +614,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     /**
-     * Synchronized to prevent to ensure consecutive purge jobs don't clash
+     * Synchronized to prevent to ensure concurrent purge jobs don't clash
      *
      * @param now Allows the setting of the current time for testing purposes
      */
@@ -622,7 +686,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
             final PurgeCounts purgeCounts = countsRef.get();
             if (purgeCounts.refStreamDefsFailedCount == 0) {
-                LAMBDA_LOGGER.info(() -> "Purge completed successfully. " +
+                LAMBDA_LOGGER.info(() -> "Purge completed successfully - " +
                         buildPurgeInfoString(startTime, purgeCounts));
             } else {
                 // One or more ref stream defs failed
@@ -634,7 +698,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             // Expected behaviour so just rethrow, stopping it being picked up by the other
             // catch block
             LOGGER.debug("Purge terminated", e);
-            LAMBDA_LOGGER.warn(() -> "Purge terminated. " +
+            LAMBDA_LOGGER.warn(() -> "Purge terminated - " +
                     buildPurgeInfoString(startTime, countsRef.get()));
             throw e;
         } catch (Exception e) {
@@ -692,7 +756,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private String buildPurgeInfoString(final Instant startTime,
                                         final PurgeCounts purgeCounts) {
-        return LogUtil.message(" refStreamDefs purged: {}, refStreamDef purge failures: {}, " +
+        return LogUtil.message("refStreamDefs purged: {}, refStreamDef purge failures: {}, " +
                         "maps deleted: {}, values deleted: {}, values de-referenced: {}. " +
                         "Time taken {}",
                 purgeCounts.refStreamDefsDeletedCount,
@@ -744,8 +808,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                     refStreamDefinition, refDataProcessingInfo);
                         }
                     } else {
-                        LOGGER.debug("Ref data processing info does not exist for {}, " +
-                                "another thread may have purged it", refStreamDefinition);
+                        LOGGER.info("Ref data processing info does not exist, another thread may have already " +
+                                        "purged it {}",
+                                refStreamDefinition);
                     }
 
                     // Force final commit
@@ -783,18 +848,20 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 refStreamDefinition.getPartIndex());
 
         final String refStreamDefStr = LogUtil.message(
-                "stream {}, " +
-                        "effective time {}, " +
-                        "pipeline {}, " +
-                        "pipeline version {}, " +
-                        "create time {}, " +
-                        "access time {}",
+                "stream: {}, " +
+                        "effective time: {}, " +
+                        "pipeline: {}, " +
+                        "pipeline version: {}, " +
+                        "create time: {}, " +
+                        "access time: {}, " +
+                        "state: {}",
                 refStreamDefinition.getStreamId(),
                 refDataProcessingInfo.getEffectiveTime(),
                 DocRefUtil.createSimpleDocRefString(refStreamDefinition.getPipelineDocRef()),
                 refStreamDefinition.getPipelineVersion(),
                 refDataProcessingInfo.getCreateTime(),
-                refDataProcessingInfo.getLastAccessedTime());
+                refDataProcessingInfo.getLastAccessedTime(),
+                refDataProcessingInfo.getProcessingState());
 
         LOGGER.info("Purging refStreamDefinition with {}", refStreamDefStr);
 
@@ -1374,6 +1441,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final int refStreamDefsDeletedCount;
         final int refStreamDefsFailedCount;
         final RefStreamPurgeCounts refStreamPurgeCounts;
+        private static final PurgeCounts ZERO = new PurgeCounts(
+                0,
+                0,
+                RefStreamPurgeCounts.zero());
 
         private PurgeCounts(final int refStreamDefsDeletedCount,
                             final int refStreamFailedCount,
@@ -1384,11 +1455,16 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         }
 
         public static PurgeCounts zero() {
-            return new PurgeCounts(0, 0, RefStreamPurgeCounts.zero());
+            return ZERO;
         }
 
         public PurgeCounts increment(final RefStreamPurgeCounts refStreamPurgeCounts) {
-            if (refStreamPurgeCounts.isSuccess) {
+            if (refStreamPurgeCounts.isZero()) {
+                return new PurgeCounts(
+                        refStreamDefsDeletedCount,
+                        refStreamDefsFailedCount,
+                        this.refStreamPurgeCounts);
+            } else if (refStreamPurgeCounts.isSuccess) {
                 return new PurgeCounts(
                         refStreamDefsDeletedCount + 1,
                         refStreamDefsFailedCount,
@@ -1409,6 +1485,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final int valuesDeReferencedCount;
         final boolean isSuccess;
 
+        private static final RefStreamPurgeCounts ZERO = new RefStreamPurgeCounts(
+                0,
+                0,
+                0,
+                true);
+
         private RefStreamPurgeCounts(final int mapsDeletedCount,
                                      final int valuesDeletedCount,
                                      final int valuesDeReferencedCount,
@@ -1420,11 +1502,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         }
 
         public static RefStreamPurgeCounts zero() {
-            return new RefStreamPurgeCounts(
-                    0,
-                    0,
-                    0,
-                    true);
+            return ZERO;
         }
 
         public RefStreamPurgeCounts add(final RefStreamPurgeCounts other) {
@@ -1453,9 +1531,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     mapsDeletedCount + mapsDeletedDelta,
                     valuesDeletedCount + valuesDeletedDelta,
                     valuesDeReferencedCount + valuesDeReferencedDelta,
-                    !isSuccess
-                            ? false
-                            : this.isSuccess);
+                    isSuccess && this.isSuccess);
+        }
+
+        public boolean isZero() {
+            return mapsDeletedCount == 0
+                    && valuesDeletedCount == 0
+                    && valuesDeReferencedCount == 0;
         }
     }
 }

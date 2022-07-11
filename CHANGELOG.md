@@ -12,11 +12,35 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.1-beta.12] - 2022-07-05
+* Issue **#2834** : Fix `countGroups` search table expression.
+
+* Issue **#2961** : Fix sorting on selector and countGroups columns.
+
+* Issue **#2897** : On boot, delete ref streams from the store that have a state of LOAD_IN_PROGRESS or PURGE_IN_PROGRESS.
+
+* Issue **#2965** : Fix server tasks paging.
+
+* Issue **#2964** : Fix server tasks paging.
+
+* Issue **#2967** : Change application instance message.
+
+* Issue **#2966** : Fix interrupts being ignored in stats aggregation and improve task info messages.
 
 * Issue **#2834** : Fix `countGroups` search table expression.
 
 * Issue **#2961** : Fix sorting on selector and countGroups columns.
+
+* Issue **#2960** : Stop releasing owned tasks under lock.
+
+* Issue **#2939** : Remove duplicate createTime and updateTime doc properties.
+
+* Issue **#2959** : Turn off source line numbering in Saxon.
+
+* Issue **#2939** : Add DB migration to remove duplicate keys from `doc.data` json column.
+
+* Issue **#2966** : Add batching to stage 2 stats aggregation. Add new property `statisticAggregationStageTwoBatchSize`. Remove interruption checks in stats flush to avoid loss of data.
+
+* Improve error messages for ref data value deserialisation.
 
 * Issue **#2938** : Fix StreamId error when querying annotations data source.
 
@@ -96,7 +120,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * No changes, failed build.
 
-* Issue **#2855** : Add propety `stroom.index.writer.slowIndexWriteWarningThreshold` to configure the threshold for warning about slow index shard writes.
+* Issue **#2855** : Add property `stroom.index.writer.slowIndexWriteWarningThreshold` to configure the threshold for warning about slow index shard writes.
 
 * Issue **#2856** : Strip `[` and `]` from IPv6 addresses in the logged events to ensure schema compliance.
 

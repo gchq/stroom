@@ -40,6 +40,7 @@ import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -50,6 +51,7 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -80,13 +82,13 @@ public class ProcessorTaskListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
 
         criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(
-                eventBus,
-                criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<ProcessorTask>> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<ProcessorTask>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 if (criteria.getExpression() != null) {
+                    CriteriaUtil.setRange(criteria, range);
                     final Rest<ResultPage<ProcessorTask>> rest = restFactory.create();
                     rest
                             .onSuccess(dataConsumer)

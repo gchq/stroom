@@ -29,40 +29,4 @@ public class DelayedUpdate {
             timer.schedule(delay);
         }
     }
-
-//
-//    private final int delay;
-//    private final Runnable runnable;
-//    private final Timer timer;
-//    private long lastUpdate;
-//
-//    public DelayedUpdate(final int delay, final Runnable runnable) {
-//        this.delay = delay;
-//        this.runnable = runnable;
-//        timer = new Timer() {
-//            @Override
-//            public void run() {
-//                doUpdate();
-//            }
-//        };
-//    }
-//
-//    public void reset() {
-//        timer.cancel();
-//        lastUpdate = 0;
-//    }
-//
-//    public void update() {
-//        timer.cancel();
-//        if (lastUpdate > 0 && lastUpdate < System.currentTimeMillis() - delay) {
-//            doUpdate();
-//        } else {
-//            timer.schedule(delay);
-//        }
-//    }
-//
-//    private void doUpdate() {
-//        lastUpdate = System.currentTimeMillis();
-//        runnable.run();
-//    }
 }
