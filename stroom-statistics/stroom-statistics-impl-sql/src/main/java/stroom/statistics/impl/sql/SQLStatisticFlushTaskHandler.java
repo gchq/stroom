@@ -53,6 +53,7 @@ public class SQLStatisticFlushTaskHandler {
     private int counter;
     private int savedCount;
     private int total;
+    private int batchCount;
 
     @Inject
     public SQLStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
@@ -149,19 +150,38 @@ public class SQLStatisticFlushTaskHandler {
     private void doSaveBatch(final TaskContext taskContext,
                              final List<SQLStatValSourceDO> batchInsert) {
         try {
-            final int seconds = (int) (logExecutionTime.getDurationMs() / 1000L);
+            // Capture the values locally so the info shows the state as it is now and not
+            // as it is then the supplier is called.
+            final int seconds = (int) (logExecutionTime.getDurationMs() / 1_000L);
+            final int localBatchCount = ++batchCount;
+            final int localSavedCount = savedCount;
 
-            if (seconds > 0) {
-                taskContext.info(() -> LogUtil.message("Saving {}/{} ({}/sec)",
-                        ModelStringUtil.formatCsv(counter),
+            final Supplier<String> msgSupplier = () -> {
+                final String rate = seconds > 0
+                        ? Double.toString(((double) localSavedCount) / seconds)
+                        : "?";
+
+                return LogUtil.message("Saving batch no. {} with {} records, progress so far: {}/{} ({}/sec)",
+                        ModelStringUtil.formatCsv(localBatchCount),
+                        ModelStringUtil.formatCsv(batchInsert.size()),
+                        ModelStringUtil.formatCsv(localSavedCount),
                         ModelStringUtil.formatCsv(total),
-                        ModelStringUtil.formatCsv(savedCount / seconds)));
+                        rate);
+            };
+
+            taskContext.info(msgSupplier);
+
+            if (Thread.currentThread().isInterrupted()) {
+                // We can't drop out here our we will lose data but at least log something so the admin can
+                // see something is happening in the logs.
+                LOGGER.info("Waiting for flush to complete. {}", msgSupplier.get());
             } else {
-                taskContext.info(() -> LogUtil.message("Saving {}/{} (? ps)",
-                        ModelStringUtil.formatCsv(counter),
-                        ModelStringUtil.formatCsv(total)));
+                LOGGER.debug(msgSupplier);
             }
 
+            // First try to insert the batch using the fastest approach,
+            // i.e. a single massive insert into X (..) values (..), (..), (..) ...
+            // with a prepared statement
             sqlStatisticValueBatchSaveService.saveBatchStatisticValueSource_SinglePreparedStatement(batchInsert);
 
             savedCount += batchInsert.size();
@@ -172,6 +192,7 @@ public class SQLStatisticFlushTaskHandler {
                     batchInsert.size(), e.getMessage()));
 
             try {
+                // Single massive statement failed so try doing it as a batch of individual inserts
                 sqlStatisticValueBatchSaveService.saveBatchStatisticValueSource_BatchPreparedStatement(batchInsert);
                 savedCount += batchInsert.size();
             } catch (final SQLException e2) {
@@ -179,17 +200,24 @@ public class SQLStatisticFlushTaskHandler {
                 int successCount = 0;
 
                 if (e2 instanceof BatchUpdateException) {
+                    // Get the array of insert counts by idx in the batch
                     successfulInserts = ((BatchUpdateException) e2).getUpdateCounts();
                 }
 
                 final List<SQLStatValSourceDO> revisedBatch = new ArrayList<>();
-
                 for (int i = 0, lenBatch = batchInsert.size(), lenArr = successfulInserts.length; i < lenBatch; i++) {
                     if (i < lenArr && successfulInserts[i] == 1) {
                         successCount++;
                         // ignore this item as it has already been processed
                     } else {
-                        revisedBatch.add(batchInsert.get(i));
+                        // Failed item so add it to the revised batch
+                        final SQLStatValSourceDO failedItem = batchInsert.get(i);
+                        if (i < 5 || LOGGER.isTraceEnabled()) {
+                            LOGGER.debug("Batch item {} {} failed with error: {} " +
+                                    "(only showing first 5 failures, enable debug to see all)",
+                                    i, failedItem, e2);
+                        }
+                        revisedBatch.add(failedItem);
                     }
                 }
 
