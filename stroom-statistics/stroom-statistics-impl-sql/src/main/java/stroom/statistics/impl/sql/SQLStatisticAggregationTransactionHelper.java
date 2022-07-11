@@ -309,7 +309,12 @@ public class SQLStatisticAggregationTransactionHelper {
 
                     totalRowsAffected += rowsAffected;
                     if (Thread.currentThread().isInterrupted()) {
-                        LOGGER.debug("Thread interrupted");
+                        LOGGER.debug(() -> LogUtil.message(
+                                "Thread interrupted in stage 2 aggregation (batch level). " +
+                                        "targetPrecision: {}, lastPrecision: {}, valueType: {} " +
+                                        "Safely stopping here.",
+                                level.getPrecision(), level.getLastPrecision(), level.getValueType()));
+                        break;
                     }
                 }
                 LOGGER.debug("Deleted {} stats with a time older than {}", totalRowsAffected,
@@ -454,7 +459,8 @@ public class SQLStatisticAggregationTransactionHelper {
                     // for this aggregateConfig.  Thus, next time round it can just form a new batch
                     // with whatever is left.
                     if (Thread.currentThread().isInterrupted()) {
-                        LOGGER.debug("Thread interrupted during stage 1 aggregation. Safely stopping here.");
+                        LOGGER.debug("Thread interrupted during stage 1 aggregation. " +
+                                "Safely stopping here.");
                         break;
                     }
                 }
@@ -509,7 +515,7 @@ public class SQLStatisticAggregationTransactionHelper {
                             final byte valueType,
                             final long aggregateToMs,
                             final int batchSize,
-                            final int iteration) throws SQLException {
+                            final int batchNo) throws SQLException {
         int upsertCount;
         int deleteCount;
         final LogExecutionTime time = new LogExecutionTime();
@@ -517,8 +523,8 @@ public class SQLStatisticAggregationTransactionHelper {
         final Supplier<String> infoSupplier = () -> prefix +
                 " - Type: " + valueType
                 + ", aggregateTo: < " + DateUtil.createNormalDateTimeString(aggregateToMs)
-                + ", Precision: " + lastPrecision + "=>" + targetPrecision
-                + ", iteration: " + iteration
+                + ", precision: " + lastPrecision + "=>" + targetPrecision
+                + ", batch no.: " + batchNo
                 + ", batchSize: " + batchSize;
         LOGGER.debug(() -> LogUtil.message("aggregateToMs: {} ({})",
                 aggregateToMs, Instant.ofEpochMilli(aggregateToMs)));
@@ -592,7 +598,7 @@ public class SQLStatisticAggregationTransactionHelper {
                 if (targetPrecision != lastPrecision) {
 
                     int deleteCount;
-                    int iteration = 0;
+                    int batchNo = 0;
                     // Keep calling it till we get a partial batch
                     do {
                         deleteCount = callUpsert2(
@@ -605,14 +611,26 @@ public class SQLStatisticAggregationTransactionHelper {
                                 valueType,
                                 aggregateToMs,
                                 stage2BatchSize,
-                                ++iteration);
+                                ++batchNo);
 
                         totalCount += deleteCount;
+                        if (Thread.currentThread().isInterrupted()) {
+                            LOGGER.debug("Thread interrupted in stage 2 aggregation (batch level). " +
+                                    "targetPrecision: {}, lastPrecision: {}, valueType: {} " +
+                                    "batchNo: {}." +
+                                    "Safely stopping here.",
+                                    targetPrecision, lastPrecision, valueType, batchNo);
+                            break;
+                        }
                     } while (deleteCount >= stage2BatchSize);
-                    iterationsLog.add(iteration);
+                    iterationsLog.add(batchNo);
                 }
                 if (Thread.currentThread().isInterrupted()) {
-                    LOGGER.debug("Thread interrupted. Safely stopping here.");
+                    LOGGER.debug("Thread interrupted in stage 2 aggregation. " +
+                                    "targetPrecision: {}, lastPrecision: {}, valueType: {}." +
+                                    "Safely stopping here.",
+                            targetPrecision, lastPrecision, valueType);
+                    break;
                 }
             }
         }

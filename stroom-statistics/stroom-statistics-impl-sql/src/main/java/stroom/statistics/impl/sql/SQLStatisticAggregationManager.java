@@ -97,20 +97,20 @@ class SQLStatisticAggregationManager {
                 oldStatsDeletedCount = helper.deleteOldStats(timeNow, taskContext);
 
                 long processedCount;
-                int iteration = 0;
+                int batchNo = 0;
                 // Process batches of records until we have processed one
                 // that was not a full batch
                 do {
                     processedCount = helper.aggregateConfigStage1(
                             taskContext,
-                            "Aggregation Stage 1 - Iteration: " + ++iteration + "",
+                            "Aggregation Stage 1 - batch no: " + ++batchNo + "",
                             stage1BatchSize,
                             timeNow);
                     totalStage1Count += processedCount;
-
                 } while (processedCount > 0 && !Thread.currentThread().isInterrupted());
+
                 LOGGER.info("Completed stage 1 aggregation with {} iterations in {}{}",
-                        iteration,
+                        batchNo,
                         logExecutionTime.getDuration(),
                         (Thread.currentThread().isInterrupted()
                                 ? " (INTERRUPTED)"
