@@ -37,7 +37,7 @@ BEGIN
     DECLARE change_count INT DEFAULT 0;
 
     -- Build the new and merged aggregate counts/values in a temp table
-    CREATE TEMPORARY TABLE TEMP_AGG AS (
+    CREATE TEMPORARY TABLE TEMP_AGG_1 AS (
         SELECT
             SSVT.FK_SQL_STAT_KEY_ID as FK_SQL_STAT_KEY_ID,
             SSVT.TIME_MS_RND as TIME_MS,
@@ -82,14 +82,14 @@ BEGIN
         VAL,
         CT)
     SELECT
-        TEMP_AGG.FK_SQL_STAT_KEY_ID,
-        TEMP_AGG.TIME_MS,
-        TEMP_AGG.PRES,
-        TEMP_AGG.VAL_TP,
-        TEMP_AGG.VAL,
-        TEMP_AGG.CT
-    FROM TEMP_AGG
-    WHERE TEMP_AGG.CT > 0
+        ta.FK_SQL_STAT_KEY_ID,
+        ta.TIME_MS,
+        ta.PRES,
+        ta.VAL_TP,
+        ta.VAL,
+        ta.CT
+    FROM TEMP_AGG_1 ta
+    WHERE ta.CT > 0
     ON DUPLICATE KEY UPDATE
        VAL = VALUES(VAL),
        CT = VALUES(CT);
@@ -136,7 +136,7 @@ BEGIN
     SET change_count = ROW_COUNT() + change_count;
     SET p_rowCount = change_count;
 
-    DROP TEMPORARY TABLE TEMP_AGG;
+    DROP TEMPORARY TABLE TEMP_AGG_1;
 END //
 
 -- -----------------------------------------------------------------------
@@ -256,7 +256,7 @@ BEGIN
         -- Combine the aggregates from the existing data in the target precision with the data that
         -- needs to be moved to the target precision.
         -- Inserted into a temp table as we had issue with the ON DUPLICATE KEY
-        CREATE TEMPORARY TABLE TEMP_AGG AS (
+        CREATE TEMPORARY TABLE TEMP_AGG_2 AS (
             SELECT
                 FK_SQL_STAT_KEY_ID,
                 TIME_MS,
@@ -307,13 +307,13 @@ BEGIN
             VAL,
             CT)
         SELECT
-            TEMP_AGG.FK_SQL_STAT_KEY_ID,
-            TEMP_AGG.TIME_MS,
+            ta.FK_SQL_STAT_KEY_ID,
+            ta.TIME_MS,
             p_targetPrecision as PRES, -- target pres
             p_valueType as VAL_TP,
-            TEMP_AGG.VAL AS VAL,
-            TEMP_AGG.CT AS CT
-        FROM TEMP_AGG
+            ta.VAL AS VAL,
+            ta.CT AS CT
+        FROM TEMP_AGG_2 ta
         ON DUPLICATE KEY UPDATE
             VAL = VALUES(VAL),
             CT = VALUES(CT);
@@ -321,7 +321,7 @@ BEGIN
         SET p_upsertCount = ROW_COUNT();
         CALL log_num_value(v_log, p_is_trace_enabled, 'p_upsertCount', p_upsertCount);
 
-        DROP TEMPORARY TABLE TEMP_AGG;
+        DROP TEMPORARY TABLE TEMP_AGG_2;
 
         IF p_upsertCount > 0 THEN
             -- Now delete all the records that we have aggregated up to a courser level
