@@ -43,7 +43,7 @@ from
     where dm.ext = 'meta') v;
 
 -- A view for just feed docs, extracting all the json keys to columns
-create or replace view v_doc_feed as
+create or replace view v_feed_doc as
 select
     vd.id,
     vd.uuid,
