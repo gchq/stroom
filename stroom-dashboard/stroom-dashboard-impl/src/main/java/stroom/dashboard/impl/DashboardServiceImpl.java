@@ -426,15 +426,24 @@ class DashboardServiceImpl implements DashboardService {
 
     private ApplicationInstance getApplicationInstance(final String applicationInstanceUuid) {
         if (applicationInstanceUuid == null) {
-            throw new EntityServiceException("Null application instance id.");
+            throw new EntityServiceException("Session expired, please refresh your browser." +
+                    "\n" +
+                    "\n" +
+                    "Null application instance id.");
         }
         final Optional<ApplicationInstance> optionalApplicationInstance =
                 applicationInstanceManager.getOptional(applicationInstanceUuid);
         final ApplicationInstance applicationInstance = optionalApplicationInstance.orElseThrow(() ->
-                new EntityServiceException("Application instance not found for: "
-                        + applicationInstanceUuid));
+                new EntityServiceException("Session expired, please refresh your browser." +
+                        "\n" +
+                        "\n" +
+                        "Application instance not found for: " +
+                        applicationInstanceUuid));
         if (!securityContext.getUserId().equals(applicationInstance.getUserId())) {
-            throw new EntityServiceException("Attempt to use application instance for a different user.");
+            throw new EntityServiceException("Session expired, please refresh your browser." +
+                    "\n" +
+                    "\n" +
+                    "Attempt to use application instance for a different user.");
         }
         return applicationInstance;
     }

@@ -98,4 +98,15 @@ public class SQLStatValSourceDO implements Serializable {
     public StatisticType getType() {
         return type;
     }
+
+    @Override
+    public String toString() {
+        return "SQLStatValSourceDO{" +
+                "createMs=" + createMs +
+                ", name='" + name + '\'' +
+                ", valueSum=" + valueSum +
+                ", count=" + count +
+                ", type=" + type +
+                '}';
+    }
 }

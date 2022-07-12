@@ -17,6 +17,7 @@
 package stroom.monitoring.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -30,10 +31,12 @@ import stroom.node.shared.FindDBTableCriteria;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -94,11 +97,12 @@ public class DatabaseTablesMonitoringPresenter
         getView().addEndColumn(new EndColumn<>());
 
         criteria = new FindDBTableCriteria();
-        dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus,
-                criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<DBTableStatus>> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<DBTableStatus>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
+                CriteriaUtil.setRange(criteria, range);
                 final Rest<ResultPage<DBTableStatus>> rest = restFactory.create();
                 rest
                         .onSuccess(dataConsumer)

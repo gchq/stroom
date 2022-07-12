@@ -17,6 +17,7 @@
 package stroom.index.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -34,6 +35,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -182,12 +184,13 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
 
     public void init(final ExpressionCriteria criteria, final Consumer<ResultPage<IndexVolume>> c) {
         this.consumer = c;
-        final Rest<ResultPage<IndexVolume>> rest = restFactory.create();
-        dataProvider = new RestDataProvider<IndexVolume, ResultPage<IndexVolume>>(getEventBus(),
-                criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<IndexVolume, ResultPage<IndexVolume>>(getEventBus()) {
             @Override
-            protected void exec(final Consumer<ResultPage<IndexVolume>> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<IndexVolume>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
+                CriteriaUtil.setRange(criteria, range);
+                final Rest<ResultPage<IndexVolume>> rest = restFactory.create();
                 rest
                         .onSuccess(result -> {
                             dataConsumer.accept(result);
