@@ -24,6 +24,7 @@ import stroom.util.shared.BuildInfo;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException;
 import io.dropwizard.setup.Environment;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.Configuration;
@@ -262,20 +263,42 @@ public class BootstrapUtil {
 
     private static void acquireBootstrapLock(final ConnectionConfig connectionConfig,
                                              final Configuration txnConfig) {
-        LOGGER.info("Waiting to acquire bootstrap lock on table: {}, user: {}, url: {}",
-                BUILD_VERSION_TABLE_NAME, connectionConfig.getUser(), connectionConfig.getUrl());
-        Instant startTime = Instant.now();
+        LOGGER.info("Waiting to acquire bootstrap lock on table: {}, id: {}, user: {}, url: {}",
+                BUILD_VERSION_TABLE_NAME,
+                BUILD_VERSION_TABLE_ID,
+                connectionConfig.getUser(),
+                connectionConfig.getUrl());
+        final Instant startTime = Instant.now();
 
         final String sql = LogUtil.message("""
                 SELECT *
                 FROM {}
                 WHERE id = ?
                 FOR UPDATE""", BUILD_VERSION_TABLE_NAME);
-        DSL.using(txnConfig)
-                .execute(sql, BUILD_VERSION_TABLE_ID);
 
-        LOGGER.info("Waited {} to acquire bootstrap lock",
-                Duration.between(startTime, Instant.now()));
+        boolean acquiredLock = false;
+        while (!acquiredLock) {
+            try {
+                // Wait to get a row lock on the one record in the table
+                DSL.using(txnConfig)
+                        .execute(sql, BUILD_VERSION_TABLE_ID);
+                LOGGER.info("Waited {} to acquire bootstrap lock",
+                        Duration.between(startTime, Instant.now()));
+                acquiredLock = true;
+            } catch (Exception e) {
+                // If the node that gets the lock has to run lengthy db= migrations it is almost certain
+                // that we will get a lock timeout error so need to handle that and keep trying to get the lock
+                if (e.getCause() != null
+                        && e.getCause() instanceof MySQLTransactionRollbackException
+                        && e.getCause().getMessage().contains("Lock wait timeout exceeded")) {
+                    LOGGER.info("Still waiting for bootstrap lock, waited {} so far.",
+                            Duration.between(startTime, Instant.now()));
+                } else {
+                    LOGGER.error("Error getting bootstrap lock: {}", e.getMessage(), e);
+                    throw e;
+                }
+            }
+        }
     }
 
     private static void ensureBuildVersionTable(final Configuration txnConfig, final Connection connection) {
