@@ -198,7 +198,7 @@ public class MapDataStore implements DataStore, Data {
                                final Generator[] generators) {
         LOGGER.trace(() -> "addToChildMap called for item");
         if (Thread.currentThread().isInterrupted() || hasEnoughData) {
-            return;
+            completionState.signalComplete();
         }
 
         // Update the total number of results that we have received.
