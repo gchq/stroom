@@ -265,7 +265,7 @@ public class BootstrapUtil {
                                              final Configuration txnConfig) {
         LOGGER.info("Waiting to acquire bootstrap lock on table: {}, user: {}, url: {}",
                 BUILD_VERSION_TABLE_NAME, connectionConfig.getUser(), connectionConfig.getUrl());
-        Instant startTime = Instant.now();
+        final Instant startTime = Instant.now();
 
         final String sql = LogUtil.message("""
                 SELECT *
