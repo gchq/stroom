@@ -86,7 +86,7 @@ public class Generators {
                             if (generator == null) {
                                 return "null";
                             }
-                            return generator.eval().toString();
+                            return generator.eval(null).toString();
                         })
                         .collect(Collectors.joining(", ")) +
                 "]}";

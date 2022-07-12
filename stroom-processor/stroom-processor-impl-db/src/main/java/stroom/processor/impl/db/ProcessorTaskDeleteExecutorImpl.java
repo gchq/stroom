@@ -132,9 +132,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
 
     private void deleteOldTasks(final Instant deleteThreshold) {
         final Collection<Condition> conditions = JooqUtil.conditions(
-                Optional.of(PROCESSOR_TASK.STATUS.in(
-                        TaskStatus.COMPLETE.getPrimitiveValue(),
-                        TaskStatus.FAILED.getPrimitiveValue())),
+                Optional.of(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMPLETE.getPrimitiveValue())),
                 Optional.of(PROCESSOR_TASK.CREATE_TIME_MS.isNull()
                         .or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))));
 

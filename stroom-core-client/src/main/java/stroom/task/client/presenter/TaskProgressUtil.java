@@ -22,8 +22,10 @@ import stroom.task.shared.TaskProgress;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.Expander;
-import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+
+import com.google.gwt.view.client.Range;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,29 +45,25 @@ class TaskProgressUtil {
     private TaskProgressUtil() {
     }
 
-    static ResultPage<TaskProgress> combine(final FindTaskProgressCriteria criteria,
+    static ResultPage<TaskProgress> combine(final Range range,
+                                            final FindTaskProgressCriteria criteria,
                                             final Collection<List<TaskProgress>> input,
                                             final TaskManagerTreeAction treeAction) {
         // Validate criteria.
         criteria.validateSortField();
 
-        final PageRequest originalPageRequest = criteria.getPageRequest();
-        try {
-            // Don't page limit the first query
-            criteria.setPageRequest(new PageRequest());
+        final Map<TaskId, TaskProgress> totalMap = input
+                .stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toMap(TaskProgress::getId, Function.identity()));
 
-            final Map<TaskId, TaskProgress> totalMap = input
-                    .stream()
-                    .flatMap(List::stream)
-                    .collect(Collectors.toMap(TaskProgress::getId, Function.identity()));
-
-            final List<TaskProgress> resultList = createList(totalMap, criteria, treeAction);
-
-            return ResultPage.createCriterialBasedList(resultList, criteria);
-
-        } finally {
-            criteria.setPageRequest(originalPageRequest);
+        List<TaskProgress> resultList = createList(totalMap, criteria, treeAction);
+        final long total = resultList.size();
+        final List<TaskProgress> trimmed = new ArrayList<>();
+        for (int i = range.getStart(); i < range.getStart() + range.getLength() && i < resultList.size(); i++) {
+            trimmed.add(resultList.get(i));
         }
+        return new ResultPage<>(trimmed, new PageResponse(range.getStart(), trimmed.size(), total, true));
     }
 
     static List<TaskProgress> createList(final Map<TaskId, TaskProgress> taskProgressMap,
@@ -124,8 +122,8 @@ class TaskProgressUtil {
                 set.forEach(taskProgress -> {
                     if (taskProgress.isMatchedInFilter()) {
                         childMapOut.computeIfAbsent(
-                                taskId,
-                                k -> new HashSet<>())
+                                        taskId,
+                                        k -> new HashSet<>())
                                 .add(taskProgress);
 
                         // Add children
@@ -135,8 +133,8 @@ class TaskProgressUtil {
                         TaskId parent = taskId;
                         while (parent != null) {
                             childMapOut.computeIfAbsent(
-                                    parent.getParentId(),
-                                    k -> new HashSet<>())
+                                            parent.getParentId(),
+                                            k -> new HashSet<>())
                                     .add(completeIdMap.get(parent));
                             parent = parent.getParentId();
                         }

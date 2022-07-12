@@ -102,6 +102,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskManagerImpl.class);
 
     private static final String LOCK_NAME = "ProcessorTaskManager";
+    private static final int MAX_ERROR_LENGTH = 200;
 
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
@@ -204,7 +205,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             // Lock the cluster so that only this node is able to release owned tasks at this time.
             final String nodeName = nodeInfo.getThisNodeName();
             LOGGER.info(() -> "Locking cluster to release owned tasks for node " + nodeName);
-            clusterLockService.lock(LOCK_NAME, () -> processorTaskDao.releaseOwnedTasks(nodeName));
+            processorTaskDao.releaseOwnedTasks(nodeName);
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
@@ -791,7 +792,11 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 optionalProcessorFilter = processorFilterService.fetch(filter.getId());
                 optionalProcessorFilter.ifPresent(loadedFilter -> {
                     ProcessorFilterTracker tracker = loadedFilter.getProcessorFilterTracker();
-                    tracker.setStatus("Error: " + e);
+                    String error = e.toString();
+                    if (error.length() > MAX_ERROR_LENGTH) {
+                        error = error.substring(0, MAX_ERROR_LENGTH) + "...";
+                    }
+                    tracker.setStatus("Error: " + error);
                     processorFilterTrackerDao.update(tracker);
                 });
             } catch (final RuntimeException e2) {

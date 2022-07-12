@@ -16,11 +16,11 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -67,10 +67,9 @@ import java.time.format.DateTimeFormatter;
                         returnDescription = "A date string in the supplied date format pattern.",
                         description = "Convert the date to a string using the supplied date format" +
                                 "pattern and timezone.")})
-class FormatDate extends AbstractFunction implements Serializable {
+class FormatDate extends AbstractFunction {
 
     static final String NAME = "formatDate";
-    private static final long serialVersionUID = -305845496003936297L;
     private String pattern = DateUtil.DEFAULT_PATTERN;
     private String timeZone;
 
@@ -131,7 +130,6 @@ class FormatDate extends AbstractFunction implements Serializable {
 
     private static class Gen extends AbstractSingleChildGenerator {
 
-        private static final long serialVersionUID = 8153777070911899616L;
 
         private final String pattern;
         private final String timeZone;
@@ -148,8 +146,8 @@ class FormatDate extends AbstractFunction implements Serializable {
         }
 
         @Override
-        public Val eval() {
-            final Val val = childGenerator.eval();
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerator.eval(childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }

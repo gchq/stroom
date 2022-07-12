@@ -16,8 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -42,10 +42,9 @@ import java.util.regex.Pattern;
                                 name = "replacement",
                                 description = "The string to replace each match with.",
                                 argType = ValString.class)}))
-class Replace extends AbstractManyChildFunction implements Serializable {
+class Replace extends AbstractManyChildFunction {
 
     static final String NAME = "replace";
-    private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
     private boolean simple;
 
@@ -117,8 +116,6 @@ class Replace extends AbstractManyChildFunction implements Serializable {
 
     private static final class Gen extends AbstractManyChildGenerator {
 
-        private static final long serialVersionUID = 8153777070911899616L;
-
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
         }
@@ -131,16 +128,16 @@ class Replace extends AbstractManyChildFunction implements Serializable {
         }
 
         @Override
-        public Val eval() {
-            final Val val = childGenerators[0].eval();
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerators[0].eval(childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }
-            final Val valRegex = childGenerators[1].eval();
+            final Val valRegex = childGenerators[1].eval(childDataSupplier);
             if (!valRegex.type().isValue()) {
                 return ValErr.wrap(valRegex);
             }
-            final Val valReplacement = childGenerators[2].eval();
+            final Val valReplacement = childGenerators[2].eval(childDataSupplier);
             if (!valReplacement.type().isValue()) {
                 return ValErr.wrap(valReplacement);
             }

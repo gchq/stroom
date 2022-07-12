@@ -319,7 +319,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HttpCallFunction(final Provider<HttpCall> functionCallProvider) {
             super(
-                    "http-call",
+                    HttpCall.FUNCTION_NAME,
                     1,
                     5,
                     new SequenceType[]{
@@ -469,6 +469,8 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
 
         @Inject
         PointIsInsideXYPolygonFunction(final Provider<PointIsInsideXYPolygon> functionCallProvider) {
+            // TODO This really ought to be in lower-kebab-case like all the others but that would
+            //  break content packs that use this func.
             super(
                     "pointIsInsideXYPolygon",
                     4,

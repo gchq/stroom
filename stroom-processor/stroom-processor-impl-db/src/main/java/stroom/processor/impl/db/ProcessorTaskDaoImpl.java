@@ -49,6 +49,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Record3;
 import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
@@ -68,6 +69,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.inject.Inject;
@@ -237,6 +239,17 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return set;
     }
 
+    private Condition getActiveTaskCondition() {
+        final Set<Byte> statusSet = Set.of(
+                TaskStatus.UNPROCESSED.getPrimitiveValue(),
+                TaskStatus.ASSIGNED.getPrimitiveValue(),
+                TaskStatus.PROCESSING.getPrimitiveValue());
+        final Selection<Byte> selection = Selection.selectNone();
+        selection.setSet(statusSet);
+        final Optional<Condition> statusCondition = JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, selection);
+        return statusCondition.orElse(null);
+    }
+
     /**
      * Release tasks and make them unowned.
      *
@@ -245,7 +258,30 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     @Override
     public void releaseOwnedTasks(final String nodeName) {
         LOGGER.info(() -> "Releasing owned tasks for " + nodeName);
-        releaseTasks(Set.of(nodeName), null, null);
+        final List<Condition> conditions = new ArrayList<>();
+
+        // Release tasks for the specified nodes.
+        final Integer nodeId = processorNodeCache.getOrCreate(nodeName);
+        conditions.add(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId));
+
+        // Only alter tasks that are marked as unprocessed, assigned or processing,
+        // i.e. ignore complete and failed tasks.
+        conditions.add(getActiveTaskCondition());
+
+//        final int results = JooqUtil.contextResult(processorDbConnProvider, context -> context
+//                .update(PROCESSOR_TASK)
+//                .set(PROCESSOR_TASK.STATUS, TaskStatus.UNPROCESSED.getPrimitiveValue())
+//                .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
+//                .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, (Integer) null)
+//                .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
+//                .where(conditions)
+//                .execute());
+
+        // Do one by one to avoid deadlocks
+        final long count = releaseTasks(conditions);
+
+        LOGGER.info(() -> "Set " + count + " tasks back to UNPROCESSED that were " +
+                "UNPROCESSED, ASSIGNED, PROCESSING");
     }
 
     /**
@@ -257,52 +293,83 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     @Override
     public void retainOwnedTasks(final Set<String> retainForNodes, final Instant statusOlderThan) {
         LOGGER.info(() -> "Retaining owned tasks");
-        releaseTasks(null, retainForNodes, statusOlderThan);
-    }
-
-    private void releaseTasks(final Set<String> releaseForNodes,
-                              final Set<String> retainForNodes,
-                              final Instant statusOlderThan) {
         final List<Condition> conditions = new ArrayList<>();
-        if (releaseForNodes != null) {
-            // Release tasks for the specified nodes.
-            final Set<Integer> nodeIdSet = getNodeIdSet(releaseForNodes);
-            conditions.add(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.in(nodeIdSet));
-        }
 
-        if (retainForNodes != null) {
-            // Keep tasks ownership for active nodes.
-            final Set<Integer> nodeIdSet = getNodeIdSet(retainForNodes);
-            conditions.add(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.notIn(nodeIdSet));
-        }
+        // Keep tasks ownership for active nodes.
+        final Set<Integer> nodeIdSet = getNodeIdSet(retainForNodes);
+        conditions.add(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.notIn(nodeIdSet));
 
-        if (statusOlderThan != null) {
-            // Only change tasks that have not been changed for a certain amount of time.
-            conditions.add(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThan.toEpochMilli()));
-        }
+
+        // Only change tasks that have not been changed for a certain amount of time.
+        conditions.add(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThan.toEpochMilli()));
+
 
         // Only alter tasks that are marked as unprocessed, assigned or processing,
         // i.e. ignore complete and failed tasks.
-        final Set<Byte> statusSet = Set.of(
-                TaskStatus.UNPROCESSED.getPrimitiveValue(),
-                TaskStatus.ASSIGNED.getPrimitiveValue(),
-                TaskStatus.PROCESSING.getPrimitiveValue());
-        final Selection<Byte> selection = Selection.selectNone();
-        selection.setSet(statusSet);
-        final Optional<Condition> statusCondition = JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, selection);
-        statusCondition.ifPresent(conditions::add);
+        conditions.add(getActiveTaskCondition());
 
-        final int results = JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .update(PROCESSOR_TASK)
-                .set(PROCESSOR_TASK.STATUS, TaskStatus.UNPROCESSED.getPrimitiveValue())
-                .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
-                .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, (Integer) null)
-                .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
-                .where(conditions)
-                .execute());
+//        final int results = JooqUtil.contextResult(processorDbConnProvider, context -> context
+//                .update(PROCESSOR_TASK)
+//                .set(PROCESSOR_TASK.STATUS, TaskStatus.UNPROCESSED.getPrimitiveValue())
+//                .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
+//                .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, (Integer) null)
+//                .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
+//                .where(conditions)
+//                .execute());
 
-        LOGGER.info(() -> "Set " + results + " tasks back to UNPROCESSED that were " +
+        // Do one by one to avoid deadlocks
+        final long count = releaseTasks(conditions);
+
+        LOGGER.info(() -> "Set " + count + " tasks back to UNPROCESSED that were " +
                 "UNPROCESSED, ASSIGNED, PROCESSING");
+    }
+
+    private long releaseTasks(final List<Condition> conditions) {
+        final AtomicLong minId = new AtomicLong(-1);
+        boolean complete = false;
+        long count = 0;
+
+        while (!complete) {
+            final List<Record3<Long, Integer, Byte>> results = JooqUtil.contextResult(processorDbConnProvider,
+                    context ->
+                            context
+                                    .select(PROCESSOR_TASK.ID, PROCESSOR_TASK.VERSION, PROCESSOR_TASK.STATUS)
+                                    .from(PROCESSOR_TASK)
+                                    .where(conditions)
+                                    .and(PROCESSOR_TASK.ID.gt(minId.get()))
+                                    .orderBy(PROCESSOR_TASK.ID)
+                                    .limit(1000)
+                                    .fetch());
+            if (results.size() == 0) {
+                complete = true;
+            } else {
+                for (final Record3<Long, Integer, Byte> record : results) {
+                    minId.set(record.value1());
+                    count += releaseTask(record);
+                }
+            }
+        }
+
+        return count;
+    }
+
+    private int releaseTask(final Record3<Long, Integer, Byte> record) {
+        try {
+            return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                    .update(PROCESSOR_TASK)
+                    .set(PROCESSOR_TASK.STATUS, TaskStatus.UNPROCESSED.getPrimitiveValue())
+                    .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
+                    .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, (Integer) null)
+                    .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
+                    .where(PROCESSOR_TASK.ID.eq(record.value1()))
+                    .and(PROCESSOR_TASK.VERSION.eq(record.value2()))
+                    .and(PROCESSOR_TASK.STATUS.eq(record.value3()))
+                    .execute());
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+
+        return 0;
     }
 
     /**

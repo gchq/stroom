@@ -64,7 +64,6 @@ class Floor extends AbstractRoundingFunction {
 
     private static class NumericFloor implements RoundCalculator {
 
-        private static final long serialVersionUID = -2414316545075369054L;
 
         @Override
         public Val calc(final Val value) {
@@ -79,7 +78,6 @@ class Floor extends AbstractRoundingFunction {
 
     private static class DecimalPlaceFloor implements RoundCalculator {
 
-        private static final long serialVersionUID = -5893918049538006730L;
 
         private final double multiplier;
 

@@ -19,6 +19,8 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.util.function.Supplier;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Random.NAME,
@@ -51,8 +53,6 @@ class Random extends AbstractFunction {
 
     private static final class Gen extends AbstractNoChildGenerator {
 
-        private static final long serialVersionUID = -7551073465232523106L;
-
         private Val value;
 
         @Override
@@ -61,7 +61,7 @@ class Random extends AbstractFunction {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             return value;
         }
 

@@ -16,7 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
+
+import java.util.function.Supplier;
 
 @FunctionDef(
         name = Any.NAME,
@@ -33,10 +34,9 @@ import java.io.Serializable;
                                 description = "Grouped field or the result of another function",
                                 argType = Val.class)
                 }))
-public class Any extends AbstractSelectorFunction implements Serializable {
+public class Any extends AbstractSelectorFunction {
 
     static final String NAME = "any";
-    private static final long serialVersionUID = -305845496003936297L;
 
     public Any(final String name) {
         super(name, 1, 1);
@@ -48,36 +48,20 @@ public class Any extends AbstractSelectorFunction implements Serializable {
     }
 
     @Override
-    public boolean isChildSelector() {
+    public boolean requiresChildData() {
         // `any()` is a special case because we actually don't need to select a child row as it just grab any value.
         return false;
     }
 
-    public static class AnySelector extends Selector {
-
-        private static final long serialVersionUID = 8153777070911899616L;
-        private Val val;
+    static class AnySelector extends Selector {
 
         AnySelector(final Generator childGenerator) {
             super(childGenerator);
         }
 
-        public Val select(final Selection<Val> selection) {
-            if (this.val == null) {
-                if (selection.size() > 0) {
-                    for (int i = 0; i < selection.size(); i++) {
-                        final Val val = selection.get(i);
-                        if (val.type().isValue()) {
-                            this.val = val;
-                            return this.val;
-                        }
-                    }
-                }
-
-                this.val = eval();
-            }
-
-            return this.val;
+        @Override
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            return childGenerator.eval(childDataSupplier);
         }
     }
 }

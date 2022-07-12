@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -32,10 +31,9 @@ import java.io.Serializable;
                                 description = "Field, the result of another function or a constant.",
                                 argType = Val.class)
                 }))
-class IsBoolean extends AbstractIsFunction implements Serializable {
+class IsBoolean extends AbstractIsFunction {
 
     static final String NAME = "isBoolean";
-    private static final long serialVersionUID = -305145496413936297L;
     private static final BooleanTest TEST = new BooleanTest();
 
     public IsBoolean(final String name) {

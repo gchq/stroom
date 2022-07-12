@@ -12,6 +12,69 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.217] - 2022-07-11
+
+* Issue **#2897** : On boot, delete ref streams from the store that have a state of LOAD_IN_PROGRESS or PURGE_IN_PROGRESS.
+
+* Issue **#2965** : Fix server tasks paging.
+
+* Issue **#2964** : Fix server tasks paging.
+
+* Issue **#2967** : Change application instance message.
+
+* Issue **#2966** : Fix interrupts being ignored in stats aggregation and improve task info messages.
+
+
+## [v7.0-beta.216] - 2022-07-11
+
+* Issue **#2834** : Fix `countGroups` search table expression.
+
+* Issue **#2961** : Fix sorting on selector and countGroups columns.
+
+* Issue **#2960** : Stop releasing owned tasks under lock.
+
+* Issue **#2939** : Remove duplicate createTime and updateTime doc properties.
+
+* Issue **#2959** : Turn off source line numbering in Saxon.
+
+* Issue **#2939** : Add DB migration to remove duplicate keys from `doc.data` json column.
+
+* Issue **#2966** : Add batching to stage 2 stats aggregation. Add new property `statisticAggregationStageTwoBatchSize`. Remove interruption checks in stats flush to avoid loss of data.
+
+* Improve error messages for ref data value deserialisation.
+
+
+## [v7.0-beta.215] - 2022-07-04
+
+* Issue **#2938** : Fix StreamId error when querying annotations data source.
+
+* Issue **#2944** : Truncate error messages for processor_filter_tracker status to fit DB.
+
+* Issue **#2935** : Remove query UUID in query download.
+
+* Issue **#2945** : Fix deadlock updating processor task by updating individually.
+
+* Issue **#2946** : Add property `statisticFlushBatchSize`.
+
+* Issue **#2946** : Change SQL Statistics flush to use single large prepared statements for more efficient inserts to SQL_STAT_VAL_SRC.
+
+* Issue **#2954** : Stop logging SQL exceptions as errors in JooqUtil.
+
+* Issue **#2948** : Processing tasks will complete normally when data deleted.
+
+* Issue **#2946** : Add statistics properties `inMemAggregatorPoolSize`, `inMemPooledAggregatorSizeThreshold`, `inMemPooledAggregatorAgeThreshold` and `inMemFinalAggregatorSizeThreshold`.
+
+
+## [v7.0-beta.214] - 2022-06-29
+
+* Issue **#2931** : Set cluster state update frequency to 1m.
+
+
+## [v7.0-beta.213] - 2022-06-29
+
+* Issue **#2933** : Change structure of config object for http-call function to allow setting various HTTP client configuration properties, including HTTP protocol version.
+
+
 ## [v7.0-beta.212] - 2022-06-27
 
 * Issue **#2902** : Release queued tasks if no longer master and from dead nodes.
@@ -4452,7 +4515,12 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.212...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.217...HEAD
+[v7.0-beta.217]: https://github.com/gchq/stroom/compare/v7.0-beta.216...v7.0-beta.217
+[v7.0-beta.216]: https://github.com/gchq/stroom/compare/v7.0-beta.215...v7.0-beta.216
+[v7.0-beta.215]: https://github.com/gchq/stroom/compare/v7.0-beta.214...v7.0-beta.215
+[v7.0-beta.214]: https://github.com/gchq/stroom/compare/v7.0-beta.213...v7.0-beta.214
+[v7.0-beta.213]: https://github.com/gchq/stroom/compare/v7.0-beta.212...v7.0-beta.213
 [v7.0-beta.212]: https://github.com/gchq/stroom/compare/v7.0-beta.211...v7.0-beta.212
 [v7.0-beta.211]: https://github.com/gchq/stroom/compare/v7.0-beta.210...v7.0-beta.211
 [v7.0-beta.210]: https://github.com/gchq/stroom/compare/v7.0-beta.209...v7.0-beta.210

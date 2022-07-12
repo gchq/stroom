@@ -16,9 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 
-interface Extractor extends Serializable {
+interface Extractor {
 
     String extract(String value);
 }
