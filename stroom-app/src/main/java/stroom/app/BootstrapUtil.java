@@ -263,8 +263,11 @@ public class BootstrapUtil {
 
     private static void acquireBootstrapLock(final ConnectionConfig connectionConfig,
                                              final Configuration txnConfig) {
-        LOGGER.info("Waiting to acquire bootstrap lock on table: {}, user: {}, url: {}",
-                BUILD_VERSION_TABLE_NAME, connectionConfig.getUser(), connectionConfig.getUrl());
+        LOGGER.info("Waiting to acquire bootstrap lock on table: {}, id: {}, user: {}, url: {}",
+                BUILD_VERSION_TABLE_NAME,
+                BUILD_VERSION_TABLE_ID,
+                connectionConfig.getUser(),
+                connectionConfig.getUrl());
         final Instant startTime = Instant.now();
 
         final String sql = LogUtil.message("""
