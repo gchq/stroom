@@ -248,22 +248,7 @@ public class SearchModel {
     public void destroy() {
         GWT.log("SearchModel - destroy()");
         if (currentQueryKey != null) {
-            final DestroySearchRequest request = DestroySearchRequest
-                    .builder()
-                    .queryKey(currentQueryKey)
-                    .applicationInstanceUuid(applicationInstance.getInstanceUuid())
-                    .dashboardUuid(dashboardUuid)
-                    .componentId(componentId)
-                    .build();
-            final Rest<Boolean> rest = restFactory.create();
-            rest
-                    .onSuccess(response -> {
-                        if (!response) {
-                            Console.log("Unable to destroy search: " + request);
-                        }
-                    })
-                    .call(DASHBOARD_RESOURCE)
-                    .destroy(request);
+            destroy(currentQueryKey);
             currentQueryKey = null;
         }
         setMode(Mode.INACTIVE);
@@ -278,6 +263,25 @@ public class SearchModel {
         // Stop polling.
         searching = false;
         currentSearch = null;
+    }
+
+    private void destroy(final QueryKey queryKey) {
+        final DestroySearchRequest request = DestroySearchRequest
+                .builder()
+                .queryKey(queryKey)
+                .applicationInstanceUuid(applicationInstance.getInstanceUuid())
+                .dashboardUuid(dashboardUuid)
+                .componentId(componentId)
+                .build();
+        final Rest<Boolean> rest = restFactory.create();
+        rest
+                .onSuccess(response -> {
+                    if (!response) {
+                        Console.log("Unable to destroy search: " + request);
+                    }
+                })
+                .call(DASHBOARD_RESOURCE)
+                .destroy(request);
     }
 
     private void poll(final boolean storeHistory) {
@@ -317,6 +321,8 @@ public class SearchModel {
                             if (searching) {
                                 poll(false);
                             }
+                        } else {
+                            destroy(response.getQueryKey());
                         }
                     })
                     .onFailure(throwable -> {

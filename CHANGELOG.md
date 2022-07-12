@@ -12,6 +12,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2977** : Fix to destroy stale searches.
+
 * Issue **#2834** : Fix `countGroups` search table expression.
 
 * Issue **#2961** : Fix sorting on selector and countGroups columns.
