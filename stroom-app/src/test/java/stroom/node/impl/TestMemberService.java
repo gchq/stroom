@@ -18,8 +18,7 @@
 package stroom.node.impl;
 
 
-import stroom.cluster.api.NodeInfo;
-import stroom.node.api.FindNodeCriteria;
+import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import org.junit.jupiter.api.Test;
@@ -28,7 +27,7 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestNodeService extends AbstractCoreIntegrationTest {
+class TestMemberService extends AbstractCoreIntegrationTest {
 
     @Inject
     private NodeInfo nodeInfo;

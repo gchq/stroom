@@ -17,7 +17,7 @@ dependencies {
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-meta:stroom-meta-api')
-//    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')

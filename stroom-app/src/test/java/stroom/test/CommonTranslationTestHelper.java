@@ -16,9 +16,9 @@
 
 package stroom.test;
 
-import stroom.cluster.api.NodeInfo;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.impl.DataProcessorTaskHandler;

@@ -16,6 +16,8 @@
 
 package stroom.job.impl;
 
+import stroom.cluster.api.ClusterMember;
+import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
 import stroom.cluster.api.RemoteRestUtil;
 import stroom.event.logging.api.DocumentEventLog;
@@ -27,6 +29,7 @@ import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResourcePaths;
 
 import event.logging.AdvancedQuery;
@@ -50,20 +53,23 @@ class JobNodeResourceImpl implements JobNodeResource {
     private final Provider<EndpointUrlService> endpointUrlServiceProvider;
     private final Provider<WebTargetFactory> webTargetFactoryProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
+    private final Provider<ClusterService> clusterServiceProvider;
 
     @Inject
     JobNodeResourceImpl(final Provider<JobNodeService> jobNodeServiceProvider,
                         final Provider<EndpointUrlService> endpointUrlServiceProvider,
                         final Provider<WebTargetFactory> webTargetFactoryProvider,
-                        final Provider<DocumentEventLog> documentEventLogProvider) {
+                        final Provider<DocumentEventLog> documentEventLogProvider,
+                        final Provider<ClusterService> clusterServiceProvider) {
         this.jobNodeServiceProvider = jobNodeServiceProvider;
         this.endpointUrlServiceProvider = endpointUrlServiceProvider;
         this.webTargetFactoryProvider = webTargetFactoryProvider;
         this.documentEventLogProvider = documentEventLogProvider;
+        this.clusterServiceProvider = clusterServiceProvider;
     }
 
     @Override
-    public JobNodeListResponse list(final String jobName, final String nodeName) {
+    public JobNodeListResponse list(final String jobName) {
         JobNodeListResponse response;
 
         And.Builder<Void> andBuilder = And.builder();
@@ -77,14 +83,17 @@ class JobNodeResourceImpl implements JobNodeResource {
                     .withValue(jobName)
                     .build());
         }
-        if (nodeName != null && !nodeName.isEmpty()) {
-            findJobNodeCriteria.getNodeName().setString(nodeName);
-            andBuilder.addTerm(Term.builder()
-                    .withName("NodeName")
-                    .withCondition(TermCondition.EQUALS)
-                    .withValue(nodeName)
-                    .build());
-        }
+
+//
+//        if (memberUuid != null && !memberUuid.isEmpty()) {
+//            clusterServiceProvider.get().
+//            findJobNodeCriteria.getNodeName().setString(nodeName);
+//            andBuilder.addTerm(Term.builder()
+//                    .withName("NodeName")
+//                    .withCondition(TermCondition.EQUALS)
+//                    .withValue(nodeName)
+//                    .build());
+//        }
 
         final Query query = Query.builder()
                 .withAdvanced(AdvancedQuery.builder()
@@ -114,14 +123,17 @@ class JobNodeResourceImpl implements JobNodeResource {
 
     @Override
     public JobNodeInfo info(final String jobName, final String nodeName) {
+        RestUtil.requireNonNull(nodeName, "memberUuid not supplied");
+        final ClusterMember member = clusterServiceProvider.get().getMemberForOldNodeName(nodeName);
+
         JobNodeInfo jobNodeInfo;
         // If this is the node that was contacted then just return our local info.
         final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
-        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
+        if (endpointUrlService.shouldExecuteLocally(member)) {
             jobNodeInfo = jobNodeServiceProvider.get().getInfo(jobName);
 
         } else {
-            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName) +
+            final String url = endpointUrlService.getRemoteEndpointUrl(member) +
                     ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
             try {
                 WebTarget webTarget = webTargetFactoryProvider.get().create(url);
@@ -135,10 +147,10 @@ class JobNodeResourceImpl implements JobNodeResource {
                 }
                 jobNodeInfo = response.readEntity(JobNodeInfo.class);
                 if (jobNodeInfo == null) {
-                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
+                    throw new RuntimeException("Unable to contact member \"" + member + "\" at URL: " + url);
                 }
             } catch (final Throwable e) {
-                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptions(member, url, e);
             }
         }
 

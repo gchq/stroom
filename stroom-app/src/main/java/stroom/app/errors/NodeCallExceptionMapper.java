@@ -21,7 +21,7 @@
 
 package stroom.app.errors;
 
-import stroom.cluster.api.NodeCallException;
+import stroom.cluster.api.ClusterCallException;
 
 import io.dropwizard.jersey.errors.ErrorMessage;
 import org.slf4j.Logger;
@@ -32,19 +32,19 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
-public class NodeCallExceptionMapper implements ExceptionMapper<NodeCallException> {
+public class NodeCallExceptionMapper implements ExceptionMapper<ClusterCallException> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeCallExceptionMapper.class);
 
     @Override
-    public Response toResponse(final NodeCallException nodeCallException) {
+    public Response toResponse(final ClusterCallException clusterCallException) {
 
         // Inter-node comms failure is not very exceptional so we don't want a big stack
         // every time.
         final long id = ThreadLocalRandom.current().nextLong();
-        final String msg = String.format("%s [%016x]", nodeCallException.getMessage(), id);
+        final String msg = String.format("%s [%016x]", clusterCallException.getMessage(), id);
 
-        LOGGER.debug(msg, nodeCallException);
+        LOGGER.debug(msg, clusterCallException);
         LOGGER.error(msg + " Enable DEBUG for stacktrace");
 
         return Response.status(Response.Status.SERVICE_UNAVAILABLE.getStatusCode())

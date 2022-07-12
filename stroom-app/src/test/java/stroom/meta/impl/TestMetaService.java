@@ -34,6 +34,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
+import stroom.node.mock.MockNodeModule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.api.SecurityContext;
@@ -65,6 +66,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(BootstrapTestModule.class)
 @IncludeModule(ResourceModule.class)
 @IncludeModule(MockClusterModule.class)
+@IncludeModule(MockNodeModule.class)
 @IncludeModule(VolumeTestConfigModule.class)
 @IncludeModule(SecurityContextModule.class)
 @IncludeModule(MockMetaStatisticsModule.class)

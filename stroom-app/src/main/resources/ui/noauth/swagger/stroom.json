@@ -1289,7 +1289,7 @@
           }
         }, {
           "in" : "query",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "schema" : {
             "type" : "string"
           }
@@ -1322,7 +1322,7 @@
           }
         }, {
           "in" : "query",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "schema" : {
             "type" : "string"
           }
@@ -1348,7 +1348,7 @@
         "operationId" : "listCaches",
         "parameters" : [ {
           "in" : "query",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "schema" : {
             "type" : "string"
           }
@@ -1449,7 +1449,7 @@
           }
         }, {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -1495,7 +1495,7 @@
         "operationId" : "listConfigPropertiesByNode",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -2592,7 +2592,7 @@
         "operationId" : "fireEntityEvent",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -3229,7 +3229,7 @@
         "operationId" : "deleteIndexShards",
         "parameters" : [ {
           "in" : "query",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "schema" : {
             "type" : "string"
           }
@@ -3297,7 +3297,7 @@
         "operationId" : "flushIndexShards",
         "parameters" : [ {
           "in" : "query",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "schema" : {
             "type" : "string"
           }
@@ -3458,7 +3458,7 @@
         "operationId" : "rescanIndexVolumes",
         "parameters" : [ {
           "in" : "query",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "schema" : {
             "type" : "string"
           }
@@ -3817,12 +3817,6 @@
         "parameters" : [ {
           "in" : "query",
           "name" : "jobName",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "nodeName",
           "schema" : {
             "type" : "string"
           }
@@ -4311,7 +4305,7 @@
         "operationId" : "setNodeEnabled",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -4349,7 +4343,7 @@
         "operationId" : "fetchNodeInfo",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -4376,7 +4370,7 @@
         "operationId" : "pingNode",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -4404,7 +4398,7 @@
         "operationId" : "setNodePriority",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -4672,7 +4666,7 @@
         "operationId" : "firePermissionChangeEvent",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -5511,7 +5505,7 @@
         "operationId" : "abandonProcessorTasks",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -5549,7 +5543,7 @@
         "operationId" : "assignProcessorTasks",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -5647,7 +5641,7 @@
         "operationId" : "clearBufferPool",
         "parameters" : [ {
           "in" : "query",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "schema" : {
             "type" : "string"
           }
@@ -5749,7 +5743,7 @@
           }
         }, {
           "in" : "query",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "schema" : {
             "type" : "string"
           }
@@ -5784,7 +5778,7 @@
           }
         }, {
           "in" : "query",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "schema" : {
             "type" : "string"
           }
@@ -6322,7 +6316,7 @@
         "operationId" : "listSessions",
         "parameters" : [ {
           "in" : "query",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "schema" : {
             "type" : "string"
           }
@@ -7714,7 +7708,7 @@
         "operationId" : "findTasks",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -7752,7 +7746,7 @@
         "operationId" : "listTasks",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -7779,7 +7773,7 @@
         "operationId" : "terminateTasks",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -7817,7 +7811,7 @@
         "operationId" : "listUserTasks",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "memberUuid",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -9180,7 +9174,7 @@
               "$ref" : "#/components/schemas/ClusterNodeInfoItem"
             }
           },
-          "nodeName" : {
+          "memberUuid" : {
             "type" : "string"
           },
           "ping" : {

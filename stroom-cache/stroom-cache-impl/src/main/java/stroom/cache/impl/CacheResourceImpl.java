@@ -20,6 +20,8 @@ import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
+import stroom.cluster.api.ClusterMember;
+import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
 import stroom.cluster.api.RemoteRestUtil;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -31,6 +33,7 @@ import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.StringCriteria;
 
@@ -57,33 +60,39 @@ class CacheResourceImpl implements CacheResource {
     private final Provider<WebTargetFactory> webTargetFactory;
     private final Provider<CacheManagerService> cacheManagerService;
     private final Provider<TaskContextFactory> taskContextFactory;
+    private final Provider<ClusterService> clusterServiceProvider;
 
     @Inject
     CacheResourceImpl(final Provider<EndpointUrlService> endpointUrlServiceProvider,
                       final Provider<WebTargetFactory> webTargetFactory,
                       final Provider<CacheManagerService> cacheManagerService,
-                      final Provider<TaskContextFactory> taskContextFactory) {
+                      final Provider<TaskContextFactory> taskContextFactory,
+                      final Provider<ClusterService> clusterServiceProvider) {
         this.endpointUrlServiceProvider = endpointUrlServiceProvider;
         this.webTargetFactory = webTargetFactory;
         this.cacheManagerService = cacheManagerService;
         this.taskContextFactory = taskContextFactory;
+        this.clusterServiceProvider = clusterServiceProvider;
     }
 
     @Override
     @AutoLogged(OperationType.VIEW)
-    public CacheNamesResponse list(final String nodeName) {
+    public CacheNamesResponse list(final String memberUuid) {
+        RestUtil.requireNonNull(memberUuid, "memberUuid not supplied");
+        final ClusterMember member = new ClusterMember(memberUuid);
+
         CacheNamesResponse result;
 
         // If this is the node that was contacted then just return our local info.
         final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
-        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
+        if (endpointUrlService.shouldExecuteLocally(member)) {
             result = new CacheNamesResponse(cacheManagerService.get().getCacheNames());
         } else {
-            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
+            final String url = endpointUrlService.getRemoteEndpointUrl(member)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.LIST_PATH);
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);
-                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                webTarget = UriBuilderUtil.addParam(webTarget, "memberUuid", memberUuid);
                 final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get();
@@ -92,10 +101,10 @@ class CacheResourceImpl implements CacheResource {
                 }
                 result = response.readEntity(CacheNamesResponse.class);
                 if (result == null) {
-                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
+                    throw new RuntimeException("Unable to contact member \"" + member + "\" at URL: " + url);
                 }
             } catch (Exception e) {
-                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptions(member, url, e);
             }
         }
 
@@ -104,23 +113,25 @@ class CacheResourceImpl implements CacheResource {
 
     @Override
     @AutoLogged(OperationType.VIEW)
-    public CacheInfoResponse info(final String cacheName, final String nodeName) {
+    public CacheInfoResponse info(final String cacheName, final String memberUuid) {
+        RestUtil.requireNonNull(memberUuid, "memberUuid not supplied");
+        final ClusterMember member = new ClusterMember(memberUuid);
         CacheInfoResponse result;
         // If this is the node that was contacted then just return our local info.
         final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
-        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
+        if (endpointUrlService.shouldExecuteLocally(member)) {
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(cacheName, null));
             final List<CacheInfo> list = cacheManagerService.get().find(criteria);
             result = new CacheInfoResponse(list);
 
         } else {
-            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
+            final String url = endpointUrlService.getRemoteEndpointUrl(member)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.INFO_PATH);
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
-                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                webTarget = UriBuilderUtil.addParam(webTarget, "memberUuid", memberUuid);
                 final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get();
@@ -129,16 +140,16 @@ class CacheResourceImpl implements CacheResource {
                 }
                 result = response.readEntity(CacheInfoResponse.class);
                 if (result == null) {
-                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
+                    throw new RuntimeException("Unable to contact \"" + member + "\" at URL: " + url);
                 }
             } catch (Exception e) {
-                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptions(member, url, e);
             }
         }
 
         // Add the node name.
         for (final CacheInfo value : result.getValues()) {
-            value.setNodeName(nodeName);
+            value.setNodeName(memberUuid);
         }
 
         return result;
@@ -146,19 +157,19 @@ class CacheResourceImpl implements CacheResource {
 
     @Override
     @AutoLogged(value = OperationType.PROCESS, verb = "Clearing cache")
-    public Long clear(final String cacheName, final String nodeName) {
+    public Long clear(final String cacheName, final String memberUuid) {
         final Long result;
-        if (nodeName == null) {
+        if (memberUuid == null) {
             result = clearCacheOnAllNodes(cacheName);
         } else {
-            result = clearCache(cacheName, nodeName);
+            final ClusterMember member = new ClusterMember(memberUuid);
+            result = clearCache(cacheName, member);
         }
         return result;
     }
 
     private Long clearCacheOnAllNodes(final String cacheName) {
-        final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
-        final Set<String> allNodes = endpointUrlService.getNodeNames();
+        final Set<ClusterMember> allNodes = clusterServiceProvider.get().getMembers();
 
         final Set<String> failedNodes = new ConcurrentSkipListSet<>();
         final AtomicReference<Throwable> exception = new AtomicReference<>();
@@ -181,7 +192,7 @@ class CacheResourceImpl implements CacheResource {
                                 return CompletableFuture
                                         .supplyAsync(supplier)
                                         .exceptionally(throwable -> {
-                                            failedNodes.add(nodeName);
+                                            failedNodes.add(nodeName.toString());
                                             exception.set(throwable);
                                             LOGGER.error(
                                                     "Error clearing cache [{}] on node [{}]: {}. Enable DEBUG for " +
@@ -207,26 +218,26 @@ class CacheResourceImpl implements CacheResource {
                 }).get();
     }
 
-    private Long clearCache(final String cacheName, final String nodeName) {
+    private Long clearCache(final String cacheName, final ClusterMember member) {
         Objects.requireNonNull(cacheName);
-        Objects.requireNonNull(nodeName);
+        Objects.requireNonNull(member);
 
         final Long result;
         final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
-        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
+        if (endpointUrlService.shouldExecuteLocally(member)) {
             // local node
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(cacheName, null));
             result = cacheManagerService.get().clear(criteria);
 
         } else {
-            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
+            final String url = endpointUrlService.getRemoteEndpointUrl(member)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.BASE_PATH);
 
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
-                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                webTarget = UriBuilderUtil.addParam(webTarget, "memberUuid", member.getUuid());
                 final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .delete();
@@ -235,7 +246,7 @@ class CacheResourceImpl implements CacheResource {
                 }
                 result = response.readEntity(Long.class);
             } catch (Throwable e) {
-                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptions(member, url, e);
             }
         }
         return result;

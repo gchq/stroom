@@ -17,7 +17,7 @@
 
 package stroom.job.impl;
 
-import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.ClusterService;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.util.scheduler.FrequencyScheduler;
@@ -44,7 +44,7 @@ class JobNodeTrackerCache {
     private final long refreshInterval = DEFAULT_REFRESH_INTERVAL;
     private final ReentrantLock refreshLock = new ReentrantLock();
 
-    private final NodeInfo nodeInfo;
+    private final ClusterService clusterService;
     private final JobNodeDao jobNodeDao;
 
     private volatile String nodeName;
@@ -52,9 +52,9 @@ class JobNodeTrackerCache {
     private volatile long lastRefreshMs;
 
     @Inject
-    JobNodeTrackerCache(final NodeInfo nodeInfo,
+    JobNodeTrackerCache(final ClusterService clusterService,
                         final JobNodeDao jobNodeDao) {
-        this.nodeInfo = nodeInfo;
+        this.clusterService = clusterService;
         this.jobNodeDao = jobNodeDao;
     }
 
@@ -106,7 +106,7 @@ class JobNodeTrackerCache {
 
     String getNodeName() {
         if (nodeName == null) {
-            nodeName = nodeInfo.getThisNodeName();
+            nodeName = clusterService.getLocal().getUuid();
         }
         return nodeName;
     }

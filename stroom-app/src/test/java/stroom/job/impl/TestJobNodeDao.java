@@ -18,9 +18,9 @@
 package stroom.job.impl;
 
 
-import stroom.cluster.api.NodeInfo;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
+import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.AuditUtil;

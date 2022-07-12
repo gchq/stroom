@@ -1,5 +1,6 @@
 package stroom.task.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.ClusterService;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValInteger;
@@ -132,22 +133,22 @@ class SearchableTaskProgress implements Searchable {
 
             try {
                 // Get the nodes that we are going to send the entity event to.
-                final Set<String> targetNodes = clusterService.getMembers();
+                final Set<ClusterMember> members = clusterService.getMembers();
 
-                final CountDownLatch countDownLatch = new CountDownLatch(targetNodes.size());
+                final CountDownLatch countDownLatch = new CountDownLatch(members.size());
 
                 // Only send the event to remote nodes and not this one.
                 // Send the entity event.
-                targetNodes.forEach(nodeName -> {
+                members.forEach(member -> {
                     final Supplier<TaskProgressResponse> supplier = taskContextFactory.childContextResult(taskContext,
-                            "Getting progress from node '" + nodeName + "'",
+                            "Getting progress from node '" + member + "'",
                             tc ->
-                                    taskResource.list(nodeName));
+                                    taskResource.list(member.getUuid()));
                     CompletableFuture
                             .supplyAsync(supplier, executor)
                             .whenComplete((r, t) -> {
                                 if (r != null) {
-                                    nodeResponses.putIfAbsent(nodeName, r);
+                                    nodeResponses.putIfAbsent(member.getUuid(), r);
                                 }
                                 countDownLatch.countDown();
                             });

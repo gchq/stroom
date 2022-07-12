@@ -16,6 +16,7 @@
 
 package stroom.search.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ErrorConsumerUtil;
@@ -54,12 +55,12 @@ public class ClusterSearchResultCollector implements Store {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchResultCollector.class);
     private static final String TASK_NAME = "AsyncSearchTask";
 
-    private final ConcurrentHashMap<String, Set<Throwable>> errors = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<ClusterMember, Set<Throwable>> errors = new ConcurrentHashMap<>();
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
     private final AsyncSearchTask task;
-    private final String nodeName;
+    private final ClusterMember nodeName;
     private final Set<String> highlights;
     private final Coprocessors coprocessors;
 
@@ -71,7 +72,7 @@ public class ClusterSearchResultCollector implements Store {
                                         final TaskContextFactory taskContextFactory,
                                         final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
                                         final AsyncSearchTask task,
-                                        final String nodeName,
+                                        final ClusterMember nodeName,
                                         final Set<String> highlights,
                                         final Coprocessors coprocessors) {
         this.executor = executor;
@@ -153,7 +154,7 @@ public class ClusterSearchResultCollector implements Store {
         return coprocessors.getCompletionState().awaitCompletion(timeout, unit);
     }
 
-    public synchronized boolean onSuccess(final String nodeName,
+    public synchronized boolean onSuccess(final ClusterMember nodeName,
                                           final InputStream inputStream) {
         // If we have already completed the finish immediately without worrying about this data.
         if (isComplete()) {
@@ -187,7 +188,7 @@ public class ClusterSearchResultCollector implements Store {
         return isComplete() || complete;
     }
 
-    public synchronized void onFailure(final String nodeName,
+    public synchronized void onFailure(final ClusterMember nodeName,
                                        final Throwable throwable) {
         LOGGER.debug(throwable::getMessage, throwable);
         if (!ErrorConsumerUtil.isInterruption(throwable)) {
@@ -195,7 +196,7 @@ public class ClusterSearchResultCollector implements Store {
         }
     }
 
-    private void addErrors(final String nodeName,
+    private void addErrors(final ClusterMember nodeName,
                            final Set<Throwable> newErrors) {
         if (newErrors != null && newErrors.size() > 0) {
             final Set<Throwable> errorSet = errors.computeIfAbsent(nodeName, k ->
@@ -214,8 +215,8 @@ public class ClusterSearchResultCollector implements Store {
         }
 
         final List<String> err = new ArrayList<>();
-        for (final Entry<String, Set<Throwable>> entry : errors.entrySet()) {
-            final String nodeName = entry.getKey();
+        for (final Entry<ClusterMember, Set<Throwable>> entry : errors.entrySet()) {
+            final ClusterMember nodeName = entry.getKey();
             final Set<Throwable> errors = entry.getValue();
 
             if (errors.size() > 0) {

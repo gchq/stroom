@@ -21,7 +21,7 @@ dependencies {
     implementation project(':stroom-meta:stroom-meta-impl')
     implementation project(':stroom-meta:stroom-meta-impl-db')
 //    implementation project(':stroom-node:stroom-node-impl')
-//    implementation project(':stroom-node:stroom-node-mock')
+    implementation project(':stroom-node:stroom-node-mock')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-mock')

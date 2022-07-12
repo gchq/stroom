@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.RemoteRestService;
 import stroom.dashboard.expression.v1.Val;
@@ -288,11 +289,11 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public void purge(final StroomDuration purgeAge, final String nodeName) {
+    public void purge(final StroomDuration purgeAge, final String memberUuid) {
 
         securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
 
-            final List<String> nodeNames = getNodeList(nodeName);
+            final List<ClusterMember> nodeNames = getNodeList(memberUuid);
             final Set<String> failedNodes = new ConcurrentSkipListSet<>();
             final AtomicReference<Throwable> exception = new AtomicReference<>();
 
@@ -316,14 +317,14 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                                 purgeLocally(purgeAge),
                                                         SyncInvoker::delete,
                                                         Collections.singletonMap(
-                                                                ReferenceDataResource.QUERY_PARAM_NODE_NAME,
-                                                                nodeName2));
+                                                                ReferenceDataResource.QUERY_PARAM_MEMBER_UUID,
+                                                                nodeName2.getUuid()));
                                             });
 
                                     return CompletableFuture
                                             .runAsync(runnable)
                                             .exceptionally(throwable -> {
-                                                failedNodes.add(nodeName2);
+                                                failedNodes.add(nodeName2.getUuid());
                                                 exception.set(throwable);
                                                 LOGGER.error(
                                                         "Error purging reference data store on node [{}]: {}. " +
@@ -357,10 +358,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public void purge(final long refStreamId, final String nodeName) {
+    public void purge(final long refStreamId, final String memberUuid) {
 
         securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
-            final List<String> nodeNames = getNodeList(nodeName);
+            final List<ClusterMember> nodeNames = getNodeList(memberUuid);
             final Set<String> failedNodes = new ConcurrentSkipListSet<>();
             final AtomicReference<Throwable> exception = new AtomicReference<>();
 
@@ -384,14 +385,14 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                                 purgeLocally(refStreamId),
                                                         SyncInvoker::delete,
                                                         Collections.singletonMap(
-                                                                ReferenceDataResource.QUERY_PARAM_NODE_NAME,
-                                                                nodeName2));
+                                                                ReferenceDataResource.QUERY_PARAM_MEMBER_UUID,
+                                                                nodeName2.getUuid()));
                                             });
 
                                     return CompletableFuture
                                             .runAsync(runnable)
                                             .exceptionally(throwable -> {
-                                                failedNodes.add(nodeName2);
+                                                failedNodes.add(nodeName2.getUuid());
                                                 exception.set(throwable);
                                                 LOGGER.error(
                                                         "Error purging reference data store on node [{}]: {}. " +
@@ -424,9 +425,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public void clearBufferPool(final String nodeName) {
+    public void clearBufferPool(final String memberUuid) {
         securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
-            final List<String> nodeNames = getNodeList(nodeName);
+            final List<ClusterMember> nodeNames = getNodeList(memberUuid);
 
             final Set<String> failedNodes = new ConcurrentSkipListSet<>();
             final AtomicReference<Throwable> exception = new AtomicReference<>();
@@ -449,14 +450,14 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                         byteBufferPool::clear,
                                                         SyncInvoker::delete,
                                                         Collections.singletonMap(
-                                                                ReferenceDataResource.QUERY_PARAM_NODE_NAME,
-                                                                nodeName2));
+                                                                ReferenceDataResource.QUERY_PARAM_MEMBER_UUID,
+                                                                nodeName2.getUuid()));
                                             });
 
                                     return CompletableFuture
                                             .runAsync(runnable)
                                             .exceptionally(throwable -> {
-                                                failedNodes.add(nodeName2);
+                                                failedNodes.add(nodeName2.getUuid());
                                                 exception.set(throwable);
                                                 LOGGER.error(
                                                         "Error clearing byte buffer pool on node [{}]: {}. " +
@@ -479,10 +480,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         });
     }
 
-    private List<String> getNodeList(final String nodeName) {
-        return nodeName == null
+    private List<ClusterMember> getNodeList(final String memberUuid) {
+        return memberUuid == null
                 ? new ArrayList<>(clusterService.getMembers())
-                : Collections.singletonList(nodeName);
+                : Collections.singletonList(new ClusterMember(memberUuid));
     }
 
     private String performLookup(final RefDataLookupRequest refDataLookupRequest) {

@@ -28,7 +28,7 @@ public interface SessionResource extends RestResource, DirectRestService {
 
     String BASE_PATH = "/session" + ResourcePaths.V1;
     String LIST_PATH_PART = "/list";
-    String NODE_NAME_PARAM = "nodeName";
+    String MEMBER_UUID_PARAM = "memberUuid";
 
     @GET
     @Path("/noauth/validateSession")
@@ -49,5 +49,5 @@ public interface SessionResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Lists user sessions for a node, or all nodes in the cluster if nodeName is null",
             operationId = "listSessions")
-    SessionListResponse list(@QueryParam(NODE_NAME_PARAM) String nodeName);
+    SessionListResponse list(@QueryParam(MEMBER_UUID_PARAM) String memberUuid);
 }

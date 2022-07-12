@@ -1,9 +1,9 @@
 package stroom.index.impl;
 
-import stroom.cluster.api.NodeInfo;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
+import stroom.node.api.NodeInfo;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;

@@ -16,6 +16,7 @@
 
 package stroom.core.entity.event;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.ClusterService;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
@@ -111,10 +112,10 @@ class EntityEventBusImpl implements EntityEventBus {
             final ClusterService clusterService = clusterServiceProvider.get();
 
             // Get this node.
-            final String local = clusterService.getLocal();
+            final ClusterMember local = clusterService.getLocal();
 
             // Get the nodes that we are going to send the entity event to.
-            final Set<String> targetNodes = clusterService.getMembers();
+            final Set<ClusterMember> targetNodes = clusterService.getMembers();
 
             // Only send the event to remote nodes and not this one.
             CompletableFuture.allOf(targetNodes
@@ -125,7 +126,7 @@ class EntityEventBusImpl implements EntityEventBus {
                         final Runnable runnable = taskContextFactory.childContext(
                                 parentTaskContext,
                                 "Fire Entity Event To " + targetNode, taskContext ->
-                                        entityEventResource.fireEvent(targetNode, entityEvent)
+                                        entityEventResource.fireEvent(targetNode.getUuid(), entityEvent)
                         );
                         return CompletableFuture.runAsync(runnable, executor);
                     }).toArray(CompletableFuture[]::new)).join();

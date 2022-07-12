@@ -1,5 +1,6 @@
 package stroom.cluster.task.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.ClusterService;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.security.api.SecurityContext;
@@ -64,17 +65,17 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
 
             try {
                 // Get the nodes that we are going to send the entity event to.
-                final Set<String> targetNodes = clusterService.getMembers();
+                final Set<ClusterMember> members = clusterService.getMembers();
 
                 // Only send the event to remote nodes and not this one.
                 // Send the entity event.
-                targetNodes.forEach(nodeName -> {
+                members.forEach(member -> {
                     final Runnable runnable = taskContextFactory.context(
-                            "Terminate '" + taskName + "' on node '" + nodeName + "'",
+                            "Terminate '" + taskName + "' on '" + member + "'",
                             taskContext -> {
                                 try {
                                     final Boolean response = taskResource.terminate(
-                                            nodeName, terminateTaskProgressRequest);
+                                            member.getUuid(), terminateTaskProgressRequest);
                                     if (!Boolean.TRUE.equals(response)) {
                                         LOGGER.warn("Failed tp terminate task '" + taskName + "'");
                                     }

@@ -1,7 +1,6 @@
 package stroom.processor.impl.db;
 
 import stroom.cache.impl.CacheModule;
-import stroom.cluster.api.NodeInfo;
 import stroom.cluster.mock.MockClusterModule;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;

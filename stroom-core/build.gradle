@@ -19,7 +19,7 @@ dependencies {
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-//    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-proxy:stroom-proxy-remote-api')

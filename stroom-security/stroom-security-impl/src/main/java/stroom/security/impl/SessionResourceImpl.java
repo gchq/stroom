@@ -135,10 +135,11 @@ public class SessionResourceImpl implements SessionResource {
 
     @Override
     @AutoLogged(OperationType.VIEW)
-    public SessionListResponse list(final String nodeName) {
-        LOGGER.debug("list({}) called", nodeName);
-        if (nodeName != null) {
-            return sessionListService.get().listSessions(nodeName);
+    public SessionListResponse list(final String memberUuid) {
+
+        LOGGER.debug("list({}) called", memberUuid);
+        if (memberUuid != null) {
+            return sessionListService.get().listSessions(memberUuid);
         } else {
             return sessionListService.get().listSessions();
         }

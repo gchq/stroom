@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.node.api;
+package stroom.node.impl;
 
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.FindNamedEntityCriteria;

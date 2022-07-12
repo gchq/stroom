@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.cluster.mock;
+package stroom.node.mock;
 
-import stroom.cluster.api.NodeInfo;
+import stroom.node.api.NodeInfo;
 
-import javax.inject.Inject;
+import com.google.inject.AbstractModule;
 
-public class MockNodeInfo implements NodeInfo {
-
-    @Inject
-    public MockNodeInfo() {
-    }
+public class MockNodeModule extends AbstractModule {
 
     @Override
-    public String getThisNodeName() {
-        return "node1a";
+    protected void configure() {
+        bind(NodeInfo.class).to(MockNodeInfo.class);
     }
 }

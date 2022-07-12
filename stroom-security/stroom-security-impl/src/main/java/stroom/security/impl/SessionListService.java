@@ -24,7 +24,7 @@ public interface SessionListService {
     /**
      * List all sessions on the specified node
      */
-    SessionListResponse listSessions(final String nodeName);
+    SessionListResponse listSessions(final String memberUuid);
 
     /**
      * List all sessions on all nodes

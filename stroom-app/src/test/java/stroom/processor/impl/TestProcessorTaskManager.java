@@ -16,7 +16,6 @@
 
 package stroom.processor.impl;
 
-import stroom.cluster.api.NodeInfo;
 import stroom.data.shared.StreamTypeNames;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaProperties;
@@ -24,6 +23,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
+import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;

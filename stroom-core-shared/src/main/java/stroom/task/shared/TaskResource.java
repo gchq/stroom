@@ -50,14 +50,14 @@ public interface TaskResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Lists tasks for a node",
             operationId = "listTasks")
-    TaskProgressResponse list(@PathParam("nodeName") String nodeName);
+    TaskProgressResponse list(@PathParam("memberUuid") String memberUuid);
 
     @POST
     @Path(FIND_PATH_PART + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Finds tasks for a node",
             operationId = "findTasks")
-    TaskProgressResponse find(@PathParam("nodeName") String nodeName,
+    TaskProgressResponse find(@PathParam("memberUuid") String memberUuid,
                               @Parameter(description = "request", required = true) FindTaskProgressRequest request);
 
     @GET
@@ -65,13 +65,13 @@ public interface TaskResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Lists tasks for a node",
             operationId = "listUserTasks")
-    TaskProgressResponse userTasks(@PathParam("nodeName") String nodeName);
+    TaskProgressResponse userTasks(@PathParam("memberUuid") String memberUuid);
 
     @POST
     @Path(TERMINATE_PATH_PART + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Terminates tasks for a node",
             operationId = "terminateTasks")
-    Boolean terminate(@PathParam("nodeName") String nodeName,
+    Boolean terminate(@PathParam("memberUuid") String memberUuid,
                       @Parameter(description = "request", required = true) TerminateTaskProgressRequest request);
 }

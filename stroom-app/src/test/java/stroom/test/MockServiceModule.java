@@ -14,6 +14,7 @@ import stroom.importexport.impl.ImportExportModule;
 import stroom.index.mock.MockIndexModule;
 import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.meta.mock.MockMetaModule;
+import stroom.node.mock.MockNodeModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;
 import stroom.processor.impl.MockProcessorModule;
 import stroom.resource.impl.MockResourceModule;
@@ -63,6 +64,7 @@ public class MockServiceModule extends AbstractModule {
         install(new LegacyImpexModule());
         install(new MockIndexModule());
         install(new MockClusterModule());
+        install(new MockNodeModule());
         install(new stroom.pipeline.PipelineModule());
         install(new stroom.pipeline.cache.PipelineCacheModule());
         install(new stroom.pipeline.factory.CommonPipelineElementModule());

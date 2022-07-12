@@ -16,7 +16,7 @@
 
 package stroom.node.impl;
 
-import stroom.cluster.api.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.state.RecordCountService;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;

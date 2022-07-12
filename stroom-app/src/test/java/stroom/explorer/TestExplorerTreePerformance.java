@@ -26,6 +26,7 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
+import stroom.node.mock.MockNodeModule;
 import stroom.resource.impl.MockResourceModule;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.DocumentPermissionServiceImpl;
@@ -55,6 +56,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(CoreModule.class)
 @IncludeModule(MockClusterModule.class)
+@IncludeModule(MockNodeModule.class)
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(MockResourceModule.class)
 @IncludeModule(SecurityContextModule.class)

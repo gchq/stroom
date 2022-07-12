@@ -18,7 +18,6 @@ package stroom.headless;
 
 import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
-import stroom.cluster.api.NodeInfo;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.explorer.impl.MockExplorerModule;
@@ -27,6 +26,7 @@ import stroom.importexport.impl.ImportExportModule;
 import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.api.MetaStatistics;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.processor.impl.MockProcessorModule;
 import stroom.security.mock.MockSecurityContextModule;

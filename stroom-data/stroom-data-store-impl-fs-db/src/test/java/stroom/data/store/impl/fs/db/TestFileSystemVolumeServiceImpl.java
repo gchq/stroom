@@ -16,9 +16,6 @@
 
 package stroom.data.store.impl.fs.db;
 
-
-import stroom.cluster.api.NodeInfo;
-import stroom.cluster.mock.MockNodeInfo;
 import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeDao;
@@ -27,6 +24,8 @@ import stroom.data.store.impl.fs.FsVolumeStateDao;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
+import stroom.node.api.NodeInfo;
+import stroom.node.mock.MockNodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContext;

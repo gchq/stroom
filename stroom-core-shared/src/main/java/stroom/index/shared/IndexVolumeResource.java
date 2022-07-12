@@ -71,5 +71,5 @@ public interface IndexVolumeResource extends RestResource, DirectRestService, Fe
     @Operation(
             summary = "Rescans index volumes",
             operationId = "rescanIndexVolumes")
-    Boolean rescan(@QueryParam("nodeName") String nodeName);
+    Boolean rescan(@QueryParam("memberUuid") String memberUuid);
 }

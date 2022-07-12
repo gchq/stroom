@@ -1,5 +1,6 @@
 package stroom.test.common.util.test;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
@@ -34,7 +35,6 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -63,22 +63,22 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
     private static final String CONTAINER_FACTORY = "org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory";
 
-    private final List<TestNode> testNodes;
+    private final List<TestMember> members;
     private final Map<String, JerseyTest> nodeToJerseyTestMap = new HashMap<>();
     private final Map<String, RequestListener> nodeToListenerMap = new HashMap<>();
 
-    public static List<TestNode> createNodeList(final int base) {
+    public static List<TestMember> createNodeList(final int base) {
         return List.of(
-                new TestNode("node1", base, true),
-                new TestNode("node2", base + 1, true),
-                new TestNode("node3", base + 2, false));
+                new TestMember(new ClusterMember("node1"), base, true),
+                new TestMember(new ClusterMember("node2"), base + 1, true),
+                new TestMember(new ClusterMember("node3"), base + 2, false));
     }
 
     /**
      * Uses the supplied nodes for testing.
      */
     @SuppressWarnings("unused")
-    protected AbstractMultiNodeResourceTest(final List<TestNode> testNodes) {
+    protected AbstractMultiNodeResourceTest(final List<TestMember> members) {
 
         // Force the container factory to ensure the jersey-test-framework-provider-grizzly2
         // dependency is in place. Without forcing it, it will just try to use whatever is there
@@ -94,7 +94,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                     "jersey-test-framework-provider-grizzly2");
         }
 
-        this.testNodes = testNodes;
+        this.members = members;
     }
 
     /**
@@ -107,24 +107,23 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
      * to provide a fully mocked out implementation of the rest resource. The arguments
      * are provided so you can have mocks tailored to the node.
      */
-    public abstract R getRestResource(final TestNode node,
-                                      final List<TestNode> allNodes,
-                                      final Map<String, String> baseEndPointUrls);
+    public abstract R getRestResource(final TestMember local,
+                                      final List<TestMember> members);
 
     private String getFullResourcePath() {
         return ResourcePaths.buildAuthenticatedApiPath(getResourceBasePath());
     }
 
-    public String getBaseEndPointUrl(final TestNode node) {
-        return "http://localhost:" + node.getPort();
-    }
-
-    private Map<String, String> getBaseEndPointUrls() {
-        return testNodes.stream()
-                .collect(Collectors.toMap(
-                        TestNode::getNodeName,
-                        this::getBaseEndPointUrl));
-    }
+//    public String getBaseEndPointUrl(final ClusterMember member) {
+//        return "http://localhost:" + node.getPort();
+//    }
+//
+//    private Map<ClusterMember, TestNode> getBaseEndPointUrls() {
+//        return testNodes.stream()
+//                .collect(Collectors.toMap(
+//                        TestNode::getNodeName,
+//                        this::getBaseEndPointUrl));
+//    }
 
     public void stopNodes() {
         nodeToJerseyTestMap.values().forEach(jerseyTest -> {
@@ -162,27 +161,28 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
     private void initNodes(final int maxNodeCount) {
 
-        testNodes.stream()
+        members
+                .stream()
                 .limit(maxNodeCount)
                 .forEach(node -> {
 
-                    final String baseEndPointUrl = getBaseEndPointUrl(node);
+                    final String baseEndPointUrl = node.getEndpointUrl();
 
                     RequestListener requestListener = new RequestListener(node);
-                    nodeToListenerMap.put(node.getNodeName(), requestListener);
+                    nodeToListenerMap.put(node.getUuid(), requestListener);
 
                     final JerseyTest jerseyTest = new JerseyTestBuilder<>(
-                            () -> getRestResource(node, testNodes, getBaseEndPointUrls()),
+                            () -> getRestResource(node, members),
                             node.getPort(),
                             requestListener)
                             .build();
 
-                    nodeToJerseyTestMap.put(node.getNodeName(), jerseyTest);
+                    nodeToJerseyTestMap.put(node.getUuid(), jerseyTest);
 
                     try {
                         if (node.isEnabled) {
                             LOGGER.info("Starting node [{}] (enabled: {}) at {}",
-                                    node.getNodeName(), node.isEnabled, baseEndPointUrl);
+                                    node.getUuid(), node.isEnabled, baseEndPointUrl);
                             jerseyTest.setUp();
                         }
                     } catch (Exception e) {
@@ -194,8 +194,8 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     /**
      * Override if you want to use more nodes or different ports
      */
-    public List<TestNode> getTestNodes() {
-        return testNodes;
+    public List<TestMember> getTestNodes() {
+        return members;
     }
 
     public List<RequestEvent> getRequestEvents(final String nodeName) {
@@ -206,7 +206,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
      * @return The JerseyTest instance for the first node
      */
     public JerseyTest getJerseyTest() {
-        return nodeToJerseyTestMap.get(testNodes.get(0).getNodeName());
+        return nodeToJerseyTestMap.get(members.get(0).getUuid());
     }
 
     /**
@@ -401,8 +401,8 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                 .path(subPath);
     }
 
-    public static <T> T createNamedMock(final Class<T> clazz, final TestNode node) {
-        return Mockito.mock(clazz, clazz.getName() + "_" + node.getNodeName());
+    public static <T> T createNamedMock(final Class<T> clazz, final TestMember node) {
+        return Mockito.mock(clazz, clazz.getName() + "_" + node.getUuid());
     }
 
     private boolean isSuccessful(final int statusCode) {
@@ -459,22 +459,26 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         }
     }
 
-    public static class TestNode {
+    public static class TestMember {
 
-        private final String nodeName;
+        private final ClusterMember member;
         private final int port;
         private final boolean isEnabled;
 
-        public TestNode(final String nodeName,
-                        final int port,
-                        final boolean isEnabled) {
-            this.nodeName = nodeName;
+        public TestMember(final ClusterMember member,
+                          final int port,
+                          final boolean isEnabled) {
+            this.member = member;
             this.port = port;
             this.isEnabled = isEnabled;
         }
 
-        public String getNodeName() {
-            return nodeName;
+        public ClusterMember getMember() {
+            return member;
+        }
+
+        public String getUuid() {
+            return member.getUuid();
         }
 
         public int getPort() {
@@ -485,6 +489,10 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
             return isEnabled;
         }
 
+        public String getEndpointUrl() {
+            return "http://localhost:" + port;
+        }
+
         @Override
         public boolean equals(final Object o) {
             if (this == o) {
@@ -493,21 +501,21 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final TestNode testNode = (TestNode) o;
-            return port == testNode.port &&
-                    isEnabled == testNode.isEnabled &&
-                    Objects.equals(nodeName, testNode.nodeName);
+            final TestMember testMember = (TestMember) o;
+            return port == testMember.port &&
+                    isEnabled == testMember.isEnabled &&
+                    Objects.equals(member, testMember.member);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(nodeName, port, isEnabled);
+            return Objects.hash(member, port, isEnabled);
         }
 
         @Override
         public String toString() {
             return "TestNode{" +
-                    "nodeName='" + nodeName + '\'' +
+                    "member='" + member + '\'' +
                     ", port=" + port +
                     ", isEnabled=" + isEnabled +
                     '}';
@@ -517,21 +525,21 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     public static class RequestListener implements ApplicationEventListener {
 
         private final List<RequestEvent> requestLog = new ArrayList<>();
-        private final TestNode node;
+        private final TestMember node;
 
-        RequestListener(final TestNode node) {
+        RequestListener(final TestMember node) {
             this.node = node;
         }
 
         @Override
         public void onEvent(final ApplicationEvent event) {
-            LOGGER.debug("ApplicationEvent on node {}", node.getNodeName());
+            LOGGER.debug("ApplicationEvent on member {}", node.getUuid());
         }
 
         @Override
         public RequestEventListener onRequest(final RequestEvent requestEvent) {
-            LOGGER.debug("{} to {} request received on node {} ",
-                    requestEvent.getType(), requestEvent.getUriInfo().getPath(), node.getNodeName());
+            LOGGER.debug("{} to {} request received on member {} ",
+                    requestEvent.getType(), requestEvent.getUriInfo().getPath(), node.getUuid());
 
             requestLog.add(requestEvent);
             return null;

@@ -16,7 +16,7 @@
 
 package stroom.search.impl;
 
-import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.ClusterService;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
@@ -38,17 +38,17 @@ public class EventSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventSearchTaskHandler.class);
 
-    private final NodeInfo nodeInfo;
+    private final ClusterService clusterService;
     private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
 
     @Inject
-    EventSearchTaskHandler(final NodeInfo nodeInfo,
+    EventSearchTaskHandler(final ClusterService clusterService,
                            final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory,
                            final SecurityContext securityContext,
                            final CoprocessorsFactory coprocessorsFactory) {
-        this.nodeInfo = nodeInfo;
+        this.clusterService = clusterService;
         this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
@@ -99,7 +99,7 @@ public class EventSearchTaskHandler {
                 // Create a collector to store search results.
                 final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
                         asyncSearchTask,
-                        nodeInfo.getThisNodeName(),
+                        clusterService.getLocal(),
                         null,
                         coprocessors);
 

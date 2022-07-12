@@ -1,9 +1,9 @@
 package stroom.index.impl;
 
-import stroom.cluster.api.NodeInfo;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeFields;
+import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.api.SecurityContext;

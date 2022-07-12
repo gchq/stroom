@@ -17,7 +17,7 @@
 
 package stroom.processor.impl;
 
-import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.ClusterService;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.shared.Meta;
@@ -52,7 +52,7 @@ public class DataProcessorTaskHandler {
     private final ProcessorFilterCache processorFilterCache;
     private final ProcessorTaskDao processorTaskDao;
     private final Store streamStore;
-    private final NodeInfo nodeInfo;
+    private final ClusterService clusterService;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
 
@@ -62,7 +62,7 @@ public class DataProcessorTaskHandler {
                              final ProcessorFilterCache processorFilterCache,
                              final ProcessorTaskDao processorTaskDao,
                              final Store streamStore,
-                             final NodeInfo nodeInfo,
+                             final ClusterService clusterService,
                              final SecurityContext securityContext,
                              final TaskContextFactory taskContextFactory) {
         this.executorProviders = executorProviders;
@@ -70,7 +70,7 @@ public class DataProcessorTaskHandler {
         this.processorFilterCache = processorFilterCache;
         this.processorTaskDao = processorTaskDao;
         this.streamStore = streamStore;
-        this.nodeInfo = nodeInfo;
+        this.clusterService = clusterService;
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
     }
@@ -87,6 +87,8 @@ public class DataProcessorTaskHandler {
     }
 
     private ProcessorResult exec(final TaskContext taskContext, final ProcessorTask task) {
+        final String memberUuid = clusterService.getLocal().getUuid();
+
         ProcessorTask processorTask = task;
 
         boolean complete = false;
@@ -130,7 +132,8 @@ public class DataProcessorTaskHandler {
 
                 } else {
                     // Change the task status.... and save
-                    processorTask = processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(),
+                    processorTask = processorTaskDao.changeTaskStatus(processorTask,
+                            memberUuid,
                             TaskStatus.PROCESSING, startTime, null);
                     if (processorTask != null) {
                         // Avoid having to do another fetch
@@ -161,15 +164,21 @@ public class DataProcessorTaskHandler {
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         } finally {
+
+
             // Null processorTask implies the task was (logically)? deleted before we completed so no point in
             // changing status
             if (processorTask != null) {
                 if (complete) {
-                    processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
-                            startTime, System.currentTimeMillis());
+                    processorTaskDao.changeTaskStatus(
+                            processorTask,
+                            memberUuid,
+                            TaskStatus.COMPLETE,
+                            startTime,
+                            System.currentTimeMillis());
                 } else {
                     processorTaskDao.changeTaskStatus(processorTask,
-                            nodeInfo.getThisNodeName(),
+                            memberUuid,
                             TaskStatus.FAILED,
                             startTime,
                             System.currentTimeMillis());

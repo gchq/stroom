@@ -1,28 +1,22 @@
 package stroom.cluster.mock;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.EndpointUrlService;
-
-import java.util.Set;
 
 public class MockEndpointUrlService implements EndpointUrlService {
 
     @Override
-    public Set<String> getNodeNames() {
+    public String getBaseEndpointUrl(final ClusterMember member) {
         return null;
     }
 
     @Override
-    public String getBaseEndpointUrl(final String nodeName) {
+    public String getRemoteEndpointUrl(final ClusterMember member) {
         return null;
     }
 
     @Override
-    public String getRemoteEndpointUrl(final String nodeName) {
-        return null;
-    }
-
-    @Override
-    public boolean shouldExecuteLocally(final String nodeName) {
+    public boolean shouldExecuteLocally(final ClusterMember member) {
         return true;
     }
 }

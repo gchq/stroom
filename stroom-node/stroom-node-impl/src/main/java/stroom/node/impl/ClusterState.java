@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.node.api;
+package stroom.node.impl;
 
 import java.util.Collection;
 import java.util.Set;

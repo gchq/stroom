@@ -16,8 +16,8 @@
 
 package stroom.pipeline.task;
 
-import stroom.cluster.api.NodeInfo;
 import stroom.data.store.mock.MockStore;
+import stroom.node.api.NodeInfo;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StoreCreationTool;

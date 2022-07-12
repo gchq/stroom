@@ -29,6 +29,6 @@ public interface PermissionChangeResource extends RestResource {
     @Operation(
             summary = "Fires a permission change event",
             operationId = "firePermissionChangeEvent")
-    Boolean fireChange(@PathParam("nodeName") String nodeName,
+    Boolean fireChange(@PathParam("memberUuid") String memberUuid,
                        @Parameter(description = "request", required = true) PermissionChangeRequest request);
 }

@@ -10,7 +10,7 @@ dependencies {
     implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-data:stroom-data-store-impl')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
-//    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')

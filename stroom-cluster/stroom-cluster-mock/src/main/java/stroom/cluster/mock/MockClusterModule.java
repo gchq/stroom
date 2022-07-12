@@ -18,7 +18,6 @@ package stroom.cluster.mock;
 
 import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
-import stroom.cluster.api.NodeInfo;
 import stroom.cluster.api.RemoteRestService;
 
 import com.google.inject.AbstractModule;
@@ -28,7 +27,6 @@ public class MockClusterModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ClusterService.class).to(MockClusterService.class);
-        bind(NodeInfo.class).to(MockNodeInfo.class);
         bind(EndpointUrlService.class).to(MockEndpointUrlService.class);
         bind(RemoteRestService.class).to(MockRemoteRestService.class);
     }

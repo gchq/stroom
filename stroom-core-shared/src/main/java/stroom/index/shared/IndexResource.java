@@ -16,7 +16,6 @@
 
 package stroom.index.shared;
 
-import stroom.util.shared.FetchWithTemplate;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.FindWithCriteria;
 import stroom.util.shared.ResourcePaths;
@@ -77,7 +76,7 @@ public interface IndexResource extends RestResource, DirectRestService, FetchWit
     @Operation(
             summary = "Delete matching index shards",
             operationId = "deleteIndexShards")
-    Long deleteIndexShards(@QueryParam("nodeName") String nodeName,
+    Long deleteIndexShards(@QueryParam("memberUuid") String memberUuid,
                            @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 
     @POST
@@ -85,6 +84,6 @@ public interface IndexResource extends RestResource, DirectRestService, FetchWit
     @Operation(
             summary = "Flush matching index shards",
             operationId = "flushIndexShards")
-    Long flushIndexShards(@QueryParam("nodeName") String nodeName,
+    Long flushIndexShards(@QueryParam("memberUuid") String memberUuid,
                           @Parameter(description = "criteria", required = true) FindIndexShardCriteria criteria);
 }

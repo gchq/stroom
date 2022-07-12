@@ -1,5 +1,6 @@
 package stroom.index.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.EndpointUrlService;
 import stroom.cluster.api.RemoteRestUtil;
 import stroom.docref.DocRef;
@@ -75,33 +76,34 @@ class IndexResourceImpl implements IndexResource {
     }
 
     @Override
-    public Long deleteIndexShards(final String nodeName, final FindIndexShardCriteria criteria) {
-        return performShardAction(nodeName, criteria, IndexResource.SHARD_DELETE_SUB_PATH, IndexShardAction.DELETE);
+    public Long deleteIndexShards(final String memberUuid, final FindIndexShardCriteria criteria) {
+        return performShardAction(memberUuid, criteria, IndexResource.SHARD_DELETE_SUB_PATH, IndexShardAction.DELETE);
     }
 
     @Override
     @AutoLogged(value = OperationType.PROCESS, verb = "Flushing index shards to disk")
-    public Long flushIndexShards(final String nodeName, final FindIndexShardCriteria criteria) {
-        return performShardAction(nodeName, criteria, IndexResource.SHARD_FLUSH_SUB_PATH, IndexShardAction.FLUSH);
+    public Long flushIndexShards(final String memberUuid, final FindIndexShardCriteria criteria) {
+        return performShardAction(memberUuid, criteria, IndexResource.SHARD_FLUSH_SUB_PATH, IndexShardAction.FLUSH);
     }
 
-    private Long performShardAction(final String nodeName,
+    private Long performShardAction(final String memberUuid,
                                     final FindIndexShardCriteria criteria,
                                     final String subPath,
                                     final IndexShardAction action) {
-        RestUtil.requireNonNull(nodeName, "nodeName not supplied");
+        RestUtil.requireNonNull(memberUuid, "memberUuid not supplied");
+        final ClusterMember member = new ClusterMember(memberUuid);
 
         // If this is the node that was contacted then just resolve it locally
         final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
-        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
+        if (endpointUrlService.shouldExecuteLocally(member)) {
             return indexShardManagerProvider.get().performAction(criteria, action);
         } else {
-            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
+            final String url = endpointUrlService.getRemoteEndpointUrl(member)
                     + ResourcePaths.buildAuthenticatedApiPath(IndexResource.BASE_PATH, subPath);
             try {
                 // A different node to make a rest call to the required node
                 WebTarget webTarget = webTargetFactoryProvider.get().create(url);
-                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                webTarget = UriBuilderUtil.addParam(webTarget, "memberUuid", memberUuid);
                 final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .post(Entity.json(criteria));
@@ -113,7 +115,7 @@ class IndexResourceImpl implements IndexResource {
 
                 return response.readEntity(Long.class);
             } catch (final Throwable e) {
-                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptions(member, url, e);
             }
         }
     }

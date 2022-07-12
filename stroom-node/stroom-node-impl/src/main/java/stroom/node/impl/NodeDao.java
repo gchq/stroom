@@ -16,7 +16,6 @@
 
 package stroom.node.impl;
 
-import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.util.shared.ResultPage;
 

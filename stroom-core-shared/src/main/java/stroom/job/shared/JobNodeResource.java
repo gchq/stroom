@@ -51,8 +51,7 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Lists job nodes",
             operationId = "listJobsNodes")
-    ResultPage<JobNode> list(@QueryParam("jobName") String jobName,
-                             @QueryParam("nodeName") String nodeName);
+    ResultPage<JobNode> list(@QueryParam("jobName") String jobName);
 
     @GET
     @Path(INFO_PATH_PART)

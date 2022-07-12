@@ -16,6 +16,7 @@
 
 package stroom.processor.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.RemoteRestService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
@@ -124,15 +125,16 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public ProcessorTaskList assignTasks(final String nodeName, final AssignTasksRequest request) {
+    public ProcessorTaskList assignTasks(final String memberUuid, final AssignTasksRequest request) {
+        final ClusterMember member = new ClusterMember(memberUuid);
         final ProcessorTaskList processorTaskList = remoteRestServiceProvider.get()
                 .remoteRestResult(
-                        nodeName,
+                        member,
                         ProcessorTaskList.class,
                         () -> ResourcePaths.buildAuthenticatedApiPath(
                                 ProcessorTaskResource.BASE_PATH,
                                 ProcessorTaskResource.ASSIGN_TASKS_PATH_PART,
-                                nodeName),
+                                memberUuid),
                         () ->
                                 processorTaskManagerProvider.get()
                                         .assignTasks(request.getNodeName(), request.getCount()),
@@ -143,15 +145,16 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public Boolean abandonTasks(final String nodeName, final ProcessorTaskList request) {
+    public Boolean abandonTasks(final String memberUuid, final ProcessorTaskList request) {
+        final ClusterMember member = new ClusterMember(memberUuid);
         final Boolean result = remoteRestServiceProvider.get()
                 .remoteRestResult(
-                        nodeName,
+                        member,
                         Boolean.class,
                         () -> ResourcePaths.buildAuthenticatedApiPath(
                                 ProcessorTaskResource.BASE_PATH,
                                 ProcessorTaskResource.ABANDON_TASKS_PATH_PART,
-                                nodeName),
+                                memberUuid),
                         () ->
                                 processorTaskManagerProvider.get()
                                         .abandonTasks(request),

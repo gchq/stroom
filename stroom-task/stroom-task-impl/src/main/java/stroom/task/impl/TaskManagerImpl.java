@@ -16,7 +16,7 @@
 
 package stroom.task.impl;
 
-import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.ClusterService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskManager;
@@ -61,7 +61,7 @@ class TaskManagerImpl implements TaskManager {
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_INFO, TaskProgress::getTaskInfo)
     );
 
-    private final NodeInfo nodeInfo;
+    private final ClusterService clusterService;
     private final SessionIdProvider sessionIdProvider;
     private final SecurityContext securityContext;
     private final ExecutorProviderImpl executorProvider;
@@ -69,13 +69,13 @@ class TaskManagerImpl implements TaskManager {
     private final TaskRegistry taskRegistry;
 
     @Inject
-    TaskManagerImpl(final NodeInfo nodeInfo,
+    TaskManagerImpl(final ClusterService clusterService,
                     final SessionIdProvider sessionIdProvider,
                     final SecurityContext securityContext,
                     final ExecutorProviderImpl executorProvider,
                     final TaskContextFactoryImpl taskContextFactory,
                     final TaskRegistry taskRegistry) {
-        this.nodeInfo = nodeInfo;
+        this.clusterService = clusterService;
         this.sessionIdProvider = sessionIdProvider;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
@@ -257,7 +257,7 @@ class TaskManagerImpl implements TaskManager {
         taskProgress.setTaskInfo(taskContext.getInfo());
         taskProgress.setSubmitTimeMs(taskContext.getSubmitTimeMs());
         taskProgress.setTimeNowMs(timeNowMs);
-        taskProgress.setNodeName(nodeInfo.getThisNodeName());
+        taskProgress.setNodeName(clusterService.getLocal().getUuid());
         return taskProgress;
     }
 
@@ -335,15 +335,15 @@ class TaskManagerImpl implements TaskManager {
 
         final Instant startTime = Instant.EPOCH;
         final Instant now = Instant.now();
-        final String nodeName = nodeInfo.getThisNodeName();
+        final String memberUuid = clusterService.getLocal().getUuid();
 
         final List<TaskProgress> colourTasks = taskNames.stream()
                 .flatMap(taskname -> {
                     // Need to make sure task IDs are unique over the cluster
-                    TaskId grandparentTaskId = new TaskId(nodeName + "-" + id.incrementAndGet(), null);
-                    TaskId parentTaskId = new TaskId(nodeName + "-" + id.incrementAndGet(),
+                    TaskId grandparentTaskId = new TaskId(memberUuid + "-" + id.incrementAndGet(), null);
+                    TaskId parentTaskId = new TaskId(memberUuid + "-" + id.incrementAndGet(),
                             grandparentTaskId);
-                    TaskId childTaskId = new TaskId(nodeName + "-" + id.incrementAndGet(),
+                    TaskId childTaskId = new TaskId(memberUuid + "-" + id.incrementAndGet(),
                             parentTaskId);
                     return Stream.of(
                             Tuple.of(taskname + "-grandparent", grandparentTaskId),
@@ -362,7 +362,7 @@ class TaskManagerImpl implements TaskManager {
                     taskProgress.setSubmitTimeMs(startTime.plus(id.get() * 100, ChronoUnit.DAYS)
                             .toEpochMilli());
                     taskProgress.setTimeNowMs(now.toEpochMilli());
-                    taskProgress.setNodeName(nodeInfo.getThisNodeName());
+                    taskProgress.setNodeName(memberUuid);
 
                     taskProgress.setFilterMatchState(
                             FilterMatchState.fromBoolean(fuzzyMatchPredicate.test(taskProgress)));
@@ -380,7 +380,7 @@ class TaskManagerImpl implements TaskManager {
                 "taskInfo-Orphaned-task",
                 "janedoe",
                 "threadY",
-                nodeInfo.getThisNodeName(),
+                memberUuid,
                 startTime.plus(id.get() * 100, ChronoUnit.DAYS).toEpochMilli(),
                 now.toEpochMilli(),
                 null,

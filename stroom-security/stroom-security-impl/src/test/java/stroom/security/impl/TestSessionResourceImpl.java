@@ -48,7 +48,7 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
                 subPath,
                 SessionListResponse.class,
                 expectedResponse,
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "memberUuid", "node1"));
 
         verify(sessionListService).listSessions(Mockito.anyString());
     }

@@ -16,8 +16,9 @@
 
 package stroom.security.impl;
 
+import stroom.cluster.api.ClusterMember;
+import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
-import stroom.cluster.api.NodeInfo;
 import stroom.cluster.api.RemoteRestUtil;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.SessionDetails;
@@ -55,17 +56,17 @@ class SessionListListener implements HttpSessionListener, SessionListService {
 
     private final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
 
-    private final NodeInfo nodeInfo;
+    private final ClusterService clusterService;
     private final EndpointUrlService endpointUrlService;
     private final TaskContextFactory taskContextFactory;
     private final WebTargetFactory webTargetFactory;
 
     @Inject
-    SessionListListener(final NodeInfo nodeInfo,
+    SessionListListener(final ClusterService clusterService,
                         final EndpointUrlService endpointUrlService,
                         final TaskContextFactory taskContextFactory,
                         final WebTargetFactory webTargetFactory) {
-        this.nodeInfo = nodeInfo;
+        this.clusterService = clusterService;
         this.endpointUrlService = endpointUrlService;
         this.taskContextFactory = taskContextFactory;
         this.webTargetFactory = webTargetFactory;
@@ -86,29 +87,30 @@ class SessionListListener implements HttpSessionListener, SessionListService {
         sessionMap.remove(httpSession.getId());
     }
 
-    public SessionListResponse listSessions(final String nodeName) {
-        LOGGER.debug("listSessions(\"{}\") called", nodeName);
+    public SessionListResponse listSessions(final String memberUuid) {
+        final ClusterMember member = new ClusterMember(memberUuid);
+        LOGGER.debug("listSessions(\"{}\") called", member);
         // TODO add audit logging?
-        Objects.requireNonNull(nodeName);
+        Objects.requireNonNull(member);
 
         final SessionListResponse sessionList;
 
-        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
+        if (endpointUrlService.shouldExecuteLocally(member)) {
             // This is our node so execute locally
             sessionList = listSessionsOnThisNode();
 
         } else {
             // This is a different node so make a rest call to it to get the result
 
-            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName) +
+            final String url = endpointUrlService.getRemoteEndpointUrl(member) +
                     ResourcePaths.buildAuthenticatedApiPath(
                             SessionResource.BASE_PATH,
                             SessionResource.LIST_PATH_PART);
 
             try {
-                LOGGER.debug("Sending request to {} for node {}", url, nodeName);
+                LOGGER.debug("Sending request to {} for node {}", url, member);
                 WebTarget webTarget = webTargetFactory.create(url);
-                webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.NODE_NAME_PARAM, nodeName);
+                webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.MEMBER_UUID_PARAM, member);
                 final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get();
@@ -119,7 +121,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
 
                 sessionList = response.readEntity(SessionListResponse.class);
             } catch (Throwable e) {
-                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptions(member, url, e);
             }
         }
         return sessionList;
@@ -134,32 +136,32 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                             httpSession.getCreationTime(),
                             httpSession.getLastAccessedTime(),
                             UserAgentSessionUtil.get(httpSession),
-                            nodeInfo.getThisNodeName());
+                            clusterService.getLocal().toString());
                 })
                 .collect(SessionListResponse.collector(SessionListResponse::new));
     }
 
     public SessionListResponse listSessions() {
         return taskContextFactory.contextResult("Get session list on all active nodes", parentTaskContext ->
-                endpointUrlService.getNodeNames()
+                clusterService.getMembers()
                         .stream()
-                        .map(nodeName -> {
+                        .map(member -> {
                             final Supplier<SessionListResponse> listSessionsOnNodeTask =
                                     taskContextFactory.childContextResult(parentTaskContext,
-                                            LogUtil.message("Get session list on node [{}]", nodeName),
+                                            LogUtil.message("Get session list on node [{}]", member),
                                             taskContext ->
-                                                    listSessions(nodeName));
+                                                    listSessions(member.getUuid()));
 
-                            LOGGER.debug("Creating async task for node {}", nodeName);
+                            LOGGER.debug("Creating async task for node {}", member);
                             return CompletableFuture
                                     .supplyAsync(listSessionsOnNodeTask)
                                     .exceptionally(throwable -> {
                                         LOGGER.error("Error getting session list for node [{}]: {}. " +
                                                         "Enable DEBUG for stacktrace",
-                                                nodeName,
+                                                member,
                                                 throwable.getMessage());
                                         LOGGER.debug("Error getting session list for node [{}]",
-                                                nodeName, throwable);
+                                                member, throwable);
                                         // TODO do we want to silently ignore nodes that error?
                                         // If we can't talk to one node we still want to see the results from the
                                         // other nodes

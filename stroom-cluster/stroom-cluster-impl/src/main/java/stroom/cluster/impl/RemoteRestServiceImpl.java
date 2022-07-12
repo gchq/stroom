@@ -1,5 +1,6 @@
 package stroom.cluster.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.RemoteRestService;
 import stroom.cluster.api.RemoteRestUtil;
 import stroom.util.jersey.UriBuilderUtil;
@@ -38,24 +39,24 @@ public class RemoteRestServiceImpl implements RemoteRestService {
     }
 
     @Override
-    public <T_RESP> T_RESP remoteRestResult(final String nodeName,
+    public <T_RESP> T_RESP remoteRestResult(final ClusterMember member,
                                             final Supplier<String> fullPathSupplier,
                                             final Supplier<T_RESP> localSupplier,
                                             final Function<Invocation.Builder, Response> responseBuilderFunc,
                                             final Function<Response, T_RESP> responseMapper,
                                             final Map<String, Object> queryParams) {
-        RestUtil.requireNonNull(nodeName, "nodeName not supplied");
+        RestUtil.requireNonNull(member, "member not supplied");
 
         final T_RESP resp;
 
         // If this is the node that was contacted then just resolve it locally
-        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
+        if (endpointUrlService.shouldExecuteLocally(member)) {
             LOGGER.debug(() -> LogUtil.message("Executing {} locally", fullPathSupplier.get()));
             resp = localSupplier.get();
 
         } else {
             // A different node to make a rest call to the required node
-            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName) + fullPathSupplier.get();
+            final String url = endpointUrlService.getRemoteEndpointUrl(member) + fullPathSupplier.get();
             LOGGER.debug("Fetching value from remote node at {}", url);
             try {
                 final Builder builder = createBuilder(queryParams, url);
@@ -70,28 +71,28 @@ public class RemoteRestServiceImpl implements RemoteRestService {
 
                 Objects.requireNonNull(resp, "Null response calling url " + url);
             } catch (final Throwable e) {
-                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptions(member, url, e);
             }
         }
         return resp;
     }
 
     @Override
-    public void remoteRestCall(final String nodeName,
+    public void remoteRestCall(final ClusterMember member,
                                final Supplier<String> fullPathSupplier,
                                final Runnable localRunnable,
                                final Function<Builder, Response> responseBuilderFunc,
                                final Map<String, Object> queryParams) {
-        RestUtil.requireNonNull(nodeName, "nodeName not supplied");
+        RestUtil.requireNonNull(member, "member not supplied");
 
         // If this is the node that was contacted then just resolve it locally
-        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
+        if (endpointUrlService.shouldExecuteLocally(member)) {
 
             LOGGER.debug(() -> LogUtil.message("Executing {} locally", fullPathSupplier.get()));
             localRunnable.run();
         } else {
             // A different node to make a rest call to the required node
-            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName) + fullPathSupplier.get();
+            final String url = endpointUrlService.getRemoteEndpointUrl(member) + fullPathSupplier.get();
             LOGGER.debug("Calling remote node at {}", url);
             try {
                 final Builder builder = createBuilder(queryParams, url);
@@ -103,7 +104,7 @@ public class RemoteRestServiceImpl implements RemoteRestService {
                     throw new WebApplicationException(response);
                 }
             } catch (final Throwable e) {
-                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptions(member, url, e);
             }
         }
     }

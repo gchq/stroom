@@ -17,8 +17,8 @@
 
 package stroom.processor.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.ClusterService;
-import stroom.cluster.api.NodeInfo;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
@@ -112,7 +112,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final TaskContext taskContext;
-    private final NodeInfo nodeInfo;
     private final Provider<ProcessorConfig> processorConfigProvider;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
     private final MetaService metaService;
@@ -156,7 +155,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private volatile boolean allowAsyncTaskCreation = false;
     private volatile boolean allowTaskCreation = true;
 
-    private final Map<String, Instant> lastNodeContactTime = new ConcurrentHashMap<>();
+    private final Map<ClusterMember, Instant> lastNodeContactTime = new ConcurrentHashMap<>();
     private Instant lastDisownedTasks = Instant.now();
 
     @Inject
@@ -166,7 +165,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final ExecutorProvider executorProvider,
                              final TaskContextFactory taskContextFactory,
                              final TaskContext taskContext,
-                             final NodeInfo nodeInfo,
                              final Provider<ProcessorConfig> processorConfigProvider,
                              final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
                              final MetaService metaService,
@@ -180,7 +178,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.taskContext = taskContext;
-        this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
         this.processorConfigProvider = processorConfigProvider;
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
@@ -197,7 +194,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         try {
             // Anything that we owned release
             // Lock the cluster so that only this node is able to release owned tasks at this time.
-            final String nodeName = nodeInfo.getThisNodeName();
+            final String nodeName = clusterService.getLocal().getUuid();
             LOGGER.info(() -> "Locking cluster to release owned tasks for node " + nodeName);
             clusterService.lock(LOCK_NAME, () -> processorTaskDao.releaseOwnedTasks(nodeName));
         } catch (final RuntimeException e) {
@@ -480,17 +477,15 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
     public void disownDeadTasks() {
         try {
-            final String node = nodeInfo.getThisNodeName();
-            final String leader = clusterService.getLeader();
-            if (node != null && node.equals(leader)) {
+            if (clusterService.isLeader()) {
                 // If this is the master node then see if there are any nodes that we haven't had contact with
                 // for some time.
 
                 // IF we haven't had contact with a node for 10 minutes then forcibly release the tasks owned
                 // by that node.
                 final Instant now = Instant.now();
-                final Set<String> activeNodes = clusterService.getMembers();
-                activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now));
+                final Set<ClusterMember> members = clusterService.getMembers();
+                members.forEach(member -> lastNodeContactTime.put(member, now));
                 final Instant disownTaskAge = now.minus(processorConfig.getDisownDeadTasksAfter());
                 if (lastDisownedTasks.isBefore(disownTaskAge)) {
                     lastDisownedTasks = now;
@@ -504,7 +499,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
                     // Retain all tasks that have had their status updated in the last 10 minutes or belong to
                     // nodes we know have been active in the last 10 minutes.
-                    processorTaskDao.retainOwnedTasks(lastNodeContactTime.keySet(), disownTaskAge);
+                    processorTaskDao.retainOwnedTasks(
+                            lastNodeContactTime.keySet().stream().map(ClusterMember::getUuid).collect(
+                                    Collectors.toSet()), disownTaskAge);
                 }
             }
         } catch (final RuntimeException e) {
@@ -515,9 +512,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     public synchronized void releaseOldQueuedTasks() {
         if (queueMap.size() > 0) {
             try {
-                final String node = nodeInfo.getThisNodeName();
-                final String leader = clusterService.getLeader();
-                if (node != null && !node.equals(leader)) {
+                if (!clusterService.isLeader()) {
                     // This is no longer the master node so release all tasks.
                     releaseAll();
                 }
@@ -560,7 +555,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // Update the stream task store.
         prioritisedFiltersRef.set(filters);
 
-        final String nodeName = nodeInfo.getThisNodeName();
+        final String nodeName = clusterService.getLocal().getUuid();
         if (nodeName == null) {
             throw new NullPointerException("Node is null");
         }

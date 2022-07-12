@@ -1,9 +1,10 @@
 package stroom.cluster.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.ClusterRole;
 import stroom.cluster.api.ClusterService;
-import stroom.cluster.api.NodeInfo;
 import stroom.config.common.UriFactory;
+import stroom.node.api.NodeInfo;
 
 import com.hazelcast.cluster.Member;
 import com.hazelcast.config.Config;
@@ -13,6 +14,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -45,6 +47,9 @@ public class ClusterServiceImpl implements ClusterService {
         }
 
         Config conf = new Config();
+        if (clusterConfig.getClusterName() != null) {
+            conf.setClusterName(clusterConfig.getClusterName());
+        }
         conf.setMemberAttributeConfig(memberAttributeConfig);
         instance = Hazelcast.newHazelcastInstance(conf);
 
@@ -53,38 +58,16 @@ public class ClusterServiceImpl implements ClusterService {
                 .getMembers());
     }
 
-    private Member getLeaderMember() {
-        return instance
-                .getCluster()
-                .getMembers()
-                .stream()
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No cluster members exist"));
-    }
-
-    private Member getLocalMember() {
-        return instance
-                .getCluster()
-                .getMembers()
-                .stream()
-                .filter(Member::localMember)
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No cluster members exist"));
-    }
-
-    public String getBaseEndpointUrl(final String nodeName) {
+    public String getBaseEndpointUrl(final ClusterMember member) {
         final List<Member> list = instance
                 .getCluster()
                 .getMembers()
                 .stream()
-                .filter(member -> {
-                    final String attValue = member.getAttribute(NODE_NAME);
-                    return nodeName.equals(attValue);
-                })
+                .filter(m -> new ClusterMember(m.getUuid()).equals(member))
                 .toList();
 
         if (list.size() > 1) {
-            throw new RuntimeException("More than one node found with name " + nodeName);
+            throw new RuntimeException("More than one node found");
         } else if (list.size() == 1) {
             return getMemberUrl(list.get(0));
         }
@@ -95,27 +78,40 @@ public class ClusterServiceImpl implements ClusterService {
         return member.getAttribute(NODE_ENDPOINT_URL);
     }
 
-    private String getNodeName(final Member member) {
-        return member.getAttribute("NODE_NAME");
-    }
+//    private String getNodeName(final Member member) {
+//        return member.getAttribute("NODE_NAME");
+//    }
 
     @Override
-    public String getLeader() {
-        return getNodeName(getLeaderMember());
-    }
-
-    @Override
-    public String getLocal() {
-        return getNodeName(getLocalMember());
-    }
-
-    @Override
-    public Set<String> getMembers() {
+    public ClusterMember getLeader() {
         return instance
                 .getCluster()
                 .getMembers()
                 .stream()
-                .map(this::getNodeName)
+                .findFirst()
+                .map(member -> new ClusterMember(member.getUuid()))
+                .orElseThrow(() -> new RuntimeException("No cluster members exist"));
+    }
+
+    @Override
+    public ClusterMember getLocal() {
+        return instance
+                .getCluster()
+                .getMembers()
+                .stream()
+                .filter(Member::localMember)
+                .findFirst()
+                .map(member -> new ClusterMember(member.getUuid()))
+                .orElseThrow(() -> new RuntimeException("No cluster members exist"));
+    }
+
+    @Override
+    public Set<ClusterMember> getMembers() {
+        return instance
+                .getCluster()
+                .getMembers()
+                .stream()
+                .map(member -> new ClusterMember(member.getUuid()))
                 .collect(Collectors.toSet());
     }
 
@@ -162,5 +158,25 @@ public class ClusterServiceImpl implements ClusterService {
                 fencedLock.unlock();
             }
         }
+    }
+
+    @Override
+    public ClusterMember getMemberForOldNodeName(final String oldNodeName) {
+        return getOptionalMemberForOldNodeName(oldNodeName)
+                .orElseThrow(() -> new RuntimeException("Cluster member not found for '" + oldNodeName + "'"));
+    }
+
+    @Override
+    public Optional<ClusterMember> getOptionalMemberForOldNodeName(final String oldNodeName) {
+        return instance
+                .getCluster()
+                .getMembers()
+                .stream()
+                .filter(member -> {
+                    final String attValue = member.getAttribute(NODE_NAME);
+                    return oldNodeName.equals(attValue);
+                })
+                .findFirst()
+                .map(member -> new ClusterMember(member.getUuid()));
     }
 }

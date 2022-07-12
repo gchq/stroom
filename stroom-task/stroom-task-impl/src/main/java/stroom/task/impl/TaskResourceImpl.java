@@ -16,6 +16,7 @@
 
 package stroom.task.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.RemoteRestService;
 import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -28,6 +29,7 @@ import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.rest.RestUtil;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
@@ -66,16 +68,18 @@ class TaskResourceImpl implements TaskResource {
 
     @AutoLogged(OperationType.UNLOGGED) // Called for each node so too noisy to log and of limited benefit
     @Override
-    public TaskProgressResponse find(final String nodeName, final FindTaskProgressRequest request) {
+    public TaskProgressResponse find(final String memberUuid, final FindTaskProgressRequest request) {
+        RestUtil.requireNonNull(memberUuid, "memberUuid not supplied");
+        final ClusterMember member = new ClusterMember(memberUuid);
         try {
             return remoteRestServiceProvider.get()
                     .remoteRestResult(
-                            nodeName,
+                            member,
                             TaskProgressResponse.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     TaskResource.BASE_PATH,
                                     TaskResource.FIND_PATH_PART,
-                                    nodeName),
+                                    memberUuid),
                             () -> {
                                 final ResultPage<TaskProgress> resultPage = taskManagerProvider.get()
                                         .find(request.getCriteria());
@@ -114,14 +118,15 @@ class TaskResourceImpl implements TaskResource {
     @Override
     @AutoLogged(value = OperationType.PROCESS, verb = "Terminating",
             decorator = TerminateDecorator.class)
-    public Boolean terminate(final String nodeName, final TerminateTaskProgressRequest request) {
+    public Boolean terminate(final String memberUuid, final TerminateTaskProgressRequest request) {
+        final ClusterMember member = new ClusterMember(memberUuid);
         remoteRestServiceProvider.get()
                 .remoteRestCall(
-                        nodeName,
+                        member,
                         () -> ResourcePaths.buildAuthenticatedApiPath(
                                 TaskResource.BASE_PATH,
                                 TaskResource.TERMINATE_PATH_PART,
-                                nodeName),
+                                memberUuid),
                         () ->
                                 taskManagerProvider.get().terminate(
                                         request.getCriteria()),

@@ -1,5 +1,6 @@
 package stroom.search.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
 import stroom.security.api.SecurityContext;
@@ -30,8 +31,8 @@ public class LocalNodeSearch implements NodeSearch {
         this.taskContextFactory = taskContextFactory;
     }
 
-    public void searchNode(final String sourceNode,
-                           final String targetNode,
+    public void searchNode(final ClusterMember sourceNode,
+                           final ClusterMember targetNode,
                            final List<Long> shards,
                            final AsyncSearchTask task,
                            final Query query,

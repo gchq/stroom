@@ -18,7 +18,6 @@
 package stroom.index;
 
 
-import stroom.cluster.api.NodeInfo;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexStore;
@@ -26,6 +25,7 @@ import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShardKey;
+import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 

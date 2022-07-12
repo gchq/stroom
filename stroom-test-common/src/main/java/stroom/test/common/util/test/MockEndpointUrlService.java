@@ -1,44 +1,39 @@
 package stroom.test.common.util.test;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.EndpointUrlService;
-import stroom.test.common.util.test.AbstractMultiNodeResourceTest.TestNode;
+import stroom.test.common.util.test.AbstractMultiNodeResourceTest.TestMember;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MockEndpointUrlService implements EndpointUrlService {
 
-    private final TestNode node;
-    private final List<TestNode> allNodes;
-    private final Map<String, String> baseEndPointUrl;
+    private final TestMember local;
+    private final Map<ClusterMember, TestMember> baseEndPointUrl;
 
-    public MockEndpointUrlService(final TestNode node,
-                                  final List<TestNode> allNodes,
-                                  final Map<String, String> baseEndPointUrl) {
-        this.node = node;
-        this.allNodes = allNodes;
-        this.baseEndPointUrl = baseEndPointUrl;
+    public MockEndpointUrlService(final TestMember local,
+                                  final List<TestMember> baseEndPointUrl) {
+        this.local = local;
+        this.baseEndPointUrl = baseEndPointUrl
+                .stream()
+                .collect(Collectors.toMap(TestMember::getMember, Function.identity()));
     }
 
     @Override
-    public Set<String> getNodeNames() {
-        return allNodes.stream().map(TestNode::getNodeName).collect(Collectors.toSet());
+    public String getBaseEndpointUrl(final ClusterMember member) {
+        return baseEndPointUrl.get(member).getEndpointUrl();
     }
 
     @Override
-    public String getBaseEndpointUrl(final String nodeName) {
-        return baseEndPointUrl.get(nodeName);
+    public String getRemoteEndpointUrl(final ClusterMember member) {
+        return baseEndPointUrl.get(member).getEndpointUrl();
     }
 
     @Override
-    public String getRemoteEndpointUrl(final String nodeName) {
-        return baseEndPointUrl.get(nodeName);
-    }
-
-    @Override
-    public boolean shouldExecuteLocally(final String nodeName) {
-        return node.getNodeName().equals(nodeName);
+    public boolean shouldExecuteLocally(final ClusterMember member) {
+        return local.getMember().equals(member);
     }
 }

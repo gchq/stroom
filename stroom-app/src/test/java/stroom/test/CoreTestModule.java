@@ -10,6 +10,7 @@ import stroom.config.global.impl.db.GlobalConfigDaoModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
+import stroom.node.mock.MockNodeModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.util.io.DirProvidersModule;
@@ -31,6 +32,7 @@ public class CoreTestModule extends AbstractModule {
         install(new CoreModule());
         install(new ResourceModule());
         install(new MockClusterModule());
+        install(new MockNodeModule());
         install(new VolumeTestConfigModule());
         install(new MockSecurityContextModule());
         install(new MockMetaStatisticsModule());

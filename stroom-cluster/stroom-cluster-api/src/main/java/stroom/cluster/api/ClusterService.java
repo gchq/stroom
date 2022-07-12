@@ -13,9 +13,13 @@ public interface ClusterService {
 
     void tryLock(String lockName, Runnable runnable);
 
-    String getLeader();
+    ClusterMember getLeader();
 
-    String getLocal();
+    ClusterMember getLocal();
 
-    Set<String> getMembers();
+    Set<ClusterMember> getMembers();
+
+    ClusterMember getMemberForOldNodeName(String oldNodeName);
+
+    Optional<ClusterMember> getOptionalMemberForOldNodeName(String oldNodeName);
 }

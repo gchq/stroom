@@ -17,7 +17,7 @@
 package stroom.node.impl.db;
 
 import stroom.db.util.JooqUtil;
-import stroom.node.api.FindNodeCriteria;
+import stroom.node.impl.FindNodeCriteria;
 import stroom.node.impl.NodeDao;
 import stroom.node.impl.db.jooq.tables.records.NodeRecord;
 import stroom.node.shared.Node;

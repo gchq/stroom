@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestNodeStatusServiceUtil {
+class TestMemberStatusServiceUtil {
 
     // example output from 'cat /proc/stat'
     @SuppressWarnings("checkstyle:LineLength")

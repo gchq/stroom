@@ -11,26 +11,25 @@ import javax.ws.rs.core.Response;
 public interface RemoteRestService {
 
     /**
-     * Call out to the specified node using the rest request defined by fullPath and
-     * responseBuilderFunc, if nodeName is this node then use localSupplier.
+     * Call out to the specified member using the rest request defined by fullPath and
+     * responseBuilderFunc, if member is this member then use localSupplier.
      *
-     * @param nodeName            The name of the node to call
+     * @param member              The cluster member to call
      * @param responseType        The type of the result that will be returned.
      * @param fullPathSupplier    A supplier of the full path to use for a remote rest call, if needed, e.g.
      *                            /api/permission/changeEvent/v1/fireChange
-     * @param localSupplier       The supplier of the result if this node matches nodeName
+     * @param localSupplier       The supplier of the result if this member matches member
      * @param responseBuilderFunc A function to use the provided {@link Invocation.Builder} to execute a REST
-     *                            call and get the result from a node where nodeName is not equal to this node's
-     *                            name.
+     *                            call and get the result from a member.
      */
-    default <T_RESP> T_RESP remoteRestResult(final String nodeName,
+    default <T_RESP> T_RESP remoteRestResult(final ClusterMember member,
                                              final Class<T_RESP> responseType,
                                              final Supplier<String> fullPathSupplier,
                                              final Supplier<T_RESP> localSupplier,
                                              final Function<Builder, Response> responseBuilderFunc) {
 
         return remoteRestResult(
-                nodeName,
+                member,
                 fullPathSupplier,
                 localSupplier,
                 responseBuilderFunc,
@@ -41,19 +40,18 @@ public interface RemoteRestService {
     }
 
     /**
-     * Call out to the specified node using the rest request defined by fullPath and
-     * responseBuilderFunc, if nodeName is this node then use localSupplier.
+     * Call out to the specified member using the rest request defined by fullPath and
+     * responseBuilderFunc, if member is this member then use localSupplier.
      *
-     * @param nodeName            The name of the node to call
+     * @param member              The cluster member to call
      * @param responseType        The type of the result that will be returned.
      * @param fullPathSupplier    A supplier of the full path to use for a remote rest call, if needed, e.g.
      *                            /api/permission/changeEvent/v1/fireChange
-     * @param localSupplier       The supplier of the result if this node matches nodeName
+     * @param localSupplier       The supplier of the result if this member matches member
      * @param responseBuilderFunc A function to use the provided {@link Invocation.Builder} to execute a REST
-     *                            call and get the result from a node where nodeName is not equal to this node's
-     *                            name.
+     *                            call and get the result from a member.
      */
-    default <T_RESP> T_RESP remoteRestResult(final String nodeName,
+    default <T_RESP> T_RESP remoteRestResult(final ClusterMember member,
                                              final Class<T_RESP> responseType,
                                              final Supplier<String> fullPathSupplier,
                                              final Supplier<T_RESP> localSupplier,
@@ -61,7 +59,7 @@ public interface RemoteRestService {
                                              final Map<String, Object> queryParams) {
 
         return remoteRestResult(
-                nodeName,
+                member,
                 fullPathSupplier,
                 localSupplier,
                 responseBuilderFunc,
@@ -73,26 +71,25 @@ public interface RemoteRestService {
 
 
     /**
-     * Call out to the specified node using the rest request defined by fullPath and
-     * responseBuilderFunc, if nodeName is this node then use localSupplier.
+     * Call out to the specified member using the rest request defined by fullPath and
+     * responseBuilderFunc, if member is this member then use localSupplier.
      *
-     * @param nodeName            The name of the node to call
+     * @param member              The cluster member to call
      * @param fullPathSupplier    A supplier of the full path to use for a remote rest call, if needed, e.g.
      *                            /api/permission/changeEvent/v1/fireChange
-     * @param localSupplier       The supplier of the result if this node matches nodeName
+     * @param localSupplier       The supplier of the result if this member matches member
      * @param responseBuilderFunc A function to use the provided {@link Invocation.Builder} to execute a REST
-     *                            call and get the result from a node where nodeName is not equal to this node's
-     *                            name.
+     *                            call and get the result from a member where member is not equal to this.
      * @param responseMapper      A function to map the response of the local supplier or rest call to into another
      *                            type.
      */
-    default <T_RESP> T_RESP remoteRestResult(final String nodeName,
+    default <T_RESP> T_RESP remoteRestResult(final ClusterMember member,
                                              final Supplier<String> fullPathSupplier,
                                              final Supplier<T_RESP> localSupplier,
                                              final Function<Invocation.Builder, Response> responseBuilderFunc,
                                              final Function<Response, T_RESP> responseMapper) {
         return remoteRestResult(
-                nodeName,
+                member,
                 fullPathSupplier,
                 localSupplier,
                 responseBuilderFunc,
@@ -101,20 +98,19 @@ public interface RemoteRestService {
     }
 
     /**
-     * Call out to the specified node using the rest request defined by fullPath and
-     * responseBuilderFunc, if nodeName is this node then use localSupplier.
+     * Call out to the specified member using the rest request defined by fullPath and
+     * responseBuilderFunc, if member is this member then use localSupplier.
      *
-     * @param nodeName            The name of the node to call
+     * @param member              The cluster member to call
      * @param fullPathSupplier    A supplier of the full path to use for a remote rest call, if needed, e.g.
      *                            /api/permission/changeEvent/v1/fireChange
-     * @param localSupplier       The supplier of the result if this node matches nodeName
+     * @param localSupplier       The supplier of the result if this member matches member
      * @param responseBuilderFunc A function to use the provided {@link Invocation.Builder} to execute a REST
-     *                            call and get the result from a node where nodeName is not equal to this node's
-     *                            name.
+     *                            call and get the result from a member where member is not equal to this.
      * @param responseMapper      A function to map the response of the local supplier or rest call to into another
      *                            type.
      */
-    <T_RESP> T_RESP remoteRestResult(final String nodeName,
+    <T_RESP> T_RESP remoteRestResult(final ClusterMember member,
                                      final Supplier<String> fullPathSupplier,
                                      final Supplier<T_RESP> localSupplier,
                                      final Function<Invocation.Builder, Response> responseBuilderFunc,
@@ -122,37 +118,35 @@ public interface RemoteRestService {
                                      final Map<String, Object> queryParams);
 
     /**
-     * Call out to the specified node using the rest request defined by fullPath and
-     * responseBuilderFunc, if nodeName is this node then use localRunnable.
+     * Call out to the specified member using the rest request defined by fullPath and
+     * responseBuilderFunc, if member is this member then use localRunnable.
      *
-     * @param nodeName            The name of the node to call
+     * @param member              The cluster member to call
      * @param fullPathSupplier    A supplier of the full path to use for a remote rest call, if needed, e.g.
      *                            /api/permission/changeEvent/v1/fireChange
-     * @param localRunnable       The local code to run if this node matches nodeName
+     * @param localRunnable       The local code to run if this member matches member
      * @param responseBuilderFunc A function to use the provided {@link Invocation.Builder} to execute a REST
-     *                            call and get the result from a node where nodeName is not equal to this node's
-     *                            name.
+     *                            call and get the result from a member.
      */
-    default void remoteRestCall(final String nodeName,
+    default void remoteRestCall(final ClusterMember member,
                                 final Supplier<String> fullPathSupplier,
                                 final Runnable localRunnable,
                                 final Function<Invocation.Builder, Response> responseBuilderFunc) {
-        remoteRestCall(nodeName, fullPathSupplier, localRunnable, responseBuilderFunc, Collections.emptyMap());
+        remoteRestCall(member, fullPathSupplier, localRunnable, responseBuilderFunc, Collections.emptyMap());
     }
 
     /**
-     * Call out to the specified node using the rest request defined by fullPath and
-     * responseBuilderFunc, if nodeName is this node then use localRunnable.
+     * Call out to the specified member using the rest request defined by fullPath and
+     * responseBuilderFunc, if member is this member then use localRunnable.
      *
-     * @param nodeName            The name of the node to call
+     * @param member              The cluster member to call
      * @param fullPathSupplier    A supplier of the full path to use for a remote rest call, if needed, e.g.
      *                            /api/permission/changeEvent/v1/fireChange
-     * @param localRunnable       The local code to run if this node matches nodeName
+     * @param localRunnable       The local code to run if this member matches member
      * @param responseBuilderFunc A function to use the provided {@link Invocation.Builder} to execute a REST
-     *                            call and get the result from a node where nodeName is not equal to this node's
-     *                            name.
+     *                            call and get the result from a member.
      */
-    void remoteRestCall(final String nodeName,
+    void remoteRestCall(final ClusterMember member,
                         final Supplier<String> fullPathSupplier,
                         final Runnable localRunnable,
                         final Function<Invocation.Builder, Response> responseBuilderFunc,

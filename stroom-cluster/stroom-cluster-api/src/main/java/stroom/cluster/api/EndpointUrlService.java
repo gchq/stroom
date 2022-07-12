@@ -1,18 +1,14 @@
 package stroom.cluster.api;
 
-import java.util.Set;
-
 public interface EndpointUrlService {
 
-    Set<String> getNodeNames();
+    String getBaseEndpointUrl(ClusterMember member);
 
-    String getBaseEndpointUrl(String nodeName);
-
-    String getRemoteEndpointUrl(String nodeName);
+    String getRemoteEndpointUrl(ClusterMember member);
 
     /**
-     * @return True if the work should be executed on the local node.
-     * I.e. if nodeName equals the name of the local node
+     * @return True if the work should be executed on the local member.
+     * I.e. if member equals the local member
      */
-    boolean shouldExecuteLocally(String nodeName);
+    boolean shouldExecuteLocally(ClusterMember member);
 }

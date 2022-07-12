@@ -65,7 +65,7 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Assign some tasks",
             operationId = "assignProcessorTasks")
-    ProcessorTaskList assignTasks(@PathParam("nodeName") String nodeName,
+    ProcessorTaskList assignTasks(@PathParam("memberUuid") String memberUuid,
                                   @Parameter(description = "request", required = true) AssignTasksRequest request);
 
     @POST
@@ -73,6 +73,6 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Abandon some tasks",
             operationId = "abandonProcessorTasks")
-    Boolean abandonTasks(@PathParam("nodeName") String nodeName,
+    Boolean abandonTasks(@PathParam("memberUuid") String memberUuid,
                          @Parameter(description = "request", required = true) ProcessorTaskList request);
 }

@@ -268,8 +268,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
             final BuildInfo buildInfo = result.getBuildInfo();
             builder
                     .addTwoColTable(tableBuilder -> {
-                        tableBuilder.addHeaderRow("Node Details");
-                        tableBuilder.addRow("Node Name", result.getNodeName(), true);
+                        tableBuilder.addHeaderRow("Cluster Member Details");
+                        tableBuilder.addRow("Member UUID", result.getMemberUuid(), true);
                         if (buildInfo != null) {
                             tableBuilder
                                     .addRow("Build Version", buildInfo.getBuildVersion(), true)

@@ -355,7 +355,7 @@ export interface ClusterNodeInfo {
   endpointUrl?: string;
   error?: string;
   itemList?: ClusterNodeInfoItem[];
-  nodeName?: string;
+  memberUuid?: string;
 
   /** @format int64 */
   ping?: number;
@@ -4690,7 +4690,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request DELETE:/cache/v1
      * @secure
      */
-    clearCache: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
+    clearCache: (query?: { cacheName?: string; memberUuid?: string }, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/cache/v1`,
         method: "DELETE",
@@ -4708,7 +4708,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/cache/v1/info
      * @secure
      */
-    getCacheInfo: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
+    getCacheInfo: (query?: { cacheName?: string; memberUuid?: string }, params: RequestParams = {}) =>
       this.request<any, CacheInfoResponse>({
         path: `/cache/v1/info`,
         method: "GET",
@@ -4726,7 +4726,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/cache/v1/list
      * @secure
      */
-    listCaches: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+    listCaches: (query?: { memberUuid?: string }, params: RequestParams = {}) =>
       this.request<any, CacheNamesResponse>({
         path: `/cache/v1/list`,
         method: "GET",
@@ -4783,7 +4783,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/config/v1/clusterProperties/{propertyName}/yamlOverrideValue/{nodeName}
      * @secure
      */
-    getConfigYamlValueByNodeAndName: (propertyName: string, nodeName: string, params: RequestParams = {}) =>
+    getConfigYamlValueByNodeAndName: (
+      propertyName: string,
+      memberUuid: string,
+      nodeName: string,
+      params: RequestParams = {},
+    ) =>
       this.request<any, OverrideValueString>({
         path: `/config/v1/clusterProperties/${propertyName}/yamlOverrideValue/${nodeName}`,
         method: "GET",
@@ -4817,7 +4822,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/config/v1/nodeProperties/{nodeName}
      * @secure
      */
-    listConfigPropertiesByNode: (nodeName: string, data: GlobalConfigCriteria, params: RequestParams = {}) =>
+    listConfigPropertiesByNode: (
+      memberUuid: string,
+      nodeName: string,
+      data: GlobalConfigCriteria,
+      params: RequestParams = {},
+    ) =>
       this.request<any, ListConfigResponse>({
         path: `/config/v1/nodeProperties/${nodeName}`,
         method: "POST",
@@ -5506,7 +5516,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request PUT:/entityEvent/v1/{nodeName}
      * @secure
      */
-    fireEntityEvent: (nodeName: string, data: EntityEvent, params: RequestParams = {}) =>
+    fireEntityEvent: (memberUuid: string, nodeName: string, data: EntityEvent, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/entityEvent/v1/${nodeName}`,
         method: "PUT",
@@ -5916,7 +5926,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/index/v2/shard/delete
      * @secure
      */
-    deleteIndexShards: (data: FindIndexShardCriteria, query?: { nodeName?: string }, params: RequestParams = {}) =>
+    deleteIndexShards: (data: FindIndexShardCriteria, query?: { memberUuid?: string }, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/index/v2/shard/delete`,
         method: "POST",
@@ -5955,7 +5965,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/index/v2/shard/flush
      * @secure
      */
-    flushIndexShards: (data: FindIndexShardCriteria, query?: { nodeName?: string }, params: RequestParams = {}) =>
+    flushIndexShards: (data: FindIndexShardCriteria, query?: { memberUuid?: string }, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/index/v2/shard/flush`,
         method: "POST",
@@ -6049,7 +6059,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request DELETE:/index/volume/v2/rescan
      * @secure
      */
-    rescanIndexVolumes: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+    rescanIndexVolumes: (query?: { memberUuid?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/index/volume/v2/rescan`,
         method: "DELETE",
@@ -6268,7 +6278,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/jobNode/v1
      * @secure
      */
-    listJobsNodes: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
+    listJobsNodes: (query?: { jobName?: string }, params: RequestParams = {}) =>
       this.request<any, ResultPageJobNode>({
         path: `/jobNode/v1`,
         method: "GET",
@@ -6580,7 +6590,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request PUT:/node/v1/enabled/{nodeName}
      * @secure
      */
-    setNodeEnabled: (nodeName: string, data: boolean, params: RequestParams = {}) =>
+    setNodeEnabled: (memberUuid: string, nodeName: string, data: boolean, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/node/v1/enabled/${nodeName}`,
         method: "PUT",
@@ -6599,7 +6609,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/node/v1/info/{nodeName}
      * @secure
      */
-    fetchNodeInfo: (nodeName: string, params: RequestParams = {}) =>
+    fetchNodeInfo: (memberUuid: string, nodeName: string, params: RequestParams = {}) =>
       this.request<any, ClusterNodeInfo>({
         path: `/node/v1/info/${nodeName}`,
         method: "GET",
@@ -6616,7 +6626,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/node/v1/ping/{nodeName}
      * @secure
      */
-    pingNode: (nodeName: string, params: RequestParams = {}) =>
+    pingNode: (memberUuid: string, nodeName: string, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/node/v1/ping/${nodeName}`,
         method: "GET",
@@ -6633,7 +6643,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request PUT:/node/v1/priority/{nodeName}
      * @secure
      */
-    setNodePriority: (nodeName: string, data: number, params: RequestParams = {}) =>
+    setNodePriority: (memberUuid: string, nodeName: string, data: number, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/node/v1/priority/${nodeName}`,
         method: "PUT",
@@ -6806,7 +6816,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/permission/changeEvent/v1/fireChange/{nodeName}
      * @secure
      */
-    firePermissionChangeEvent: (nodeName: string, data: PermissionChangeRequest, params: RequestParams = {}) =>
+    firePermissionChangeEvent: (
+      memberUuid: string,
+      nodeName: string,
+      data: PermissionChangeRequest,
+      params: RequestParams = {},
+    ) =>
       this.request<any, boolean>({
         path: `/permission/changeEvent/v1/fireChange/${nodeName}`,
         method: "POST",
@@ -7325,7 +7340,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/processorTask/v1/abandon/{nodeName}
      * @secure
      */
-    abandonProcessorTasks: (nodeName: string, data: ProcessorTaskList, params: RequestParams = {}) =>
+    abandonProcessorTasks: (
+      memberUuid: string,
+      nodeName: string,
+      data: ProcessorTaskList,
+      params: RequestParams = {},
+    ) =>
       this.request<any, boolean>({
         path: `/processorTask/v1/abandon/${nodeName}`,
         method: "POST",
@@ -7344,7 +7364,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/processorTask/v1/assign/{nodeName}
      * @secure
      */
-    assignProcessorTasks: (nodeName: string, data: AssignTasksRequest, params: RequestParams = {}) =>
+    assignProcessorTasks: (
+      memberUuid: string,
+      nodeName: string,
+      data: AssignTasksRequest,
+      params: RequestParams = {},
+    ) =>
       this.request<any, ProcessorTaskList>({
         path: `/processorTask/v1/assign/${nodeName}`,
         method: "POST",
@@ -7402,7 +7427,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request DELETE:/refData/v1/clearBufferPool
      * @secure
      */
-    clearBufferPool: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+    clearBufferPool: (query?: { memberUuid?: string }, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/refData/v1/clearBufferPool`,
         method: "DELETE",
@@ -7460,7 +7485,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request DELETE:/refData/v1/purgeByAge/{purgeAge}
      * @secure
      */
-    purgeReferenceDataByAge: (purgeAge: string, query?: { nodeName?: string }, params: RequestParams = {}) =>
+    purgeReferenceDataByAge: (purgeAge: string, query?: { memberUuid?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/refData/v1/purgeByAge/${purgeAge}`,
         method: "DELETE",
@@ -7478,7 +7503,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request DELETE:/refData/v1/purgeByStream/{refStreamId}
      * @secure
      */
-    purgeReferenceDataByStream: (refStreamId: number, query?: { nodeName?: string }, params: RequestParams = {}) =>
+    purgeReferenceDataByStream: (refStreamId: number, query?: { memberUuid?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/refData/v1/purgeByStream/${refStreamId}`,
         method: "DELETE",
@@ -7819,7 +7844,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/session/v1/list
      * @secure
      */
-    listSessions: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+    listSessions: (query?: { memberUuid?: string }, params: RequestParams = {}) =>
       this.request<any, SessionListResponse>({
         path: `/session/v1/list`,
         method: "GET",
@@ -8706,7 +8731,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/task/v1/find/{nodeName}
      * @secure
      */
-    findTasks: (nodeName: string, data: FindTaskProgressRequest, params: RequestParams = {}) =>
+    findTasks: (memberUuid: string, nodeName: string, data: FindTaskProgressRequest, params: RequestParams = {}) =>
       this.request<any, TaskProgressResponse>({
         path: `/task/v1/find/${nodeName}`,
         method: "POST",
@@ -8725,7 +8750,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/task/v1/list/{nodeName}
      * @secure
      */
-    listTasks: (nodeName: string, params: RequestParams = {}) =>
+    listTasks: (memberUuid: string, nodeName: string, params: RequestParams = {}) =>
       this.request<any, TaskProgressResponse>({
         path: `/task/v1/list/${nodeName}`,
         method: "GET",
@@ -8742,7 +8767,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/task/v1/terminate/{nodeName}
      * @secure
      */
-    terminateTasks: (nodeName: string, data: TerminateTaskProgressRequest, params: RequestParams = {}) =>
+    terminateTasks: (
+      memberUuid: string,
+      nodeName: string,
+      data: TerminateTaskProgressRequest,
+      params: RequestParams = {},
+    ) =>
       this.request<any, boolean>({
         path: `/task/v1/terminate/${nodeName}`,
         method: "POST",
@@ -8761,7 +8791,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/task/v1/user/{nodeName}
      * @secure
      */
-    listUserTasks: (nodeName: string, params: RequestParams = {}) =>
+    listUserTasks: (memberUuid: string, nodeName: string, params: RequestParams = {}) =>
       this.request<any, TaskProgressResponse>({
         path: `/task/v1/user/${nodeName}`,
         method: "GET",

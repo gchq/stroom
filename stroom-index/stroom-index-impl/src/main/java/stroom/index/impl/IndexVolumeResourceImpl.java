@@ -1,7 +1,7 @@
 package stroom.index.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.EndpointUrlService;
-import stroom.cluster.api.RemoteRestService;
 import stroom.cluster.api.RemoteRestUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -64,22 +64,23 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
     }
 
     @Override
-    public Boolean rescan(final String nodeName) {
-        RestUtil.requireNonNull(nodeName, "nodeName not supplied");
+    public Boolean rescan(final String memberUuid) {
+        RestUtil.requireNonNull(memberUuid, "memberUuid not supplied");
+        final ClusterMember member = new ClusterMember(memberUuid);
 
         // If this is the node that was contacted then just resolve it locally
         final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
-        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
+        if (endpointUrlService.shouldExecuteLocally(member)) {
             indexVolumeServiceProvider.get().rescan();
         } else {
-            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
+            final String url = endpointUrlService.getRemoteEndpointUrl(member)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     IndexVolumeResource.BASE_PATH,
                     IndexVolumeResource.RESCAN_SUB_PATH);
             try {
                 // A different node to make a rest call to the required node
                 WebTarget webTarget = webTargetFactoryProvider.get().create(url);
-                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                webTarget = UriBuilderUtil.addParam(webTarget, "memberUuid", memberUuid);
                 final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get();
@@ -91,7 +92,7 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
 
                 return response.readEntity(Boolean.class);
             } catch (final Throwable e) {
-                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptions(member, url, e);
             }
         }
 

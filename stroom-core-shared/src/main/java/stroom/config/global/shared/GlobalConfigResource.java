@@ -65,7 +65,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             summary = "List all properties matching the criteria on the requested node.",
             operationId = "listConfigPropertiesByNode")
     ListConfigResponse listByNode(
-            @PathParam("nodeName") final String nodeName,
+            @PathParam("memberUuid") String memberUuid,
             @Parameter(description = "criteria", required = true) final GlobalConfigCriteria criteria);
 
     @GET
@@ -81,7 +81,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             summary = "Get the property value from the YAML configuration in the specified node.",
             operationId = "getConfigYamlValueByNodeAndName")
     OverrideValue<String> getYamlValueByNodeAndName(@PathParam("propertyName") final String propertyName,
-                                                    @PathParam("nodeName") final String nodeName);
+                                                    @PathParam("memberUuid") String memberUuid);
 
     @POST
     @Operation(

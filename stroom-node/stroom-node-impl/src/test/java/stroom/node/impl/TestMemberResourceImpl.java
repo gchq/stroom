@@ -2,17 +2,15 @@ package stroom.node.impl;
 
 import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
-import stroom.cluster.api.NodeInfo;
 import stroom.cluster.api.RemoteRestService;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.node.api.ClusterState;
-import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.test.common.util.test.MockClusterService;
 import stroom.test.common.util.test.MockEndpointUrlService;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
@@ -31,18 +29,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
-class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
+class TestMemberResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
     private final Map<String, ClusterNodeInfo> expectedClusterNodeInfoMap = new HashMap<>();
     private final Map<String, NodeServiceImpl> nodeServiceMap = new HashMap<>();
 
     private static final int BASE_PORT = 7040;
 
-    public TestNodeResourceImpl() {
+    public TestMemberResourceImpl() {
         super(createNodeList(BASE_PORT));
     }
 
@@ -56,8 +53,8 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
                 .map(testNode -> {
                     Node node2 = new Node();
                     node2.setEnabled(testNode.isEnabled());
-                    node2.setName(testNode.getNodeName());
-                    return new NodeStatusResult(node2, testNode.getNodeName().equals("node1"));
+                    node2.setName(testNode.getUuid());
+                    return new NodeStatusResult(node2, testNode.getUuid().equals("node1"));
                 })
                 .collect(FetchNodeStatusResponse.collector(FetchNodeStatusResponse::new));
 
@@ -276,14 +273,13 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
     }
 
     @Override
-    public NodeResource getRestResource(final TestNode node,
-                                        final List<TestNode> allNodes,
-                                        final Map<String, String> baseEndPointUrls) {
+    public NodeResource getRestResource(final TestMember local,
+                                        final List<TestMember> members) {
         // Set up the NodeService mock
-        final NodeServiceImpl nodeService = createNamedMock(NodeServiceImpl.class, node);
-        final ClusterService clusterService = createNamedMock(ClusterService.class, node);
-        final EndpointUrlService endpointUrlService = new MockEndpointUrlService(node, allNodes, baseEndPointUrls);
-        final RemoteRestService remoteRestService = createNamedMock(RemoteRestService.class, node);
+        final NodeServiceImpl nodeService = createNamedMock(NodeServiceImpl.class, local);
+        final ClusterService clusterService = new MockClusterService(local, members);
+        final EndpointUrlService endpointUrlService = new MockEndpointUrlService(local, members);
+        final RemoteRestService remoteRestService = createNamedMock(RemoteRestService.class, local);
 
 //        when(nodeService.isEnabled(Mockito.anyString()))
 //                .thenAnswer(invocation ->
@@ -295,11 +291,11 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 //                .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
 
         when(nodeService.find(Mockito.any(FindNodeCriteria.class)))
-                .thenReturn(allNodes.stream()
+                .thenReturn(members.stream()
                         .map(testNode -> {
                             Node node2 = new Node();
                             node2.setEnabled(testNode.isEnabled());
-                            node2.setName(testNode.getNodeName());
+                            node2.setName(testNode.getUuid());
                             return node2;
                         })
                         .collect(ResultPage.collector(ResultPage::new)));
@@ -312,18 +308,18 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
                     return node2;
                 });
 
-        nodeServiceMap.put(node.getNodeName(), nodeService);
+        nodeServiceMap.put(local.getUuid(), nodeService);
 
         // Set up the NodeInfo mock
 
-        final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, node);
-
-        when(nodeInfo.getThisNodeName())
-                .thenReturn(node.getNodeName());
+//        final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, local);
+//
+//        when(nodeInfo.getThisNodeName())
+//                .thenReturn(node.getNodeName());
 
         // Set up the ClusterNodeManager mock
 
-        final ClusterNodeManager clusterNodeManager = createNamedMock(ClusterNodeManager.class, node);
+        final ClusterNodeManager clusterNodeManager = createNamedMock(ClusterNodeManager.class, local);
 
         final long now = System.currentTimeMillis();
         ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(
@@ -332,20 +328,20 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
                         now,
                         "v1.1",
                         now),
-                node.getNodeName(),
-                getBaseEndPointUrl(node));
+                local.getUuid(),
+                local.getEndpointUrl());
 
-        expectedClusterNodeInfoMap.put(node.getNodeName(), clusterNodeInfo);
+        expectedClusterNodeInfoMap.put(local.getUuid(), clusterNodeInfo);
 
         when(clusterNodeManager.getClusterNodeInfo())
                 .thenReturn(clusterNodeInfo);
 
-        final ClusterState clusterState = buildClusterState(allNodes);
+        final ClusterState clusterState = buildClusterState(members);
 
         when(clusterNodeManager.getClusterState())
                 .thenReturn(clusterState);
 
-        final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, node);
+        final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, local);
 
         return new NodeResourceImpl(
                 () -> nodeService,
@@ -356,14 +352,14 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
                 () -> documentEventLog);
     }
 
-    private ClusterState buildClusterState(final List<TestNode> allNodes) {
+    private ClusterState buildClusterState(final List<TestMember> allNodes) {
         final ClusterState clusterState = new ClusterState();
         clusterState.setAllNodes(allNodes.stream()
-                .map(TestNode::getNodeName)
+                .map(TestMember::getUuid)
                 .collect(Collectors.toSet()));
         clusterState.setEnabledNodes(allNodes.stream()
-                .filter(TestNode::isEnabled)
-                .map(TestNode::getNodeName)
+                .filter(TestMember::isEnabled)
+                .map(TestMember::getUuid)
                 .collect(Collectors.toSet()));
         clusterState.setMasterNodeName("node1");
         clusterState.setUpdateTime(Instant.now().toEpochMilli());

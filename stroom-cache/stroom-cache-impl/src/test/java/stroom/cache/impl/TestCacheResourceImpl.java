@@ -5,8 +5,11 @@ import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
+import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
+import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.test.common.util.test.MockClusterService;
 import stroom.test.common.util.test.MockEndpointUrlService;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.ResourcePaths;
@@ -45,19 +48,19 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
     }
 
     @Override
-    public CacheResource getRestResource(final TestNode node,
-                                         final List<TestNode> allNodes,
-                                         final Map<String, String> baseEndPointUrls) {
+    public CacheResource getRestResource(final TestMember local,
+                                         final List<TestMember> members) {
 
         // Set up the NodeService mock
-        final EndpointUrlService endpointUrlService = new MockEndpointUrlService(node, allNodes, baseEndPointUrls);
+        final EndpointUrlService endpointUrlService = new MockEndpointUrlService(local, members);
 
         // Set up the CacheManagerService mock
 
         final CacheManagerService cacheManagerService = Mockito.mock(CacheManagerService.class,
-                CacheManagerService.class.getName() + "_" + node.getNodeName());
+                CacheManagerService.class.getName() + "_" + local.getUuid());
+        final ClusterService clusterService = new MockClusterService(local, members);
 
-        cacheManagerServiceMocks.put(node.getNodeName(), cacheManagerService);
+        cacheManagerServiceMocks.put(local.getUuid(), cacheManagerService);
 
         when(cacheManagerService.getCacheNames())
                 .thenReturn(List.of("cache1", "cache2"));
@@ -68,11 +71,11 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                     if (criteria.getName().isConstrained()) {
                         return List.of(new CacheInfo(criteria.getName().getString(),
                                 Collections.emptyMap(),
-                                node.getNodeName()));
+                                local.getUuid()));
                     } else {
                         return List.of(
-                                new CacheInfo("cache1", Collections.emptyMap(), node.getNodeName()),
-                                new CacheInfo("cache2", Collections.emptyMap(), node.getNodeName()));
+                                new CacheInfo("cache1", Collections.emptyMap(), local.getUuid()),
+                                new CacheInfo("cache2", Collections.emptyMap(), local.getUuid()));
                     }
                 });
 
@@ -82,7 +85,8 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 () -> endpointUrlService,
                 AbstractMultiNodeResourceTest::webTargetFactory,
                 () -> cacheManagerService,
-                null);
+                SimpleTaskContextFactory::new,
+                () -> clusterService);
     }
 
     @Test
@@ -101,7 +105,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 subPath,
                 CacheNamesResponse.class,
                 expectedResponse,
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "memberUuid", "node1"));
     }
 
     @Test
@@ -120,7 +124,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 subPath,
                 CacheNamesResponse.class,
                 expectedResponse,
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node2"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "memberUuid", "node2"));
     }
 
     @Test
@@ -142,7 +146,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 CacheInfoResponse.class,
                 expectedResponse,
                 webTarget -> UriBuilderUtil.addParam(webTarget, "cacheName", "cache1"),
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "memberUuid", "node1"));
     }
 
     @Test
@@ -164,7 +168,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 CacheInfoResponse.class,
                 expectedResponse,
                 webTarget -> UriBuilderUtil.addParam(webTarget, "cacheName", "cache1"),
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node2"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "memberUuid", "node2"));
     }
 
     @Test
@@ -183,7 +187,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 Long.class,
                 expectedResponse,
                 webTarget -> UriBuilderUtil.addParam(webTarget, "cacheName", "cache1"),
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "memberUuid", "node1"));
 
         verify(cacheManagerServiceMocks.get("node1"))
                 .clear(Mockito.any());
@@ -209,7 +213,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 Long.class,
                 expectedResponse,
                 webTarget -> UriBuilderUtil.addParam(webTarget, "cacheName", "cache1"),
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node2"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "memberUuid", "node2"));
 
         verify(cacheManagerServiceMocks.get("node1"), Mockito.never())
                 .clear(Mockito.any());

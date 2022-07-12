@@ -17,6 +17,7 @@
 
 package stroom.search.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
 import stroom.cluster.task.api.ClusterTaskTerminator;
@@ -93,7 +94,7 @@ class AsyncSearchTaskHandler {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
             if (!parentContext.isTerminated()) {
-                final String local = clusterService.getLocal();
+                final ClusterMember local = clusterService.getLocal();
                 final Map<String, List<Long>> shardMap = new HashMap<>();
 
                 // Create an async call that will terminate the whole task if the coprocessors decide they have enough
@@ -104,7 +105,7 @@ class AsyncSearchTaskHandler {
                 try {
                     // Get the nodes that we are going to send the search request
                     // to.
-                    final Set<String> targetNodes = clusterService.getMembers();
+                    final Set<ClusterMember> members = clusterService.getMembers();
                     parentContext.info(task::getSearchName);
                     final Query query = task.getQuery();
 
@@ -121,7 +122,9 @@ class AsyncSearchTaskHandler {
                     // Build a map of nodes that will deal with each set of shards.
                     for (final IndexShard indexShard : indexShards.getValues()) {
                         if (IndexShardStatus.CORRUPT.equals(indexShard.getStatus())) {
-                            resultCollector.onFailure(indexShard.getNodeName(),
+                            final ClusterMember member =
+                                    clusterService.getMemberForOldNodeName(indexShard.getNodeName());
+                            resultCollector.onFailure(member,
                                     new SearchException("Attempt to search an index shard marked as corrupt: id=" +
                                             indexShard.getId() +
                                             "."));
@@ -136,20 +139,21 @@ class AsyncSearchTaskHandler {
                     final List<CompletableFuture<Void>> futures = new ArrayList<>();
                     for (final Entry<String, List<Long>> entry : shardMap.entrySet()) {
                         final String nodeName = entry.getKey();
+                        final ClusterMember member = clusterService.getMemberForOldNodeName(nodeName);
                         final List<Long> shards = entry.getValue();
-                        if (targetNodes.contains(nodeName)) {
+                        if (members.contains(member)) {
                             final Runnable runnable = taskContextFactory.childContext(
                                     parentContext,
                                     "Search node: " + nodeName,
                                     taskContext -> {
                                         final NodeSearch nodeSearch;
-                                        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
+                                        if (endpointUrlService.shouldExecuteLocally(member)) {
                                             nodeSearch = localNodeSearchProvider.get();
                                         } else {
                                             nodeSearch = remoteNodeSearchProvider.get();
                                         }
                                         nodeSearch.searchNode(local,
-                                                nodeName,
+                                                member,
                                                 shards,
                                                 task,
                                                 query,
@@ -159,7 +163,7 @@ class AsyncSearchTaskHandler {
                                     executor);
                             futures.add(completableFuture);
                         } else {
-                            resultCollector.onFailure(nodeName,
+                            resultCollector.onFailure(member,
                                     new SearchException(
                                             "Node is not enabled or active. Some search results may be missing."));
                         }

@@ -18,11 +18,11 @@
 package stroom.job.impl;
 
 import stroom.cluster.api.ClusterService;
-import stroom.cluster.api.NodeInfo;
 import stroom.job.api.ScheduledJob;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
+import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;

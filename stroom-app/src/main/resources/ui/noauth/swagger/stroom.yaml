@@ -890,7 +890,7 @@ paths:
         schema:
           type: string
       - in: query
-        name: nodeName
+        name: memberUuid
         schema:
           type: string
       responses:
@@ -913,7 +913,7 @@ paths:
         schema:
           type: string
       - in: query
-        name: nodeName
+        name: memberUuid
         schema:
           type: string
       responses:
@@ -931,7 +931,7 @@ paths:
       operationId: listCaches
       parameters:
       - in: query
-        name: nodeName
+        name: memberUuid
         schema:
           type: string
       responses:
@@ -1000,7 +1000,7 @@ paths:
         schema:
           type: string
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -1033,7 +1033,7 @@ paths:
       operationId: listConfigPropertiesByNode
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -1780,7 +1780,7 @@ paths:
       operationId: fireEntityEvent
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -2214,7 +2214,7 @@ paths:
       operationId: deleteIndexShards
       parameters:
       - in: query
-        name: nodeName
+        name: memberUuid
         schema:
           type: string
       requestBody:
@@ -2260,7 +2260,7 @@ paths:
       operationId: flushIndexShards
       parameters:
       - in: query
-        name: nodeName
+        name: memberUuid
         schema:
           type: string
       requestBody:
@@ -2370,7 +2370,7 @@ paths:
       operationId: rescanIndexVolumes
       parameters:
       - in: query
-        name: nodeName
+        name: memberUuid
         schema:
           type: string
       responses:
@@ -2623,10 +2623,6 @@ paths:
       parameters:
       - in: query
         name: jobName
-        schema:
-          type: string
-      - in: query
-        name: nodeName
         schema:
           type: string
       responses:
@@ -2963,7 +2959,7 @@ paths:
       operationId: setNodeEnabled
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -2989,7 +2985,7 @@ paths:
       operationId: fetchNodeInfo
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -3008,7 +3004,7 @@ paths:
       operationId: pingNode
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -3028,7 +3024,7 @@ paths:
       operationId: setNodePriority
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -3215,7 +3211,7 @@ paths:
       operationId: firePermissionChangeEvent
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -3786,7 +3782,7 @@ paths:
       operationId: abandonProcessorTasks
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -3812,7 +3808,7 @@ paths:
       operationId: assignProcessorTasks
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -3878,7 +3874,7 @@ paths:
       operationId: clearBufferPool
       parameters:
       - in: query
-        name: nodeName
+        name: memberUuid
         schema:
           type: string
       responses:
@@ -3954,7 +3950,7 @@ paths:
         schema:
           type: string
       - in: query
-        name: nodeName
+        name: memberUuid
         schema:
           type: string
       responses:
@@ -3980,7 +3976,7 @@ paths:
           format: int64
           minimum: 1
       - in: query
-        name: nodeName
+        name: memberUuid
         schema:
           type: string
       responses:
@@ -4351,7 +4347,7 @@ paths:
       operationId: listSessions
       parameters:
       - in: query
-        name: nodeName
+        name: memberUuid
         schema:
           type: string
       responses:
@@ -5295,7 +5291,7 @@ paths:
       operationId: findTasks
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -5321,7 +5317,7 @@ paths:
       operationId: listTasks
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -5340,7 +5336,7 @@ paths:
       operationId: terminateTasks
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -5366,7 +5362,7 @@ paths:
       operationId: listUserTasks
       parameters:
       - in: path
-        name: nodeName
+        name: memberUuid
         required: true
         schema:
           type: string
@@ -6323,7 +6319,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ClusterNodeInfoItem'
-        nodeName:
+        memberUuid:
           type: string
         ping:
           type: integer

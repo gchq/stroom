@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.cluster.impl;
+package stroom.node.impl;
 
-import stroom.cluster.api.NodeInfo;
+import stroom.node.api.NodeInfo;
 
 import javax.inject.Inject;
 
 class NodeInfoImpl implements NodeInfo {
 
-    private final ClusterConfig clusterConfig;
+    private final NodeConfig nodeConfig;
 
     @Inject
-    NodeInfoImpl(final ClusterConfig clusterConfig) {
-        this.clusterConfig = clusterConfig;
+    NodeInfoImpl(final NodeConfig nodeConfig) {
+        this.nodeConfig = nodeConfig;
     }
 
     @Override
     public String getThisNodeName() {
-        return clusterConfig.getNodeName();
+        return nodeConfig.getNodeName();
     }
 }

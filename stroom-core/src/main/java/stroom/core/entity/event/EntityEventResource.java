@@ -45,6 +45,6 @@ public interface EntityEventResource extends RestResource {
     @Operation(
             summary = "Sends an entity event",
             operationId = "fireEntityEvent")
-    Boolean fireEvent(@PathParam("nodeName") String nodeName,
+    Boolean fireEvent(@PathParam("memberUuid") String memberUuid,
                       @Parameter(description = "entityevent", required = true) EntityEvent entityEvent);
 }

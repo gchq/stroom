@@ -51,7 +51,7 @@ public interface NodeResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Gets detailed information about a node",
             operationId = "fetchNodeInfo")
-    ClusterNodeInfo info(@PathParam("nodeName") String nodeName);
+    ClusterNodeInfo info(@PathParam("memberUuid") String memberUuid);
 
     @GET
     @Path("/all")
@@ -78,14 +78,14 @@ public interface NodeResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Gets a ping time for a node",
             operationId = "pingNode")
-    Long ping(@PathParam("nodeName") String nodeName);
+    Long ping(@PathParam("memberUuid") String memberUuid);
 
     @PUT
     @Path(PRIORITY_PATH_PART + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Sets the priority of a node",
             operationId = "setNodePriority")
-    boolean setPriority(@PathParam("nodeName") String nodeName,
+    boolean setPriority(@PathParam("memberUuid") String memberUuid,
                         @Parameter(description = "nodeName", required = true) Integer priority);
 
     @PUT
@@ -93,6 +93,6 @@ public interface NodeResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Sets whether a node is enabled",
             operationId = "setNodeEnabled")
-    boolean setEnabled(@PathParam("nodeName") String nodeName,
+    boolean setEnabled(@PathParam("memberUuid") String memberUuid,
                        @Parameter(description = "enabled", required = true) Boolean enabled);
 }

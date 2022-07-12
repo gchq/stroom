@@ -16,16 +16,14 @@
 
 package stroom.node.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
-import stroom.cluster.api.NodeInfo;
-import stroom.node.api.ClusterState;
-import stroom.node.api.FindNodeCriteria;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;
 import stroom.util.shared.BuildInfo;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -66,6 +64,23 @@ public class ClusterNodeManager {
         return getQuickClusterState();
     }
 
+    public List<String> listAllNodes() {
+        return nodeDao
+                .find(new FindNodeCriteria())
+                .getValues()
+                .stream()
+                .map(Node::getName)
+                .collect(Collectors.toList());
+    }
+
+    public List<String> listEnabledNodes() {
+        final List<String> all = listAllNodes();
+        return all
+                .stream()
+                .filter(oldNodeName -> clusterService.getOptionalMemberForOldNodeName(oldNodeName).isPresent())
+                .collect(Collectors.toList());
+    }
+
     /**
      * Gets the current cluster state or builds a new cluster state if no
      * current state exists but without locking. This method is quick as either
@@ -83,10 +98,7 @@ public class ClusterNodeManager {
                 .collect(Collectors.toList());
         final ClusterState clusterState = new ClusterState();
         clusterState.setAllNodes(allNodeNames);
-        final Collection<String> enabledNodes = clusterService.getMembers();
-        clusterState.setEnabledNodes(enabledNodes);
-        clusterState.setMasterNodeName(clusterService.getLeader());
-        clusterState.setEnabledNodes(clusterService.getMembers());
+        clusterState.setEnabledNodes(listEnabledNodes());
 
         clusterState.setUpdateTime(System.currentTimeMillis());
         return clusterState;
@@ -96,13 +108,13 @@ public class ClusterNodeManager {
         final ClusterState clusterState = getQuickClusterState();
 
         // Take a copy of our working variables;
-        final String thisNodeName = nodeInfo.getThisNodeName();
+        final ClusterMember local = clusterService.getLocal();
         final String masterNodeName = clusterState.getMasterNodeName();
 
         final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(clusterState.getUpdateTime(),
                 buildInfo,
-                thisNodeName,
-                endpointUrlService.getBaseEndpointUrl(thisNodeName));
+                local.toString(),
+                endpointUrlService.getBaseEndpointUrl(local));
 
         if (masterNodeName != null) {
             for (final String nodeName : clusterState.getAllNodes()) {

@@ -35,7 +35,7 @@ public class ClusterNodeInfo {
     @JsonProperty
     private BuildInfo buildInfo;
     @JsonProperty
-    private String nodeName;
+    private String memberUuid;
     @JsonProperty
     private String endpointUrl;
     @JsonProperty
@@ -50,25 +50,25 @@ public class ClusterNodeInfo {
 
     public ClusterNodeInfo(final long discoverTime,
                            final BuildInfo buildInfo,
-                           final String nodeName,
+                           final String memberUuid,
                            final String endpointUrl) {
         this.discoverTime = discoverTime;
         this.buildInfo = buildInfo;
-        this.nodeName = nodeName;
+        this.memberUuid = memberUuid;
         this.endpointUrl = endpointUrl;
     }
 
     @JsonCreator
     public ClusterNodeInfo(@JsonProperty("discoverTime") final long discoverTime,
                            @JsonProperty("buildInfo") final BuildInfo buildInfo,
-                           @JsonProperty("nodeName") final String nodeName,
+                           @JsonProperty("memberUuid") final String memberUuid,
                            @JsonProperty("endpointUrl") final String endpointUrl,
                            @JsonProperty("itemList") final List<ClusterNodeInfoItem> itemList,
                            @JsonProperty("ping") final Long ping,
                            @JsonProperty("error") final String error) {
         this.discoverTime = discoverTime;
         this.buildInfo = buildInfo;
-        this.nodeName = nodeName;
+        this.memberUuid = memberUuid;
         this.endpointUrl = endpointUrl;
         this.itemList = itemList;
         this.ping = ping;
@@ -98,12 +98,12 @@ public class ClusterNodeInfo {
         this.buildInfo = buildInfo;
     }
 
-    public String getNodeName() {
-        return nodeName;
+    public String getMemberUuid() {
+        return memberUuid;
     }
 
-    public void setNodeName(final String nodeName) {
-        this.nodeName = nodeName;
+    public void setMemberUuid(final String memberUuid) {
+        this.memberUuid = memberUuid;
     }
 
     public String getEndpointUrl() {
@@ -149,7 +149,7 @@ public class ClusterNodeInfo {
         final ClusterNodeInfo that = (ClusterNodeInfo) o;
         return Objects.equals(discoverTime, that.discoverTime) &&
                 Objects.equals(buildInfo, that.buildInfo) &&
-                Objects.equals(nodeName, that.nodeName) &&
+                Objects.equals(memberUuid, that.memberUuid) &&
                 Objects.equals(endpointUrl, that.endpointUrl) &&
                 Objects.equals(itemList, that.itemList) &&
                 Objects.equals(ping, that.ping) &&
@@ -161,7 +161,7 @@ public class ClusterNodeInfo {
         return "ClusterNodeInfo{" +
                 "discoverTime='" + discoverTime + '\'' +
                 ", buildInfo=" + buildInfo +
-                ", nodeName='" + nodeName + '\'' +
+                ", nodeName='" + memberUuid + '\'' +
                 ", endpointUrl='" + endpointUrl + '\'' +
                 ", itemList=" + itemList +
                 ", ping=" + ping +
@@ -171,7 +171,7 @@ public class ClusterNodeInfo {
 
     @Override
     public int hashCode() {
-        return Objects.hash(discoverTime, buildInfo, nodeName, endpointUrl, itemList, ping, error);
+        return Objects.hash(discoverTime, buildInfo, memberUuid, endpointUrl, itemList, ping, error);
     }
 
     @JsonInclude(Include.NON_NULL)

@@ -1,6 +1,5 @@
 package stroom.task.impl;
 
-import stroom.cluster.api.NodeInfo;
 import stroom.cluster.api.RemoteRestService;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.task.shared.FindTaskCriteria;
@@ -15,15 +14,12 @@ import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResourcePaths;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,8 +29,8 @@ import static org.mockito.Mockito.when;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
-    private final Map<String, TaskManagerImpl> taskManagerMap = new HashMap<>();
-    private final Map<String, DocumentEventLog> documentEventLogMap = new HashMap<>();
+//    private final Map<String, TaskManagerImpl> taskManagerMap = new HashMap<>();
+//    private final Map<String, DocumentEventLog> documentEventLogMap = new HashMap<>();
 
     private static final int BASE_PORT = 7050;
 
@@ -42,11 +38,11 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         super(createNodeList(BASE_PORT));
     }
 
-    @BeforeEach
-    void setUp() {
-        taskManagerMap.clear();
-        documentEventLogMap.clear();
-    }
+//    @BeforeEach
+//    void setUp() {
+//        taskManagerMap.clear();
+//        documentEventLogMap.clear();
+//    }
 
     @Disabled // TODO @AT Need to rework this after the remote rest stuff was moved to NodeService
     @Test
@@ -247,22 +243,21 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
     }
 
     @Override
-    public TaskResource getRestResource(final TestNode node,
-                                        final List<TestNode> allNodes,
-                                        final Map<String, String> baseEndPointUrls) {
+    public TaskResource getRestResource(final TestMember local,
+                                        final List<TestMember> members) {
 
-        final TaskManagerImpl taskManager = createNamedMock(TaskManagerImpl.class, node);
+        final TaskManagerImpl taskManager = createNamedMock(TaskManagerImpl.class, local);
 
         when(taskManager.find(any()))
-                .thenReturn(buildTaskProgressResponse(node.getNodeName()));
+                .thenReturn(buildTaskProgressResponse(local.getUuid()));
 
-        final SessionIdProvider sessionIdProvider = createNamedMock(SessionIdProvider.class, node);
+        final SessionIdProvider sessionIdProvider = createNamedMock(SessionIdProvider.class, local);
 
         when(sessionIdProvider.get())
                 .thenReturn(UUID.randomUUID().toString());
 
         // Set up the NodeService mock
-        final RemoteRestService remoteRestService = createNamedMock(RemoteRestService.class, node);
+        final RemoteRestService remoteRestService = createNamedMock(RemoteRestService.class, local);
 
 //        when(nodeService.isEnabled(Mockito.anyString()))
 //                .then(invocation ->
@@ -275,14 +270,14 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
         // Set up the NodeInfo mock
 
-        final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, node);
+//        final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, node);
+//
+//        when(nodeInfo.getThisNodeName())
+//                .thenReturn(node.getNodeName());
 
-        when(nodeInfo.getThisNodeName())
-                .thenReturn(node.getNodeName());
+        final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, local);
 
-        final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, node);
-
-        documentEventLogMap.put(node.getNodeName(), documentEventLog);
+//        documentEventLogMap.put(node.getNodeName(), documentEventLog);
 
         return new TaskResourceImpl(
                 () -> taskManager,

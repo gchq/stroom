@@ -16,8 +16,8 @@
 
 package stroom.processor.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.ClusterService;
-import stroom.cluster.api.NodeInfo;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryDescription;
@@ -49,26 +49,23 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     private final ClusterService clusterService;
     private final ProcessorTaskResource processorTaskResource;
     private final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider;
-    private final NodeInfo nodeInfo;
 
     @Inject
     DataProcessorTaskFactory(final ClusterService clusterService,
                              final ProcessorTaskResource processorTaskResource,
-                             final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider,
-                             final NodeInfo nodeInfo) {
+                             final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider) {
         this.clusterService = clusterService;
         this.processorTaskResource = processorTaskResource;
         this.dataProcessorTaskHandlerProvider = dataProcessorTaskHandlerProvider;
-        this.nodeInfo = nodeInfo;
     }
 
     @Override
     public List<DistributedTask> fetch(final String nodeName, final int count) {
         try {
-            final String leader = clusterService.getLeader();
+            final ClusterMember leader = clusterService.getLeader();
             LOGGER.debug("masterNode: {}", leader);
             final ProcessorTaskList processorTaskList = processorTaskResource
-                    .assignTasks(leader, new AssignTasksRequest(nodeName, count));
+                    .assignTasks(leader.getUuid(), new AssignTasksRequest(nodeName, count));
 
             return processorTaskList
                     .getList()
@@ -95,7 +92,7 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     @Override
     public Boolean abandon(final String nodeName, final List<DistributedTask> tasks) {
         try {
-            final String leader = clusterService.getLeader();
+            final ClusterMember leader = clusterService.getLeader();
 
             final List<ProcessorTask> processorTasks = tasks
                     .stream()
@@ -103,11 +100,11 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
                     .map(DistributedDataProcessorTask::getProcessorTask)
                     .collect(Collectors.toList());
 
-            final ProcessorTaskList processorTaskList = new ProcessorTaskList(nodeInfo.getThisNodeName(),
+            final ProcessorTaskList processorTaskList = new ProcessorTaskList(clusterService.getLocal().getUuid(),
                     processorTasks);
 
             return processorTaskResource
-                    .abandonTasks(leader, processorTaskList);
+                    .abandonTasks(leader.getUuid(), processorTaskList);
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }

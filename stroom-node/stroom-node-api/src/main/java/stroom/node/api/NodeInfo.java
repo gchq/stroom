@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cluster.api;
+package stroom.node.api;
 
 public interface NodeInfo {
 

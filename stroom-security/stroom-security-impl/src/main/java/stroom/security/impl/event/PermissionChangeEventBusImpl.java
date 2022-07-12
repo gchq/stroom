@@ -16,6 +16,7 @@
 
 package stroom.security.impl.event;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.ClusterService;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
@@ -90,15 +91,15 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
         securityContext.secure(() -> {
             try {
                 // Get this node.
-                final String local = clusterService.getLocal();
+                final ClusterMember local = clusterService.getLocal();
 
                 // Get the nodes that we are going to send the entity event to.
-                final Set<String> targetNodes = clusterService.getMembers();
+                final Set<ClusterMember> members = clusterService.getMembers();
 
                 // Only send the event to remote nodes and not this one.
-                targetNodes.stream().filter(targetNode -> !targetNode.equals(local)).forEach(targetNode -> {
+                members.stream().filter(targetNode -> !targetNode.equals(local)).forEach(member -> {
                     // Send the entity event.
-                    permissionChangeResource.fireChange(targetNode, new PermissionChangeRequest(event));
+                    permissionChangeResource.fireChange(member.getUuid(), new PermissionChangeRequest(event));
                 });
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);

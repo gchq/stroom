@@ -16,6 +16,7 @@
 
 package stroom.security.impl.event;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.RemoteRestService;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
@@ -41,14 +42,15 @@ class PermissionChangeResourceImpl implements PermissionChangeResource {
     }
 
     @Override
-    public Boolean fireChange(final String nodeName, final PermissionChangeRequest request) {
+    public Boolean fireChange(final String memberUuid, final PermissionChangeRequest request) {
+        final ClusterMember member = new ClusterMember(memberUuid);
         final Boolean result = remoteRestServiceProvider.get().remoteRestResult(
-                nodeName,
+                member,
                 Boolean.class,
                 () -> ResourcePaths.buildAuthenticatedApiPath(
                         PermissionChangeResource.BASE_PATH,
                         PermissionChangeResource.FIRE_CHANGE_PATH_PART,
-                        nodeName),
+                        memberUuid),
                 () -> {
                     permissionChangeEventHandlersProvider.get().fireLocally(request.getEvent());
                     return true;

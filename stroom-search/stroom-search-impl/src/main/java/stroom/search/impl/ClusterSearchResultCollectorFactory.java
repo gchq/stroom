@@ -16,6 +16,7 @@
 
 package stroom.search.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.query.common.v2.Coprocessors;
 import stroom.task.api.TaskContextFactory;
 
@@ -40,7 +41,7 @@ public class ClusterSearchResultCollectorFactory {
     }
 
     public ClusterSearchResultCollector create(final AsyncSearchTask task,
-                                               final String nodeName,
+                                               final ClusterMember nodeName,
                                                final Set<String> highlights,
                                                final Coprocessors coprocessors) {
         return new ClusterSearchResultCollector(executor,

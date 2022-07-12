@@ -16,6 +16,7 @@
 
 package stroom.node.impl;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
 import stroom.cluster.api.RemoteRestService;
@@ -23,7 +24,6 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.Node;
@@ -35,7 +35,6 @@ import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -73,26 +72,19 @@ class NodeResourceImpl implements NodeResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public List<String> listAllNodes() {
-        FetchNodeStatusResponse response = find();
-        if (response != null && response.getValues() != null) {
-            return response.getValues()
-                    .stream()
-                    .map(NodeStatusResult::getNode)
-                    .map(Node::getName)
-                    .collect(Collectors.toList());
-        }
-        return List.of();
+        return clusterNodeManagerProvider.get().listAllNodes();
     }
 
     @Override
     @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public List<String> listEnabledNodes() {
-        return new ArrayList<>(endpointUrlServiceProvider.get().getNodeNames());
+        return clusterNodeManagerProvider.get().listEnabledNodes();
     }
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public FetchNodeStatusResponse find() {
+        final ClusterService clusterService = clusterServiceProvider.get();
         FetchNodeStatusResponse response = null;
 
         final Query query = Query.builder()
@@ -108,12 +100,17 @@ class NodeResourceImpl implements NodeResource {
                     .find(new FindNodeCriteria())
                     .getValues();
 
-            final String leader = clusterServiceProvider.get().getLeader();
+            final ClusterMember leader = clusterService.getLeader();
 
             final List<NodeStatusResult> resultList = nodes.stream()
                     .sorted(Comparator.comparing(Node::getName))
-                    .map(node ->
-                            new NodeStatusResult(node, node.getName().equals(leader)))
+                    .map(node -> {
+                        final boolean lead = clusterService
+                                .getOptionalMemberForOldNodeName(node.getName())
+                                .map(member -> member.equals(leader))
+                                .orElse(false);
+                        return new NodeStatusResult(node, lead);
+                    })
                     .collect(Collectors.toList());
             response = new FetchNodeStatusResponse(resultList);
 
@@ -139,19 +136,19 @@ class NodeResourceImpl implements NodeResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public ClusterNodeInfo info(final String nodeName) {
-        ClusterNodeInfo clusterNodeInfo;
+        ClusterNodeInfo clusterNodeInfo = null;
 
         final Supplier<String> pathSupplier = () -> ResourcePaths.buildAuthenticatedApiPath(
                 NodeResource.BASE_PATH,
                 NodeResource.INFO_PATH_PART,
                 nodeName);
 
-
         try {
+            final ClusterMember member = clusterServiceProvider.get().getMemberForOldNodeName(nodeName);
             final long now = System.currentTimeMillis();
 
             clusterNodeInfo = remoteRestServiceProvider.get().remoteRestResult(
-                    nodeName,
+                    member,
                     ClusterNodeInfo.class,
                     pathSupplier,
                     () ->
@@ -160,14 +157,14 @@ class NodeResourceImpl implements NodeResource {
 
             if (clusterNodeInfo == null) {
                 final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
-                final String url = endpointUrlService.getRemoteEndpointUrl(nodeName) + pathSupplier.get();
+                final String url = endpointUrlService.getRemoteEndpointUrl(member) + pathSupplier.get();
                 throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
             }
 
             clusterNodeInfo.setPing(System.currentTimeMillis() - now);
         } catch (Exception e) {
             clusterNodeInfo = new ClusterNodeInfo();
-            clusterNodeInfo.setNodeName(nodeName);
+            clusterNodeInfo.setMemberUuid(nodeName);
             clusterNodeInfo.setEndpointUrl(null);
             clusterNodeInfo.setError(e.getMessage());
         }
@@ -180,8 +177,9 @@ class NodeResourceImpl implements NodeResource {
     public Long ping(final String nodeName) {
         final long now = System.currentTimeMillis();
 
+        final ClusterMember member = clusterServiceProvider.get().getMemberForOldNodeName(nodeName);
         final Long ping = remoteRestServiceProvider.get().remoteRestResult(
-                nodeName,
+                member,
                 Long.class,
                 () -> ResourcePaths.buildAuthenticatedApiPath(
                         NodeResource.BASE_PATH,

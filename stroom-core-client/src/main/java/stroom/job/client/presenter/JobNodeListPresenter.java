@@ -91,7 +91,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
             protected void exec(final Consumer<ResultPage<JobNode>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<JobNode>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(JOB_NODE_RESOURCE).list(jobName, null);
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(JOB_NODE_RESOURCE).list(jobName);
             }
 
             @Override

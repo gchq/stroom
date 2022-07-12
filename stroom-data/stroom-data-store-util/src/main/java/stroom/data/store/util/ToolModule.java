@@ -20,6 +20,7 @@ import stroom.cluster.mock.MockClusterModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.node.mock.MockNodeModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.mock.MockTaskModule;
@@ -43,6 +44,7 @@ public class ToolModule extends AbstractModule {
         install(new MockDocRefInfoModule());
         install(new MockInternalStatisticsModule());
         install(new MockClusterModule());
+        install(new MockNodeModule());
         install(new MockSecurityContextModule());
         install(new MockServletModule());
         install(new MockTaskModule());

@@ -8,6 +8,7 @@ import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.test.common.util.test.MockClusterService;
 import stroom.test.common.util.test.MockEndpointUrlService;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.ResourcePaths;
@@ -76,8 +77,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 subPath,
                 JobNodeListResponse.class,
                 JOB_NODES,
-                webTarget -> UriBuilderUtil.addParam(webTarget, "jobName", "myJob"),
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1")
+                webTarget -> UriBuilderUtil.addParam(webTarget, "jobName", "myJob")
         );
 
         verify(jobNodeServiceMap.get("node1"), Mockito.only())
@@ -85,8 +85,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
         assertThat(criteriaCaptor.getValue().getJobName().getString())
                 .isEqualTo("myJob");
-        assertThat(criteriaCaptor.getValue().getNodeName().getString())
-                .isEqualTo("node1");
+//        assertThat(criteriaCaptor.getValue().getNodeName().getString())
+//                .isEqualTo("node1");
 
     }
 
@@ -125,8 +125,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         final JobNodeListResponse response = doGetTest(
                 subPath,
                 JobNodeListResponse.class,
-                JOB_NODES,
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1")
+                JOB_NODES
         );
 
         verify(jobNodeServiceMap.get("node1"), Mockito.only())
@@ -134,8 +133,6 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
         assertThat(criteriaCaptor.getValue().getJobName().isConstrained())
                 .isFalse();
-        assertThat(criteriaCaptor.getValue().getNodeName().getString())
-                .isEqualTo("node1");
     }
 
     @Test
@@ -314,15 +311,14 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
     }
 
     @Override
-    public JobNodeResource getRestResource(final TestNode node,
-                                           final List<TestNode> allNodes,
-                                           final Map<String, String> baseEndPointUrls) {
+    public JobNodeResource getRestResource(final TestMember local,
+                                           final List<TestMember> members) {
         // Set up the JobNodeService mock
-        final JobNodeService jobNodeService = createNamedMock(JobNodeService.class, node);
+        final JobNodeService jobNodeService = createNamedMock(JobNodeService.class, local);
 
         // Use the port as a unique task count
         when(jobNodeService.getInfo(any()))
-                .thenReturn(new JobNodeInfo(node.getPort(), 2L, 3L));
+                .thenReturn(new JobNodeInfo(local.getPort(), 2L, 3L));
 
         when(jobNodeService.find(any()))
                 .thenReturn(JOB_NODES);
@@ -342,18 +338,20 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                     return output;
                 });
 
-        jobNodeServiceMap.put(node.getNodeName(), jobNodeService);
+        jobNodeServiceMap.put(local.getUuid(), jobNodeService);
 
         // Set up the NodeService mock
-        final EndpointUrlService endpointUrlService = new MockEndpointUrlService(node, allNodes, baseEndPointUrls);
-        final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, node);
+        final EndpointUrlService endpointUrlService = new MockEndpointUrlService(local, members);
+        final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, local);
+        final ClusterService clusterService = new MockClusterService(local, members);
 
-        documentEventLogMap.put(node.getNodeName(), documentEventLog);
+        documentEventLogMap.put(local.getUuid(), documentEventLog);
 
         return new JobNodeResourceImpl(
                 () -> jobNodeService,
                 () -> endpointUrlService,
                 () -> webTargetFactory(),
-                () -> documentEventLog);
+                () -> documentEventLog,
+                () -> clusterService);
     }
 }

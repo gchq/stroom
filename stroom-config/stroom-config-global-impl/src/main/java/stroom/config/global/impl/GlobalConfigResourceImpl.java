@@ -1,6 +1,6 @@
 package stroom.config.global.impl;
 
-import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.RemoteRestService;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
@@ -12,6 +12,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.node.api.NodeInfo;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -117,16 +118,18 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @AutoLogged(OperationType.UNLOGGED)
     @Timed
     @Override
-    public ListConfigResponse listByNode(final String nodeName,
+    public ListConfigResponse listByNode(final String memberUuid,
                                          final GlobalConfigCriteria criteria) {
-        LOGGER.debug("listByNode called for node: {}, criteria: {}", nodeName, criteria);
+        RestUtil.requireNonNull(memberUuid, "memberUuid not supplied");
+        final ClusterMember member = new ClusterMember(memberUuid);
+        LOGGER.debug("listByNode called for member: {}, criteria: {}", member, criteria);
         return remoteRestServiceProvider.get().remoteRestResult(
-                nodeName,
+                member,
                 ListConfigResponse.class,
                 () -> ResourcePaths.buildAuthenticatedApiPath(
                         GlobalConfigResource.BASE_PATH,
                         GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
-                        nodeName),
+                        memberUuid),
                 () ->
                         listWithoutLogging(criteria),
                 builder ->
@@ -178,18 +181,19 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Timed
     @Override
     public OverrideValue<String> getYamlValueByNodeAndName(final String propertyPath,
-                                                           final String nodeName) {
+                                                           final String memberUuid) {
         RestUtil.requireNonNull(propertyPath, "propertyName not supplied");
-        RestUtil.requireNonNull(nodeName, "nodeName not supplied");
+        RestUtil.requireNonNull(memberUuid, "memberUuid not supplied");
+        final ClusterMember member = new ClusterMember(memberUuid);
 
         return remoteRestServiceProvider.get().remoteRestResult(
-                nodeName,
+                member,
                 () -> ResourcePaths.buildAuthenticatedApiPath(
                         GlobalConfigResource.BASE_PATH,
                         GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
                         propertyPath,
                         GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
-                        nodeName),
+                        memberUuid),
                 () ->
                         getYamlValueByName(propertyPath),
                 SyncInvoker::get,

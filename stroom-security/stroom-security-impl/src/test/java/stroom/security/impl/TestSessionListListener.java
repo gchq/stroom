@@ -2,25 +2,22 @@ package stroom.security.impl;
 
 import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
-import stroom.cluster.api.NodeInfo;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.test.common.util.test.MockClusterService;
 import stroom.test.common.util.test.MockEndpointUrlService;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResource> {
@@ -87,11 +84,12 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
     }
 
     @Override
-    public SessionResource getRestResource(final TestNode node,
-                                           final List<TestNode> allNodes,
-                                           final Map<String, String> baseEndPointUrls) {
+    public SessionResource getRestResource(final TestMember local,
+                                           final List<TestMember> members) {
+        final ClusterService clusterService = new MockClusterService(local, members);
+
         // Set up the NodeService mock
-        final EndpointUrlService endpointUrlService = new MockEndpointUrlService(node, allNodes, baseEndPointUrls);
+        final EndpointUrlService endpointUrlService = new MockEndpointUrlService(local, members);
 
 //        when(nodeService.isEnabled(Mockito.anyString()))
 //                .thenAnswer(invocation ->
@@ -107,19 +105,19 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
 
         // Set up the NodeInfo mock
 
-        final NodeInfo nodeInfo = Mockito.mock(NodeInfo.class,
-                NodeInfo.class.getName() + "_" + node.getNodeName());
-
-        when(nodeInfo.getThisNodeName())
-                .thenReturn(node.getNodeName());
+//        final NodeInfo nodeInfo = Mockito.mock(NodeInfo.class,
+//                NodeInfo.class.getName() + "_" + node.getNodeName());
+//
+//        when(nodeInfo.getThisNodeName())
+//                .thenReturn(node.getNodeName());
 
         final SessionListService sessionListService = new SessionListListener(
-                nodeInfo,
+                clusterService,
                 endpointUrlService,
                 new SimpleTaskContextFactory(),
                 webTargetFactory());
 
-        sessionListServiceMap.put(node.getNodeName(), sessionListService);
+        sessionListServiceMap.put(local.getUuid(), sessionListService);
 
         return new SessionResourceImpl(() -> sessionListService);
     }

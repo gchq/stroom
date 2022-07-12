@@ -1,6 +1,6 @@
 package stroom.config.global.impl;
 
-import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.RemoteRestService;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
@@ -9,6 +9,7 @@ import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.mock.MockStroomEventLoggingService;
+import stroom.node.api.NodeInfo;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.filter.FilterFieldMapper;
@@ -301,13 +302,12 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
     }
 
     @Override
-    public GlobalConfigResource getRestResource(final TestNode node,
-                                                final List<TestNode> allNodes,
-                                                final Map<String, String> baseEndPointUrls) {
+    public GlobalConfigResource getRestResource(final TestMember local,
+                                                final List<TestMember> members) {
 
-        LOGGER.info("Setting up mocked node {}", node);
+        LOGGER.info("Setting up mocked node {}", local);
         // Set up the GlobalConfigResource mock
-        final GlobalConfigService globalConfigService = createNamedMock(GlobalConfigService.class, node);
+        final GlobalConfigService globalConfigService = createNamedMock(GlobalConfigService.class, local);
         final StroomEventLoggingService stroomEventLoggingService = new MockStroomEventLoggingService();
 
         final FilterFieldMappers<ConfigProperty> fieldMappers = FilterFieldMappers.of(
@@ -326,7 +326,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                                         fieldMappers,
                                         FULL_PROP_LIST.stream())
                                         .peek(configProperty ->
-                                                configProperty.setYamlOverrideValue(node.getNodeName()))
+                                                configProperty.setYamlOverrideValue(local.getUuid()))
                                         .collect(Collectors.toList()),
                                 "node1a",
                                 QuickFilterPredicateFactory.fullyQualifyInput(
@@ -344,7 +344,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                     PropertyPath propertyPath = invocation.getArgument(0);
                     return FULL_PROP_LIST.stream()
                             .peek(configProperty -> {
-                                configProperty.setYamlOverrideValue(node.getNodeName());
+                                configProperty.setYamlOverrideValue(local.getUuid());
                             })
                             .filter(configProperty -> configProperty.getName().equals(propertyPath))
                             .findFirst();
@@ -360,10 +360,10 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                     return configProperty;
                 });
 
-        globalConfigServiceMap.put(node.getNodeName(), globalConfigService);
+        globalConfigServiceMap.put(local.getUuid(), globalConfigService);
 
         // Set up the NodeService mock
-        final RemoteRestService remoteRestService = createNamedMock(RemoteRestService.class, node);
+        final RemoteRestService remoteRestService = createNamedMock(RemoteRestService.class, local);
 
 //        when(nodeService.isEnabled(Mockito.anyString()))
 //                .thenAnswer(invocation ->
@@ -383,18 +383,19 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 //                Mockito.any())).thenCallRealMethod();
 
         when(remoteRestService.remoteRestResult(
-                Mockito.anyString(),
+                Mockito.any(ClusterMember.class),
                 Mockito.any(Class.class),
                 Mockito.any(),
                 Mockito.any(),
-                Mockito.any())).thenCallRealMethod();
+                Mockito.any()))
+                .thenCallRealMethod();
 
         // Set up the NodeInfo mock
 
-        final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, node);
+        final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, local);
 
         when(nodeInfo.getThisNodeName())
-                .thenReturn(node.getNodeName());
+                .thenReturn(local.getUuid());
 
         return new GlobalConfigResourceImpl(
                 () -> stroomEventLoggingService,

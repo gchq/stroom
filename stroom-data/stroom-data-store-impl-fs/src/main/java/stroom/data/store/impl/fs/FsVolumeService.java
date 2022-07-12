@@ -2,12 +2,12 @@ package stroom.data.store.impl.fs;
 
 import stroom.cluster.api.ClusterRoles;
 import stroom.cluster.api.ClusterService;
-import stroom.cluster.api.NodeInfo;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.docref.DocRef;
+import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;

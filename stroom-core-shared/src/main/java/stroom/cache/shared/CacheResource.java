@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
-import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -49,7 +48,7 @@ public interface CacheResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Lists caches",
             operationId = "listCaches")
-    CacheNamesResponse list(@QueryParam("nodeName") String nodeName);
+    CacheNamesResponse list(@QueryParam("memberUuid") String memberUuid);
 
     @GET
     @Path(INFO)
@@ -58,7 +57,7 @@ public interface CacheResource extends RestResource, DirectRestService {
             operationId = "getCacheInfo")
     CacheInfoResponse info(
             @QueryParam("cacheName") String cacheName,
-            @QueryParam("nodeName") String nodeName);
+            @QueryParam("memberUuid") String memberUuid);
 
     @DELETE
     @Operation(
@@ -66,5 +65,5 @@ public interface CacheResource extends RestResource, DirectRestService {
             operationId = "clearCache")
     Long clear(
             @QueryParam("cacheName") String cacheName,
-            @QueryParam("nodeName") String nodeName);
+            @QueryParam("memberUuid") String memberUuid);
 }

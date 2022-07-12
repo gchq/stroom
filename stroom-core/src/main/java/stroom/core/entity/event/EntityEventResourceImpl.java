@@ -16,12 +16,14 @@
 
 package stroom.core.entity.event;
 
+import stroom.cluster.api.ClusterMember;
 import stroom.cluster.api.EndpointUrlService;
 import stroom.cluster.api.RemoteRestUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResourcePaths;
 
 import java.util.Objects;
@@ -49,17 +51,19 @@ class EntityEventResourceImpl implements EntityEventResource {
     }
 
     @Override
-    public Boolean fireEvent(final String nodeName, final EntityEvent entityEvent) {
+    public Boolean fireEvent(final String memberUuid, final EntityEvent entityEvent) {
+        RestUtil.requireNonNull(memberUuid, "memberUuid not supplied");
+        final ClusterMember member = new ClusterMember(memberUuid);
         // If this is the node that was contacted then just return the latency we have incurred within this method.
         final EndpointUrlService endpointUrlService = endpointUrlServiceProvider.get();
-        if (endpointUrlService.shouldExecuteLocally(nodeName)) {
+        if (endpointUrlService.shouldExecuteLocally(member)) {
             entityEventHandlerProvider.get().fireLocally(entityEvent);
             return true;
         } else {
-            final String url = endpointUrlService.getRemoteEndpointUrl(nodeName)
+            final String url = endpointUrlService.getRemoteEndpointUrl(member)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     EntityEventResource.BASE_PATH,
-                    nodeName);
+                    memberUuid);
 
             try {
                 final Response response = webTargetFactoryProvider
@@ -74,7 +78,7 @@ class EntityEventResourceImpl implements EntityEventResource {
                 Objects.requireNonNull(success, "Null success");
                 return success;
             } catch (Throwable e) {
-                throw RemoteRestUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                throw RemoteRestUtil.handleExceptions(member, url, e);
             }
         }
     }

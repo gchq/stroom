@@ -56,6 +56,7 @@ appConfig:
       1000000: 3
     warningThresholdPercentage: 90
   cluster:
+    clusterName: "Stroom"
     clusterRoles:
     - "CLUSTER_ROLE_DATA_RETENTION"
     - "CLUSTER_ROLE_SQL_STATISTIC_AGGREGATION"
@@ -68,7 +69,6 @@ appConfig:
     - "CLUSTER_ROLE_REFRESH_FS_VOLUMES"
     - "CLUSTER_ROLE_DATA_DELETE"
     - "CLUSTER_ROLE_FIND_ORPHAN_FILES"
-    name: "tba"
   clusterLock:
     db:
       connection:

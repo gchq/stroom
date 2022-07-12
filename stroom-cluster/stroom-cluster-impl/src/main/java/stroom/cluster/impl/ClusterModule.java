@@ -18,7 +18,6 @@ package stroom.cluster.impl;
 
 import stroom.cluster.api.ClusterService;
 import stroom.cluster.api.EndpointUrlService;
-import stroom.cluster.api.NodeInfo;
 import stroom.cluster.api.RemoteRestService;
 
 import com.google.inject.AbstractModule;
@@ -28,7 +27,6 @@ public class ClusterModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ClusterService.class).to(ClusterServiceImpl.class);
-        bind(NodeInfo.class).to(NodeInfoImpl.class);
         bind(EndpointUrlService.class).to(EndpointUrlServiceImpl.class);
         bind(RemoteRestService.class).to(RemoteRestServiceImpl.class);
     }

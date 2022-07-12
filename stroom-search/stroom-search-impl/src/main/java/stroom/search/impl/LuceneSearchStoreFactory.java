@@ -17,7 +17,7 @@
 
 package stroom.search.impl;
 
-import stroom.cluster.api.NodeInfo;
+import stroom.cluster.api.ClusterService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneVersionUtil;
@@ -50,7 +50,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
 
     private final IndexStore indexStore;
     private final WordListProvider wordListProvider;
-    private final NodeInfo nodeInfo;
+    private final ClusterService clusterService;
     private final int maxBooleanClauseCount;
     private final SecurityContext securityContext;
     private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
@@ -60,13 +60,13 @@ public class LuceneSearchStoreFactory implements StoreFactory {
     public LuceneSearchStoreFactory(final IndexStore indexStore,
                                     final WordListProvider wordListProvider,
                                     final SearchConfig searchConfig,
-                                    final NodeInfo nodeInfo,
+                                    final ClusterService clusterService,
                                     final SecurityContext securityContext,
                                     final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory,
                                     final CoprocessorsFactory coprocessorsFactory) {
         this.indexStore = indexStore;
         this.wordListProvider = wordListProvider;
-        this.nodeInfo = nodeInfo;
+        this.clusterService = clusterService;
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
         this.securityContext = securityContext;
         this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
@@ -118,7 +118,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         // Create the search result collector.
         final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
                 asyncSearchTask,
-                nodeInfo.getThisNodeName(),
+                clusterService.getLocal(),
                 highlights,
                 coprocessors);
 

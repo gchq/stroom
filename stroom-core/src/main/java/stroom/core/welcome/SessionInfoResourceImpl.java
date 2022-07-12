@@ -1,8 +1,8 @@
 package stroom.core.welcome;
 
-import stroom.cluster.api.NodeInfo;
 import stroom.config.global.shared.SessionInfoResource;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.SessionInfo;

@@ -16,10 +16,9 @@
 
 package stroom.node.impl;
 
-import stroom.cluster.api.NodeInfo;
 import stroom.config.common.UriFactory;
 import stroom.docref.DocRef;
-import stroom.node.api.FindNodeCriteria;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;

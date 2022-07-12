@@ -37,7 +37,7 @@ public interface ReferenceDataResource extends RestResource {
     String PURGE_BY_AGE_SUB_PATH = "/purgeByAge";
     String PURGE_BY_STREAM_SUB_PATH = "/purgeByStream";
     String CLEAR_BUFFER_POOL_PATH = "/clearBufferPool";
-    String QUERY_PARAM_NODE_NAME = "nodeName";
+    String QUERY_PARAM_MEMBER_UUID = "memberUuid";
 
     @GET
     @Path(ENTRIES_SUB_PATH)
@@ -78,7 +78,7 @@ public interface ReferenceDataResource extends RestResource {
                     "or all nodes if null.",
             operationId = "purgeReferenceDataByAge")
     boolean purge(@NotNull @PathParam("purgeAge") final String purgeAge,
-                  @Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
+                  @Nullable @QueryParam(QUERY_PARAM_MEMBER_UUID) final String memberUuid);
 
     @DELETE
     @Path(PURGE_BY_STREAM_SUB_PATH + "/{refStreamId}")
@@ -87,7 +87,7 @@ public interface ReferenceDataResource extends RestResource {
                     "Performed on the named node or all nodes if null.",
             operationId = "purgeReferenceDataByStream")
     boolean purge(@Min(1) @PathParam("refStreamId") final long refStreamId,
-                  @Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
+                  @Nullable @QueryParam(QUERY_PARAM_MEMBER_UUID) final String memberUuid);
 
     @DELETE
     @Path(CLEAR_BUFFER_POOL_PATH)
@@ -95,5 +95,5 @@ public interface ReferenceDataResource extends RestResource {
             summary = "Clear all buffers currently available in the buffer pool to reclaim memory. " +
                     "Performed on the named node or all nodes if null.",
             operationId = "clearBufferPool")
-    void clearBufferPool(@Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
+    void clearBufferPool(@Nullable @QueryParam(QUERY_PARAM_MEMBER_UUID) final String memberUuid);
 }
