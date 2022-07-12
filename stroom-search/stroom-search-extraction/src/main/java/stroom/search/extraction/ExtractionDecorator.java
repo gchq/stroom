@@ -165,7 +165,7 @@ public class ExtractionDecorator {
                                 final Map<DocRef, ExtractionReceiver> receivers,
                                 final Coprocessors coprocessors) {
         // Create an object to make event lists from raw index data.
-        final StreamMapCreator streamMapCreator = new StreamMapCreator(queryKey, coprocessors.getFieldIndex());
+        final EventFactory eventFactory = new EventFactory(coprocessors.getFieldIndex());
         final ErrorConsumer errorConsumer = coprocessors.getErrorConsumer();
 
         return taskContextFactory.childContext(
@@ -192,7 +192,11 @@ public class ExtractionDecorator {
                                         // If we have some values then map them.
                                         SearchProgressLog.increment(queryKey,
                                                 SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_TAKE);
-                                        streamMapCreator.addEvent(streamEventMap, values);
+                                        final Event event = eventFactory.create(values);
+                                        SearchProgressLog.increment(
+                                                queryKey,
+                                                SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
+                                        streamEventMap.put(event);
 
                                     } catch (final RuntimeException e) {
                                         LOGGER.debug(e::getMessage, e);

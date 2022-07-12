@@ -17,6 +17,8 @@
 package stroom.util.collections;
 
 import org.apache.commons.lang3.mutable.MutableLong;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
@@ -34,6 +36,18 @@ class TestRoundRobinSet {
 
     private static final int N3 = 3;
     private static final int N4 = 4;
+
+    private ExecutorService executorService;
+
+    @BeforeEach
+    void beforeEach() {
+        executorService = Executors.newCachedThreadPool();
+    }
+
+    @AfterEach
+    void afterEach() {
+        executorService.shutdown();
+    }
 
     /**
      * Tests that the round robin list works correctly.
@@ -63,7 +77,6 @@ class TestRoundRobinSet {
 
         final MutableLong failureCount = new MutableLong(0);
 
-        final ExecutorService executorService = Executors.newCachedThreadPool();
         for (int i = 0; i < 10; i++) {
             executorService.execute(() -> {
                 try {
@@ -105,7 +118,6 @@ class TestRoundRobinSet {
 
     static class RoundRobinSetTestObject {
 
-        private static final long serialVersionUID = -7648759863152854689L;
         int i;
 
         public RoundRobinSetTestObject(final int i) {

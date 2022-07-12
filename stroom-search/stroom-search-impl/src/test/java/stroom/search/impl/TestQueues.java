@@ -11,11 +11,14 @@ import stroom.search.impl.shard.DocIdQueue;
 import stroom.search.impl.shard.ShardIdQueue;
 import stroom.util.concurrent.CompleteException;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,6 +31,18 @@ class TestQueues {
 
     private static final long MAX = 1000;
 
+    private ExecutorService executorService;
+
+    @BeforeEach
+    void beforeEach() {
+        executorService = Executors.newCachedThreadPool();
+    }
+
+    @AfterEach
+    void afterEach() {
+        executorService.shutdown();
+    }
+
     @Test
     @SuppressWarnings("unchecked")
     void testShardIdQueue() {
@@ -37,7 +52,6 @@ class TestQueues {
                 .boxed()
                 .collect(Collectors.toList()));
         final AtomicLong consumed = new AtomicLong();
-        final Executor executor = Executors.newCachedThreadPool();
 
         final CompletableFuture<Void>[] futures = new CompletableFuture[threads];
         for (int i = 0; i < threads; i++) {
@@ -51,7 +65,7 @@ class TestQueues {
                         complete = true;
                     }
                 }
-            }, executor);
+            }, executorService);
             futures[i] = future;
         }
         CompletableFuture.allOf(futures).join();
@@ -66,7 +80,6 @@ class TestQueues {
         final DocIdQueue queue = new DocIdQueue(1000000);
         final AtomicInteger produced = new AtomicInteger();
         final AtomicInteger consumed = new AtomicInteger();
-        final Executor executor = Executors.newCachedThreadPool();
 
         // Producer.
         final CompletableFuture<Void>[] producers = new CompletableFuture[threads];
@@ -81,7 +94,7 @@ class TestQueues {
                         queue.put(id);
                     }
                 }
-            }, executor);
+            }, executorService);
             producers[i] = future;
         }
 
@@ -96,7 +109,7 @@ class TestQueues {
                         consumed.incrementAndGet();
                     }
                 }
-            }, executor);
+            }, executorService);
             consumers[i] = future;
         }
 
@@ -116,7 +129,6 @@ class TestQueues {
         final StoredDataQueue queue = new StoredDataQueue(new QueryKey(UUID.randomUUID().toString()), 1000000);
         final AtomicInteger produced = new AtomicInteger();
         final AtomicInteger consumed = new AtomicInteger();
-        final Executor executor = Executors.newCachedThreadPool();
 
         // Producer.
         final CompletableFuture<Void>[] producers = new CompletableFuture[threads];
@@ -131,7 +143,7 @@ class TestQueues {
                         queue.put(new Val[]{ValString.create("test"), ValString.create("test")});
                     }
                 }
-            }, executor);
+            }, executorService);
             producers[i] = future;
         }
 
@@ -146,7 +158,7 @@ class TestQueues {
                         consumed.incrementAndGet();
                     }
                 }
-            }, executor);
+            }, executorService);
             consumers[i] = future;
         }
 
@@ -160,13 +172,13 @@ class TestQueues {
     }
 
     @Test
+    @RepeatedTest(100000)
     @SuppressWarnings("unchecked")
     void testStreamEventMap() {
         final int threads = 10;
         final StreamEventMap queue = new StreamEventMap(1000000);
         final AtomicInteger produced = new AtomicInteger();
         final AtomicInteger consumed = new AtomicInteger();
-        final Executor executor = Executors.newCachedThreadPool();
 
         // Producer.
         final CompletableFuture<Void>[] producers = new CompletableFuture[threads];
@@ -182,7 +194,7 @@ class TestQueues {
                                 new Val[]{ValString.create("test"), ValString.create("test")}));
                     }
                 }
-            }, executor);
+            }, executorService);
             producers[i] = future;
         }
 
@@ -199,7 +211,7 @@ class TestQueues {
                 } catch (final CompleteException e) {
                     // Ignore.
                 }
-            }, executor);
+            }, executorService);
             consumers[i] = future;
         }
 
