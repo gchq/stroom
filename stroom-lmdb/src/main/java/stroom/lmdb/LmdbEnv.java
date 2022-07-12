@@ -230,6 +230,7 @@ public class LmdbEnv implements AutoCloseable {
      * the single write lock. Useful for large jobs that need to commit periodically but don't want to release
      * the lock to avoid the risk of deadlocks.
      * A call to this method will result in a write lock being obtained.
+     * Should be used in a try-with-resources block to ensure the write lock that it obtains is released.
      */
     public BatchingWriteTxn openBatchingWriteTxn(final int batchSize) {
         try {
@@ -590,7 +591,9 @@ public class LmdbEnv implements AutoCloseable {
         }
 
         /**
-         * Increment the count of items processed in the batch
+         * Increment the count of items processed in the batch.
+         * Does not perform a commit so requires the caller to commit based
+         * on the return value.
          *
          * @return True if the batch is full, false if not.
          */
@@ -616,7 +619,11 @@ public class LmdbEnv implements AutoCloseable {
         }
 
         /**
-         * Commit if the batch has reach its max size
+         * If the batch size is > 0 it will increment the current batch count
+         * and then commit if the batch has reach its max size.
+         * If the batch size is zero then it will never commit and will
+         * always return false.
+         * @return True if a commit took place.
          */
         public boolean commitIfRequired() {
             return commitFunc.getAsBoolean();

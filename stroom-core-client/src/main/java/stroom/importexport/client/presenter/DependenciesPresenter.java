@@ -17,6 +17,7 @@
 package stroom.importexport.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -32,7 +33,6 @@ import stroom.importexport.shared.DependencyCriteria;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
@@ -53,6 +53,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+    public static final int DEFAULT_PAGE_SIZE = 100;
 
     private static final int COL_WIDTH_TYPE = 120;
     private static final int COL_WIDTH_NAME = 300;
@@ -67,19 +68,18 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
     @Inject
     public DependenciesPresenter(final EventBus eventBus, final RestFactory restFactory) {
-        super(eventBus, new DataGridViewImpl<>(false, 100));
+        super(eventBus, new DataGridViewImpl<>(false, DEFAULT_PAGE_SIZE));
         this.restFactory = restFactory;
         criteria = new DependencyCriteria();
 
         refreshDocTypeIcons();
 
-        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(
-                eventBus,
-                criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<Dependency>> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<Dependency>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
-
+                CriteriaUtil.setRange(criteria, range);
                 final Rest<ResultPage<Dependency>> rest = restFactory.create();
                 rest
                         .onSuccess(dataConsumer)
@@ -254,7 +254,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     }
 
     private void resetRange() {
-        getView().getDataDisplay().setVisibleRange(new Range(0, PageRequest.DEFAULT_PAGE_SIZE));
+        getView().getDataDisplay().setVisibleRange(new Range(0, DEFAULT_PAGE_SIZE));
     }
 
     void refresh() {

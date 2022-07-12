@@ -33,6 +33,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
     private final StroomDuration inMemPooledAggregatorAgeThreshold;
     private final int statisticFlushBatchSize;
     private final int statisticAggregationBatchSize;
+    private final int statisticAggregationStageTwoBatchSize;
     // TODO 29/11/2021 AT: Make final
     private StroomDuration maxProcessingAge;
     private final CacheConfig dataSourceCache;
@@ -48,6 +49,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
         inMemFinalAggregatorSizeThreshold = 1_000_000;
         statisticFlushBatchSize = 8_000;
         statisticAggregationBatchSize = 1_000_000;
+        statisticAggregationStageTwoBatchSize = 200_000;
         maxProcessingAge = null;
         dataSourceCache = CacheConfig.builder()
                 .maximumSize(100L)
@@ -68,6 +70,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
             @JsonProperty("inMemFinalAggregatorSizeThreshold") final int inMemFinalAggregatorSizeThreshold,
             @JsonProperty("statisticFlushBatchSize") final int statisticFlushBatchSize,
             @JsonProperty("statisticAggregationBatchSize") final int statisticAggregationBatchSize,
+            @JsonProperty("statisticAggregationStageTwoBatchSize") final int statisticAggregationStageTwoBatchSize,
             @JsonProperty("maxProcessingAge") final StroomDuration maxProcessingAge,
             @JsonProperty("dataSourceCache") final CacheConfig dataSourceCache,
             @JsonProperty("slowQueryWarningThreshold") final StroomDuration slowQueryWarningThreshold) {
@@ -81,6 +84,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
         this.inMemFinalAggregatorSizeThreshold = inMemFinalAggregatorSizeThreshold;
         this.statisticFlushBatchSize = statisticFlushBatchSize;
         this.statisticAggregationBatchSize = statisticAggregationBatchSize;
+        this.statisticAggregationStageTwoBatchSize = statisticAggregationStageTwoBatchSize;
         this.maxProcessingAge = maxProcessingAge;
         this.dataSourceCache = dataSourceCache;
         this.slowQueryWarningThreshold = slowQueryWarningThreshold;
@@ -130,6 +134,8 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
     @Min(1)
     @JsonPropertyDescription("Maximum size (number of entries) of the final in-memory aggregator map." +
             "Once an aggregator has reached this size it will be flushed to the database." +
+            "If statistic flush tasks are delaying shutdown of stroom you can reduce this value to make " +
+            "the flushes smaller, at the cost of efficiency." +
             "This aggregator is the final stage of in-memory statistic aggregation.")
     public int getInMemFinalAggregatorSizeThreshold() {
         return inMemFinalAggregatorSizeThreshold;
@@ -144,9 +150,19 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
     }
 
     @Min(1)
-    @JsonPropertyDescription("Number of SQL_STAT_VAL_SRC records to merge into SQL_STAT_VAL in one batch")
+    @JsonPropertyDescription("Number of SQL_STAT_VAL_SRC records to merge into SQL_STAT_VAL in one batch" +
+            "Typically a larger number is more efficient but means it will take longer which can delay a clean " +
+            "shutdown of stroom. Higher numbers may also lead to database lock contention and lock wait errors.")
     public int getStatisticAggregationBatchSize() {
         return statisticAggregationBatchSize;
+    }
+
+    @Min(1)
+    @JsonPropertyDescription("Number of SQL_STAT_VAL records to move to a coarser aggregation level in one batch. " +
+            "Typically a larger number is more efficient but means it will take longer which can delay a clean " +
+            "shutdown of stroom. Higher numbers may also lead to database lock contention and lock wait errors.")
+    public int getStatisticAggregationStageTwoBatchSize() {
+        return statisticAggregationStageTwoBatchSize;
     }
 
     @Nullable
@@ -184,6 +200,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
                 inMemFinalAggregatorSizeThreshold,
                 statisticFlushBatchSize,
                 statisticAggregationBatchSize,
+                statisticAggregationStageTwoBatchSize,
                 maxProcessingAge,
                 dataSourceCache,
                 slowQueryWarningThreshold);
@@ -200,6 +217,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
                 inMemFinalAggregatorSizeThreshold,
                 statisticFlushBatchSize,
                 statisticAggregationBatchSize,
+                statisticAggregationStageTwoBatchSize,
                 maxProcessingAge,
                 dataSourceCache,
                 slowQueryWarningThreshold);
@@ -218,6 +236,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
                 inMemFinalAggregatorSizeThreshold,
                 statisticFlushBatchSize,
                 statisticAggregationBatchSize,
+                getStatisticAggregationStageTwoBatchSize(),
                 maxProcessingAge,
                 dataSourceCache,
                 slowQueryWarningThreshold);
@@ -236,6 +255,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
                 inMemFinalAggregatorSizeThreshold,
                 statisticFlushBatchSize,
                 statisticAggregationBatchSize,
+                statisticAggregationStageTwoBatchSize,
                 maxProcessingAge,
                 dataSourceCache,
                 slowQueryWarningThreshold);
@@ -254,6 +274,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
                 inMemFinalAggregatorSizeThreshold,
                 statisticFlushBatchSize,
                 statisticAggregationBatchSize,
+                statisticAggregationStageTwoBatchSize,
                 maxProcessingAge,
                 dataSourceCache,
                 slowQueryWarningThreshold);
@@ -271,6 +292,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
                 ", inMemPooledAggregatorAgeThreshold=" + inMemPooledAggregatorAgeThreshold +
                 ", statisticFlushBatchSize=" + statisticFlushBatchSize +
                 ", statisticAggregationBatchSize=" + statisticAggregationBatchSize +
+                ", statisticAggregationStageTwoBatchSize=" + statisticAggregationStageTwoBatchSize +
                 ", maxProcessingAge=" + maxProcessingAge +
                 ", dataSourceCache=" + dataSourceCache +
                 ", slowQueryWarningThreshold=" + slowQueryWarningThreshold +

@@ -50,6 +50,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -88,10 +89,15 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
 
         dataProvider = new RestDataProvider<JobNode, ResultPage<JobNode>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<JobNode>> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<JobNode>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<JobNode>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(JOB_NODE_RESOURCE).list(jobName, null);
+                rest
+                        .onSuccess(dataConsumer)
+                        .onFailure(throwableConsumer)
+                        .call(JOB_NODE_RESOURCE)
+                        .list(jobName, null);
             }
 
             @Override

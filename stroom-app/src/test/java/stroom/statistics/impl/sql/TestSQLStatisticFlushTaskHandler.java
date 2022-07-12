@@ -23,6 +23,7 @@ import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractStatisticsCoreIntegrationTest;
 import stroom.test.common.util.db.DbTestUtil;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -244,7 +245,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
      */
     @Disabled // Manual running only, too slow for CI
     @Test
-    void testFlushAndAggregatePerformance() throws SQLException {
+    void testFlushAndAggregatePerformance() throws SQLException, InterruptedException {
 
         final LogExecutionTime totalRunTime = LogExecutionTime.start();
         final List<String> tagNames = List.of("Tag1", "Tag2");
@@ -269,6 +270,8 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
                         0,
                         ZoneOffset.UTC));
         final LongAdder totalEventCount = new LongAdder();
+        sqlStatisticAggregationManager.setStage1BatchSize(500_000);
+        sqlStatisticAggregationManager.setStage2BatchSize(500_000);
 
         LOGGER.info("Start time: {}", startTime);
 
@@ -279,6 +282,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
 
         final SQLStatisticFlushTaskHandler sqlStatisticFlushTaskHandler = new SQLStatisticFlushTaskHandler(
                 sqlStatisticValueBatchSaveService, taskContextFactory, securityContext, () -> sqlStatisticsConfig);
+        final CountDownLatch doneFirstFlush = new CountDownLatch(1);
 
         final Runnable flushRunnable = () -> {
             final AtomicReference<SQLStatisticAggregateMap> aggregateMapRef = new AtomicReference<>(
@@ -321,6 +325,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
                         eventCount++;
                         if (eventCount >= flushLimit) {
                             doFlush.run();
+                            doneFirstFlush.countDown();
                             eventCount = 0;
                         }
                     }
@@ -329,6 +334,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
 
             if (aggregateMapRef.get().size() > 0) {
                 doFlush.run();
+                doneFirstFlush.countDown();
             }
             LOGGER.info("Earliest time: {}, eventDeltaMs: {}", time, Duration.ofMillis(eventDeltaMs));
         };
@@ -350,15 +356,29 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
 
         // Keep running aggregation until all flushes have finished
         final LogExecutionTime totalAggTime = LogExecutionTime.start();
+        Instant aggregationNow = startTime;
+
+        // Don't start aggregating till
+        doneFirstFlush.await();
+        ThreadUtil.sleep(100);
         while (countDownLatch.getCount() > 0) {
-            LOGGER.logDurationIfInfoEnabled(() ->
-                            sqlStatisticAggregationManager.aggregate(Instant.now()),
-                    "Aggregate");
+            sqlStatisticAggregationManager.aggregate(aggregationNow);
         }
         LOGGER.info("Flushing finished, running final aggregation");
-        LOGGER.logDurationIfInfoEnabled(() ->
-                        sqlStatisticAggregationManager.aggregate(Instant.now()),
-                "Aggregate");
+        sqlStatisticAggregationManager.aggregate(aggregationNow);
+
+        LOGGER.info("Running aggregation 2 hours after start time");
+        aggregationNow = aggregationNow.plus(2, ChronoUnit.HOURS);
+        // This ensures we run stage 2 agg.
+        sqlStatisticAggregationManager.aggregate(aggregationNow);
+
+        LOGGER.info("Running aggregation 2 days after the last time");
+        aggregationNow = aggregationNow.plus(2, ChronoUnit.DAYS);
+        sqlStatisticAggregationManager.aggregate(aggregationNow);
+
+        LOGGER.info("Running aggregation 40 days after the last time");
+        aggregationNow = aggregationNow.plus(40, ChronoUnit.DAYS);
+        sqlStatisticAggregationManager.aggregate(aggregationNow);
 
         LOGGER.info("------------------------------------------------------------");
         LOGGER.info("""
