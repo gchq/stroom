@@ -68,11 +68,11 @@ class TestStroomStatsInternalStatisticsService {
 
         //assemble test data
         InternalStatisticEvent event1 = InternalStatisticEvent.createPlusOneCountStat(
-                InternalStatisticKey.MEMORY, 0, Collections.emptyMap());
+                InternalStatisticKey.MEMORY, 0, Collections.emptySortedMap());
         InternalStatisticEvent event2 = InternalStatisticEvent.createPlusOneCountStat(
-                InternalStatisticKey.MEMORY, 1, Collections.emptyMap());
+                InternalStatisticKey.MEMORY, 1, Collections.emptySortedMap());
         InternalStatisticEvent event3 = InternalStatisticEvent.createPlusOneCountStat(
-                InternalStatisticKey.MEMORY, 1, Collections.emptyMap());
+                InternalStatisticKey.MEMORY, 1, Collections.emptySortedMap());
         DocRef docRefA = new DocRef(DOC_REF_TYPE_1, UUID.randomUUID().toString(), "myStat1");
         DocRef docRefB = new DocRef(DOC_REF_TYPE_2, UUID.randomUUID().toString(), "myStat2");
         Map<DocRef, List<InternalStatisticEvent>> map = Map.of(
@@ -119,7 +119,7 @@ class TestStroomStatsInternalStatisticsService {
     private List<InternalStatisticEvent> createNEvents(final InternalStatisticKey key, final int count) {
 
         return IntStream.rangeClosed(1, count)
-                .mapToObj(i -> InternalStatisticEvent.createPlusOneCountStat(key, i, Collections.emptyMap()))
+                .mapToObj(i -> InternalStatisticEvent.createPlusOneCountStat(key, i, Collections.emptySortedMap()))
                 .collect(Collectors.toList());
     }
 

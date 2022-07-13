@@ -48,7 +48,12 @@ public class InternalStatisticsConfig extends AbstractConfig {
     private final List<DocRef> memoryDocRefs;
     private final List<DocRef> metaDataStreamSizeDocRefs;
     private final List<DocRef> metaDataStreamsReceivedDocRefs;
+    private final List<DocRef> refDataStoreEntryCount;
+    private final List<DocRef> refDataStoreStreamCount;
+    private final List<DocRef> refDataStoreSize;
     private final List<DocRef> pipelineStreamProcessorDocRefs;
+    private final List<DocRef> searchResultsStoreSize;
+    private final List<DocRef> searchResultsStoreCount;
     private final List<DocRef> streamTaskQueueSizeDocRefs;
     private final List<DocRef> volumesDocRefs;
 
@@ -91,9 +96,29 @@ public class InternalStatisticsConfig extends AbstractConfig {
                 StatisticStoreDoc.DOCUMENT_TYPE, "946a87bc-a59a-11e6-bdc4-0242ac110002",
                 StroomStatsStoreDoc.DOCUMENT_TYPE, "5535f493-29ae-4ee6-bba6-735aa3104136"));
 
+        refDataStoreEntryCount = buildDocRefs(InternalStatisticKey.REF_DATA_STORE_ENTRY_COUNT, Map.of(
+                StatisticStoreDoc.DOCUMENT_TYPE, "f1587262-9cbc-46b4-80eb-51deb011b2c1",
+                StroomStatsStoreDoc.DOCUMENT_TYPE, "TODO"));
+
+        refDataStoreSize = buildDocRefs(InternalStatisticKey.REF_DATA_STORE_SIZE, Map.of(
+                StatisticStoreDoc.DOCUMENT_TYPE, "e57959bf-0b2d-4008-98a7-ffcae4bbc4bb",
+                StroomStatsStoreDoc.DOCUMENT_TYPE, "TODO"));
+
+        refDataStoreStreamCount = buildDocRefs(InternalStatisticKey.REF_DATA_STORE_STREAM_COUNT, Map.of(
+                StatisticStoreDoc.DOCUMENT_TYPE, "0dfd4e00-e068-4667-9c60-d3f6163a6c04",
+                StroomStatsStoreDoc.DOCUMENT_TYPE, "TODO"));
+
         pipelineStreamProcessorDocRefs = buildDocRefs(InternalStatisticKey.PIPELINE_STREAM_PROCESSOR, Map.of(
                 StatisticStoreDoc.DOCUMENT_TYPE, "946a80fc-a59a-11e6-bdc4-0242ac110002",
                 StroomStatsStoreDoc.DOCUMENT_TYPE, "efd9bad4-0bab-460f-ae98-79e9717deeaf"));
+
+        searchResultsStoreSize = buildDocRefs(InternalStatisticKey.SEARCH_RESULTS_STORE_SIZE, Map.of(
+                StatisticStoreDoc.DOCUMENT_TYPE, "de5b831d-3b7e-4bb5-836f-2f438ec30568",
+                StroomStatsStoreDoc.DOCUMENT_TYPE, "TODO"));
+
+        searchResultsStoreCount = buildDocRefs(InternalStatisticKey.SEARCH_RESULTS_STORE_COUNT, Map.of(
+                StatisticStoreDoc.DOCUMENT_TYPE, "35d60e7d-f11a-45c9-981d-16d8ddda081e",
+                StroomStatsStoreDoc.DOCUMENT_TYPE, "TODO"));
 
         streamTaskQueueSizeDocRefs = buildDocRefs(InternalStatisticKey.STREAM_TASK_QUEUE_SIZE, Map.of(
                 StatisticStoreDoc.DOCUMENT_TYPE, "946a7f0f-a59a-11e6-bdc4-0242ac110002",
@@ -115,7 +140,12 @@ public class InternalStatisticsConfig extends AbstractConfig {
             @JsonProperty("memory") final List<DocRef> memoryDocRefs,
             @JsonProperty("metaDataStreamSize") final List<DocRef> metaDataStreamSizeDocRefs,
             @JsonProperty("metaDataStreamsReceived") final List<DocRef> metaDataStreamsReceivedDocRefs,
+            @JsonProperty("refDataStoreEntryCount") final List<DocRef> refDataStoreEntryCount,
+            @JsonProperty("refDataStoreSize") final List<DocRef> refDataStoreSize,
+            @JsonProperty("refDataStoreStreamCount") final List<DocRef> refDataStoreStreamCount,
             @JsonProperty("pipelineStreamProcessor") final List<DocRef> pipelineStreamProcessorDocRefs,
+            @JsonProperty("searchResultsStoreSize") final List<DocRef> searchResultsStoreSize,
+            @JsonProperty("searchResultsStoreCount") final List<DocRef> searchResultsStoreCount,
             @JsonProperty("streamTaskQueueSize") final List<DocRef> streamTaskQueueSizeDocRefs,
             @JsonProperty("volumes") final List<DocRef> volumesDocRefs) {
 
@@ -128,7 +158,12 @@ public class InternalStatisticsConfig extends AbstractConfig {
         this.memoryDocRefs = memoryDocRefs;
         this.metaDataStreamSizeDocRefs = metaDataStreamSizeDocRefs;
         this.metaDataStreamsReceivedDocRefs = metaDataStreamsReceivedDocRefs;
+        this.refDataStoreEntryCount = refDataStoreEntryCount;
+        this.refDataStoreSize = refDataStoreSize;
+        this.refDataStoreStreamCount = refDataStoreStreamCount;
         this.pipelineStreamProcessorDocRefs = pipelineStreamProcessorDocRefs;
+        this.searchResultsStoreSize = searchResultsStoreSize;
+        this.searchResultsStoreCount = searchResultsStoreCount;
         this.streamTaskQueueSizeDocRefs = streamTaskQueueSizeDocRefs;
         this.volumesDocRefs = volumesDocRefs;
     }
@@ -180,8 +215,23 @@ public class InternalStatisticsConfig extends AbstractConfig {
                 InternalStatisticKey.METADATA_STREAMS_RECEIVED,
                 InternalStatisticsConfig::getMetaDataStreamsReceivedDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
+                InternalStatisticKey.REF_DATA_STORE_ENTRY_COUNT,
+                InternalStatisticsConfig::getRefDataStoreEntryCount);
+        KEY_TO_DOC_REFS_GETTER_MAP.put(
+                InternalStatisticKey.REF_DATA_STORE_SIZE,
+                InternalStatisticsConfig::getRefDataStoreSize);
+        KEY_TO_DOC_REFS_GETTER_MAP.put(
+                InternalStatisticKey.REF_DATA_STORE_STREAM_COUNT,
+                InternalStatisticsConfig::getRefDataStoreStreamCount);
+        KEY_TO_DOC_REFS_GETTER_MAP.put(
                 InternalStatisticKey.PIPELINE_STREAM_PROCESSOR,
                 InternalStatisticsConfig::getPipelineStreamProcessorDocRefs);
+        KEY_TO_DOC_REFS_GETTER_MAP.put(
+                InternalStatisticKey.SEARCH_RESULTS_STORE_SIZE,
+                InternalStatisticsConfig::getSearchResultsStoreSize);
+        KEY_TO_DOC_REFS_GETTER_MAP.put(
+                InternalStatisticKey.SEARCH_RESULTS_STORE_COUNT,
+                InternalStatisticsConfig::getSearchResultsStoreCount);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
                 InternalStatisticKey.STREAM_TASK_QUEUE_SIZE,
                 InternalStatisticsConfig::getStreamTaskQueueSizeDocRefs);
@@ -256,6 +306,38 @@ public class InternalStatisticsConfig extends AbstractConfig {
         return metaDataStreamsReceivedDocRefs;
     }
 
+    @JsonPropertyDescription(DESCRIPTION_PREFIX
+            + "the total number of map entries in the off heap reference data store.")
+    @JsonProperty("refDataStoreEntryCount")
+    public List<DocRef> getRefDataStoreEntryCount() {
+        return refDataStoreEntryCount;
+    }
+
+    @JsonPropertyDescription(DESCRIPTION_PREFIX + "the total size in bytes of the off heap reference data store.")
+    @JsonProperty("refDataStoreSize")
+    public List<DocRef> getRefDataStoreSize() {
+        return refDataStoreSize;
+    }
+
+    @JsonPropertyDescription(DESCRIPTION_PREFIX
+            + "the total number of streams in the off heap reference data store.")
+    @JsonProperty("refDataStoreStreamCount")
+    public List<DocRef> getRefDataStoreStreamCount() {
+        return refDataStoreStreamCount;
+    }
+
+    @JsonPropertyDescription(DESCRIPTION_PREFIX + "the total size in bytes of the off heap search results stores.")
+    @JsonProperty("searchResultsStoreSize")
+    public List<DocRef> getSearchResultsStoreSize() {
+        return searchResultsStoreSize;
+    }
+
+    @JsonPropertyDescription(DESCRIPTION_PREFIX + "the total number of off heap search results stores.")
+    @JsonProperty("searchResultsStoreCount")
+    public List<DocRef> getSearchResultsStoreCount() {
+        return searchResultsStoreCount;
+    }
+
     @JsonPropertyDescription(DESCRIPTION_PREFIX + "the number of streams processed by a pipeline.")
     @JsonProperty("pipelineStreamProcessor")
     public List<DocRef> getPipelineStreamProcessorDocRefs() {
@@ -291,7 +373,9 @@ public class InternalStatisticsConfig extends AbstractConfig {
     @JsonIgnore
     public List<DocRef> getEnabledDocRefs(final InternalStatisticKey internalStatisticKey) {
         Function<InternalStatisticsConfig, List<DocRef>> func = KEY_TO_DOC_REFS_GETTER_MAP.get(internalStatisticKey);
-        Objects.requireNonNull(func, () -> LogUtil.message("Key {} is not known"));
+        Objects.requireNonNull(func, () -> LogUtil.message(
+                "Key {} is not known. You need to added it to KEY_TO_DOC_REFS_GETTER_MAP"));
+
         return func.apply(this).stream()
                 .filter(docRef -> enabledStoreTypes.contains(docRef.getType()))
                 .collect(Collectors.toList());
@@ -300,7 +384,8 @@ public class InternalStatisticsConfig extends AbstractConfig {
     @Override
     public String toString() {
         return "InternalStatisticsConfig{" +
-                "benchmarkClusterDocRefs=" + benchmarkClusterDocRefs +
+                "enabledStoreTypes=" + enabledStoreTypes +
+                ", benchmarkClusterDocRefs=" + benchmarkClusterDocRefs +
                 ", cpuDocRefs=" + cpuDocRefs +
                 ", eventsPerSecondDocRefs=" + eventsPerSecondDocRefs +
                 ", heapHistogramBytesDocRefs=" + heapHistogramBytesDocRefs +
@@ -308,7 +393,10 @@ public class InternalStatisticsConfig extends AbstractConfig {
                 ", memoryDocRefs=" + memoryDocRefs +
                 ", metaDataStreamSizeDocRefs=" + metaDataStreamSizeDocRefs +
                 ", metaDataStreamsReceivedDocRefs=" + metaDataStreamsReceivedDocRefs +
+                ", refDataStoreSize=" + refDataStoreSize +
                 ", pipelineStreamProcessorDocRefs=" + pipelineStreamProcessorDocRefs +
+                ", searchResultsStoreSize=" + searchResultsStoreSize +
+                ", searchResultsStoreCount=" + searchResultsStoreCount +
                 ", streamTaskQueueSizeDocRefs=" + streamTaskQueueSizeDocRefs +
                 ", volumesDocRefs=" + volumesDocRefs +
                 '}';

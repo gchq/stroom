@@ -27,7 +27,7 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 import stroom.util.shared.ResultPage;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -386,7 +387,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                                    final String type,
                                    final Long bytes) {
         if (bytes != null) {
-            Map<String, String> tags = ImmutableMap.<String, String>builder()
+            SortedMap<String, String> tags = ImmutableSortedMap.<String, String>naturalOrder()
                     .put("Id", String.valueOf(volume.getId()))
                     .put("Path", volume.getPath())
                     .put("Type", type)
