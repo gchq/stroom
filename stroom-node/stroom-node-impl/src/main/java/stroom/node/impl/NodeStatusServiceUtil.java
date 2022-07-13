@@ -200,25 +200,35 @@ class NodeStatusServiceUtil {
                                    final SortedMap<String, String> tags,
                                    final long nowEpochMs) {
 
-        statisticEventList.add(InternalStatisticEvent.createValueStat(
-                InternalStatisticKey.REF_DATA_STORE_SIZE,
-                nowEpochMs,
-                tags,
-                refDataStore.getSizeOnDisk()));
-
+        // No point in holding a load of zeros, e.g. nodes not running processing
+        final long sizeOnDisk = refDataStore.getSizeOnDisk();
         final long combinedEntryCount = refDataStore.getKeyValueEntryCount()
                 + refDataStore.getKeyRangeValueEntryCount();
-        statisticEventList.add(InternalStatisticEvent.createValueStat(
-                InternalStatisticKey.REF_DATA_STORE_ENTRY_COUNT,
-                nowEpochMs,
-                tags,
-                combinedEntryCount));
+        final long processingInfoEntryCount = refDataStore.getProcessingInfoEntryCount();
 
-        statisticEventList.add(InternalStatisticEvent.createValueStat(
-                InternalStatisticKey.REF_DATA_STORE_STREAM_COUNT,
-                nowEpochMs,
-                tags,
-                refDataStore.getProcessingInfoEntryCount()));
+        if (sizeOnDisk > 0) {
+            statisticEventList.add(InternalStatisticEvent.createValueStat(
+                    InternalStatisticKey.REF_DATA_STORE_SIZE,
+                    nowEpochMs,
+                    tags,
+                    sizeOnDisk));
+        }
+
+        if (combinedEntryCount > 0) {
+            statisticEventList.add(InternalStatisticEvent.createValueStat(
+                    InternalStatisticKey.REF_DATA_STORE_ENTRY_COUNT,
+                    nowEpochMs,
+                    tags,
+                    combinedEntryCount));
+        }
+
+        if (processingInfoEntryCount > 0) {
+            statisticEventList.add(InternalStatisticEvent.createValueStat(
+                    InternalStatisticKey.REF_DATA_STORE_STREAM_COUNT,
+                    nowEpochMs,
+                    tags,
+                    processingInfoEntryCount));
+        }
     }
 
     private void buildSearchResultStoresStats(final List<InternalStatisticEvent> statisticEventList,
@@ -226,17 +236,22 @@ class NodeStatusServiceUtil {
                                               final long nowEpochMs) {
         final StoreSizeSummary storeSizeSummary = dataStoreFactory.getTotalSizeOnDisk();
 
-        statisticEventList.add(InternalStatisticEvent.createValueStat(
-                InternalStatisticKey.SEARCH_RESULTS_STORE_SIZE,
-                nowEpochMs,
-                tags,
-                storeSizeSummary.getTotalSizeOnDisk()));
+        // No point in holding a load of zeros for the times when no searches are running
+        if (storeSizeSummary.getStoreCount() > 0) {
+            statisticEventList.add(InternalStatisticEvent.createValueStat(
+                    InternalStatisticKey.SEARCH_RESULTS_STORE_SIZE,
+                    nowEpochMs,
+                    tags,
+                    storeSizeSummary.getTotalSizeOnDisk()));
+        }
 
-        statisticEventList.add(InternalStatisticEvent.createValueStat(
-                InternalStatisticKey.SEARCH_RESULTS_STORE_COUNT,
-                nowEpochMs,
-                tags,
-                storeSizeSummary.getStoreCount()));
+        if (storeSizeSummary.getTotalSizeOnDisk() > 0) {
+            statisticEventList.add(InternalStatisticEvent.createValueStat(
+                    InternalStatisticKey.SEARCH_RESULTS_STORE_COUNT,
+                    nowEpochMs,
+                    tags,
+                    storeSizeSummary.getStoreCount()));
+        }
     }
 
     private void buildCpuStatEvents(final List<InternalStatisticEvent> statisticEventList,
