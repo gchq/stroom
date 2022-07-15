@@ -179,7 +179,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
     private void addColumn(Column<CacheInfo, ?> column, String name, int width) {
         columns.add(column);
         final int newWidth = width == -1
-        ? (int) (((double) name.length() / 11) * SMALL_COL)
+                ? (int) (((double) name.length() / 11) * SMALL_COL)
                 : width;
         getView().addResizableColumn(column, name, newWidth);
     }
