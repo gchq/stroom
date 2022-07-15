@@ -72,10 +72,7 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -1385,7 +1382,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .addDetail("Path", lmdbEnvironment.getLocalDir().toAbsolutePath().normalize())
                     .addDetail("Environment max size", referenceDataConfig.getLmdbConfig().getMaxStoreSize())
                     .addDetail("Environment current size",
-                            ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
+                            ModelStringUtil.formatIECByteSizeString(getSizeOnDisk()))
                     .addDetail("Purge age", referenceDataConfig.getPurgeAge())
                     .addDetail("Purge cut off",
                             TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
@@ -1415,25 +1412,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         }
     }
 
-    private long getEnvironmentDiskUsage() {
-        long totalSizeBytes;
-        try (final Stream<Path> fileStream = Files.list(lmdbEnvironment.getLocalDir().toAbsolutePath())) {
-            totalSizeBytes = fileStream
-                    .mapToLong(path -> {
-                        try {
-                            return Files.size(path);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .sum();
-        } catch (IOException
-                | RuntimeException e) {
-            LOGGER.error("Error calculating disk usage for path {}",
-                    lmdbEnvironment.getLocalDir().toAbsolutePath().normalize(), e);
-            totalSizeBytes = -1;
-        }
-        return totalSizeBytes;
+    public long getSizeOnDisk() {
+        return lmdbEnvironment.getSizeOnDisk();
     }
 
     private static final class PurgeCounts {

@@ -99,6 +99,10 @@ public class LmdbEnv implements AutoCloseable {
         }
     }
 
+    public static boolean isLmdbDataFile(final Path file) {
+        return file != null && file.endsWith("data.mdb");
+    }
+
     /**
      * @return The number of permits available for new read txns. For info purposes only,
      * not for concurrency control.
@@ -456,6 +460,28 @@ public class LmdbEnv implements AutoCloseable {
             final Stat stat = db.stat(txn);
             return convertStatToMap(stat);
         });
+    }
+
+    public long getSizeOnDisk() {
+        long totalSizeBytes;
+        final Path localDir = getLocalDir().toAbsolutePath();
+        try (final Stream<Path> fileStream = Files.list(localDir)) {
+            totalSizeBytes = fileStream
+                    .mapToLong(path -> {
+                        try {
+                            return Files.size(path);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .sum();
+        } catch (IOException
+                | RuntimeException e) {
+            LOGGER.error("Error calculating disk usage for path {}",
+                    localDir.normalize(), e);
+            totalSizeBytes = -1;
+        }
+        return totalSizeBytes;
     }
 
     private static ImmutableMap<String, String> convertStatToMap(final Stat stat) {

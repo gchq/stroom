@@ -8,7 +8,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -128,10 +129,11 @@ class HeapHistogramStatisticsExecutor {
                 (double) heapHistogramEntry.getInstances());
     }
 
-    private static Map<String, String> buildTags(final Map.Entry<String, String> nodeTag,
-                                                 final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
+    private static SortedMap<String, String> buildTags(
+            final Map.Entry<String, String> nodeTag,
+            final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
 
-        return ImmutableMap.<String, String>builder()
+        return ImmutableSortedMap.<String, String>naturalOrder()
                 .put(nodeTag)
                 .put(TAG_NAME_CLASS_NAME, heapHistogramEntry.getClassName())
                 .build();
