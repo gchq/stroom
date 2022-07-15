@@ -35,11 +35,11 @@ public interface HasSystemInfo {
         if (params == null || params.isEmpty()) {
             return getSystemInfo();
         } else {
-            throw new UnsupportedOperationException("This system info provider does not support parameters");
+            throw new UnsupportedOperationException("This system info provider does not support parameters. " +
+                    "Has getSystemInfo(params) been implemented for it.");
         }
     }
 
-    // TODO Change this to a list of ParamInfo
     default List<ParamInfo> getParamInfo() {
         return Collections.emptyList();
     }
