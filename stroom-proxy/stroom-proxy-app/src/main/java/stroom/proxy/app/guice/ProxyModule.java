@@ -181,7 +181,8 @@ public class ProxyModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)
-                .addBinding(ProxyLifecycle.class);
+                .addBinding(ProxyLifecycle.class)
+                .addBinding(RemoteFeedStatusService.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class)

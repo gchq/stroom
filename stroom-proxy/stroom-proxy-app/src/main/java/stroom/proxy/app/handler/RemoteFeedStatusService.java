@@ -11,12 +11,20 @@ import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
+import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -30,19 +38,19 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 @Singleton
-public class RemoteFeedStatusService implements FeedStatusService, HasHealthCheck {
+public class RemoteFeedStatusService implements FeedStatusService, HasHealthCheck, Managed {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteFeedStatusService.class);
 
-    private static final long ONE_MINUTE = 60_000;
-
     private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
-    private final Map<GetFeedStatusRequest, CachedResponse> lastKnownResponse = new ConcurrentHashMap<>();
+    private final Map<GetFeedStatusRequest, FeedStatusUpdater> updaters = new ConcurrentHashMap<>();
     private final WebTarget feedStatusWebTarget;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
+
 
     @Inject
     RemoteFeedStatusService(final Provider<ProxyConfig> proxyConfigProvider,
@@ -60,6 +68,16 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                 .path(GET_FEED_STATUS_PATH);
     }
 
+    @Override
+    public void start() throws Exception {
+
+    }
+
+    @Override
+    public void stop() throws Exception {
+        executorService.shutdownNow();
+    }
+
     private String getApiKey() {
         // Allows us to use hard-coded open id creds / token to authenticate with stroom
         // out of the box. ONLY for use in test/demo environments.
@@ -75,34 +93,31 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        final CachedResponse cachedResponse = lastKnownResponse.compute(request, (k, v) -> {
-            CachedResponse result = v;
+        final FeedStatusUpdater feedStatusUpdater = updaters.computeIfAbsent(request, k ->
+                new FeedStatusUpdater(executorService));
+        final CachedResponse cachedResponse = feedStatusUpdater.get(lastResponse -> {
+            CachedResponse result;
+            try {
+                final GetFeedStatusResponse response = callFeedStatus(request);
+                result = new CachedResponse(Instant.now(), response);
 
-            if (result == null || result.getCreationTime() < System.currentTimeMillis() - ONE_MINUTE) {
-                try {
-                    final GetFeedStatusResponse response = callFeedStatus(request);
-                    result = new CachedResponse(System.currentTimeMillis(), response);
+            } catch (final Exception e) {
+                LOGGER.debug("Unable to check remote feed service", e);
+                // Get the last response we received.
+                if (lastResponse != null) {
+                    result = new CachedResponse(Instant.now(), lastResponse.getResponse());
+                    LOGGER.error(
+                            "Unable to check remote feed service ({}).... will use last response ({}) - {}",
+                            request, result, e.getMessage());
 
-                } catch (final Exception e) {
-                    LOGGER.debug("Unable to check remote feed service", e);
-                    // Get the last response we received.
-                    if (result != null) {
-                        result = new CachedResponse(System.currentTimeMillis(),
-                                result.getResponse());
-                        LOGGER.error(
-                                "Unable to check remote feed service ({}).... will use last response ({}) - {}",
-                                request, result, e.getMessage());
-
-                    } else {
-                        // Assume ok to receive by default.
-                        result = new CachedResponse(System.currentTimeMillis(),
-                                GetFeedStatusResponse.createOKRecieveResponse());
-                        LOGGER.error("Unable to check remote feed service ({}).... will assume OK ({}) - {}",
-                                request, result, e.getMessage());
-                    }
+                } else {
+                    // Assume ok to receive by default.
+                    result = new CachedResponse(Instant.now(), GetFeedStatusResponse.createOKRecieveResponse());
+                    LOGGER.error(
+                            "Unable to check remote feed service ({}).... will assume OK ({}) - {}",
+                            request, result, e.getMessage());
                 }
             }
-
             return result;
         });
 
@@ -201,18 +216,53 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         return resultBuilder.build();
     }
 
+    private static class FeedStatusUpdater {
+
+        private final Executor executor;
+        private final AtomicBoolean updating = new AtomicBoolean();
+        private volatile CachedResponse cachedResponse;
+
+        public FeedStatusUpdater(final Executor executor) {
+            this.executor = executor;
+        }
+
+        public CachedResponse get(final Function<CachedResponse, CachedResponse> function) {
+            if (cachedResponse == null) {
+                synchronized (this) {
+                    if (cachedResponse == null) {
+                        setCachedResponse(function.apply(cachedResponse));
+                    }
+                }
+            }
+
+            if (cachedResponse.isOld()) {
+                if (updating.compareAndSet(false, true)) {
+                    CompletableFuture
+                            .runAsync(() -> setCachedResponse(function.apply(cachedResponse)), executor)
+                            .whenComplete((v, t) -> updating.set(false));
+                }
+            }
+
+            return cachedResponse;
+        }
+
+        private synchronized void setCachedResponse(final CachedResponse cachedResponse) {
+            this.cachedResponse = cachedResponse;
+        }
+    }
+
     private static class CachedResponse {
 
-        private final long creationTime;
+        private final Instant creationTime;
         private final GetFeedStatusResponse response;
 
-        CachedResponse(final long creationTime, final GetFeedStatusResponse response) {
+        CachedResponse(final Instant creationTime, final GetFeedStatusResponse response) {
             this.creationTime = creationTime;
             this.response = response;
         }
 
-        public long getCreationTime() {
-            return creationTime;
+        public boolean isOld() {
+            return creationTime.isBefore(Instant.now().minus(1, ChronoUnit.MINUTES));
         }
 
         public GetFeedStatusResponse getResponse() {
