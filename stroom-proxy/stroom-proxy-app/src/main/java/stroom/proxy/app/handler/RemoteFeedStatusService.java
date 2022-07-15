@@ -87,6 +87,8 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                     LOGGER.debug("Unable to check remote feed service", e);
                     // Get the last response we received.
                     if (result != null) {
+                        result = new CachedResponse(System.currentTimeMillis(),
+                                result.getResponse());
                         LOGGER.error(
                                 "Unable to check remote feed service ({}).... will use last response ({}) - {}",
                                 request, result, e.getMessage());
@@ -98,8 +100,6 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                         LOGGER.error("Unable to check remote feed service ({}).... will assume OK ({}) - {}",
                                 request, result, e.getMessage());
                     }
-
-                    LOGGER.error("Error checking feed status", e);
                 }
             }
 

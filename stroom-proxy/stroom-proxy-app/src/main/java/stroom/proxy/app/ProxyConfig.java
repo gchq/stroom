@@ -1,5 +1,6 @@
 package stroom.proxy.app;
 
+import stroom.proxy.app.event.EventStoreConfig;
 import stroom.proxy.app.forwarder.ForwardConfig;
 import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
@@ -43,6 +44,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final ProxyDbConfig proxyDbConfig;
     private final ReceiveDataConfig receiveDataConfig;
     private final ProxyRepoConfig proxyRepoConfig;
+    private final EventStoreConfig eventStoreConfig;
     private final List<FileScannerConfig> fileScanners;
     private final AggregatorConfig aggregatorConfig;
     private final List<ForwardConfig> forwardDestinations;
@@ -63,6 +65,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         proxyDbConfig = new ProxyDbConfig();
         receiveDataConfig = new ReceiveDataConfig();
         proxyRepoConfig = new ProxyRepoConfig();
+        eventStoreConfig = new EventStoreConfig();
         fileScanners = Collections.emptyList();
         aggregatorConfig = new AggregatorConfig();
         forwardDestinations = Collections.emptyList();
@@ -84,6 +87,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty("db") final ProxyDbConfig proxyDbConfig,
             @JsonProperty("receiveDataConfig") final ReceiveDataConfig receiveDataConfig,
             @JsonProperty("repository") final ProxyRepoConfig proxyRepoConfig,
+            @JsonProperty("eventStore") final EventStoreConfig eventStoreConfig,
             @JsonProperty("fileScanners") final List<FileScannerConfig> fileScanners,
             @JsonProperty("aggregator") final AggregatorConfig aggregatorConfig,
             @JsonProperty("forwardDestinations") final List<ForwardConfig> forwardDestinations,
@@ -102,6 +106,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.proxyDbConfig = proxyDbConfig;
         this.receiveDataConfig = receiveDataConfig;
         this.proxyRepoConfig = proxyRepoConfig;
+        this.eventStoreConfig = eventStoreConfig;
         this.fileScanners = fileScanners;
         this.aggregatorConfig = aggregatorConfig;
         this.forwardDestinations = forwardDestinations;
@@ -162,6 +167,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty("repository")
     public ProxyRepoConfig getProxyRepositoryConfig() {
         return proxyRepoConfig;
+    }
+
+    @JsonProperty("eventStore")
+    public EventStoreConfig getEventStoreConfig() {
+        return eventStoreConfig;
     }
 
     @JsonProperty("fileScanners")
@@ -225,6 +235,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private ProxyDbConfig proxyDbConfig = new ProxyDbConfig();
         private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
         private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
+        private EventStoreConfig eventStoreConfig = new EventStoreConfig();
         private List<FileScannerConfig> fileScanners = new ArrayList<>();
         private AggregatorConfig aggregatorConfig = new AggregatorConfig();
         private List<ForwardConfig> forwardDestinations = new ArrayList<>();
@@ -276,6 +287,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         public Builder proxyRepoConfig(final ProxyRepoConfig proxyRepoConfig) {
             this.proxyRepoConfig = proxyRepoConfig;
+            return this;
+        }
+
+        public Builder eventStoreConfig(final EventStoreConfig eventStoreConfig) {
+            this.eventStoreConfig = eventStoreConfig;
             return this;
         }
 
@@ -334,6 +350,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     proxyDbConfig,
                     receiveDataConfig,
                     proxyRepoConfig,
+                    eventStoreConfig,
                     fileScanners,
                     aggregatorConfig,
                     forwardDestinations,
