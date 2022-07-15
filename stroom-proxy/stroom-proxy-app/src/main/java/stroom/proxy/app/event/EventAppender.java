@@ -29,6 +29,7 @@ class EventAppender implements AutoCloseable {
         }
 
         writer.write(data);
+        writer.newLine();
         writer.flush();
     }
 

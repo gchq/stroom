@@ -186,7 +186,7 @@ public class EventStore implements EventConsumer {
                     data);
 
             final EventAppender appender = cache.get(feedKey);
-            appender.write(string + "\n");
+            appender.write(string);
 
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);

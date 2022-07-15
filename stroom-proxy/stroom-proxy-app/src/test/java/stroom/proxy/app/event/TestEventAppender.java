@@ -19,7 +19,7 @@ public class TestEventAppender {
         final StringBuilder expected = new StringBuilder();
         for (int i = 0; i < 10; i++) {
             eventAppender.write("test");
-            expected.append("test");
+            expected.append("test\n");
         }
         eventAppender.close();
         assertThat(EventStoreTestUtil.read(dir, feedKey, EventStoreFile.TEMP_EXTENSION))
