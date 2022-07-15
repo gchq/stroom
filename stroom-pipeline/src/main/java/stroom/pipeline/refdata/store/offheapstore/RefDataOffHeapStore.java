@@ -66,12 +66,9 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.jetbrains.annotations.NotNull;
 import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -112,8 +109,7 @@ import javax.inject.Singleton;
 @Singleton
 public class RefDataOffHeapStore extends AbstractRefDataStore implements RefDataStore, HasSystemInfo {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
 
     private static final String DEFAULT_STORE_SUB_DIR_NAME = "refDataOffHeapStore";
 
@@ -202,67 +198,86 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final int stripesCount = referenceDataConfigProvider.get().getLoadingLockStripes();
         LOGGER.debug("Initialising striped with {} stripes", stripesCount);
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(stripesCount);
-        purgePartialLoads();
     }
 
     private void purgePartialLoads() {
 
         final Instant startTime = Instant.now();
+
+        final Predicate<ByteBuffer> partialLoadProgressPredicate =
+                RefDataProcessingInfoSerde.createProcessingStatePredicate(
+                        ProcessingState.LOAD_IN_PROGRESS,
+                        ProcessingState.PURGE_IN_PROGRESS,
+                        ProcessingState.TERMINATED);
+
         // Get all the ref stream defs in a partially loaded/purged state
         // It is only in exceptional circumstances that we get streams in this state so the list should
         // not be big.
-        final List<RefStreamDefinition> refStreamDefinitions = lmdbEnvironment.getWithReadTxn(this::getInvalidStreams);
+        final List<Entry<RefStreamDefinition, RefDataProcessingInfo>> invalidStreams = lmdbEnvironment.getWithReadTxn(
+                readTxn -> getInvalidStreams(readTxn, partialLoadProgressPredicate));
 
-        if (!refStreamDefinitions.isEmpty()) {
-            LOGGER.info("Found {} ref streams that are partially loaded/purged. They will now be purged.",
-                    refStreamDefinitions.size());
+        if (!invalidStreams.isEmpty()) {
             AtomicReference<PurgeCounts> purgeCountsRef = new AtomicReference<>(PurgeCounts.ZERO);
-            for (final RefStreamDefinition refStreamDefinition : refStreamDefinitions) {
+            for (final Entry<RefStreamDefinition, RefDataProcessingInfo> entry : invalidStreams) {
                 try (final PooledByteBuffer refStreamDefPooledBuf = processingInfoDb.getPooledKeyBuffer()) {
+                    final RefStreamDefinition refStreamDefinition = entry.getKey();
+                    final RefDataProcessingInfo refDataProcessingInfo = entry.getValue();
                     this.taskContext.info(() -> LogUtil.message(
-                            "Purging partially loaded/purged reference stream {}:{}",
-                            refStreamDefinition.getStreamId(), refStreamDefinition.getPartNumber()));
+                            "Purging partially loaded/purged reference stream {}:{} with state {}",
+                            refStreamDefinition.getStreamId(),
+                            refStreamDefinition.getPartNumber(),
+                            refDataProcessingInfo.getProcessingState()));
                     processingInfoDb.serializeKey(refStreamDefPooledBuf.getByteBuffer(), refStreamDefinition);
+
+                    // Need to recheck the state under lock in case it has changed
                     final RefStreamPurgeCounts refStreamPurgeCounts = purgeRefStreamIfEligible(
-                            startTime,
+                            partialLoadProgressPredicate,
                             refStreamDefPooledBuf.getByteBuffer(),
                             refStreamDefinition);
+
                     purgeCountsRef.set(purgeCountsRef.get().increment(refStreamPurgeCounts));
                 }
+                if (Thread.currentThread().isInterrupted()) {
+                    LOGGER.debug("Thread interrupted during ");
+                }
             }
-            LAMBDA_LOGGER.info(() -> "Purge of partial loads/purges completed successfully - " +
-                    buildPurgeInfoString(startTime, purgeCountsRef.get()));
+
+            LOGGER.info(() -> LogUtil.message(
+                    "Purge of partial loads/purges {}- {}",
+                    (Thread.currentThread().isInterrupted()
+                            ? "interrupted"
+                            : "completed successfully "),
+                    buildPurgeInfoString(startTime, purgeCountsRef.get())));
         } else {
             LOGGER.info("Completed check for invalid ref loads/purges in {}",
                     Duration.between(startTime, Instant.now()));
         }
     }
 
-    private List<RefStreamDefinition> getInvalidStreams(final Txn<ByteBuffer> writeTxn) {
+    private List<Entry<RefStreamDefinition, RefDataProcessingInfo>> getInvalidStreams(
+            final Txn<ByteBuffer> writeTxn,
+            final Predicate<ByteBuffer> partialLoadProgressPredicate) {
 
-        final Predicate<KeyVal<ByteBuffer>> statePredicate = keyVal -> {
-            final ProcessingState processingState =
-                    RefDataProcessingInfoSerde.extractProcessingState(keyVal.val());
-            final boolean isInvalid = ProcessingState.PURGE_IN_PROGRESS.equals(processingState)
-                    || ProcessingState.LOAD_IN_PROGRESS.equals(processingState);
-            if (LOGGER.isDebugEnabled() && isInvalid) {
-                final RefStreamDefinition refStreamDefinition = processingInfoDb.deserializeKey(keyVal.key());
-                LOGGER.debug("Found ref stream def {}:{} in state {}",
-                        refStreamDefinition.getStreamId(),
-                        refStreamDefinition.getPartNumber(),
-                        processingState);
-            }
-            return isInvalid;
-        };
+        final List<Entry<RefStreamDefinition, RefDataProcessingInfo>> invalidStreams =
+                processingInfoDb.streamEntriesAsBytes(
+                        writeTxn,
+                        KeyRange.all(),
+                        stream ->
+                                stream.filter(keyVal ->
+                                                partialLoadProgressPredicate.test(keyVal.val()))
+                                        .map(processingInfoDb::deserializeKeyVal)
+                                        .collect(Collectors.toList()));
 
-        return processingInfoDb.streamEntriesAsBytes(
-                writeTxn,
-                KeyRange.all(),
-                stream ->
-                        stream.filter(statePredicate)
-                                .map(keyVal ->
-                                        processingInfoDb.deserializeKey(keyVal.key()))
-                                .collect(Collectors.toList()));
+        final Map<ProcessingState, Long> countsByState = invalidStreams.stream()
+                .collect(Collectors.groupingBy(entry ->
+                        entry.getValue().getProcessingState(), Collectors.counting()));
+
+        LOGGER.info("Found partially loaded/purged ref streams (counts: {}) (total {}). " +
+                        "They will now all be purged.",
+                countsByState,
+                invalidStreams.size());
+
+        return invalidStreams;
     }
 
     private LmdbEnv createEnvironment(final ReferenceDataLmdbConfig lmdbConfig) {
@@ -383,6 +398,19 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         processingInfoDb.updateLastAccessedTime(refStreamDefinition, timeMs);
     }
 
+    /**
+     * Intended only for testing use.
+     */
+    void setProcessingState(final RefStreamDefinition refStreamDefinition, ProcessingState processingState) {
+        lmdbEnvironment.doWithWriteTxn(writeTxn -> {
+            processingInfoDb.updateProcessingState(
+                    writeTxn,
+                    refStreamDefinition,
+                    processingState,
+                    true);
+        });
+    }
+
     private Optional<ByteBuffer> getValueStoreKey(final Txn<ByteBuffer> readTxn,
                                                   final MapDefinition mapDefinition,
                                                   final String key) {
@@ -477,11 +505,17 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     public void purgeOldData() {
         LOGGER.info("purgeAge in purgeOldData: {}", referenceDataConfigProvider.get().getPurgeAge());
         purgeOldData(Instant.now(), referenceDataConfigProvider.get().getPurgeAge());
+
+        // Also clear out any partial loads/purges
+        purgePartialLoads();
     }
 
     @Override
     public void purgeOldData(final StroomDuration purgeAge) {
         purgeOldData(Instant.now(), purgeAge);
+
+        // Also clear out any partial loads/purges
+        purgePartialLoads();
     }
 
     @Override
@@ -499,6 +533,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final Predicate<RefStreamDefinition> refStreamDefinitionPredicate = refStreamDef ->
                     refStreamDef.getStreamId() == refStreamId && refStreamDef.getPartIndex() == partIndex;
 
+            // Initially we scan the whole range but as we find stuff we move the start key
             final AtomicReference<KeyRange<RefStreamDefinition>> keyRangeRef = new AtomicReference<>(KeyRange.all());
             boolean wasMatchFound;
             do {
@@ -509,7 +544,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     throw new TaskTerminatedException();
                 }
 
-                // With a read txn scan over all the proc info entries to find the next one that is ready for purge
+                // Find the next one that is ready for purge
+                // Can just use a stream and for each as that would result in a cursor inside a cursor
                 final Optional<Entry<RefStreamDefinition, RefDataProcessingInfo>> optEntry =
                         lmdbEnvironment.getWithReadTxn(readTxn ->
                                 processingInfoDb.findFirstMatchingKey(
@@ -526,8 +562,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     keyRangeRef.set(KeyRange.greaterThan(refStreamDefinition));
                     processingInfoDb.serializeKey(refStreamDefPooledBuf.getByteBuffer(), refStreamDefinition);
 
+                    // Always true predicate as there is no condition on the processing info
                     final RefStreamPurgeCounts refStreamPurgeCounts = purgeRefStreamIfEligible(
-                            Instant.now(),
+                            byteBuffer -> true,
                             refStreamDefPooledBuf.getByteBuffer(),
                             refStreamDefinition);
 
@@ -550,20 +587,20 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                         "Unable to purge {} ref stream definitions",
                         purgeCounts.refStreamDefsFailedCount));
             } else if (purgeCounts.refStreamDefsDeletedCount > 0) {
-                LAMBDA_LOGGER.info(() -> "Purge completed successfully - " +
+                LOGGER.info(() -> "Purge completed successfully - " +
                         buildPurgeInfoString(startTime, purgeCounts));
             } else {
-                LAMBDA_LOGGER.info(() -> "Purge completed with no data to purge.");
+                LOGGER.info(() -> "Purge completed with no data to purge.");
             }
         } catch (TaskTerminatedException e) {
             // Expected behaviour so just rethrow, stopping it being picked up by the other
             // catch block
             LOGGER.debug("Purge terminated", e);
-            LAMBDA_LOGGER.warn(() -> "Purge terminated - " +
+            LOGGER.warn(() -> "Purge terminated - " +
                     buildPurgeInfoString(startTime, countsRef.get()));
             throw e;
         } catch (Exception e) {
-            LAMBDA_LOGGER.error(() -> "Purge failed due to " + e.getMessage() + ". " +
+            LOGGER.error(() -> "Purge failed due to " + e.getMessage() + ". " +
                     buildPurgeInfoString(startTime, countsRef.get()), e);
             throw e;
         }
@@ -661,7 +698,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     final RefStreamDefinition refStreamDefinition = optRefStreamDef.get();
 
                     final RefStreamPurgeCounts refStreamPurgeCounts = purgeRefStreamIfEligible(
-                            purgeCutOffTime,
+                            accessTimePredicate,
                             currRefStreamDefBufRef.get(),
                             refStreamDefinition);
 
@@ -683,7 +720,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
             final PurgeCounts purgeCounts = countsRef.get();
             if (purgeCounts.refStreamDefsFailedCount == 0) {
-                LAMBDA_LOGGER.info(() -> "Purge completed successfully - " +
+                LOGGER.info(() -> "Purge completed successfully - " +
                         buildPurgeInfoString(startTime, purgeCounts));
             } else {
                 // One or more ref stream defs failed
@@ -695,11 +732,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             // Expected behaviour so just rethrow, stopping it being picked up by the other
             // catch block
             LOGGER.debug("Purge terminated", e);
-            LAMBDA_LOGGER.warn(() -> "Purge terminated - " +
+            LOGGER.warn(() -> "Purge terminated - " +
                     buildPurgeInfoString(startTime, countsRef.get()));
             throw e;
         } catch (Exception e) {
-            LAMBDA_LOGGER.error(() -> "Purge failed due to " + e.getMessage() + ". " +
+            LOGGER.error(() -> "Purge failed due to " + e.getMessage() + ". " +
                     buildPurgeInfoString(startTime, countsRef.get()), e);
             throw e;
         }
@@ -764,9 +801,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 Duration.between(startTime, Instant.now()));
     }
 
-    private RefStreamPurgeCounts purgeRefStreamIfEligible(final Instant purgeCutOffTime,
-                                                          final ByteBuffer refStreamDefinitionBuf,
-                                                          final RefStreamDefinition refStreamDefinition) {
+    private RefStreamPurgeCounts purgeRefStreamIfEligible(
+            final Predicate<ByteBuffer> processingInfoBufferPredicate,
+            final ByteBuffer refStreamDefinitionBuf,
+            final RefStreamDefinition refStreamDefinition) {
 
         LOGGER.debug("Attempting to purge ref stream {} if eligible", refStreamDefinition);
         final AtomicReference<RefStreamPurgeCounts> refStreamPurgeCountsRef = new AtomicReference<>();
@@ -774,7 +812,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         taskContext.info(() -> "Acquiring lock for reference stream " +
                 refStreamDefinition.getStreamId() + ":" + refStreamDefinition.getPartIndex());
 
-        // now acquire a lock for the this ref stream def so we don't conflict with any load operations
+        // now acquire a lock for this ref stream def, so we don't conflict with any load operations
         doWithRefStreamDefinitionLock(refStreamDefStripedReentrantLock, refStreamDefinition, () -> {
 
             try {
@@ -787,11 +825,16 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             batchingWriteTxn.getTxn(), refStreamDefinitionBuf);
 
                     if (optRefDataProcInfoBuf.isPresent()) {
-                        final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.deserializeValue(
-                                optRefDataProcInfoBuf.get());
+                        final ByteBuffer refDataProcessingInfoBuffer = optRefDataProcInfoBuf.get();
 
-                        // Re-check that it is valid for purge in case something has been in and accessed it.
-                        if (refDataProcessingInfo.getLastAccessedTime().isBefore(purgeCutOffTime)) {
+                        LOGGER.debug(() -> LogUtil.message("refStreamDefinition: {}",
+                                processingInfoDb.deserializeKey(refDataProcessingInfoBuffer)));
+
+                        // Test the predicate to ensure we can purge it
+                        if (processingInfoBufferPredicate.test(refDataProcessingInfoBuffer)) {
+
+                            final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.deserializeValue(
+                                    refDataProcessingInfoBuffer);
 
                             final RefStreamPurgeCounts refStreamPurgeCounts = purgeRefStreamDef(
                                     refStreamDefinition,
@@ -801,8 +844,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
                             refStreamPurgeCountsRef.set(refStreamPurgeCounts);
                         } else {
-                            LOGGER.debug("Ref stream {} not eligible for purge, info {}",
-                                    refStreamDefinition, refDataProcessingInfo);
+                            LOGGER.debug(() -> LogUtil.message("Ref stream {} not eligible for purge, info {}",
+                                    refStreamDefinition,
+                                    processingInfoDb.deserializeValue(refDataProcessingInfoBuffer)));
                         }
                     } else {
                         LOGGER.info("Ref data processing info does not exist, another thread may have already " +
@@ -993,7 +1037,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             } while (optMapUid.isPresent());
         }
 
-//        LOGGER.info("Purged data for {} map(s) for {}", cnt, refStreamDefinition);
+//        LAMBDA_LOGGER.info("Purged data for {} map(s) for {}", cnt, refStreamDefinition);
         return summaryInfo;
     }
 
@@ -1019,7 +1063,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             valueEntryDeleteCount,
                             valueEntryDeReferenceCount);
                 });
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Deleted {} value entries, de-referenced {} value entries",
+        LOGGER.debug(() -> LogUtil.message("Deleted {} value entries, de-referenced {} value entries",
                 valueEntryDeleteCount.get(), valueEntryDeReferenceCount.get()));
 
         LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");
@@ -1160,7 +1204,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 final Stream<RefStoreEntry> combinedStream = Stream.concat(keyValueStream, rangeValueStream)
                         .peek(entry -> entryCounter.increment());
 
-                return LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                return LOGGER.logDurationIfDebugEnabled(
                         () ->
                                 streamFunction.apply(combinedStream),
                         () ->
@@ -1246,7 +1290,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
         final List<ProcessingInfoResponse> items = new ArrayList<>();
 
-        LAMBDA_LOGGER.logDurationIfDebugEnabled(
+        LOGGER.logDurationIfDebugEnabled(
                 () -> {
                     items.addAll(lmdbEnvironment.getWithReadTxn(readTxn ->
                             processingInfoDb.streamEntries(
