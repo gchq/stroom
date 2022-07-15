@@ -11,6 +11,7 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Watchable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,12 +25,14 @@ public class TestEventStore {
 
         final ProxyConfig proxyConfig = Mockito.mock(ProxyConfig.class);
         Mockito.when(proxyConfig.getProxyId()).thenReturn("test-proxy");
+        final EventStoreConfig eventStoreConfig = new EventStoreConfig();
 
         final ReceiveStreamHandlers receiveStreamHandlers = Mockito.mock(ReceiveStreamHandlers.class);
         final RepoDirProvider repoDirProvider = () -> dir;
         final EventStore eventStore = new EventStore(
                 receiveStreamHandlers,
                 proxyConfig,
+                eventStoreConfig,
                 repoDirProvider);
 
         for (int i = 0; i < 10; i++) {

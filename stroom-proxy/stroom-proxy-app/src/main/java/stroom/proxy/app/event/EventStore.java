@@ -18,6 +18,7 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -35,14 +36,17 @@ public class EventStore implements EventConsumer {
     private final ReceiveStreamHandlers receiveStreamHandlerProvider;
     private final Path dir;
     private final ProxyConfig proxyConfig;
-    private final LoadingCache<FeedKey, EventAppender> cache;
+    private final EventStoreConfig eventStoreConfig;
+    private final LoadingCache<FeedKey, EventAppender> openAppenders;
     private final Map<FeedKey, EventAppender> stores;
     private final EventSerialiser eventSerialiser;
 
     @Inject
     public EventStore(final ReceiveStreamHandlers receiveStreamHandlerProvider,
                       final ProxyConfig proxyConfig,
+                      final EventStoreConfig eventStoreConfig,
                       final RepoDirProvider repoDirProvider) {
+        this.eventStoreConfig = eventStoreConfig;
         final Path repoDir = repoDirProvider.get();
 
         // Create the root directory
@@ -57,7 +61,7 @@ public class EventStore implements EventConsumer {
         final Caffeine<Object, Object> cacheBuilder = Caffeine.newBuilder();
         cacheBuilder.maximumSize(100);
         cacheBuilder.removalListener(this::close);
-        this.cache = cacheBuilder.build(this::open);
+        this.openAppenders = cacheBuilder.build(this::open);
         this.stores = new ConcurrentHashMap<>();
         eventSerialiser = new EventSerialiser();
 
@@ -101,8 +105,18 @@ public class EventStore implements EventConsumer {
         }
     }
 
+    public void tryRoll() {
+        stores.values().forEach(appender -> {
+            try {
+                final Optional<Path> optionalPath = appender.tryRoll();
+                optionalPath.ifPresent(this::forward);
+            } catch (final IOException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        });
+    }
+
     public void roll() {
-        cache.cleanUp();
         stores.values().forEach(appender -> {
             try {
                 final Optional<Path> optionalPath = appender.roll();
@@ -155,7 +169,7 @@ public class EventStore implements EventConsumer {
     }
 
     private EventAppender open(final FeedKey feedKey) {
-        return stores.computeIfAbsent(feedKey, k -> new EventAppender(dir, k));
+        return stores.computeIfAbsent(feedKey, k -> new EventAppender(dir, k, eventStoreConfig));
     }
 
     private void close(final FeedKey feedKey,
@@ -183,10 +197,11 @@ public class EventStore implements EventConsumer {
                     proxyConfig.getProxyId(),
                     feedKey,
                     attributeMap,
-                    data);
+                    data) + "\n";
 
-            final EventAppender appender = cache.get(feedKey);
-            appender.write(string);
+            final EventAppender appender = openAppenders.get(feedKey);
+            final Optional<Path> optionalPath = appender.write(string.getBytes(StandardCharsets.UTF_8));
+            optionalPath.ifPresent(this::forward);
 
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);

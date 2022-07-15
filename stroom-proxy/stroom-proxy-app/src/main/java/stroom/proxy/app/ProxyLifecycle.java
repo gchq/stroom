@@ -169,7 +169,7 @@ public class ProxyLifecycle implements Managed {
         // Add executor to roll event store.
         final EventStore eventStore = eventStoreProvider.get();
         addFrequencyExecutor("Event Store - roll",
-                () -> eventStore::roll,
+                () -> eventStore::tryRoll,
                 eventStoreConfig.getRollFrequency().toMillis());
     }
 

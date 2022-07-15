@@ -3,6 +3,7 @@ package stroom.proxy.app.event;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -15,10 +16,10 @@ public class TestEventAppender {
         final Path dir = Files.createTempDirectory("stroom");
 
         final FeedKey feedKey = new FeedKey("Test", "Raw Events");
-        final EventAppender eventAppender = new EventAppender(dir, feedKey);
+        final EventAppender eventAppender = new EventAppender(dir, feedKey, new EventStoreConfig());
         final StringBuilder expected = new StringBuilder();
         for (int i = 0; i < 10; i++) {
-            eventAppender.write("test");
+            eventAppender.write("test\n".getBytes(StandardCharsets.UTF_8));
             expected.append("test\n");
         }
         eventAppender.close();

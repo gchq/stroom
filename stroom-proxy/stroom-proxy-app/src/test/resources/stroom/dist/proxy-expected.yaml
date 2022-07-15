@@ -28,6 +28,11 @@ proxyConfig:
     - "pragma vacuum;"
     - "pragma optimize;"
     maintenancePragmaFrequency: "PT1M"
+  eventStore:
+    maxAge: "PT1M"
+    maxByteCount: 9223372036854775807
+    maxEventCount: 9223372036854775807
+    rollFrequency: "PT10S"
   feedStatus:
     apiKey: null
     url: null
