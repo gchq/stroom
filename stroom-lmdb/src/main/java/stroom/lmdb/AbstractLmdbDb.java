@@ -326,7 +326,8 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     /**
      * Find the first entry matching the supplied key predicate in the supplied key range.
      * Not very efficient as it will scan over all entries in the range (de-serialising
-     * each one as it goes) till it finds a match.
+     * each key as it goes) till it finds a match. Values only de-serialised if the keyPredicate
+     * is matched.
      */
     public Optional<Entry<K, V>> findFirstMatchingKey(final Txn<ByteBuffer> txn,
                                                       final KeyRange<K> keyRange,
@@ -341,12 +342,36 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
             return streamEntriesAsBytes(txn, serialisedKeyRange, entryStream ->
                     entryStream
-                            .map(keyVal -> {
-                                final K key = deserializeKey(keyVal.key());
-                                final V value = deserializeValue(keyVal.val());
-                                return Map.entry(key, value);
-                            })
+                            .map(keyVal ->
+                                    Map.entry(deserializeKey(keyVal.key()), keyVal.val()))
                             .filter(entry -> keyPredicate.test(entry.getKey()))
+                            .map(entry -> Map.entry(
+                                    entry.getKey(),
+                                    deserializeValue(entry.getValue())))
+                            .findFirst());
+        }
+    }
+
+    /**
+     * Find the first entry matching the supplied key buffer predicate in the supplied key range.
+     * Only de-serialises matched entries.
+     */
+    public Optional<Entry<K, V>> findFirstMatchingKeyBytes(final Txn<ByteBuffer> txn,
+                                                           final KeyRange<K> keyRange,
+                                                           final Predicate<ByteBuffer> keyPredicate) {
+
+        try (final PooledByteBuffer startKeyPooledBuffer = getPooledKeyBuffer();
+                final PooledByteBuffer stopKeyPooledBuffer = getPooledKeyBuffer()) {
+
+            final KeyRange<ByteBuffer> serialisedKeyRange = serialiseKeyRange(startKeyPooledBuffer,
+                    stopKeyPooledBuffer,
+                    keyRange);
+
+            return streamEntriesAsBytes(txn, serialisedKeyRange, entryStream ->
+                    entryStream
+                            .filter(keyVal ->
+                                    keyPredicate.test(keyVal.key()))
+                            .map(this::deserializeKeyVal)
                             .findFirst());
         }
     }
