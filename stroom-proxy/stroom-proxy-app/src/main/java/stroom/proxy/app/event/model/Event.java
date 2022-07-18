@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
+
 @JsonPropertyOrder({
         "version",
         "event-id",
@@ -29,7 +31,7 @@ public class Event {
     @JsonProperty("receive-time")
     private final String receiveTime;
     @JsonProperty("headers")
-    private final Header[] headers;
+    private final List<Header> headers;
     @JsonProperty("detail")
     private final String detail;
 
@@ -40,7 +42,7 @@ public class Event {
                  @JsonProperty("feed") final String feed,
                  @JsonProperty("type") final String type,
                  @JsonProperty("receive-time") final String receiveTime,
-                 @JsonProperty("headers") final Header[] headers,
+                 @JsonProperty("headers") final List<Header> headers,
                  @JsonProperty("detail") final String detail) {
         this.version = version;
         this.eventId = eventId;
@@ -76,7 +78,7 @@ public class Event {
         return receiveTime;
     }
 
-    public Header[] getHeaders() {
+    public List<Header> getHeaders() {
         return headers;
     }
 
