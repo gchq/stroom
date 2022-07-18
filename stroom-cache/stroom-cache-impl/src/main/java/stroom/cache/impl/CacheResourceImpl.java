@@ -42,6 +42,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -159,6 +160,18 @@ class CacheResourceImpl implements CacheResource {
         return result;
     }
 
+    @Override
+    @AutoLogged(value = OperationType.PROCESS, verb = "Evicting expired cache entries")
+    public Long evict(final String cacheName, final String nodeName) {
+        final Long result;
+        if (nodeName == null) {
+            result = evictExpiredOnAllNodes(cacheName);
+        } else {
+            result = evictExpired(cacheName, nodeName);
+        }
+        return result;
+    }
+
     private Long clearCacheOnAllNodes(final String cacheName) {
 
         final FindNodeCriteria criteria = new FindNodeCriteria();
@@ -212,7 +225,75 @@ class CacheResourceImpl implements CacheResource {
                 }).get();
     }
 
-    private Long clearCache(final String cacheName, final String nodeName) {
+    private Long evictExpiredOnAllNodes(final String cacheName) {
+
+        final FindNodeCriteria criteria = new FindNodeCriteria();
+        criteria.setEnabled(true);
+        final List<String> allNodes = nodeService.get().findNodeNames(FindNodeCriteria.allEnabled());
+
+        final Set<String> failedNodes = new ConcurrentSkipListSet<>();
+        final AtomicReference<Throwable> exception = new AtomicReference<>();
+
+        return taskContextFactory.get().contextResult(
+                LogUtil.message("Evict expired entries for cache [{}] on all active nodes", cacheName),
+                TerminateHandlerFactory.NOOP_FACTORY,
+                parentContext -> {
+                    final Long count = allNodes.stream()
+                            .map(nodeName -> {
+                                final Supplier<Long> supplier = taskContextFactory.get()
+                                        .childContextResult(
+                                                parentContext,
+                                                LogUtil.message("Evict expired entries for cache [{}] on node [{}]",
+                                                        cacheName, nodeName),
+                                                TerminateHandlerFactory.NOOP_FACTORY,
+                                                taskContext ->
+                                                        evictExpired(cacheName, nodeName));
+
+                                return CompletableFuture
+                                        .supplyAsync(supplier)
+                                        .exceptionally(throwable -> {
+                                            failedNodes.add(nodeName);
+                                            exception.set(throwable);
+                                            LOGGER.error(
+                                                    "Error evicting expired entries for cache [{}] on node [{}]: {}. Enable DEBUG for " +
+                                                            "stacktrace",
+                                                    cacheName,
+                                                    nodeName,
+                                                    throwable.getMessage());
+                                            LOGGER.debug("Error evicting expired entries for cache [{}] on node [{}]",
+                                                    cacheName, nodeName, throwable);
+                                            return 0L;
+                                        });
+                            })
+                            .map(CompletableFuture::join)
+                            .reduce(Long::sum)
+                            .orElse(0L);
+
+                    if (!failedNodes.isEmpty()) {
+                        throw new RuntimeException(LogUtil.message(
+                                "Error evicting expired entries for cache on node(s) [{}]. See logs for details",
+                                String.join(",", failedNodes)), exception.get());
+                    }
+                    return count;
+                }).get();
+    }
+
+    private Long clearCache(final String cacheName,
+                            final String nodeName) {
+        return doCacheAction(cacheName, nodeName, null, criteria ->
+                cacheManagerService.get().clear(criteria));
+    }
+
+    private Long evictExpired(final String cacheName,
+                              final String nodeName) {
+        return doCacheAction(cacheName, nodeName, CacheResource.EVICT, criteria ->
+                cacheManagerService.get().evictExpiredElements(criteria));
+    }
+
+    private Long doCacheAction(final String cacheName,
+                               final String nodeName,
+                               final String subPath,
+                               final Function<FindCacheInfoCriteria, Long> cacheAction) {
         Objects.requireNonNull(cacheName);
         Objects.requireNonNull(nodeName);
 
@@ -221,11 +302,11 @@ class CacheResourceImpl implements CacheResource {
             // local node
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(cacheName, null));
-            result = cacheManagerService.get().clear(criteria);
+            result = cacheAction.apply(criteria);
 
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(CacheResource.BASE_PATH);
+                    + ResourcePaths.buildAuthenticatedApiPath(CacheResource.BASE_PATH, subPath);
 
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);

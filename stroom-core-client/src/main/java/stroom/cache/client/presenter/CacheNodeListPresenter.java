@@ -19,8 +19,7 @@ package stroom.cache.client.presenter;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
-import stroom.cell.info.client.InfoColumn;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.cell.info.client.ActionCell;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -30,25 +29,27 @@ import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PageResponse;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
-import com.google.gwt.cell.client.ButtonCell;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.regexp.shared.RegExp;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -56,16 +57,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheInfo>> {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
+    private static final int ICON_COL = 18;
     private static final int SMALL_COL = 90;
-    private static final int MEDIUM_COL = 150;
+    private static final int MEDIUM_COL = 130;
     private static final RegExp CASE_CONVERSION_REGEX = RegExp.compile("([a-z])([A-Z])", "g");
+    protected static final String CACHE_INFO_KEY_HIT_COUNT = "HitCount";
+    protected static final String CACHE_INFO_KEY_MISS_COUNT = "MissCount";
 
     private final RestFactory restFactory;
     private final TooltipPresenter tooltipPresenter;
@@ -93,8 +99,6 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         this.tooltipPresenter = tooltipPresenter;
         this.nodeManager = nodeManager;
         this.delayedUpdate = new DelayedUpdate(this::update);
-
-//        addColumns();
     }
 
     private void addColumns() {
@@ -103,8 +107,31 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         }
         columns.clear();
 
-        // Info.
-        addInfoColumn();
+        // Clear.
+        addIconButtonColumn(
+                SvgPresets.of(SvgPresets.DELETE, "Clear cache", true),
+                (row, nativeEvent) -> {
+                    final Rest<Boolean> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> {
+                                dataProvider.refresh();
+                            })
+                            .call(CACHE_RESOURCE)
+                            .clear(row.getName(), row.getNodeName());
+                });
+
+        // Clean up
+        addIconButtonColumn(
+                SvgPresets.of(SvgPresets.CLEAN, "Evict expired entries", true),
+                (row, nativeEvent) -> {
+                    final Rest<Boolean> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> {
+                                dataProvider.refresh();
+                            })
+                            .call(CACHE_RESOURCE)
+                            .evict(row.getName(), row.getNodeName());
+                });
 
         // Node.
         addColumn(new Column<CacheInfo, String>(new TextCell()) {
@@ -114,62 +141,94 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
             }
         }, "Node", MEDIUM_COL);
 
-        // Entries.
-//        addColumn(new Column<CacheInfo, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final CacheInfo row) {
-//                return row.getMap().get("Entries");
-//            }
-//        }, "Entries", SMALL_COL);
-
-        // Max Entries.
-//        addColumn(new Column<CacheInfo, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final CacheInfo row) {
-//                return row.getMap().get("MaximumSize");
-//            }
-//        }, "Max Entries", SMALL_COL);
-
-        // Expiry.
-//        addColumn(new Column<CacheInfo, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final CacheInfo row) {
-//                String expiry = row.getMap().get("ExpireAfterAccess");
-//                if (expiry == null) {
-//                    expiry = row.getMap().get("ExpireAfterWrite");
-//                }
-//                return expiry;
-//            }
-//        }, "Expiry", SMALL_COL);
-
         for (final String cacheInfoKey : cacheInfoKeys.stream().sorted().collect(Collectors.toList())) {
             final String name = convertUpperCamelToHuman(cacheInfoKey);
-            final Column<CacheInfo, String> column = new Column<CacheInfo, String>(new TextCell()) {
-                @Override
-                public String getValue(final CacheInfo row) {
-                    String value = row.getMap().get(cacheInfoKey);
-                    return value;
-                }
-            };
-            addColumn(column, name, -1);
+            addStatColumn(name, -1, row -> {
+                String value = row.getMap().get(cacheInfoKey);
+                return formatValue(cacheInfoKey, value);
+            });
         }
 
-        // Clear.
-        final Column<CacheInfo, String> clearColumn = new Column<CacheInfo, String>(new ButtonCell()) {
-            @Override
-            public String getValue(final CacheInfo row) {
-                return "Clear";
-            }
-        };
-        clearColumn.setFieldUpdater((index, row, value) -> {
-            final Rest<Boolean> rest = restFactory.create();
-            rest.call(CACHE_RESOURCE).clear(row.getName(), row.getNodeName());
-        });
-        addColumn(clearColumn, "</br>", 50);
+        if (cacheInfoKeys.contains(CACHE_INFO_KEY_HIT_COUNT)
+                && cacheInfoKeys.contains(CACHE_INFO_KEY_MISS_COUNT)) {
+            addStatColumn("Hit Ratio", -1, row ->
+                    getCacheHitRatio(row.getMap()));
+        }
 
         final EndColumn<CacheInfo> endColumn = new EndColumn<>();
         columns.add(endColumn);
         getView().addEndColumn(endColumn);
+    }
+
+    private void addIconButtonColumn(final SvgPreset svgPreset,
+                                     final BiConsumer<CacheInfo, NativeEvent> action) {
+        final ActionCell<CacheInfo> cell = new stroom.cell.info.client.ActionCell<CacheInfo>(
+                svgPreset, action);
+        final Column<CacheInfo, CacheInfo> col =
+                new Column<CacheInfo, CacheInfo>(cell) {
+                    @Override
+                    public CacheInfo getValue(final CacheInfo row) {
+                        return row;
+                    }
+
+                    @Override
+                    public void onBrowserEvent(final Context context,
+                                               final Element elem,
+                                               final CacheInfo rule,
+                                               final NativeEvent event) {
+                        super.onBrowserEvent(context, elem, rule, event);
+                    }
+                };
+        columns.add(col);
+        getView().addColumn(col, "", ICON_COL);
+    }
+
+    private void addStatColumn(final String name,
+                               final int width,
+                               final Function<CacheInfo, String> valueExtractor) {
+
+        final Column<CacheInfo, String> col = DataGridUtil.columnBuilder(
+                        valueExtractor,
+                        Function.identity(),
+                        TextCell::new)
+                .rightAligned()
+                .build();
+        columns.add(col);
+        final int newWidth = width == -1
+                ? determineColumnWidth(name)
+                : width;
+        getView().addResizableColumn(
+                col,
+                DataGridUtil.createRightAlignedHeader(name),
+                newWidth);
+    }
+
+    private String getCacheHitRatio(final Map<String, String> cacheInfo) {
+        final long hitCount = Long.parseLong(cacheInfo.get(CACHE_INFO_KEY_HIT_COUNT));
+        final long missCount = Long.parseLong(cacheInfo.get(CACHE_INFO_KEY_MISS_COUNT));
+        if (hitCount + missCount == 0) {
+            return "-";
+        } else {
+            final double ratio = ((double) hitCount) / (hitCount + missCount);
+
+            final BigDecimal scaledVal = new BigDecimal(ratio).setScale(3, RoundingMode.HALF_UP);
+            return NumberFormat.getDecimalFormat()
+                    .format(scaledVal);
+        }
+    }
+
+    private String formatValue(final String cacheKey, final String value) {
+        if (cacheKey.equals("TotalLoadTime")) {
+            return value;
+        } else if (cacheKey.startsWith("ExpireAfter")) {
+            return value;
+        } else {
+            try {
+                return ModelStringUtil.formatCsv(Long.parseLong(value));
+            } catch (NumberFormatException e) {
+                return value;
+            }
+        }
     }
 
     private String convertUpperCamelToHuman(final String str) {
@@ -179,47 +238,44 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
     private void addColumn(Column<CacheInfo, ?> column, String name, int width) {
         columns.add(column);
         final int newWidth = width == -1
-                ? (int) (((double) name.length() / 11) * SMALL_COL)
+                ? determineColumnWidth(name)
                 : width;
         getView().addResizableColumn(column, name, newWidth);
     }
 
-    private void addInfoColumn() {
-        // Info column.
-        final InfoColumn<CacheInfo> infoColumn = new InfoColumn<CacheInfo>() {
-            @Override
-            public SvgPreset getValue(final CacheInfo object) {
-                return SvgPresets.INFO;
-            }
-
-            @Override
-            protected void showInfo(final CacheInfo row, final int x, final int y) {
-                final SafeHtml html = getInfoHtml(row);
-                tooltipPresenter.setHTML(html);
-                final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(CacheNodeListPresenter.this, tooltipPresenter, PopupType.POPUP,
-                        popupPosition, null);
-            }
-        };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
-        columns.add(infoColumn);
-    }
-
-    private SafeHtml getInfoHtml(final CacheInfo cacheInfo) {
-
-        return TooltipUtil.builder()
-                .addTwoColTable(tableBuilder -> {
-                    tableBuilder.addHeaderRow(cacheInfo.getNodeName());
-                    final Map<String, String> map = cacheInfo.getMap();
-                    map.keySet().stream()
-                            .sorted(Comparator.naturalOrder())
-                            .forEachOrdered(k -> {
-                                final String v = map.get(k);
-                                tableBuilder.addRow(k, v);
-                            });
-                    return tableBuilder.build();
-                })
-                .build();
+    /**
+     * Crude method to size a column by its header
+     */
+    private int determineColumnWidth(final String text) {
+        // Not a fixed width font so some chars are narrower
+        final long thinCharsCount = text.chars()
+                .filter(chr ->
+                        chr == 'I'
+                                || chr == 'i'
+                                || chr == 'j'
+                                || chr == 'l'
+                                || chr == 'r'
+                                || chr == 't')
+                .count();
+        final long wideCharsCount = text.chars()
+                .filter(chr ->
+                        chr == 'M'
+                                || chr == 'W'
+                                || chr == 'm'
+                                || chr == 'w')
+                .count();
+        final long normalCharsCount = text.length() - thinCharsCount - wideCharsCount;
+        // Adjust for the narrow chars present
+        final double adjustedCharsCount = normalCharsCount
+                + ((double) thinCharsCount * 0.6)
+                + ((double) wideCharsCount * 1.3);
+        // Now scale the to pixels
+        final int colWidth = (int) (adjustedCharsCount * 8.5);
+//        GWT.log("text: " + text
+//                + " length: " + text.length()
+//                + " eff width: " + effectiveWidth
+//                + " col width: " + colWidth);
+        return Math.max(colWidth, SMALL_COL);
     }
 
     public void read(final String cacheName) {
