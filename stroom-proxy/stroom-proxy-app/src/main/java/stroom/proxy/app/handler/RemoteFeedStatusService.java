@@ -7,9 +7,12 @@ import stroom.receive.common.FeedStatusService;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.base.Strings;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
@@ -17,10 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,7 +45,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
-    private final Map<GetFeedStatusRequest, FeedStatusUpdater> updaters = new ConcurrentHashMap<>();
+    private final LoadingCache<GetFeedStatusRequest, FeedStatusUpdater> updaters;
     private final WebTarget feedStatusWebTarget;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final Provider<ProxyConfig> proxyConfigProvider;
@@ -61,11 +62,34 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
 
-        final String url = feedStatusConfigProvider.get().getFeedStatusUrl();
+        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+        Objects.requireNonNull(feedStatusConfig, "Feed status config is null");
+        final String url = feedStatusConfig.getFeedStatusUrl();
+        Objects.requireNonNull(url, "The feed status URL is null");
 
         this.feedStatusWebTarget = jerseyClient
                 .target(url)
                 .path(GET_FEED_STATUS_PATH);
+
+        final CacheConfig cacheConfig = feedStatusConfig.getFeedStatusCache();
+        Objects.requireNonNull(cacheConfig, "Feed status cache config is null");
+        this.updaters = createFromConfig(cacheConfig).build(k -> new FeedStatusUpdater(executorService));
+    }
+
+    private Caffeine createFromConfig(final CacheConfig cacheConfig) {
+        final Caffeine cacheBuilder = Caffeine.newBuilder();
+        cacheBuilder.recordStats();
+
+        if (cacheConfig.getMaximumSize() != null) {
+            cacheBuilder.maximumSize(cacheConfig.getMaximumSize());
+        }
+        if (cacheConfig.getExpireAfterAccess() != null) {
+            cacheBuilder.expireAfterAccess(cacheConfig.getExpireAfterAccess().getDuration());
+        }
+        if (cacheConfig.getExpireAfterWrite() != null) {
+            cacheBuilder.expireAfterWrite(cacheConfig.getExpireAfterWrite().getDuration());
+        }
+        return cacheBuilder;
     }
 
     @Override
@@ -92,8 +116,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        final FeedStatusUpdater feedStatusUpdater = updaters.computeIfAbsent(request, k ->
-                new FeedStatusUpdater(executorService));
+        final FeedStatusUpdater feedStatusUpdater = updaters.get(request);
         final CachedResponse cachedResponse = feedStatusUpdater.get(lastResponse -> {
             CachedResponse result;
             try {
