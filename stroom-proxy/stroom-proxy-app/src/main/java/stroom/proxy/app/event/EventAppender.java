@@ -90,16 +90,18 @@ class EventAppender implements AutoCloseable {
     }
 
     public synchronized Optional<Path> roll() throws IOException {
-        close();
-        final Path file = dir.resolve(EventStoreFile.createTempFileName(prefix));
-        if (Files.isRegularFile(file)) {
-            final Path rolledFile = dir.resolve(EventStoreFile.createRolledFileName(prefix));
-            Files.move(file, rolledFile, StandardCopyOption.ATOMIC_MOVE);
-            eventCount = 0;
-            byteCount = 0;
-            lastRoll = Instant.now();
+        if (eventCount > 0) {
+            close();
+            final Path file = dir.resolve(EventStoreFile.createTempFileName(prefix));
+            if (Files.isRegularFile(file)) {
+                final Path rolledFile = dir.resolve(EventStoreFile.createRolledFileName(prefix));
+                Files.move(file, rolledFile, StandardCopyOption.ATOMIC_MOVE);
+                eventCount = 0;
+                byteCount = 0;
+                lastRoll = Instant.now();
 
-            return Optional.of(rolledFile);
+                return Optional.of(rolledFile);
+            }
         }
 
         return Optional.empty();

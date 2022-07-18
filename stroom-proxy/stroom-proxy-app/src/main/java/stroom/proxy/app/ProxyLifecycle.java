@@ -171,6 +171,10 @@ public class ProxyLifecycle implements Managed {
         addFrequencyExecutor("Event Store - roll",
                 () -> eventStore::tryRoll,
                 eventStoreConfig.getRollFrequency().toMillis());
+        // Add executor to forward event store.
+        addFrequencyExecutor("Event Store - forward",
+                () -> eventStore::forwardAll,
+                eventStoreConfig.getRollFrequency().toMillis());
     }
 
     private void addParallelExecutor(final String threadName,

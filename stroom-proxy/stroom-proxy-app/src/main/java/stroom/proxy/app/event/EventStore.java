@@ -7,6 +7,7 @@ import stroom.proxy.app.handler.ReceiveStreamHandlers;
 import stroom.proxy.repo.RepoDirProvider;
 import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StroomStreamProcessor;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
@@ -25,10 +26,13 @@ import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class EventStore implements EventConsumer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventStore.class);
@@ -40,6 +44,7 @@ public class EventStore implements EventConsumer {
     private final LoadingCache<FeedKey, EventAppender> openAppenders;
     private final Map<FeedKey, EventAppender> stores;
     private final EventSerialiser eventSerialiser;
+    private final LinkedBlockingQueue<Path> forwardQueue;
 
     @Inject
     public EventStore(final ReceiveStreamHandlers receiveStreamHandlerProvider,
@@ -47,6 +52,7 @@ public class EventStore implements EventConsumer {
                       final EventStoreConfig eventStoreConfig,
                       final RepoDirProvider repoDirProvider) {
         this.eventStoreConfig = eventStoreConfig;
+        this.forwardQueue = new LinkedBlockingQueue<>(1000);
         final Path repoDir = repoDirProvider.get();
 
         // Create the root directory
@@ -91,7 +97,7 @@ public class EventStore implements EventConsumer {
                         final String prefix = EventStoreFile.getPrefix(fileName);
                         final Path rolledFile = dir.resolve(EventStoreFile.createRolledFileName(prefix));
                         Files.move(file, rolledFile, StandardCopyOption.ATOMIC_MOVE);
-                        forward(rolledFile);
+                        addToForwardQueue(rolledFile);
                     }
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
@@ -109,7 +115,7 @@ public class EventStore implements EventConsumer {
         stores.values().forEach(appender -> {
             try {
                 final Optional<Path> optionalPath = appender.tryRoll();
-                optionalPath.ifPresent(this::forward);
+                optionalPath.ifPresent(this::addToForwardQueue);
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);
             }
@@ -120,11 +126,29 @@ public class EventStore implements EventConsumer {
         stores.values().forEach(appender -> {
             try {
                 final Optional<Path> optionalPath = appender.roll();
-                optionalPath.ifPresent(this::forward);
+                optionalPath.ifPresent(this::addToForwardQueue);
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);
             }
         });
+    }
+
+    private void addToForwardQueue(final Path file) {
+        try {
+            forwardQueue.put(file);
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
+    }
+
+    public void forwardAll() {
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                forward(forwardQueue.take());
+            }
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
     }
 
     private void forward(final Path file) {
@@ -201,7 +225,7 @@ public class EventStore implements EventConsumer {
 
             final EventAppender appender = openAppenders.get(feedKey);
             final Optional<Path> optionalPath = appender.write(string.getBytes(StandardCharsets.UTF_8));
-            optionalPath.ifPresent(this::forward);
+            optionalPath.ifPresent(this::addToForwardQueue);
 
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
