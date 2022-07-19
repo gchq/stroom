@@ -19,6 +19,10 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 -- --------------------------------------------------
 
+DELIMITER $$
+
+-- --------------------------------------------------
+
 DROP PROCEDURE IF EXISTS index_drop_column_v1$$
 
 -- DO NOT change this without reading the header!
@@ -70,6 +74,8 @@ BEGIN
     DEALLOCATE PREPARE stmt;
 END $$
 
+-- --------------------------------------------------
+
 DELIMITER ;
 
 -- --------------------------------------------------
@@ -81,6 +87,8 @@ CALL index_drop_column_v1("index_shard", "old_index_id");
 DROP PROCEDURE IF EXISTS index_drop_column_v1;
 
 DROP PROCEDURE IF EXISTS index_run_sql_v1;
+
+-- --------------------------------------------------
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 
