@@ -63,7 +63,7 @@ class EventAppender {
         }
     }
 
-    public boolean shouldRoll(final long addBytes) {
+    public synchronized boolean shouldRoll(final long addBytes) {
         return createTime.isBefore(Instant.now().minus(eventStoreConfig.getMaxAge())) ||
                 eventCount >= eventStoreConfig.getMaxEventCount() ||
                 byteCount + addBytes > eventStoreConfig.getMaxByteCount();
@@ -77,20 +77,4 @@ class EventAppender {
         }
         return file;
     }
-
-//    public synchronized Optional<Path> roll() throws IOException {
-//        if (eventCount > 0) {
-//            close();
-//            return Optional.of(file);
-////            if (Files.isRegularFile(file)) {
-//////                final Path rolledFile = dir.resolve(EventStoreFile.createRolledFileName(prefix));
-//////                Files.move(file, rolledFile, StandardCopyOption.ATOMIC_MOVE);
-////                return Optional.of(file);
-////            }
-//        } else {
-//            Files.deleteIfExists(file);
-//        }
-//
-//        return Optional.empty();
-//    }
 }
