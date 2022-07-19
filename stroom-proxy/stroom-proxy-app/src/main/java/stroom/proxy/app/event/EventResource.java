@@ -32,18 +32,17 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Event")
-@Path(SchemaEventResource.BASE_RESOURCE_PATH)
+@Path(EventResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface SchemaEventResource extends RestResource {
+public interface EventResource extends RestResource {
 
     String BASE_RESOURCE_PATH = "/event";
 
     @POST
-    @Path("/schema_v4_0")
     @Operation(
             summary = "Log an event",
-            operationId = "log_event_v4_0")
-    String schema_v4_0(@Context @NotNull HttpServletRequest request,
-                       @Parameter(description = "event", required = true) String event);
+            operationId = "log_event")
+    String event(@Context @NotNull HttpServletRequest request,
+                 @Parameter(description = "event", required = true) String event);
 }

@@ -50,8 +50,7 @@ public class GetFeedStatusRequest extends RemoteRequest {
             return false;
         }
         final GetFeedStatusRequest that = (GetFeedStatusRequest) o;
-        return Objects.equals(feedName, that.feedName) &&
-                Objects.equals(senderDn, that.senderDn);
+        return Objects.equals(feedName, that.feedName) && Objects.equals(senderDn, that.senderDn);
     }
 
     @Override

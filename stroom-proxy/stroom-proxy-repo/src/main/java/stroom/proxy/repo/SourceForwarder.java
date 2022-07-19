@@ -180,8 +180,12 @@ public class SourceForwarder {
 
         } catch (final RuntimeException ex) {
             error.set(ex.getMessage());
-            LOGGER.warn(() -> "processFeedFiles() - Failed to send to feed " + feedKey.feed() + " ( " + ex + ")");
-            LOGGER.debug(() -> "processFeedFiles() - Debug trace " + info, ex);
+            LOGGER.warn(() -> "Failed to send to feed " +
+                    feedKey.feed() +
+                    " (" +
+                    ex.getMessage() +
+                    ")");
+            LOGGER.debug(() -> "Failed to send to feed " + info, ex);
         }
 
         // Record that we sent the data or if there was no data to send.
