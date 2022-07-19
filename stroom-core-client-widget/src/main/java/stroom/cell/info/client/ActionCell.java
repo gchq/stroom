@@ -46,16 +46,21 @@ public class ActionCell<R> extends AbstractCell<R> {
     private static Template template;
 
     //    private final boolean isButton = true;
-    private final SvgPreset svgPreset = SvgPresets.ELLIPSES_HORIZONTAL;
+    private final SvgPreset svgPreset;
     private final BiConsumer<R, NativeEvent> action;
 
-
     public ActionCell(final BiConsumer<R, NativeEvent> action) {
+        this(SvgPresets.ELLIPSES_HORIZONTAL, action);
+    }
+
+    public ActionCell(final SvgPreset svgPreset,
+                      final BiConsumer<R, NativeEvent> action) {
         super("click");
 //        super(isButton
 //                ? "click"
 //                : null);
         this.action = action;
+        this.svgPreset = svgPreset;
 
         if (resources == null) {
             resources = GWT.create(Resources.class);
