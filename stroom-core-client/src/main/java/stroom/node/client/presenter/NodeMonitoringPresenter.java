@@ -27,10 +27,12 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.node.client.NodeManager;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
+import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.svg.client.Icon;
@@ -70,6 +72,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
 
     private final Map<String, PingResult> latestPing = new HashMap<>();
+    private final FindNodeStatusCriteria findNodeStatusCriteria;
 
     @Inject
     public NodeMonitoringPresenter(final EventBus eventBus,
@@ -79,12 +82,13 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         this.nodeManager = nodeManager;
         this.tooltipPresenter = tooltipPresenter;
         initTableColumns();
+        this.findNodeStatusCriteria = new FindNodeStatusCriteria();
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<FetchNodeStatusResponse> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
-                nodeManager.fetchNodeStatus(dataConsumer, throwableConsumer);
+                nodeManager.fetchNodeStatus(dataConsumer, throwableConsumer, getFindNodeStatusCriteria());
             }
 
             @Override
@@ -108,6 +112,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 
+    public FindNodeStatusCriteria getFindNodeStatusCriteria() {
+        return findNodeStatusCriteria;
+    }
+
     /**
      * Add the columns to the table.
      */
@@ -125,7 +133,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         getView().addColumn(infoColumn, "<br/>", 20);
 
         // Name.
-        final Column<NodeStatusResult, String> nameColumn = new Column<NodeStatusResult, String>(new TextCell()) {
+        final Column<NodeStatusResult, String> nameColumn = new OrderByColumn<NodeStatusResult, String>(
+                new TextCell(),
+                "Name",
+                true) {
             @Override
             public String getValue(final NodeStatusResult row) {
                 if (row == null) {
@@ -134,6 +145,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return row.getNode().getName();
             }
         };
+        DataGridUtil.addColumnSortHandler(getView(), findNodeStatusCriteria, this::refresh);
         getView().addResizableColumn(nameColumn, "Name", 100);
 
         // Host Name.

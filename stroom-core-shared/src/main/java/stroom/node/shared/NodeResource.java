@@ -71,7 +71,7 @@ public interface NodeResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Lists nodes",
             operationId = "findNodes")
-    FetchNodeStatusResponse find();
+    FetchNodeStatusResponse find(final FindNodeStatusCriteria findNodeStatusCriteria);
 
     @GET
     @Path(PING_PATH_PART + NODE_NAME_PATH_PARAM)

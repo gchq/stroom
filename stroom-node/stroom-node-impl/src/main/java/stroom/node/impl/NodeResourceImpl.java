@@ -27,11 +27,13 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
+import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.StringCriteria;
 
 import event.logging.AdvancedQuery;
 import event.logging.And;
@@ -92,9 +94,13 @@ class NodeResourceImpl implements NodeResource {
                 .collect(Collectors.toList());
     }
 
+    private FetchNodeStatusResponse find() {
+        return find(new FindNodeStatusCriteria());
+    }
+
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
-    public FetchNodeStatusResponse find() {
+    public FetchNodeStatusResponse find(final FindNodeStatusCriteria findNodeStatusCriteria) {
         FetchNodeStatusResponse response = null;
 
         final Query query = Query.builder()
@@ -106,8 +112,16 @@ class NodeResourceImpl implements NodeResource {
 
         final String typeId = StroomEventLoggingUtil.buildTypeId(this, "find");
         try {
+            final FindNodeCriteria findNodeCriteria = findNodeStatusCriteria != null
+                    ? new FindNodeCriteria(
+                    findNodeStatusCriteria.getPageRequest(),
+                    findNodeStatusCriteria.getSortList(),
+                    new StringCriteria(),
+                    null)
+                    : new FindNodeCriteria();
+
             final List<Node> nodes = nodeServiceProvider.get()
-                    .find(new FindNodeCriteria())
+                    .find(findNodeCriteria)
                     .getValues();
 
             final ClusterState clusterState = clusterNodeManagerProvider.get().getClusterState();
