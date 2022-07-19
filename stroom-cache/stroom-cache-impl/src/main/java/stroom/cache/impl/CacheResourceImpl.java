@@ -255,8 +255,8 @@ class CacheResourceImpl implements CacheResource {
                                             failedNodes.add(nodeName);
                                             exception.set(throwable);
                                             LOGGER.error(
-                                                    "Error evicting expired entries for cache [{}] on node [{}]: {}. Enable DEBUG for " +
-                                                            "stacktrace",
+                                                    "Error evicting expired entries for cache [{}] on node [{}]: {}. " +
+                                                            "Enable DEBUG for stacktrace",
                                                     cacheName,
                                                     nodeName,
                                                     throwable.getMessage());
