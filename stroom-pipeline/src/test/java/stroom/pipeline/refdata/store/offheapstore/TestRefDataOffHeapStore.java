@@ -108,7 +108,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             .collect(Collectors.joining());
 
     private static final int REF_STREAM_DEF_COUNT = 2;
-    private static final int ENTRIES_PER_MAP_DEF = 50;
+    private static final int ENTRIES_PER_MAP_DEF = 20;
     private static final int MAPS_PER_REF_STREAM_DEF = 2;
 
     @Inject
@@ -135,7 +135,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         LOGGER.debug("Creating LMDB environment in dbDir {}", dbDir.toAbsolutePath().toString());
 
         // This should ensure batching is exercised, including partial batches
-        final int batchSize = (ENTRIES_PER_MAP_DEF / 2) - 1;
+        final int batchSize = Math.max(1, ENTRIES_PER_MAP_DEF / 2) - 1;
         LOGGER.debug("Using batchSize {}", batchSize);
         referenceDataConfig = new ReferenceDataConfig()
                 .withLmdbConfig(new ReferenceDataLmdbConfig()
@@ -728,7 +728,75 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         int expectedRefStreamDefCount = 2;
         assertDbCounts(
                 expectedRefStreamDefCount,
-                (expectedRefStreamDefCount + keyValueMapCount) + (expectedRefStreamDefCount * rangeValueMapCount),
+                (expectedRefStreamDefCount * keyValueMapCount) + (expectedRefStreamDefCount * rangeValueMapCount),
+                expectedRefStreamDefCount * keyValueMapCount * entryCount,
+                expectedRefStreamDefCount * rangeValueMapCount * entryCount,
+                (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
+                        (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
+    }
+
+    @Test
+    void testPurgeOldData_partial_2() {
+
+        setPurgeAgeProperty(StroomDuration.ofDays(1));
+        int refStreamDefCount = 8;
+        int keyValueMapCount = 2;
+        int rangeValueMapCount = 2;
+        int entryCount = 2;
+        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
+        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
+
+        final List<RefStreamDefinition> refStreamDefs = loadBulkData(
+                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
+
+        refDataStore.logAllContents();
+
+        assertDbCounts(
+                refStreamDefCount,
+                totalMapEntries,
+                totalKeyValueEntryCount,
+                totalRangeValueEntryCount,
+                totalValueEntryCount);
+
+        refDataStore.purgeOldData();
+
+        // do the purge - nothing is old/partial so no change expected
+        assertDbCounts(
+                refStreamDefCount,
+                totalMapEntries,
+                totalKeyValueEntryCount,
+                totalRangeValueEntryCount,
+                totalValueEntryCount);
+
+        int expectedRefStreamDefCount = refStreamDefCount;
+
+        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(ProcessingInfoDb.DB_NAME))
+                .isEqualTo(expectedRefStreamDefCount);
+
+        // Now change the states
+
+        // These three should be purged
+        setProcessingState(refStreamDefs.get(1), ProcessingState.LOAD_IN_PROGRESS);
+        setProcessingState(refStreamDefs.get(3), ProcessingState.PURGE_IN_PROGRESS);
+        setProcessingState(refStreamDefs.get(5), ProcessingState.TERMINATED);
+
+        // These two won't be purged
+        setProcessingState(refStreamDefs.get(6), ProcessingState.FAILED);
+        setProcessingState(refStreamDefs.get(7), ProcessingState.PURGE_FAILED);
+
+        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+
+        // do the purge
+        refDataStore.purgeOldData();
+
+        refDataStore.logAllContents();
+
+        expectedRefStreamDefCount = refStreamDefCount - 3;
+        assertDbCounts(
+                expectedRefStreamDefCount,
+                (expectedRefStreamDefCount * keyValueMapCount) + (expectedRefStreamDefCount * rangeValueMapCount),
                 expectedRefStreamDefCount * keyValueMapCount * entryCount,
                 expectedRefStreamDefCount * rangeValueMapCount * entryCount,
                 (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
@@ -1208,6 +1276,10 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
     private void setLastAccessedTime(final RefStreamDefinition refStreamDef, final long newLastAccessedTimeMs) {
         ((RefDataOffHeapStore) refDataStore).setLastAccessedTime(refStreamDef, newLastAccessedTimeMs);
+    }
+
+    private void setProcessingState(final RefStreamDefinition refStreamDef, final ProcessingState processingState) {
+        ((RefDataOffHeapStore) refDataStore).setProcessingState(refStreamDef, processingState);
     }
 
     private RefStreamDefinition buildUniqueRefStreamDefinition(final long streamId) {

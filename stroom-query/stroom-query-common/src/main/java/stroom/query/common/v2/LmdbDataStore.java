@@ -35,7 +35,6 @@ import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.logging.Metrics;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -166,7 +165,7 @@ public class LmdbDataStore implements DataStore {
     @Override
     public void add(final Val[] values) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_ADD);
-        LOGGER.trace(() -> LogUtil.message("add() called for {} values", values.length));
+        LOGGER.trace(() -> "add() called for " + values.length + " values");
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
@@ -312,7 +311,7 @@ public class LmdbDataStore implements DataStore {
         try {
             queue.put(queueItem);
         } catch (final InterruptedException e) {
-            LOGGER.trace(e.getMessage(), e);
+            LOGGER.trace(e::getMessage, e);
             // Keep interrupting this thread.
             Thread.currentThread().interrupt();
         }
@@ -329,7 +328,7 @@ public class LmdbDataStore implements DataStore {
 
                 try {
                     while (!transferState.isTerminated()) {
-                        LOGGER.trace("Transferring");
+                        LOGGER.trace(() -> "Transferring");
                         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_QUEUE_POLL);
                         final LmdbKV lmdbKV = queue.poll(1, TimeUnit.SECONDS);
 
@@ -367,6 +366,9 @@ public class LmdbDataStore implements DataStore {
                 } catch (final CompleteException e) {
                     LOGGER.debug(() -> "Complete");
                     LOGGER.trace(e::getMessage, e);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
+                    errorConsumer.add(e);
                 }
 
                 if (!transferState.isTerminated() && uncommittedCount > 0) {
@@ -390,12 +392,12 @@ public class LmdbDataStore implements DataStore {
                 }
 
             } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
                 errorConsumer.add(e);
             } finally {
                 // Ensure we complete.
                 complete.countDown();
-                LOGGER.debug("Finished transfer while loop");
+                LOGGER.debug(() -> "Finished transfer while loop");
                 transferState.setThread(null);
             }
         });
@@ -441,7 +443,7 @@ public class LmdbDataStore implements DataStore {
                                     final Generator[] newValue = rowValue.getGenerators().getGenerators();
                                     final Generator[] combined = combine(generators, newValue);
 
-                                    LOGGER.trace("Merging combined value to output");
+                                    LOGGER.trace(() -> "Merging combined value to output");
                                     final LmdbValue combinedValue = new LmdbValue(
                                             existingRowValue.getKey().getBytes(),
                                             new Generators(compiledFields, combined));
@@ -456,7 +458,7 @@ public class LmdbDataStore implements DataStore {
                                     merged = true;
 
                                 } else {
-                                    LOGGER.debug("Copying value to output");
+                                    LOGGER.debug(() -> "Copying value to output");
                                     existingRowValue.write(output);
                                 }
                             }
@@ -464,7 +466,7 @@ public class LmdbDataStore implements DataStore {
 
                         // Append if we didn't merge.
                         if (!merged) {
-                            LOGGER.debug("Appending value to output");
+                            LOGGER.debug(() -> "Appending value to output");
                             rowValue.write(output);
                             resultCount.incrementAndGet();
                         }
@@ -472,23 +474,33 @@ public class LmdbDataStore implements DataStore {
                         final ByteBuffer newValue = output.getByteBuffer().flip();
                         final boolean ok = put(batchingWriteTxn, dbi, rowKey.getByteBuffer(), newValue);
                         if (!ok) {
-                            LOGGER.debug("Unable to update");
+                            LOGGER.debug(() -> "Unable to update");
                             throw new RuntimeException("Unable to update");
                         }
                     }
 
                 } else {
                     // We do not expect a key collision here.
-                    LOGGER.debug("Unexpected collision");
+                    LOGGER.debug(() -> "Unexpected collision");
                     throw new RuntimeException("Unexpected collision");
                 }
 
             } catch (final RuntimeException | IOException e) {
-                LOGGER.debug("Error putting " + queueItem + " (" + e.getMessage() + ")", e);
-                errorConsumer.add(new RuntimeException("Error putting " + queueItem + " (" + e.getMessage() + ")", e));
+                if (LOGGER.isTraceEnabled()) {
+                    // Only evaluate queue item value in trace as it can be expensive.
+                    LOGGER.trace(() -> "Error putting " + queueItem + " (" + e.getMessage() + ")", e);
+                } else {
+                    LOGGER.debug(() -> "Error putting queueItem (" + e.getMessage() + ")", e);
+                }
+
+                final RuntimeException exception =
+                        new RuntimeException("Error putting queueItem (" + e.getMessage() + ")", e);
+                errorConsumer.add(exception);
 
                 // Treat all errors as fatal so complete.
                 completionState.signalComplete();
+
+                throw exception;
             }
         });
     }
@@ -506,7 +518,7 @@ public class LmdbDataStore implements DataStore {
             }
             return didPutSucceed;
         } catch (final Exception e) {
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.debug(e::getMessage, e);
             errorConsumer.add(e);
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -541,14 +553,16 @@ public class LmdbDataStore implements DataStore {
     @Override
     public synchronized void getData(final Consumer<Data> consumer) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET);
-        LOGGER.trace("getData()");
+        LOGGER.trace(() -> "getData()");
 
         if (lmdbEnv.isClosed()) {
             // If we query LMDB after the env has been closed then we are likely to crash the JVM
             // see https://github.com/lmdbjava/lmdbjava/issues/185
-            LOGGER.debug(() -> LogUtil.message(
-                    "getData() called (queryKey ={}, componentId={}) after store has been shut down",
-                    queryKey, componentId));
+            LOGGER.debug(() -> "getData() called (queryKey =" +
+                    queryKey +
+                    ", componentId=" +
+                    componentId +
+                    ") after store has been shut down");
         } else {
             lmdbEnv.doWithReadTxn(readTxn ->
                     Metrics.measure("getData", () ->
@@ -568,7 +582,7 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public synchronized void clear() {
-        LOGGER.debug("clear called");
+        LOGGER.debug(() -> "clear called");
         LOGGER.trace(() -> "clear()", new RuntimeException("clear"));
         if (shutdown.compareAndSet(false, true)) {
             SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_CLEAR);
@@ -584,10 +598,10 @@ public class LmdbDataStore implements DataStore {
 
             // Wait for transferring to stop.
             try {
-                LOGGER.debug("Waiting for transfer to stop");
+                LOGGER.debug(() -> "Waiting for transfer to stop");
                 completionState.awaitCompletion();
             } catch (final InterruptedException e) {
-                LOGGER.trace(e.getMessage(), e);
+                LOGGER.trace(e::getMessage, e);
                 // Keep interrupting this thread.
                 Thread.currentThread().interrupt();
             }
@@ -596,21 +610,21 @@ public class LmdbDataStore implements DataStore {
                 try {
                     dbi.close();
                 } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(e::getMessage, e);
                     errorConsumer.add(e);
                 }
 
                 try {
                     lmdbEnv.close();
                 } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(e::getMessage, e);
                     errorConsumer.add(e);
                 }
 
                 try {
                     lmdbEnv.delete();
                 } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(e::getMessage, e);
                     errorConsumer.add(e);
                 }
             } finally {
@@ -688,7 +702,7 @@ public class LmdbDataStore implements DataStore {
          */
         @Override
         public Items get() {
-            LOGGER.trace("get() called");
+            LOGGER.trace(() -> "get() called");
             return get(Key.root());
         }
 
@@ -702,7 +716,7 @@ public class LmdbDataStore implements DataStore {
         @Override
         public Items get(final Key parentKey) {
             SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET);
-            LOGGER.trace("get() called for parentKey: {}", parentKey);
+            LOGGER.trace(() -> "get() called for parentKey: " + parentKey);
 
             return Metrics.measure("get", () -> {
                 final int depth = parentKey.size();
@@ -1044,7 +1058,7 @@ public class LmdbDataStore implements DataStore {
             try {
                 complete = this.complete.await(0, TimeUnit.MILLISECONDS);
             } catch (final InterruptedException e) {
-                LOGGER.trace(e.getMessage(), e);
+                LOGGER.trace(e::getMessage, e);
                 // Keep interrupting this thread.
                 Thread.currentThread().interrupt();
             }
@@ -1084,7 +1098,7 @@ public class LmdbDataStore implements DataStore {
                 if (thread != null) {
                     thread.interrupt();
                 } else if (Thread.interrupted()) {
-                    LOGGER.debug("Cleared interrupt state");
+                    LOGGER.debug(() -> "Cleared interrupt state");
                 }
             }
         }
