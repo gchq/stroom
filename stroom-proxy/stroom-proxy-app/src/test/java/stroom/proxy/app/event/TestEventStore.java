@@ -11,7 +11,6 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Watchable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,10 +44,6 @@ public class TestEventStore {
         final String expected =
                 "\"headers\":[{\"name\":\"Feed\",\"value\":\"Test\"},{\"name\":\"Type\",\"value\":\"Raw Events\"}]," +
                         "\"detail\":\"test\"}";
-        assertThat(EventStoreTestUtil.read(eventDir, feedKey, EventStoreFile.TEMP_EXTENSION))
-                .contains(expected);
-        eventStore.roll();
-        assertThat(EventStoreTestUtil.read(eventDir, feedKey, EventStoreFile.LOG_EXTENSION))
-                .contains(expected);
+        assertThat(EventStoreTestUtil.read(eventDir, feedKey)).contains(expected);
     }
 }

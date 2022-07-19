@@ -29,12 +29,18 @@ proxyConfig:
     - "pragma optimize;"
     maintenancePragmaFrequency: "PT1M"
   eventStore:
+    forwardQueueSize: 1000
     maxAge: "PT1M"
     maxByteCount: 9223372036854775807
     maxEventCount: 9223372036854775807
+    maxOpenFiles: 100
     rollFrequency: "PT10S"
   feedStatus:
     apiKey: null
+    feedStatusCache:
+      expireAfterAccess: null
+      expireAfterWrite: null
+      maximumSize: 1000
     url: null
   fileScanners: []
   forwardDestinations: []

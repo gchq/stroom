@@ -1,8 +1,10 @@
 package stroom.proxy.app;
 
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.shared.ModelStringUtil;
 
+import com.google.common.base.Strings;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -14,28 +16,35 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
 
 public class TestEventResource {
 
     public static void main(final String[] args) {
         System.out.println("AVAILABLE PROCESSORS = " + Runtime.getRuntime().availableProcessors());
+        final ExecutorService executorService = Executors.newCachedThreadPool();
 
         final HttpClient httpClient = HttpClients.createDefault();
 
-        final int threadCount = 10;
+        final int threadCount = 100;
         final LongAdder count = new LongAdder();
         final CompletableFuture[] arr = new CompletableFuture[threadCount];
 
         final long startTime = System.currentTimeMillis();
         for (int i = 0; i < threadCount; i++) {
+            final String feedName = "TEST" +
+                    Strings.padStart(String.valueOf(i + 1), 3, '0') +
+                    "-EVENTS";
+            final String typeName = "Raw Events";
             arr[i] = CompletableFuture.runAsync(() -> {
                 while (true) {
-                    if (post(httpClient)) {
+                    if (post(httpClient, feedName, typeName)) {
                         count.increment();
                     }
                 }
-            });
+            }, executorService);
         }
 
         CompletableFuture.runAsync(() -> {
@@ -67,14 +76,23 @@ public class TestEventResource {
                 lastTime = now;
                 lastCount = totalCount;
             }
-        });
+        }, executorService);
         CompletableFuture.allOf(arr).join();
+
+        executorService.shutdownNow();
     }
 
-    private static boolean post(final HttpClient httpClient) {
+    private static boolean post(final HttpClient httpClient,
+                                final String feed,
+                                final String type) {
         try {
             final HttpPost httpPost = new HttpPost("http://127.0.0.1:8090/api/event");
-            httpPost.addHeader("Feed", "TEST-EVENTS2");
+            if (feed != null) {
+                httpPost.addHeader(StandardHeaderArguments.FEED, feed);
+            }
+            if (type != null) {
+                httpPost.addHeader(StandardHeaderArguments.TYPE, type);
+            }
             httpPost.addHeader("System", "EXAMPLE_SYSTEM");
             httpPost.addHeader("Environment", "EXAMPLE_ENVIRONMENT");
             httpPost.setEntity(
