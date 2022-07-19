@@ -20,13 +20,15 @@ import stroom.security.api.SecurityContext;
 import stroom.test.common.util.test.StroomTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
 import java.nio.file.Path;
-import java.util.Objects;
 import javax.inject.Inject;
 
 /**
@@ -34,7 +36,9 @@ import javax.inject.Inject;
  */
 public abstract class StroomIntegrationTest implements StroomTest {
 
-    private Path testTempDir;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomIntegrationTest.class);
+
+    private static final ThreadLocal<StroomIntegrationTest> CURRENT_TEST_CLASS_THREAD_LOCAL = new ThreadLocal<>();
 
     @Inject
     private CommonTestControl commonTestControl;
@@ -43,45 +47,79 @@ public abstract class StroomIntegrationTest implements StroomTest {
     @Inject
     private TempDirProvider tempDirProvider;
 
-    static Path tempDir; // Static makes the temp dir remain constant for the life of the test class.
-
-    private static Class<?> currentTestClass;
+    private Path testTempDir;
 
     /**
      * Initialise required database entities.
+     * <p>
+     * Note this method is public to prevent subclasses from hiding.
      */
     @BeforeEach
-    final void setup(final TestInfo testInfo) {
-        if (setupBetweenTests() || !Objects.equals(testInfo.getTestClass().orElse(null), currentTestClass)) {
-            currentTestClass = testInfo.getTestClass().orElse(null);
-
-            tempDir = tempDirProvider.get();
-            if (tempDir == null) {
+    public final void setup(final TestInfo testInfo) {
+        debug("setup", testInfo);
+        if (CURRENT_TEST_CLASS_THREAD_LOCAL.get() == null) {
+            testTempDir = tempDirProvider.get();
+            if (testTempDir == null) {
                 throw new NullPointerException("Temp dir is null");
             }
-            this.testTempDir = tempDir;
-            securityContext.asProcessingUser(() -> {
-                commonTestControl.cleanup();
-                commonTestControl.setup(tempDir);
-            });
+            securityContext.asProcessingUser(() -> commonTestControl.setup(testTempDir));
+            CURRENT_TEST_CLASS_THREAD_LOCAL.set(this);
         }
     }
 
+    /**
+     * Cleanup the database and caches
+     * <p>
+     * Note this method is public to prevent subclasses from hiding.
+     */
     @AfterEach
-    final void cleanup(final TestInfo testInfo) {
-        if (setupBetweenTests() || !Objects.equals(testInfo.getTestClass().orElse(null), currentTestClass)) {
-            securityContext.asProcessingUser(() -> commonTestControl.cleanup());
-            // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
-            FileUtil.deleteContents(tempDir);
+    public final void cleanup(final TestInfo testInfo) {
+        debug("cleanup", testInfo);
+        if (CURRENT_TEST_CLASS_THREAD_LOCAL.get() == null) {
+            throw new IllegalStateException("Cleanup called without setup");
+        } else if (cleanupBetweenTests()) {
+            cleanup(securityContext, commonTestControl, testTempDir);
         }
+    }
+
+    /**
+     * Ensure final cleanup even if we aren't clearing between tests.
+     */
+    @AfterAll
+    public static void finalCleanup() {
+        final StroomIntegrationTest stroomIntegrationTest = CURRENT_TEST_CLASS_THREAD_LOCAL.get();
+        if (stroomIntegrationTest != null) {
+            cleanup(stroomIntegrationTest.securityContext,
+                    stroomIntegrationTest.commonTestControl,
+                    stroomIntegrationTest.testTempDir);
+        }
+    }
+
+    private void debug(final String message,
+                       final TestInfo testInfo) {
+        LOGGER.debug(() -> message + " " +
+                testInfo.getTestClass()
+                        .map(Class::getSimpleName)
+                        .orElse("") +
+                " " +
+                testInfo.getDisplayName());
+    }
+
+    private static void cleanup(final SecurityContext securityContext,
+                                final CommonTestControl commonTestControl,
+                                final Path tempDir) {
+        securityContext.asProcessingUser(commonTestControl::cleanup);
+        // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
+        FileUtil.deleteContents(tempDir);
+        CURRENT_TEST_CLASS_THREAD_LOCAL.set(null);
     }
 
     @Override
-    public Path getCurrentTestDir() {
+    public final Path getCurrentTestDir() {
         return testTempDir;
     }
 
-    protected boolean setupBetweenTests() {
+    protected boolean cleanupBetweenTests() {
         return true;
     }
 }

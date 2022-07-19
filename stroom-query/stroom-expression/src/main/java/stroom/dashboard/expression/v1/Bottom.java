@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
 
 @FunctionDef(
@@ -42,10 +41,9 @@ import java.text.ParseException;
                                 description = "The maximum number of values to included in the selection.",
                                 argType = ValInteger.class)
                 }))
-public class Bottom extends AbstractSelectorFunction implements Serializable {
+public class Bottom extends AbstractSelectorFunction {
 
     static final String NAME = "bottom";
-    private static final long serialVersionUID = -305845496003936297L;
 
     private String delimiter = "";
     private int limit = 10;
@@ -70,9 +68,7 @@ public class Bottom extends AbstractSelectorFunction implements Serializable {
         return new BottomSelector(super.createGenerator(), delimiter, limit);
     }
 
-    public static class BottomSelector extends Selector {
-
-        private static final long serialVersionUID = 8153777070911899616L;
+    static class BottomSelector extends Selector {
 
         private final String delimiter;
         private final int limit;
@@ -83,22 +79,27 @@ public class Bottom extends AbstractSelectorFunction implements Serializable {
             this.limit = limit;
         }
 
-        public Val select(final Selection<Val> selection) {
-            final StringBuilder sb = new StringBuilder();
-            for (int i = Math.max(0, selection.size() - limit); i < selection.size(); i++) {
-                final Val val = selection.get(i);
-                if (val.type().isValue()) {
-                    if (sb.length() > 0) {
-                        sb.append(delimiter);
-                    }
-                    sb.append(val.toString());
-                }
-            }
-            return ValString.create(sb.toString());
+        @Override
+        Val select(final ChildData childData) {
+            return childData.bottom(delimiter, limit);
         }
 
-        public int getLimit() {
-            return limit;
-        }
+//        public Val select(final Selection<Val> selection) {
+//            final StringBuilder sb = new StringBuilder();
+//            for (int i = Math.max(0, selection.size() - limit); i < selection.size(); i++) {
+//                final Val val = selection.get(i);
+//                if (val.type().isValue()) {
+//                    if (sb.length() > 0) {
+//                        sb.append(delimiter);
+//                    }
+//                    sb.append(val);
+//                }
+//            }
+//            return ValString.create(sb.toString());
+//        }
+//
+//        public int getLimit() {
+//            return limit;
+//        }
     }
 }

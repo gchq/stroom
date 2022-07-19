@@ -50,7 +50,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
     @Inject
     public FeedSettingsPresenter(final EventBus eventBus,
                                  final FeedSettingsView view,
-                                 final DataTypeUiManager streamTypeUiManager,
+                                 final DataTypeUiManager dataTypeUiManager,
                                  final RestFactory restFactory) {
         super(eventBus, view);
 
@@ -77,7 +77,16 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
                 .fetchSupportedEncodings();
 
         view.getFeedStatus().addItems(FeedStatus.values());
-        view.getReceivedType().addItems(streamTypeUiManager.getRawStreamTypeList());
+        dataTypeUiManager.getTypes(list -> {
+            view.getReceivedType().clear();
+            if (list != null && !list.isEmpty()) {
+                view.getReceivedType().addItems(list);
+                final FeedDoc feed = getEntity();
+                if (feed != null) {
+                    view.getReceivedType().setSelected(feed.getStreamType());
+                }
+            }
+        });
 
         // Add listeners for dirty events.
         final InputHandler inputHandler = event -> setDirty(true);

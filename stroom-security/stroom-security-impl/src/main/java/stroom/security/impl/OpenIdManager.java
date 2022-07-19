@@ -2,6 +2,7 @@ package stroom.security.impl;
 
 import stroom.security.api.UserIdentity;
 import stroom.security.openid.api.OpenId;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.UrlUtils;
@@ -118,6 +119,10 @@ class OpenIdManager {
             // Provide identity from the session if we are allowing this to happen.
             result = UserIdentitySessionUtil.get(request.getSession(false));
 
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("User identity from session: [{}]", userIdentity.orElse(null));
+            }
+
         } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
             // Set the user ref in the session.
             UserIdentitySessionUtil.set(request.getSession(true), userIdentity.get());
@@ -146,13 +151,15 @@ class OpenIdManager {
                                  final boolean prompt) {
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         // Use OIDC API.
-        UriBuilder authenticationRequest = UriBuilder.fromUri(endpoint)
-                .queryParam(OpenId.RESPONSE_TYPE, OpenId.CODE)
-                .queryParam(OpenId.CLIENT_ID, clientId)
-                .queryParam(OpenId.REDIRECT_URI, state.getUri())
-                .queryParam(OpenId.SCOPE, openIdConfig.getRequestScope())
-                .queryParam(OpenId.STATE, state.getId())
-                .queryParam(OpenId.NONCE, state.getNonce());
+        UriBuilder uriBuilder = UriBuilder.fromUri(endpoint);
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.RESPONSE_TYPE, OpenId.CODE);
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.CLIENT_ID, clientId);
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, state.getUri());
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.SCOPE, OpenId.SCOPE__OPENID +
+                " " +
+                OpenId.SCOPE__EMAIL);
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.STATE, state.getId());
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.NONCE, state.getNonce());
 
         // If there's 'prompt' in the request then we'll want to pass that on to the AuthenticationService.
         // In OpenId 'prompt=login' asks the IP to present a login page to the user, and that's the effect
@@ -160,12 +167,12 @@ class OpenIdManager {
         // log in as the 'admin' user but the browser is always presenting a certificate.
         final String promptParam = UrlUtils.getLastParam(request, OpenId.PROMPT);
         if (!Strings.isNullOrEmpty(promptParam)) {
-            authenticationRequest.queryParam(OpenId.PROMPT, promptParam);
+            uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, promptParam);
         } else if (prompt) {
-            authenticationRequest.queryParam(OpenId.PROMPT, "login");
+            uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, "login");
         }
 
-        final String authenticationRequestUrl = authenticationRequest.build().toString();
+        final String authenticationRequestUrl = uriBuilder.build().toString();
         LOGGER.info(() -> "Redirecting with an AuthenticationRequest to: " + authenticationRequestUrl);
         // We want to make sure that the client has the cookie.
         return authenticationRequestUrl;

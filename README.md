@@ -28,24 +28,19 @@ cd stroom_core_test/stroom_core_test*
 ./start.sh
 ```
 
-For more details on the commands above and any prerequisites see [Running Stroom in Docker Containers](https://gchq.github.io/stroom-docs/dev-guide/docker-running.html).
+For more details on the commands above and any prerequisites see [Single Node Docker Installation](https://gchq.github.io/stroom-docs/7.0/docs/install-guide/single-node-docker/).
 
 For the releases of the core Stroom product, see [Stroom releases](https://github.com/gchq/stroom/releases). For the releases of the docker application stacks, see [Stroom-Resources releases](https://github.com/gchq/stroom-resources/releases).
 
 ## Documentation
 
-The Stroom application spans several repositories but we've bundled all the documentation into the [`stroom-docs`](https://gchq.github.io/stroom-docs/) repository. 
-That's where to look if you want any of these:
+The Stroom application spans several repositories but we've bundled all the documentation into one [Stroom Documentation](https://gchq.github.io/stroom-docs/) site. 
 
-- [The main README.md](https://gchq.github.io/stroom-docs/)
-- [The quick-start guide](https://gchq.github.io/stroom-docs/quick-start-guide/quick-start.html)
-- [The developer guide](https://gchq.github.io/stroom-docs/dev-guide/)
-- [The install guide](https://gchq.github.io/stroom-docs/install-guide/stroom-6-installation.html)
-- [The user guide](https://gchq.github.io/stroom-docs/install-guide/stroom-6-installation.html)
 
 ## Contributing
 
 If you'd like to make a contribution then the details for doing all of that are in [CONTRIBUTING.md](https://github.com/gchq/stroom/blob/master/CONTRIBUTING.md).
+
 
 ## Repositories
 

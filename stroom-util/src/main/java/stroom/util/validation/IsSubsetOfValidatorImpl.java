@@ -36,13 +36,19 @@ public class IsSubsetOfValidatorImpl implements IsSubsetOfValidator {
 
         if (values != null && !values.isEmpty()) {
 
-            Set<String> invalidValues = new HashSet<>(values);
+            final Set<String> invalidValues = new HashSet<>(values);
             invalidValues.removeAll(allowedValues);
 
             if (!invalidValues.isEmpty()) {
                 // We want the exception details in the message so bin the default constraint
                 // violation and make a new one.
-                String msg = "List contains invalid values [" + String.join(",", invalidValues) + "]";
+                final String plural = invalidValues.size() > 1
+                        ? "s"
+                        : "";
+                final String msg = "Set contains invalid value"
+                        + plural
+                        + " ["
+                        + String.join(",", invalidValues) + "]";
                 context.disableDefaultConstraintViolation();
                 context
                         .buildConstraintViolationWithTemplate(msg)

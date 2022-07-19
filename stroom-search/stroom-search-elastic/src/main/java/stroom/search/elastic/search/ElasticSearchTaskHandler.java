@@ -33,6 +33,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
@@ -95,30 +96,31 @@ public class ElasticSearchTaskHandler {
                        final ValuesConsumer valuesConsumer,
                        final ErrorConsumer errorConsumer,
                        final AtomicLong hitCount) {
-        if (!Thread.currentThread().isInterrupted()) {
+        if (!taskContext.isTerminated()) {
             taskContext.reset();
             taskContext.info(() -> LogUtil.message("Searching Elasticsearch index {}", elasticIndex.getName()));
 
             final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
             final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
 
+            final CompletableFuture<Void> searchFuture = executeSearch(
+                    taskContext,
+                    elasticIndex,
+                    query,
+                    fieldIndex,
+                    valuesConsumer,
+                    errorConsumer,
+                    hitCount,
+                    connectionConfig);
+
             try {
-                final CompletableFuture<Void> searchFuture = executeSearch(
-                        taskContext,
-                        elasticIndex,
-                        query,
-                        fieldIndex,
-                        valuesConsumer,
-                        errorConsumer,
-                        hitCount,
-                        connectionConfig);
-
                 searchFuture.get();
-
             } catch (final RuntimeException | ExecutionException e) {
                 error(errorConsumer, e);
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
+            } finally {
+                searchFuture.join();
             }
         }
     }
@@ -139,8 +141,10 @@ public class ElasticSearchTaskHandler {
             elasticClientCache.context(connectionConfig, elasticClient -> {
                 for (int i = 0; i < elasticIndex.getSearchSlices(); i++) {
                     final int slice = i;
-                    futures[i] = CompletableFuture.runAsync(() -> taskContextFactory.childContext(parentContext,
+                    final Runnable runnable = taskContextFactory.childContext(
+                            parentContext,
                             "Elasticsearch Search Scroll Slice",
+                            TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> searchSlice(
                                     elasticIndex,
                                     query,
@@ -151,7 +155,9 @@ public class ElasticSearchTaskHandler {
                                     elasticClient,
                                     slice,
                                     taskContext
-                            )).run(), executor);
+                            ));
+
+                    futures[i] = CompletableFuture.runAsync(runnable, executor);
                 }
             });
         } catch (final RuntimeException e) {
@@ -202,7 +208,7 @@ public class ElasticSearchTaskHandler {
             int totalHitCount = searchHits.length;
 
             // Continue requesting results until we have all results
-            while (searchHits.length > 0) {
+            while (!taskContext.isTerminated() && searchHits.length > 0) {
                 SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId).scroll(scroll);
                 searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
                 searchHits = searchResponse.getHits().getHits();
@@ -220,6 +226,11 @@ public class ElasticSearchTaskHandler {
             elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
         } catch (final IOException | RuntimeException e) {
             error(errorConsumer, e);
+
+            // Record any inner exceptions from Elasticsearch
+            for (final Throwable ex : e.getSuppressed()) {
+                error(errorConsumer, ex);
+            }
         }
     }
 

@@ -28,17 +28,20 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
+import stroom.util.functions.TriFunction;
 
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,7 +49,14 @@ import java.util.stream.Stream;
  * Convert our query objects to an Elasticsearch Query DSL query.
  */
 public class SearchExpressionQueryBuilder {
+
     private static final String DELIMITER = ",";
+    private static final Pattern WILDCARD_PATTERN = Pattern.compile(".*[*?].*");
+    private static final Pattern QUOTED_PATTERN = Pattern.compile("^\"(.+)\"$");
+    private static final Pattern IPV4_ADDRESS_PATTERN =
+            Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})(?:/\\d{1,2})?$");
+    private static final Pattern IPV4_CIDR_PATTERN =
+            Pattern.compile("^\\d+\\.\\d+\\.\\d+\\.\\d+/\\d{1,2}$");
     private final Map<String, ElasticIndexField> indexFieldsMap;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
@@ -85,9 +95,8 @@ public class SearchExpressionQueryBuilder {
                 final ExpressionOperator operator = (ExpressionOperator) item;
                 if (operatorHasChildren(operator)) {
                     final List<QueryBuilder> innerChildQueries = operator.getChildren().stream()
-                        .map(this::getQuery)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
+                            .map(this::getQuery)
+                            .filter(Objects::nonNull).toList();
 
                     BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
                     final Op op = operator.getOp();
@@ -120,7 +129,7 @@ public class SearchExpressionQueryBuilder {
             value = value.trim();
         }
 
-        // Try and find the referenced field.
+        // Validate the field
         if (field == null || field.length() == 0) {
             throw new IllegalArgumentException("Field not set");
         }
@@ -130,108 +139,161 @@ public class SearchExpressionQueryBuilder {
         }
         final String fieldName = indexField.getFieldName();
 
-        // Ensure an appropriate value has been provided for the condition type.
+        // Validate the expression
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
         if (Condition.IN_DICTIONARY.equals(condition)) {
             if (docRef == null || docRef.getUuid() == null) {
                 throw new IllegalArgumentException("Dictionary not set for field: " + field);
             }
-        } else {
-            if (value == null || value.length() == 0) {
-                return null;
-            }
         }
-        if (Condition.IS_DOC_REF.equals(condition)) {
-            if (docRef == null || docRef.getUuid() == null) {
-                throw new IllegalArgumentException("Doc Ref not set for field: " + field);
-            }
+
+        // Special case: if the expression is a wildcard, use the `exists` query
+        if (value.equals("*")) {
+            return QueryBuilders.existsQuery(fieldName);
         }
 
         // Create a query based on the field type and condition.
         final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
         if (indexField.getFieldUse().isNumeric()) {
-            return buildNumericQuery(condition, indexField, fieldName, value, this::getNumber, docRef);
+            return buildScalarQuery(condition, indexField, fieldName, value, this::getNumber, docRef);
         } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
-            return buildNumericQuery(condition, indexField, fieldName, value, this::getFloat, docRef);
+            return buildScalarQuery(condition, indexField, fieldName, value, this::getFloat, docRef);
         } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
-            return buildNumericQuery(condition, indexField, fieldName, value, this::getDouble, docRef);
+            return buildScalarQuery(condition, indexField, fieldName, value, this::getDouble, docRef);
         } else if (elasticFieldType.equals(ElasticIndexFieldType.DATE)) {
-            return buildNumericQuery(condition, indexField, fieldName, value, this::getDate, docRef);
+            return buildScalarQuery(condition, indexField, fieldName, value, this::getDate, docRef);
+        } else if (elasticFieldType.equals(ElasticIndexFieldType.IPV4_ADDRESS)) {
+            return buildScalarQuery(condition, indexField, fieldName, value, this::getIpV4Address, docRef);
         } else {
-            // A string-based term
+            return buildStringQuery(condition, value, docRef, indexField, fieldName);
+        }
+    }
+
+    private QueryBuilder buildStringQuery(final Condition condition,
+                                          final String expression,
+                                          final DocRef docRef,
+                                          final ElasticIndexField indexField,
+                                          final String fieldName) {
+        final List<String> terms = tokenizeExpression(expression).filter(term -> !term.isEmpty()).toList();
+        if (terms.isEmpty()) {
+            return null;
+        }
+
+        if (indexField.getFieldType().equals("keyword")) {
+            // Elasticsearch field mapping type is `keyword`, so generate a term-level query
             switch (condition) {
                 case EQUALS:
-                    return QueryBuilders
-                            .queryStringQuery(value)
-                            .field(fieldName)
-                            .analyzeWildcard(true);
-                case CONTAINS:
-                    // Note: This is redundant as `Term::setCondition` in `stroom-core-client` prevents this condition
-                    // from being selected.
-
-                    // All terms must match
-                    BoolQueryBuilder mustQuery = QueryBuilders.boolQuery();
-                    tokenizeExpression(value).forEach(term -> {
-                        mustQuery.must(QueryBuilders.termQuery(fieldName, term));
-                    });
-                    return mustQuery;
+                    return buildKeywordQuery(fieldName, expression);
+                case MATCHES_REGEX:
+                    return QueryBuilders.regexpQuery(fieldName, expression);
                 case IN:
-                    // One or more terms must match
-                    return QueryBuilders
-                            .termsQuery(fieldName, tokenizeExpression(value));
+                    if (terms.size() > 1) {
+                        final BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+                        terms.forEach(term -> boolQuery.should(buildKeywordQuery(fieldName, term)));
+                        return boolQuery;
+                    } else {
+                        return buildKeywordQuery(fieldName, expression);
+                    }
                 case IN_DICTIONARY:
-                    return buildDictionaryQuery(fieldName, docRef, indexField);
-                case IS_DOC_REF:
-                    return QueryBuilders
-                            .termQuery(fieldName, docRef.getUuid());
+                    return buildDictionaryQuery(condition, fieldName, docRef, indexField);
                 default:
-                    throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                    throw new UnsupportedOperationException("Unsupported condition '" + condition.getDisplayValue() +
+                            "' for " + indexField.getFieldUse().getDisplayValue() + " field type");
+            }
+        } else {
+            // This is a type other than `keyword`, such as `text` or `wildcard`. Perform a full-text match.
+            switch (condition) {
+                case EQUALS:
+                    return buildTextQuery(fieldName, expression);
+                case MATCHES_REGEX:
+                    return QueryBuilders.regexpQuery(fieldName, expression);
+                case IN:
+                    if (terms.size() > 1) {
+                        final BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+                        terms.forEach(term -> boolQuery.should(buildTextQuery(fieldName, term)));
+                        return boolQuery;
+                    } else {
+                        return buildTextQuery(fieldName, expression);
+                    }
+                case IN_DICTIONARY:
+                    return buildDictionaryQuery(condition, fieldName, docRef, indexField);
+                default:
+                    throw new RuntimeException("Unsupported condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldUse().getDisplayValue() + " field type");
             }
         }
     }
 
-    private <T extends Number> QueryBuilder buildNumericQuery(
+    /**
+     * Creates an Elasticsearch query for a `keyword` field appropriate for the expression content
+     */
+    private QueryBuilder buildKeywordQuery(final String fieldName, final String expression) {
+        final Matcher quotedMatcher = QUOTED_PATTERN.matcher(expression);
+        if (quotedMatcher.matches()) {
+            // Expression is in quotes, so perform an exact match
+            return QueryBuilders.termQuery(fieldName, quotedMatcher.group(1));
+        } else if (WILDCARD_PATTERN.matcher(expression).matches()) {
+            // Expression is a wildcard pattern, so return a wildcard query
+            return QueryBuilders.wildcardQuery(fieldName, expression)
+                    .caseInsensitive(true);
+        } else {
+            // Perform an exact match on the provided term
+            return QueryBuilders.termQuery(fieldName, expression);
+        }
+    }
+
+    private QueryBuilder buildTextQuery(final String fieldName, final String expression) {
+        // Contains wildcard chars, so use a query string query, which supports these
+        return QueryBuilders.queryStringQuery(expression)
+                .field(fieldName)
+                .analyzeWildcard(true);
+    }
+
+    private <T> QueryBuilder buildScalarQuery(
             final ExpressionTerm.Condition condition, final ElasticIndexField indexField, final String fieldName,
-            final String fieldValue, BiFunction<String, String, T> valueParser, final DocRef docRef
+            final String fieldValue, TriFunction<Condition, String, String, T> valueParser,
+            final DocRef docRef
     ) {
         T numericValue;
         List<T> numericValues;
 
         switch (condition) {
             case EQUALS:
-                numericValue = valueParser.apply(fieldName, fieldValue);
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .termQuery(fieldName, numericValue);
             case CONTAINS:
             case IN:
                 numericValues = tokenizeExpression(fieldValue)
-                        .map(val -> valueParser.apply(fieldName, val))
+                        .map(val -> valueParser.apply(condition, fieldName, val))
                         .collect(Collectors.toList());
                 return QueryBuilders
                         .termsQuery(fieldName, numericValues);
             case GREATER_THAN:
-                numericValue = valueParser.apply(fieldName, fieldValue);
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .gt(numericValue);
             case GREATER_THAN_OR_EQUAL_TO:
-                numericValue = valueParser.apply(fieldName, fieldValue);
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .gte(numericValue);
             case LESS_THAN:
-                numericValue = valueParser.apply(fieldName, fieldValue);
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .lt(numericValue);
             case LESS_THAN_OR_EQUAL_TO:
-                numericValue = valueParser.apply(fieldName, fieldValue);
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .rangeQuery(fieldName)
                         .lte(numericValue);
             case BETWEEN:
                 numericValues = tokenizeExpression(fieldValue)
-                        .map(val -> valueParser.apply(fieldName, val))
+                        .map(val -> valueParser.apply(condition, fieldName, val))
                         .collect(Collectors.toList());
                 if (numericValues.size() != 2) {
                     throw new IllegalArgumentException(
@@ -242,7 +304,7 @@ public class SearchExpressionQueryBuilder {
                         .gte(numericValues.get(0))
                         .lte(numericValues.get(1));
             case IN_DICTIONARY:
-                return buildDictionaryQuery(fieldName, docRef, indexField);
+                return buildDictionaryQuery(condition, fieldName, docRef, indexField);
             default:
                 throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
                         indexField.getFieldUse().getDisplayValue() + " field type");
@@ -252,20 +314,21 @@ public class SearchExpressionQueryBuilder {
     /**
      * Split an expression into is component terms. Useful for extracting terms for use with "in" or "contains"
      * conditions
+     *
      * @param expression - Example: "1,2, 3"
      * @return - Stream of terms. Example: [ "1", "2", "3" ]
      */
     private Stream<String> tokenizeExpression(final String expression) {
         if (expression != null) {
             return Arrays.stream(expression.split(DELIMITER))
-                .map(String::trim)
-                .filter(token -> !token.isEmpty());
+                    .map(String::trim)
+                    .filter(token -> !token.isEmpty());
         } else {
             return Stream.empty();
         }
     }
 
-    private Long getDate(final String fieldName, final String value) {
+    private Long getDate(final Condition condition, final String fieldName, final String value) {
         try {
             // Empty optional will be caught below
             return DateExpressionParser.parse(value, dateTimeSettings, nowEpochMilli).get().toInstant().toEpochMilli();
@@ -275,7 +338,37 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
-    private Long getNumber(final String fieldName, final String value) {
+    /**
+     * Validates the format of an IPv4 address. CIDR notation is allowed (e.g. 192.168.1.1/24) for equality
+     * conditions (EQUALS, IN and IN_DICTIONARY).
+     */
+    private String getIpV4Address(final Condition condition, final String fieldName, final String value) {
+        final Matcher ipAddressMatcher = IPV4_ADDRESS_PATTERN.matcher(value);
+        try {
+            if (ipAddressMatcher.matches()) {
+                InetAddress.getByAddress(new byte[]{
+                        Integer.valueOf(ipAddressMatcher.group(1)).byteValue(),
+                        Integer.valueOf(ipAddressMatcher.group(2)).byteValue(),
+                        Integer.valueOf(ipAddressMatcher.group(3)).byteValue(),
+                        Integer.valueOf(ipAddressMatcher.group(4)).byteValue()
+                });
+            } else {
+                throw new IllegalArgumentException();
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid IPv4 address format: " + value + " for field \"" +
+                    fieldName + "\"");
+        }
+
+        if (!condition.equals(Condition.EQUALS) && !condition.equals(Condition.IN) &&
+                !condition.equals(Condition.IN_DICTIONARY) && IPV4_CIDR_PATTERN.matcher(value).matches()) {
+            throw new IllegalArgumentException("CIDR notation is only supported for EQUALS and IN operators. " +
+                    "Value provided: \"" + value + "\". Operator: \"" + condition.getDisplayValue() + "\"");
+        }
+        return value;
+    }
+
+    private Long getNumber(final Condition condition, final String fieldName, final String value) {
         try {
             return Long.parseLong(value);
         } catch (final NumberFormatException e) {
@@ -285,80 +378,64 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
-    private Float getFloat(final String fieldName, final String value) {
+    private Float getFloat(final Condition condition, final String fieldName, final String value) {
         try {
             return Float.parseFloat(value);
         } catch (final NumberFormatException e) {
             throw new NumberFormatException(
                     "Expected a decimal (float) value for field \"" + fieldName + "\" but was given string \"" +
-                    value + "\""
+                            value + "\""
             );
         }
     }
 
-    private Double getDouble(final String fieldName, final String value) {
+    private Double getDouble(final Condition condition, final String fieldName, final String value) {
         try {
             return Double.parseDouble(value);
         } catch (final NumberFormatException e) {
             throw new NumberFormatException(
                     "Expected a decimal (double) value for field \"" + fieldName + "\" but was given string \"" +
-                    value + "\""
+                            value + "\""
             );
         }
     }
 
     /**
-     * Loads the specified Dictionary from the doc store.
-     * For each line, constructs an AND query for all terms on that line.
-     * All lines are combined into an OR query.
+     * Loads the specified Dictionary from the doc store. Each line is combined with AND logic.
      */
     private QueryBuilder buildDictionaryQuery(
+            final Condition condition,
             final String fieldName,
             final DocRef docRef,
             final ElasticIndexField indexField
     ) {
-        final String[] lines = readDictLines(docRef);
-
+        final String[] lines = wordListProvider.getWords(docRef);
         final BoolQueryBuilder builder = QueryBuilders.boolQuery();
 
         for (final String line : lines) {
-            BoolQueryBuilder mustQuery = QueryBuilders.boolQuery();
+            final BoolQueryBuilder mustQueries = QueryBuilders.boolQuery();
             final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
 
             if (elasticFieldType.isNumeric()) {
-                tokenizeExpression(line)
-                        .map(val -> getNumber(fieldName, val))
-                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getNumber(condition, fieldName, line)));
             } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
-                tokenizeExpression(line)
-                        .map(val -> getFloat(fieldName, val))
-                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getFloat(condition, fieldName, line)));
             } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
-                tokenizeExpression(line)
-                        .map(val -> getDouble(fieldName, val))
-                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
-            } else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
-                tokenizeExpression(line)
-                        .map(val -> getDate(fieldName, val))
-                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getDouble(condition, fieldName, line)));
+            } else if (elasticFieldType.equals(ElasticIndexFieldType.DATE)) {
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getDate(condition, fieldName, line)));
+            } else if (elasticFieldType.equals(ElasticIndexFieldType.IPV4_ADDRESS)) {
+                mustQueries.must(QueryBuilders.termQuery(fieldName, getIpV4Address(condition, fieldName, line)));
+            } else if (indexField.getFieldType().equals("keyword")) {
+                mustQueries.must(buildKeywordQuery(fieldName, line));
             } else {
-                tokenizeExpression(line)
-                        .forEach(term -> mustQuery.must(QueryBuilders.termQuery(fieldName, term)));
+                mustQueries.must(buildTextQuery(fieldName, line));
             }
 
-            builder.should(mustQuery);
+            builder.should(mustQueries);
         }
 
         return builder;
-    }
-
-    private String[] readDictLines(final DocRef docRef) {
-        final String words = wordListProvider.getCombinedData(docRef);
-        if (words == null) {
-            throw new ResourceNotFoundException("Dictionary \"" + docRef + "\" not found");
-        }
-
-        return words.trim().split("\n");
     }
 
     private boolean operatorHasChildren(final ExpressionOperator operator) {

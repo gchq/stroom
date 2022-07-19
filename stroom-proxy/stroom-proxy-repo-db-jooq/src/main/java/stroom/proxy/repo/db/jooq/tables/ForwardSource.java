@@ -60,14 +60,14 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
     public final TableField<ForwardSourceRecord, Long> UPDATE_TIME_MS = createField(DSL.name("update_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>forward_source.fk_forward_url_id</code>.
+     * The column <code>forward_source.fk_forward_dest_id</code>.
      */
-    public final TableField<ForwardSourceRecord, Integer> FK_FORWARD_URL_ID = createField(DSL.name("fk_forward_url_id"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<ForwardSourceRecord, Integer> FK_FORWARD_DEST_ID = createField(DSL.name("fk_forward_dest_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>forward_source.source_id</code>.
+     * The column <code>forward_source.fk_source_id</code>.
      */
-    public final TableField<ForwardSourceRecord, Long> SOURCE_ID = createField(DSL.name("source_id"), SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<ForwardSourceRecord, Long> FK_SOURCE_ID = createField(DSL.name("fk_source_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>forward_source.success</code>.
@@ -129,36 +129,17 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
 
     @Override
     public Schema getSchema() {
-        return DefaultSchema.DEFAULT_SCHEMA;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.NEW_POSITION_FORWARD_SOURCE_INDEX, Indexes.RETRY_POSITION_FORWARD_SOURCE_INDEX);
+        return Arrays.asList(Indexes.NEW_POSITION_FORWARD_SOURCE_INDEX, Indexes.RETRY_POSITION_FORWARD_SOURCE_INDEX);
     }
 
     @Override
     public UniqueKey<ForwardSourceRecord> getPrimaryKey() {
-        return Keys.PK_FORWARD_SOURCE;
-    }
-
-    @Override
-    public List<UniqueKey<ForwardSourceRecord>> getKeys() {
-        return Arrays.<UniqueKey<ForwardSourceRecord>>asList(Keys.PK_FORWARD_SOURCE);
-    }
-
-    @Override
-    public List<ForeignKey<ForwardSourceRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<ForwardSourceRecord, ?>>asList(Keys.FK_FORWARD_SOURCE_FORWARD_URL_1);
-    }
-
-    private transient ForwardUrl _forwardUrl;
-
-    public ForwardUrl forwardUrl() {
-        if (_forwardUrl == null)
-            _forwardUrl = new ForwardUrl(this, Keys.FK_FORWARD_SOURCE_FORWARD_URL_1);
-
-        return _forwardUrl;
+        return Keys.FORWARD_SOURCE__;
     }
 
     @Override

@@ -4,8 +4,9 @@
 package stroom.config.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.config.impl.db.jooq.Keys;
+import stroom.config.impl.db.jooq.Stroom;
+import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -22,9 +23,8 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.config.impl.db.jooq.Keys;
-import stroom.config.impl.db.jooq.Stroom;
-import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -123,7 +123,7 @@ public class Config extends TableImpl<ConfigRecord> {
 
     @Override
     public Schema getSchema() {
-        return Stroom.STROOM;
+        return aliased() ? null : Stroom.STROOM;
     }
 
     @Override
@@ -137,8 +137,8 @@ public class Config extends TableImpl<ConfigRecord> {
     }
 
     @Override
-    public List<UniqueKey<ConfigRecord>> getKeys() {
-        return Arrays.<UniqueKey<ConfigRecord>>asList(Keys.KEY_CONFIG_PRIMARY, Keys.KEY_CONFIG_NAME);
+    public List<UniqueKey<ConfigRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_CONFIG_NAME);
     }
 
     @Override

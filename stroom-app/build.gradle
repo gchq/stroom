@@ -160,7 +160,6 @@ dependencies {
     implementation project(':stroom-processor:stroom-processor-impl')
     implementation project(':stroom-processor:stroom-processor-impl-db')
     implementation project(':stroom-processor:stroom-processor-impl-db-jooq')
-    implementation project(':stroom-proxy:stroom-proxy-repo')
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
@@ -206,6 +205,7 @@ dependencies {
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.dropwizard_servlets
     implementation libs.dropwizard_validation
+    implementation libs.dropwizard_websockets
     implementation libs.eventLogging
     implementation libs.flyway_core
     implementation libs.guava
@@ -222,6 +222,7 @@ dependencies {
     implementation libs.jooq
     implementation libs.jose4j
     implementation libs.logback_classic
+    implementation libs.mysql_connector_java
     implementation libs.restygwt
     implementation libs.slf4j_api
     implementation project(':stroom-docref')
@@ -233,6 +234,7 @@ dependencies {
     testImplementation project(':stroom-activity:stroom-activity-api')
     testImplementation project(':stroom-activity:stroom-activity-mock')
     testImplementation project(':stroom-alert:stroom-alert-mock')
+    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
     testImplementation project(':stroom-config:stroom-config-app')
     testImplementation project(':stroom-config:stroom-config-global-impl')
     testImplementation project(':stroom-core')
@@ -249,6 +251,7 @@ dependencies {
     testImplementation project(':stroom-event-logging:stroom-event-logging-impl')
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation project(':stroom-explorer:stroom-collection-mock')
+    testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
     testImplementation project(':stroom-explorer:stroom-explorer-api')
     testImplementation project(':stroom-explorer:stroom-explorer-impl')
     testImplementation project(':stroom-explorer:stroom-explorer-impl-db')

@@ -50,7 +50,7 @@ public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyService
     private static class DataSourceImpl extends DataSourceProxy implements GlobalConfigDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }

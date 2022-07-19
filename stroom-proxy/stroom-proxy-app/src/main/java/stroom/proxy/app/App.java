@@ -16,6 +16,7 @@
 
 package stroom.proxy.app;
 
+import stroom.dropwizard.common.AdminServlets;
 import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
@@ -73,6 +74,8 @@ public class App extends Application<Config> {
     @Inject
     private Servlets servlets;
     @Inject
+    private AdminServlets adminServlets;
+    @Inject
     private RestResources restResources;
     @Inject
     private ManagedServices managedServices;
@@ -91,6 +94,8 @@ public class App extends Application<Config> {
     // of the yaml file before our main injector has been created and also so we can use our custom
     // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
     // injectors running but not sure how else we could do this unless Guice is not used for the validators.
+    // TODO 28/02/2022 AT: We could add the validation module to the root injector along with BuildInfo
+    //  then we don't have to bind it twice
     private final Injector validationOnlyInjector;
 
     // Needed for DropwizardExtensionsSupport
@@ -165,6 +170,9 @@ public class App extends Application<Config> {
 
         // Add servlets
         servlets.register();
+
+        // Add admin port/path servlets. Needs to be called after healthChecks.register()
+        adminServlets.register();
 
         // Add all injectable rest resources.
         restResources.register();

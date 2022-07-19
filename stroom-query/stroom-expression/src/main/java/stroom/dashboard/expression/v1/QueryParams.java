@@ -31,10 +31,8 @@ import java.util.Set;
                 args = {}))
 class QueryParams extends AbstractFunction {
 
-    private static final Set<String> INTERNAL_PARAMS = Collections.singleton(CurrentUser.KEY);
-
     static final String NAME = "params";
-
+    private static final Set<String> INTERNAL_PARAMS = Collections.singleton(CurrentUser.KEY);
     private static final Generator NULL_GEN = new StaticValueFunction(ValNull.INSTANCE).createGenerator();
 
     private Generator gen = NULL_GEN;

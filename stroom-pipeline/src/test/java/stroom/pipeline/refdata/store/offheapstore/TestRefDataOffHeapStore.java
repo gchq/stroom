@@ -41,6 +41,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
@@ -81,9 +82,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -105,10 +108,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             .collect(Collectors.joining());
 
     private static final int REF_STREAM_DEF_COUNT = 2;
-    private static final int ENTRIES_PER_MAP_DEF = 5;
-    //    private static final int ENTRIES_PER_MAP_DEF = 10_000;
-    //    private static final int ENTRIES_PER_MAP_DEF = 100_000;
-//    private static final int ENTRIES_PER_MAP_DEF = 1_000_000;
+    private static final int ENTRIES_PER_MAP_DEF = 20;
     private static final int MAPS_PER_REF_STREAM_DEF = 2;
 
     @Inject
@@ -134,10 +134,15 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         dbDir = Files.createTempDirectory("stroom");
         LOGGER.debug("Creating LMDB environment in dbDir {}", dbDir.toAbsolutePath().toString());
 
+        // This should ensure batching is exercised, including partial batches
+        final int batchSize = Math.max(1, ENTRIES_PER_MAP_DEF / 2) - 1;
+        LOGGER.debug("Using batchSize {}", batchSize);
         referenceDataConfig = new ReferenceDataConfig()
                 .withLmdbConfig(new ReferenceDataLmdbConfig()
-                        .withLocalDir(dbDir.toAbsolutePath().toString()))
-                .withMaxPutsBeforeCommit(500_000);
+                        .withLocalDir(dbDir.toAbsolutePath().toString())
+                        .withReaderBlockedByWriter(false))
+                .withMaxPutsBeforeCommit(batchSize)
+                .withMaxPurgeDeletesBeforeCommit(batchSize);
 
         injector = Guice.createInjector(
                 new AbstractModule() {
@@ -430,14 +435,115 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             LOGGER.debug("Finished running loadTask on thread {}", Thread.currentThread().getName());
         };
 
-        ExecutorService executorService = Executors.newFixedThreadPool(6);
-        List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, 10)
+        final ExecutorService executorService = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors());
+        final List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, 10)
                 .boxed()
                 .map(i -> {
                     LOGGER.debug("Running async task on thread {}", Thread.currentThread().getName());
                     final CompletableFuture<Void> future = CompletableFuture.runAsync(loadTask, executorService);
                     LOGGER.debug("Got future");
                     return future;
+                })
+                .collect(Collectors.toList());
+
+        futures.forEach(voidCompletableFuture -> {
+            try {
+                voidCompletableFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        LOGGER.debug("Finished all");
+    }
+
+    /**
+     * Test to make sure that multiple threads trying to load and purge the same data do not clash
+     */
+    @Test
+    void testConcurrentLoadAndPurge() {
+        final int refStreamDefCount = 5;
+        final long effectiveTimeMs = System.currentTimeMillis();
+        final int recCount = 1_000;
+        final int iterationCount = 200;
+        final int maxTaskSleepMs = 50;
+
+        final List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>(refStreamDefCount);
+        final List<MapDefinition> mapDefinitions = new ArrayList<>(refStreamDefCount);
+
+        for (int strmId = 0; strmId < refStreamDefCount; strmId++) {
+            final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition(strmId);
+            refStreamDefinitions.add(refStreamDefinition);
+            mapDefinitions.add(new MapDefinition(refStreamDefinition, "MyMap"));
+        }
+        final BiConsumer<RefStreamDefinition, MapDefinition> loadTask = (refStreamDefinition, mapDefinitionKey) -> {
+            LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
+            try {
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, refDataLoader -> {
+                    // Add a cheeky sleep to make the task take a bit longer
+                    ThreadUtil.sleep(ThreadLocalRandom.current().nextInt(maxTaskSleepMs));
+                    try {
+                        refDataLoader.setCommitInterval(200);
+                        final PutOutcome putOutcome = refDataLoader.initialise(true);
+                        assertThat(putOutcome.isSuccess())
+                                .isTrue();
+
+                        for (int i = 0; i < recCount; i++) {
+                            refDataLoader.put(mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
+                        }
+                        refDataLoader.completeProcessing();
+                        LOGGER.debug("Finished loading data");
+                    } catch (Exception e) {
+                        Assertions.fail("Error: " + e.getMessage());
+                    }
+
+                    LOGGER.debug("Getting values under lock");
+                    LOGGER.logDurationIfDebugEnabled(() -> {
+                        IntStream.range(0, recCount)
+                                .boxed()
+                                .sorted(Comparator.reverseOrder())
+                                .forEach(i -> {
+                                    Optional<RefDataValue> optValue = refDataStore.getValue(
+                                            mapDefinitionKey, "key" + i);
+                                    assertThat(optValue.isPresent())
+                                            .isTrue();
+                                });
+                    }, () -> LogUtil.message("Getting {} entries, twice", recCount));
+                });
+
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            LOGGER.debug("Finished running loadTask on thread {}", Thread.currentThread().getName());
+        };
+
+        final Consumer<RefStreamDefinition> purgeTask = (refStreamDefinition) -> {
+            ThreadUtil.sleep(ThreadLocalRandom.current().nextInt(maxTaskSleepMs));
+            LOGGER.debug("Running purgeTask on thread {}", Thread.currentThread().getName());
+            refDataStore.purge(refStreamDefinition.getStreamId());
+            LOGGER.debug("Finished running purgeTask on thread {}", Thread.currentThread().getName());
+        };
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors());
+
+        final Random random = new Random();
+        final List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, iterationCount)
+                .boxed()
+                .flatMap(i -> {
+                    final int randomInt = random.nextInt(refStreamDefCount);
+                    final RefStreamDefinition refStreamDefinition = refStreamDefinitions.get(randomInt);
+                    final MapDefinition mapDefinition = mapDefinitions.get(randomInt);
+
+                    final CompletableFuture<Void> loadFuture = CompletableFuture.runAsync(
+                            () -> loadTask.accept(refStreamDefinition, mapDefinition),
+                            executorService);
+                    final CompletableFuture<Void> purgeFuture = CompletableFuture.runAsync(
+                            () -> purgeTask.accept(refStreamDefinition),
+                            executorService);
+
+                    return Stream.of(loadFuture, purgeFuture);
                 })
                 .collect(Collectors.toList());
 
@@ -622,7 +728,75 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         int expectedRefStreamDefCount = 2;
         assertDbCounts(
                 expectedRefStreamDefCount,
-                (expectedRefStreamDefCount + keyValueMapCount) + (expectedRefStreamDefCount * rangeValueMapCount),
+                (expectedRefStreamDefCount * keyValueMapCount) + (expectedRefStreamDefCount * rangeValueMapCount),
+                expectedRefStreamDefCount * keyValueMapCount * entryCount,
+                expectedRefStreamDefCount * rangeValueMapCount * entryCount,
+                (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
+                        (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
+    }
+
+    @Test
+    void testPurgeOldData_partial_2() {
+
+        setPurgeAgeProperty(StroomDuration.ofDays(1));
+        int refStreamDefCount = 8;
+        int keyValueMapCount = 2;
+        int rangeValueMapCount = 2;
+        int entryCount = 2;
+        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
+        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
+
+        final List<RefStreamDefinition> refStreamDefs = loadBulkData(
+                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
+
+        refDataStore.logAllContents();
+
+        assertDbCounts(
+                refStreamDefCount,
+                totalMapEntries,
+                totalKeyValueEntryCount,
+                totalRangeValueEntryCount,
+                totalValueEntryCount);
+
+        refDataStore.purgeOldData();
+
+        // do the purge - nothing is old/partial so no change expected
+        assertDbCounts(
+                refStreamDefCount,
+                totalMapEntries,
+                totalKeyValueEntryCount,
+                totalRangeValueEntryCount,
+                totalValueEntryCount);
+
+        int expectedRefStreamDefCount = refStreamDefCount;
+
+        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(ProcessingInfoDb.DB_NAME))
+                .isEqualTo(expectedRefStreamDefCount);
+
+        // Now change the states
+
+        // These three should be purged
+        setProcessingState(refStreamDefs.get(1), ProcessingState.LOAD_IN_PROGRESS);
+        setProcessingState(refStreamDefs.get(3), ProcessingState.PURGE_IN_PROGRESS);
+        setProcessingState(refStreamDefs.get(5), ProcessingState.TERMINATED);
+
+        // These two won't be purged
+        setProcessingState(refStreamDefs.get(6), ProcessingState.FAILED);
+        setProcessingState(refStreamDefs.get(7), ProcessingState.PURGE_FAILED);
+
+        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+
+        // do the purge
+        refDataStore.purgeOldData();
+
+        refDataStore.logAllContents();
+
+        expectedRefStreamDefCount = refStreamDefCount - 3;
+        assertDbCounts(
+                expectedRefStreamDefCount,
+                (expectedRefStreamDefCount * keyValueMapCount) + (expectedRefStreamDefCount * rangeValueMapCount),
                 expectedRefStreamDefCount * keyValueMapCount * entryCount,
                 expectedRefStreamDefCount * rangeValueMapCount * entryCount,
                 (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
@@ -1102,6 +1276,10 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
     private void setLastAccessedTime(final RefStreamDefinition refStreamDef, final long newLastAccessedTimeMs) {
         ((RefDataOffHeapStore) refDataStore).setLastAccessedTime(refStreamDef, newLastAccessedTimeMs);
+    }
+
+    private void setProcessingState(final RefStreamDefinition refStreamDef, final ProcessingState processingState) {
+        ((RefDataOffHeapStore) refDataStore).setProcessingState(refStreamDef, processingState);
     }
 
     private RefStreamDefinition buildUniqueRefStreamDefinition(final long streamId) {

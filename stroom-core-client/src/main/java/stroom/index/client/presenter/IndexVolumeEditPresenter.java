@@ -63,7 +63,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     }
 
     void show(final IndexVolume volume, final String caption, final Consumer<IndexVolume> consumer) {
-        nodeManager.listEnabledNodes(
+        nodeManager.listAllNodes(
                 nodeNames -> {
                     read(nodeNames, volume);
 

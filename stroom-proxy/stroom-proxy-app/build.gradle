@@ -50,6 +50,7 @@ dependencies {
     implementation libs.dropwizard_metrics_core
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_configuration
+    implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice5
     implementation libs.jackson_annotations
@@ -60,7 +61,9 @@ dependencies {
     implementation libs.jaxb_api
     implementation libs.jetty_server
     implementation libs.jose4j
+    implementation libs.kafka_clients
     implementation libs.slf4j_api
+    implementation libs.swagger_annotations
     
     testImplementation project(':stroom-test-common')
 
@@ -70,10 +73,11 @@ dependencies {
     testImplementation libs.guice_extension
     testImplementation libs.guice_grapher
     testImplementation libs.jinjava
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
     testImplementation libs.mbknor_jackson_jsonSchema
     testImplementation libs.mockito_junit_jupiter
-
-    testImplementation libs.junit_jupiter_api
+    testImplementation libs.wiremock
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

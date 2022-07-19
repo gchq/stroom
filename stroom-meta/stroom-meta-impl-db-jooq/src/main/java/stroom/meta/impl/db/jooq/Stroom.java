@@ -16,7 +16,6 @@ import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,7 +26,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = 621245976;
+    private static final long serialVersionUID = 1L;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -37,37 +36,37 @@ public class Stroom extends SchemaImpl {
     /**
      * The table <code>stroom.meta</code>.
      */
-    public final Meta META = stroom.meta.impl.db.jooq.tables.Meta.META;
+    public final Meta META = Meta.META;
 
     /**
      * The table <code>stroom.meta_feed</code>.
      */
-    public final MetaFeed META_FEED = stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
+    public final MetaFeed META_FEED = MetaFeed.META_FEED;
 
     /**
      * The table <code>stroom.meta_key</code>.
      */
-    public final MetaKey META_KEY = stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
+    public final MetaKey META_KEY = MetaKey.META_KEY;
 
     /**
      * The table <code>stroom.meta_processor</code>.
      */
-    public final MetaProcessor META_PROCESSOR = stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
+    public final MetaProcessor META_PROCESSOR = MetaProcessor.META_PROCESSOR;
 
     /**
      * The table <code>stroom.meta_retention_tracker</code>.
      */
-    public final MetaRetentionTracker META_RETENTION_TRACKER = stroom.meta.impl.db.jooq.tables.MetaRetentionTracker.META_RETENTION_TRACKER;
+    public final MetaRetentionTracker META_RETENTION_TRACKER = MetaRetentionTracker.META_RETENTION_TRACKER;
 
     /**
      * The table <code>stroom.meta_type</code>.
      */
-    public final MetaType META_TYPE = stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
+    public final MetaType META_TYPE = MetaType.META_TYPE;
 
     /**
      * The table <code>stroom.meta_val</code>.
      */
-    public final MetaVal META_VAL = stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
+    public final MetaVal META_VAL = MetaVal.META_VAL;
 
     /**
      * No further instances allowed
@@ -84,19 +83,14 @@ public class Stroom extends SchemaImpl {
 
     @Override
     public final List<Table<?>> getTables() {
-        List result = new ArrayList();
-        result.addAll(getTables0());
-        return result;
-    }
-
-    private final List<Table<?>> getTables0() {
-        return Arrays.<Table<?>>asList(
+        return Arrays.asList(
             Meta.META,
             MetaFeed.META_FEED,
             MetaKey.META_KEY,
             MetaProcessor.META_PROCESSOR,
             MetaRetentionTracker.META_RETENTION_TRACKER,
             MetaType.META_TYPE,
-            MetaVal.META_VAL);
+            MetaVal.META_VAL
+        );
     }
 }

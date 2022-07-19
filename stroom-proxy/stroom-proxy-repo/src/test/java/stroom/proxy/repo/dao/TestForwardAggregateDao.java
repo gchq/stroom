@@ -1,12 +1,11 @@
 package stroom.proxy.repo.dao;
 
-import stroom.data.zip.StroomZipFileType;
-import stroom.proxy.repo.Aggregate;
+import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyRepoTestModule;
-import stroom.proxy.repo.QueueUtil;
 import stroom.proxy.repo.RepoSource;
-import stroom.proxy.repo.RepoSourceEntry;
 import stroom.proxy.repo.RepoSourceItem;
+import stroom.proxy.repo.queue.Batch;
+import stroom.proxy.repo.queue.BatchUtil;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -14,11 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
@@ -29,6 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestForwardAggregateDao {
 
     @Inject
+    private FeedDao feedDao;
+    @Inject
     private SourceDao sourceDao;
     @Inject
     private SourceItemDao sourceItemDao;
@@ -37,7 +35,7 @@ public class TestForwardAggregateDao {
     @Inject
     private ForwardAggregateDao forwardAggregateDao;
     @Inject
-    private ForwardUrlDao forwardUrlDao;
+    private ForwardDestDao forwardDestDao;
 
     @BeforeEach
     void beforeEach() {
@@ -45,93 +43,80 @@ public class TestForwardAggregateDao {
         sourceItemDao.clear();
         aggregateDao.clear();
         forwardAggregateDao.clear();
-        forwardUrlDao.clear();
+        forwardDestDao.clear();
     }
 
     @Test
     void testForwardAggregate() {
         assertThat(sourceDao.countSources()).isZero();
-        assertThat(sourceItemDao.countEntries()).isZero();
         assertThat(aggregateDao.countAggregates()).isZero();
         assertThat(forwardAggregateDao.countForwardAggregates()).isZero();
-        assertThat(forwardUrlDao.countForwardUrl()).isZero();
-        assertThat(sourceDao.pathExists("test")).isFalse();
+        assertThat(forwardDestDao.countForwardDest()).isZero();
+//        assertThat(sourceDao.pathExists("test")).isFalse();
 
-        sourceDao.addSource("test", "test", "test", System.currentTimeMillis());
+        sourceDao.addSource(1L, "test", "test");
+        sourceDao.flush();
 
-        final Optional<RepoSource> optionalSource = sourceDao.getNewSource(0, TimeUnit.MILLISECONDS);
-        assertThat(optionalSource.isPresent()).isTrue();
+        final Batch<RepoSource> sources = sourceDao.getNewSources(0, TimeUnit.MILLISECONDS);
+        assertThat(sources.isEmpty()).isFalse();
 
-        final RepoSource source = optionalSource.get();
-        assertThat(source.getSourcePath()).isEqualTo("test");
+        final RepoSource source = sources.list().get(0);
+        assertThat(source.fileStoreId()).isEqualTo(1L);
 
+        final long feedId = feedDao.getId(new FeedKey("testFeed", "Raw Events"));
         final Map<String, RepoSourceItem> itemNameMap = new HashMap<>();
         for (int i = 0; i < 100; i++) {
-            final RepoSourceItem sourceItemRecord = RepoSourceItem
-                    .builder()
-                    .source(source)
-                    .name("item" + i)
-                    .feedName("testFeed")
-                    .typeName("Raw Events")
-                    .build();
-            itemNameMap.put(sourceItemRecord.getName(), sourceItemRecord);
-
-            for (int j = 0; j < 10; j++) {
-                final RepoSourceEntry entry = RepoSourceEntry
-                        .builder()
-                        .type(StroomZipFileType.DATA)
-                        .extension("dat")
-                        .byteSize(100L)
-                        .build();
-                sourceItemRecord.addEntry(entry);
-            }
+            final RepoSourceItem sourceItemRecord = new RepoSourceItem(
+                    source,
+                    i,
+                    "item" + i,
+                    feedId,
+                    null,
+                    0,
+                    "dat");
+            itemNameMap.put(sourceItemRecord.name(), sourceItemRecord);
         }
 
-        sourceItemDao.addItems(Paths.get("test"), source.getId(), itemNameMap.values());
-        assertThat(sourceDao.getDeletableSources().size()).isZero();
+        sourceItemDao.addItems(source, itemNameMap.values());
+        sourceItemDao.flush();
+        assertThat(sourceDao.countDeletableSources()).isZero();
 
-        QueueUtil.consumeAll(
-                () -> sourceItemDao.getNewSourceItem(0, TimeUnit.MILLISECONDS),
-                sourceItem ->
-                        aggregateDao.addItem(
-                                sourceItem,
-                                10,
-                                10000L)
-        );
+        BatchUtil.transfer(
+                sourceItemDao::getNewSourceItems,
+                batch -> aggregateDao.addItems(batch, 10, 10000L));
 
         assertThat(aggregateDao.countAggregates()).isEqualTo(10);
-        final List<Aggregate> aggregateList =
-                aggregateDao.getClosableAggregates(
-                        10,
-                        10000L,
-                        System.currentTimeMillis());
-        assertThat(aggregateList.size()).isEqualTo(10);
-        aggregateList.forEach(aggregateDao::closeAggregate);
+        final long count = aggregateDao.closeAggregates(0,
+                10000L,
+                System.currentTimeMillis(),
+                1000);
+        assertThat(count).isEqualTo(10);
         assertThat(aggregateDao.countAggregates()).isEqualTo(10);
 
         // Create forward aggregates.
-        forwardUrlDao.getForwardUrlId("test");
-        assertThat(forwardUrlDao.countForwardUrl()).isOne();
-        QueueUtil.consumeAll(
-                () -> aggregateDao.getNewAggregate(0, TimeUnit.MILLISECONDS),
-                aggregate -> forwardAggregateDao.createForwardAggregates(aggregate.getId(),
-                        forwardUrlDao.getAllForwardUrls())
+        forwardDestDao.getForwardDestId("test");
+        assertThat(forwardDestDao.countForwardDest()).isOne();
+        BatchUtil.transfer(
+                () -> aggregateDao.getNewAggregates(0, TimeUnit.MILLISECONDS),
+                batch -> forwardAggregateDao.createForwardAggregates(batch,
+                        forwardDestDao.getAllForwardDests())
         );
+        forwardAggregateDao.flush();
+        assertThat(forwardAggregateDao.countForwardAggregates()).isEqualTo(10);
 
         // Mark all as forwarded.
-        QueueUtil.consumeAll(
-                () -> forwardAggregateDao.getNewForwardAggregate(0, TimeUnit.MILLISECONDS),
+        BatchUtil.transferEach(
+                () -> forwardAggregateDao.getNewForwardAggregates(0, TimeUnit.MILLISECONDS),
                 forwardAggregate -> forwardAggregateDao.update(forwardAggregate.copy().tries(1).success(true).build())
         );
 
-        sourceDao.getDeletableSources().forEach(s -> sourceDao.deleteSource(s.getId()));
+        sourceDao.countDeletableSources();
+        sourceDao.deleteSources();
 
         assertThat(forwardAggregateDao.countForwardAggregates()).isZero();
         assertThat(aggregateDao.countAggregates()).isZero();
-        assertThat(sourceItemDao.countEntries()).isZero();
         assertThat(sourceItemDao.countItems()).isZero();
         assertThat(sourceDao.countSources()).isZero();
-        assertThat(sourceDao.pathExists("test")).isFalse();
     }
 }
 

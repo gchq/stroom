@@ -18,11 +18,15 @@
     <!-- RestyGWT -->
     <inherits name="org.fusesource.restygwt.RestyGWT"/>
 
+    <!-- Websocket -->
+    <inherits name="stroom.websocket.WebSocket" />
+
     <!-- Other module inherits -->
     <inherits name='stroom.dispatch.Dispatch'/>
 
     <inherits name='stroom.Stroom'/>
     <inherits name='stroom.core.Core'/>
+    <inherits name="stroom.instance.Instance"/>
     <inherits name='stroom.task.Task'/>
     <inherits name='stroom.main.Main'/>
     <inherits name='stroom.widget.popup.Popup'/>

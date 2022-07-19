@@ -2,10 +2,6 @@ package stroom.proxy.app.guice;
 
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyPathConfig;
-import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.proxy.repo.ProxyRepoDbConfig;
-import stroom.proxy.repo.RepoConfig;
-import stroom.proxy.repo.RepoDbConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -83,16 +79,16 @@ public class GenerateProxyConfigProvidersModule {
                 simpleNameToFullNamesMap,
                 ProxyPathConfig.class,
                 PathConfig.class);
-        final String repoConfigMethodStr = buildMethod(
-                simpleNames,
-                simpleNameToFullNamesMap,
-                ProxyRepoConfig.class,
-                RepoConfig.class);
-        final String repoDbConfigMethodStr = buildMethod(
-                simpleNames,
-                simpleNameToFullNamesMap,
-                ProxyRepoDbConfig.class,
-                RepoDbConfig.class);
+//        final String repoConfigMethodStr = buildMethod(
+//                simpleNames,
+//                simpleNameToFullNamesMap,
+//                ProxyRepoConfig.class,
+//                RepoConfig.class);
+//        final String repoDbConfigMethodStr = buildMethod(
+//                simpleNames,
+//                simpleNameToFullNamesMap,
+//                RepoDbConfig.class,
+//                RepoDbConfig.class);
 
         final String methodsStr = injectableClasses
                 .stream()
@@ -126,8 +122,8 @@ public class GenerateProxyConfigProvidersModule {
                 "\n",
                 header,
                 pathConfigMethodStr,
-                repoConfigMethodStr,
-                repoDbConfigMethodStr,
+//                repoConfigMethodStr,
+//                repoDbConfigMethodStr,
                 SEPARATOR,
                 methodsStr,
                 """

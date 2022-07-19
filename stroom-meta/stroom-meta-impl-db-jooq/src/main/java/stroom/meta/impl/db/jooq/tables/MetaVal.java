@@ -19,8 +19,10 @@ import org.jooq.Row5;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
 import java.util.Arrays;
@@ -33,7 +35,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaVal extends TableImpl<MetaValRecord> {
 
-    private static final long serialVersionUID = -293545220;
+    private static final long serialVersionUID = 1L;
 
     /**
      * The reference instance of <code>stroom.meta_val</code>
@@ -51,33 +53,34 @@ public class MetaVal extends TableImpl<MetaValRecord> {
     /**
      * The column <code>stroom.meta_val.id</code>.
      */
-    public final TableField<MetaValRecord, Long> ID = createField(DSL.name("id"), org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<MetaValRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.meta_val.create_time</code>.
      */
-    public final TableField<MetaValRecord, Long> CREATE_TIME = createField(DSL.name("create_time"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<MetaValRecord, Long> CREATE_TIME = createField(DSL.name("create_time"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>stroom.meta_val.meta_id</code>.
      */
-    public final TableField<MetaValRecord, Long> META_ID = createField(DSL.name("meta_id"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<MetaValRecord, Long> META_ID = createField(DSL.name("meta_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>stroom.meta_val.meta_key_id</code>.
      */
-    public final TableField<MetaValRecord, Integer> META_KEY_ID = createField(DSL.name("meta_key_id"), org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<MetaValRecord, Integer> META_KEY_ID = createField(DSL.name("meta_key_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>stroom.meta_val.val</code>.
      */
-    public final TableField<MetaValRecord, Long> VAL = createField(DSL.name("val"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<MetaValRecord, Long> VAL = createField(DSL.name("val"), SQLDataType.BIGINT.nullable(false), this, "");
 
-    /**
-     * Create a <code>stroom.meta_val</code> table reference
-     */
-    public MetaVal() {
-        this(DSL.name("meta_val"), null);
+    private MetaVal(Name alias, Table<MetaValRecord> aliased) {
+        this(alias, aliased, null);
+    }
+
+    private MetaVal(Name alias, Table<MetaValRecord> aliased, Field<?>[] parameters) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
     }
 
     /**
@@ -94,12 +97,11 @@ public class MetaVal extends TableImpl<MetaValRecord> {
         this(alias, META_VAL);
     }
 
-    private MetaVal(Name alias, Table<MetaValRecord> aliased) {
-        this(alias, aliased, null);
-    }
-
-    private MetaVal(Name alias, Table<MetaValRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""));
+    /**
+     * Create a <code>stroom.meta_val</code> table reference
+     */
+    public MetaVal() {
+        this(DSL.name("meta_val"), null);
     }
 
     public <O extends Record> MetaVal(Table<O> child, ForeignKey<O, MetaValRecord> key) {
@@ -108,27 +110,22 @@ public class MetaVal extends TableImpl<MetaValRecord> {
 
     @Override
     public Schema getSchema() {
-        return Stroom.STROOM;
+        return aliased() ? null : Stroom.STROOM;
     }
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.META_VAL_META_VAL_CREATE_TIME, Indexes.META_VAL_META_VAL_META_ID, Indexes.META_VAL_PRIMARY);
+        return Arrays.asList(Indexes.META_VAL_META_VAL_CREATE_TIME, Indexes.META_VAL_META_VAL_META_ID);
     }
 
     @Override
     public Identity<MetaValRecord, Long> getIdentity() {
-        return Keys.IDENTITY_META_VAL;
+        return (Identity<MetaValRecord, Long>) super.getIdentity();
     }
 
     @Override
     public UniqueKey<MetaValRecord> getPrimaryKey() {
         return Keys.KEY_META_VAL_PRIMARY;
-    }
-
-    @Override
-    public List<UniqueKey<MetaValRecord>> getKeys() {
-        return Arrays.<UniqueKey<MetaValRecord>>asList(Keys.KEY_META_VAL_PRIMARY);
     }
 
     @Override

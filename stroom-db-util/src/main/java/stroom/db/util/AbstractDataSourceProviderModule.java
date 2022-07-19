@@ -9,6 +9,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
@@ -28,6 +31,8 @@ public abstract class AbstractDataSourceProviderModule<
 
     protected abstract T_CONN_PROV createConnectionProvider(DataSource dataSource);
 
+    private static final Map<DataSource, Set<String>> COMPLETED_MIGRATIONS = new ConcurrentHashMap<>();
+
     @Override
     protected void configure() {
         super.configure();
@@ -40,7 +45,9 @@ public abstract class AbstractDataSourceProviderModule<
 
     /**
      * We inject {@link ForceLegacyMigration} to ensure that the the core DB migration has happened before all
-     * other migrations
+     * other migrations.
+     * <p>
+     * This provider means the FlyWay migration will be triggered on first use of a datasource.
      */
     @Provides
     @Singleton
@@ -55,7 +62,9 @@ public abstract class AbstractDataSourceProviderModule<
                 configProvider.get(),
                 getModuleName(),
                 createUniquePool());
+
         performMigration(dataSource);
+
         return createConnectionProvider(dataSource);
     }
 

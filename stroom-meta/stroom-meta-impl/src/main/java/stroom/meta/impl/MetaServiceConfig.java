@@ -110,6 +110,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
         return metaTypes;
     }
 
+
     public MetaServiceConfig withMetaValueConfig(final MetaValueConfig metaValueConfig) {
         return new MetaServiceConfig(
                 dbConfig,

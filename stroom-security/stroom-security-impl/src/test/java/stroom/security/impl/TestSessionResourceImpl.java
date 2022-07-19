@@ -4,6 +4,7 @@ import stroom.security.shared.SessionDetails;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
 import stroom.test.common.util.test.AbstractResourceTest;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.ResourcePaths;
 
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
                 subPath,
                 SessionListResponse.class,
                 expectedResponse,
-                webTarget -> webTarget.queryParam("nodeName", "node1"));
+                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1"));
 
         verify(sessionListService).listSessions(Mockito.anyString());
     }

@@ -961,6 +961,85 @@
         "tags" : [ "Api Keys" ]
       }
     },
+    "/application-instance/v1/keepAlive" : {
+      "post" : {
+        "operationId" : "applicationInstanceKeepAlive",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ApplicationInstanceInfo"
+              }
+            }
+          },
+          "description" : "applicationInstanceInfo",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Keep an application instance alive",
+        "tags" : [ "Application" ]
+      }
+    },
+    "/application-instance/v1/register" : {
+      "get" : {
+        "operationId" : "applicationInstanceRegister",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationInstanceInfo"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Register a new application instance",
+        "tags" : [ "Application" ]
+      }
+    },
+    "/application-instance/v1/remove" : {
+      "post" : {
+        "operationId" : "applicationInstanceRemove",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ApplicationInstanceInfo"
+              }
+            }
+          },
+          "description" : "applicationInstanceInfo",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Remove an application instance",
+        "tags" : [ "Application" ]
+      }
+    },
     "/authentication/v1/needsPasswordChange" : {
       "get" : {
         "operationId" : "needsPasswordChange",
@@ -1230,26 +1309,6 @@
         },
         "summary" : "Clears a cache",
         "tags" : [ "Caches" ]
-      },
-      "get" : {
-        "operationId" : "listCaches",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Lists caches",
-        "tags" : [ "Caches" ]
       }
     },
     "/cache/v1/info" : {
@@ -1281,6 +1340,32 @@
           }
         },
         "summary" : "Gets cache info",
+        "tags" : [ "Caches" ]
+      }
+    },
+    "/cache/v1/list" : {
+      "get" : {
+        "operationId" : "listCaches",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CacheNamesResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Lists caches",
         "tags" : [ "Caches" ]
       }
     },
@@ -1737,6 +1822,36 @@
         "tags" : [ "Content" ]
       }
     },
+    "/dashboard/v1/destroy" : {
+      "post" : {
+        "operationId" : "dashboardDestroySearch",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DestroySearchRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Destroy a running search",
+        "tags" : [ "Dashboards" ]
+      }
+    },
     "/dashboard/v1/downloadQuery" : {
       "post" : {
         "operationId" : "downloadDashboardQuery",
@@ -1744,7 +1859,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DownloadQueryRequest"
+                "$ref" : "#/components/schemas/DashboardSearchRequest"
               }
             }
           },
@@ -1841,14 +1956,14 @@
         "tags" : [ "Dashboards" ]
       }
     },
-    "/dashboard/v1/poll" : {
+    "/dashboard/v1/search" : {
       "post" : {
-        "operationId" : "pollDashboardSearchResults",
+        "operationId" : "dashboardSearch",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/SearchBusPollRequest"
+                "$ref" : "#/components/schemas/DashboardSearchRequest"
               }
             }
           },
@@ -1860,18 +1975,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/DashboardSearchResponse"
-                  },
-                  "uniqueItems" : true
+                  "$ref" : "#/components/schemas/DashboardSearchResponse"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Poll for new search results",
+        "summary" : "Perform a new search or get new results",
         "tags" : [ "Dashboards" ]
       }
     },
@@ -4215,6 +4326,34 @@
           }
         },
         "summary" : "Update status on matching meta data",
+        "tags" : [ "Meta" ]
+      }
+    },
+    "/meta/v1/{id}" : {
+      "get" : {
+        "operationId" : "fetch",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Meta"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get a meta record for a given id, if permitted.",
         "tags" : [ "Meta" ]
       }
     },
@@ -7225,7 +7364,7 @@
     },
     "/stroom-elastic-index/v2/destroy" : {
       "post" : {
-        "operationId" : "destroyElasticIndexSearch",
+        "operationId" : "destroyElasticIndexQuery",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7250,6 +7389,36 @@
           }
         },
         "summary" : "Destroy a running query",
+        "tags" : [ "Elasticsearch Queries" ]
+      }
+    },
+    "/stroom-elastic-index/v2/keepAlive" : {
+      "post" : {
+        "operationId" : "keepAliveElasticIndexQuery",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "QueryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Keep a running query alive",
         "tags" : [ "Elasticsearch Queries" ]
       }
     },
@@ -7594,6 +7763,36 @@
           }
         },
         "summary" : "Get all system info result names",
+        "tags" : [ "System Info" ]
+      }
+    },
+    "/systemInfo/v1/params/{name}" : {
+      "get" : {
+        "operationId" : "getSystemInfoParams",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ParamInfo"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets the parameters for this system info provider",
         "tags" : [ "System Info" ]
       }
     },
@@ -8372,7 +8571,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL" ]
+              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
             }
           },
           "name" : {
@@ -8745,6 +8944,21 @@
           }
         }
       },
+      "ApplicationInstanceInfo" : {
+        "type" : "object",
+        "properties" : {
+          "createTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "userId" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "Arg" : {
         "type" : "object",
         "properties" : {
@@ -8893,6 +9107,20 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/CacheInfo"
+            }
+          }
+        }
+      },
+      "CacheNamesResponse" : {
+        "type" : "object",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
             }
           }
         }
@@ -9526,10 +9754,6 @@
       "DashboardDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -9546,10 +9770,6 @@
           "type" : {
             "type" : "string"
           },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -9565,37 +9785,40 @@
           }
         }
       },
-      "DashboardQueryKey" : {
-        "type" : "object",
-        "properties" : {
-          "componentId" : {
-            "type" : "string"
-          },
-          "dashboardUuid" : {
-            "type" : "string"
-          },
-          "uuid" : {
-            "type" : "string"
-          }
-        }
-      },
       "DashboardSearchRequest" : {
         "type" : "object",
         "properties" : {
+          "applicationInstanceUuid" : {
+            "type" : "string"
+          },
+          "componentId" : {
+            "type" : "string"
+          },
           "componentResultRequests" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ComponentResultRequest"
             }
           },
-          "dashboardQueryKey" : {
-            "$ref" : "#/components/schemas/DashboardQueryKey"
+          "dashboardUuid" : {
+            "type" : "string"
           },
           "dateTimeSettings" : {
             "$ref" : "#/components/schemas/DateTimeSettings"
           },
+          "queryKey" : {
+            "$ref" : "#/components/schemas/QueryKey"
+          },
           "search" : {
             "$ref" : "#/components/schemas/Search"
+          },
+          "storeHistory" : {
+            "type" : "boolean"
+          },
+          "timeout" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field"
           }
         }
       },
@@ -9619,7 +9842,7 @@
             "uniqueItems" : true
           },
           "queryKey" : {
-            "$ref" : "#/components/schemas/DashboardQueryKey"
+            "$ref" : "#/components/schemas/QueryKey"
           },
           "results" : {
             "type" : "array",
@@ -9766,10 +9989,6 @@
       "DataRetentionRules" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -9788,10 +10007,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -9910,13 +10125,26 @@
           }
         }
       },
+      "DestroySearchRequest" : {
+        "type" : "object",
+        "properties" : {
+          "applicationInstanceUuid" : {
+            "type" : "string"
+          },
+          "componentId" : {
+            "type" : "string"
+          },
+          "dashboardUuid" : {
+            "type" : "string"
+          },
+          "queryKey" : {
+            "$ref" : "#/components/schemas/QueryKey"
+          }
+        }
+      },
       "DictionaryDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -9941,10 +10169,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -10107,27 +10331,10 @@
           "$ref" : "#/components/schemas/AbstractField"
         } ]
       },
-      "DownloadQueryRequest" : {
-        "type" : "object",
-        "properties" : {
-          "dashboardQueryKey" : {
-            "$ref" : "#/components/schemas/DashboardQueryKey"
-          },
-          "searchRequest" : {
-            "$ref" : "#/components/schemas/DashboardSearchRequest"
-          }
-        }
-      },
       "DownloadSearchResultsRequest" : {
         "type" : "object",
         "properties" : {
-          "applicationInstanceId" : {
-            "type" : "string"
-          },
           "componentId" : {
-            "type" : "string"
-          },
-          "dateTimeLocale" : {
             "type" : "string"
           },
           "fileType" : {
@@ -10152,10 +10359,6 @@
           "connection" : {
             "$ref" : "#/components/schemas/ElasticConnectionConfig"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10171,10 +10374,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -10235,10 +10434,6 @@
           "clusterRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10275,10 +10470,6 @@
           "type" : {
             "type" : "string"
           },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10305,9 +10496,9 @@
           },
           "fieldUse" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "IPV4_ADDRESS" ]
           },
-          "stored" : {
+          "indexed" : {
             "type" : "boolean"
           }
         }
@@ -10682,7 +10873,7 @@
             "condition" : {
               "type" : "string",
               "description" : "The condition of the predicate term",
-              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL" ]
+              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
             },
             "docRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -10708,10 +10899,6 @@
           },
           "contextEncoding" : {
             "type" : "string"
-          },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "createTimeMs" : {
             "type" : "integer",
@@ -10745,10 +10932,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -11670,10 +11853,6 @@
       "IndexDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -11715,10 +11894,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -11958,6 +12133,12 @@
           "$ref" : "#/components/schemas/AbstractField"
         } ]
       },
+      "IpV4AddressField" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractField"
+        } ]
+      },
       "Job" : {
         "type" : "object",
         "properties" : {
@@ -12064,10 +12245,6 @@
       "KafkaConfigDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -12086,10 +12263,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -12502,6 +12675,21 @@
         },
         "required" : [ "key", "value" ]
       },
+      "ParamInfo" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "paramType" : {
+            "type" : "string",
+            "enum" : [ "OPTIONAL", "MANDATORY" ]
+          }
+        }
+      },
       "PasswordPolicyConfig" : {
         "type" : "object",
         "properties" : {
@@ -12589,10 +12777,6 @@
       "PipelineDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -12614,10 +12798,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -13465,10 +13645,6 @@
       "ReceiveDataRules" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -13493,10 +13669,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -14054,10 +14226,6 @@
       "ScriptDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -14082,10 +14250,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -14128,9 +14292,6 @@
           },
           "queryInfo" : {
             "type" : "string"
-          },
-          "storeHistory" : {
-            "type" : "boolean"
           }
         }
       },
@@ -14173,21 +14334,6 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
-          }
-        }
-      },
-      "SearchBusPollRequest" : {
-        "type" : "object",
-        "properties" : {
-          "applicationInstanceId" : {
-            "type" : "string"
-          },
-          "searchRequests" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/DashboardSearchRequest"
-            },
-            "uniqueItems" : true
           }
         }
       },
@@ -14238,13 +14384,7 @@
           "errors" : {
             "type" : "array",
             "items" : {
-              "type" : "string",
-              "xml" : {
-                "name" : "error"
-              }
-            },
-            "xml" : {
-              "wrapped" : true
+              "type" : "string"
             }
           },
           "highlights" : {
@@ -14252,29 +14392,20 @@
             "description" : "A list of strings to highlight in the UI that should correlate with the search query.",
             "items" : {
               "type" : "string",
-              "description" : "A list of strings to highlight in the UI that should correlate with the search query.",
-              "xml" : {
-                "name" : "highlight"
-              }
-            },
-            "xml" : {
-              "wrapped" : true
+              "description" : "A list of strings to highlight in the UI that should correlate with the search query."
             }
+          },
+          "queryKey" : {
+            "$ref" : "#/components/schemas/QueryKey"
           },
           "results" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Result"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           }
         },
-        "required" : [ "highlights" ],
-        "xml" : {
-          "name" : "searchResponse"
-        }
+        "required" : [ "highlights", "queryKey" ]
       },
       "SelectionIndexShardStatus" : {
         "type" : "object",
@@ -14578,10 +14709,6 @@
           "collection" : {
             "type" : "string"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -14618,10 +14745,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -14688,7 +14811,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL" ]
+              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
             }
           },
           "termOffsets" : {
@@ -14853,10 +14976,6 @@
           "config" : {
             "$ref" : "#/components/schemas/StatisticsDataSourceData"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -14887,10 +15006,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15110,10 +15225,6 @@
           "config" : {
             "$ref" : "#/components/schemas/StroomStatsStoreEntityData"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15144,10 +15255,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15560,10 +15667,6 @@
             "type" : "string",
             "enum" : [ "NONE", "DATA_SPLITTER", "XML_FRAGMENT" ]
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15582,10 +15685,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15716,6 +15815,10 @@
           },
           "activity" : {
             "$ref" : "#/components/schemas/ActivityConfig"
+          },
+          "applicationInstanceKeepAliveIntervalMs" : {
+            "type" : "integer",
+            "format" : "int32"
           },
           "defaultMaxResults" : {
             "type" : "string"
@@ -15996,10 +16099,6 @@
       "VisualisationDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16024,10 +16123,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -16079,10 +16174,6 @@
       "XmlSchemaDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16114,10 +16205,6 @@
           "type" : {
             "type" : "string"
           },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16136,10 +16223,6 @@
       "XsltDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16158,10 +16241,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",

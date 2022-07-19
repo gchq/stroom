@@ -14,7 +14,8 @@ const useColumns = (): Column<ApiKey>[] => {
       {
         Header: "User Id",
         accessor: "userId",
-        maxWidth: 150,
+        width: 190,
+        maxWidth: 250,
       },
       {
         id: "enabled",

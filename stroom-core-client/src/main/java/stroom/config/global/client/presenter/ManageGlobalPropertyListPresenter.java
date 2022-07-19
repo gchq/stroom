@@ -125,12 +125,24 @@ public class ManageGlobalPropertyListPresenter
         dataProvider.setListUpdater(this::refreshTable);
     }
 
+    private void resetLocalState() {
+        refreshAllNodesTimer.reset();
+        updateChildMapsTimer.reset();
+
+        nodeToClusterEffectiveValuesMap.clear();
+        propertyToUniqueEffectiveValuesMap.clear();
+        nodeToClusterSourcesMap.clear();
+        propertyToUniqueSourcesMap.clear();
+        unreachableNodes.clear();
+    }
+
     private void refreshTable(final Range range) {
 
         criteria.setPageRequest(new PageRequest(range.getStart(), range.getLength()));
 
-        refreshAllNodesTimer.reset();
-        updateChildMapsTimer.reset();
+        resetLocalState();
+
+//        GWT.log("Refresh table called");
 
         final Rest<ListConfigResponse> rest = restFactory.create();
         rest
@@ -160,16 +172,16 @@ public class ManageGlobalPropertyListPresenter
                     // from all the nodes. Use a timer to delay it a bit
                     refreshAllNodesTimer.update();
                 })
-                .onFailure(throwable -> {
-                    // TODO
-                })
+                .onFailure(caught ->
+                        AlertEvent.fireError(
+                                ManageGlobalPropertyListPresenter.this,
+                                caught.getMessage(),
+                                null))
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .list(criteria);
     }
 
     private void refreshPropertiesForAllNodes() {
-        updateChildMapsTimer.reset();
-
         // Only care about enabled nodes
         unreachableNodes.clear();
         // No point hitting the node that we hit at the top level again as we already have its data
@@ -186,6 +198,7 @@ public class ManageGlobalPropertyListPresenter
     }
 
     private void refreshPropertiesForNode(final String nodeName) {
+//        GWT.log("Refreshing " + nodeName);
         final Rest<ListConfigResponse> listPropertiesRest = restFactory.create();
 
         criteria.setPageRequest(new PageRequest(
@@ -200,13 +213,13 @@ public class ManageGlobalPropertyListPresenter
                     nodeToClusterEffectiveValuesMap.keySet().forEach(
                             propName -> {
                                 nodeToClusterEffectiveValuesMap.computeIfAbsent(
-                                                propName,
-                                                k -> new HashMap<>())
+                                        propName,
+                                        k -> new HashMap<>())
                                         .remove(nodeName);
 
                                 nodeToClusterSourcesMap.computeIfAbsent(
-                                                propName,
-                                                k -> new HashMap<>())
+                                        propName,
+                                        k -> new HashMap<>())
                                         .remove(nodeName);
                             });
 
@@ -219,12 +232,17 @@ public class ManageGlobalPropertyListPresenter
     }
 
     private void handleNodeResponse(final ListConfigResponse listConfigResponse) {
+//        GWT.log("Handling response for node " + listConfigResponse.getNodeName());
         unreachableNodes.remove(listConfigResponse.getNodeName());
 
         // Add the node's result to our maps
         listConfigResponse.getValues().forEach(configProperty -> {
             final String effectiveValue = configProperty.getEffectiveValue().orElse(null);
             final String source = configProperty.getSource().getName();
+
+//            if (configProperty.getNameAsString().equals("stroom.statistics.sql.db.connectionPool.maxPoolSize")) {
+//                GWT.log(listConfigResponse.getNodeName() + " - eff: " + effectiveValue + " source " + source);
+//            }
 
             updateNodeKeyedMaps(
                     listConfigResponse.getNodeName(),
@@ -244,13 +262,18 @@ public class ManageGlobalPropertyListPresenter
                                      final String source) {
 
         nodeToClusterEffectiveValuesMap.computeIfAbsent(
-                        propName,
-                        k -> new HashMap<>())
+                propName,
+                k -> new HashMap<>())
                 .put(nodeName, effectiveValue);
 
+//        if (propName.equals("stroom.statistics.sql.db.connectionPool.maxPoolSize")) {
+//            GWT.log(nodeName + " - " + effectiveValue + " - "
+//                    + nodeToClusterEffectiveValuesMap.get(propName).get(nodeName));
+//        }
+
         nodeToClusterSourcesMap.computeIfAbsent(
-                        propName,
-                        k -> new HashMap<>())
+                propName,
+                k -> new HashMap<>())
                 .put(nodeName, source);
     }
 
@@ -267,6 +290,7 @@ public class ManageGlobalPropertyListPresenter
                         if (effectiveValues.size() <= 1) {
                             effectiveValueStr = row.getEffectiveValueAsString();
                         } else {
+//                            GWT.log(row.configProperty.getNameAsString() + effectiveValues);
                             effectiveValueStr = MULTIPLE_VALUES_MSG;
                         }
                     }
@@ -333,11 +357,11 @@ public class ManageGlobalPropertyListPresenter
         // Effective Value
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(
-                                DataGridUtil.highlightedCellExtractor(
-                                        ConfigPropertyRow::getEffectiveValueAsString,
-                                        (ConfigPropertyRow row) ->
-                                                MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
-                                        ERROR_CSS_COLOUR))
+                        DataGridUtil.highlightedCellExtractor(
+                                ConfigPropertyRow::getEffectiveValueAsString,
+                                (ConfigPropertyRow row) ->
+                                        MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
+                                ERROR_CSS_COLOUR))
                         .withSorting(GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName())
                         .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
@@ -347,11 +371,11 @@ public class ManageGlobalPropertyListPresenter
         // Source
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(
-                                DataGridUtil.highlightedCellExtractor(
-                                        ConfigPropertyRow::getSourceAsString,
-                                        (ConfigPropertyRow row) ->
-                                                MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
-                                        ERROR_CSS_COLOUR))
+                        DataGridUtil.highlightedCellExtractor(
+                                ConfigPropertyRow::getSourceAsString,
+                                (ConfigPropertyRow row) ->
+                                        MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
+                                ERROR_CSS_COLOUR))
                         .withSorting(GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName())
                         .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),

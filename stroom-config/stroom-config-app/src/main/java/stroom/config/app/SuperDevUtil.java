@@ -53,25 +53,21 @@ public class SuperDevUtil {
     }
 
     public static AbstractConfig relaxSecurityInSuperDevMode(final AbstractConfig config) {
-        if (IS_IN_SUPER_DEV_MODE) {
-            if (config instanceof ContentSecurityConfig) {
-                final ContentSecurityConfig newContentSecurityConfig = ((ContentSecurityConfig) config)
-                        .withContentSecurityPolicy(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE);
-                LOGGER.debug("newContentSecurityConfig: {}", newContentSecurityConfig);
-                return newContentSecurityConfig;
+        if (config instanceof ContentSecurityConfig && IS_IN_SUPER_DEV_MODE) {
+            final ContentSecurityConfig newContentSecurityConfig = ((ContentSecurityConfig) config)
+                    .withContentSecurityPolicy(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE);
+            LOGGER.debug("newContentSecurityConfig: {}", newContentSecurityConfig);
+            return newContentSecurityConfig;
 
-            } else if (config instanceof SessionCookieConfig) {
-                final SessionCookieConfig newSessionCookieConfig = ((SessionCookieConfig) config)
-                        .withSecure(SUPER_DEV_SESSION_COOKIE_SECURE_VALUE);
-                LOGGER.debug("newSessionCookieConfig: {}", newSessionCookieConfig);
-                return newSessionCookieConfig;
-            } else if (config instanceof UiConfig) {
-                final UiConfig uiConfig = (UiConfig) config;
-                uiConfig.setRequireReactWrapper(false);
-                return uiConfig;
-            } else {
-                return config;
-            }
+        } else if (config instanceof SessionCookieConfig && IS_IN_SUPER_DEV_MODE) {
+            final SessionCookieConfig newSessionCookieConfig = ((SessionCookieConfig) config)
+                    .withSecure(SUPER_DEV_SESSION_COOKIE_SECURE_VALUE);
+            LOGGER.debug("newSessionCookieConfig: {}", newSessionCookieConfig);
+            return newSessionCookieConfig;
+        } else if (config instanceof UiConfig) {
+            final UiConfig uiConfig = (UiConfig) config;
+            uiConfig.setRequireReactWrapper(false);
+            return uiConfig;
         } else {
             return config;
         }

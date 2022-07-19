@@ -18,6 +18,7 @@ package stroom.cache.impl;
 
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
+import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
@@ -26,6 +27,8 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -43,6 +46,7 @@ import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -72,8 +76,34 @@ class CacheResourceImpl implements CacheResource {
 
     @Override
     @AutoLogged(OperationType.VIEW)
-    public List<String> list() {
-        return cacheManagerService.get().getCacheNames();
+    public CacheNamesResponse list(final String nodeName) {
+        CacheNamesResponse result;
+
+        // If this is the node that was contacted then just return our local info.
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
+            result = new CacheNamesResponse(cacheManagerService.get().getCacheNames());
+        } else {
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
+                    + ResourcePaths.buildAuthenticatedApiPath(CacheResource.LIST_PATH);
+            try {
+                WebTarget webTarget = webTargetFactory.get().create(url);
+                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                final Response response = webTarget
+                        .request(MediaType.APPLICATION_JSON)
+                        .get();
+                if (response.getStatus() != 200) {
+                    throw new WebApplicationException(response);
+                }
+                result = response.readEntity(CacheNamesResponse.class);
+                if (result == null) {
+                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
+                }
+            } catch (Exception e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+            }
+        }
+
+        return result;
     }
 
     @Override
@@ -91,10 +121,10 @@ class CacheResourceImpl implements CacheResource {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.INFO_PATH);
             try {
-                final Response response = webTargetFactory
-                        .get().create(url)
-                        .queryParam("cacheName", cacheName)
-                        .queryParam("nodeName", nodeName)
+                WebTarget webTarget = webTargetFactory.get().create(url);
+                webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
+                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get();
                 if (response.getStatus() != 200) {
@@ -140,13 +170,16 @@ class CacheResourceImpl implements CacheResource {
 
         return taskContextFactory.get().contextResult(
                 LogUtil.message("Clear cache [{}] on all active nodes", cacheName),
+                TerminateHandlerFactory.NOOP_FACTORY,
                 parentContext -> {
                     final Long count = allNodes.stream()
                             .map(nodeName -> {
                                 final Supplier<Long> supplier = taskContextFactory.get()
-                                        .childContextResult(parentContext,
+                                        .childContextResult(
+                                                parentContext,
                                                 LogUtil.message("Clearing cache [{}] on node [{}]",
                                                         cacheName, nodeName),
+                                                TerminateHandlerFactory.NOOP_FACTORY,
                                                 taskContext ->
                                                         clearCache(cacheName, nodeName));
 
@@ -195,10 +228,10 @@ class CacheResourceImpl implements CacheResource {
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.BASE_PATH);
 
             try {
-                final Response response = webTargetFactory.get()
-                        .create(url)
-                        .queryParam("cacheName", cacheName)
-                        .queryParam("nodeName", nodeName)
+                WebTarget webTarget = webTargetFactory.get().create(url);
+                webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
+                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .delete();
                 if (response.getStatus() != 200) {

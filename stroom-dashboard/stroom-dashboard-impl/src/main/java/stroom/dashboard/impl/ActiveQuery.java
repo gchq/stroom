@@ -16,7 +16,6 @@
 
 package stroom.dashboard.impl;
 
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
@@ -29,22 +28,26 @@ class ActiveQuery {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActiveQuery.class);
 
-    private final DashboardQueryKey dashboardQueryKey;
     private final QueryKey queryKey;
     private final DocRef docRef;
     private final DataSourceProvider dataSourceProvider;
+    private final String userId;
     private final long creationTime;
 
-    ActiveQuery(final DashboardQueryKey dashboardQueryKey,
-                final QueryKey queryKey,
+    ActiveQuery(final QueryKey queryKey,
                 final DocRef docRef,
-                final DataSourceProvider dataSourceProvider) {
+                final DataSourceProvider dataSourceProvider,
+                final String userId) {
         LOGGER.trace(() -> "New ActiveQuery " + queryKey);
-        this.dashboardQueryKey = dashboardQueryKey;
         this.queryKey = queryKey;
         this.docRef = docRef;
         this.dataSourceProvider = dataSourceProvider;
+        this.userId = userId;
         this.creationTime = System.currentTimeMillis();
+    }
+
+    public String getUserId() {
+        return userId;
     }
 
     public SearchResponse search(final SearchRequest request) {
@@ -59,11 +62,26 @@ class ActiveQuery {
         return dataSourceProvider.destroy(queryKey);
     }
 
+    public QueryKey getQueryKey() {
+        return queryKey;
+    }
+
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
+    public DataSourceProvider getDataSourceProvider() {
+        return dataSourceProvider;
+    }
+
+    public long getCreationTime() {
+        return creationTime;
+    }
+
     @Override
     public String toString() {
         return "ActiveQuery{" +
-                "dashboardQueryKey=" + dashboardQueryKey +
-                ", queryKey=" + queryKey +
+                "queryKey=" + queryKey +
                 ", docRef=" + docRef +
                 ", creationTime=" + creationTime +
                 '}';

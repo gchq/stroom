@@ -50,16 +50,16 @@ public class ForwardAggregateRecord extends UpdatableRecordImpl<ForwardAggregate
     }
 
     /**
-     * Setter for <code>forward_aggregate.fk_forward_url_id</code>.
+     * Setter for <code>forward_aggregate.fk_forward_dest_id</code>.
      */
-    public void setFkForwardUrlId(Integer value) {
+    public void setFkForwardDestId(Integer value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>forward_aggregate.fk_forward_url_id</code>.
+     * Getter for <code>forward_aggregate.fk_forward_dest_id</code>.
      */
-    public Integer getFkForwardUrlId() {
+    public Integer getFkForwardDestId() {
         return (Integer) get(2);
     }
 
@@ -182,7 +182,7 @@ public class ForwardAggregateRecord extends UpdatableRecordImpl<ForwardAggregate
 
     @Override
     public Field<Integer> field3() {
-        return ForwardAggregate.FORWARD_AGGREGATE.FK_FORWARD_URL_ID;
+        return ForwardAggregate.FORWARD_AGGREGATE.FK_FORWARD_DEST_ID;
     }
 
     @Override
@@ -227,7 +227,7 @@ public class ForwardAggregateRecord extends UpdatableRecordImpl<ForwardAggregate
 
     @Override
     public Integer component3() {
-        return getFkForwardUrlId();
+        return getFkForwardDestId();
     }
 
     @Override
@@ -272,7 +272,7 @@ public class ForwardAggregateRecord extends UpdatableRecordImpl<ForwardAggregate
 
     @Override
     public Integer value3() {
-        return getFkForwardUrlId();
+        return getFkForwardDestId();
     }
 
     @Override
@@ -319,7 +319,7 @@ public class ForwardAggregateRecord extends UpdatableRecordImpl<ForwardAggregate
 
     @Override
     public ForwardAggregateRecord value3(Integer value) {
-        setFkForwardUrlId(value);
+        setFkForwardDestId(value);
         return this;
     }
 
@@ -387,12 +387,12 @@ public class ForwardAggregateRecord extends UpdatableRecordImpl<ForwardAggregate
     /**
      * Create a detached, initialised ForwardAggregateRecord
      */
-    public ForwardAggregateRecord(Long id, Long updateTimeMs, Integer fkForwardUrlId, Long fkAggregateId, Boolean success, String error, Long tries, Long newPosition, Long retryPosition) {
+    public ForwardAggregateRecord(Long id, Long updateTimeMs, Integer fkForwardDestId, Long fkAggregateId, Boolean success, String error, Long tries, Long newPosition, Long retryPosition) {
         super(ForwardAggregate.FORWARD_AGGREGATE);
 
         setId(id);
         setUpdateTimeMs(updateTimeMs);
-        setFkForwardUrlId(fkForwardUrlId);
+        setFkForwardDestId(fkForwardDestId);
         setFkAggregateId(fkAggregateId);
         setSuccess(success);
         setError(error);

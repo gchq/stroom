@@ -4,8 +4,9 @@
 package stroom.config.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.config.impl.db.jooq.Keys;
+import stroom.config.impl.db.jooq.Stroom;
+import stroom.config.impl.db.jooq.tables.records.PreferencesRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -22,9 +23,8 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.config.impl.db.jooq.Keys;
-import stroom.config.impl.db.jooq.Stroom;
-import stroom.config.impl.db.jooq.tables.records.PreferencesRecord;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -123,7 +123,7 @@ public class Preferences extends TableImpl<PreferencesRecord> {
 
     @Override
     public Schema getSchema() {
-        return Stroom.STROOM;
+        return aliased() ? null : Stroom.STROOM;
     }
 
     @Override
@@ -137,8 +137,8 @@ public class Preferences extends TableImpl<PreferencesRecord> {
     }
 
     @Override
-    public List<UniqueKey<PreferencesRecord>> getKeys() {
-        return Arrays.<UniqueKey<PreferencesRecord>>asList(Keys.KEY_PREFERENCES_PRIMARY, Keys.KEY_PREFERENCES_USER_ID);
+    public List<UniqueKey<PreferencesRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_PREFERENCES_USER_ID);
     }
 
     @Override

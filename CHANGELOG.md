@@ -12,6 +12,263 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.13] - 2022-07-19
+
+* Issue **#2969** : Fix search termination for Elastic searches.
+
+* Issue **#2981** : On-heap searches now complete automatically once the table result limit is reached.
+
+* Issue **#2030** : Add stats for reference data and search LMDB off heap store sizes on disk. Requires the import of content pack internal-statistics-sql-v2.2.
+
+* Issue **#2942** : Add `v_fs_volume`, `v_doc`, `v_feed_doc`, `v_index_volume`, `v_job_node`, `v_processor_task` & `v_permission` DB views. Add `id` col to `v_meta` DB view.
+
+* Issue **#2978** : Handle lock wait errors when waiting for bootstrap lock. It now keeps retrying until it gets the lock.
+
+* Issue **#2985** : Add warning when caches evict items due to size constraint.
+
+* Issue **#2987** : Fix search termination.
+
+* Issue **#2984** : Change the purge of partial ref loads to happen as part of the purge job and not on boot.
+
+* Issue **#2977** : Fix to destroy stale searches.
+
+
+## [v7.1-beta.12] - 2022-07-05
+
+* Issue **#2834** : Fix `countGroups` search table expression.
+
+* Issue **#2961** : Fix sorting on selector and countGroups columns.
+
+* Issue **#2897** : On boot, delete ref streams from the store that have a state of LOAD_IN_PROGRESS or PURGE_IN_PROGRESS.
+
+* Issue **#2965** : Fix server tasks paging.
+
+* Issue **#2964** : Fix server tasks paging.
+
+* Issue **#2967** : Change application instance message.
+
+* Issue **#2966** : Fix interrupts being ignored in stats aggregation and improve task info messages.
+
+* Issue **#2834** : Fix `countGroups` search table expression.
+
+* Issue **#2961** : Fix sorting on selector and countGroups columns.
+
+* Issue **#2960** : Stop releasing owned tasks under lock.
+
+* Issue **#2939** : Remove duplicate createTime and updateTime doc properties.
+
+* Issue **#2959** : Turn off source line numbering in Saxon.
+
+* Issue **#2939** : Add DB migration to remove duplicate keys from `doc.data` json column.
+
+* Issue **#2966** : Add batching to stage 2 stats aggregation. Add new property `statisticAggregationStageTwoBatchSize`. Remove interruption checks in stats flush to avoid loss of data.
+
+* Improve error messages for ref data value deserialisation.
+
+* Issue **#2938** : Fix StreamId error when querying annotations data source.
+
+* Issue **#2944** : Truncate error messages for processor_filter_tracker status to fit DB.
+
+* Issue **#2935** : Remove query UUID in query download.
+
+* Issue **#2945** : Fix deadlock updating processor task by updating individually.
+
+* Issue **#2946** : Add property `statisticFlushBatchSize`.
+
+* Issue **#2946** : Change SQL Statistics flush to use single large prepared statements for more efficient inserts to SQL_STAT_VAL_SRC.
+
+* Issue **#2954** : Stop logging SQL exceptions as errors in JooqUtil.
+
+* Issue **#2948** : Processing tasks will complete normally when data deleted.
+
+* Issue **#2946** : Add statistics properties `inMemAggregatorPoolSize`, `inMemPooledAggregatorSizeThreshold`, `inMemPooledAggregatorAgeThreshold` and `inMemFinalAggregatorSizeThreshold`.
+
+* Issue **#2931** : Set cluster state update frequency to 1m.
+
+* Issue **#2933** : Change structure of config object for http-call function to allow setting various HTTP client configuration properties, including HTTP protocol version.
+
+* Issue **#2902** : Release queued tasks if no longer master and from dead nodes.
+
+* Issue **#2925** : Remove order by from Attribute Value Data Retention job to try to speed it up. Also improve logging for the job.
+
+* Issue **#2924** : Fix feed name resolution from UUID in stream appenders.
+
+* Issue **#2870** : Fix delete of old processor filters and trackers.
+
+* Issue **#2912** : Prevent users from renaming feeds as this breaks the link with the files stored on the file system.
+
+* Issue **#2903** : Fix pipeline structure inheritance to hide dead inherited links.
+
+* Issue **#2906** : Fix rolling appenders failing due to "no logged in user".
+
+* Issue **#2916** : Change LMDB thread interrupted messages from ERROR to DEBUG.
+
+* Issue **#2914** : Propagate useAsRead to sub tasks.
+
+* Issue **#2877** : Handle missing index when performing shard retention.
+
+* Issue **#2896** : Improve application instance error handling.
+
+* Issue **#2900** : Move stream type to file extension mappings into config (`stroom.data.filesystemVolume.metaTypeExtensions`) to allow use of legacy file extensions.
+
+* Issue **#2906** : Fix RollingStreamAppender failing to roll on timed basis.
+
+* Issue **#2904** : Fix NPE when setting the feed to null on the StreamAppender.
+
+* Issue **#2901** : Change stream type drop downs on feed setting and stream upload to included all stream types.
+
+* Change start.sh in stroom docker image to accept multiple arguments to support command utilities.
+
+* Issue **#2872** : Fix permission exception thrown when removing search store from cache.
+
+* Issue **#2889** : Change pipeline entity deletion to also logically delete the processor, processor filters and any unprocessed tasks.
+
+* Change the shard system info provider to only query the shard if the node has ownership.
+
+* Issue **#2879** : Prevent shards closing during read.
+
+* Issue **#2879** : Prevent interrupts during index shard use.
+
+* Issue **#2888** : Fix error when paging and then filtering on the dependencies screen.
+
+* Add system info provider for index shards.
+
+* Issue **#2883** : Fix issue of search errors not being shown in the UI.
+
+* Issue **#2879** : Prevent interrupting threads that may be reading search index shards.
+
+* Issue **#2874** : Add debug logging for shard writing/reading.
+
+* Issue **#2881** : Fix broken CLI commands, e.g. `reset_password`.
+
+* No changes, failed build.
+
+* Issue **#2855** : Add property `stroom.index.writer.slowIndexWriteWarningThreshold` to configure the threshold for warning about slow index shard writes.
+
+* Issue **#2856** : Strip `[` and `]` from IPv6 addresses in the logged events to ensure schema compliance.
+
+* Issue **#2857** : Add `/stroomAdmin/filteredhealthcheck` and `/proxyAdmin/filteredhealthcheck` servlets to allow filtering of the health checks that are run.
+
+* Issue **#2863** : Fix UI hanging when data viewer navigation buttons are clicked repeatedly and very quickly.
+
+* Issue **#2839** : Fix invalid event XML generated when adding user perms to an entity with no perms (i.e. System entity).
+
+* Issue **#2843** : Fix NPE when logging in to a user with no password.
+
+* Increase column width for _Sign in Failures_ column on Manage Accounts screen so the sort icon is visible.
+
+* Issue **#2840** : Fix various issues with sorting on Manage Accounts screen.
+
+* Issue **#2841** : Fix issues with sorting/filtering on API Keys screen.
+
+* Increase User Id column width on API Keys screen.
+
+* Issue **#2847** : Fix download of dashboard query and results.
+
+* Issue **#2838** : Change web socket code to avoid errors for expected cases.
+
+* Issue **#2851** : Add configuration property `stroom.statistics.sql.slowQueryWarningThreshold` to configure slow statistics sql query warning threshold.
+
+* Issue **#2827** : Fix Format feature in editor when comment contains unmatched double quote.
+
+* Issue **#2830** : Change logging of document permission changes to log a single event containing the full before/after state of the doc's perms.
+
+* Issue **#2830** : Ensure the creation of a stroom user record is only logged once.
+
+* Issue **#2830** : When cascading document permissions, only log the change for the top level but mark it with the cascade setting.
+
+* Issue **#2816** : Fix missing navigation controls when viewing a multi part stream where a middle part is binary and the rest are text.
+
+* Add missing Singlton annotation to ProxyConfigProvider.
+
+
+## [v7.1-beta.11] - 2022-04-01
+
+* Issue **#2749** : Improve support for  and  fields when searching an Elasticsearch index.
+
+* Issue **#2822** : Add application instance management to keep track of active queries.
+
+* Issue **#2822** : Add application instance management to keep track of active queries.
+
+* Issue **#2824** : Fix to stop SearchableStore interrupting threads that it is no longer using.
+
+* Issue **#2822** : Create a managed search UUID in the web socket before starting search.
+
+* Issue **#2817** : Change data retention impact summary to show the counts of records that would be deleted now rather than at some point in the future.
+
+
+## [v7.1-beta.10] - 2022-03-18
+
+* Issue **#2725** : Support multiple levels of nesting in Elasticsearch indexing.
+
+* Issue **#2730** : Fix folder presenter Processors tab always being empty.
+
+* Issue **#2759** : Normalise Windows line endings () to Unix-style () when pasting into the ACE text editor.
+
+* Issue **#2815** : Ensure early termination of Lucene searches when required.
+
+* Issue **#2801** : Add Guice support and authorisation to web sockets.
+
+* Issue **#2804** : Ensure unowned tasks are added even when there are many associated locked meta records.
+
+* Issue **#2807** : Show all nodes on Index Volume edit dialog, not just enabled.
+
+* Change the common alert dialog to show the detail by default.
+
+* Change the common alert dialog so the width is the same if detail is shown or not.
+
+* Issue **#2806** : Fix NPEs when a visualisation pane is present but the visualisation is not defined. Show warning about the misconfiguration.
+
+* Add _Dual_ searchable datasource to always return a single column/row.
+
+* Issue **#2810** : Fix display of error streams with the data() link expression.
+
+* Issue **#2801** : Add our own native web socket code to GWT.
+
+* Fix failing test.
+
+* Issue **#2801** : Add `connect-src 'self' wss:;` to default `contentSecurityPolicy` property, select web sockets ws/wss based on current scheme and improve logging.
+
+* Issue **#2618** : Fix UI to show all caches even ones that only exist on remote nodes.
+
+* Issue **#2801** : Add Web Socket mechanism to keep search results active.
+
+* Issue **#2805** : Fix default annotation expression function.
+
+* Issue **#2778** : Simplify search result store cache and query UUID creation.
+
+* Ensure meta types retrieved from config are trimmed.
+
+* Issue **#2802** : Ensure tasks are created but only queued if fill task queue enabled.
+
+* Issue **#2805** : Fix default annotation expression function.
+
+* Make application fail to start if there is no build version/date.
+
+* Issue **#2799** : Add protection for null/empty meta types in `stroom.data.meta.metaTypes`.
+
+* Issue **#2795** : Speculative fix for the bind errors on MetaTypeDaoImpl.
+
+* Issue **#2782** : Fix validation of primitive properties, e.g. booleans.
+
+* Issue **#2782** : Fix property edit screen `Sources` field showing `Multiple Sources` for a single node.
+
+* Issue **#2787** : Add config_update_tracker table to improve the process of updating each node's effective config. Also fix the updating of the effective value/source columns in the properties list view.
+
+* Issue **#2786** : Handle multiple IPs in X-FORWARDED-FOR header.
+
+* Issue **#2789** : Add locking to ensure one node performs the DB migrations and all others wait for it to complete. DB migration checks will not be run on boot if the build version matches that in the bootstrap_lock table.
+
+* Issue **#2789** : Make the creation of the admin and processing users resiliant to multiple nodes doing it at once.
+
+* Issue **#2768** : Suppress unable to keep alive message.
+
+* Issue **#2775** : Ensure all URL params are encoded.
+
+* Issue **#2768** : Fix auto recurring searches.
+
+* Issue **#2768** : Fix auto recurring searches.
+
 * Issue **gchq/stroom#2578** : Improve logging of Pipeline operations.
 
 * Issue **#2768** : Fix auto recurring searches.

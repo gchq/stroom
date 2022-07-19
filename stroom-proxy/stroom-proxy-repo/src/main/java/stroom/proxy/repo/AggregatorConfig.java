@@ -141,27 +141,27 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
             return this;
         }
 
-        public Builder withMaxItemsPerAggregate(final int maxItemsPerAggregate) {
+        public Builder maxItemsPerAggregate(final int maxItemsPerAggregate) {
             this.maxItemsPerAggregate = maxItemsPerAggregate;
             return this;
         }
 
-        public Builder withMaxUncompressedByteSize(final long maxUncompressedByteSize) {
+        public Builder maxUncompressedByteSize(final long maxUncompressedByteSize) {
             this.maxUncompressedByteSize = maxUncompressedByteSize;
             return this;
         }
 
-        public Builder withMaxUncompressedByteSizeString(final String maxUncompressedByteSizeString) {
+        public Builder maxUncompressedByteSizeString(final String maxUncompressedByteSizeString) {
             this.maxUncompressedByteSize = ModelStringUtil.parseIECByteSizeString(maxUncompressedByteSizeString);
             return this;
         }
 
-        public Builder withMaxAggregateAge(final StroomDuration maxAggregateAge) {
+        public Builder maxAggregateAge(final StroomDuration maxAggregateAge) {
             this.maxAggregateAge = maxAggregateAge;
             return this;
         }
 
-        public Builder withAggregationFrequency(final StroomDuration aggregationFrequency) {
+        public Builder aggregationFrequency(final StroomDuration aggregationFrequency) {
             this.aggregationFrequency = aggregationFrequency;
             return this;
         }

@@ -95,6 +95,7 @@ projList.each { p ->
 }
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {
+    group "gwt"
     dependsOn 'gwtClean'
 
     def module = 'stroom.app.App'
@@ -151,6 +152,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
 }
 
 task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
+    group "gwt"
     def module = 'stroom.app.AppSuperDevModeChrome'
 
     doFirst {
@@ -196,6 +198,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
 }
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
+    group "gwt"
     def module = 'stroom.app.AppSuperDevModeChrome'
 
 //    def dirs = []
@@ -219,10 +222,9 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
         def NC = '\033[0m'
 
         println """
-        To run stroom in SuperDevMode:${GREEN}
-          * Set appConfig.security.authenticationRequired to false in local.yml
-          * Vist the code server (link further down) and copy the dev mode buttons to your browser bookmarks
-          * Visit stroom at http://localhost:8080/stroom/ui (NOTE: http, not https)
+        ${NC}To run stroom in SuperDevMode:${GREEN}
+          * Visit the 'code server' (link further down) and copy the dev mode buttons to your browser bookmarks
+          * Visit stroom at http://localhost:8080 (NOTE: http, not https), or https://localhost if running Nginx
           * Click 'Dev Mode On'${NC}
         """.stripIndent().trim()
     }
@@ -254,6 +256,7 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 }
 
 task gwtClean {
+    group "gwt"
     doLast {
 //        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
 //        delete unitCacheDir

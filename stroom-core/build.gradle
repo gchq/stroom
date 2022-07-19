@@ -22,7 +22,6 @@ dependencies {
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-processor:stroom-processor-api')
-    implementation project(':stroom-proxy:stroom-proxy-repo')
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-receive:stroom-receive-common')

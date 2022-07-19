@@ -31,6 +31,7 @@ import stroom.node.client.NodeManager;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.PageResponse;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
@@ -39,6 +40,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -68,7 +70,10 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
     private RestDataProvider<CacheInfo, CacheInfoResponse> dataProvider;
     private String cacheName;
 
-    private DelayedUpdate delayedUpdate;
+    private final DelayedUpdate delayedUpdate;
+
+    private Range range;
+    private Consumer<CacheInfoResponse> dataConsumer;
 
     @Inject
     public CacheNodeListPresenter(final EventBus eventBus,
@@ -84,6 +89,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
         this.nodeManager = nodeManager;
+        this.delayedUpdate = new DelayedUpdate(this::update);
 
         // Info.
         addInfoColumn();
@@ -182,14 +188,12 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
             if (dataProvider == null) {
                 dataProvider = new RestDataProvider<CacheInfo, CacheInfoResponse>(getEventBus()) {
                     @Override
-                    protected void exec(final Consumer<CacheInfoResponse> dataConsumer,
+                    protected void exec(final Range range,
+                                        final Consumer<CacheInfoResponse> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
-                        if (delayedUpdate == null) {
-                            delayedUpdate = new DelayedUpdate(() ->
-                                    combineNodeTasks(dataConsumer, throwableConsumer));
-                        }
+                        CacheNodeListPresenter.this.range = range;
+                        CacheNodeListPresenter.this.dataConsumer = dataConsumer;
                         delayedUpdate.reset();
-
                         nodeManager.listAllNodes(nodeNames ->
                                 fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames), throwableConsumer);
                     }
@@ -219,14 +223,19 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         }
     }
 
-    private void combineNodeTasks(final Consumer<CacheInfoResponse> dataConsumer,
-                                  final Consumer<Throwable> throwableConsumer) {
+    private void update() {
         // Combine data from all nodes.
         final List<CacheInfo> list = new ArrayList<>();
         responseMap.values().forEach(list::addAll);
         list.sort(Comparator.comparing(CacheInfo::getName));
 
-        final CacheInfoResponse response = new CacheInfoResponse(list);
+        final long total = list.size();
+        final List<CacheInfo> trimmed = new ArrayList<>();
+        for (int i = range.getStart(); i < range.getStart() + range.getLength() && i < list.size(); i++) {
+            trimmed.add(list.get(i));
+        }
+        final CacheInfoResponse response = new CacheInfoResponse(trimmed,
+                new PageResponse(range.getStart(), trimmed.size(), total, true));
         dataConsumer.accept(response);
     }
 }

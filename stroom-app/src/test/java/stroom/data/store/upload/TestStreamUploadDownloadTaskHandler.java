@@ -26,7 +26,6 @@ import stroom.data.store.api.Target;
 import stroom.data.store.impl.DataDownloadSettings;
 import stroom.data.store.impl.DataDownloadTaskHandler;
 import stroom.data.store.impl.DataUploadTaskHandler;
-import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.MetaProperties;
@@ -40,6 +39,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.string.StringIdUtil;
 
 import org.junit.jupiter.api.Test;
 
@@ -92,7 +92,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         for (int i = 1; i <= entryCount; i++) {
-            final String baseName = StroomFileNameUtil.idToString(i);
+            final String baseName = StringIdUtil.idToString(i);
             assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.MANIFEST)).isTrue();
             assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.DATA)).isTrue();
             assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.CONTEXT)).isFalse();

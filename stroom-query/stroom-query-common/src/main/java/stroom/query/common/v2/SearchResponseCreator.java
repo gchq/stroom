@@ -48,6 +48,7 @@ public class SearchResponseCreator {
 
     private static final Duration FALL_BACK_DEFAULT_TIMEOUT = Duration.ofMinutes(5);
 
+    private final String userId;
     private final SizesProvider sizesProvider;
     private final Store store;
 
@@ -59,17 +60,25 @@ public class SearchResponseCreator {
     /**
      * @param store The underlying store to use for creating the search responses.
      */
-    public SearchResponseCreator(final SizesProvider sizesProvider,
+    public SearchResponseCreator(final String userId,
+                                 final SizesProvider sizesProvider,
                                  final Store store) {
+        this.userId = userId;
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
+    }
+
+    public String getUserId() {
+        return userId;
     }
 
     /**
      * @param throwable List of errors to add to the {@link SearchResponse}
      * @return An empty {@link SearchResponse} with the passed error messages
      */
-    private static SearchResponse createErrorResponse(final Store store, final Throwable throwable) {
+    private static SearchResponse createErrorResponse(final QueryKey queryKey,
+                                                      final Store store,
+                                                      final Throwable throwable) {
         Objects.requireNonNull(store);
         Objects.requireNonNull(throwable);
 
@@ -82,6 +91,7 @@ public class SearchResponseCreator {
             errors.addAll(store.getErrors());
         }
         return new SearchResponse(
+                queryKey,
                 null,
                 null,
                 errors,
@@ -136,6 +146,7 @@ public class SearchResponseCreator {
                 if (!didSearchComplete && !searchRequest.incremental()) {
                     // Search didn't complete non-incremental search in time so return a timed out error response
                     return createErrorResponse(
+                            searchRequest.getKey(),
                             store,
                             new RuntimeException(SearchResponse.TIMEOUT_MESSAGE + effectiveTimeout));
                 }
@@ -146,6 +157,7 @@ public class SearchResponseCreator {
                 Thread.currentThread().interrupt();
 
                 return createErrorResponse(
+                        searchRequest.getKey(),
                         store,
                         new RuntimeException("Thread was interrupted before the search could complete"));
             }
@@ -177,6 +189,7 @@ public class SearchResponseCreator {
             final List<String> errors = buildCompoundErrorList(store, results);
 
             final SearchResponse searchResponse = new SearchResponse(
+                    searchRequest.getKey(),
                     store.getHighlights(),
                     results,
                     errors,
@@ -192,7 +205,9 @@ public class SearchResponseCreator {
         } catch (final RuntimeException e) {
             LOGGER.error(() -> "Error getting search results for query " + searchRequest.getKey().toString(), e);
 
-            return createErrorResponse(store,
+            return createErrorResponse(
+                    searchRequest.getKey(),
+                    store,
                     new RuntimeException("Error getting search results: [" +
                             e.getMessage() +
                             "], see service's logs for details", e));
@@ -257,7 +272,7 @@ public class SearchResponseCreator {
                         // Cache the new result and get the previous one.
                         final Result lastResult = resultCache.put(componentId, result);
 
-                        // See if we have delivered an identical result before so we
+                        // See if we have delivered an identical result before, so we
                         // don't send more data to the client than we need to.
                         if (!result.equals(lastResult)) {
                             //

@@ -27,7 +27,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
-import java.util.Set;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -73,7 +72,7 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
             operationId = "downloadDashboardQuery")
     ResourceGeneration downloadQuery(
             @Parameter(description = "downloadQueryRequest", required = true)
-                    DownloadQueryRequest downloadQueryRequest);
+                    DashboardSearchRequest request);
 
     @POST
     @Path("/downloadSearchResults")
@@ -84,12 +83,20 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
             @Parameter(description = "request", required = true) DownloadSearchResultsRequest request);
 
     @POST
-    @Path("/poll")
+    @Path("/search")
     @Operation(
-            summary = "Poll for new search results",
-            operationId = "pollDashboardSearchResults")
-    Set<DashboardSearchResponse> poll(
-            @Parameter(description = "request", required = true) SearchBusPollRequest request);
+            summary = "Perform a new search or get new results",
+            operationId = "dashboardSearch")
+    DashboardSearchResponse search(
+            @Parameter(description = "request", required = true) DashboardSearchRequest request);
+
+    @POST
+    @Path("/destroy")
+    @Operation(
+            summary = "Destroy a running search",
+            operationId = "dashboardDestroySearch")
+    Boolean destroy(
+            @Parameter(description = "request", required = true) DestroySearchRequest request);
 
     @GET
     @Path("/fetchTimeZones")

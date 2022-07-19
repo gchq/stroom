@@ -14,6 +14,7 @@ import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.util.cert.CertificateUtil;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -373,26 +374,26 @@ class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public URI createSignInUri(final String redirectUri) {
         LOGGER.debug("Sending user to login.");
-        final UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.SIGN_IN_URL_PATH))
-                .queryParam("error", "login_required")
-                .queryParam(OpenId.REDIRECT_URI, redirectUri);
+        UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.SIGN_IN_URL_PATH));
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, "error", "login_required");
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, redirectUri);
         return uriBuilder.build();
     }
 
     @Override
     public URI createConfirmPasswordUri(final String redirectUri) {
         LOGGER.debug("Sending user to confirm password.");
-        return UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.CONFIRM_PASSWORD_URL_PATH))
-                .queryParam(OpenId.REDIRECT_URI, redirectUri)
-                .build();
+        UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.CONFIRM_PASSWORD_URL_PATH));
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, redirectUri);
+        return uriBuilder.build();
     }
 
     @Override
     public URI createChangePasswordUri(final String redirectUri) {
         LOGGER.debug("Sending user to change password.");
-        return UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH))
-                .queryParam(OpenId.REDIRECT_URI, redirectUri)
-                .build();
+        UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH));
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, redirectUri);
+        return uriBuilder.build();
     }
 
     private Optional<String> getIdFromCertificate(final String cn) {

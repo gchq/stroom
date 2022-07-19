@@ -2,8 +2,10 @@ package stroom.proxy.repo;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.zip.StroomZipFileType;
+import stroom.proxy.repo.dao.FeedDao;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceItemDao;
+import stroom.proxy.repo.queue.Batch;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -12,14 +14,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,6 +28,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @IncludeModule(ProxyRepoTestModule.class)
 public class TestSourceEntries {
 
+    @Inject
+    private FeedDao feedDao;
     @Inject
     private RepoSources proxyRepoSources;
     @Inject
@@ -56,12 +57,13 @@ public class TestSourceEntries {
 
     @Test
     void testUnique() {
-        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
+        proxyRepoSources.addSource(1L, "test", null, null);
+        proxyRepoSources.flush();
 
         // Check that we have a new source.
-        final Optional<RepoSource> optionalSource = sourceDao.getNewSource();
-        assertThat(optionalSource.isPresent()).isTrue();
-        final RepoSource source = optionalSource.get();
+        final Batch<RepoSource> batch = sourceDao.getNewSources();
+        assertThat(batch.isEmpty()).isFalse();
+        final RepoSource source = batch.list().get(0);
 
         addEntriesToSource(source, 1, 1);
 
@@ -75,23 +77,23 @@ public class TestSourceEntries {
 
 
     long addEntries() {
-        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
+        proxyRepoSources.addSource(1L, "test", null, null);
+        proxyRepoSources.flush();
 
         // Check that we have a new source.
-        final Optional<RepoSource> optionalSource = sourceDao.getNewSource();
-        assertThat(optionalSource.isPresent()).isTrue();
-        final RepoSource source = optionalSource.get();
-        final long sourceId = source.getId();
+        final Batch<RepoSource> batch = sourceDao.getNewSources(0, TimeUnit.MILLISECONDS);
+        assertThat(batch.isEmpty()).isFalse();
+        final RepoSource source = batch.list().get(0);
+        final long sourceId = source.id();
 
         addEntriesToSource(source, 100, 10);
 
         assertThat(sourceDao.countSources()).isOne();
         assertThat(sourceItemDao.countItems()).isEqualTo(1000);
-        assertThat(sourceItemDao.countEntries()).isEqualTo(3000);
 
         // Check that we have no new sources.
-        final Optional<RepoSource> optionalSource2 = sourceDao.getNewSource(0, TimeUnit.MILLISECONDS);
-        assertThat(optionalSource2.isPresent()).isFalse();
+        final Batch<RepoSource> sources2 = sourceDao.getNewSources(0, TimeUnit.MILLISECONDS);
+        assertThat(sources2.list().isEmpty()).isTrue();
 
         return sourceId;
     }
@@ -99,9 +101,8 @@ public class TestSourceEntries {
     void addEntriesToSource(final RepoSource source,
                             final int loopCount,
                             final int feedCount) {
-        final Map<String, RepoSourceItem.Builder> itemNameMap = new HashMap<>();
-        final AtomicLong sourceItemRecordId = new AtomicLong();
-        final AtomicLong sourceEntryRecordId = new AtomicLong();
+        final AtomicLong id = new AtomicLong();
+        final Map<String, RepoSourceItem> itemNameMap = new HashMap<>();
         final List<StroomZipFileType> types = List.of(
                 StroomZipFileType.META,
                 StroomZipFileType.CONTEXT,
@@ -112,31 +113,22 @@ public class TestSourceEntries {
                 final String dataName = "entry_" + i + "_" + j;
                 final String feedName = "feed_" + j;
                 final String typeName = StreamTypeNames.RAW_EVENTS;
+                final long feedId = feedDao.getId(new FeedKey(feedName, typeName));
 
                 for (final StroomZipFileType type : types) {
-                    final RepoSourceItem.Builder builder = itemNameMap.computeIfAbsent(dataName, k ->
-                            RepoSourceItem.builder()
-                                    .source(source)
-                                    .name(dataName)
-                                    .feedName(feedName)
-                                    .typeName(typeName));
-
-                    builder.addEntry(RepoSourceEntry.builder()
-                            .type(type)
-                            .extension(type.getExtension())
-                            .byteSize(1000L)
-                            .build());
+                    final RepoSourceItem item = itemNameMap.computeIfAbsent(dataName, k ->
+                            new RepoSourceItem(source,
+                                    id.incrementAndGet(),
+                                    dataName,
+                                    feedId,
+                                    null,
+                                    0,
+                                    "dat"));
                 }
             }
         }
 
-        sourceItemDao.addItems(
-                Paths.get(source.getSourcePath()),
-                source.getId(),
-                itemNameMap
-                        .values()
-                        .stream()
-                        .map(RepoSourceItem.Builder::build)
-                        .collect(Collectors.toList()));
+        sourceItemDao.addItems(source, itemNameMap.values());
+        sourceItemDao.flush();
     }
 }

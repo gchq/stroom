@@ -5,6 +5,8 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-util-shared')
 
+    implementation libs.jackson_annotations
+    implementation libs.jaxb_api
     implementation libs.lucene_analyzers_common
     implementation libs.lucene_core
     implementation libs.lucene_queryparser

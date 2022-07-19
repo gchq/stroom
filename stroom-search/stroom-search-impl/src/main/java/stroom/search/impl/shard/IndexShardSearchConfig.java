@@ -17,17 +17,12 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
 
     private final int maxDocIdQueueSize;
     private final int maxThreadsPerTask;
-    private final CacheConfig searchResultCache;
     private final CacheConfig remoteSearchResultCache;
     private final CacheConfig indexShardSearcherCache;
 
     public IndexShardSearchConfig() {
         maxDocIdQueueSize = 1_000_000;
         maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
-        searchResultCache = CacheConfig.builder()
-                .maximumSize(10_000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
-                .build();
         remoteSearchResultCache = CacheConfig.builder()
                 .maximumSize(100L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
@@ -41,12 +36,10 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
     @JsonCreator
     public IndexShardSearchConfig(@JsonProperty("maxDocIdQueueSize") final int maxDocIdQueueSize,
                                   @JsonProperty("maxThreadsPerTask") final int maxThreadsPerTask,
-                                  @JsonProperty("searchResultCache") final CacheConfig searchResultCache,
                                   @JsonProperty("remoteSearchResultCache") final CacheConfig remoteSearchResultCache,
                                   @JsonProperty("indexShardSearcherCache") final CacheConfig indexShardSearcherCache) {
         this.maxDocIdQueueSize = maxDocIdQueueSize;
         this.maxThreadsPerTask = maxThreadsPerTask;
-        this.searchResultCache = searchResultCache;
         this.remoteSearchResultCache = remoteSearchResultCache;
         this.indexShardSearcherCache = indexShardSearcherCache;
     }
@@ -62,10 +55,6 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
         return maxThreadsPerTask;
     }
 
-    public CacheConfig getSearchResultCache() {
-        return searchResultCache;
-    }
-
     public CacheConfig getRemoteSearchResultCache() {
         return remoteSearchResultCache;
     }
@@ -79,7 +68,6 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
         return "IndexShardSearchConfig{" +
                 "maxDocIdQueueSize=" + maxDocIdQueueSize +
                 ", maxThreadsPerTask=" + maxThreadsPerTask +
-                ", searchResultCache=" + searchResultCache +
                 ", remoteSearchResultCache=" + remoteSearchResultCache +
                 ", indexShardSearcherCache=" + indexShardSearcherCache +
                 '}';

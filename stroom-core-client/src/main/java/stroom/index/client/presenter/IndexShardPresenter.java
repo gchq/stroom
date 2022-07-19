@@ -22,6 +22,7 @@ import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -54,6 +55,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -402,14 +404,18 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
             selectionCriteria.getIndexShardIdSet().clear();
 
             if (dataProvider == null) {
-                dataProvider = new RestDataProvider<IndexShard, ResultPage<IndexShard>>(getEventBus(),
-                        queryCriteria.obtainPageRequest()) {
+                dataProvider = new RestDataProvider<IndexShard, ResultPage<IndexShard>>(getEventBus()) {
                     @Override
-                    protected void exec(final Consumer<ResultPage<IndexShard>> dataConsumer,
+                    protected void exec(final Range range,
+                                        final Consumer<ResultPage<IndexShard>> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
+                        CriteriaUtil.setRange(queryCriteria, range);
                         final Rest<ResultPage<IndexShard>> rest = restFactory.create();
-                        rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_RESOURCE).find(
-                                queryCriteria);
+                        rest
+                                .onSuccess(dataConsumer)
+                                .onFailure(throwableConsumer)
+                                .call(INDEX_RESOURCE)
+                                .find(queryCriteria);
                     }
 
                     @Override

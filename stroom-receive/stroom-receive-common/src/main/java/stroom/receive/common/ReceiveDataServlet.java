@@ -16,6 +16,7 @@
 
 package stroom.receive.common;
 
+import stroom.meta.api.AttributeMapUtil;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.Unauthenticated;
 
@@ -80,8 +81,15 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
         try {
             final RequestHandler requestHandler = requestHandlerProvider.get();
             requestHandler.handle(request, response);
+
+        } catch (final StroomStreamException e) {
+            e.sendErrorResponse(response);
+
         } catch (final RuntimeException e) {
-            StroomStreamException.sendErrorResponse(request, response, e);
+            final StroomStreamException stroomStreamException =
+                    StroomStreamException.create(e,
+                            AttributeMapUtil.create(request));
+            stroomStreamException.sendErrorResponse(response);
         }
     }
 

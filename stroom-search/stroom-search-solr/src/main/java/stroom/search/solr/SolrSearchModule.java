@@ -22,7 +22,6 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.search.solr.indexing.SolrIndexingElementModule;
-import stroom.search.solr.search.SolrSearchResponseCreatorManager;
 import stroom.search.solr.search.StroomSolrIndexQueryResourceImpl;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.util.RunnableWrapper;
@@ -36,7 +35,6 @@ import com.google.inject.AbstractModule;
 import javax.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.CRON;
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class SolrSearchModule extends AbstractModule {
 
@@ -78,10 +76,6 @@ public class SolrSearchModule extends AbstractModule {
                         .description("Logically delete indexed documents in Solr indexes based on the specified " +
                                 "deletion query")
                         .schedule(CRON, "0 2 *"))
-                .bindJobTo(EvictExpiredElements.class, builder -> builder
-                        .name("Evict expired elements")
-                        .schedule(PERIODIC, "10s")
-                        .managed(false))
                 .bindJobTo(SolrIndexOptimiseExecutorJob.class, builder -> builder
                         .name("Solr Index Optimise")
                         .description("Optimise Solr indexes")
@@ -93,14 +87,6 @@ public class SolrSearchModule extends AbstractModule {
         @Inject
         DataRetention(final SolrIndexRetentionExecutor dataRetentionExecutor) {
             super(dataRetentionExecutor::exec);
-        }
-    }
-
-    private static class EvictExpiredElements extends RunnableWrapper {
-
-        @Inject
-        EvictExpiredElements(final SolrSearchResponseCreatorManager manager) {
-            super(manager::evictExpiredElements);
         }
     }
 

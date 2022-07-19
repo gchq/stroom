@@ -99,6 +99,10 @@ public class LmdbEnv implements AutoCloseable {
         }
     }
 
+    public static boolean isLmdbDataFile(final Path file) {
+        return file != null && file.endsWith("data.mdb");
+    }
+
     /**
      * @return The number of permits available for new read txns. For info purposes only,
      * not for concurrency control.
@@ -173,8 +177,7 @@ public class LmdbEnv implements AutoCloseable {
         try {
             writeTxnLock.lockInterruptibly();
         } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new UncheckedInterruptedException("Thread interrupted while waiting for write lock on "
+            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for write lock on "
                     + localDir.toAbsolutePath().normalize(), e);
         }
 
@@ -220,7 +223,7 @@ public class LmdbEnv implements AutoCloseable {
             LOGGER.trace("Opening new write txn");
             return new WriteTxn(writeTxnLock, env.txnWrite());
         } catch (final InterruptedException e) {
-            throw new UncheckedInterruptedException("Thread interrupted while waiting for write lock on "
+            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for write lock on "
                     + localDir.toAbsolutePath().normalize(), e);
         }
     }
@@ -231,6 +234,7 @@ public class LmdbEnv implements AutoCloseable {
      * the single write lock. Useful for large jobs that need to commit periodically but don't want to release
      * the lock to avoid the risk of deadlocks.
      * A call to this method will result in a write lock being obtained.
+     * Should be used in a try-with-resources block to ensure the write lock that it obtains is released.
      */
     public BatchingWriteTxn openBatchingWriteTxn(final int batchSize) {
         try {
@@ -246,7 +250,7 @@ public class LmdbEnv implements AutoCloseable {
 
             return new BatchingWriteTxn(writeTxnLock, env::txnWrite, batchSize);
         } catch (final InterruptedException e) {
-            throw new UncheckedInterruptedException("Thread interrupted while waiting for write lock on "
+            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for write lock on "
                     + localDir.toAbsolutePath().normalize(), e);
         }
     }
@@ -303,8 +307,8 @@ public class LmdbEnv implements AutoCloseable {
             }
 
         } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new UncheckedInterruptedException("Thread interrupted", e);
+            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for read permit on "
+                    + localDir.toAbsolutePath().normalize(), e);
         }
 
         if (postAcquireAction != null) {
@@ -332,8 +336,8 @@ public class LmdbEnv implements AutoCloseable {
             }
 
         } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new UncheckedInterruptedException("Thread interrupted", e);
+            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for read lock on "
+                    + localDir.toAbsolutePath().normalize(), e);
         }
 
         try {
@@ -358,11 +362,10 @@ public class LmdbEnv implements AutoCloseable {
             throw new RuntimeException(("LMDB environment at {} is still open"));
         }
 
-        LOGGER.doIfDebugEnabled(() -> {
-            LOGGER.debug("Deleting {} and all its contents", localDir.toAbsolutePath().normalize());
-            // May be useful to see the sizes of db before they are deleted
-            dumpMdbFileSize();
-        });
+        LOGGER.debug("Deleting LMDB environment {} and all its contents", localDir.toAbsolutePath().normalize());
+
+        // May be useful to see the sizes of db before they are deleted
+        LOGGER.doIfDebugEnabled(this::dumpMdbFileSize);
 
         if (!FileUtil.deleteDir(localDir)) {
             throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(localDir));
@@ -457,6 +460,28 @@ public class LmdbEnv implements AutoCloseable {
             final Stat stat = db.stat(txn);
             return convertStatToMap(stat);
         });
+    }
+
+    public long getSizeOnDisk() {
+        long totalSizeBytes;
+        final Path localDir = getLocalDir().toAbsolutePath();
+        try (final Stream<Path> fileStream = Files.list(localDir)) {
+            totalSizeBytes = fileStream
+                    .mapToLong(path -> {
+                        try {
+                            return Files.size(path);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .sum();
+        } catch (IOException
+                | RuntimeException e) {
+            LOGGER.error("Error calculating disk usage for path {}",
+                    localDir.normalize(), e);
+            totalSizeBytes = -1;
+        }
+        return totalSizeBytes;
     }
 
     private static ImmutableMap<String, String> convertStatToMap(final Stat stat) {
@@ -592,7 +617,9 @@ public class LmdbEnv implements AutoCloseable {
         }
 
         /**
-         * Increment the count of items processed in the batch
+         * Increment the count of items processed in the batch.
+         * Does not perform a commit so requires the caller to commit based
+         * on the return value.
          *
          * @return True if the batch is full, false if not.
          */
@@ -618,7 +645,11 @@ public class LmdbEnv implements AutoCloseable {
         }
 
         /**
-         * Commit if the batch has reach its max size
+         * If the batch size is > 0 it will increment the current batch count
+         * and then commit if the batch has reach its max size.
+         * If the batch size is zero then it will never commit and will
+         * always return false.
+         * @return True if a commit took place.
          */
         public boolean commitIfRequired() {
             return commitFunc.getAsBoolean();

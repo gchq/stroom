@@ -36,18 +36,19 @@ jooq {
                         inputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'config|preferences'
+                        includes = 'config|config_update_tracker|preferences'
                         // We don't want to include flyway versioning
                         excludes = 'config_schema_history'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
-                        // Treat tinyint(1) columns as booleans
-                        forcedTypes {
-                            forcedType {
-                                name = 'BOOLEAN'
-                                types = '(?i:TINYINT\\(1\\))'
-                            }
-                        }
+                        // Treat some tinyint columns as booleans
+                        //forcedTypes {
+                            //forcedType {
+                                //name = 'BOOLEAN'
+                                //// see https://github.com/jOOQ/jOOQ/issues/9405
+                                //includeTypes = '(?i:tinyint)'
+                            //}
+                        //}
                     }
                     target {
                         packageName = 'stroom.config.impl.db.jooq'

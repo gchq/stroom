@@ -50,6 +50,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -87,7 +88,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         initTableColumns();
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
-            protected void exec(final Consumer<FetchNodeStatusResponse> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<FetchNodeStatusResponse> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 nodeManager.fetchNodeStatus(dataConsumer, throwableConsumer);
             }

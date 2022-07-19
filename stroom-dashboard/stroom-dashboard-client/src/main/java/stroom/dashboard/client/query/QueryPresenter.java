@@ -23,11 +23,9 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.Components;
-import stroom.dashboard.client.main.DashboardUUID;
 import stroom.dashboard.client.main.DataSourceFieldsMap;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
-import stroom.dashboard.client.main.SearchBus;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.main.SearchModel.Mode;
 import stroom.dashboard.client.table.TimeZones;
@@ -36,10 +34,8 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardDoc;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
-import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
@@ -50,6 +46,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
+import stroom.instance.client.ClientApplicationInstance;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.preferences.client.UserPreferencesManager;
@@ -139,7 +136,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Inject
     public QueryPresenter(final EventBus eventBus,
                           final QueryView view,
-                          final SearchBus searchBus,
+                          final ClientApplicationInstance applicationInstance,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
                           final ExpressionTreePresenter expressionPresenter,
                           final QueryHistoryPresenter historyPresenter,
@@ -220,7 +217,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         warningsButton.setVisible(false);
 
         indexLoader = new IndexLoader(getEventBus(), restFactory);
-        searchModel = new SearchModel(searchBus, indexLoader, timeZones, userPreferencesManager);
+        searchModel = new SearchModel(
+                restFactory,
+                applicationInstance,
+                indexLoader,
+                timeZones,
+                userPreferencesManager);
         searchModel.addErrorListener(this::setErrors);
         searchModel.addModeListener(this::setMode);
 
@@ -566,10 +568,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void showWarnings() {
         if (currentWarnings != null && !currentWarnings.isEmpty()) {
+            final String msg = currentWarnings.size() == 1
+                    ? ("The following warning was created while running this search:")
+                    : ("The following " + currentWarnings.size()
+                            + " warnings have been created while running this search:");
             final String errors = String.join("\n", currentWarnings);
-            AlertEvent.fireWarn(this,
-                    "The following warnings have been created while running this search:",
-                    errors, null);
+            AlertEvent.fireWarn(this, msg, errors, null);
         }
     }
 
@@ -582,16 +586,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     public void setQueryInfo(final String queryInfo) {
         lastUsedQueryInfo = queryInfo;
     }
-
-//    @Override
-//    public void onQuery(final String params, final String queryInfo) {
-//        this.params = params;
-//        lastUsedQueryInfo = queryInfo;
-//        if (initialised) {
-//            stop();
-//            run(true, true);
-//        }
-//    }
 
     @Override
     public void setQueryOnOpen(final boolean queryOnOpen) {
@@ -673,12 +667,9 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     .build());
         }
 
-        // Create and register the search model.
+        // Set the dashboard UUID for the search model to be able to store query history for this dashboard.
         final DashboardDoc dashboard = getComponents().getDashboard();
-        final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getUuid(),
-                dashboard.getName(),
-                getComponentConfig().getId());
-        searchModel.setDashboardUUID(dashboardUUID);
+        searchModel.init(dashboard.getUuid(), componentConfig.getId());
 
         // Read data source.
         loadDataSource(getQuerySettings().getDataSource());
@@ -861,27 +852,14 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
             final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionPresenter.write(),
-                    params,
-                    false,
-                    false,
-                    null);
-
-            final DashboardDoc dashboard = getComponents().getDashboard();
-            final DashboardUUID dashboardUUID = new DashboardUUID(
-                    dashboard.getUuid(),
-                    dashboard.getName(),
-                    getComponentConfig().getId());
-            final DashboardQueryKey dashboardQueryKey = new DashboardQueryKey(
-                    dashboardUUID.getUUID(),
-                    dashboard.getUuid(),
-                    dashboardUUID.getComponentId());
+                    params);
 
             final Rest<ResourceGeneration> rest = restFactory.create();
             rest
                     .onSuccess(result ->
                             ExportFileCompleteUtil.onSuccess(locationManager, null, result))
                     .call(DASHBOARD_RESOURCE)
-                    .downloadQuery(new DownloadQueryRequest(dashboardQueryKey, searchRequest));
+                    .downloadQuery(searchRequest);
         }
     }
 

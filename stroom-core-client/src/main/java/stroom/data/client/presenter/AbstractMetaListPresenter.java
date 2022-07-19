@@ -65,7 +65,6 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.MyDataGridUtil;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -79,6 +78,7 @@ import com.google.gwt.core.shared.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
@@ -145,14 +145,13 @@ public abstract class AbstractMetaListPresenter
         criteria = new FindMetaCriteria();
         criteria.setSort(MetaFields.CREATE_TIME.getName(), true, false);
 
-        final PageRequest pageRequest = criteria.obtainPageRequest();
-        pageRequest.setOffset(0);
-        pageRequest.setLength(PageRequest.DEFAULT_PAGE_SIZE);
-        dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus, pageRequest) {
+        dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<MetaRow>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 if (criteria.getExpression() != null) {
+                    CriteriaUtil.setRange(criteria, range);
                     final Rest<ResultPage<MetaRow>> rest = restFactory.create();
                     rest
                             .onSuccess(dataConsumer)
@@ -498,8 +497,8 @@ public abstract class AbstractMetaListPresenter
     public void setExpression(final ExpressionOperator expression) {
         validateExpression(expression, exp -> {
             this.criteria.setExpression(exp);
-            this.criteria.obtainPageRequest().setOffset(0);
-            this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
+//            this.criteria.obtainPageRequest().setOffset(0);
+//            this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
             refresh();
         });
     }

@@ -1,4 +1,7 @@
 {
+  "queryKey" : {
+    "uuid" : "test_uuid"
+  },
   "highlights" : [ "highlight1", "highlight2" ],
   "results" : [ {
     "type" : "table",

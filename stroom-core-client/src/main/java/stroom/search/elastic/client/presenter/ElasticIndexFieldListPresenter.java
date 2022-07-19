@@ -76,7 +76,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
         addStringColumn("Name", 200, ElasticIndexField::getFieldName);
         addStringColumn("Use", row -> row.getFieldUse().getDisplayValue());
         addStringColumn("Type", ElasticIndexField::getFieldType);
-        addBooleanColumn("Stored", ElasticIndexField::isStored);
+        addBooleanColumn("Indexed", ElasticIndexField::isIndexed);
         dataGrid.addEndColumn(new EndColumn<>());
     }
 

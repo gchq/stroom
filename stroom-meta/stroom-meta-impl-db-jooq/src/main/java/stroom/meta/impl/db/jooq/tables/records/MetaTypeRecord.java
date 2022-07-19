@@ -19,7 +19,7 @@ import org.jooq.impl.UpdatableRecordImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaTypeRecord extends UpdatableRecordImpl<MetaTypeRecord> implements Record2<Integer, String> {
 
-    private static final long serialVersionUID = 646944010;
+    private static final long serialVersionUID = 1L;
 
     /**
      * Setter for <code>stroom.meta_type.id</code>.
@@ -138,7 +138,7 @@ public class MetaTypeRecord extends UpdatableRecordImpl<MetaTypeRecord> implemen
     public MetaTypeRecord(Integer id, String name) {
         super(MetaType.META_TYPE);
 
-        set(0, id);
-        set(1, name);
+        setId(id);
+        setName(name);
     }
 }

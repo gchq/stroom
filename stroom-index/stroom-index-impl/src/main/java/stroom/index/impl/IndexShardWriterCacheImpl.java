@@ -27,6 +27,7 @@ import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.concurrent.StripedLock;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -205,6 +206,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         try {
             final IndexShardWriter indexShardWriter = new IndexShardWriterImpl(indexShardManager,
+                    indexConfigProvider.get(),
                     indexStructure,
                     indexShardKey,
                     indexShard,
@@ -386,7 +388,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private CompletableFuture<IndexShardWriter> flush(final IndexShardWriter indexShardWriter,
                                                       final Executor executor) {
         final Supplier<IndexShardWriter> supplier = taskContextFactory.contextResult(
-                "Flushing writer", taskContext -> {
+                "Flushing writer",
+                TerminateHandlerFactory.NOOP_FACTORY,
+                taskContext -> {
                     try {
                         taskContext.info(() ->
                                 "Flushing writer for index shard " + indexShardWriter.getIndexShardId());
@@ -422,7 +426,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 try {
                     // Close the shard.
                     final Supplier<IndexShardWriter> supplier = taskContextFactory.contextResult(
-                            "Closing writer", taskContext -> {
+                            "Closing writer",
+                            TerminateHandlerFactory.NOOP_FACTORY,
+                            taskContext -> {
                                 try {
                                     try {
                                         LOGGER.debug(() ->

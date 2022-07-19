@@ -20,4 +20,5 @@ public interface ElasticIndexConstants {
     String STREAM_ID = "StreamId";
     String EVENT_ID = "EventId";
     String FEED_ID = "FeedId";
+    String INDEX_ID = "_index";
 }

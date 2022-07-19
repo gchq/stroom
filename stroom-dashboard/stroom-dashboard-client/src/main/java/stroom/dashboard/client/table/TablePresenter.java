@@ -27,6 +27,7 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DataSourceFieldsMap;
+import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
@@ -34,7 +35,6 @@ import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
@@ -49,13 +49,13 @@ import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldTypes;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
-import stroom.dispatch.client.ApplicationInstanceIdProvider;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.instance.client.ClientApplicationInstance;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.v2.ConditionalFormattingRule;
@@ -69,6 +69,7 @@ import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
@@ -141,13 +142,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
     private final RestFactory restFactory;
-    private final ApplicationInstanceIdProvider applicationInstanceIdProvider;
     private final TimeZones timeZones;
     private final UserPreferencesManager userPreferencesManager;
     private final FieldsManager fieldsManager;
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
     private final Column<TableRow, Expander> expanderColumn;
+    private final ClientApplicationInstance clientApplicationInstance;
 
     private int expanderColumnWidth;
     private SearchModel currentSearchModel;
@@ -169,17 +170,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final DownloadPresenter downloadPresenter,
                           final AnnotationManager annotationManager,
                           final RestFactory restFactory,
-                          final ApplicationInstanceIdProvider applicationInstanceIdProvider,
                           final UiConfigCache clientPropertyCache,
                           final TimeZones timeZones,
+                          final ClientApplicationInstance clientApplicationInstance,
                           final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
         this.restFactory = restFactory;
-        this.applicationInstanceIdProvider = applicationInstanceIdProvider;
         this.timeZones = timeZones;
+        this.clientApplicationInstance = clientApplicationInstance;
         this.userPreferencesManager = userPreferencesManager;
 
         dataGrid = new MyDataGrid<>();
@@ -302,25 +303,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private void onAddField(final ClickEvent event) {
         if (currentSearchModel != null) {
             final List<Field> addFields = new ArrayList<>();
-            if (currentSearchModel.getIndexLoader().getIndexFieldNames() != null) {
-                for (final String indexFieldName : currentSearchModel.getIndexLoader().getIndexFieldNames()) {
+            final IndexLoader indexLoader = currentSearchModel.getIndexLoader();
+            if (indexLoader.getIndexFieldNames() != null) {
+                final DataSourceFieldsMap indexFieldsMap = indexLoader.getDataSourceFieldsMap();
+                for (final String indexFieldName : indexLoader.getIndexFieldNames()) {
                     final Builder fieldBuilder = Field.builder();
                     fieldBuilder.name(indexFieldName);
-                    final String fieldParam = ParamUtil.makeParam(indexFieldName);
 
-                    if (indexFieldName.startsWith("annotation:")) {
-                        final AbstractField dataSourceField = currentSearchModel.getIndexLoader()
-                                .getDataSourceFieldsMap().get(indexFieldName);
-                        if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
-                            fieldBuilder.expression("annotation(formatDate(" + fieldParam + "), ${annotation:Id})");
-                        } else {
-                            fieldBuilder.expression("annotation(" + fieldParam + ", ${annotation:Id})");
-                        }
+                    final String expression;
+                    if (indexFieldName.startsWith("annotation:") && indexFieldsMap != null) {
+                        // Turn 'annotation:.*' fields into annotation links that make use of either the special
+                        // eventId/streamId fields (so event results can link back to annotations) OR
+                        // the annotation:Id field so Annotations datasource results can link back.
+                        expression = buildAnnotationFieldExpression(indexFieldsMap, indexFieldName);
                     } else {
-                        fieldBuilder.expression(fieldParam);
+                        expression = ParamUtil.makeParam(indexFieldName);
                     }
+                    fieldBuilder.expression(expression);
 
-                    final DataSourceFieldsMap indexFieldsMap = getIndexFieldsMap();
                     if (indexFieldsMap != null) {
                         final AbstractField indexField = indexFieldsMap.get(indexFieldName);
                         if (indexField != null) {
@@ -384,6 +384,33 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
     }
 
+    private String buildAnnotationFieldExpression(final DataSourceFieldsMap indexFieldsMap,
+                                                  final String indexFieldName) {
+        final AbstractField dataSourceField = indexFieldsMap.get(indexFieldName);
+        String fieldParam = ParamUtil.makeParam(indexFieldName);
+        if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
+            fieldParam = "formatDate(" + fieldParam + ")";
+        }
+        final Set<String> allFieldNames = indexFieldsMap.keySet();
+
+        final List<String> params = new ArrayList<>();
+        params.add(fieldParam);
+        addFieldIfPresent(params, allFieldNames, "annotation:Id");
+        addFieldIfPresent(params, allFieldNames, "StreamId");
+        addFieldIfPresent(params, allFieldNames, "EventId");
+
+        final String argsStr = String.join(", ", params);
+        return "annotation(" + argsStr + ")";
+    }
+
+    private void addFieldIfPresent(final List<String> params,
+                                   final Set<String> allFields,
+                                   final String fieldName) {
+        if (allFields.contains(fieldName)) {
+            params.add(ParamUtil.makeParam(fieldName));
+        }
+    }
+
     private String createRandomFieldId() {
         String id = getComponentConfig().getId() + "|" + RandomId.createId(5);
         // Make sure we don't duplicate ids.
@@ -396,9 +423,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void download() {
         if (currentSearchModel != null) {
-            final Search activeSearch = currentSearchModel.getActiveSearch();
-            final DashboardQueryKey queryKey = currentSearchModel.getCurrentQueryKey();
-            if (activeSearch != null && queryKey != null) {
+            final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
+            final Search currentSearch = currentSearchModel.getCurrentSearch();
+            if (queryKey != null && currentSearch != null) {
                 ShowPopupEvent.builder(downloadPresenter)
                         .popupType(PopupType.OK_CANCEL_DIALOG)
                         .caption("Download Options")
@@ -418,30 +445,30 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                                 final Search search = Search
                                         .builder()
-                                        .dataSourceRef(activeSearch.getDataSourceRef())
-                                        .expression(activeSearch.getExpression())
-                                        .componentSettingsMap(activeSearch.getComponentSettingsMap())
-                                        .params(activeSearch.getParams())
+                                        .dataSourceRef(currentSearch.getDataSourceRef())
+                                        .expression(currentSearch.getExpression())
+                                        .componentSettingsMap(currentSearch.getComponentSettingsMap())
+                                        .params(currentSearch.getParams())
                                         .incremental(true)
-                                        .storeHistory(false)
-                                        .queryInfo(activeSearch.getQueryInfo())
+                                        .queryInfo(currentSearch.getQueryInfo())
                                         .build();
 
-                                final DashboardSearchRequest searchRequest = new DashboardSearchRequest(
-                                        queryKey,
-                                        search,
-                                        requests,
-                                        getDateTimeSettings());
+                                final DashboardSearchRequest searchRequest = DashboardSearchRequest
+                                        .builder()
+                                        .applicationInstanceUuid(clientApplicationInstance.getInstanceUuid())
+                                        .queryKey(queryKey)
+                                        .search(search)
+                                        .componentResultRequests(requests)
+                                        .dateTimeSettings(getDateTimeSettings())
+                                        .build();
 
                                 final DownloadSearchResultsRequest downloadSearchResultsRequest =
                                         new DownloadSearchResultsRequest(
-                                                applicationInstanceIdProvider.get(),
                                                 searchRequest,
                                                 getComponentConfig().getId(),
                                                 downloadPresenter.getFileType(),
                                                 downloadPresenter.isSample(),
-                                                downloadPresenter.getPercent(),
-                                                timeZones.getLocalTimeZoneId());
+                                                downloadPresenter.getPercent());
                                 final Rest<ResourceGeneration> rest = restFactory.create();
                                 rest
                                         .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
@@ -1012,9 +1039,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     public Set<String> getHighlights() {
         if (currentSearchModel != null
-                && currentSearchModel.getCurrentResult() != null
-                && currentSearchModel.getCurrentResult().getHighlights() != null) {
-            return currentSearchModel.getCurrentResult().getHighlights();
+                && currentSearchModel.getCurrentResponse() != null
+                && currentSearchModel.getCurrentResponse().getHighlights() != null) {
+            return currentSearchModel.getCurrentResponse().getHighlights();
         }
 
         return null;

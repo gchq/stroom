@@ -24,7 +24,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.repo.ProgressHandler;
+import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StreamTargetStreamHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;

@@ -25,7 +25,6 @@ public class CoreTestModule extends AbstractModule {
         install(new DirProvidersModule());
         install(new DbConnectionsModule());
 
-
         install(new AppConfigTestModule());
         install(new UriFactoryModule());
         install(new CoreModule());

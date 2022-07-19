@@ -4,15 +4,16 @@
 package stroom.config.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.config.impl.db.jooq.tables.Config;
+import stroom.config.impl.db.jooq.tables.ConfigUpdateTracker;
+import stroom.config.impl.db.jooq.tables.Preferences;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.config.impl.db.jooq.tables.Config;
-import stroom.config.impl.db.jooq.tables.Preferences;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -34,6 +35,11 @@ public class Stroom extends SchemaImpl {
     public final Config CONFIG = Config.CONFIG;
 
     /**
+     * The table <code>stroom.config_update_tracker</code>.
+     */
+    public final ConfigUpdateTracker CONFIG_UPDATE_TRACKER = ConfigUpdateTracker.CONFIG_UPDATE_TRACKER;
+
+    /**
      * The table <code>stroom.preferences</code>.
      */
     public final Preferences PREFERENCES = Preferences.PREFERENCES;
@@ -53,8 +59,10 @@ public class Stroom extends SchemaImpl {
 
     @Override
     public final List<Table<?>> getTables() {
-        return Arrays.<Table<?>>asList(
+        return Arrays.asList(
             Config.CONFIG,
-            Preferences.PREFERENCES);
+            ConfigUpdateTracker.CONFIG_UPDATE_TRACKER,
+            Preferences.PREFERENCES
+        );
     }
 }

@@ -18,23 +18,30 @@ package stroom.util.logging;
 
 import stroom.util.shared.ModelStringUtil;
 
+import java.time.Duration;
+import java.time.Instant;
+
 /**
  * Class to output timings.
  */
 public class LogExecutionTime {
 
-    private final long startTime = System.currentTimeMillis();
+    private final Instant startTime = Instant.now();
 
     public static LogExecutionTime start() {
         return new LogExecutionTime();
     }
 
-    public long getDuration() {
-        return System.currentTimeMillis() - startTime;
+    public long getDurationMs() {
+        return getDuration().toMillis();
+    }
+
+    public Duration getDuration() {
+        return Duration.between(startTime, Instant.now());
     }
 
     @Override
     public String toString() {
-        return ModelStringUtil.formatDurationString(getDuration());
+        return ModelStringUtil.formatDurationString(getDurationMs());
     }
 }

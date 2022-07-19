@@ -39,6 +39,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -143,37 +144,38 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
         dataGrid.addEndColumn(new EndColumn<>());
 
-        final RestDataProvider<Job, ResultPage<Job>> dataProvider = new RestDataProvider<Job, ResultPage<Job>>(
-                eventBus) {
+        final RestDataProvider<Job, ResultPage<Job>> dataProvider =
+                new RestDataProvider<Job, ResultPage<Job>>(eventBus) {
 
-            @Override
-            protected void exec(final Consumer<ResultPage<Job>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
-                final Rest<ResultPage<Job>> rest = restFactory.create();
-                rest
-                        .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
-                        .call(JOB_RESOURCE).list();
-            }
-
-            @Override
-            protected void changeData(final ResultPage<Job> data) {
-                final List<Job> rtnList = new ArrayList<>();
-
-                boolean addedGap = false;
-                for (int i = 0; i < data.size(); i++) {
-                    rtnList.add(data.getValues().get(i));
-                    if (data.getValues().get(i).isAdvanced() && !addedGap) {
-                        // Add a gap between the non-advanced and advanced jobs
-                        rtnList.add(i, null);
-                        addedGap = true;
+                    @Override
+                    protected void exec(final Range range,
+                                        final Consumer<ResultPage<Job>> dataConsumer,
+                                        final Consumer<Throwable> throwableConsumer) {
+                        final Rest<ResultPage<Job>> rest = restFactory.create();
+                        rest
+                                .onSuccess(dataConsumer)
+                                .onFailure(throwableConsumer)
+                                .call(JOB_RESOURCE).list();
                     }
-                }
 
-                final ResultPage<Job> modifiedData = new ResultPage<>(rtnList);
-                super.changeData(modifiedData);
-            }
-        };
+                    @Override
+                    protected void changeData(final ResultPage<Job> data) {
+                        final List<Job> rtnList = new ArrayList<>();
+
+                        boolean addedGap = false;
+                        for (int i = 0; i < data.size(); i++) {
+                            rtnList.add(data.getValues().get(i));
+                            if (data.getValues().get(i).isAdvanced() && !addedGap) {
+                                // Add a gap between the non-advanced and advanced jobs
+                                rtnList.add(i, null);
+                                addedGap = true;
+                            }
+                        }
+
+                        final ResultPage<Job> modifiedData = new ResultPage<>(rtnList);
+                        super.changeData(modifiedData);
+                    }
+                };
         dataProvider.addDataDisplay(dataGrid);
     }
 

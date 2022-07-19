@@ -2,9 +2,6 @@ package stroom.proxy.repo;
 
 import stroom.receive.common.StreamHandler;
 
-import java.util.List;
-import java.util.Map;
-
 public interface Sender {
 
     /**
@@ -13,7 +10,7 @@ public interface Sender {
      * @param items   The entries to send.
      * @param handler The handler to receive the entries.
      */
-    void sendDataToHandler(Map<RepoSource, List<RepoSourceItem>> items,
+    void sendDataToHandler(Items items,
                            StreamHandler handler);
 
     /**

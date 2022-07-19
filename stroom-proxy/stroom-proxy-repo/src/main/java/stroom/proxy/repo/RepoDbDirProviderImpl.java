@@ -14,13 +14,13 @@ public class RepoDbDirProviderImpl implements RepoDbDirProvider {
     private final Path dbDir;
 
     @Inject
-    RepoDbDirProviderImpl(final ProxyRepoDbConfig repoDbConfig,
+    RepoDbDirProviderImpl(final ProxyDbConfig proxyDbConfig,
                           final PathCreator pathCreator) {
-        if (Strings.isNullOrEmpty(repoDbConfig.getDbDir())) {
+        if (Strings.isNullOrEmpty(proxyDbConfig.getDbDir())) {
             throw new RuntimeException("No repo DB directory have been provided");
         }
 
-        this.dbDir = pathCreator.toAppPath(repoDbConfig.getDbDir());
+        this.dbDir = pathCreator.toAppPath(proxyDbConfig.getDbDir());
     }
 
     @Override

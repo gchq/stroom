@@ -14,7 +14,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row8;
+import org.jooq.Row7;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -60,14 +60,9 @@ public class Aggregate extends TableImpl<AggregateRecord> {
     public final TableField<AggregateRecord, Long> CREATE_TIME_MS = createField(DSL.name("create_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>aggregate.feed_name</code>.
+     * The column <code>aggregate.fk_feed_id</code>.
      */
-    public final TableField<AggregateRecord, String> FEED_NAME = createField(DSL.name("feed_name"), SQLDataType.VARCHAR(255).defaultValue(DSL.field("NULL", SQLDataType.VARCHAR)), this, "");
-
-    /**
-     * The column <code>aggregate.type_name</code>.
-     */
-    public final TableField<AggregateRecord, String> TYPE_NAME = createField(DSL.name("type_name"), SQLDataType.VARCHAR(255).defaultValue(DSL.field("NULL", SQLDataType.VARCHAR)), this, "");
+    public final TableField<AggregateRecord, Long> FK_FEED_ID = createField(DSL.name("fk_feed_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * The column <code>aggregate.byte_size</code>.
@@ -124,22 +119,17 @@ public class Aggregate extends TableImpl<AggregateRecord> {
 
     @Override
     public Schema getSchema() {
-        return DefaultSchema.DEFAULT_SCHEMA;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.AGGREGATE_FEED_TYPE_INDEX, Indexes.NEW_POSITION_AGGREGATE_INDEX);
+        return Arrays.asList(Indexes.NEW_POSITION_AGGREGATE_INDEX);
     }
 
     @Override
     public UniqueKey<AggregateRecord> getPrimaryKey() {
-        return Keys.PK_AGGREGATE;
-    }
-
-    @Override
-    public List<UniqueKey<AggregateRecord>> getKeys() {
-        return Arrays.<UniqueKey<AggregateRecord>>asList(Keys.PK_AGGREGATE);
+        return Keys.AGGREGATE__;
     }
 
     @Override
@@ -169,11 +159,11 @@ public class Aggregate extends TableImpl<AggregateRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row8 type methods
+    // Row7 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Long, Long, String, String, Long, Integer, Boolean, Long> fieldsRow() {
-        return (Row8) super.fieldsRow();
+    public Row7<Long, Long, Long, Long, Integer, Boolean, Long> fieldsRow() {
+        return (Row7) super.fieldsRow();
     }
 }

@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -31,10 +30,9 @@ import java.io.Serializable;
                         name = "value",
                         description = "Field, the result of another function or a constant.",
                         argType = Val.class)))
-class ToDouble extends AbstractCast implements Serializable {
+class ToDouble extends AbstractCast {
 
     static final String NAME = "toDouble";
-    private static final long serialVersionUID = -305845496003936297L;
     private static final ValErr ERROR = ValErr.create("Unable to cast to a double");
     private static final Cast CAST = new Cast();
 

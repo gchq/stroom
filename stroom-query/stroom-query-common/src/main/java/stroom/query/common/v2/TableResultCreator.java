@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,10 +81,16 @@ public class TableResultCreator implements ResultCreator {
             Set<Key> openGroups = OpenGroupsConverter.convertSet(resultRequest.getOpenGroups());
 
             TableSettings tableSettings = resultRequest.getMappings().get(0);
-            latestFields = tableSettings.getFields();
+            latestFields = tableSettings != null
+                    ? tableSettings.getFields()
+                    : Collections.emptyList();
             // Create a set of sizes that are the minimum values for the combination of user provided sizes for
             // the table and the default maximum sizes.
-            final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
+            final Sizes maxResults = Sizes.min(
+                    Sizes.create(tableSettings != null
+                            ? tableSettings.getMaxResults()
+                            : Collections.emptyList()),
+                    defaultMaxResultsSizes);
 
             // Create the row creator.
             Optional<RowCreator> optionalRowCreator =
@@ -214,7 +221,7 @@ public class TableResultCreator implements ResultCreator {
             final List<String> stringValues = new ArrayList<>(fields.length);
             for (int i = 0; i < fields.length; i++) {
                 final Field field = fields[i];
-                final Val val = item.getValue(i);
+                final Val val = item.getValue(i, true);
                 final String string = fieldFormatter.format(field, val);
                 stringValues.add(string);
             }
@@ -249,16 +256,20 @@ public class TableResultCreator implements ResultCreator {
         public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
                                                   final TableSettings tableSettings) {
             // Create conditional formatting expression matcher.
-            List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
-            if (rules != null) {
-                rules = rules
-                        .stream()
-                        .filter(ConditionalFormattingRule::isEnabled)
-                        .collect(Collectors.toList());
-                if (rules.size() > 0) {
-                    final ConditionalFormattingExpressionMatcher expressionMatcher =
-                            new ConditionalFormattingExpressionMatcher(tableSettings.getFields());
-                    return Optional.of(new ConditionalFormattingRowCreator(fieldFormatter, rules, expressionMatcher));
+            if (tableSettings != null) {
+                List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
+                if (rules != null) {
+                    rules = rules
+                            .stream()
+                            .filter(ConditionalFormattingRule::isEnabled)
+                            .collect(Collectors.toList());
+                    if (rules.size() > 0) {
+                        final ConditionalFormattingExpressionMatcher expressionMatcher =
+                                new ConditionalFormattingExpressionMatcher(tableSettings.getFields());
+                        return Optional.of(new ConditionalFormattingRowCreator(fieldFormatter,
+                                rules,
+                                expressionMatcher));
+                    }
                 }
             }
 
@@ -276,7 +287,7 @@ public class TableResultCreator implements ResultCreator {
             final List<String> stringValues = new ArrayList<>(fields.length);
             for (int i = 0; i < fields.length; i++) {
                 final Field field = fields[i];
-                final Val val = item.getValue(i);
+                final Val val = item.getValue(i, true);
                 final String string = fieldFormatter.format(field, val);
                 stringValues.add(string);
                 fieldIdToValueMap.put(field.getName(), string);

@@ -16,8 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -37,10 +37,9 @@ import java.util.regex.Pattern;
                                 name = "pattern",
                                 description = "The regex pattern to test with.",
                                 argType = ValString.class)}))
-class Match extends AbstractManyChildFunction implements Serializable {
+class Match extends AbstractManyChildFunction {
 
     static final String NAME = "match";
-    private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
     private boolean simple;
 
@@ -111,8 +110,6 @@ class Match extends AbstractManyChildFunction implements Serializable {
 
     private static final class Gen extends AbstractManyChildGenerator {
 
-        private static final long serialVersionUID = 8153777070911899616L;
-
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
         }
@@ -125,12 +122,12 @@ class Match extends AbstractManyChildFunction implements Serializable {
         }
 
         @Override
-        public Val eval() {
-            final Val val = childGenerators[0].eval();
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerators[0].eval(childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }
-            final Val valRegex = childGenerators[1].eval();
+            final Val valRegex = childGenerators[1].eval(childDataSupplier);
             if (!valRegex.type().isValue()) {
                 return ValErr.wrap(valRegex);
             }

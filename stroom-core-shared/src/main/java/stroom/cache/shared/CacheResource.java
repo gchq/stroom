@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
-import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -39,14 +38,17 @@ import javax.ws.rs.core.MediaType;
 public interface CacheResource extends RestResource, DirectRestService {
 
     String BASE_PATH = "/cache" + ResourcePaths.V1;
+    String LIST = "/list";
+    String LIST_PATH = BASE_PATH + LIST;
     String INFO = "/info";
     String INFO_PATH = BASE_PATH + INFO;
 
     @GET
+    @Path(LIST)
     @Operation(
             summary = "Lists caches",
             operationId = "listCaches")
-    List<String> list();
+    CacheNamesResponse list(@QueryParam("nodeName") String nodeName);
 
     @GET
     @Path(INFO)

@@ -18,14 +18,12 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DateTimeFormatSettings;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
@@ -47,20 +45,11 @@ import java.util.Map;
 
 public class SearchRequestTestData {
 
-    static DashboardQueryKey dashboardQueryKey() {
-        return new DashboardQueryKey(
-                "queryKeyUuid",
-                "0",
-                "queryId-1");
-    }
-
     static SearchRequest apiSearchRequest() {
         DashboardSearchRequest dashboardSearchRequest = dashboardSearchRequest();
 
         SearchRequestMapper searchRequestMapper = new SearchRequestMapper(null);
-        return searchRequestMapper.mapRequest(
-                dashboardQueryKey(),
-                dashboardSearchRequest);
+        return searchRequestMapper.mapRequest(dashboardSearchRequest);
     }
 
     static DashboardSearchRequest dashboardSearchRequest() {
@@ -124,7 +113,6 @@ public class SearchRequestTestData {
                 .componentSettingsMap(componentSettingsMap)
                 .params(params)
                 .incremental(true)
-                .storeHistory(false)
                 .build();
 
         final List<ComponentResultRequest> componentResultRequests = new ArrayList<>();
@@ -139,9 +127,13 @@ public class SearchRequestTestData {
             componentResultRequests.add(tableResultRequest);
         }
 
-        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();
-        return new DashboardSearchRequest(
-                dashboardQueryKey(), search, componentResultRequests, dateTimeSettings);
+        return DashboardSearchRequest
+                .builder()
+                .search(search)
+                .componentResultRequests(componentResultRequests)
+                .dashboardUuid("dashboardUuid")
+                .componentId(componentId)
+                .build();
     }
 
     private static DateTimeFormatSettings createDateTimeFormat() {

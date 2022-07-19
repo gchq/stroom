@@ -331,4 +331,9 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
                 this);
     }
 
+    @Override
+    public long getSizeOnDisk() {
+        // On heap so zero size on disk
+        return 0;
+    }
 }

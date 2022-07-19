@@ -12,6 +12,7 @@ import stroom.query.common.v2.Store;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskManager;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -31,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class SearchableStore implements Store {
 
@@ -38,18 +40,21 @@ class SearchableStore implements Store {
 
     private final String searchKey;
 
+    private final TaskManager taskManager;
     private final Coprocessors coprocessors;
     private final Set<Throwable> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final AtomicBoolean terminate = new AtomicBoolean();
-    private volatile Thread thread;
+    private volatile TaskContext taskContext;
 
     SearchableStore(final Searchable searchable,
                     final TaskContextFactory taskContextFactory,
-                    final TaskContext taskContext,
+                    final TaskContext parentTaskContext,
+                    final TaskManager taskManager,
                     final SearchRequest searchRequest,
                     final Executor executor,
                     final Coprocessors coprocessors,
                     final ExpressionOperator expression) {
+        this.taskManager = taskManager;
         this.coprocessors = coprocessors;
         searchKey = searchRequest.getKey().toString();
         final String taskName = getTaskName(searchable.getDocRef());
@@ -60,7 +65,7 @@ class SearchableStore implements Store {
                 searchKey);
 
         LOGGER.debug(() -> LogUtil.message("{} Starting search with key {}", taskName, searchKey));
-        taskContext.info(() -> infoPrefix + "initialising query");
+        parentTaskContext.info(() -> infoPrefix + "initialising query");
 
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 
@@ -71,12 +76,23 @@ class SearchableStore implements Store {
         final FieldIndex fieldIndex = coprocessors.getFieldIndex();
         final AbstractField[] fieldArray = new AbstractField[fieldIndex.size()];
         for (int i = 0; i < fieldArray.length; i++) {
-            fieldArray[i] = fieldMap.get(fieldIndex.getField(i));
+            final String fieldName = fieldIndex.getField(i);
+            final AbstractField field = fieldMap.get(fieldName);
+            if (field == null) {
+                throw new RuntimeException("Field '" + fieldName + "' is not valid for this datasource");
+            } else {
+                fieldArray[i] = field;
+            }
         }
 
-        final Runnable runnable = taskContextFactory.context(taskName, tc -> {
-            tc.info(() -> infoPrefix + "running query");
-            searchAsync(tc, searchable, criteria, fieldArray, coprocessors, taskName, infoPrefix);
+        final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
+            try {
+                this.taskContext = taskContext;
+                taskContext.info(() -> infoPrefix + "running query");
+                searchAsync(taskContext, searchable, criteria, fieldArray, coprocessors, taskName, infoPrefix);
+            } finally {
+                this.taskContext = null;
+            }
         });
         CompletableFuture.runAsync(runnable, executor);
     }
@@ -88,47 +104,40 @@ class SearchableStore implements Store {
                              final Coprocessors coprocessors,
                              final String taskName,
                              final String infoPrefix) {
-        synchronized (SearchableStore.class) {
-            thread = Thread.currentThread();
-            if (terminate.get()) {
-                return;
+        if (!terminate.get()) {
+            final Instant queryStart = Instant.now();
+            try {
+                // Give the data array to each of our coprocessors
+                searchable.search(criteria, fieldArray, coprocessors);
+
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+                errors.add(e);
             }
+
+            LOGGER.debug(() ->
+                    String.format("%s complete called, counter: %s",
+                            taskName,
+                            coprocessors.getValueCount()));
+            taskContext.info(() -> infoPrefix + "complete");
+            LOGGER.debug(() -> taskName + " completeSearch called");
+            complete();
+            LOGGER.debug(() -> taskName + " Query finished in " + Duration.between(queryStart, Instant.now()));
         }
-
-        final Instant queryStart = Instant.now();
-        try {
-            // Give the data array to each of our coprocessors
-            searchable.search(criteria, fieldArray, coprocessors);
-
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
-            errors.add(e);
-        }
-
-        LOGGER.debug(() ->
-                String.format("%s complete called, counter: %s",
-                        taskName,
-                        coprocessors.getValueCount()));
-        taskContext.info(() -> infoPrefix + "complete");
-        LOGGER.debug(() -> taskName + " completeSearch called");
-        complete();
-
-        LOGGER.debug(() -> taskName + " Query finished in " + Duration.between(queryStart, Instant.now()));
     }
 
     @Override
     public void destroy() {
-        synchronized (SearchableStore.class) {
-            LOGGER.debug(() -> "destroy called");
-            // Terminate the search
-            terminate.set(true);
-            if (thread != null) {
-                thread.interrupt();
-            }
-
-            complete();
-            coprocessors.clear();
+        LOGGER.debug(() -> "destroy called");
+        // Terminate the search
+        terminate.set(true);
+        final TaskContext taskContext = this.taskContext;
+        if (taskContext != null) {
+            taskManager.terminate(taskContext.getTaskId());
         }
+
+        complete();
+        coprocessors.clear();
     }
 
     public void complete() {
@@ -158,9 +167,10 @@ class SearchableStore implements Store {
 
     @Override
     public List<String> getErrors() {
-        return errors
-                .stream()
-                .map(ExceptionStringUtil::getMessage)
+        return Stream.concat(
+                        errors.stream()
+                                .map(ExceptionStringUtil::getMessage),
+                        coprocessors.getErrorConsumer().stream())
                 .collect(Collectors.toList());
     }
 

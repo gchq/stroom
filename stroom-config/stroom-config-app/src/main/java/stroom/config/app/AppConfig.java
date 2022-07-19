@@ -10,7 +10,6 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
-import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
@@ -33,7 +32,6 @@ import stroom.processor.impl.ProcessorConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
-import stroom.searchable.impl.SearchableConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -93,12 +91,10 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_PIPELINE = "pipeline";
     public static final String PROP_NAME_PROCESSOR = "processor";
     public static final String PROP_NAME_PROPERTIES = "properties";
-    public static final String PROP_NAME_PROXY_AGGREGATION = "proxyAggregation";
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
     public static final String PROP_NAME_SEARCH = "search";
-    public static final String PROP_NAME_SEARCHABLE = "searchable";
     public static final String PROP_NAME_SECURITY = "security";
     public static final String PROP_NAME_SERVICE_DISCOVERY = "serviceDiscovery";
     public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
@@ -138,11 +134,9 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final PipelineConfig pipelineConfig;
     private final ProcessorConfig processorConfig;
     private final PropertyServiceConfig propertyServiceConfig;
-    private final ProxyAggregationConfig proxyAggregationConfig;
     private final PublicUriConfig publicUri;
     private final ReceiveDataConfig receiveDataConfig;
     private final SearchConfig searchConfig;
-    private final SearchableConfig searchableConfig;
     private final SecurityConfig securityConfig;
     private final ServiceDiscoveryConfig serviceDiscoveryConfig;
     private final SessionCookieConfig sessionCookieConfig;
@@ -158,51 +152,48 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
      * Will construct a full immutable AppConfig tree will ALL defaults set.
      */
     public AppConfig() {
-        haltBootOnConfigValidationFailure = true;
-
-        activityConfig = new ActivityConfig();
-        alertConfig = new AlertConfig();
-        annotationConfig = new AnnotationConfig();
-        byteBufferPoolConfig = new ByteBufferPoolConfig();
-        clusterConfig = new ClusterConfig();
-        clusterLockConfig = new ClusterLockConfig();
-        commonDbConfig = new CommonDbConfig();
-        contentPackImportConfig = new ContentPackImportConfig();
-        legacyConfig = new LegacyConfig();
-        dashboardConfig = new DashboardConfig();
-        dataConfig = new DataConfig();
-        dataSourceUrlConfig = new DataSourceUrlConfig();
-        docStoreConfig = new DocStoreConfig();
-        elasticConfig = new ElasticConfig();
-        explorerConfig = new ExplorerConfig();
-        exportConfig = new ExportConfig();
-        feedConfig = new FeedConfig();
-        indexConfig = new IndexConfig();
-        jobSystemConfig = new JobSystemConfig();
-        kafkaConfig = new KafkaConfig();
-        lifecycleConfig = new LifecycleConfig();
-        lmdbLibraryConfig = new LmdbLibraryConfig();
-        loggingConfig = new LoggingConfig();
-        nodeConfig = new NodeConfig();
-        nodeUri = new NodeUriConfig();
-        pipelineConfig = new PipelineConfig();
-        processorConfig = new ProcessorConfig();
-        propertyServiceConfig = new PropertyServiceConfig();
-        proxyAggregationConfig = new ProxyAggregationConfig();
-        publicUri = new PublicUriConfig();
-        receiveDataConfig = new ReceiveDataConfig();
-        searchConfig = new SearchConfig();
-        searchableConfig = new SearchableConfig();
-        securityConfig = new SecurityConfig();
-        serviceDiscoveryConfig = new ServiceDiscoveryConfig();
-        sessionCookieConfig = new SessionCookieConfig();
-        solrConfig = new SolrConfig();
-        statisticsConfig = new StatisticsConfig();
-        storedQueryConfig = new StoredQueryConfig();
-        pathConfig = new StroomPathConfig();
-        uiConfig = new UiConfig();
-        uiUri = new UiUriConfig();
-        volumeConfig = new VolumeConfig();
+        this(true,
+                new ActivityConfig(),
+                new AlertConfig(),
+                new AnnotationConfig(),
+                new ByteBufferPoolConfig(),
+                new ClusterConfig(),
+                new ClusterLockConfig(),
+                new CommonDbConfig(),
+                new ContentPackImportConfig(),
+                new LegacyConfig(),
+                new DashboardConfig(),
+                new DataConfig(),
+                new DataSourceUrlConfig(),
+                new DocStoreConfig(),
+                new ElasticConfig(),
+                new ExplorerConfig(),
+                new ExportConfig(),
+                new FeedConfig(),
+                new IndexConfig(),
+                new JobSystemConfig(),
+                new KafkaConfig(),
+                new LifecycleConfig(),
+                new LmdbLibraryConfig(),
+                new LoggingConfig(),
+                new NodeConfig(),
+                new NodeUriConfig(),
+                new PipelineConfig(),
+                new ProcessorConfig(),
+                new PropertyServiceConfig(),
+                new PublicUriConfig(),
+                new ReceiveDataConfig(),
+                new SearchConfig(),
+                new SecurityConfig(),
+                new ServiceDiscoveryConfig(),
+                new SessionCookieConfig(),
+                new SolrConfig(),
+                new StatisticsConfig(),
+                new StoredQueryConfig(),
+                new StroomPathConfig(),
+                new UiConfig(),
+                new UiUriConfig(),
+                new VolumeConfig());
     }
 
     @SuppressWarnings("checkstyle:linelength")
@@ -236,11 +227,9 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_PIPELINE) final PipelineConfig pipelineConfig,
                      @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
                      @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
-                     @JsonProperty(PROP_NAME_PROXY_AGGREGATION) final ProxyAggregationConfig proxyAggregationConfig,
                      @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                      @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
                      @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
-                     @JsonProperty(PROP_NAME_SEARCHABLE) final SearchableConfig searchableConfig,
                      @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                      @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                      @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
@@ -280,11 +269,9 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.pipelineConfig = pipelineConfig;
         this.processorConfig = processorConfig;
         this.propertyServiceConfig = propertyServiceConfig;
-        this.proxyAggregationConfig = proxyAggregationConfig;
         this.publicUri = publicUri;
         this.receiveDataConfig = receiveDataConfig;
         this.searchConfig = searchConfig;
-        this.searchableConfig = searchableConfig;
         this.securityConfig = securityConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.sessionCookieConfig = sessionCookieConfig;
@@ -459,11 +446,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         return propertyServiceConfig;
     }
 
-    @JsonProperty(PROP_NAME_PROXY_AGGREGATION)
-    public ProxyAggregationConfig getProxyAggregationConfig() {
-        return proxyAggregationConfig;
-    }
-
     @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host if " +
             "behind a proxy")
     @JsonProperty(PROP_NAME_PUBLIC_URI)
@@ -489,11 +471,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_SEARCH)
     public SearchConfig getSearchConfig() {
         return searchConfig;
-    }
-
-    @JsonProperty(PROP_NAME_SEARCHABLE)
-    public SearchableConfig getSearchableConfig() {
-        return searchableConfig;
     }
 
     @JsonProperty(PROP_NAME_SOLR)

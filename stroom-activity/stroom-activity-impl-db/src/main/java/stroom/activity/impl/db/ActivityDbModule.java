@@ -50,7 +50,7 @@ public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityDbConfig, A
     private static class DataSourceImpl extends DataSourceProxy implements ActivityDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {
-            super(dataSource);
+            super(dataSource, MODULE);
         }
     }
 }

@@ -51,11 +51,11 @@ import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
-import stroom.proxy.repo.ProgressHandler;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -138,8 +138,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         FileUtil.mkdirs(outputDir);
 
-        importConfig();
-
         // Process reference data.
         processData(inputDir, outputDir, true, compareOutput, exceptions);
         // Process event data.
@@ -185,14 +183,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     protected void importConfig() {
-        if (pipelineStore.list().size() == 0) {
-            final Path samplesDir = getSamplesDir();
-            final Path configDir = samplesDir.resolve("config");
+        final Path samplesDir = getSamplesDir();
+        final Path configDir = samplesDir.resolve("config");
 
-            importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-            contentImportService.importStandardPacks();
-        }
+        contentImportService.importStandardPacks();
     }
 
     @NotNull

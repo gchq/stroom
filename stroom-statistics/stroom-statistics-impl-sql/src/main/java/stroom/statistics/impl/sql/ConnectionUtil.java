@@ -21,6 +21,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.StroomDuration;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,13 +33,22 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class ConnectionUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConnectionUtil.class);
 
+    private final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider;
+
+    @Inject
+    public ConnectionUtil(final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider) {
+        this.sqlStatisticsConfigProvider = sqlStatisticsConfigProvider;
+    }
+
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    public static int executeUpdate(final Connection connection, final String sql, final List<Object> args)
+    public int executeUpdate(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
         logSql(sql, args);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -55,11 +65,11 @@ public class ConnectionUtil {
         }
     }
 
-    public static void executeStatement(final Connection connection, final String sql) throws SQLException {
+    public void executeStatement(final Connection connection, final String sql) throws SQLException {
         executeStatements(connection, Collections.singletonList(sql));
     }
 
-    public static void executeStatements(final Connection connection, final List<String> sqlStatements)
+    public void executeStatements(final Connection connection, final List<String> sqlStatements)
             throws SQLException {
         LOGGER.debug(() -> ">>> " + sqlStatements.stream()
                 .map(ConnectionUtil::cleanSqlForLogs)
@@ -97,7 +107,7 @@ public class ConnectionUtil {
     }
 
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    public static Long executeQueryLongResult(final Connection connection, final String sql, final List<Object> args)
+    public Long executeQueryLongResult(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
         logSql(sql, args);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -128,10 +138,10 @@ public class ConnectionUtil {
         }
     }
 
-    private static void logExecution(final LogExecutionTime logExecutionTime,
-                                     final Object result,
-                                     final String sql,
-                                     final List<Object> args) {
+    private void logExecution(final LogExecutionTime logExecutionTime,
+                              final Object result,
+                              final String sql,
+                              final List<Object> args) {
         if (result == null) {
             logExecution(logExecutionTime, () -> "", () -> sql, args);
         } else {
@@ -139,22 +149,32 @@ public class ConnectionUtil {
         }
     }
 
-    private static void logExecution(final LogExecutionTime logExecutionTime,
-                                     final Supplier<String> resultSupplier,
-                                     final Supplier<String> sqlSupplier,
-                                     final List<Object> args) {
-        final long time = logExecutionTime.getDuration();
-        if (LOGGER.isDebugEnabled() || time > 1000) {
+    private void logExecution(final LogExecutionTime logExecutionTime,
+                              final Supplier<String> resultSupplier,
+                              final Supplier<String> sqlSupplier,
+                              final List<Object> args) {
+        final long time = logExecutionTime.getDurationMs();
+        final StroomDuration warningThreshold = sqlStatisticsConfigProvider.get()
+                .getSlowQueryWarningThreshold();
+        final long warningThresholdMs = warningThreshold.toMillis();
+
+        if (LOGGER.isDebugEnabled() || isSlowQueryWarningRequired(time, warningThresholdMs)) {
             final String sql = buildSQLTrace(sqlSupplier.get(), args);
-            final String message = "<<< " + sql + " "
+            final String message = "<<< " + sql
                     + " took " + ModelStringUtil.formatDurationString(time)
-                    + " with result " + resultSupplier.get();
-            if (time > 1000) {
-                LOGGER.warn(() -> message);
+                    + " with result " + resultSupplier.get() + ".";
+            if (isSlowQueryWarningRequired(time, warningThresholdMs)) {
+                LOGGER.warn(() -> message
+                        + " Warning threshold: " + warningThreshold
+                        + ". Set property stroom.statistics.sql.slowQueryWarningThreshold to change this threshold.");
             } else {
                 LOGGER.debug(() -> message);
             }
         }
+    }
+
+    private boolean isSlowQueryWarningRequired(final long timeMs, final long warningThresholdMs) {
+        return warningThresholdMs > 0 && timeMs > warningThresholdMs;
     }
 
     private static String cleanSqlForLogs(final String sql) {

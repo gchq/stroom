@@ -17,6 +17,7 @@
 package stroom.importexport.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -37,6 +38,7 @@ import stroom.util.shared.ResultPage;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -51,6 +53,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+    public static final int DEFAULT_PAGE_SIZE = 100;
 
     private static final int COL_WIDTH_TYPE = 120;
     private static final int COL_WIDTH_NAME = 300;
@@ -78,13 +81,12 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
         refreshDocTypeIcons();
 
-        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(
-                eventBus,
-                criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<Dependency>> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<Dependency>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
-
+                CriteriaUtil.setRange(criteria, range);
                 final Rest<ResultPage<Dependency>> rest = restFactory.create();
                 rest
                         .onSuccess(dataConsumer)
@@ -101,14 +103,14 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
         // From (Icon)
         dataGrid.addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
-                        getDocTypeIcon(row.getFrom()))
+                                getDocTypeIcon(row.getFrom()))
                         .build(),
                 "<br/>",
                 ColumnSizeConstants.ICON_COL);
 
         // From (Type)
         dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                        getValue(row, Dependency::getFrom, DocRef::getType))
+                                getValue(row, Dependency::getFrom, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_FROM_TYPE, true)
                         .build(),
                 DependencyCriteria.FIELD_FROM_TYPE,
@@ -116,7 +118,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
         // From (Name)
         dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                        getValue(row, Dependency::getFrom, DocRef::getName))
+                                getValue(row, Dependency::getFrom, DocRef::getName))
                         .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
                         .build(),
                 DependencyCriteria.FIELD_FROM_NAME,
@@ -124,21 +126,21 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
         // From (UUID)
         dataGrid.addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
-                        getUUID(row, Dependency::getFrom))
+                                getUUID(row, Dependency::getFrom))
                         .build(),
                 DependencyCriteria.FIELD_FROM_UUID,
                 COL_WIDTH_UUID);
 
         // To (Icon)
         dataGrid.addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
-                        getDocTypeIcon(row.getTo()))
+                                getDocTypeIcon(row.getTo()))
                         .build(),
                 "<br/>",
                 ColumnSizeConstants.ICON_COL);
 
         // To (Type)
         dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                        getValue(row, Dependency::getTo, DocRef::getType))
+                                getValue(row, Dependency::getTo, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_TO_TYPE, true)
                         .build(),
                 DependencyCriteria.FIELD_TO_TYPE,
@@ -146,7 +148,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
         // To (Name)
         dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                        getValue(row, Dependency::getTo, DocRef::getName))
+                                getValue(row, Dependency::getTo, DocRef::getName))
                         .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
                         .build(),
                 DependencyCriteria.FIELD_TO_NAME,
@@ -154,7 +156,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
         // To (UUID)
         dataGrid.addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
-                        getUUID(row, Dependency::getTo))
+                                getUUID(row, Dependency::getTo))
                         .build(),
                 DependencyCriteria.FIELD_TO_UUID,
                 COL_WIDTH_UUID);
@@ -248,10 +250,18 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
     void setFilterInput(final String filterInput) {
         this.criteria.setPartialName(filterInput);
+        // Changing the filter means any existing offset is wrong, so we need to reset to the initial state
+        resetRange();
     }
 
     void clearFilterInput() {
         this.criteria.setPartialName(null);
+        // Changing the filter means any existing offset is wrong, so we need to reset to the initial state
+        resetRange();
+    }
+
+    private void resetRange() {
+        dataGrid.setVisibleRange(new Range(0, DEFAULT_PAGE_SIZE));
     }
 
     void refresh() {

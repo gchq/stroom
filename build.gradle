@@ -28,7 +28,7 @@ plugins {
 
     id "com.github.johnrengelman.shadow" version "7.1.2" apply false
 
-    id 'nu.studer.jooq' version '5.2' apply false
+    id 'nu.studer.jooq' version '7.1.1' apply false
 
     id 'org.flywaydb.flyway' version '7.5.4' apply false
 
@@ -87,7 +87,7 @@ ext.versions = [
 
         //------Stroom-repos---------------
         //    stroomProxyRepo: 'v5.1-beta.8',
-        eventLogging      : '5.0-beta.30_schema-v4.0-beta.3',
+        eventLogging      : '5.0-beta.31_schema-v4.0-beta.3',
         hadoopCommonShaded: '2.6.4-9',
         hadoopHdfsShaded  : '2.6.4-7',
         stroomStats       : '1.0-alpha.6',
@@ -111,13 +111,13 @@ ext.versions = [
         //------------3rd-party------------
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
         dropwizard        : '2.0.28', // used to set the dropwizard-bom version, that controls lots of dependency versions
-        elasticsearch     : '7.16.2',
+        elasticsearch     : '7.17.1',
         httpcore          : '4.4.12', // Transient dependency of Elasticsearch
-        guice5            : '5.0.1',
+        guice5            : '5.1.0',
         gwt               : '2.9.0',
         hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
-        jooq              : '3.15.5',
+        jooq              : '3.16.4',
         junit_jupiter     : '5.8.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
@@ -152,7 +152,7 @@ ext.libs = [
         commons_lang                   : "org.apache.commons:commons-lang3", // version controlled by DW BOM
         commons_pool2                  : "org.apache.commons:commons-pool2:2.10.0",
         commons_text                   : "org.apache.commons:commons-text", // version controlled by DW BOM
-        classgraph                     : "io.github.classgraph:classgraph:4.8.138",
+        classgraph                     : "io.github.classgraph:classgraph:4.8.146",
         curator_client                 : "org.apache.curator:curator-client:$versions.curator",
         curator_framework              : "org.apache.curator:curator-framework:$versions.curator",
         curator_x_discovery            : "org.apache.curator:curator-x-discovery:$versions.curator",
@@ -172,7 +172,8 @@ ext.libs = [
         dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks", // version controlled by DW BOM
         dropwizard_servlets            : "io.dropwizard:dropwizard-servlets", // version controlled by DW BOM
         dropwizard_testing             : "io.dropwizard:dropwizard-testing", // version controlled by DW BOM
-        dropwizard_validation          : "io.dropwizard:dropwizard-validation",//files("libs/dropwizard-validation-2.0.28.jar"),//"io.dropwizard:dropwizard-validation", // version controlled by DW BOM
+        dropwizard_validation          : "io.dropwizard:dropwizard-validation", // version controlled by DW BOM
+        dropwizard_websockets          : "com.liveperson:dropwizard-websockets:1.3.14",
         elasticsearch_rest_high_level_client : "org.elasticsearch.client:elasticsearch-rest-high-level-client:$versions.elasticsearch",
         elasticsearch_rest_client      : "org.elasticsearch.client:elasticsearch-rest-client:$versions.elasticsearch",
         elasticsearch                  : "org.elasticsearch:elasticsearch:$versions.elasticsearch",
@@ -267,7 +268,7 @@ ext.libs = [
         swagger_annotations            : "io.swagger.core.v3:swagger-annotations:$versions.swagger",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
         vavr                           : "io.vavr:vavr:0.10.4",
-        wiremock                       : 'com.github.tomakehurst:wiremock:2.27.2',
+        wiremock                       : 'com.github.tomakehurst:wiremock-jre8:2.33.1',
         wix_embedded_mysql             : "com.wix:wix-embedded-mysql:4.6.1",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1.1",
         xml_apis                       : "xml-apis:xml-apis:2.0.2",

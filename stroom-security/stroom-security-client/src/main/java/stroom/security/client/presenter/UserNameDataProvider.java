@@ -16,6 +16,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
@@ -27,6 +28,7 @@ import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.DataGrid;
+import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
@@ -60,11 +62,12 @@ public class UserNameDataProvider implements Refreshable {
     public void setCriteria(final FindUserNameCriteria criteria) {
         this.criteria = criteria;
         if (dataProvider == null) {
-            this.dataProvider = new RestDataProvider<String, ResultPage<String>>(eventBus,
-                    criteria.obtainPageRequest()) {
+            this.dataProvider = new RestDataProvider<String, ResultPage<String>>(eventBus) {
                 @Override
-                protected void exec(final Consumer<ResultPage<String>> dataConsumer,
+                protected void exec(final Range range,
+                                    final Consumer<ResultPage<String>> dataConsumer,
                                     final Consumer<Throwable> throwableConsumer) {
+                    CriteriaUtil.setRange(criteria, range);
                     final Rest<ResultPage<String>> rest = restFactory.create();
                     rest
                             .onSuccess(dataConsumer)

@@ -19,7 +19,7 @@ import org.jooq.impl.UpdatableRecordImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaKeyRecord extends UpdatableRecordImpl<MetaKeyRecord> implements Record3<Integer, String, Byte> {
 
-    private static final long serialVersionUID = 435941021;
+    private static final long serialVersionUID = 1L;
 
     /**
      * Setter for <code>stroom.meta_key.id</code>.
@@ -174,8 +174,8 @@ public class MetaKeyRecord extends UpdatableRecordImpl<MetaKeyRecord> implements
     public MetaKeyRecord(Integer id, String name, Byte fieldType) {
         super(MetaKey.META_KEY);
 
-        set(0, id);
-        set(1, name);
-        set(2, fieldType);
+        setId(id);
+        setName(name);
+        setFieldType(fieldType);
     }
 }

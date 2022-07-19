@@ -22,23 +22,22 @@ import stroom.app.commands.DbMigrationCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
-import stroom.app.guice.BootStrapModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.ConfigMapper;
+import stroom.dropwizard.common.AdminServlets;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
+import stroom.dropwizard.common.WebSockets;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
-import stroom.util.date.DateUtil;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.io.DirProvidersModule;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
@@ -49,7 +48,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.validation.ValidationModule;
 import stroom.util.yaml.YamlUtil;
@@ -58,7 +56,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import io.dropwizard.Application;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
@@ -75,7 +72,6 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.DispatcherType;
@@ -83,7 +79,6 @@ import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
 import javax.sql.DataSource;
 import javax.validation.ValidatorFactory;
-import javax.validation.constraints.NotNull;
 
 public class App extends Application<Config> {
 
@@ -100,13 +95,15 @@ public class App extends Application<Config> {
     @Inject
     private Servlets servlets;
     @Inject
+    private AdminServlets adminServlets;
+    @Inject
+    private WebSockets webSockets;
+    @Inject
     private SessionListeners sessionListeners;
     @Inject
     private RestResources restResources;
     @Inject
     private ManagedServices managedServices;
-    @Inject
-    private BuildInfo buildInfo;
     @Inject
     private RestResourceAutoLogger resourceAutoLogger;
     @Inject
@@ -129,7 +126,6 @@ public class App extends Application<Config> {
         configFile = Paths.get("PATH_NOT_SUPPLIED");
         validationOnlyInjector = createValidationInjector(configFile);
     }
-
 
     App(final Path configFile) {
         this.configFile = configFile;
@@ -192,6 +188,7 @@ public class App extends Application<Config> {
 
     @Override
     public void run(final Config configuration, final Environment environment) {
+
         Objects.requireNonNull(configFile, () ->
                 LogUtil.message("No config YAML file supplied in arguments"));
 
@@ -199,7 +196,17 @@ public class App extends Application<Config> {
 
         validateAppConfig(configuration, configFile);
 
-        final Injector bootStrapInjector = bootstrapApplication(configuration, environment);
+        // Initialise all the DB connections and app config; and run all the Flyway migrations
+        // if needed, then return the injector used.
+        final Injector bootStrapInjector = BootstrapUtil.bootstrapApplication(
+                configuration, environment, configFile);
+
+        this.homeDirProvider = bootStrapInjector.getInstance(HomeDirProvider.class);
+        this.tempDirProvider = bootStrapInjector.getInstance(TempDirProvider.class);
+
+        // Ensure we have our home/temp dirs set up
+        FileUtil.ensureDirExists(homeDirProvider.get());
+        FileUtil.ensureDirExists(tempDirProvider.get());
 
         LOGGER.info("Completed initialisation of database connections and application configuration");
 
@@ -259,6 +266,12 @@ public class App extends Application<Config> {
         // Add servlets
         servlets.register();
 
+        // Add admin port/path servlets. Needs to be called after healthChecks.register()
+        adminServlets.register();
+
+        // Add web sockets
+        webSockets.register();
+
         // Add session listeners.
         sessionListeners.register();
 
@@ -270,49 +283,16 @@ public class App extends Application<Config> {
 
         warnAboutDefaultOpenIdCreds(configuration);
 
-        showInfo(configuration);
+        showNodeInfo(configuration);
     }
 
-    @NotNull
-    private Injector bootstrapApplication(final Config configuration,
-                                          final Environment environment) {
-        LOGGER.info("Initialising database connections and configuration properties");
-
-        final BootStrapModule bootstrapModule = new BootStrapModule(
-                configuration, environment, configFile);
-
-        final Injector bootStrapInjector = Guice.createInjector(bootstrapModule);
-
-        // Force all datasources to be created so we can force migrations to run.
-        final Set<DataSource> dataSources = bootStrapInjector.getInstance(
-                Key.get(GuiceUtil.setOf(DataSource.class)));
-
-        LOGGER.debug(() -> LogUtil.message("Used {} data sources:\n{}",
-                dataSources.size(),
-                dataSources.stream()
-                        .map(dataSource -> dataSource.getClass().getName())
-                        .map(name -> "  " + name)
-                        .sorted()
-                        .collect(Collectors.joining("\n"))));
-
-        this.homeDirProvider = bootStrapInjector.getInstance(HomeDirProvider.class);
-        this.tempDirProvider = bootStrapInjector.getInstance(TempDirProvider.class);
-
-        // Ensure we have our home/temp dirs set up
-        FileUtil.ensureDirExists(homeDirProvider.get());
-        FileUtil.ensureDirExists(tempDirProvider.get());
-        return bootStrapInjector;
-    }
-
-    private void showInfo(final Config configuration) {
-        Objects.requireNonNull(buildInfo);
-
+    private void showNodeInfo(final Config configuration) {
         LOGGER.info(""
-                + "\n  Build version: " + buildInfo.getBuildVersion()
-                + "\n  Build date:    " + DateUtil.createNormalDateTimeString(buildInfo.getBuildTime())
+                + "\n********************************************************************************"
                 + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
                 + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig()));
+                + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig())
+                + "\n********************************************************************************");
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {
@@ -352,7 +332,7 @@ public class App extends Application<Config> {
         final AppConfigValidator appConfigValidator = validationOnlyInjector.getInstance(AppConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
-                configFile.toAbsolutePath().normalize().toString());
+                configFile.toAbsolutePath().normalize());
 
         final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(appConfig);
 

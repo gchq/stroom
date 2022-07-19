@@ -16,39 +16,49 @@
 
 package stroom.search.impl.shard;
 
+import stroom.index.shared.IndexShard;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SimpleCollector;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
-class IndexShardHitCollector extends SimpleCollector {
+public class IndexShardHitCollector extends SimpleCollector {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardHitCollector.class);
 
     private final TaskContext taskContext;
+    private final IndexShard indexShard;
     private final QueryKey queryKey;
+    private final Query query;
+
     //an empty optional is used as a marker to indicate no more items will be added
     private final DocIdQueue docIdQueue;
-    private final AtomicLong totalHitCount;
-    private final AtomicLong localHitCount = new AtomicLong();
+    private final LongAdder totalHitCount;
+    private final LongAdder localHitCount = new LongAdder();
     private int docBase;
 
-    IndexShardHitCollector(final TaskContext taskContext,
-                           final QueryKey queryKey,
-                           final DocIdQueue docIdQueue,
-                           final AtomicLong totalHitCount) {
+    public IndexShardHitCollector(final TaskContext taskContext,
+                                  final QueryKey queryKey,
+                                  final IndexShard indexShard,
+                                  final Query query,
+                                  final DocIdQueue docIdQueue,
+                                  final LongAdder totalHitCount) {
         this.taskContext = taskContext;
+        this.indexShard = indexShard;
         this.queryKey = queryKey;
+        this.query = query;
         this.docIdQueue = docIdQueue;
         this.totalHitCount = totalHitCount;
 
@@ -63,36 +73,50 @@ class IndexShardHitCollector extends SimpleCollector {
 
     @Override
     public void collect(final int doc) {
-        // Pause the current search if the deque is full.
-        final int docId = docBase + doc;
+        LOGGER.trace("Collect called. {}, query term [{}]", this, query);
 
-        try {
-            SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_PUT);
+        if (!taskContext.isTerminated()) {
+            final int docId = docBase + doc;
+
+            // Add to the hit count.
             docIdQueue.put(docId);
-            info(() -> "Found " + localHitCount + " hits");
-        } catch (final InterruptedException e) {
-            info(() -> "Quitting...");
-            LOGGER.trace(e::getMessage, e);
-            // Keep interrupting this thread.
-            Thread.currentThread().interrupt();
-            throw new TaskTerminatedException();
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-        }
+            localHitCount.increment();
+            totalHitCount.increment();
 
-        // Add to the hit count.
-        localHitCount.getAndIncrement();
-        totalHitCount.getAndIncrement();
+            try {
+                SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_PUT);
+                info(() -> "Found " + localHitCount + " hits");
+            } catch (final RuntimeException e) {
+                LOGGER.error("Error logging search progress: {}. {}", e.getMessage(), this, e);
+            }
+
+        } else {
+            // We are terminating so let follow-on tasks know.
+            docIdQueue.clear();
+            docIdQueue.complete();
+
+            info(() -> "Quitting...");
+            LOGGER.debug("Quitting (terminated). {}, query term [{}]", this, query);
+            throw new TaskTerminatedException();
+        }
     }
 
     private void info(final Supplier<String> message) {
         taskContext.info(message);
-        LOGGER.debug(message);
+        LOGGER.trace(message);
     }
 
     @Override
     public boolean needsScores() {
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "Query key: " + queryKey
+                + ", shard: " + NullSafe.get(indexShard, IndexShard::getId)
+                + ", shard hits: " + localHitCount.sum()
+                + ", total hits: " + NullSafe.getOrElse(totalHitCount, LongAdder::sum, -1);
     }
 }
 

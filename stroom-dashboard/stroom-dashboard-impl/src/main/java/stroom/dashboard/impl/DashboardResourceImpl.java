@@ -18,11 +18,11 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.DownloadQueryRequest;
+import stroom.dashboard.shared.DestroySearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
-import stroom.dashboard.shared.SearchBusPollRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -31,7 +31,6 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 
 import java.util.List;
-import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -72,7 +71,7 @@ class DashboardResourceImpl implements DashboardResource {
     }
 
     @Override
-    public ResourceGeneration downloadQuery(final DownloadQueryRequest request) {
+    public ResourceGeneration downloadQuery(final DashboardSearchRequest request) {
         return dashboardServiceProvider.get().downloadQuery(request);
     }
 
@@ -83,8 +82,14 @@ class DashboardResourceImpl implements DashboardResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public Set<DashboardSearchResponse> poll(final SearchBusPollRequest request) {
-        return dashboardServiceProvider.get().poll(request);
+    public DashboardSearchResponse search(final DashboardSearchRequest request) {
+        return dashboardServiceProvider.get().search(request);
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public Boolean destroy(final DestroySearchRequest request) {
+        return dashboardServiceProvider.get().destroy(request);
     }
 
     @Override
@@ -98,5 +103,4 @@ class DashboardResourceImpl implements DashboardResource {
     public List<FunctionSignature> fetchFunctions() {
         return dashboardServiceProvider.get().fetchFunctions();
     }
-
 }

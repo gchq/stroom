@@ -19,7 +19,7 @@ import org.jooq.impl.UpdatableRecordImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaValRecord extends UpdatableRecordImpl<MetaValRecord> implements Record5<Long, Long, Long, Integer, Long> {
 
-    private static final long serialVersionUID = -1594145398;
+    private static final long serialVersionUID = 1L;
 
     /**
      * Setter for <code>stroom.meta_val.id</code>.
@@ -246,10 +246,10 @@ public class MetaValRecord extends UpdatableRecordImpl<MetaValRecord> implements
     public MetaValRecord(Long id, Long createTime, Long metaId, Integer metaKeyId, Long val) {
         super(MetaVal.META_VAL);
 
-        set(0, id);
-        set(1, createTime);
-        set(2, metaId);
-        set(3, metaKeyId);
-        set(4, val);
+        setId(id);
+        setCreateTime(createTime);
+        setMetaId(metaId);
+        setMetaKeyId(metaKeyId);
+        setVal(val);
     }
 }

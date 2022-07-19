@@ -60,9 +60,9 @@ public class ForwardAggregate extends TableImpl<ForwardAggregateRecord> {
     public final TableField<ForwardAggregateRecord, Long> UPDATE_TIME_MS = createField(DSL.name("update_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>forward_aggregate.fk_forward_url_id</code>.
+     * The column <code>forward_aggregate.fk_forward_dest_id</code>.
      */
-    public final TableField<ForwardAggregateRecord, Integer> FK_FORWARD_URL_ID = createField(DSL.name("fk_forward_url_id"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<ForwardAggregateRecord, Integer> FK_FORWARD_DEST_ID = createField(DSL.name("fk_forward_dest_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>forward_aggregate.fk_aggregate_id</code>.
@@ -129,44 +129,17 @@ public class ForwardAggregate extends TableImpl<ForwardAggregateRecord> {
 
     @Override
     public Schema getSchema() {
-        return DefaultSchema.DEFAULT_SCHEMA;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.NEW_POSITION_FORWARD_AGGREGATE_INDEX, Indexes.RETRY_POSITION_FORWARD_AGGREGATE_INDEX);
+        return Arrays.asList(Indexes.NEW_POSITION_FORWARD_AGGREGATE_INDEX, Indexes.RETRY_POSITION_FORWARD_AGGREGATE_INDEX);
     }
 
     @Override
     public UniqueKey<ForwardAggregateRecord> getPrimaryKey() {
-        return Keys.PK_FORWARD_AGGREGATE;
-    }
-
-    @Override
-    public List<UniqueKey<ForwardAggregateRecord>> getKeys() {
-        return Arrays.<UniqueKey<ForwardAggregateRecord>>asList(Keys.PK_FORWARD_AGGREGATE);
-    }
-
-    @Override
-    public List<ForeignKey<ForwardAggregateRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<ForwardAggregateRecord, ?>>asList(Keys.FK_FORWARD_AGGREGATE_FORWARD_URL_1, Keys.FK_FORWARD_AGGREGATE_AGGREGATE_1);
-    }
-
-    private transient ForwardUrl _forwardUrl;
-    private transient Aggregate _aggregate;
-
-    public ForwardUrl forwardUrl() {
-        if (_forwardUrl == null)
-            _forwardUrl = new ForwardUrl(this, Keys.FK_FORWARD_AGGREGATE_FORWARD_URL_1);
-
-        return _forwardUrl;
-    }
-
-    public Aggregate aggregate() {
-        if (_aggregate == null)
-            _aggregate = new Aggregate(this, Keys.FK_FORWARD_AGGREGATE_AGGREGATE_1);
-
-        return _aggregate;
+        return Keys.FORWARD_AGGREGATE__;
     }
 
     @Override

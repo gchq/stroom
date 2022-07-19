@@ -5,6 +5,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.query.api.v2.Query;
 import stroom.task.api.TaskContext;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -17,6 +18,7 @@ import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -83,15 +85,10 @@ public class RemoteNodeSearch implements NodeSearch {
             // Poll for results until completion.
             boolean complete = false;
             while (!Thread.currentThread().isInterrupted() && !complete) {
-                try {
-                    complete = pollRemoteSearch(targetNode, queryKey, resultCollector);
-                } catch (final RuntimeException | IOException e) {
-                    complete = true;
-                    resultCollector.onFailure(targetNode, e);
-                }
+                complete = pollRemoteSearch(targetNode, queryKey, resultCollector);
             }
 
-        } catch (final RuntimeException e) {
+        } catch (final Throwable e) {
             LOGGER.debug(e::getMessage, e);
             resultCollector.onFailure(sourceNode, e);
 
@@ -145,9 +142,10 @@ public class RemoteNodeSearch implements NodeSearch {
                 RemoteSearchResource.BASE_PATH,
                 RemoteSearchResource.POLL_PATH_PART);
 
-        try (final InputStream inputStream = webTargetFactory
-                .create(url)
-                .queryParam("queryKey", queryKey)
+        WebTarget webTarget = webTargetFactory.create(url);
+        webTarget = UriBuilderUtil.addParam(webTarget, "queryKey", queryKey);
+
+        try (final InputStream inputStream = webTarget
                 .request(MediaType.APPLICATION_OCTET_STREAM)
                 .get(InputStream.class)) {
 
@@ -165,9 +163,10 @@ public class RemoteNodeSearch implements NodeSearch {
                 RemoteSearchResource.DESTROY_PATH_PART);
 
         try {
-            final Response response = webTargetFactory
-                    .create(url)
-                    .queryParam("queryKey", queryKey)
+            WebTarget webTarget = webTargetFactory.create(url);
+            webTarget = UriBuilderUtil.addParam(webTarget, "queryKey", queryKey);
+
+            final Response response = webTarget
                     .request(MediaType.APPLICATION_JSON)
                     .get();
             if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {

@@ -4,7 +4,6 @@
 package stroom.meta.impl.db.jooq.tables;
 
 
-import stroom.meta.impl.db.jooq.Indexes;
 import stroom.meta.impl.db.jooq.Keys;
 import stroom.meta.impl.db.jooq.Stroom;
 import stroom.meta.impl.db.jooq.tables.records.MetaFeedRecord;
@@ -12,15 +11,16 @@ import stroom.meta.impl.db.jooq.tables.records.MetaFeedRecord;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Row2;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
 import java.util.Arrays;
@@ -33,7 +33,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaFeed extends TableImpl<MetaFeedRecord> {
 
-    private static final long serialVersionUID = -1979554485;
+    private static final long serialVersionUID = 1L;
 
     /**
      * The reference instance of <code>stroom.meta_feed</code>
@@ -51,18 +51,19 @@ public class MetaFeed extends TableImpl<MetaFeedRecord> {
     /**
      * The column <code>stroom.meta_feed.id</code>.
      */
-    public final TableField<MetaFeedRecord, Integer> ID = createField(DSL.name("id"), org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<MetaFeedRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.meta_feed.name</code>.
      */
-    public final TableField<MetaFeedRecord, String> NAME = createField(DSL.name("name"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<MetaFeedRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
-    /**
-     * Create a <code>stroom.meta_feed</code> table reference
-     */
-    public MetaFeed() {
-        this(DSL.name("meta_feed"), null);
+    private MetaFeed(Name alias, Table<MetaFeedRecord> aliased) {
+        this(alias, aliased, null);
+    }
+
+    private MetaFeed(Name alias, Table<MetaFeedRecord> aliased, Field<?>[] parameters) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
     }
 
     /**
@@ -79,12 +80,11 @@ public class MetaFeed extends TableImpl<MetaFeedRecord> {
         this(alias, META_FEED);
     }
 
-    private MetaFeed(Name alias, Table<MetaFeedRecord> aliased) {
-        this(alias, aliased, null);
-    }
-
-    private MetaFeed(Name alias, Table<MetaFeedRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""));
+    /**
+     * Create a <code>stroom.meta_feed</code> table reference
+     */
+    public MetaFeed() {
+        this(DSL.name("meta_feed"), null);
     }
 
     public <O extends Record> MetaFeed(Table<O> child, ForeignKey<O, MetaFeedRecord> key) {
@@ -93,17 +93,12 @@ public class MetaFeed extends TableImpl<MetaFeedRecord> {
 
     @Override
     public Schema getSchema() {
-        return Stroom.STROOM;
-    }
-
-    @Override
-    public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.META_FEED_NAME, Indexes.META_FEED_PRIMARY);
+        return aliased() ? null : Stroom.STROOM;
     }
 
     @Override
     public Identity<MetaFeedRecord, Integer> getIdentity() {
-        return Keys.IDENTITY_META_FEED;
+        return (Identity<MetaFeedRecord, Integer>) super.getIdentity();
     }
 
     @Override
@@ -112,8 +107,8 @@ public class MetaFeed extends TableImpl<MetaFeedRecord> {
     }
 
     @Override
-    public List<UniqueKey<MetaFeedRecord>> getKeys() {
-        return Arrays.<UniqueKey<MetaFeedRecord>>asList(Keys.KEY_META_FEED_PRIMARY, Keys.KEY_META_FEED_NAME);
+    public List<UniqueKey<MetaFeedRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_META_FEED_NAME);
     }
 
     @Override

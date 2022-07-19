@@ -35,4 +35,12 @@
     it is another multi-line comment 
     -->
   </element>
+
+  <!--
+  This is comment 7.
+  Within this comment I can use ]]>
+  and other reserved characters like <, &, ', and "
+  and I can't place two dashes next to each other.
+  -->
+  <element />
 </test>

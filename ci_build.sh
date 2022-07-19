@@ -1,27 +1,32 @@
 #!/bin/bash
 
-# This is the CI build script that is run by travis/Github and does the following:
-# * Start up a DB to run tests against
-# * Compile the app and run all the tests
-# * Build the app jars and distribution zips
-# * Build the docker images
-# If this is a push on a release branch, e.g. '7.0':
-# * Push the docker images with floating tags, e.g.  '7-LATEST' '7.0-LATEST'
-# If this is a tagged release it will also:
-# * Build an entity relationship diagram
-# * Build a SQL DDL script for the DB
-# * Gather all release artefacts into one place
-# * Push the docker images
-# * Create a Github release and add all the artefacts
+# This is the CI build script that is run by Github Actions and does the
+# following:
+#   * Start up a DB to run tests against
+#   * Compile the app and run all the tests
+#   * Build the app jars and distribution zips
+#   * Build the docker images
+#   If this is a push on a release branch, e.g. '7.0':
+#     * Push the docker images with floating tags, e.g.  '7-LATEST' '7.0-LATEST'
+#   If this is a tagged release it will also:
+#     * Build an entity relationship diagram
+#     * Build a SQL DDL script for the DB
+#     * Gather all release artefacts into one place
+#     * Push the docker images
+#     * Create a Github release and add all the artefacts
 
 # Depoendencies for this script:
-# * bash + standard shell tools (sed, grep, etc.)
-# * docker
-# * docker-compose
+#   * bash + standard shell tools (sed, grep, etc.)
+#   * docker
+#   * docker-compose
 
 # The actual build is run inside a docker container which has all the
 # dependencies for performing the build and will spawn other docker
 # containers to perform sub parts of the build, e.g. the UI build.
+
+# Lines like:
+# echo "::group::DDL dump"
+# are to group/collapse shell output in the Github actions console
 
 # exit script on any error
 set -eo pipefail
@@ -43,7 +48,7 @@ LATEST_SUFFIX="-LATEST"
 # As 7 is still in beta, this is currently 6.1
 CURRENT_STROOM_RELEASE_BRANCH="6.1"
 # The version of stroom-resources used for running the DB
-STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.118"
+STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.192-2"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources" 
@@ -121,6 +126,7 @@ start_stroom_all_dbs() {
 }
 
 generate_ddl_dump() {
+  echo "::group::DDL dump"
   mkdir -p "${DDL_DUMP_DIR}"
 
   stop_and_clear_down_stroom_all_dbs
@@ -142,12 +148,16 @@ generate_ddl_dump() {
       -p"my-secret-pw" \
       stroom \
     > "${DDL_DUMP_FILE}"
+  echo "::endgroup::"
 }
 
 generate_entity_rel_diagram() {
+
+  echo "::group::ERD generation"
   # Needs the stroom-all-dbs container to be running and populated with a vanilla
   # database schema for us to generate an ERD from
   "${BUILD_DIR}/container_build/runInJavaDocker.sh" ERD
+  echo "::endgroup::"
 }
 
 copy_release_artefact() {
@@ -177,6 +187,7 @@ copy_release_artefact() {
 # Github releases. Some of them are needed by the stack builds in
 # stroom-resources
 gather_release_artefacts() {
+  echo "::group::Gather release artefacts"
   mkdir -p "${RELEASE_ARTEFACTS_DIR}"
 
   local -r release_config_dir="${BUILD_DIR}/stroom-app/build/release/config"
@@ -271,6 +282,7 @@ gather_release_artefacts() {
   for file in "${RELEASE_ARTEFACTS_DIR}"/*.zip; do
     create_file_hash "${file}"
   done
+  echo "::endgroup::"
 }
 
 format_manifest_file() {
@@ -372,6 +384,7 @@ docker_logout() {
 }
 
 copy_swagger_ui_content() {
+  echo "::group::Copy Swagger content"
   local ghPagesDir=$BUILD_DIR/gh-pages
   local swaggerUiCloneDir=$BUILD_DIR/swagger-ui
   mkdir -p "${ghPagesDir}"
@@ -406,6 +419,7 @@ copy_swagger_ui_content() {
     -i \
     "s#url: \".*\"#url: \"https://gchq.github.io/stroom/${minor_version}/stroom.json\"#g" \
     "${ghPagesDir}/index.html"
+  echo "::endgroup::"
 }
 
 check_for_out_of_date_puml_svgs() {
@@ -413,7 +427,7 @@ check_for_out_of_date_puml_svgs() {
   local convert_cmd=( "./container_build/runInJavaDocker.sh" "SVG" )
 
   echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
-  
+
   # shellcheck disable=SC2068
   ${convert_cmd[@]}
 
@@ -440,7 +454,7 @@ check_for_out_of_date_puml_svgs() {
     fi
   done < <(git status --porcelain \
     | grep -Po "(?<=( M|\?\?) ).*\.svg")
-  
+
   if [[ ${out_of_date_file_count} -gt 0 ]]; then
     echo -e "${RED}ERROR${NC}: ${out_of_date_file_count} PlantUML generated" \
       "file(s) are out of date. Run '${convert_cmd[*]}' to update them," \
@@ -553,7 +567,9 @@ docker_login
 
 check_for_out_of_date_puml_svgs
 
+echo "::group::Start stroom-all-dbs"
 start_stroom_all_dbs
+echo "::endgroup::"
 
 # Ensure we have a local.yml file as the integration tests will need it
 ./local.yml.sh
@@ -572,6 +588,7 @@ export BUILD_VERSION
 # Don't do a docker build for pull requests
 if [ "$doDockerBuild" = true ]; then
 
+  echo "::group::DockerHub release"
   # build and release stroom image to dockerhub
   releaseToDockerHub \
     "${STROOM_DOCKER_REPO}" \
@@ -583,6 +600,7 @@ if [ "$doDockerBuild" = true ]; then
     "${STROOM_PROXY_DOCKER_REPO}" \
     "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
+  echo "::endgroup::"
 fi
 
 # If it is a tagged build copy all the files needed for the github release

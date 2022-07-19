@@ -4,26 +4,23 @@
 package stroom.meta.impl.db.jooq.tables;
 
 
-import stroom.meta.impl.db.jooq.Indexes;
 import stroom.meta.impl.db.jooq.Keys;
 import stroom.meta.impl.db.jooq.Stroom;
 import stroom.meta.impl.db.jooq.tables.records.MetaRetentionTrackerRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Row3;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
-
-import java.util.Arrays;
-import java.util.List;
 
 
 /**
@@ -32,7 +29,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaRetentionTracker extends TableImpl<MetaRetentionTrackerRecord> {
 
-    private static final long serialVersionUID = 310388399;
+    private static final long serialVersionUID = 1L;
 
     /**
      * The reference instance of <code>stroom.meta_retention_tracker</code>
@@ -48,19 +45,44 @@ public class MetaRetentionTracker extends TableImpl<MetaRetentionTrackerRecord> 
     }
 
     /**
-     * The column <code>stroom.meta_retention_tracker.retention_rules_version</code>.
+     * The column
+     * <code>stroom.meta_retention_tracker.retention_rules_version</code>.
      */
-    public final TableField<MetaRetentionTrackerRecord, String> RETENTION_RULES_VERSION = createField(DSL.name("retention_rules_version"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<MetaRetentionTrackerRecord, String> RETENTION_RULES_VERSION = createField(DSL.name("retention_rules_version"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.meta_retention_tracker.rule_age</code>.
      */
-    public final TableField<MetaRetentionTrackerRecord, String> RULE_AGE = createField(DSL.name("rule_age"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<MetaRetentionTrackerRecord, String> RULE_AGE = createField(DSL.name("rule_age"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.meta_retention_tracker.last_run_time</code>.
      */
-    public final TableField<MetaRetentionTrackerRecord, Long> LAST_RUN_TIME = createField(DSL.name("last_run_time"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<MetaRetentionTrackerRecord, Long> LAST_RUN_TIME = createField(DSL.name("last_run_time"), SQLDataType.BIGINT.nullable(false), this, "");
+
+    private MetaRetentionTracker(Name alias, Table<MetaRetentionTrackerRecord> aliased) {
+        this(alias, aliased, null);
+    }
+
+    private MetaRetentionTracker(Name alias, Table<MetaRetentionTrackerRecord> aliased, Field<?>[] parameters) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
+    }
+
+    /**
+     * Create an aliased <code>stroom.meta_retention_tracker</code> table
+     * reference
+     */
+    public MetaRetentionTracker(String alias) {
+        this(DSL.name(alias), META_RETENTION_TRACKER);
+    }
+
+    /**
+     * Create an aliased <code>stroom.meta_retention_tracker</code> table
+     * reference
+     */
+    public MetaRetentionTracker(Name alias) {
+        this(alias, META_RETENTION_TRACKER);
+    }
 
     /**
      * Create a <code>stroom.meta_retention_tracker</code> table reference
@@ -69,50 +91,18 @@ public class MetaRetentionTracker extends TableImpl<MetaRetentionTrackerRecord> 
         this(DSL.name("meta_retention_tracker"), null);
     }
 
-    /**
-     * Create an aliased <code>stroom.meta_retention_tracker</code> table reference
-     */
-    public MetaRetentionTracker(String alias) {
-        this(DSL.name(alias), META_RETENTION_TRACKER);
-    }
-
-    /**
-     * Create an aliased <code>stroom.meta_retention_tracker</code> table reference
-     */
-    public MetaRetentionTracker(Name alias) {
-        this(alias, META_RETENTION_TRACKER);
-    }
-
-    private MetaRetentionTracker(Name alias, Table<MetaRetentionTrackerRecord> aliased) {
-        this(alias, aliased, null);
-    }
-
-    private MetaRetentionTracker(Name alias, Table<MetaRetentionTrackerRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""));
-    }
-
     public <O extends Record> MetaRetentionTracker(Table<O> child, ForeignKey<O, MetaRetentionTrackerRecord> key) {
         super(child, key, META_RETENTION_TRACKER);
     }
 
     @Override
     public Schema getSchema() {
-        return Stroom.STROOM;
-    }
-
-    @Override
-    public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.META_RETENTION_TRACKER_PRIMARY);
+        return aliased() ? null : Stroom.STROOM;
     }
 
     @Override
     public UniqueKey<MetaRetentionTrackerRecord> getPrimaryKey() {
         return Keys.KEY_META_RETENTION_TRACKER_PRIMARY;
-    }
-
-    @Override
-    public List<UniqueKey<MetaRetentionTrackerRecord>> getKeys() {
-        return Arrays.<UniqueKey<MetaRetentionTrackerRecord>>asList(Keys.KEY_META_RETENTION_TRACKER_PRIMARY);
     }
 
     @Override

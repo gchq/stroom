@@ -3,26 +3,32 @@
 ' avoid problems with angled crows feet
 skinparam linetype ortho
 
+entity feed {
+  *id : bigint
+  --
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+}
+
 entity source {
   *id : bigint
   --
   *path : varchar(255) - unique
-  *feed_name : varchar(255)
-  *type_name : varchar(255)
-  *last_modified_time_ms : bigint
+  *fk_feed_id : bigint
   *examined : boolean
-  *forwarded : boolean
-  *forward_error : boolean
+  *item_count : integer
+  *new_position : bigint
 }
 
 entity source_item {
   *id : bigint
   --
   *name : varchar(255)
-  *feed_name : varchar(255)
-  *type_name : varchar(255)
+  *fk_feed_id : bigint
+  *byte_size : bigint
   *fk_source_id : bigint
-  *aggregated : boolean
+  *fk_aggregate_id : bigint
+  *new_position : bigint
 }
 
 entity source_entry {
@@ -38,52 +44,55 @@ entity aggregate {
   *id : bigint
   --
   *create_time_ms : bigint
-  *feed_name : varchar(255)
-  *type_name : varchar(255)
+  *fk_feed_id : bigint
   *byte_size : bigint
   *items : int
   *complete : boolean
-  *forward_error : boolean
+  *new_position : bigint
 }
 
-entity aggregate_item {
-  *id : bigint
-  --
-  *fk_aggregate_id : bigint
-  *fk_source_item_id : bigint
-}
-
-entity forward_url {
+entity forward_dest {
   *id : int
   --
-  *url : varchar(255)
+  *name : varchar(255)
 }
 
 entity forward_source {
   *id : bigint
   --
-  *fk_forward_url_id : int
+  *update_time_ms : bigint
+  *fk_forward_dest_id : int
   *fk_source_id : bigint
   *success : boolean
   *error : varchar(255)
+  *tries : bigint
+  *new_position : bigint
+  *retry_position : bigint
 }
 
 entity forward_aggregate {
   *id : bigint
   --
-  *fk_forward_url_id : int
+  *update_time_ms : bigint
+  *fk_forward_dest_id : int
   *fk_aggregate_id : bigint
   *success : boolean
   *error : varchar(255)
+  *tries : bigint
+  *new_position : bigint
+  *retry_position : bigint
 }
+
+feed ||--|{ source
+feed ||--|{ source_item
+feed ||--|{ aggregate
 
 source ||..o{ source_item
 source_item ||--|{ source_entry
-aggregate ||--|{ aggregate_item
-source_item ||..o| aggregate_item
-forward_source }o--|| forward_url
+aggregate ||--|{ source_item
+forward_source }o--|| forward_dest
 forward_source }o..|| source
-forward_aggregate }o--|| forward_url
+forward_aggregate }o--|| forward_dest
 forward_aggregate }o--|| aggregate
 
 @enduml

@@ -16,8 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -33,10 +33,9 @@ import java.text.ParseException;
                                 description = "The value to find the type of.",
                                 argType = Val.class)
                 }))
-class TypeOf extends AbstractFunction implements Serializable {
+class TypeOf extends AbstractFunction {
 
     static final String NAME = "typeOf";
-    private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
     private Function function;
     private boolean hasAggregate;
@@ -79,7 +78,6 @@ class TypeOf extends AbstractFunction implements Serializable {
 
     private static final class Gen extends AbstractSingleChildGenerator {
 
-        private static final long serialVersionUID = 8153777070911899616L;
 
         Gen(final Generator childGenerator) {
             super(childGenerator);
@@ -91,8 +89,8 @@ class TypeOf extends AbstractFunction implements Serializable {
         }
 
         @Override
-        public Val eval() {
-            final Val val = childGenerator.eval();
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerator.eval(childDataSupplier);
             final String type = val.type().toString();
             if (type != null) {
                 return ValString.create(type);

@@ -143,18 +143,11 @@ proxyConfig:
   repository:
     storingEnabled: {{ true | envVar('STORING_ENABLED') }}
 #    repoDir: "repo"
-#    dbDir: "repo"
-    format: "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
-#    cleanupFrequency: 1h
-#    lockDeleteAge: 1h
-#    dirCleanDelay: 10s
 
   # Do we want to forward data by scanning for files in the repository? This is only needed where we want to pick up
   # files from a repository that isn't being filled by receiving new data via HTTP POST. When we receive data via POST
   # the receipt of new data automatically triggers any required process.
-  scanner:
-    scanningEnabled: false
-    scanFrequency: 10s
+  fileScanners: []
 
   # If we are storing data in a proxy repository we can aggregate it before forwarding.
   aggregator:
@@ -163,20 +156,21 @@ proxyConfig:
     maxAggregateAge: 10m
     aggregationFrequency: 1m
 
-  forwarder:
-    forwardingEnabled: {{ true | envVar('FORWARDING_ENABLED') }}
-    forwardDestinations:
-      # If you want multiple forward destinations then you will need to edit this file directly
-      # instead of using env var substitution
-      - forwardUrl: "{{ 'https://nginx/stroom/datafeed' | envVar('FORWARD_URL') }}"
-        sslConfig:
-          keyStorePath: "certs/client.jks"
-          keyStorePassword: "password"
-          trustStorePath: "certs/ca.jks"
-          trustStorePassword: "password"
-          {% if distribution == "docker" %}
-          hostnameVerificationEnabled: {{ true | envVar('FORWARDING_HOST_VERIFICATION_ENABLED') }}
-          {% endif %}
+  # If you want multiple forward destinations then you will need to edit this file directly
+  # instead of using env var substitution
+  forwardDestinations:
+    - type: "post"
+      enabled: {{ true | envVar('FORWARDING_ENABLED') }}
+      name: "upstream"
+      forwardUrl: "{{ 'https://nginx/stroom/datafeed' | envVar('FORWARD_URL') }}"
+      sslConfig:
+        keyStorePath: "certs/client.jks"
+        keyStorePassword: "password"
+        trustStorePath: "certs/ca.jks"
+        trustStorePassword: "password"
+        {% if distribution == "docker" %}
+        hostnameVerificationEnabled: {{ true | envVar('FORWARDING_HOST_VERIFICATION_ENABLED') }}
+        {% endif %}
 
   logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"

@@ -75,7 +75,14 @@ public class SystemInfoResult {
         return Objects.hash(name, description, details);
     }
 
-    public static Builder builder() {
+    public static Builder builder(final HasSystemInfo systemInfoProvider) {
+        return new Builder(systemInfoProvider.getSystemInfoName());
+    }
+
+    /**
+     * Only for testing
+     */
+    static Builder builder() {
         return new Builder();
     }
 
@@ -89,6 +96,10 @@ public class SystemInfoResult {
         private String description = null;
         private Map<String, Object> details = new HashMap<>();
 
+        private Builder(final String name) {
+            this.name = name;
+        }
+
         private Builder() {
         }
 
@@ -98,7 +109,7 @@ public class SystemInfoResult {
             details = systemInfoResult.details;
         }
 
-        public Builder name(final String name) {
+        Builder name(final String name) {
             this.name = name;
             return this;
         }

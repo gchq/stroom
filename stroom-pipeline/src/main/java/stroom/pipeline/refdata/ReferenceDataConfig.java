@@ -1,5 +1,6 @@
 package stroom.pipeline.refdata;
 
+import stroom.pipeline.refdata.store.RefDataStoreModule.RefDataPurge;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
@@ -73,7 +74,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
 
     @JsonPropertyDescription("The time to retain reference data for in the off heap store. The time is taken " +
             "from the time that the reference stream was last accessed, e.g. a lookup was made against it. " +
-            "In ISO-8601 duration format, e.g. 'P1DT12H'")
+            "In ISO-8601 duration format, e.g. 'P1DT12H'. Used by job '" + RefDataPurge.JOB_NAME + "'.")
     public StroomDuration getPurgeAge() {
         return purgeAge;
     }
@@ -117,6 +118,16 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     }
 
     public ReferenceDataConfig withMaxPutsBeforeCommit(final int maxPutsBeforeCommit) {
+        return new ReferenceDataConfig(
+                maxPutsBeforeCommit,
+                maxPurgeDeletesBeforeCommit,
+                purgeAge,
+                loadingLockStripes,
+                lmdbConfig,
+                effectiveStreamCache);
+    }
+
+    public ReferenceDataConfig withMaxPurgeDeletesBeforeCommit(final int maxPurgeDeletesBeforeCommit) {
         return new ReferenceDataConfig(
                 maxPutsBeforeCommit,
                 maxPurgeDeletesBeforeCommit,

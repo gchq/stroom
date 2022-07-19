@@ -107,15 +107,18 @@ class SearchableTaskProgress implements Searchable {
                     .forEach(attributeMap -> {
                         final Val[] arr = new Val[fields.length];
                         for (int i = 0; i < fields.length; i++) {
+                            final AbstractField field = fields[i];
                             Val val = ValNull.INSTANCE;
-                            Object o = attributeMap.get(fields[i].getName());
-                            if (o != null) {
-                                if (o instanceof String) {
-                                    val = ValString.create((String) o);
-                                } else if (o instanceof Long) {
-                                    val = ValLong.create((long) o);
-                                } else if (o instanceof Integer) {
-                                    val = ValInteger.create((int) o);
+                            if (field != null) {
+                                final Object o = attributeMap.get(field.getName());
+                                if (o != null) {
+                                    if (o instanceof String) {
+                                        val = ValString.create((String) o);
+                                    } else if (o instanceof Long) {
+                                        val = ValLong.create((long) o);
+                                    } else if (o instanceof Integer) {
+                                        val = ValInteger.create((int) o);
+                                    }
                                 }
                             }
                             arr[i] = val;

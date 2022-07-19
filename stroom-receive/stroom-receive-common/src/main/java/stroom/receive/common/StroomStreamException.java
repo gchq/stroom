@@ -17,7 +17,6 @@
 package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.util.logging.LambdaLogger;
@@ -28,78 +27,53 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.zip.DataFormatException;
 import java.util.zip.ZipException;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class StroomStreamException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
-
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomStreamException.class);
 
-    private final StroomStatusCode stroomStatusCode;
-    private final AttributeMap attributeMap;
+    private final StroomStreamStatus stroomStreamStatus;
 
     public StroomStreamException(final StroomStatusCode stroomStatusCode,
-                                 final HttpServletRequest httpServletRequest,
-                                 final Object... args) {
-        this(stroomStatusCode, extractAttributeMap(httpServletRequest), args);
+                                 final AttributeMap attributeMap) {
+        this(new StroomStreamStatus(stroomStatusCode, attributeMap));
     }
 
     public StroomStreamException(final StroomStatusCode stroomStatusCode,
                                  final AttributeMap attributeMap,
-                                 final Object... args) {
-        super(buildStatusMessage(stroomStatusCode, attributeMap, args));
-        this.stroomStatusCode = stroomStatusCode;
-        this.attributeMap = attributeMap;
+                                 final String message) {
+        this(new StroomStreamStatus(stroomStatusCode, attributeMap), message);
     }
 
-    public static String buildStatusMessage(final StroomStatusCode stroomStatusCode,
-                                            final AttributeMap attributeMap,
-                                            final Object... args) {
-        final StringBuilder builder = new StringBuilder();
-        builder.append("Stroom Status ");
-        if (stroomStatusCode != null) {
-            builder.append(stroomStatusCode.getCode())
-                    .append(" - ")
-                    .append(stroomStatusCode.getMessage());
-        } else {
-            builder.append("null");
-        }
-
-        AttributeMapUtil.appendAttributes(
-                attributeMap,
-                builder,
-                StandardHeaderArguments.FEED,
-                StandardHeaderArguments.COMPRESSION,
-                StandardHeaderArguments.TYPE);
-
-        if (args != null) {
-            for (final Object object : args) {
-                builder.append(" - ")
-                        .append(object);
-            }
-        }
-        return builder.toString();
+    public StroomStreamException(final StroomStreamStatus stroomStreamStatus) {
+        super(stroomStreamStatus.buildStatusMessage());
+        this.stroomStreamStatus = stroomStreamStatus;
     }
 
-    public static void createAndThrow(final Throwable ex, final AttributeMap attributeMap) {
-        RuntimeException unwrappedException = unwrap(ex, attributeMap);
+    public StroomStreamException(final StroomStreamStatus stroomStreamStatus,
+                                 final String message) {
+        super(stroomStreamStatus.buildStatusMessage(message));
+        this.stroomStreamStatus = stroomStreamStatus;
+    }
+
+    public static StroomStreamException create(final Throwable ex, final AttributeMap attributeMap) {
+        final RuntimeException unwrappedException = unwrap(ex, attributeMap);
         if (unwrappedException instanceof StroomStreamException) {
-            throw unwrappedException;
+            return (StroomStreamException) unwrappedException;
         } else {
-            throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR,
+            return new StroomStreamException(
+                    StroomStatusCode.UNKNOWN_ERROR,
                     attributeMap,
                     unwrappedException.getMessage());
         }
     }
 
-
     private static RuntimeException unwrap(final Throwable ex, final AttributeMap attributeMap) {
         if (ex instanceof ZipException) {
-            throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, attributeMap, ex.getMessage());
+            return new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, attributeMap, ex.getMessage());
         } else if (ex instanceof DataFormatException) {
-            throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, attributeMap, ex.getMessage());
+            return new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, attributeMap, ex.getMessage());
         } else if (ex instanceof StroomStreamException) {
             return (StroomStreamException) ex;
         } else if (ex.getCause() != null) {
@@ -155,96 +129,23 @@ public class StroomStreamException extends RuntimeException {
         }
     }
 
-    public static RuntimeException sendErrorResponse(final HttpServletRequest httpServletRequest,
-                                                     final HttpServletResponse httpServletResponse,
-                                                     final Exception exception) {
-        final AttributeMap attributeMap = extractAttributeMap(httpServletRequest);
+    public void sendErrorResponse(final HttpServletResponse httpServletResponse) {
+        LOGGER.debug(getMessage(), this);
+        LOGGER.warn(() -> "Sending error response " + stroomStreamStatus + " " + getMessage());
 
-        final RuntimeException unwrappedException = unwrap(exception, attributeMap);
-
-        StroomStatusCode stroomStatusCode = StroomStatusCode.UNKNOWN_ERROR;
-        final String message = unwrapMessage(unwrappedException);
-
-        if (unwrappedException instanceof StroomStreamException) {
-            stroomStatusCode = ((StroomStreamException) unwrappedException).getStroomStatusCode();
-        }
-
-        if (stroomStatusCode == null) {
-            stroomStatusCode = StroomStatusCode.UNKNOWN_ERROR;
-        }
-
-
-        final StroomStatusCode finalStroomStatusCode = stroomStatusCode;
-        LOGGER.warn(() -> {
-            final StringBuilder clientDetailsStringBuilder = new StringBuilder();
-            AttributeMapUtil.appendAttributes(
-                    attributeMap,
-                    clientDetailsStringBuilder,
-                    StandardHeaderArguments.X_FORWARDED_FOR,
-                    StandardHeaderArguments.REMOTE_HOST,
-                    StandardHeaderArguments.REMOTE_ADDRESS,
-                    StandardHeaderArguments.RECEIVED_PATH);
-
-            final String clientDetailsStr = clientDetailsStringBuilder.isEmpty()
-                    ? ""
-                    : " - " + clientDetailsStringBuilder;
-
-            return "Sending error response "
-                    + finalStroomStatusCode.getHttpCode()
-                    + " - "
-                    + message
-                    + clientDetailsStr;
-        });
-
+        final StroomStatusCode stroomStatusCode = stroomStreamStatus.getStroomStatusCode();
+        httpServletResponse.setStatus(stroomStatusCode.getHttpCode());
         httpServletResponse.setHeader(StandardHeaderArguments.STROOM_STATUS,
                 String.valueOf(stroomStatusCode.getCode()));
 
         try {
-            httpServletResponse.sendError(stroomStatusCode.getHttpCode(), message);
+            httpServletResponse.sendError(stroomStatusCode.getHttpCode(), getMessage());
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
-
-        return unwrappedException;
-
     }
 
-    private static AttributeMap extractAttributeMap(final HttpServletRequest httpServletRequest) {
-        AttributeMap attributeMap = null;
-        try {
-            attributeMap = AttributeMapUtil.create(httpServletRequest);
-        } catch (Exception e) {
-            LOGGER.error("Unable to extract attribute map from request", e);
-        }
-        return attributeMap;
-    }
-
-    protected static String unwrapMessage(final Throwable throwable) {
-        final StringBuilder stringBuilder = new StringBuilder();
-        unwrapMessage(stringBuilder, throwable, 10);
-        return stringBuilder.toString();
-    }
-
-    protected static void unwrapMessage(final StringBuilder stringBuilder,
-                                        final Throwable throwable,
-                                        final int depth) {
-        if (depth == 0 || throwable == null) {
-            return;
-        }
-        stringBuilder.append(throwable.getMessage());
-
-        final Throwable cause = throwable.getCause();
-        if (cause != null) {
-            stringBuilder.append(" - ");
-            unwrapMessage(stringBuilder, throwable.getCause(), depth - 1);
-        }
-    }
-
-    public StroomStatusCode getStroomStatusCode() {
-        return stroomStatusCode;
-    }
-
-    public AttributeMap getAttributeMap() {
-        return attributeMap;
+    public StroomStreamStatus getStroomStreamStatus() {
+        return stroomStreamStatus;
     }
 }

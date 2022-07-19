@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -35,6 +36,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -70,12 +72,18 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         initTableColumns();
 
         final FindFsVolumeCriteria criteria = FindFsVolumeCriteria.matchAll();
-        dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(eventBus, criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<FsVolume>> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<FsVolume>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
+                CriteriaUtil.setRange(criteria, range);
                 final Rest<ResultPage<FsVolume>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(FS_VOLUME_RESOURCE).find(criteria);
+                rest
+                        .onSuccess(dataConsumer)
+                        .onFailure(throwableConsumer)
+                        .call(FS_VOLUME_RESOURCE)
+                        .find(criteria);
             }
         };
         dataProvider.addDataDisplay(dataGrid);

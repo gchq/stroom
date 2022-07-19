@@ -68,11 +68,22 @@ import javax.xml.transform.sax.TransformerHandler;
 /**
  * An XML filter for performing inline XSLT transformation of XML.
  */
-@ConfigurableElement(type = "XSLTFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.XSLT)
+@ConfigurableElement(
+        type = "XSLTFilter",
+        description = """
+                An element used to transform XML data from one form to another using XSLT.
+                The specified XSLT can be used to transform the input XML into XML conforming to another \
+                schema or into other forms such as JSON, plain text, etc.
+                """,
+        category = Category.FILTER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE,
+                PipelineElementType.VISABILITY_STEPPING,
+                PipelineElementType.ROLE_MUTATOR,
+                PipelineElementType.ROLE_HAS_CODE},
+        icon = ElementIcons.XSLT)
 public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjection {
 
     private final XsltPool xsltPool;
@@ -236,7 +247,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 // Make sure the executable points at the local error handler.
                 final Configuration configuration = xsltExecutable.getUnderlyingCompiledStylesheet().getConfiguration();
                 configuration.setErrorListener(errorListener);
-                configuration.setLineNumbering(!pipelineContext.isStepping());
+//                configuration.setLineNumbering(!pipelineContext.isStepping());
 
                 // Create a handler to receive all SAX events.
                 final TemplatesImpl templates = new TemplatesImpl(xsltExecutable);

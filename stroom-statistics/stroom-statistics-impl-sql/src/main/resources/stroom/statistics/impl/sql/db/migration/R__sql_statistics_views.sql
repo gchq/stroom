@@ -20,11 +20,7 @@ SELECT
         if(
             ssvs.VAL_TP = 2,
             "VALUE",
-            null)) STAT_TYPE,
-    if(
-        ssvs.PROCESSING = 1,
-        "YES",
-        "NO") IS_PROCESSING_NOW
+            null)) STAT_TYPE
 FROM SQL_STAT_VAL_SRC ssvs
 ORDER BY
     ssvs.NAME,

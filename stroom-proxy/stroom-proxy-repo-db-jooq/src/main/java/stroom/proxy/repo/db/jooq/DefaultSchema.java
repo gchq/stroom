@@ -5,11 +5,11 @@ package stroom.proxy.repo.db.jooq;
 
 
 import stroom.proxy.repo.db.jooq.tables.Aggregate;
+import stroom.proxy.repo.db.jooq.tables.Feed;
 import stroom.proxy.repo.db.jooq.tables.ForwardAggregate;
+import stroom.proxy.repo.db.jooq.tables.ForwardDest;
 import stroom.proxy.repo.db.jooq.tables.ForwardSource;
-import stroom.proxy.repo.db.jooq.tables.ForwardUrl;
 import stroom.proxy.repo.db.jooq.tables.Source;
-import stroom.proxy.repo.db.jooq.tables.SourceEntry;
 import stroom.proxy.repo.db.jooq.tables.SourceItem;
 
 import org.jooq.Catalog;
@@ -39,9 +39,19 @@ public class DefaultSchema extends SchemaImpl {
     public final Aggregate AGGREGATE = Aggregate.AGGREGATE;
 
     /**
+     * The table <code>feed</code>.
+     */
+    public final Feed FEED = Feed.FEED;
+
+    /**
      * The table <code>forward_aggregate</code>.
      */
     public final ForwardAggregate FORWARD_AGGREGATE = ForwardAggregate.FORWARD_AGGREGATE;
+
+    /**
+     * The table <code>forward_dest</code>.
+     */
+    public final ForwardDest FORWARD_DEST = ForwardDest.FORWARD_DEST;
 
     /**
      * The table <code>forward_source</code>.
@@ -49,19 +59,9 @@ public class DefaultSchema extends SchemaImpl {
     public final ForwardSource FORWARD_SOURCE = ForwardSource.FORWARD_SOURCE;
 
     /**
-     * The table <code>forward_url</code>.
-     */
-    public final ForwardUrl FORWARD_URL = ForwardUrl.FORWARD_URL;
-
-    /**
      * The table <code>source</code>.
      */
     public final Source SOURCE = Source.SOURCE;
-
-    /**
-     * The table <code>source_entry</code>.
-     */
-    public final SourceEntry SOURCE_ENTRY = SourceEntry.SOURCE_ENTRY;
 
     /**
      * The table <code>source_item</code>.
@@ -83,13 +83,14 @@ public class DefaultSchema extends SchemaImpl {
 
     @Override
     public final List<Table<?>> getTables() {
-        return Arrays.<Table<?>>asList(
+        return Arrays.asList(
             Aggregate.AGGREGATE,
+            Feed.FEED,
             ForwardAggregate.FORWARD_AGGREGATE,
+            ForwardDest.FORWARD_DEST,
             ForwardSource.FORWARD_SOURCE,
-            ForwardUrl.FORWARD_URL,
             Source.SOURCE,
-            SourceEntry.SOURCE_ENTRY,
-            SourceItem.SOURCE_ITEM);
+            SourceItem.SOURCE_ITEM
+        );
     }
 }

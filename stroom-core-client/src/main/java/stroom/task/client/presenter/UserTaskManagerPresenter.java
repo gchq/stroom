@@ -39,6 +39,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -75,6 +76,7 @@ public class UserTaskManagerPresenter
 
     private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
     private final DelayedUpdate delayedUpdate = new DelayedUpdate(this::update);
+
 
     @Inject
     public UserTaskManagerPresenter(final EventBus eventBus,
@@ -154,7 +156,11 @@ public class UserTaskManagerPresenter
 
     private void update() {
         // Combine data from all nodes.
-        final ResultPage<TaskProgress> list = TaskProgressUtil.combine(criteria, responseMap.values(), treeAction);
+        final ResultPage<TaskProgress> list = TaskProgressUtil.combine(
+                new Range(0, 100),
+                criteria,
+                responseMap.values(),
+                treeAction);
 
         // Refresh the display.
         setData(list);

@@ -13,24 +13,6 @@ import javax.annotation.processing.Generated;
 @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
 public class ConfigProvidersModule extends AbstractModule {
 
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.proxy.repo.RepoConfig getRepoConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.core.receive.ProxyAggregationConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.proxy.repo.RepoDbConfig getRepoDbConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.core.receive.ProxyAggregationRepoDbConfig.class);
-    }
-
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -166,24 +148,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.config.common.UiUriConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.core.receive.ProxyAggregationConfig getProxyAggregationConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.core.receive.ProxyAggregationConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.core.receive.ProxyAggregationRepoDbConfig getProxyAggregationRepoDbConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.core.receive.ProxyAggregationRepoDbConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -486,15 +450,6 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.repo.AggregatorConfig getAggregatorConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.proxy.repo.AggregatorConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.query.common.v2.ResultStoreConfig getResultStoreConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -589,15 +544,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.search.solr.search.SolrSearchConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.searchable.impl.SearchableConfig getSearchableConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.searchable.impl.SearchableConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

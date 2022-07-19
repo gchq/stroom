@@ -38,6 +38,7 @@ import stroom.query.common.v2.EventRefs;
 import stroom.search.impl.EventSearchTask;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.impl.ExecutorProviderImpl;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -85,7 +86,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
     }
 
     @Override
-    protected boolean setupBetweenTests() {
+    protected boolean cleanupBetweenTests() {
         return false;
     }
 
@@ -473,15 +474,18 @@ class TestInteractiveSearch extends AbstractSearchTest {
                 100);
         final AtomicReference<EventRefs> results = new AtomicReference<>();
 
-        final Runnable runnable = taskContextFactory.context("Translate", taskContext -> {
-            final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
-            eventSearchTaskHandler.exec(eventSearchTask, (eventRefs, throwable) -> {
-                if (eventRefs != null) {
-                    results.set(eventRefs);
-                }
-                complete.countDown();
-            });
-        });
+        final Runnable runnable = taskContextFactory.context(
+                "Translate",
+                TerminateHandlerFactory.NOOP_FACTORY,
+                taskContext -> {
+                    final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
+                    eventSearchTaskHandler.exec(eventSearchTask, (eventRefs, throwable) -> {
+                        if (eventRefs != null) {
+                            results.set(eventRefs);
+                        }
+                        complete.countDown();
+                    });
+                });
         CompletableFuture.runAsync(runnable, executor);
         try {
             complete.await();

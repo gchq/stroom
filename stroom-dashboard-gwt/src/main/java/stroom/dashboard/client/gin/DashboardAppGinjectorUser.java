@@ -27,6 +27,8 @@ import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.dispatch.client.RestModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
+import stroom.instance.client.InstanceGinjector;
+import stroom.instance.client.InstanceModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
 import stroom.query.client.QueryModule;
@@ -48,6 +50,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         ActivityModule.class,
         AnnotationModule.class,
         AlertModule.class,
+        InstanceModule.class,
         SecurityModule.class,
         EntityModule.class,
         UserPreferencesModule.class,
@@ -58,6 +61,7 @@ public interface DashboardAppGinjectorUser extends
         Ginjector,
         PopupGinjector,
         AlertGinjector,
+        InstanceGinjector,
         SecurityGinjector,
         EntityGinjector,
         DashboardGinjector,

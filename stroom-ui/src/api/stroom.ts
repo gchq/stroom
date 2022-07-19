@@ -40,6 +40,7 @@ export interface AbstractField {
     | "IS_DOC_REF"
     | "IS_NULL"
     | "IS_NOT_NULL"
+    | "MATCHES_REGEX"
   )[];
   name?: string;
   queryable?: boolean;
@@ -219,6 +220,13 @@ export interface ApiKeyResultPage {
   values?: ApiKey[];
 }
 
+export interface ApplicationInstanceInfo {
+  /** @format int64 */
+  createTime?: number;
+  userId?: string;
+  uuid?: string;
+}
+
 export interface Arg {
   allowedValues?: string[];
   argType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
@@ -282,6 +290,12 @@ export interface CacheInfoResponse {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: CacheInfo[];
+}
+
+export interface CacheNamesResponse {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: string[];
 }
 
 export interface ChangeDocumentPermissionsRequest {
@@ -548,17 +562,11 @@ export interface DashboardConfig {
 
 export interface DashboardDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   dashboardConfig?: DashboardConfig;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -567,26 +575,34 @@ export interface DashboardDoc {
   version?: string;
 }
 
-export interface DashboardQueryKey {
-  componentId?: string;
-  dashboardUuid?: string;
-  uuid?: string;
-}
-
 export interface DashboardSearchRequest {
+  applicationInstanceUuid?: string;
+  componentId?: string;
   componentResultRequests?: ComponentResultRequest[];
-  dashboardQueryKey?: DashboardQueryKey;
+  dashboardUuid?: string;
 
   /** The client date/time settings */
   dateTimeSettings?: DateTimeSettings;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
   search?: Search;
+  storeHistory?: boolean;
+
+  /**
+   * Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field
+   * @format int64
+   */
+  timeout?: number;
 }
 
 export interface DashboardSearchResponse {
   complete?: boolean;
   errors?: string[];
   highlights?: string[];
-  queryKey?: DashboardQueryKey;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
   results?: Result[];
 }
 
@@ -658,17 +674,11 @@ export interface DataRetentionRule {
 
 export interface DataRetentionRules {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   name?: string;
   rules?: DataRetentionRule[];
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -724,10 +734,16 @@ export interface DependencyCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
-export interface DictionaryDoc {
-  /** @format int64 */
-  createTime?: number;
+export interface DestroySearchRequest {
+  applicationInstanceUuid?: string;
+  componentId?: string;
+  dashboardUuid?: string;
 
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
+}
+
+export interface DictionaryDoc {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
@@ -736,9 +752,6 @@ export interface DictionaryDoc {
   imports?: DocRef[];
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -811,15 +824,8 @@ export interface DocumentTypes {
 
 export type DoubleField = AbstractField;
 
-export interface DownloadQueryRequest {
-  dashboardQueryKey?: DashboardQueryKey;
-  searchRequest?: DashboardSearchRequest;
-}
-
 export interface DownloadSearchResultsRequest {
-  applicationInstanceId?: string;
   componentId?: string;
-  dateTimeLocale?: string;
   fileType?: "EXCEL" | "CSV" | "TSV";
 
   /** @format int32 */
@@ -832,17 +838,11 @@ export interface ElasticClusterDoc {
   connection?: ElasticConnectionConfig;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -872,9 +872,6 @@ export interface ElasticIndexDoc {
   clusterRef?: DocRef;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -893,9 +890,6 @@ export interface ElasticIndexDoc {
   type?: string;
 
   /** @format int64 */
-  updateTime?: number;
-
-  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
@@ -905,8 +899,8 @@ export interface ElasticIndexDoc {
 export interface ElasticIndexField {
   fieldName?: string;
   fieldType?: string;
-  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT";
-  stored?: boolean;
+  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT" | "IPV4_ADDRESS";
+  indexed?: boolean;
 }
 
 export interface ElasticIndexTestResponse {
@@ -1085,7 +1079,8 @@ export type ExpressionTerm = ExpressionItem & {
     | "IN_FOLDER"
     | "IS_DOC_REF"
     | "IS_NULL"
-    | "IS_NOT_NULL";
+    | "IS_NOT_NULL"
+    | "MATCHES_REGEX";
   docRef?: DocRef;
   field?: string;
   value?: string;
@@ -1094,9 +1089,6 @@ export type ExpressionTerm = ExpressionItem & {
 export interface FeedDoc {
   classification?: string;
   contextEncoding?: string;
-
-  /** @format int64 */
-  createTime?: number;
 
   /** @format int64 */
   createTimeMs?: number;
@@ -1111,9 +1103,6 @@ export interface FeedDoc {
   status?: "RECEIVE" | "REJECT" | "DROP";
   streamType?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -1507,9 +1496,6 @@ export interface ImportState {
 
 export interface IndexDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -1529,9 +1515,6 @@ export interface IndexDoc {
   /** @format int32 */
   shardsPerPartition?: number;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -1660,6 +1643,8 @@ export interface InfoPopupConfig {
 
 export type IntegerField = AbstractField;
 
+export type IpV4AddressField = AbstractField;
+
 export interface Job {
   advanced?: boolean;
 
@@ -1718,18 +1703,12 @@ export interface JobNodeInfo {
 
 export interface KafkaConfigDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
   description?: string;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -1939,6 +1918,12 @@ export interface Param {
   value: string;
 }
 
+export interface ParamInfo {
+  description?: string;
+  name?: string;
+  paramType?: "OPTIONAL" | "MANDATORY";
+}
+
 export interface PasswordPolicyConfig {
   allowPasswordResets?: boolean;
   forcePasswordChangeOnFirstLogin?: boolean;
@@ -1980,9 +1965,6 @@ export interface PipelineData {
 
 export interface PipelineDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -1992,9 +1974,6 @@ export interface PipelineDoc {
   parentPipeline?: DocRef;
   pipelineData?: PipelineData;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -2384,18 +2363,12 @@ export interface ReceiveDataRule {
 
 export interface ReceiveDataRules {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   fields?: AbstractField[];
   name?: string;
   rules?: ReceiveDataRule[];
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -2699,9 +2672,6 @@ export interface ScheduledTimes {
 
 export interface ScriptDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
@@ -2709,9 +2679,6 @@ export interface ScriptDoc {
   description?: string;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -2731,7 +2698,6 @@ export interface Search {
   incremental?: boolean;
   params?: Param[];
   queryInfo?: string;
-  storeHistory?: boolean;
 }
 
 export interface SearchAccountRequest {
@@ -2746,11 +2712,6 @@ export interface SearchApiKeyRequest {
   quickFilter?: string;
   sort?: string;
   sortList?: CriteriaFieldSort[];
-}
-
-export interface SearchBusPollRequest {
-  applicationInstanceId?: string;
-  searchRequests?: DashboardSearchRequest[];
 }
 
 /**
@@ -2786,6 +2747,9 @@ export interface SearchResponse {
 
   /** A list of strings to highlight in the UI that should correlate with the search query. */
   highlights: string[];
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey: QueryKey;
   results?: Result[];
 }
 
@@ -2913,9 +2877,6 @@ export interface SolrIndexDoc {
   collection?: string;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   deletedFields?: SolrIndexField[];
@@ -2928,9 +2889,6 @@ export interface SolrIndexDoc {
   solrConnectionConfig?: SolrConnectionConfig;
   solrSynchState?: SolrSynchState;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -2977,6 +2935,7 @@ export interface SolrIndexField {
     | "IS_DOC_REF"
     | "IS_NULL"
     | "IS_NOT_NULL"
+    | "MATCHES_REGEX"
   )[];
   termOffsets?: boolean;
   termPayloads?: boolean;
@@ -3068,9 +3027,6 @@ export interface StatisticStoreDoc {
   config?: StatisticsDataSourceData;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -3082,9 +3038,6 @@ export interface StatisticStoreDoc {
   rollUpType?: "NONE" | "ALL" | "CUSTOM";
   statisticType?: "COUNT" | "VALUE";
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -3177,9 +3130,6 @@ export interface StroomStatsStoreDoc {
   config?: StroomStatsStoreEntityData;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -3189,9 +3139,6 @@ export interface StroomStatsStoreDoc {
   rollUpType?: "NONE" | "ALL" | "CUSTOM";
   statisticType?: "COUNT" | "VALUE";
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -3337,18 +3284,12 @@ export interface TextConverterDoc {
   converterType?: "NONE" | "DATA_SPLITTER" | "XML_FRAGMENT";
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
   description?: string;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -3421,6 +3362,9 @@ export interface TokenResponse {
 export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
+
+  /** @format int32 */
+  applicationInstanceKeepAliveIntervalMs?: number;
   defaultMaxResults?: string;
   helpSubPathExpressions?: string;
   helpSubPathJobs?: string;
@@ -3532,9 +3476,6 @@ export type VisResultRequest = ComponentResultRequest & {
 
 export interface VisualisationDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -3545,9 +3486,6 @@ export interface VisualisationDoc {
   scriptRef?: DocRef;
   settings?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -3570,9 +3508,6 @@ export interface XPathFilter {
 
 export interface XmlSchemaDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
@@ -3585,9 +3520,6 @@ export interface XmlSchemaDoc {
   type?: string;
 
   /** @format int64 */
-  updateTime?: number;
-
-  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
@@ -3596,18 +3528,12 @@ export interface XmlSchemaDoc {
 
 export interface XsltDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
   description?: string;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -4433,6 +4359,62 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
+  applicationInstance = {
+    /**
+     * No description
+     *
+     * @tags Application
+     * @name ApplicationInstanceKeepAlive
+     * @summary Keep an application instance alive
+     * @request POST:/application-instance/v1/keepAlive
+     * @secure
+     */
+    applicationInstanceKeepAlive: (data: ApplicationInstanceInfo, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/application-instance/v1/keepAlive`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Application
+     * @name ApplicationInstanceRegister
+     * @summary Register a new application instance
+     * @request GET:/application-instance/v1/register
+     * @secure
+     */
+    applicationInstanceRegister: (params: RequestParams = {}) =>
+      this.request<any, ApplicationInstanceInfo>({
+        path: `/application-instance/v1/register`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Application
+     * @name ApplicationInstanceRemove
+     * @summary Remove an application instance
+     * @request POST:/application-instance/v1/remove
+     * @secure
+     */
+    applicationInstanceRemove: (data: ApplicationInstanceInfo, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/application-instance/v1/remove`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
   authentication = {
     /**
      * No description
@@ -4620,23 +4602,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Caches
-     * @name ListCaches
-     * @summary Lists caches
-     * @request GET:/cache/v1
-     * @secure
-     */
-    listCaches: (params: RequestParams = {}) =>
-      this.request<any, string[]>({
-        path: `/cache/v1`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Caches
      * @name GetCacheInfo
      * @summary Gets cache info
      * @request GET:/cache/v1/info
@@ -4645,6 +4610,24 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     getCacheInfo: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, CacheInfoResponse>({
         path: `/cache/v1/info`,
+        method: "GET",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Caches
+     * @name ListCaches
+     * @summary Lists caches
+     * @request GET:/cache/v1/list
+     * @secure
+     */
+    listCaches: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, CacheNamesResponse>({
+        path: `/cache/v1/list`,
         method: "GET",
         query: query,
         secure: true,
@@ -4919,12 +4902,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
+     * @name DashboardDestroySearch
+     * @summary Destroy a running search
+     * @request POST:/dashboard/v1/destroy
+     * @secure
+     */
+    dashboardDestroySearch: (data: DestroySearchRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/dashboard/v1/destroy`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Dashboards
      * @name DownloadDashboardQuery
      * @summary Download a query
      * @request POST:/dashboard/v1/downloadQuery
      * @secure
      */
-    downloadDashboardQuery: (data: DownloadQueryRequest, params: RequestParams = {}) =>
+    downloadDashboardQuery: (data: DashboardSearchRequest, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/dashboard/v1/downloadQuery`,
         method: "POST",
@@ -4991,14 +4993,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name PollDashboardSearchResults
-     * @summary Poll for new search results
-     * @request POST:/dashboard/v1/poll
+     * @name DashboardSearch
+     * @summary Perform a new search or get new results
+     * @request POST:/dashboard/v1/search
      * @secure
      */
-    pollDashboardSearchResults: (data: SearchBusPollRequest, params: RequestParams = {}) =>
-      this.request<any, DashboardSearchResponse[]>({
-        path: `/dashboard/v1/poll`,
+    dashboardSearch: (data: DashboardSearchRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse>({
+        path: `/dashboard/v1/search`,
         method: "POST",
         body: data,
         secure: true,
@@ -6454,6 +6456,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Meta
+     * @name Fetch
+     * @summary Get a meta record for a given id, if permitted.
+     * @request GET:/meta/v1/{id}
+     * @secure
+     */
+    fetch: (id: number, params: RequestParams = {}) =>
+      this.request<any, Meta>({
+        path: `/meta/v1/${id}`,
+        method: "GET",
+        secure: true,
         ...params,
       }),
   };
@@ -8338,14 +8357,33 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Elasticsearch Queries
-     * @name DestroyElasticIndexSearch
+     * @name DestroyElasticIndexQuery
      * @summary Destroy a running query
      * @request POST:/stroom-elastic-index/v2/destroy
      * @secure
      */
-    destroyElasticIndexSearch: (data: QueryKey, params: RequestParams = {}) =>
+    destroyElasticIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/stroom-elastic-index/v2/destroy`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Elasticsearch Queries
+     * @name KeepAliveElasticIndexQuery
+     * @summary Keep a running query alive
+     * @request POST:/stroom-elastic-index/v2/keepAlive
+     * @secure
+     */
+    keepAliveElasticIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/stroom-elastic-index/v2/keepAlive`,
         method: "POST",
         body: data,
         secure: true,
@@ -8576,6 +8614,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     getSystemInfoNames: (params: RequestParams = {}) =>
       this.request<any, string[]>({
         path: `/systemInfo/v1/names`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags System Info
+     * @name GetSystemInfoParams
+     * @summary Gets the parameters for this system info provider
+     * @request GET:/systemInfo/v1/params/{name}
+     * @secure
+     */
+    getSystemInfoParams: (name: string, params: RequestParams = {}) =>
+      this.request<any, ParamInfo[]>({
+        path: `/systemInfo/v1/params/${name}`,
         method: "GET",
         secure: true,
         ...params,

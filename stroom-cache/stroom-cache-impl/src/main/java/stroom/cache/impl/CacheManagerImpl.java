@@ -26,6 +26,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 
 import java.util.Collection;
@@ -82,14 +83,21 @@ public class CacheManagerImpl implements CacheManager {
         }
         if (removalNotificationConsumer != null) {
             final RemovalListener<K, V> removalListener = (key, value, cause) -> {
-                LOGGER.debug(() -> "Removal notification for cache '" +
+                final Supplier<String> messageSupplier = () -> "Removal notification for cache '" +
                         name +
                         "' (key=" +
                         key +
                         ", value=" +
                         value +
                         ", cause=" +
-                        cause + ")");
+                        cause + ")";
+
+                if (cause == RemovalCause.SIZE) {
+                    LOGGER.warn(() -> "Cache reached size limit '" + name + "'");
+                    LOGGER.debug(messageSupplier);
+                } else {
+                    LOGGER.trace(messageSupplier);
+                }
                 removalNotificationConsumer.accept(key, value);
             };
             cacheBuilder.removalListener(removalListener);

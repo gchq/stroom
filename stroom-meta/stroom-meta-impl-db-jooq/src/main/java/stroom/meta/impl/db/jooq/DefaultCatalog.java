@@ -4,10 +4,10 @@
 package stroom.meta.impl.db.jooq;
 
 
+import org.jooq.Constants;
 import org.jooq.Schema;
 import org.jooq.impl.CatalogImpl;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,17 +18,17 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class DefaultCatalog extends CatalogImpl {
 
-    private static final long serialVersionUID = 2027119131;
+    private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code></code>
+     * The reference instance of <code>DEFAULT_CATALOG</code>
      */
     public static final DefaultCatalog DEFAULT_CATALOG = new DefaultCatalog();
 
     /**
      * The schema <code>stroom</code>.
      */
-    public final Stroom STROOM = stroom.meta.impl.db.jooq.Stroom.STROOM;
+    public final Stroom STROOM = Stroom.STROOM;
 
     /**
      * No further instances allowed
@@ -39,13 +39,16 @@ public class DefaultCatalog extends CatalogImpl {
 
     @Override
     public final List<Schema> getSchemas() {
-        List result = new ArrayList();
-        result.addAll(getSchemas0());
-        return result;
+        return Arrays.asList(
+            Stroom.STROOM
+        );
     }
 
-    private final List<Schema> getSchemas0() {
-        return Arrays.<Schema>asList(
-            Stroom.STROOM);
-    }
+    /**
+     * A reference to the 3.16 minor release of the code generator. If this
+     * doesn't compile, it's because the runtime library uses an older minor
+     * release, namely: 3.16. You can turn off the generation of this reference
+     * by specifying /configuration/generator/generate/jooqVersionReference
+     */
+    private static final String REQUIRE_RUNTIME_JOOQ_VERSION = Constants.VERSION_3_16;
 }

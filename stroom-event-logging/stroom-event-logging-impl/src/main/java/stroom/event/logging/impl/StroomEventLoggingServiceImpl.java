@@ -29,6 +29,9 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.ByteSize;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasId;
@@ -58,8 +61,6 @@ import event.logging.SystemDetail;
 import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
 import event.logging.util.DeviceUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -72,6 +73,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -89,7 +91,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     /**
      * Logger - should not be used for event logs
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
 
     private static final String PROCESSING_USER_ID = "INTERNAL_PROCESSING_USER";
     private static final String X_FORWARDED_FOR = "X-FORWARDED-FOR";
@@ -224,20 +226,41 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return copyDevice(storedDevice);
     }
 
-    private Device getClient(final HttpServletRequest request) {
-        Device device = null;
-        if (request != null) {
-            // First try and use the X-FORWARDED-FOR header that provides the originating IP address of the request if
-            // behind a proxy.
-            final String forwardedFor = request.getHeader(X_FORWARDED_FOR);
-            if (forwardedFor != null && !forwardedFor.isBlank()) {
-                device = copyDevice(deviceCache.getDeviceForIpAddress(forwardedFor));
-
+    private Optional<String> getIpFromXForwardedFor(final HttpServletRequest request) {
+        final String forwardedFor = request.getHeader(X_FORWARDED_FOR);
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            final String ip;
+            // X_FORWARD_FOR may contain multiple IPs if it has been through multiple proxies
+            // for example '1.2.3.4, 9.8.7.6'.  We will take the left most (i.e. most distant) one.
+            if (forwardedFor.contains(",")) {
+                ip = forwardedFor.substring(0, forwardedFor.indexOf(","));
             } else {
-                // Either the client is not the other side of a firewall or the X-FORWARDED-FOR header has not been
-                // supplied.
-                device = copyDevice(deviceCache.getDeviceForIpAddress(request.getRemoteAddr()));
+                ip = forwardedFor;
             }
+            LOGGER.debug("{}: [{}], ip: [{}]", X_FORWARDED_FOR, forwardedFor, ip);
+            return Optional.of(ip);
+        } else {
+            LOGGER.debug("{} is empty", X_FORWARDED_FOR);
+            return Optional.empty();
+        }
+    }
+
+    private Device getClient(final HttpServletRequest request) {
+        final Device device;
+        if (request != null) {
+            // First try and use the X-FORWARDED-FOR header that provides the originating
+            // IP address of the request if behind a proxy.
+            final String address = getIpFromXForwardedFor(request)
+                    .orElseGet(request::getRemoteAddr);
+
+            device = copyDevice(deviceCache.getDeviceForIpAddress(address));
+
+            LOGGER.debug(() -> LogUtil.message("Device - (host: {}, ip: {}, mac: {})",
+                    device.getHostName(),
+                    device.getIPAddress(),
+                    device.getMACAddress()));
+        } else {
+            device = null;
         }
         return device;
     }
@@ -263,7 +286,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             }
             obtainedDevice = true;
         }
-
         return storedDevice;
     }
 

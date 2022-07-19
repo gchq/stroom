@@ -18,7 +18,6 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
-import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
@@ -44,7 +43,6 @@ import stroom.processor.impl.ProcessorConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
-import stroom.searchable.impl.SearchableConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -69,7 +67,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.configuration.ConfigurationException;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import io.vavr.Tuple7;
+import io.vavr.Tuple8;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -108,11 +106,12 @@ class TestConfigMapper {
         Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
 
-        List<Tuple7<String, String, String, String, String, String, String>> rows = configProperties.stream()
+        var rows = configProperties.stream()
                 .sorted(Comparator.comparing(ConfigProperty::getName))
                 .map(configProperty ->
                         Tuple.of(
                                 configProperty.getName().toString(),
+                                configProperty.getDataTypeName(),
                                 StringUtils.truncate(configProperty.getDefaultValue().orElse("").toString(), 0, 50),
                                 StringUtils.truncate(configProperty.getDatabaseOverrideValue().getValueOrElse("UNSET",
                                         null), 0, 50),
@@ -124,13 +123,14 @@ class TestConfigMapper {
                 .collect(Collectors.toList());
 
         final String asciiTable = AsciiTable.builder(rows)
-                .withColumn(Column.of("Property Path", Tuple7::_1))
-                .withColumn(Column.of("Default Value", Tuple7::_2))
-                .withColumn(Column.of("DB Override Val", Tuple7::_3))
-                .withColumn(Column.of("Yaml Override Val", Tuple7::_4))
-                .withColumn(Column.of("Effective Val", Tuple7::_5))
-                .withColumn(Column.of("Source", Tuple7::_6))
-                .withColumn(Column.of("Description", Tuple7::_7))
+                .withColumn(Column.of("Property Path", Tuple8::_1))
+                .withColumn(Column.of("Type", Tuple8::_2))
+                .withColumn(Column.of("Default Value", Tuple8::_3))
+                .withColumn(Column.of("DB Override Val", Tuple8::_4))
+                .withColumn(Column.of("Yaml Override Val", Tuple8::_5))
+                .withColumn(Column.of("Effective Val", Tuple8::_6))
+                .withColumn(Column.of("Source", Tuple8::_7))
+                .withColumn(Column.of("Description", Tuple8::_8))
                 .build();
 
         LOGGER.debug("Properties\n{}", asciiTable);
@@ -939,11 +939,9 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PIPELINE) final PipelineConfig pipelineConfig,
                 @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
                 @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
-                @JsonProperty(PROP_NAME_PROXY_AGGREGATION) final ProxyAggregationConfig proxyAggregationConfig,
                 @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                 @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
                 @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
-                @JsonProperty(PROP_NAME_SEARCHABLE) final SearchableConfig searchableConfig,
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                 @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
@@ -998,11 +996,9 @@ class TestConfigMapper {
                     pipelineConfig,
                     processorConfig,
                     propertyServiceConfig,
-                    proxyAggregationConfig,
                     publicUri,
                     receiveDataConfig,
                     searchConfig,
-                    searchableConfig,
                     securityConfig,
                     serviceDiscoveryConfig,
                     sessionCookieConfig,

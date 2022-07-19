@@ -15,6 +15,10 @@ final class PasswordHashUtil {
     }
 
     static boolean checkPassword(final String password, final String passwordHash) {
-        return BCrypt.checkpw(password, passwordHash);
+        if (passwordHash == null) {
+            return false;
+        } else {
+            return BCrypt.checkpw(password, passwordHash);
+        }
     }
 }

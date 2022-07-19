@@ -16,31 +16,34 @@
 
 package stroom.data.client.presenter;
 
-import java.util.ArrayList;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.meta.shared.MetaResource;
+
+import com.google.gwt.core.client.GWT;
+
 import java.util.List;
+import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class DataTypeUiManager {
-//    private List<StreamTypeEntity> streamTypeList = new ArrayList<>();
-//
-//    @Inject
-//    public StreamTypeUiManager(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-//        updateList(Arrays.asList(StreamTypeEntity.initialValues()));
-//
-//        // We can only find out the real list when they are logged in
-//        eventBus.addHandler(CurrentUserChangedEvent.getType(), event -> dispatcher.exec(
-//                new EntityServiceFindAction<FindStreamTypeCriteria, StreamTypeEntity>(new FindStreamTypeCriteria()))
-//                .onSuccess(this::updateList));
-//
-//    }
-//
-//    private void updateList(final List<StreamTypeEntity> list) {
-//        streamTypeList = list;
-//    }
 
-    public List<String> getRawStreamTypeList() {
-        final List<String> rtn = new ArrayList<>();
-        rtn.add("Raw Events");
-        rtn.add("Raw Reference");
-        return rtn;
+    private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
+
+    private final RestFactory restFactory;
+
+    @Inject
+    public DataTypeUiManager(final RestFactory restFactory) {
+        this.restFactory = restFactory;
+    }
+
+    public void getTypes(final Consumer<List<String>> consumer) {
+        final Rest<List<String>> streamTypesRest = restFactory.create();
+        streamTypesRest
+                .onSuccess(consumer::accept)
+                .call(META_RESOURCE)
+                .getTypes();
     }
 }

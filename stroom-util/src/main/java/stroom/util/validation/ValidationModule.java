@@ -16,6 +16,7 @@ import stroom.util.shared.validation.ValidSimpleCronValidator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import javax.inject.Singleton;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
@@ -35,16 +36,22 @@ public class ValidationModule extends AbstractModule {
         // Bind each of our custom validators
         // This decouples the validator impls from the pojos to
         // avoid dragging more libs into gwt land
-        bind(ValidRegexValidator.class).to(ValidRegexValidatorImpl.class);
-        bind(ValidSimpleCronValidator.class).to(ValidSimpleSimpleCronValidatorImpl.class);
+
+        // *******************************************************
+        // IMPORTANT - Any validators bound here MUST be added to
+        // stroom.util.validation.CustomConstraintValidatorFactory
+        // *******************************************************
         bind(IsSubsetOfValidator.class).to(IsSubsetOfValidatorImpl.class);
         bind(IsSupersetOfValidator.class).to(IsSupersetOfValidatorImpl.class);
-        bind(ValidFilePathValidator.class).to(ValidFilePathValidatorImpl.class);
         bind(ValidDirectoryPathValidator.class).to(ValidDirectoryPathValidatorImpl.class);
+        bind(ValidFilePathValidator.class).to(ValidFilePathValidatorImpl.class);
+        bind(ValidRegexValidator.class).to(ValidRegexValidatorImpl.class);
+        bind(ValidSimpleCronValidator.class).to(ValidSimpleSimpleCronValidatorImpl.class);
     }
 
     @SuppressWarnings("unused")
     @Provides
+    @Singleton
     ValidatorFactory getValidatorFactory(final CustomConstraintValidatorFactory customConstraintValidatorFactory) {
 
         // TODO uncomment jackson prop provider when we have Hibernate Validator v6
@@ -62,6 +69,7 @@ public class ValidationModule extends AbstractModule {
 
     @SuppressWarnings("unused")
     @Provides
+    @Singleton
     Validator getValidator(final CustomConstraintValidatorFactory customConstraintValidatorFactory) {
 
         return getValidatorFactory(customConstraintValidatorFactory).getValidator();

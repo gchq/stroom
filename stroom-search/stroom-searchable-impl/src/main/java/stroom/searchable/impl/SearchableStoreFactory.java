@@ -6,6 +6,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
@@ -13,6 +14,7 @@ import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskManager;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -33,20 +35,23 @@ class SearchableStoreFactory implements StoreFactory {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SearchableStoreFactory.class);
 
     private final Executor executor;
+    private final TaskManager taskManager;
     private final TaskContextFactory taskContextFactory;
-    private final SearchableConfig config;
+    private final ResultStoreConfig config;
     private final UiConfig clientConfig;
     private final SearchableProvider searchableProvider;
     private final CoprocessorsFactory coprocessorsFactory;
 
     @Inject
     SearchableStoreFactory(final Executor executor,
+                           final TaskManager taskManager,
                            final TaskContextFactory taskContextFactory,
-                           final SearchableConfig config,
+                           final ResultStoreConfig config,
                            final UiConfig clientConfig,
                            final SearchableProvider searchableProvider,
                            final CoprocessorsFactory coprocessorsFactory) {
         this.executor = executor;
+        this.taskManager = taskManager;
         this.taskContextFactory = taskContextFactory;
         this.config = config;
         this.clientConfig = clientConfig;
@@ -58,10 +63,12 @@ class SearchableStoreFactory implements StoreFactory {
     public Store create(final SearchRequest searchRequest) {
         final DocRef docRef = Preconditions.checkNotNull(
                 Preconditions.checkNotNull(
-                        Preconditions.checkNotNull(searchRequest)
-                                .getQuery())
+                                Preconditions.checkNotNull(searchRequest)
+                                        .getQuery())
                         .getDataSource());
         final Searchable searchable = searchableProvider.get(docRef);
+        Preconditions.checkNotNull(searchable, "Searchable could not be found for uuid " + docRef.getUuid());
+
         final String taskName = SearchableStore.getTaskName(docRef);
 
         return taskContextFactory.contextResult(taskName, taskContext -> {
@@ -105,6 +112,7 @@ class SearchableStoreFactory implements StoreFactory {
                 searchable,
                 taskContextFactory,
                 taskContext,
+                taskManager,
                 searchRequest,
                 executor,
                 coprocessors,

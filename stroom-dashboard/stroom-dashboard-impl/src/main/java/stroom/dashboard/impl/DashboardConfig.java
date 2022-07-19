@@ -14,28 +14,27 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class DashboardConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
-    private final CacheConfig activeQueriesCache;
+    private final CacheConfig applicationInstanceCache;
 
     public DashboardConfig() {
-        activeQueriesCache = CacheConfig.builder()
-                .maximumSize(100L)
-                .expireAfterAccess(StroomDuration.ofMinutes(1))
+        applicationInstanceCache = CacheConfig.builder()
+                .expireAfterAccess(StroomDuration.ofMinutes(5))
                 .build();
     }
 
     @JsonCreator
-    public DashboardConfig(@JsonProperty("activeQueriesCache") final CacheConfig activeQueriesCache) {
-        this.activeQueriesCache = activeQueriesCache;
+    public DashboardConfig(@JsonProperty("applicationInstanceCache") final CacheConfig applicationInstanceCache) {
+        this.applicationInstanceCache = applicationInstanceCache;
     }
 
-    public CacheConfig getActiveQueriesCache() {
-        return activeQueriesCache;
+    public CacheConfig getApplicationInstanceCache() {
+        return applicationInstanceCache;
     }
 
     @Override
     public String toString() {
         return "DashboardConfig{" +
-                "activeQueriesCache=" + activeQueriesCache +
+                "applicationInstanceCache=" + applicationInstanceCache +
                 '}';
     }
 }

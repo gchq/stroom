@@ -59,7 +59,7 @@ public class ElasticAsyncSearchTaskHandler {
                        final Coprocessors coprocessors,
                        final ElasticSearchResultCollector resultCollector) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
-            if (!Thread.currentThread().isInterrupted()) {
+            if (!parentContext.isTerminated()) {
 
                 // Create an async call that will terminate the whole task if the coprocessors decide they have enough
                 // data.

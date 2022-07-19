@@ -19,7 +19,7 @@ import org.jooq.impl.UpdatableRecordImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaRecord extends UpdatableRecordImpl<MetaRecord> implements Record11<Long, Long, Long, Long, Byte, Long, Integer, Integer, Integer, Integer, Long> {
 
-    private static final long serialVersionUID = -1992127086;
+    private static final long serialVersionUID = 1L;
 
     /**
      * Setter for <code>stroom.meta.id</code>.
@@ -462,16 +462,16 @@ public class MetaRecord extends UpdatableRecordImpl<MetaRecord> implements Recor
     public MetaRecord(Long id, Long createTime, Long effectiveTime, Long parentId, Byte status, Long statusTime, Integer feedId, Integer typeId, Integer processorId, Integer processorFilterId, Long processorTaskId) {
         super(Meta.META);
 
-        set(0, id);
-        set(1, createTime);
-        set(2, effectiveTime);
-        set(3, parentId);
-        set(4, status);
-        set(5, statusTime);
-        set(6, feedId);
-        set(7, typeId);
-        set(8, processorId);
-        set(9, processorFilterId);
-        set(10, processorTaskId);
+        setId(id);
+        setCreateTime(createTime);
+        setEffectiveTime(effectiveTime);
+        setParentId(parentId);
+        setStatus(status);
+        setStatusTime(statusTime);
+        setFeedId(feedId);
+        setTypeId(typeId);
+        setProcessorId(processorId);
+        setProcessorFilterId(processorFilterId);
+        setProcessorTaskId(processorTaskId);
     }
 }

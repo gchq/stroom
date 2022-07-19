@@ -16,8 +16,9 @@
 
 package stroom.dashboard.expression.v1;
 
+import java.util.function.Supplier;
+
 final class RoundGenerator extends AbstractSingleChildGenerator {
-    private static final long serialVersionUID = -5360650022530956741L;
 
     private final RoundCalculator calculator;
 
@@ -32,8 +33,8 @@ final class RoundGenerator extends AbstractSingleChildGenerator {
     }
 
     @Override
-    public Val eval() {
-        final Val val = childGenerator.eval();
+    public Val eval(final Supplier<ChildData> childDataSupplier) {
+        final Val val = childGenerator.eval(childDataSupplier);
         if (!val.type().isValue()) {
             return val;
         }

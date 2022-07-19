@@ -28,11 +28,11 @@ public class LogLevelInspector implements HasSystemInfo, HasHealthCheck {
         if (loggerContext != null) {
             Map<String, String> levels = getLogLevels(loggerContext);
 
-            return SystemInfoResult.builder().name(getSystemInfoName())
+            return SystemInfoResult.builder(this)
                     .addDetail("levels", levels)
                     .build();
         } else {
-            return SystemInfoResult.builder().name(getSystemInfoName())
+            return SystemInfoResult.builder(this)
                     .addError("Unable to obtain levels, LoggerContext is null")
                     .build();
         }

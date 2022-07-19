@@ -19,17 +19,19 @@ import org.jooq.impl.UpdatableRecordImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaRetentionTrackerRecord extends UpdatableRecordImpl<MetaRetentionTrackerRecord> implements Record3<String, String, Long> {
 
-    private static final long serialVersionUID = 619300394;
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>stroom.meta_retention_tracker.retention_rules_version</code>.
+     * Setter for
+     * <code>stroom.meta_retention_tracker.retention_rules_version</code>.
      */
     public void setRetentionRulesVersion(String value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>stroom.meta_retention_tracker.retention_rules_version</code>.
+     * Getter for
+     * <code>stroom.meta_retention_tracker.retention_rules_version</code>.
      */
     public String getRetentionRulesVersion() {
         return (String) get(0);
@@ -174,8 +176,8 @@ public class MetaRetentionTrackerRecord extends UpdatableRecordImpl<MetaRetentio
     public MetaRetentionTrackerRecord(String retentionRulesVersion, String ruleAge, Long lastRunTime) {
         super(MetaRetentionTracker.META_RETENTION_TRACKER);
 
-        set(0, retentionRulesVersion);
-        set(1, ruleAge);
-        set(2, lastRunTime);
+        setRetentionRulesVersion(retentionRulesVersion);
+        setRuleAge(ruleAge);
+        setLastRunTime(lastRunTime);
     }
 }

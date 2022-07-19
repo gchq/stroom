@@ -27,10 +27,10 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.util.LambdaLogger;
+import stroom.query.util.LambdaLoggerFactory;
 import stroom.util.concurrent.UncheckedInterruptedException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,10 +41,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 public class FlatResultCreator implements ResultCreator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FlatResultCreator.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FlatResultCreator.class);
 
     private final FieldFormatter fieldFormatter;
     private final List<Mapper> mappers;
@@ -61,7 +62,11 @@ public class FlatResultCreator implements ResultCreator {
                              final Sizes defaultMaxResultsSizes) {
         this.fieldFormatter = fieldFormatter;
 
-        final List<TableSettings> tableSettings = resultRequest.getMappings();
+        // User may have added a vis pane but not defined the vis
+        final List<TableSettings> tableSettings = resultRequest.getMappings()
+                .stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
         if (tableSettings.size() > 1) {
             mappers = new ArrayList<>(tableSettings.size() - 1);
@@ -84,12 +89,22 @@ public class FlatResultCreator implements ResultCreator {
                         errorConsumer));
             }
         } else {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Invalid non-null tableSettings count ({}) for search: {} and componentId: {}",
+                    tableSettings.size(),
+                    queryKey,
+                    componentId));
+            errorConsumer.add(new Throwable(LogUtil.message(
+                    "Component with ID: '{}' has not been configured correctly so will not show any data.",
+                    componentId)));
             mappers = Collections.emptyList();
         }
 
         final TableSettings child = tableSettings.get(tableSettings.size() - 1);
 
-        fields = child.getFields();
+        fields = child != null
+                ? child.getFields()
+                : Collections.emptyList();
     }
 
     private List<Object> toNodeKey(final Map<Integer, List<Field>> groupFields, final Key key) {
@@ -210,9 +225,11 @@ public class FlatResultCreator implements ResultCreator {
                         .build();
 
             } catch (final UncheckedInterruptedException e) {
-                LOGGER.debug(e.getMessage(), e);
+                LOGGER.debug(e::getMessage, e);
             } catch (final Exception e) {
-                LOGGER.error("Error creating result for resultRequest {}", resultRequest.getComponentId(), e);
+                LOGGER.error(() ->
+                        LogUtil.message(
+                                "Error creating result for resultRequest {}", resultRequest.getComponentId()), e);
                 errorConsumer.add(e);
             }
         }
@@ -251,7 +268,7 @@ public class FlatResultCreator implements ResultCreator {
                 // functions where necessary.
                 int i = 0;
                 for (final Field field : fields) {
-                    final Val val = item.getValue(i);
+                    final Val val = item.getValue(i, true);
                     Object result = null;
                     if (val != null) {
                         // Convert all list into fully resolved
@@ -349,7 +366,10 @@ public class FlatResultCreator implements ResultCreator {
 
             // Extract child fields from expressions.
             final FieldIndex childFieldIndex = new FieldIndex();
-            CompiledFields.create(child.getFields(), childFieldIndex, paramMap);
+            final List<Field> childFields = child != null
+                    ? child.getFields()
+                    : Collections.emptyList();
+            CompiledFields.create(childFields, childFieldIndex, paramMap);
 
             // Create the index mapping.
             parentFieldIndices = new int[childFieldIndex.size()];
@@ -361,7 +381,10 @@ public class FlatResultCreator implements ResultCreator {
 
             // Create a set of max result sizes that are determined by the supplied max results or default to integer
             // max value.
-            final Sizes maxResults = Sizes.create(child.getMaxResults(), Integer.MAX_VALUE);
+            final List<Integer> childMaxResults = child != null
+                    ? child.getMaxResults()
+                    : Collections.emptyList();
+            final Sizes maxResults = Sizes.create(childMaxResults, Integer.MAX_VALUE);
             dataStore = dataStoreFactory.create(
                     queryKey,
                     componentId,
@@ -388,7 +411,7 @@ public class FlatResultCreator implements ResultCreator {
                             final int index = parentFieldIndices[i];
                             if (index != -1) {
                                 // TODO : @66 Currently evaluating more values than will be needed.
-                                final Val val = item.getValue(index);
+                                final Val val = item.getValue(index, true);
                                 values[i] = val;
                             }
                         }

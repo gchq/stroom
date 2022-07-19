@@ -16,6 +16,7 @@
 
 package stroom.cache.client.presenter;
 
+import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
@@ -23,8 +24,9 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.util.shared.ResultPage;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.node.client.NodeManager;
+import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.PageResponse;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -32,25 +34,39 @@ import com.google.gwt.cell.client.ButtonCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class CacheListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
+    private final RestFactory restFactory;
+    private final Set<String> allNames = new HashSet<>();
+    private final DelayedUpdate delayedUpdate;
+
     private final MultiSelectionModelImpl<String> selectionModel;
+
+    private Range range;
+    private Consumer<CacheNamesResponse> dataConsumer;
 
     @Inject
     public CacheListPresenter(final EventBus eventBus,
                               final PagerView view,
                               final RestFactory restFactory,
-                              final TooltipPresenter tooltipPresenter) {
+                              final NodeManager nodeManager) {
         super(eventBus, view);
+        this.restFactory = restFactory;
+        this.delayedUpdate = new DelayedUpdate(this::update);
 
         final MyDataGrid<String> dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -79,21 +95,46 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
 
         dataGrid.addEndColumn(new EndColumn<>());
 
-        RestDataProvider<String, ResultPage<String>> dataProvider = new RestDataProvider<String, ResultPage<String>>(
-                eventBus) {
-            @Override
-            protected void exec(final Consumer<ResultPage<String>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
-                final Rest<List<String>> rest = restFactory.create();
-                rest
-                        .onSuccess(list -> {
-                            dataConsumer.accept(new ResultPage<>(list));
-                        })
-                        .onFailure(throwableConsumer)
-                        .call(CACHE_RESOURCE).list();
-            }
-        };
+        final RestDataProvider<String, CacheNamesResponse> dataProvider =
+                new RestDataProvider<String, CacheNamesResponse>(getEventBus()) {
+                    @Override
+                    protected void exec(final Range range,
+                                        final Consumer<CacheNamesResponse> dataConsumer,
+                                        final Consumer<Throwable> throwableConsumer) {
+                        CacheListPresenter.this.range = range;
+                        CacheListPresenter.this.dataConsumer = dataConsumer;
+                        delayedUpdate.reset();
+                        nodeManager.listAllNodes(nodeNames -> fetchNamesForNodes(nodeNames), throwableConsumer);
+                    }
+                };
         dataProvider.addDataDisplay(dataGrid);
+    }
+
+    private void fetchNamesForNodes(final List<String> nodeNames) {
+        for (final String nodeName : nodeNames) {
+            final Rest<CacheNamesResponse> rest = restFactory.create();
+            rest
+                    .onSuccess(response -> {
+                        allNames.addAll(response.getValues());
+                        delayedUpdate.update();
+                    })
+                    .onFailure(throwable -> {
+                        delayedUpdate.update();
+                    })
+                    .call(CACHE_RESOURCE).list(nodeName);
+        }
+    }
+
+    private void update() {
+        final List<String> list = allNames.stream().sorted().collect(Collectors.toList());
+        final long total = list.size();
+        final List<String> trimmed = new ArrayList<>();
+        for (int i = range.getStart(); i < range.getStart() + range.getLength() && i < list.size(); i++) {
+            trimmed.add(list.get(i));
+        }
+        final CacheNamesResponse response = new CacheNamesResponse(trimmed,
+                new PageResponse(range.getStart(), trimmed.size(), total, true));
+        dataConsumer.accept(response);
     }
 
     public MultiSelectionModel<String> getSelectionModel() {

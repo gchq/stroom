@@ -32,6 +32,8 @@ public interface AccountDao {
 
     Account create(Account account, String password);
 
+    Account tryCreate(final Account account, final String password);
+
     Optional<Integer> getId(String userId);
 
     Optional<Account> get(String userId);

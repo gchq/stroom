@@ -43,6 +43,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -72,14 +73,18 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         view.setDataWidget(dataGrid);
 
         criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(eventBus,
-                criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
+                CriteriaUtil.setRange(criteria, range);
                 final Rest<ResultPage<ProcessorTaskSummary>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).findSummary(
-                        criteria);
+                rest
+                        .onSuccess(dataConsumer)
+                        .onFailure(throwableConsumer)
+                        .call(PROCESSOR_TASK_RESOURCE)
+                        .findSummary(criteria);
             }
 
             @Override

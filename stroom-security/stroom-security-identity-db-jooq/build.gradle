@@ -41,11 +41,21 @@ jooq {
                         excludes = 'authentication_schema_version'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
-                        // Treat tinyint(1) columns as booleans
+                        // Treat some tinyint columns as booleans
                         forcedTypes {
                             forcedType {
                                 name = 'BOOLEAN'
-                                types = '(?i:TINYINT\\(1\\))'
+                                includeExpression = '' +
+                                    '.*\\.account\\.force_password_change|' +
+                                    '.*\\.account\\.never_expires|' +
+                                    '.*\\.account\\.enabled|' +
+                                    '.*\\.account\\.inactive|' +
+                                    '.*\\.account\\.locked|' +
+                                    '.*\\.account\\.processing_account|' +
+                                    '.*\\.json_web_key\\.enabled|' +
+                                    '.*\\.token\\.enabled'
+                                // see https://github.com/jOOQ/jOOQ/issues/9405
+                                includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }
                         }
                     }

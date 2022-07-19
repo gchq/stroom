@@ -26,6 +26,7 @@ import stroom.job.shared.JobNodeResource;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
@@ -39,6 +40,7 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -126,10 +128,10 @@ class JobNodeResourceImpl implements JobNodeResource {
                     nodeServiceProvider.get(), nodeName) +
                     ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
             try {
-                final Response response = webTargetFactoryProvider.get()
-                        .create(url)
-                        .queryParam("jobName", jobName)
-                        .queryParam("nodeName", nodeName)
+                WebTarget webTarget = webTargetFactoryProvider.get().create(url);
+                webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
+                webTarget = UriBuilderUtil.addParam(webTarget, "jobName", jobName);
+                final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get();
                 if (response.getStatus() != 200) {
