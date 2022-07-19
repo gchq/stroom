@@ -19,6 +19,7 @@ package stroom.pipeline.refdata.store;
 
 import stroom.bytebuffer.ByteBufferModule;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
+import stroom.job.api.Schedule;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
@@ -45,8 +46,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.CRON;
-
 public class RefDataStoreModule extends AbstractModule {
 
     @Override
@@ -62,8 +61,6 @@ public class RefDataStoreModule extends AbstractModule {
         ValueConsumerBinder.create(binder())
                 .bind(FastInfosetValue.TYPE_ID, FastInfosetValueConsumer.Factory.class)
                 .bind(StringValue.TYPE_ID, StringValueConsumer.Factory.class);
-
-        bind(RefDataStoreFactory.class).asEagerSingleton();
 
         // bind all the reference data off heap tables
         install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));
@@ -86,15 +83,20 @@ public class RefDataStoreModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(RefDataPurge.class, builder -> builder
-                        .name("Ref Data Off-heap Store Purge")
-                        .description("Purge old reference data from the off heap store as configured")
-                        .schedule(CRON, "0 2 *"));
-
+                        .name(RefDataPurge.JOB_NAME)
+                        .description("Purge old and partial reference data loads from the off heap store as " +
+                                "configured by 'purgeAge'.")
+                        .schedule(Schedule.cronSchedule()
+                                .withMinutes(0)
+                                .withHours(2)
+                                .everyDay()
+                                .build()));
     }
 
-    private static class RefDataPurge extends RunnableWrapper {
+    public static class RefDataPurge extends RunnableWrapper {
 
         private static final Logger LOGGER = LoggerFactory.getLogger(RefDataPurge.class);
+        public static final String JOB_NAME = "Ref Data Off-heap Store Purge";
 
         @Inject
         RefDataPurge(final RefDataStoreFactory refDataStoreFactory) {

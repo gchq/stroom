@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public class RefDataProcessingInfoSerde implements
         Serde<RefDataProcessingInfo>,
@@ -98,6 +99,30 @@ public class RefDataProcessingInfoSerde implements
     public static ProcessingState extractProcessingState(final ByteBuffer byteBuffer) {
         byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
         return ProcessingState.fromByte(bState);
+    }
+
+    /**
+     * Creates a predicate that is an OR of the passed states.
+     */
+    public static Predicate<ByteBuffer> createProcessingStatePredicate(final ProcessingState... processingStates) {
+        if (processingStates == null || processingStates.length == 0) {
+            return byteBuffer -> false;
+        } else {
+            final byte[] processingStateIds = new byte[processingStates.length];
+            int i = 0;
+            for (final ProcessingState processingState : processingStates) {
+                processingStateIds[i++] = processingState.getId();
+            }
+            return byteBuffer -> {
+                byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
+                for (final byte processingStateId : processingStateIds) {
+                    if (processingStateId == bState) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+        }
     }
 
     public static long extractLastAccessedTimeMs(final ByteBuffer byteBuffer) {

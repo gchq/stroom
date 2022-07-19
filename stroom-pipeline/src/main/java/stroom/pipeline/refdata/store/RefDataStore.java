@@ -140,6 +140,11 @@ public interface RefDataStore {
 
     StorageType getStorageType();
 
+    /**
+     * @return The size of the store on disk in bytes.
+     */
+    long getSizeOnDisk();
+
     enum StorageType {
         ON_HEAP,
         OFF_HEAP

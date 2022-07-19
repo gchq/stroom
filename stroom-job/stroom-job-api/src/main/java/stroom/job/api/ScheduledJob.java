@@ -109,6 +109,12 @@ public class ScheduledJob {
             return this;
         }
 
+        public Builder schedule(final Schedule schedule) {
+            Objects.requireNonNull(schedule);
+            this.schedule = schedule;
+            return this;
+        }
+
         public Builder name(String name) {
             this.name = name;
             return this;

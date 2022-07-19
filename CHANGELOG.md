@@ -12,7 +12,28 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.13] - 2022-07-19
+
+* Issue **#2969** : Fix search termination for Elastic searches.
+
+* Issue **#2981** : On-heap searches now complete automatically once the table result limit is reached.
+
+* Issue **#2030** : Add stats for reference data and search LMDB off heap store sizes on disk. Requires the import of content pack internal-statistics-sql-v2.2.
+
+* Issue **#2942** : Add `v_fs_volume`, `v_doc`, `v_feed_doc`, `v_index_volume`, `v_job_node`, `v_processor_task` & `v_permission` DB views. Add `id` col to `v_meta` DB view.
+
+* Issue **#2978** : Handle lock wait errors when waiting for bootstrap lock. It now keeps retrying until it gets the lock.
+
+* Issue **#2985** : Add warning when caches evict items due to size constraint.
+
+* Issue **#2987** : Fix search termination.
+
+* Issue **#2984** : Change the purge of partial ref loads to happen as part of the purge job and not on boot.
+
 * Issue **#2977** : Fix to destroy stale searches.
+
+
+## [v7.1-beta.12] - 2022-07-05
 
 * Issue **#2834** : Fix `countGroups` search table expression.
 
@@ -4281,7 +4302,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.13...HEAD
+[v7.1-beta.13]: https://github.com/gchq/stroom/compare/v7.1-beta.12...v7.1-beta.13
 [v7.1-beta.12]: https://github.com/gchq/stroom/compare/v7.1-beta.11...v7.1-beta.12
 [v7.1-beta.11]: https://github.com/gchq/stroom/compare/v7.1-beta.10...v7.1-beta.11
 [v7.1-beta.10]: https://github.com/gchq/stroom/compare/v7.1-beta.9...v7.1-beta.10
