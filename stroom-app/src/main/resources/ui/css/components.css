@@ -1415,8 +1415,8 @@
 .navigation-menu-button {
     display: flex;
     flex-shrink: 0;
-    padding: 8px;
-    margin: 2px;
+    padding: 10px;
+    padding-bottom: 6px;
     background-color: transparent;
     color: var(--navigation__background-color);
 }
