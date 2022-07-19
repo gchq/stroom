@@ -176,7 +176,7 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
                 .map(entry ->
                         Map.of(
                                 "key", mapKeyForSystemInfo(entry.getKey()),
-                                "poolCount", NullSafe.get(entry.getValue(), Collection::size)))
+                                "poolItemCount", NullSafe.get(entry.getValue(), Collection::size)))
                 .collect(Collectors.toList());
 
         final int totalCount = keyMap.values()
