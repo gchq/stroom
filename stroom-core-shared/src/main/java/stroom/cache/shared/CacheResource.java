@@ -42,8 +42,6 @@ public interface CacheResource extends RestResource, DirectRestService {
     String LIST_PATH = BASE_PATH + LIST;
     String INFO = "/info";
     String INFO_PATH = BASE_PATH + INFO;
-    String EVICT = "/evict";
-    String EVICT_PATH = BASE_PATH + EVICT;
 
     @GET
     @Path(LIST)
@@ -66,15 +64,6 @@ public interface CacheResource extends RestResource, DirectRestService {
             summary = "Clears a cache",
             operationId = "clearCache")
     Long clear(
-            @QueryParam("cacheName") String cacheName,
-            @QueryParam("nodeName") String nodeName);
-
-    @DELETE
-    @Path(EVICT)
-    @Operation(
-            summary = "Evicts expired entries from the cache",
-            operationId = "evictExpired")
-    Long evict(
             @QueryParam("cacheName") String cacheName,
             @QueryParam("nodeName") String nodeName);
 }

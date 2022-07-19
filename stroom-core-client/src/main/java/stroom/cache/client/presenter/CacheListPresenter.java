@@ -88,21 +88,6 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
                             .clear(row, null);
                 });
 
-        // Clean up
-        addIconButtonColumn(
-                SvgPresets.of(SvgPresets.CLEAN, "Evict expired entries", true),
-                (row, nativeEvent) -> {
-                    final Rest<Boolean> rest = restFactory.create();
-                    rest
-                            .onSuccess(result -> {
-                                if (cacheUpdateHandler != null) {
-                                    cacheUpdateHandler.accept(row);
-                                }
-                            })
-                            .call(CACHE_RESOURCE)
-                            .evict(row, null);
-                });
-
         // Name
         getView().addResizableColumn(new Column<String, String>(new TextCell()) {
             @Override

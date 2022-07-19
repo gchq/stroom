@@ -72,6 +72,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
     private static final RegExp CASE_CONVERSION_REGEX = RegExp.compile("([a-z])([A-Z])", "g");
     protected static final String CACHE_INFO_KEY_HIT_COUNT = "HitCount";
     protected static final String CACHE_INFO_KEY_MISS_COUNT = "MissCount";
+    protected static final String HIT_RATIO_KEY = "HitRatio";
 
     private final RestFactory restFactory;
     private final TooltipPresenter tooltipPresenter;
@@ -120,19 +121,6 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                             .clear(row.getName(), row.getNodeName());
                 });
 
-        // Clean up
-        addIconButtonColumn(
-                SvgPresets.of(SvgPresets.CLEAN, "Evict expired entries", true),
-                (row, nativeEvent) -> {
-                    final Rest<Boolean> rest = restFactory.create();
-                    rest
-                            .onSuccess(result -> {
-                                dataProvider.refresh();
-                            })
-                            .call(CACHE_RESOURCE)
-                            .evict(row.getName(), row.getNodeName());
-                });
-
         // Node.
         addColumn(new Column<CacheInfo, String>(new TextCell()) {
             @Override
@@ -141,18 +129,24 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
             }
         }, "Node", MEDIUM_COL);
 
-        for (final String cacheInfoKey : cacheInfoKeys.stream().sorted().collect(Collectors.toList())) {
-            final String name = convertUpperCamelToHuman(cacheInfoKey);
-            addStatColumn(name, -1, row -> {
-                String value = row.getMap().get(cacheInfoKey);
-                return formatValue(cacheInfoKey, value);
-            });
-        }
+        final List<String> sortedCacheKeys = new ArrayList<>(cacheInfoKeys);
+        sortedCacheKeys.add(HIT_RATIO_KEY);
+        sortedCacheKeys.sort(Comparator.naturalOrder());
 
-        if (cacheInfoKeys.contains(CACHE_INFO_KEY_HIT_COUNT)
-                && cacheInfoKeys.contains(CACHE_INFO_KEY_MISS_COUNT)) {
-            addStatColumn("Hit Ratio", -1, row ->
-                    getCacheHitRatio(row.getMap()));
+        for (final String cacheInfoKey : sortedCacheKeys) {
+            final String name = convertUpperCamelToHuman(cacheInfoKey);
+
+            if (HIT_RATIO_KEY.equals(cacheInfoKey)
+                    && cacheInfoKeys.contains(CACHE_INFO_KEY_HIT_COUNT)
+                    && cacheInfoKeys.contains(CACHE_INFO_KEY_MISS_COUNT)) {
+                addStatColumn("Hit Ratio", -1, row ->
+                        getCacheHitRatio(row.getMap()));
+            } else {
+                addStatColumn(name, -1, row -> {
+                    String value = row.getMap().get(cacheInfoKey);
+                    return formatValue(cacheInfoKey, value);
+                });
+            }
         }
 
         final EndColumn<CacheInfo> endColumn = new EndColumn<>();
