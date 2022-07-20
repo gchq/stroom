@@ -666,6 +666,59 @@ paths:
       summary: Enable or disable the state of an API key.
       tags:
       - Api Keys
+  /application-instance/v1/keepAlive:
+    post:
+      operationId: applicationInstanceKeepAlive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationInstanceInfo'
+        description: applicationInstanceInfo
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Keep an application instance alive
+      tags:
+      - Application
+  /application-instance/v1/register:
+    get:
+      operationId: applicationInstanceRegister
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationInstanceInfo'
+          description: default response
+      summary: Register a new application instance
+      tags:
+      - Application
+  /application-instance/v1/remove:
+    post:
+      operationId: applicationInstanceRemove
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationInstanceInfo'
+        description: applicationInstanceInfo
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Remove an application instance
+      tags:
+      - Application
   /authentication/v1/needsPasswordChange:
     get:
       operationId: needsPasswordChange
@@ -851,20 +904,6 @@ paths:
       summary: Clears a cache
       tags:
       - Caches
-    get:
-      operationId: listCaches
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-          description: default response
-      summary: Lists caches
-      tags:
-      - Caches
   /cache/v1/info:
     get:
       operationId: getCacheInfo
@@ -885,6 +924,24 @@ paths:
                 $ref: '#/components/schemas/CacheInfoResponse'
           description: default response
       summary: Gets cache info
+      tags:
+      - Caches
+  /cache/v1/list:
+    get:
+      operationId: listCaches
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheNamesResponse'
+          description: default response
+      summary: Lists caches
       tags:
       - Caches
   /cluster/lock/v1/keepALive/{nodeName}:
@@ -1196,6 +1253,26 @@ paths:
       summary: Import content
       tags:
       - Content
+  /dashboard/v1/destroy:
+    post:
+      operationId: dashboardDestroySearch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DestroySearchRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Destroy a running search
+      tags:
+      - Dashboards
   /dashboard/v1/downloadQuery:
     post:
       operationId: downloadDashboardQuery
@@ -1203,7 +1280,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DownloadQueryRequest'
+              $ref: '#/components/schemas/DashboardSearchRequest'
         description: downloadQueryRequest
         required: true
       responses:
@@ -1266,14 +1343,14 @@ paths:
       summary: Fetch all expression functions
       tags:
       - Dashboards
-  /dashboard/v1/poll:
+  /dashboard/v1/search:
     post:
-      operationId: pollDashboardSearchResults
+      operationId: dashboardSearch
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SearchBusPollRequest'
+              $ref: '#/components/schemas/DashboardSearchRequest'
         description: request
         required: true
       responses:
@@ -1281,12 +1358,9 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DashboardSearchResponse'
-                uniqueItems: true
+                $ref: '#/components/schemas/DashboardSearchResponse'
           description: default response
-      summary: Poll for new search results
+      summary: Perform a new search or get new results
       tags:
       - Dashboards
   /dashboard/v1/validateExpression:
@@ -2897,6 +2971,26 @@ paths:
                 format: int32
           description: default response
       summary: Update status on matching meta data
+      tags:
+      - Meta
+  /meta/v1/{id}:
+    get:
+      operationId: fetch
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Meta'
+          description: default response
+      summary: Get a meta record for a given id, if permitted.
       tags:
       - Meta
   /node/v1:
@@ -4964,7 +5058,7 @@ paths:
       - Elasticsearch Queries
   /stroom-elastic-index/v2/destroy:
     post:
-      operationId: destroyElasticIndexSearch
+      operationId: destroyElasticIndexQuery
       requestBody:
         content:
           application/json:
@@ -4980,6 +5074,26 @@ paths:
                 type: boolean
           description: default response
       summary: Destroy a running query
+      tags:
+      - Elasticsearch Queries
+  /stroom-elastic-index/v2/keepAlive:
+    post:
+      operationId: keepAliveElasticIndexQuery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryKey'
+        description: QueryKey
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Keep a running query alive
       tags:
       - Elasticsearch Queries
   /stroom-elastic-index/v2/search:
@@ -5212,6 +5326,27 @@ paths:
                   type: string
           description: default response
       summary: Get all system info result names
+      tags:
+      - System Info
+  /systemInfo/v1/params/{name}:
+    get:
+      operationId: getSystemInfoParams
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParamInfo'
+          description: default response
+      summary: Gets the parameters for this system info provider
       tags:
       - System Info
   /systemInfo/v1/{name}:
@@ -5772,6 +5907,7 @@ components:
             - IS_DOC_REF
             - IS_NULL
             - IS_NOT_NULL
+            - MATCHES_REGEX
         name:
           type: string
         queryable:
@@ -6021,6 +6157,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ApiKey'
+    ApplicationInstanceInfo:
+      type: object
+      properties:
+        createTime:
+          type: integer
+          format: int64
+        userId:
+          type: string
+        uuid:
+          type: string
     Arg:
       type: object
       properties:
@@ -6130,6 +6276,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CacheInfo'
+    CacheNamesResponse:
+      type: object
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            type: string
     ChangeDocumentPermissionsRequest:
       type: object
       properties:
@@ -6568,9 +6723,6 @@ components:
     DashboardDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -6582,9 +6734,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -6594,28 +6743,41 @@ components:
           type: string
         version:
           type: string
-    DashboardQueryKey:
-      type: object
-      properties:
-        componentId:
-          type: string
-        dashboardUuid:
-          type: string
-        uuid:
-          type: string
     DashboardSearchRequest:
       type: object
       properties:
+        applicationInstanceUuid:
+          type: string
+        componentId:
+          type: string
         componentResultRequests:
           type: array
           items:
             $ref: '#/components/schemas/ComponentResultRequest'
-        dashboardQueryKey:
-          $ref: '#/components/schemas/DashboardQueryKey'
+        dashboardUuid:
+          type: string
         dateTimeSettings:
           $ref: '#/components/schemas/DateTimeSettings'
+        queryKey:
+          $ref: '#/components/schemas/QueryKey'
         search:
           $ref: '#/components/schemas/Search'
+        storeHistory:
+          type: boolean
+        timeout:
+          type: integer
+          format: int64
+          description: Set the maximum time (in ms) for the server to wait for a complete
+            result set. The timeout applies to both incremental and non incremental
+            queries, though the behaviour is slightly different. The timeout will
+            make the server wait for which ever comes first out of the query completing
+            or the timeout period being reached. If no value is supplied then for
+            an incremental query a default value of 0 will be used (i.e. returning
+            immediately) and for a non-incremental query the server's default timeout
+            period will be used. For an incremental query, if the query has not completed
+            by the end of the timeout period, it will return the currently know results
+            with complete=false, however for a non-incremental query it will return
+            no results, complete=false and details of the timeout in the error field
     DashboardSearchResponse:
       type: object
       properties:
@@ -6631,7 +6793,7 @@ components:
             type: string
           uniqueItems: true
         queryKey:
-          $ref: '#/components/schemas/DashboardQueryKey'
+          $ref: '#/components/schemas/QueryKey'
         results:
           type: array
           items:
@@ -6736,9 +6898,6 @@ components:
     DataRetentionRules:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -6752,9 +6911,6 @@ components:
             $ref: '#/components/schemas/DataRetentionRule'
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -6841,12 +6997,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    DestroySearchRequest:
+      type: object
+      properties:
+        applicationInstanceUuid:
+          type: string
+        componentId:
+          type: string
+        dashboardUuid:
+          type: string
+        queryKey:
+          $ref: '#/components/schemas/QueryKey'
     DictionaryDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -6864,9 +7028,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -6986,21 +7147,10 @@ components:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractField'
-    DownloadQueryRequest:
-      type: object
-      properties:
-        dashboardQueryKey:
-          $ref: '#/components/schemas/DashboardQueryKey'
-        searchRequest:
-          $ref: '#/components/schemas/DashboardSearchRequest'
     DownloadSearchResultsRequest:
       type: object
       properties:
-        applicationInstanceId:
-          type: string
         componentId:
-          type: string
-        dateTimeLocale:
           type: string
         fileType:
           type: string
@@ -7020,9 +7170,6 @@ components:
       properties:
         connection:
           $ref: '#/components/schemas/ElasticConnectionConfig'
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -7034,9 +7181,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -7076,9 +7220,6 @@ components:
       properties:
         clusterRef:
           $ref: '#/components/schemas/DocRef'
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -7104,9 +7245,6 @@ components:
           format: int32
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -7134,7 +7272,8 @@ components:
           - DOUBLE
           - DATE
           - TEXT
-        stored:
+          - IPV4_ADDRESS
+        indexed:
           type: boolean
     ElasticIndexTestResponse:
       type: object
@@ -7427,6 +7566,7 @@ components:
             - IS_DOC_REF
             - IS_NULL
             - IS_NOT_NULL
+            - MATCHES_REGEX
           docRef:
             $ref: '#/components/schemas/DocRef'
           field:
@@ -7448,9 +7588,6 @@ components:
           type: string
         contextEncoding:
           type: string
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -7477,9 +7614,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -8066,7 +8200,9 @@ components:
           - 406 - 120 - Unexpected data type
           - 406 - 200 - Unknown compression
           - 401 - 300 - Client Certificate Required
+          - 401 - 301 - Client Token Required
           - 403 - 310 - Client Certificate not authorised
+          - 403 - 311 - Client Token not authorised
           - 500 - 400 - Compressed stream invalid
           - 500 - 999 - Unknown error
     GetPipelineForMetaRequest:
@@ -8156,9 +8292,6 @@ components:
     IndexDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -8193,9 +8326,6 @@ components:
           format: int32
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -8387,6 +8517,10 @@ components:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractField'
+    IpV4AddressField:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractField'
     Job:
       type: object
       properties:
@@ -8466,9 +8600,6 @@ components:
     KafkaConfigDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -8482,9 +8613,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -8790,6 +8918,18 @@ components:
       required:
       - key
       - value
+    ParamInfo:
+      type: object
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        paramType:
+          type: string
+          enum:
+          - OPTIONAL
+          - MANDATORY
     PasswordPolicyConfig:
       type: object
       properties:
@@ -8856,9 +8996,6 @@ components:
     PipelineDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -8874,9 +9011,6 @@ components:
           $ref: '#/components/schemas/PipelineData'
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -9425,6 +9559,8 @@ components:
           $ref: '#/components/schemas/ExpressionOperator'
         limits:
           $ref: '#/components/schemas/Limits'
+        params:
+          type: string
       xml:
         name: query
     QueryKey:
@@ -9496,9 +9632,6 @@ components:
     ReceiveDataRules:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -9516,9 +9649,6 @@ components:
             $ref: '#/components/schemas/ReceiveDataRule'
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -9934,9 +10064,6 @@ components:
     ScriptDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -9954,9 +10081,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -9985,8 +10109,6 @@ components:
             $ref: '#/components/schemas/Param'
         queryInfo:
           type: string
-        storeHistory:
-          type: boolean
     SearchAccountRequest:
       type: object
       properties:
@@ -10015,16 +10137,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
-    SearchBusPollRequest:
-      type: object
-      properties:
-        applicationInstanceId:
-          type: string
-        searchRequests:
-          type: array
-          items:
-            $ref: '#/components/schemas/DashboardSearchRequest'
-          uniqueItems: true
     SearchRequest:
       type: object
       description: A request for new search or a follow up request for more data for
@@ -10081,10 +10193,6 @@ components:
           type: array
           items:
             type: string
-            xml:
-              name: error
-          xml:
-            wrapped: true
         highlights:
           type: array
           description: A list of strings to highlight in the UI that should correlate
@@ -10093,20 +10201,15 @@ components:
             type: string
             description: A list of strings to highlight in the UI that should correlate
               with the search query.
-            xml:
-              name: highlight
-          xml:
-            wrapped: true
+        queryKey:
+          $ref: '#/components/schemas/QueryKey'
         results:
           type: array
           items:
             $ref: '#/components/schemas/Result'
-          xml:
-            wrapped: true
       required:
       - highlights
-      xml:
-        name: searchResponse
+      - queryKey
     SelectionIndexShardStatus:
       type: object
       properties:
@@ -10323,9 +10426,6 @@ components:
       properties:
         collection:
           type: string
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -10351,9 +10451,6 @@ components:
           $ref: '#/components/schemas/SolrSynchState'
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -10422,6 +10519,7 @@ components:
             - IS_DOC_REF
             - IS_NULL
             - IS_NOT_NULL
+            - MATCHES_REGEX
         termOffsets:
           type: boolean
         termPayloads:
@@ -10539,9 +10637,6 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/StatisticsDataSourceData'
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -10569,9 +10664,6 @@ components:
           - VALUE
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -10733,9 +10825,6 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -10768,9 +10857,6 @@ components:
           - VALUE
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -11080,9 +11166,6 @@ components:
           - NONE
           - DATA_SPLITTER
           - XML_FRAGMENT
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -11096,9 +11179,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -11196,7 +11276,18 @@ components:
           type: string
         activity:
           $ref: '#/components/schemas/ActivityConfig'
+        applicationInstanceKeepAliveIntervalMs:
+          type: integer
+          format: int32
         defaultMaxResults:
+          type: string
+        helpSubPathExpressions:
+          type: string
+        helpSubPathJobs:
+          type: string
+        helpSubPathProperties:
+          type: string
+        helpSubPathQuickFilter:
           type: string
         helpUrl:
           type: string
@@ -11382,9 +11473,6 @@ components:
     VisualisationDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -11402,9 +11490,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -11442,9 +11527,6 @@ components:
     XmlSchemaDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -11466,9 +11548,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -11481,9 +11560,6 @@ components:
     XsltDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -11497,9 +11573,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
