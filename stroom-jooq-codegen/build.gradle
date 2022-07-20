@@ -1,0 +1,15 @@
+ext.moduleName = 'stroom.jooq.codegen'
+
+dependencies {
+    implementation libs.flyway_core
+    implementation libs.jooq
+    implementation libs.jooq_meta
+    implementation libs.jooq_codegen
+    implementation libs.slf4j_api
+    implementation libs.wix_embedded_mysql
+
+    runtimeOnly libs.log4j_over_slf4j
+    runtimeOnly libs.logback_classic
+    runtimeOnly libs.logback_core
+    runtimeOnly libs.mysql_connector_java
+}

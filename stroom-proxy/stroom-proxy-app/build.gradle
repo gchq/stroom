@@ -118,7 +118,7 @@ clean {
     delete proxyDockerBuildDir
 }
 
-// Generate the confi.yml files for the zip and docker distributions
+// Generate the config.yml files for the zip and docker distributions
 task generateConfigFiles(type: JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = "stroom.proxy.dist.GenerateProxyDistributionConfig"

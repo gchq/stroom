@@ -23,7 +23,7 @@ configurations.all {
     }
 }
 
-// Declare a source set just for our GWT compile that is separate from teh Java compilation source set.
+// Declare a source set just for our GWT compile that is separate from the Java compilation source set.
 sourceSets {
     gwtSource
 }
