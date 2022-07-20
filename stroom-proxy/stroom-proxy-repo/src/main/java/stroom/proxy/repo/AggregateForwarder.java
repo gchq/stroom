@@ -176,10 +176,10 @@ public class AggregateForwarder {
                 error.set(ex.getMessage());
                 LOGGER.warn(() -> "Failed to send to feed " +
                         feedKey.feed() +
-                        " ( " +
+                        " (" +
                         ex.getMessage() +
                         ")");
-                LOGGER.debug(() -> "processFeedFiles() - Debug trace " + info, ex);
+                LOGGER.debug(() -> "Failed to send to feed " + info, ex);
             }
         } else {
             success.set(true);

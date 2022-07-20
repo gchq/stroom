@@ -125,7 +125,7 @@ public class ProxySecurityFilter implements Filter {
 
             if (isApiRequest) {
                 // Allow all event requests through as security is applied elsewhere.
-                if (requestURI.contains("/event/")) {
+                if (requestURI.contains("/event")) {
                     chain.doFilter(request, response);
 
                 } else {
