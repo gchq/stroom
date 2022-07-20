@@ -23,6 +23,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ModelStringUtil;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +33,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -87,14 +89,8 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
                         addEntries(map, cacheHolder.getCache().stats().toString());
 
                         map.forEach((k, v) -> {
-                            if (k.startsWith("Expire")) {
-                                try {
-                                    final long nanos = Long.parseLong(v);
-                                    map.put(k, ModelStringUtil.formatDurationString(nanos / 1000000, true));
-
-                                } catch (final RuntimeException e) {
-                                    // Ignore.
-                                }
+                            if (k.startsWith("Expire") || k.equals("TotalLoadTime")) {
+                                convertNanosToDuration(map, k, v);
                             }
                         });
 
@@ -105,6 +101,19 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
             }
             return list;
         });
+    }
+
+    private void convertNanosToDuration(final Map<String, String> map,
+                                        final String k,
+                                        final String v) {
+        try {
+            final long nanos = Long.parseLong(v);
+            map.put(k, ModelStringUtil.formatDurationString(
+                    nanos / 1_000_000, true));
+
+        } catch (final RuntimeException e) {
+            // Ignore.
+        }
     }
 
     private void addEntries(final Map<String, String> map, String string) {
@@ -163,12 +172,23 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
      */
     @Override
     public Long clear(final FindCacheInfoCriteria criteria) {
+        return doCacheAction(criteria, CacheUtil::clear);
+    }
+
+    @Override
+    public Long evictExpiredElements(final FindCacheInfoCriteria criteria) {
+        return doCacheAction(criteria, Cache::cleanUp);
+    }
+
+    private Long doCacheAction(final FindCacheInfoCriteria criteria,
+                               final Consumer<Cache> cacheAction) {
         final List<CacheInfo> caches = find(criteria);
         for (final CacheInfo cacheInfo : caches) {
             final String cacheName = cacheInfo.getName();
             final CacheHolder cacheHolder = cacheManager.getCaches().get(cacheName);
             if (cacheHolder != null) {
-                CacheUtil.clear(cacheHolder.getCache());
+                final Cache cache = cacheHolder.getCache();
+                cacheAction.accept(cache);
             } else {
                 LOGGER.error("Unable to find cache with name '" + cacheName + "'");
             }

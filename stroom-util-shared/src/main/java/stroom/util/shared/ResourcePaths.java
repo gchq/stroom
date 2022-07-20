@@ -124,19 +124,23 @@ public interface ResourcePaths {
         }
 
         public Builder addPathPart(final String part) {
-            if (!part.startsWith("/")) {
-                pathParts.add("/");
+            if (part != null && !part.isEmpty()) {
+                if (!part.startsWith("/")) {
+                    pathParts.add("/");
+                }
+                pathParts.add(part);
             }
-            pathParts.add(part);
             return this;
         }
 
         public Builder addPathParts(final String... parts) {
             for (String part : parts) {
-                if (!part.startsWith("/")) {
-                    pathParts.add("/");
+                if (part != null && !part.isEmpty()) {
+                    if (!part.startsWith("/")) {
+                        pathParts.add("/");
+                    }
+                    pathParts.add(part);
                 }
-                pathParts.add(part);
             }
             return this;
         }

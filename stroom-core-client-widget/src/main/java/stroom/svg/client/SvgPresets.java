@@ -28,6 +28,7 @@ public final class SvgPresets {
     public static final SvgPreset ALERT = enabled("alert.svg", "Alert");
     public static final SvgPreset ANNOTATE = disabled("edit.svg", "Annotate");
     public static final SvgPreset ANNOTATIONS = enabled("document/AnnotationsIndex.svg", "Annotations");
+    public static final SvgPreset CLEAN = disabled("broom.svg", "Clean");
     public static final SvgPreset CLEAR = disabled("clear.svg", "Clear");
     public static final SvgPreset CLOSE = disabled("close.svg", "Close");
     public static final SvgPreset COPY = disabled("copy.svg", "Copy");

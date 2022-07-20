@@ -242,7 +242,7 @@ capture_params() {
 
     local mandatory_param_details
     mandatory_param_details="$( \
-      grep "MANDATORY" <<<"${param_details}" )"
+      grep "MANDATORY" <<<"${param_details}" || echo "" )"
 
     if [[ -n "${mandatory_param_details}" ]]; then
       echo -e "${GREEN}Mandatory query parametes are required for this system info provider${NC}"
