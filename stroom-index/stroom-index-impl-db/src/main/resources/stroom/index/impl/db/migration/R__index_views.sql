@@ -30,7 +30,6 @@ inner join index_volume_group ivg on iv.fk_index_volume_group_id = ivg.id;
 
 create or replace view v_index_shard as
 select
-xxx,
     s.id index_shard_id,
     s.node_name,
     iv.index_volume_id,
