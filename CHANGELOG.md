@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-alpha.3] - 2022-07-20
+
+* Issue **#2998** : Add feature to receive individual accounting events.
+
+
 ## [v7.1-beta.13] - 2022-07-19
 
 * Issue **#2969** : Fix search termination for Elastic searches.
@@ -4313,7 +4318,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.3...HEAD
+[v7.2-alpha.3]: https://github.com/gchq/stroom/compare/v7.1-beta.13...v7.2-alpha.3
 [v7.2-alpha.2]: https://github.com/gchq/stroom/compare/v7.2-alpha.1...v7.2-alpha.2
 [v7.2-alpha.1]: https://github.com/gchq/stroom/compare/v7.1-beta.9...v7.2-alpha.1
 [v7.1-beta.9]: https://github.com/gchq/stroom/compare/v7.1-beta.8...v7.1-beta.9
