@@ -18,13 +18,18 @@ package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
 import stroom.pipeline.filter.XmlSchemaConfig;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.xmlschema.shared.XmlSchemaDoc;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -74,5 +79,30 @@ class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
     @Override
     public void onChange(final EntityEvent event) {
         clear();
+    }
+
+    @Override
+    Object mapKeyForSystemInfo(final SchemaKey key) {
+        if (key == null) {
+            return null;
+        } else {
+            final FindXMLSchemaCriteria schemaCriteria = key.getFindXMLSchemaCriteria();
+            final Builder<Object, Object> builder = ImmutableMap.builder();
+
+            NullSafe.consume(schemaCriteria,
+                    FindXMLSchemaCriteria::getNamespaceURI,
+                    str -> builder.put("namespaceURI", str));
+            NullSafe.consume(schemaCriteria,
+                    FindXMLSchemaCriteria::getSystemId,
+                    str -> builder.put("systemId", str));
+            NullSafe.consume(schemaCriteria,
+                    FindXMLSchemaCriteria::getSchemaGroup,
+                    str -> builder.put("schemaGroup", str));
+            NullSafe.consume(schemaCriteria,
+                    FindXMLSchemaCriteria::getUser,
+                    str -> builder.put("user", str));
+
+            return builder.build();
+        }
     }
 }

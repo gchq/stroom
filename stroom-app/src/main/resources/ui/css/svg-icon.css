@@ -22,6 +22,9 @@
 .svgIcon-edit {
   background-image: url("../images/edit.svg");
 }
+.svgIcon-clean {
+  background-image: url("../images/clean.svg");
+}
 .svgIcon-clear {
   background-image: url("../images/clear.svg");
 }
