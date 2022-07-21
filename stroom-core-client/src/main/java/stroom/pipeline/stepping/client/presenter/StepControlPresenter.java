@@ -60,8 +60,12 @@ public class StepControlPresenter extends MyPresenterWidget<StepControlPresenter
         StepControlEvent.fire(this, StepType.REFRESH);
     }
 
-    public void setEnabledButtons(final boolean justStepped, final StepType stepType, final boolean tasksSelected,
-                                  final boolean showingData, final boolean foundRecord) {
+    public void setEnabledButtons(final boolean justStepped,
+                                  final StepType stepType,
+                                  final boolean tasksSelected,
+                                  final boolean showingData,
+                                  final boolean foundRecord,
+                                  final boolean hasFatal) {
         if (justStepped) {
             if (stepType == StepType.FIRST) {
                 getView().setStepFirstEnabled(false);
@@ -69,15 +73,15 @@ public class StepControlPresenter extends MyPresenterWidget<StepControlPresenter
                 getView().setStepForwardEnabled(true);
                 getView().setStepLastEnabled(true);
             } else if (stepType == StepType.BACKWARD) {
-                getView().setStepFirstEnabled(foundRecord);
-                getView().setStepBackwardEnabled(foundRecord);
+                getView().setStepFirstEnabled(foundRecord && !hasFatal);
+                getView().setStepBackwardEnabled(foundRecord && !hasFatal);
                 getView().setStepForwardEnabled(true);
                 getView().setStepLastEnabled(true);
             } else if (stepType == StepType.FORWARD) {
                 getView().setStepFirstEnabled(true);
                 getView().setStepBackwardEnabled(true);
-                getView().setStepForwardEnabled(foundRecord);
-                getView().setStepLastEnabled(foundRecord);
+                getView().setStepForwardEnabled(foundRecord && !hasFatal);
+                getView().setStepLastEnabled(foundRecord && !hasFatal);
             } else if (stepType == StepType.LAST) {
                 getView().setStepFirstEnabled(true);
                 getView().setStepBackwardEnabled(true);

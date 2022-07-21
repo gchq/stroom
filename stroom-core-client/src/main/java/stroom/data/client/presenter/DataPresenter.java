@@ -1036,7 +1036,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     : "text");
             final String errorText = String.join("\n", lastResult.getErrors());
             textPresenter.setErrorText(title, errorText);
-            textPresenter.setControlsVisible(false);
+            textPresenter.setControlsVisible(playButtonVisible);
         } else {
             final boolean shouldFormatData = lastResult != null
                     && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
