@@ -1218,7 +1218,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 + childStreamText
                 + displayModeText;
 
-        final String errorText =Stream.concat(
+        final String errorText = Stream.concat(
                         errors != null
                                 ? errors.stream()
                                 : Stream.empty(),
