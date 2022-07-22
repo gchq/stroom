@@ -1,0 +1,54 @@
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-3.17.0.xsd">
+    <logging>WARN</logging>
+
+    <!-- Configure the database connection here -->
+    <jdbc>
+        <driver>com.mysql.cj.jdbc.Driver</driver>
+        <url>jdbc:mysql://localhost:3307/stroom?useUnicode=yes&amp;characterEncoding=UTF-8</url>
+        <user>stroomuser</user>
+        <password>stroompassword1</password>
+    </jdbc>
+
+    <generator>
+        <name>org.jooq.codegen.JavaGenerator</name>
+        <database>
+            <!-- The database dialect from jooq-meta. -->
+            <name>org.jooq.meta.mysql.MySQLDatabase</name>
+            <!-- Add anything you want included in generation below, whitespace ignored
+                 and comments allowed. Each one is a java regex. -->
+            <includes>job|job_node</includes>
+            <!-- We don't want to include flyway versioning -->
+            <excludes>job_schema_history</excludes>
+            <!-- Specify 'version' for use in optimistic concurrency control -->
+            <recordVersionFields>version</recordVersionFields>
+
+            <!-- Treat some tinyint columns as booleans -->
+            <forcedTypes>
+                <forcedType>
+
+                    <!-- Specify any data type that is supported in your database, or if unsupported,
+                         a type from org.jooq.impl.SQLDataType -->
+                    <name>BOOLEAN</name>
+
+                    <!-- A Java regex matching fully-qualified columns, attributes, parameters. Use the pipe to separate several expressions. -->
+                    <includeExpression>.*\.job\.enabled|.*\.job_node\.enabled</includeExpression>
+
+                    <!-- A Java regex matching data types to be forced to have this type.
+
+                         Data types may be reported by your database as:
+                         - NUMBER              regexp suggestion: NUMBER
+                         - NUMBER(5)           regexp suggestion: NUMBER\(5\)
+                         - NUMBER(5, 2)        regexp suggestion: NUMBER\(5,\s*2\)
+                         - any other form.
+
+                         It is thus recommended to use defensive regexes for types. -->
+                    <includeTypes>(?i:tinyint)(\(1\))?</includeTypes>
+                </forcedType>
+            </forcedTypes>
+        </database>
+        <target>
+            <packageName>stroom.job.impl.db.jooq</packageName>
+            <directory>src/main/java</directory>
+        </target>
+    </generator>
+</configuration>

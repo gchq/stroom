@@ -164,7 +164,7 @@ public class JobNode extends TableImpl<JobNodeRecord> {
     private transient Job _job;
 
     /**
-     * Get the implicit join path to the <code>stroom.job</code> table.
+     * Get the implicit join path to the <code>job.job</code> table.
      */
     public Job job() {
         if (_job == null)
