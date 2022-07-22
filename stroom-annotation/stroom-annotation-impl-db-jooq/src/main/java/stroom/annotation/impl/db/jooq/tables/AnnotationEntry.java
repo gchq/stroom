@@ -149,7 +149,8 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
     private transient Annotation _annotation;
 
     /**
-     * Get the implicit join path to the <code>stroom.annotation</code> table.
+     * Get the implicit join path to the <code>annotation.annotation</code>
+     * table.
      */
     public Annotation annotation() {
         if (_annotation == null)

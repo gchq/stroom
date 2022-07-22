@@ -1,0 +1,30 @@
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-3.17.0.xsd">
+    <logging>WARN</logging>
+
+    <!-- Configure the database connection here -->
+    <jdbc>
+        <driver>com.mysql.cj.jdbc.Driver</driver>
+        <url>jdbc:mysql://localhost:3307/stroom?useUnicode=yes&amp;characterEncoding=UTF-8</url>
+        <user>stroomuser</user>
+        <password>stroompassword1</password>
+    </jdbc>
+
+    <generator>
+        <name>org.jooq.codegen.JavaGenerator</name>
+        <database>
+            <!-- The database dialect from jooq-meta. -->
+            <name>org.jooq.meta.mysql.MySQLDatabase</name>
+            <!-- Add anything you want included in generation below, whitespace ignored
+                 and comments allowed. Each one is a java regex. -->
+            <includes>annotation|annotation_data_link|annotation_entry</includes>
+            <!-- We don't want to include flyway versioning -->
+            <excludes>annotation_schema_history</excludes>
+            <!-- Specify 'version' for use in optimistic concurrency control -->
+            <recordVersionFields>version</recordVersionFields>
+        </database>
+        <target>
+            <packageName>stroom.annotation.impl.db.jooq</packageName>
+            <directory>src/main/java</directory>
+        </target>
+    </generator>
+</configuration>
