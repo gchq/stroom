@@ -184,7 +184,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
     private transient IndexVolumeGroup _indexVolumeGroup;
 
     /**
-     * Get the implicit join path to the <code>stroom.index_volume_group</code>
+     * Get the implicit join path to the <code>index.index_volume_group</code>
      * table.
      */
     public IndexVolumeGroup indexVolumeGroup() {
