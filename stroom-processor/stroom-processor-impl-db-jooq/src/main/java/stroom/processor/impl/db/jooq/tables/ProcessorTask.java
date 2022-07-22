@@ -173,7 +173,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
     private transient ProcessorFeed _processorFeed;
 
     /**
-     * Get the implicit join path to the <code>stroom.processor_filter</code>
+     * Get the implicit join path to the <code>processor.processor_filter</code>
      * table.
      */
     public ProcessorFilter processorFilter() {
@@ -184,7 +184,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
     }
 
     /**
-     * Get the implicit join path to the <code>stroom.processor_node</code>
+     * Get the implicit join path to the <code>processor.processor_node</code>
      * table.
      */
     public ProcessorNode processorNode() {
@@ -195,7 +195,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
     }
 
     /**
-     * Get the implicit join path to the <code>stroom.processor_feed</code>
+     * Get the implicit join path to the <code>processor.processor_feed</code>
      * table.
      */
     public ProcessorFeed processorFeed() {
