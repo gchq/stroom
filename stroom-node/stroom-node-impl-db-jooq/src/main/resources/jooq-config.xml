@@ -16,9 +16,9 @@
             <name>org.jooq.meta.mysql.MySQLDatabase</name>
             <!-- Add anything you want included in generation below, whitespace ignored
                  and comments allowed. Each one is a java regex. -->
-            <includes>query</includes>
+            <includes>node</includes>
             <!-- We don't want to include flyway versioning -->
-            <excludes>query_schema_history</excludes>
+            <excludes>node_schema_history</excludes>
             <!-- Specify 'version' for use in optimistic concurrency control -->
             <recordVersionFields>version</recordVersionFields>
 
@@ -31,7 +31,7 @@
                     <name>BOOLEAN</name>
 
                     <!-- A Java regex matching fully-qualified columns, attributes, parameters. Use the pipe to separate several expressions. -->
-                    <includeExpression>.*\.query\.favourite</includeExpression>
+                    <includeExpression>.*\.node\.enabled</includeExpression>
 
                     <!-- A Java regex matching data types to be forced to have this type.
 
@@ -47,7 +47,7 @@
             </forcedTypes>
         </database>
         <target>
-            <packageName>stroom.storedquery.impl.db.jooq</packageName>
+            <packageName>stroom.node.impl.db.jooq</packageName>
             <directory>src/main/java</directory>
         </target>
     </generator>

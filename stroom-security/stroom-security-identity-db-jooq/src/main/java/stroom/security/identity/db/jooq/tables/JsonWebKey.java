@@ -164,7 +164,7 @@ public class JsonWebKey extends TableImpl<JsonWebKeyRecord> {
     private transient TokenType _tokenType;
 
     /**
-     * Get the implicit join path to the <code>stroom.token_type</code> table.
+     * Get the implicit join path to the <code>identity.token_type</code> table.
      */
     public TokenType tokenType() {
         if (_tokenType == null)

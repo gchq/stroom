@@ -165,7 +165,7 @@ public class Token extends TableImpl<TokenRecord> {
     private transient TokenType _tokenType;
 
     /**
-     * Get the implicit join path to the <code>stroom.account</code> table.
+     * Get the implicit join path to the <code>identity.account</code> table.
      */
     public Account account() {
         if (_account == null)
@@ -175,7 +175,7 @@ public class Token extends TableImpl<TokenRecord> {
     }
 
     /**
-     * Get the implicit join path to the <code>stroom.token_type</code> table.
+     * Get the implicit join path to the <code>identity.token_type</code> table.
      */
     public TokenType tokenType() {
         if (_tokenType == null)

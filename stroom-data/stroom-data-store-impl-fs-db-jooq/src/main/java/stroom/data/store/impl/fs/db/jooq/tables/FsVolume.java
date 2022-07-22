@@ -159,7 +159,7 @@ public class FsVolume extends TableImpl<FsVolumeRecord> {
     private transient FsVolumeState _fsVolumeState;
 
     /**
-     * Get the implicit join path to the <code>stroom.fs_volume_state</code>
+     * Get the implicit join path to the <code>data_store.fs_volume_state</code>
      * table.
      */
     public FsVolumeState fsVolumeState() {

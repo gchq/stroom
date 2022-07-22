@@ -41,14 +41,14 @@ public class JooqGenerator {
 
     private static class Config {
 
-        private final String module;
+        private final String schema;
         private final String flywayLocations;
         private final String flywayTable;
 
-        public Config(final String module,
+        public Config(final String schema,
                       final String flywayLocations,
                       final String flywayTable) {
-            this.module = module;
+            this.schema = schema;
             this.flywayLocations = flywayLocations;
             this.flywayTable = flywayTable;
         }
@@ -72,7 +72,7 @@ public class JooqGenerator {
             }
 
             return new Config(
-                    get(map, "module"),
+                    get(map, "schema"),
                     get(map, "flywayLocations"),
                     get(map, "flywayTable"));
         }
@@ -91,7 +91,7 @@ public class JooqGenerator {
             final Config config = Config.parse(args);
 
             //createTestDbName(); //stroom
-            final String dbName = config.module;
+            final String dbName = config.schema;
 
             final ConnectionConfig connectionConfig = createConnectionConfig(dbName);
             final Properties testConnectionProps = getConnectionProperties(connectionConfig);
@@ -99,7 +99,7 @@ public class JooqGenerator {
                     DriverManager.getConnection(connectionConfig.url(), testConnectionProps)) {
                 LOGGER.info("GOT CONNECTION");
                 final DataSource dataSource = new SingleConnectionDataSource(connection);
-                FlywayUtil.migrate(dataSource, config.flywayLocations, config.flywayTable, config.module);
+                FlywayUtil.migrate(dataSource, config.flywayLocations, config.flywayTable, config.schema);
             }
 
             LOGGER.info("READING JOOQ CONFIG");

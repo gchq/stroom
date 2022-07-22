@@ -1,5 +1,3 @@
-//apply plugin: 'nu.studer.jooq'
-
 ext.moduleName = 'stroom.storedquery.impl.db.jooq'
 
 // Declare a source set just for our GWT compile that is separate from the Java compilation source set.
@@ -12,62 +10,7 @@ dependencies {
 
     implementation libs.jakarta_annotation_api
     implementation libs.jooq
-
-//    runtimeOnly libs.mysql_connector_java
-//    jooqGenerator libs.mysql_connector_java
 }
-
-//// Configure jooq plugin to generate code
-//jooq {
-//    version = versions.jooq
-//    edition = nu.studer.gradle.jooq.JooqEdition.OSS  // default (can be omitted)
-//
-//    configurations {
-//        main {  // name of the jOOQ configuration
-//
-//            // Disable JOOQ code generation on build
-//            generateSchemaSourceOnCompilation = false
-//
-//            generationTool {
-//                logging = org.jooq.meta.jaxb.Logging.WARN
-//                jdbc {
-//                    driver = 'com.mysql.cj.jdbc.Driver'
-//                    url = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
-//                    user = 'stroomuser'
-//                    password = 'stroompassword1'
-//                }
-//                generator {
-//                    name = 'org.jooq.codegen.JavaGenerator'
-//                    database {
-//                        name = 'org.jooq.meta.mysql.MySQLDatabase'
-//                        inputSchema = 'stroom'
-//                        // Add anything you want included in generation below, whitespace ignored
-//                        // and comments allowed. Each one is a java regex
-//                        includes = 'query'
-//                        // We don't want to include flyway versioning
-//                        excludes = 'query_schema_history'
-//                        // Specify 'version' for use in optimistic concurrency control
-//                        recordVersionFields = 'version'
-//                        // Treat some tinyint columns as booleans
-//                        forcedTypes {
-//                            forcedType {
-//                                name = 'BOOLEAN'
-//                                includeExpression = '' +
-//                                    '.*\\.query\\.favourite'
-//                                // see https://github.com/jOOQ/jOOQ/issues/9405
-//                                includeTypes = '(?i:tinyint)(\\(1\\))?'
-//                            }
-//                        }
-//                    }
-//                    target {
-//                        packageName = 'stroom.storedquery.impl.db.jooq'
-//                        directory = 'src/main/java'
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
 
 def genJooqSourceDirs = []
 // Add all of the library sources from the gwtSource source set defined above.
@@ -81,10 +24,8 @@ task genJooq(type: JavaExec) {
     }
     mainClass = "stroom.jooq.codegen.JooqGenerator"
     args = [
-            '-module', 'storedquery',
+            '-schema', 'stored_query',
             '-flywayLocations', 'stroom/storedquery/impl/db/migration',
             '-flywayTable', 'query_schema_history'
     ]
 }
-
-//tasks.compileJava.dependsOn(genJooq)

@@ -1,65 +1,31 @@
-apply plugin: 'nu.studer.jooq'
-
 ext.moduleName = 'stroom.data.store.impl.fs.db.jooq'
 
-dependencies {
-    implementation libs.jakarta_annotation_api
-    implementation libs.jooq
-
-    runtimeOnly libs.mysql_connector_java
-    jooqGenerator libs.mysql_connector_java
+// Declare a source set just for our GWT compile that is separate from the Java compilation source set.
+sourceSets {
+    jooqCodeGen
 }
 
-// Configure jooq plugin to generate code
-jooq {
-    version = versions.jooq
-    edition = nu.studer.gradle.jooq.JooqEdition.OSS  // default (can be omitted)
+dependencies {
+    jooqCodeGenImplementation project(':stroom-jooq-codegen')
 
-    configurations {
-        main {  // name of the jOOQ configuration
+    implementation libs.jakarta_annotation_api
+    implementation libs.jooq
+}
 
-            // Disable JOOQ code generation on build
-            generateSchemaSourceOnCompilation = false
+def genJooqSourceDirs = []
+// Add all of the library sources from the gwtSource source set defined above.
+genJooqSourceDirs.addAll(sourceSets.jooqCodeGen.runtimeClasspath)
+genJooqSourceDirs.addAll(sourceSets.main.resources.srcDirs)
 
-            generationTool {
-                logging = org.jooq.meta.jaxb.Logging.WARN
-                jdbc {
-                    driver = 'com.mysql.cj.jdbc.Driver'
-                    url = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
-                    user = 'stroomuser'
-                    password = 'stroompassword1'
-                }
-                generator {
-                    name = 'org.jooq.codegen.JavaGenerator'
-                    database {
-                        name = 'org.jooq.meta.mysql.MySQLDatabase'
-                        inputSchema = 'stroom'
-                        // Add anything you want included in generation below, whitespace ignored
-                        // and comments allowed. Each one is a java regex
-                        includes = 'fs_volume|fs_volume_state|fs_feed_path|fs_type_path|fs_meta_volume'
-                        // We don't want to include flyway versioning
-                        excludes = 'fs_schema_history'
-                        // Specify 'version' for use in optimistic concurrency control
-                        recordVersionFields = 'version'
-
-                        // fs_volume.status is non-boolean tinyint
-
-                        // Treat some tinyint columns as booleans
-                        //forcedTypes {
-                            //forcedType {
-                                //name = 'BOOLEAN'
-                                //includeExpression = ''
-                                //// see https://github.com/jOOQ/jOOQ/issues/9405
-                                //includeTypes = '(?i:tinyint)(\\(1\\))?'
-                            //}
-                        //}
-                    }
-                    target {
-                        packageName = 'stroom.data.store.impl.fs.db.jooq'
-                        directory = 'src/main/java'
-                    }
-                }
-            }
-        }
+task genJooq(type: JavaExec) {
+    dependsOn ':stroom-jooq-codegen:build'
+    classpath {
+        genJooqSourceDirs
     }
+    mainClass = "stroom.jooq.codegen.JooqGenerator"
+    args = [
+            '-schema', 'data_store',
+            '-flywayLocations', 'stroom/data/store/impl/fs/db/migration',
+            '-flywayTable', 'fs_schema_history'
+    ]
 }
