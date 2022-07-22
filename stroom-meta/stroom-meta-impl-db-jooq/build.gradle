@@ -1,4 +1,4 @@
-apply plugin: 'nu.studer.jooq'
+//apply plugin: 'nu.studer.jooq'
 
 ext.moduleName = 'stroom.meta.impl.db.jooq'
 
@@ -80,19 +80,16 @@ genJooqSourceDirs.addAll(sourceSets.jooqCodeGen.runtimeClasspath)
 genJooqSourceDirs.addAll(sourceSets.main.resources.srcDirs)
 
 task genJooq(type: JavaExec) {
+    dependsOn ':stroom-jooq-codegen:build'
     classpath {
         genJooqSourceDirs
     }
     mainClass = "stroom.jooq.codegen.JooqGenerator"
     args = [
-            '-module', 'stroom-meta',
+            '-module', 'meta',
             '-flywayLocations', 'stroom/meta/impl/db/migration',
-            '-flywayTable', 'meta_schema_history',
-            '-includes', 'meta_feed|meta_type|meta_processor|meta|meta_key|meta_val|meta_retention_tracker',
-            '-excludes', 'meta_schema_history',
-            '-packageName', 'stroom.meta.impl.db.jooq',
-            '-directory', 'src/main/java'
+            '-flywayTable', 'meta_schema_history'
     ]
 }
 
-tasks.compileJava.dependsOn(genJooq)
+//tasks.compileJava.dependsOn(genJooq)

@@ -7,16 +7,13 @@ import com.wix.mysql.config.MysqldConfig;
 import com.wix.mysql.distribution.Version;
 import org.jooq.codegen.GenerationTool;
 import org.jooq.meta.jaxb.Configuration;
-import org.jooq.meta.jaxb.Database;
-import org.jooq.meta.jaxb.Generator;
 import org.jooq.meta.jaxb.Jdbc;
-import org.jooq.meta.jaxb.Logging;
-import org.jooq.meta.jaxb.Target;
 import org.jooq.tools.jdbc.SingleConnectionDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +26,7 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 
@@ -41,34 +39,18 @@ public class JooqGenerator {
     private static final String EMBEDDED_MYSQL_DB_USERNAME = "test";
     private static volatile EmbeddedMysql EMBEDDED_MYSQL;
 
-//    private static final String MODULE = "stroom-meta";
-//    private static final String FLYWAY_LOCATIONS = "stroom/meta/impl/db/migration";
-//    private static final String FLYWAY_TABLE = "meta_schema_history";
-
     private static class Config {
 
         private final String module;
         private final String flywayLocations;
         private final String flywayTable;
-        private final String includes;
-        private final String excludes;
-        private final String packageName;
-        private final String directory;
 
         public Config(final String module,
                       final String flywayLocations,
-                      final String flywayTable,
-                      final String includes,
-                      final String excludes,
-                      final String packageName,
-                      final String directory) {
+                      final String flywayTable) {
             this.module = module;
             this.flywayLocations = flywayLocations;
             this.flywayTable = flywayTable;
-            this.includes = includes;
-            this.excludes = excludes;
-            this.packageName = packageName;
-            this.directory = directory;
         }
 
         public static Config parse(final String[] args) throws ParseException {
@@ -92,11 +74,7 @@ public class JooqGenerator {
             return new Config(
                     get(map, "module"),
                     get(map, "flywayLocations"),
-                    get(map, "flywayTable"),
-                    get(map, "includes"),
-                    get(map, "excludes"),
-                    get(map, "packageName"),
-                    get(map, "directory"));
+                    get(map, "flywayTable"));
         }
 
         private static String get(final Map<String, String> map, final String key) throws ParseException {
@@ -111,7 +89,11 @@ public class JooqGenerator {
     public static void main(final String[] args) throws Exception {
         try {
             final Config config = Config.parse(args);
-            final ConnectionConfig connectionConfig = createConnectionConfig();
+
+            //createTestDbName(); //stroom
+            final String dbName = config.module;
+
+            final ConnectionConfig connectionConfig = createConnectionConfig(dbName);
             final Properties testConnectionProps = getConnectionProperties(connectionConfig);
             try (final Connection connection =
                     DriverManager.getConnection(connectionConfig.url(), testConnectionProps)) {
@@ -120,96 +102,157 @@ public class JooqGenerator {
                 FlywayUtil.migrate(dataSource, config.flywayLocations, config.flywayTable, config.module);
             }
 
-            GenerationTool.generate(getJooqConfig(config, connectionConfig));
-
-            EMBEDDED_MYSQL.stop();
-        } catch (final ParseException e) {
-            LOGGER.info("Usage = -module <MODULE> " +
-                    "-flywayLocations <LOCATIONS> " +
-                    "-flywayTable <FLYWAY_TABLE> " +
-                    "-includes <INCLUDES> " +
-                    "-excludes <EXCLUDES> " +
-                    "-packageName <PACKAGE_NAME> " +
-                    "-directory <DIRECTORY>");
-            throw e;
-        }
-    }
-
-    private static Configuration getJooqConfig(final Config config,
-                                               final ConnectionConfig connectionConfig) {
-        return new org.jooq.meta.jaxb.Configuration()
-                .withLogging(Logging.INFO)
-                // Configure the database connection here
-                .withJdbc(new Jdbc()
+            LOGGER.info("READING JOOQ CONFIG");
+            try (final InputStream inputStream =
+                    JooqGenerator.class.getClassLoader().getResourceAsStream("jooq-config.xml")) {
+                final Configuration configuration = GenerationTool.load(inputStream);
+                configuration.withJdbc(new Jdbc()
                         .withDriver(connectionConfig.className())
                         .withUrl(connectionConfig.url())
                         .withUser(connectionConfig.user())
                         .withPassword(connectionConfig.password())
-                )
-                .withGenerator(new Generator()
-                        .withName("org.jooq.codegen.JavaGenerator")
-                        .withDatabase(new Database()
-                                .withName("org.jooq.meta.mysql.MySQLDatabase")
-                                .withInputSchema(connectionConfig.dbName())
-                                // Add anything you want included in generation below, whitespace ignored
-                                // and comments allowed. Each one is a java regex
-                                .withIncludes(config.includes)
-                                // We don't want to include flyway versioning
-                                .withExcludes(config.excludes)
-                                // Specify 'version' for use in optimistic concurrency control
-                                .withRecordVersionFields("version")
-                        )
-                        .withTarget(new Target()
-                                .withPackageName(config.packageName)
-                                .withDirectory(config.directory)
-                        )
                 );
+                final DbUrl url = DbUrl.parse(connectionConfig.url);
+                configuration
+                        .getGenerator()
+                        .getDatabase()
+                        .withInputSchema(url.getDbName())
+//                        .withOutputCatalog("stroom")
+                        .withOutputCatalogToDefault(true)
+                        .withOutputSchema("stroom");
+//                                .setOutputSchemaToDefault(true);
+                GenerationTool.generate(configuration);
+            }
+
+//            EMBEDDED_MYSQL.stop();
+        } catch (final ParseException e) {
+            LOGGER.info("Usage = -module <MODULE> " +
+                    "-flywayLocations <LOCATIONS> " +
+                    "-flywayTable <FLYWAY_TABLE> ");
+            throw e;
+        }
     }
 
-    public static ConnectionConfig createConnectionConfig() throws SQLException {
-        final String dbName = "stroom";
+//    private static Configuration getJooqConfig(final Config config,
+//                                               final ConnectionConfig connectionConfig) {
+//        return new org.jooq.meta.jaxb.Configuration()
+//                .withLogging(Logging.INFO)
+//                // Configure the database connection here
+//                .withJdbc(new Jdbc()
+//                        .withDriver(connectionConfig.className())
+//                        .withUrl(connectionConfig.url())
+//                        .withUser(connectionConfig.user())
+//                        .withPassword(connectionConfig.password())
+//                )
+//                .withGenerator(new Generator()
+//                                .withName("org.jooq.codegen.JavaGenerator")
+//                                .withDatabase(new Database()
+//                                                .withName("org.jooq.meta.mysql.MySQLDatabase")
+//                                                .withInputSchema(connectionConfig.dbName())
+//                                                // Add anything you want included in generation below, whitespace
+//                                                // ignored and comments allowed. Each one is a java regex
+//                                                .withIncludes(config.includes)
+//                                                // We don't want to include flyway versioning
+//                                                .withExcludes(config.excludes)
+//                                                // Specify 'version' for use in optimistic concurrency control
+//                                                .withRecordVersionFields("version")
+//
+//                                                // Treat some tinyint columns as booleans
+//                                                .withForcedTypes(new ForcedType()
+//                                                                .withName("BOOLEAN")
+////                                        .withIncludeExpression(".*favourite")
+//                                                                .withIncludeExpression(".*\\.query\\.favourite")
+//                                                        // see https://github.com/jOOQ/jOOQ/issues/9405
+////                                        .withIncludeTypes("(?i:TINYINT)")
+//                                                )
+//
+//                                )
+//                                .withTarget(new Target()
+//                                        .withPackageName(config.packageName)
+//                                        .withDirectory(config.directory)
+//                                )
+//                );
+//    }
+
+    public static ConnectionConfig createConnectionConfig(final String dbName) throws SQLException {
 
         // Create a merged config using the common db config as a base.
-        final ConnectionConfig connectionConfig = createEmbeddedMySqlInstance(dbName);
+//        final ConnectionConfig connectionConfig = createEmbeddedMySqlInstance(dbName);
+
+
+        final DbUrl dbUrl = DbUrl.parse("jdbc:mysql://localhost:3307?useUnicode=yes&characterEncoding=UTF-8");
+
+        final String rootDbUrlString = DbUrl
+                .builder()
+                .scheme(dbUrl.getScheme())
+                .host(dbUrl.getHost())
+                .port(dbUrl.getPort())
+                .query(dbUrl.getQuery())
+                .build()
+                .toString();
+
         final ConnectionConfig rootConnectionConfig = new ConnectionConfig(
-                connectionConfig.className,
-                connectionConfig.url,
+                "com.mysql.cj.jdbc.Driver",
+                rootDbUrlString,
                 "root",
-                "",
-                connectionConfig.dbName);
+                "my-secret-pw");
+
+        final String userDbUrlString = DbUrl
+                .builder()
+                .scheme(dbUrl.getScheme())
+                .host(dbUrl.getHost())
+                .port(dbUrl.getPort())
+                .dbName(dbName)
+                .query(dbUrl.getQuery())
+                .build()
+                .toString();
+
+        final ConnectionConfig userConnectionConfig = new ConnectionConfig(
+                "com.mysql.cj.jdbc.Driver",
+                userDbUrlString,
+                "stroomuser",
+                "stroompassword1");
+
+        // EMBEDDED
+//        final ConnectionConfig rootConnectionConfig = new ConnectionConfig(
+//                connectionConfig.className,
+//                url,
+//                "root",
+//                "");
 
         // Create new db.
         LOGGER.info("Connecting to DB as root connection with URL: " + rootConnectionConfig.url());
-
         final Properties rootConnectionProps = getConnectionProperties(rootConnectionConfig);
         try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.url(),
                 rootConnectionProps)) {
             try (final Statement statement = connection.createStatement()) {
                 int result = 0;
+                result = statement.executeUpdate("DROP DATABASE IF EXISTS `" + dbName + "`;");
                 result = statement.executeUpdate("CREATE DATABASE `" + dbName +
                         "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
                 result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
-                        connectionConfig.user() + "'@'%' IDENTIFIED BY '" +
-                        connectionConfig.password() + "';");
+                        userConnectionConfig.user() + "'@'%' IDENTIFIED BY '" +
+                        userConnectionConfig.password() + "';");
                 result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
-                        connectionConfig.user() + "'@'%' WITH GRANT OPTION;");
+                        userConnectionConfig.user() + "'@'%' WITH GRANT OPTION;");
             }
         }
 
-        // Create a URL for connecting to the new DB.
-        final String url = DbUrl
-                .builder()
-                .parse(rootConnectionConfig.url())
-                .dbName(dbName)
-                .build()
-                .toString();
+//        // Create a URL for connecting to the new DB.
+//        final String url = DbUrl
+//                .builder()
+//                .parse(rootConnectionConfig.url())
+//                .dbName(dbName)
+//                .build()
+//                .toString();
+//
+//        return new ConnectionConfig(
+//                connectionConfig.className,
+//                url,
+//                connectionConfig.user,
+//                connectionConfig.password);
 
-        return new ConnectionConfig(
-                connectionConfig.className,
-                url,
-                connectionConfig.user,
-                connectionConfig.password,
-                connectionConfig.dbName);
+        return userConnectionConfig;
     }
 
     private static Properties getConnectionProperties(final ConnectionConfig connectionConfig) {
@@ -219,7 +262,7 @@ public class JooqGenerator {
         return properties;
     }
 
-    public static ConnectionConfig createEmbeddedMySqlInstance(final String dbName) {
+    public static ConnectionConfig createEmbeddedMySqlInstance() {
         EmbeddedMysql embeddedMysql = EMBEDDED_MYSQL;
         if (embeddedMysql == null) {
             embeddedMysql = createEmbeddedMysql();
@@ -237,8 +280,7 @@ public class JooqGenerator {
                 DEFAULT_JDBC_DRIVER_CLASS_NAME,
                 url,
                 mysqlConfig.getUsername(),
-                mysqlConfig.getPassword(),
-                dbName);
+                mysqlConfig.getPassword());
     }
 
     private static synchronized EmbeddedMysql createEmbeddedMysql() {
@@ -299,7 +341,17 @@ public class JooqGenerator {
         }
     }
 
-    private record ConnectionConfig(String className, String url, String user, String password, String dbName) {
+    private static String createTestDbName() {
+        String uuid = UUID.randomUUID().toString();
+        int index = uuid.indexOf("-");
+        if (index != -1) {
+            uuid = uuid.substring(0, index);
+        }
+
+        return "test_" + Thread.currentThread().getId() + "_" + uuid;
+    }
+
+    private record ConnectionConfig(String className, String url, String user, String password) {
 
     }
 }

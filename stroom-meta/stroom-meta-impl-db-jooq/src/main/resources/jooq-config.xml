@@ -1,0 +1,83 @@
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-3.17.0.xsd">
+    <logging>WARN</logging>
+
+    <!-- Configure the database connection here -->
+    <jdbc>
+        <driver>com.mysql.cj.jdbc.Driver</driver>
+        <url>jdbc:mysql://localhost:3307/stroom?useUnicode=yes&amp;characterEncoding=UTF-8</url>
+        <user>stroomuser</user>
+        <password>stroompassword1</password>
+    </jdbc>
+
+    <generator>
+        <name>org.jooq.codegen.JavaGenerator</name>
+        <database>
+            <!-- The database dialect from jooq-meta. -->
+            <name>org.jooq.meta.mysql.MySQLDatabase</name>
+
+            <!-- The schema that is used locally as a source for meta information.
+                 This could be your development schema or the production schema, etc
+                 This cannot be combined with the schemata element.
+
+                 If left empty, jOOQ will generate all available schemata. See the
+                 manual's next section to learn how to generate several schemata -->
+<!--            <inputSchema>stroom</inputSchema>-->
+<!--            <outputSchema>stroom</outputSchema>-->
+            <!-- All elements that are generated from your schema (A Java regular expression.
+                 Use the pipe to separate several expressions) Watch out for
+                 case-sensitivity. Depending on your database, this might be
+                 important!
+
+                 You can create case-insensitive regular expressions using this syntax: (?i:expr)
+
+                 Whitespace is ignored and comments are possible.
+                 -->
+            <includes>meta_feed|meta_type|meta_processor|meta|meta_key|meta_val|meta_retention_tracker</includes>
+            <!-- All elements that are excluded from your schema (A Java regular expression.
+                 Use the pipe to separate several expressions). Excludes match before
+                 includes, i.e. excludes have a higher priority -->
+            <excludes>meta_schema_history</excludes>
+
+            <!-- Specify 'version' for use in optimistic concurrency control -->
+            <recordVersionFields>version</recordVersionFields>
+
+            <!-- Treat some tinyint columns as booleans -->
+            <forcedTypes>
+                <forcedType>
+
+                    <!-- Specify any data type that is supported in your database, or if unsupported,
+                         a type from org.jooq.impl.SQLDataType -->
+                    <name>BOOLEAN</name>
+
+                    <!-- A Java regex matching fully-qualified columns, attributes, parameters. Use the pipe to separate several expressions. -->
+                    <includeExpression>.*\.query\.favourite</includeExpression>
+
+                    <!-- A Java regex matching data types to be forced to have this type.
+
+                         Data types may be reported by your database as:
+                         - NUMBER              regexp suggestion: NUMBER
+                         - NUMBER(5)           regexp suggestion: NUMBER\(5\)
+                         - NUMBER(5, 2)        regexp suggestion: NUMBER\(5,\s*2\)
+                         - any other form.
+
+                         It is thus recommended to use defensive regexes for types. -->
+                    <includeTypes>(?i:tinyint)(\(1\))?</includeTypes>
+                </forcedType>
+            </forcedTypes>
+
+        </database>
+
+        <target>
+            <!-- The destination package of your generated classes (within the
+                 destination directory)
+
+                 jOOQ may append the schema name to this package if generating multiple schemas,
+                 e.g. org.jooq.your.packagename.schema1
+                      org.jooq.your.packagename.schema2 -->
+            <packageName>stroom.meta.impl.db.jooq</packageName>
+
+            <!-- The destination directory of your generated classes -->
+            <directory>src/main/java</directory>
+        </target>
+    </generator>
+</configuration>

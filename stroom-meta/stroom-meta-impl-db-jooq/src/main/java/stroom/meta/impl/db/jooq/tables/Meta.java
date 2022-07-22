@@ -168,7 +168,7 @@ public class Meta extends TableImpl<MetaRecord> {
     private transient MetaProcessor _metaProcessor;
 
     /**
-     * Get the implicit join path to the <code>stroom.meta_feed</code> table.
+     * Get the implicit join path to the <code>meta.meta_feed</code> table.
      */
     public MetaFeed metaFeed() {
         if (_metaFeed == null)
@@ -178,7 +178,7 @@ public class Meta extends TableImpl<MetaRecord> {
     }
 
     /**
-     * Get the implicit join path to the <code>stroom.meta_type</code> table.
+     * Get the implicit join path to the <code>meta.meta_type</code> table.
      */
     public MetaType metaType() {
         if (_metaType == null)
@@ -188,8 +188,7 @@ public class Meta extends TableImpl<MetaRecord> {
     }
 
     /**
-     * Get the implicit join path to the <code>stroom.meta_processor</code>
-     * table.
+     * Get the implicit join path to the <code>meta.meta_processor</code> table.
      */
     public MetaProcessor metaProcessor() {
         if (_metaProcessor == null)
