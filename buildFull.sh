@@ -1,4 +1,4 @@
 #!/bin/bash
 
-./gradlew clean build "$@"
+./gradlew clean genJooq build "$@"
 

@@ -104,6 +104,7 @@ main() {
     --stacktrace \
     -PdumpFailedTestXml=true \
     -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
+    genJooq \
     build \
     "${test_args[@]}" \
     -x shadowJar \
