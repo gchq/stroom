@@ -70,7 +70,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 10000 ],
       "showDetail" : false,
@@ -148,7 +148,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 10000 ],
       "showDetail" : false,
@@ -226,7 +226,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 10000 ],
       "showDetail" : false,
@@ -304,7 +304,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 10000 ],
       "showDetail" : false,
@@ -382,7 +382,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 10000 ],
       "showDetail" : false,
@@ -460,7 +460,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 10000 ],
       "showDetail" : false,
@@ -513,7 +513,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 1000000 ],
       "showDetail" : false,
@@ -566,7 +566,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 1000000 ],
       "showDetail" : false,
@@ -619,7 +619,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 1000000 ],
       "showDetail" : false,
@@ -672,7 +672,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 1000000 ],
       "showDetail" : false,
@@ -725,7 +725,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 1000000 ],
       "showDetail" : false,
@@ -778,7 +778,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 1000000 ],
       "showDetail" : false,
