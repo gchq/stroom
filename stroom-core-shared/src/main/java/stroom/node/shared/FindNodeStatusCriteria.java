@@ -22,4 +22,9 @@ public class FindNodeStatusCriteria extends BaseCriteria {
                                   @JsonProperty("sortList") final List<CriteriaFieldSort> sortList) {
         super(pageRequest, sortList);
     }
+
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }

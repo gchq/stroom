@@ -116,23 +116,24 @@ public final class CompareUtil {
 
         Objects.requireNonNull(fieldComparatorsMap);
         Objects.requireNonNull(criteria);
-        Objects.requireNonNull(criteria.getSortList());
 
         Comparator<T> comparator = Comparator.comparingInt(dbTableStatus -> 1);
 
-        for (final CriteriaFieldSort sort : criteria.getSortList()) {
-            final String field = sort.getId();
+        if (criteria.getSortList() != null) {
+            for (final CriteriaFieldSort sort : criteria.getSortList()) {
+                final String field = sort.getId();
 
-            Comparator<T> fieldComparator = fieldComparatorsMap.get(field);
+                Comparator<T> fieldComparator = fieldComparatorsMap.get(field);
 
-            Objects.requireNonNull(fieldComparator, () ->
-                    "Missing comparator for field " + field);
+                Objects.requireNonNull(fieldComparator, () ->
+                        "Missing comparator for field " + field);
 
-            if (sort.isDesc()) {
-                fieldComparator = fieldComparator.reversed();
+                if (sort.isDesc()) {
+                    fieldComparator = fieldComparator.reversed();
+                }
+
+                comparator = comparator.thenComparing(fieldComparator);
             }
-
-            comparator = comparator.thenComparing(fieldComparator);
         }
         return comparator;
     }

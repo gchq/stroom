@@ -32,6 +32,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.StringCriteria;
 
@@ -41,6 +42,7 @@ import event.logging.Query;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -56,6 +58,16 @@ class NodeResourceImpl implements NodeResource {
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<ClusterNodeManager> clusterNodeManagerProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
+
+    private static final Map<String, Comparator<Node>> FIELD_COMPARATORS = Map.of(
+            "Name",
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Node::getName),
+            "URL",
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Node::getUrl),
+            "Priority",
+            Comparator.comparing(Node::getPriority),
+            "Enabled",
+            Comparator.comparing(Node::isEnabled));
 
     @Inject
     NodeResourceImpl(final Provider<NodeServiceImpl> nodeServiceProvider,
@@ -127,8 +139,11 @@ class NodeResourceImpl implements NodeResource {
             final ClusterState clusterState = clusterNodeManagerProvider.get().getClusterState();
             final String masterNodeName = clusterState.getMasterNodeName();
 
+            final Comparator<Node> comparator = CompareUtil.buildCriteriaComparator(
+                    FIELD_COMPARATORS, findNodeStatusCriteria);
+
             final List<NodeStatusResult> resultList = nodes.stream()
-                    .sorted(Comparator.comparing(Node::getName))
+                    .sorted(comparator)
                     .map(node ->
                             new NodeStatusResult(node, node.getName().equals(masterNodeName)))
                     .collect(Collectors.toList());
