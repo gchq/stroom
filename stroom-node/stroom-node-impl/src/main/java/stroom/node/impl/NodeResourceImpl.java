@@ -124,13 +124,17 @@ class NodeResourceImpl implements NodeResource {
 
         final String typeId = StroomEventLoggingUtil.buildTypeId(this, "find");
         try {
-            final FindNodeCriteria findNodeCriteria = findNodeStatusCriteria != null
-                    ? new FindNodeCriteria(
-                    findNodeStatusCriteria.getPageRequest(),
-                    findNodeStatusCriteria.getSortList(),
-                    new StringCriteria(),
-                    null)
-                    : new FindNodeCriteria();
+            final FindNodeCriteria findNodeCriteria;
+
+            if (findNodeStatusCriteria != null) {
+                findNodeCriteria = new FindNodeCriteria(
+                        findNodeStatusCriteria.getPageRequest(),
+                        findNodeStatusCriteria.getSortList(),
+                        new StringCriteria(),
+                        null);
+            } else {
+                findNodeCriteria = new FindNodeCriteria();
+            }
 
             final List<Node> nodes = nodeServiceProvider.get()
                     .find(findNodeCriteria)

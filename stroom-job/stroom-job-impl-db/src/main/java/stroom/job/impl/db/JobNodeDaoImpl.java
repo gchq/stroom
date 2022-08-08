@@ -2,9 +2,9 @@ package stroom.job.impl.db;
 
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
-import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.impl.JobNodeDao;
 import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
+import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;

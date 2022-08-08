@@ -61,7 +61,9 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Finds job nodes matching criteria and sort order",
             operationId = "findJobNodes")
-    ResultPage<JobNode> find(@Parameter(description = "findJobNodeCriteria", required = true) final FindJobNodeCriteria findJobNodeCriteria);
+    ResultPage<JobNode> find(
+            @Parameter(description = "findJobNodeCriteria",
+                    required = true) final FindJobNodeCriteria findJobNodeCriteria);
 
     @GET
     @Path(INFO_PATH_PART)
