@@ -37,7 +37,6 @@ select
     iv.node_name volume_node_name,
     iv.index_volume_group_id,
     iv.index_volume_group_name,
-    s.old_index_id,
     s.index_uuid,
     s.commit_document_count,
     s.commit_duration_ms,

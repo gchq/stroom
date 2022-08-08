@@ -12,6 +12,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.1] - 2022-07-20
+
+* Add system info for pool caches, e.g. XSLT pool cache.
+
+* Add button on Caches screen to evict expired entries. Move cache stats from info icon to table columns. Add Hit ratio figure.
+
+* Issue **#2995** : Remove old_index_id column from v_index_shard view. Remove unused old_index_id column from index_shard table (if it exists).
+
+* Add system info for listing keys of a named cache.
+
+* Issue **#2997** : Stop other nodes booting if migration fails on the first node.
+
+
 ## [v7.0.0] - 2022-07-18
 
 * Issue **#2030** : Add stats for reference data and search LMDB off heap store sizes on disk. Requires the import of content pack internal-statistics-sql-v2.2.
@@ -4535,7 +4548,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.1...HEAD
+[v7.0.1]: https://github.com/gchq/stroom/compare/v7.0.0...v7.0.1
 [v7.0.0]: https://github.com/gchq/stroom/compare/v7.0-beta.218...v7.0.0
 [v7.0-beta.218]: https://github.com/gchq/stroom/compare/v7.0-beta.217...v7.0-beta.218
 [v7.0-beta.217]: https://github.com/gchq/stroom/compare/v7.0-beta.216...v7.0-beta.217

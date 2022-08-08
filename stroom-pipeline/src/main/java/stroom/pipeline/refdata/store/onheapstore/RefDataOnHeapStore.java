@@ -40,7 +40,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * A heap based implementation of the {@link RefDataStore}
  * that is intended for use with reference data with a very short life, i.e. context
  * data that is transient and only required for the life of a single pipeline processor
- * task. As such is is not thread safe and only intended to be used to by a single thread.
+ * task. As such it is not thread safe and only intended to be used to by a single thread.
  * It also does not support purge operations as it is expected that the store will be created,
  * populated, used, then destroyed when no longer needed.
  */
@@ -79,8 +79,9 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
 
     @Override
     public Optional<ProcessingState> getLoadState(final RefStreamDefinition refStreamDefinition) {
-        Optional<ProcessingState> optProcessingState = Optional.ofNullable(processingInfoMap.get(refStreamDefinition))
-                .map(RefDataProcessingInfo::getProcessingState);
+        final Optional<ProcessingState> optProcessingState =
+                Optional.ofNullable(processingInfoMap.get(refStreamDefinition))
+                        .map(RefDataProcessingInfo::getProcessingState);
         LOGGER.trace("isDataLoaded({}) returning {}", refStreamDefinition, optProcessingState);
         return optProcessingState;
     }

@@ -724,7 +724,7 @@ class TestSearchResultCreation {
                 .extractValues(true)
                 .extractionPipeline(new DocRef("Pipeline",
                         "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-                        "Example extraction"))
+                        "Example Extraction"))
                 .addMaxResults(1000000)
                 .build();
     }
@@ -817,7 +817,7 @@ class TestSearchResultCreation {
                 .extractValues(true)
                 .extractionPipeline(new DocRef("Pipeline",
                         "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-                        "Example extraction"))
+                        "Example Extraction"))
                 .addMaxResults(1000000)
                 .build();
     }
