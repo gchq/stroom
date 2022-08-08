@@ -43,6 +43,7 @@ public interface NodeResource extends RestResource, DirectRestService {
     String BASE_PATH = "/node" + ResourcePaths.V1;
     String PING_PATH_PART = "/ping";
     String INFO_PATH_PART = "/info";
+    String FIND_PATH_PART = "/find";
     String PRIORITY_PATH_PART = "/priority";
     String ENABLED_PATH_PART = "/enabled";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
@@ -69,7 +70,7 @@ public interface NodeResource extends RestResource, DirectRestService {
     List<String> listEnabledNodes();
 
     @POST
-    @Path("/find")
+    @Path(FIND_PATH_PART)
     @Operation(
             summary = "Finds nodes matching criteria and sort order",
             operationId = "findNodes")

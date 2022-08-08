@@ -7,6 +7,7 @@ import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
+import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
@@ -48,7 +49,7 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
     void list() {
         initNodes();
 
-        final String subPath = "";
+        final String subPath = ResourcePaths.buildPath(NodeResource.FIND_PATH_PART);;
 
         final FetchNodeStatusResponse expectedResponse = getTestNodes().stream()
                 .map(testNode -> {
@@ -59,8 +60,11 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
                 })
                 .collect(FetchNodeStatusResponse.collector(FetchNodeStatusResponse::new));
 
-        doGetTest(
+        FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
+
+        doPostTest(
                 subPath,
+                findNodeStatusCriteria,
                 FetchNodeStatusResponse.class,
                 expectedResponse);
     }
