@@ -109,7 +109,7 @@ public abstract class RollingDestination implements Destination {
 
         // If we haven't written yet then create the output stream and
         // write a header if we have one.
-        if (header != null && header.length > 0 && outputStream != null && outputStream.getCount() == 0) {
+        if (header != null && header.length > 0 && outputStream != null && outputStream.isEmpty()) {
             // Write the header.
             write(header);
         }
@@ -178,7 +178,7 @@ public abstract class RollingDestination implements Destination {
         beforeRoll(exceptions::add);
 
         // If we have written any data then write a footer if we have one.
-        if (footer != null && footer.length > 0 && outputStream != null && outputStream.getCount() > 0) {
+        if (footer != null && footer.length > 0 && outputStream != null && !outputStream.isEmpty()) {
             // Write the footer.
             try {
                 write(footer);

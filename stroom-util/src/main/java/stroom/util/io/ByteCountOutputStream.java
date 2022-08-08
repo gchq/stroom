@@ -18,11 +18,13 @@ package stroom.util.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class ByteCountOutputStream extends WrappedOutputStream {
 
     private final AtomicLong count = new AtomicLong();
+    private final AtomicBoolean isEmpty = new AtomicBoolean(true);
 
     public ByteCountOutputStream(final OutputStream outputStream) {
         super(outputStream);
@@ -31,22 +33,29 @@ public class ByteCountOutputStream extends WrappedOutputStream {
     @Override
     public void write(final int b) throws IOException {
         count.incrementAndGet();
+        isEmpty.set(false);
         super.write(b);
     }
 
     @Override
     public void write(final byte[] b) throws IOException {
         count.addAndGet(b.length);
+        isEmpty.set(false);
         super.write(b);
     }
 
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
         count.addAndGet(len);
+        isEmpty.set(false);
         super.write(b, off, len);
     }
 
     public long getCount() {
         return count.get();
+    }
+
+    public boolean isEmpty() {
+        return isEmpty.get();
     }
 }
