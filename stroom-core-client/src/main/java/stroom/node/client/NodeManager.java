@@ -30,7 +30,6 @@ public class NodeManager {
                                 final Consumer<Throwable> throwableConsumer,
                                 final FindNodeStatusCriteria findNodeStatusCriteria) {
         final Rest<FetchNodeStatusResponse> rest = restFactory.create();
-        GWT.log("findNodeStatusCriteria: " + findNodeStatusCriteria);
         rest
                 .onSuccess(dataConsumer)
                 .onFailure(throwableConsumer)

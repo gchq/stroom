@@ -13,6 +13,11 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FindNodeStatusCriteria extends BaseCriteria {
 
+    public static final String FIELD_ID_NAME = "Name";
+    public static final String FIELD_ID_URL = "URL";
+    public static final String FIELD_ID_PRIORITY = "Priority";
+    public static final String FIELD_ID_ENABLED = "Enabled";
+
     public FindNodeStatusCriteria() {
         super();
     }

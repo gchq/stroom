@@ -130,7 +130,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         // Name.
         final Column<NodeStatusResult, String> nameColumn = new OrderByColumn<NodeStatusResult, String>(
                 new TextCell(),
-                "Name",
+                FindNodeStatusCriteria.FIELD_ID_NAME,
                 true) {
             @Override
             public String getValue(final NodeStatusResult row) {
@@ -146,7 +146,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         // Host Name.
         final Column<NodeStatusResult, String> hostNameColumn = new OrderByColumn<NodeStatusResult, String>(
                 new TextCell(),
-                "URL",
+                FindNodeStatusCriteria.FIELD_ID_URL,
                 true) {
             @Override
             public String getValue(final NodeStatusResult row) {
@@ -231,7 +231,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         // Priority.
         final Column<NodeStatusResult, Number> priorityColumn = new OrderByColumn<NodeStatusResult, Number>(
                 new ValueSpinnerCell(1, 100),
-                "Priority",
+                FindNodeStatusCriteria.FIELD_ID_PRIORITY,
                 true) {
             @Override
             public Number getValue(final NodeStatusResult row) {
@@ -246,12 +246,12 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                         row.getNode().getName(),
                         value.intValue(),
                         result -> refresh()));
-        getView().addColumn(priorityColumn, "Priority", 55);
+        getView().addColumn(priorityColumn, "Priority", 75);
 
         // Enabled
         final Column<NodeStatusResult, TickBoxState> enabledColumn = new OrderByColumn<NodeStatusResult, TickBoxState>(
                 TickBoxCell.create(false, false),
-                "Enabled",
+                FindNodeStatusCriteria.FIELD_ID_ENABLED,
                 true) {
             @Override
             public TickBoxState getValue(final NodeStatusResult row) {
@@ -268,7 +268,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                         value.toBoolean(),
                         result -> refresh()));
 
-        getView().addColumn(enabledColumn, "Enabled", 60);
+        getView().addColumn(enabledColumn, "Enabled", 70);
 
         getView().addEndColumn(new EndColumn<>());
     }

@@ -60,13 +60,13 @@ class NodeResourceImpl implements NodeResource {
     private final Provider<DocumentEventLog> documentEventLogProvider;
 
     private static final Map<String, Comparator<Node>> FIELD_COMPARATORS = Map.of(
-            "Name",
+            FindNodeStatusCriteria.FIELD_ID_NAME,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Node::getName),
-            "URL",
+            FindNodeStatusCriteria.FIELD_ID_URL,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Node::getUrl),
-            "Priority",
+            FindNodeStatusCriteria.FIELD_ID_PRIORITY,
             Comparator.comparing(Node::getPriority),
-            "Enabled",
+            FindNodeStatusCriteria.FIELD_ID_ENABLED,
             Comparator.comparing(Node::isEnabled));
 
     @Inject
@@ -140,7 +140,7 @@ class NodeResourceImpl implements NodeResource {
             final String masterNodeName = clusterState.getMasterNodeName();
 
             final Comparator<Node> comparator = CompareUtil.buildCriteriaComparator(
-                    FIELD_COMPARATORS, findNodeStatusCriteria);
+                    FIELD_COMPARATORS, findNodeStatusCriteria, FindNodeStatusCriteria.FIELD_ID_NAME);
 
             final List<NodeStatusResult> resultList = nodes.stream()
                     .sorted(comparator)

@@ -71,7 +71,7 @@ public interface NodeResource extends RestResource, DirectRestService {
     @POST
     @Path("/find")
     @Operation(
-            summary = "Lists nodes",
+            summary = "Finds nodes matching criteria and sort order",
             operationId = "findNodes")
     FetchNodeStatusResponse find(@Parameter(description = "findNodeStatusCriteria", required = true)
                                  final FindNodeStatusCriteria findNodeStatusCriteria);
