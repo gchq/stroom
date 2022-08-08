@@ -47,6 +47,7 @@ import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
@@ -125,6 +126,7 @@ public class DataFetcher {
     private final Provider<MetaDataHolder> metaDataHolderProvider;
     private final Provider<PipelineHolder> pipelineHolderProvider;
     private final Provider<MetaHolder> metaHolderProvider;
+    private final Provider<CurrentUserHolder> currentUserHolderProvider;
     private final PipelineStore pipelineStore;
     private final Provider<PipelineFactory> pipelineFactoryProvider;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
@@ -151,6 +153,7 @@ public class DataFetcher {
                 final Provider<MetaDataHolder> metaDataHolderProvider,
                 final Provider<PipelineHolder> pipelineHolderProvider,
                 final Provider<MetaHolder> metaHolderProvider,
+                final Provider<CurrentUserHolder> currentUserHolderProvider,
                 final PipelineStore pipelineStore,
                 final Provider<PipelineFactory> pipelineFactoryProvider,
                 final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
@@ -165,6 +168,7 @@ public class DataFetcher {
         this.metaDataHolderProvider = metaDataHolderProvider;
         this.pipelineHolderProvider = pipelineHolderProvider;
         this.metaHolderProvider = metaHolderProvider;
+        this.currentUserHolderProvider = currentUserHolderProvider;
         this.pipelineStore = pipelineStore;
         this.pipelineFactoryProvider = pipelineFactoryProvider;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
@@ -1071,6 +1075,8 @@ public class DataFetcher {
                 final MetaHolder metaHolder = metaHolderProvider.get();
                 final PipelineFactory pipelineFactory = pipelineFactoryProvider.get();
                 final ErrorReceiverProxy errorReceiverProxy = errorReceiverProxyProvider.get();
+                currentUserHolderProvider.get()
+                        .setCurrentUser(securityContext.getUserId());
 
                 final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
                 errorReceiverProxy.setErrorReceiver(errorReceiver);
