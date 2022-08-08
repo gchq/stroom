@@ -4,6 +4,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
+import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.NodeResource;
 
 import com.google.gwt.core.client.GWT;
@@ -26,13 +27,14 @@ public class NodeManager {
     }
 
     public void fetchNodeStatus(final Consumer<FetchNodeStatusResponse> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<Throwable> throwableConsumer,
+                                final FindNodeStatusCriteria findNodeStatusCriteria) {
         final Rest<FetchNodeStatusResponse> rest = restFactory.create();
         rest
                 .onSuccess(dataConsumer)
                 .onFailure(throwableConsumer)
                 .call(NODE_RESOURCE)
-                .find();
+                .find(findNodeStatusCriteria);
     }
 
     public void ping(final String nodeName,

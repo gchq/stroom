@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.job.impl;
+package stroom.job.shared;
 
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
@@ -34,7 +34,10 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class FindJobNodeCriteria extends BaseCriteria {
 
-    public static final String FIELD_ID = "Id";
+    public static final String FIELD_ID_ID = "Id";
+    public static final String FIELD_ID_ENABLED = "Enabled";
+    public static final String FIELD_ID_NODE = "Node";
+    public static final String FIELD_ID_LAST_EXECUTED = "Last Executed";
 
     @JsonProperty
     private final StringCriteria jobName;
