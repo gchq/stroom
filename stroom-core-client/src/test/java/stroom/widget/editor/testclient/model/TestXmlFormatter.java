@@ -147,7 +147,7 @@ class TestXmlFormatter {
     void testXml4() {
         testString("""
                 <?xml version="1.0" encoding="UTF-8"?>
-                
+
                 <!-- comment -->""", true);
     }
 
@@ -163,25 +163,25 @@ class TestXmlFormatter {
     @Test
     void testXml6() {
         testString("""
-                  <a />""", true);
+                <a />""", true);
     }
 
     @Test
     void testXml7() {
         testString("""
-                  <a attr="x">xxx</a>""", true);
+                <a attr="x">xxx</a>""", true);
     }
 
     @Test
     void testXml8() {
         testString("""
-                  <a attr="x"></a>""", true);
+                <a attr="x"></a>""", true);
     }
 
     @Test
     void testXml9() {
         testString("""
-                  <z:a attr="x" />""", true);
+                <z:a attr="x" />""", true);
     }
 
     private void testFile(final String name) {
