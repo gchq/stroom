@@ -16,6 +16,8 @@
 
 package stroom.editor.client.model;
 
+import com.google.gwt.regexp.shared.RegExp;
+
 import java.util.Objects;
 
 /**
@@ -31,6 +33,14 @@ public class XmlFormatter {
     private static final String PI_START = "<?";
     private static final String COMMENT_START = "<!--";
     private static final String INDENT = "  ";
+
+    // A pattern to match on pairs of elements or self-closing elements that indicate some data is xml.
+    // As we may only have part of the document it might not be valid xml
+    // XML element names can contain accented chars
+    // https://regex101.com/r/5GR5Y5/2
+    private static final RegExp XML_ELEMENT_PATTERN = RegExp.compile(
+            "(?:<\\?xml [^>]*\\?>|<([A-Za-zŽžÀ-ÿ_][A-Za-zŽžÀ-ÿ0-9_.:-]*)(?:.|\\n)*?(?:\\/>|>(?:.|\\n)*?<\\/\\1))");
+
     private int depth;
     private ElementType elementType;
     private ElementType nextElementType;
@@ -69,6 +79,15 @@ public class XmlFormatter {
      * @return A formatted version of the input XML.
      */
     public String format(final String input) {
+        // See if the data actually looks like xml before bothering to try to format it as such
+        if (looksLikeXml(input)) {
+            return doFormat(input);
+        } else {
+            return input;
+        }
+    }
+
+    public String doFormat(final String input) {
         // Reset member variables.
         reset();
 
@@ -285,6 +304,13 @@ public class XmlFormatter {
         }
 
         return output.toString();
+    }
+
+    public static boolean looksLikeXml(final String data) {
+        // Essentially we are looking for the xml declaration, a pair of opening/closing elements
+        // or a self-closing element
+        // This is to try and stop it formatting non-xml data as xml when it finds angle brackets in the data
+        return XML_ELEMENT_PATTERN.test(data);
     }
 
     /**
