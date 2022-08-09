@@ -36,13 +36,10 @@ public class XmlFormatter {
 
     // A pattern to match on pairs of elements or self-closing elements that indicate some data is xml.
     // As we may only have part of the document it might not be valid xml
-    // https://regex101.com/r/9njpLH/1
-    // https://regex101.com/r/5GR5Y5/1
+    // XML element names can contain accented chars
     // https://regex101.com/r/5GR5Y5/2
     private static final RegExp XML_ELEMENT_PATTERN = RegExp.compile(
             "(?:<\\?xml [^>]*\\?>|<([A-Za-zŽžÀ-ÿ_][A-Za-zŽžÀ-ÿ0-9_.:-]*)(?:.|\\n)*?(?:\\/>|>(?:.|\\n)*?<\\/\\1))");
-//            "(<\\?xml [^>]*\\?>|<([A-Za-zŽžÀ-ÿ_][A-Za-zŽžÀ-ÿ0-9_.:-]*)[^>\\/]*(\\/>|>.*<\\/\\2))");
-//            "<([A-Za-zŽžÀ-ÿ_][A-Za-zŽžÀ-ÿ0-9_.-]*)[^>]*(\\/>|>.*<\\/\\1)");
 
     private int depth;
     private ElementType elementType;
