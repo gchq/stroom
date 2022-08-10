@@ -580,6 +580,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             throw new DocumentNotFoundException(new DocRef(type, uuid));
         }
     }
+
     private D update(final D document) {
         return update(document, null);
     }
