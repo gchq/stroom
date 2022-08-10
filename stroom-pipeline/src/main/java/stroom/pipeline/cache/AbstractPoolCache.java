@@ -20,13 +20,13 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -39,10 +39,12 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInfo {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCache.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractPoolCache.class);
     private static final String PARAM_NAME_LIMIT = "limit";
 
+    // Holds all 1-* pooled items for each K. PoolKey hashed on object instance not content.
     private final ICache<PoolKey<K>, PoolItem<V>> cache;
+    // Provides all the cache keys (PoolKey) for each K
     private final Map<K, LinkedBlockingDeque<PoolKey<K>>> keyMap = new ConcurrentHashMap<>();
 
     public AbstractPoolCache(final CacheManager cacheManager,
@@ -75,6 +77,27 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
         }
     }
 
+    /**
+     * Forces the eviction of all pooled items associated with this key
+     * @param key The key of the entry to evict.
+     */
+    public void invalidate(final K key) {
+        LOGGER.info("Invalidating key {}", key);
+        // Get all the cache key instances for our key K
+        final LinkedBlockingDeque<PoolKey<K>> poolKeys = keyMap.get(key);
+        if (poolKeys != null) {
+            final List<PoolKey<K>> drainedPoolKeys = new ArrayList<>();
+            final int drainCount = poolKeys.drainTo(drainedPoolKeys);
+            LOGGER.debug("Drained {} poolKeys from the deque", drainCount);
+
+            // Now remove the found cache keys from the cache
+            drainedPoolKeys.forEach(poolKey -> {
+                LOGGER.debug(() -> "Invalidating key " + poolKey.getKey());
+                cache.invalidate(poolKey);
+            });
+        }
+    }
+
     protected abstract V internalCreateValue(K key);
 
     protected PoolItem<V> internalBorrowObject(final K key, final boolean usePool) {
@@ -102,7 +125,9 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
             }
 
             // Get an item from the cache using the pool key.
-            return cache.get(poolKey);
+            final PoolItem<V> val = cache.get(poolKey);
+
+            return val;
 
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
@@ -158,6 +183,13 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
         sb.append(size.get());
 
         return sb.toString();
+    }
+
+    /**
+     * @return The number of keys in the pool cache
+     */
+    public long size() {
+        return cache.size();
     }
 
     abstract Object mapKeyForSystemInfo(final K key);
