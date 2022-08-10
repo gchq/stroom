@@ -29,8 +29,10 @@ import stroom.util.sysinfo.SystemInfoResult;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
@@ -82,19 +84,16 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
      * @param key The key of the entry to evict.
      */
     public void invalidate(final K key) {
-        LOGGER.info("Invalidating key {}", key);
+        LOGGER.debug("Invalidating key {}", key);
         // Get all the cache key instances for our key K
         final LinkedBlockingDeque<PoolKey<K>> poolKeys = keyMap.get(key);
-        if (poolKeys != null) {
+        if (poolKeys != null && !poolKeys.isEmpty()) {
             final List<PoolKey<K>> drainedPoolKeys = new ArrayList<>();
             final int drainCount = poolKeys.drainTo(drainedPoolKeys);
-            LOGGER.debug("Drained {} poolKeys from the deque", drainCount);
+            LOGGER.debug("Invalidating {} poolKeys for key {}", drainCount, key);
 
             // Now remove the found cache keys from the cache
-            drainedPoolKeys.forEach(poolKey -> {
-                LOGGER.debug(() -> "Invalidating key " + poolKey.getKey());
-                cache.invalidate(poolKey);
-            });
+            drainedPoolKeys.forEach(cache::invalidate);
         }
     }
 
@@ -145,18 +144,22 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
             try {
                 final PoolKey<K> poolKey = item.getKey();
 
-                // Make this key available again to other threads.
-                // Get the current deque associated with the key.
-                keyMap.compute(poolKey.getKey(), (k, v) -> {
-                    LinkedBlockingDeque<PoolKey<K>> deque = v;
-                    if (deque == null) {
-                        deque = new LinkedBlockingDeque<>();
-                    }
-                    // Put the returned item onto the deque.
-                    deque.offer(poolKey);
-                    return deque;
-                });
-
+                if (cache.getOptional(poolKey).isEmpty()) {
+                    // Item no longer in the cache so no point returning it to the deque
+                    LOGGER.debug("Returning item {} whose poolKey is not in the cache, dropping it.", item);
+                } else {
+                    // Make this key available again to other threads.
+                    // Get the current deque associated with the key.
+                    keyMap.compute(poolKey.getKey(), (k, v) -> {
+                        LinkedBlockingDeque<PoolKey<K>> deque = v;
+                        if (deque == null) {
+                            deque = new LinkedBlockingDeque<>();
+                        }
+                        // Put the returned item onto the deque.
+                        deque.offer(poolKey);
+                        return deque;
+                    });
+                }
             } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
                 throw new RuntimeException(e.getMessage(), e);
@@ -190,6 +193,10 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
      */
     public long size() {
         return cache.size();
+    }
+
+    public Set<K> getKeys() {
+        return new HashSet<>(keyMap.keySet());
     }
 
     abstract Object mapKeyForSystemInfo(final K key);

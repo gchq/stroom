@@ -37,15 +37,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -145,10 +142,15 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
 
     @Override
     public void onChange(final EntityEvent event) {
+        LOGGER.debug("onChange() called for {}", event);
         // Get the doc object for the changed xslt then invalidate it in the cache.
-        final DocRef changedXsltDocRef = event.getDocRef();
+        // If the oldDocRef is present then use that as that is what would be in the pool
+        final DocRef changedXsltDocRef = event.getOldDocRef() != null
+                ? event.getOldDocRef()
+                : event.getDocRef();
         final String changedXsltName = changedXsltDocRef.getName();
         final XsltDoc changedXsltDoc = xsltStore.readDocument(changedXsltDocRef);
+
         LOGGER.debug("Invalidating XsltDoc {}", changedXsltDocRef);
         invalidate(changedXsltDoc);
 
@@ -157,34 +159,21 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
         // E.g. if an imported XSLT is modified then we need to invalidate the one that uses
         // it, so it picks up the updated import.
         final String searchStr = "href=\"" + changedXsltName + "\"";
-        final Consumer<Tuple2<DocRef, XsltDoc>> loggingPeekFunc = LOGGER.isDebugEnabled()
-                ? tuple2 ->
-                LOGGER.debug("Invalidating XsltDoc {} with dependency on {}", tuple2._1, changedXsltDocRef)
-                : tuple2 -> {};
+        final Consumer<XsltDoc> loggingPeekFunc = LOGGER.isDebugEnabled()
+                ? xsltDoc ->
+                LOGGER.debug("Invalidating XsltDoc {} with dependency on {}", xsltDoc, changedXsltDocRef)
+                : xsltDoc -> {};
 
-        // TODO AT: This is not efficient at all, would be better to find these using a single db query that
-        //  did the test in sql
         // This xslt may be imported/included in other XSLTs, so we need to invalidate all of them as well
-        xsltStore.list()
+        getKeys()
                 .stream()
-                .map(docRef -> {
-                    final XsltDoc xsltDoc = xsltStore.readDocument(docRef);
-                    if (xsltDoc == null) {
-                        return null;
-                    } else {
-                        return Tuple.of(docRef, xsltDoc);
-                    }
-                })
-                .filter(Objects::nonNull)
-                .filter(tuple2 -> {
-                    final XsltDoc xsltDoc = tuple2._2;
+                .filter(xsltDoc -> {
                     final String xsltData = xsltDoc.getData();
                     return xsltData != null
                             && !xsltData.isBlank()
                             && xsltData.contains(searchStr);
                 })
                 .peek(loggingPeekFunc)
-                .map(Tuple2::_2)
                 .forEach(this::invalidate);
 
         LOGGER.debug("Done event handler");
