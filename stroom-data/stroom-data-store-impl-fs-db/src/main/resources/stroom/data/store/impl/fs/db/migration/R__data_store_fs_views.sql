@@ -25,4 +25,6 @@ select
 from fs_volume fv
 inner join fs_volume_state fvs on fv.fk_fs_volume_state_id = fvs.id;
 
+SET SQL_NOTES=@OLD_SQL_NOTES;
+
 -- vim: set tabstop=4 shiftwidth=4 expandtab:
