@@ -60,7 +60,6 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
 
     private final URIResolver uriResolver;
     private final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider;
-//    private final XsltStore xsltStore;
 
     @Inject
     XsltPoolImpl(final CacheManager cacheManager,
@@ -72,7 +71,6 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
         super(cacheManager, "XSLT Pool", xsltConfig::getCacheConfig, documentPermissionCache, securityContext);
         this.uriResolver = uriResolver;
         this.stroomXsltFunctionLibraryProvider = stroomXsltFunctionLibraryProvider;
-//        this.xsltStore = xsltStore;
     }
 
     @Override
