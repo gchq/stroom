@@ -60,4 +60,6 @@ select
 from index_shard s
 inner join v_index_volume iv on s.fk_volume_id = iv.index_volume_id;
 
+SET SQL_NOTES=@OLD_SQL_NOTES;
+
 -- vim: set tabstop=4 shiftwidth=4 expandtab:
