@@ -574,7 +574,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private void update(final boolean fireEvents,
                         final String streamTypeName) {
-        if (!ignoreActions) {
+        // No point in updating if a currentSourceLocation has not been set
+        if (!ignoreActions && currentSourceLocation != null) {
             if (isSameStreamAndPartAsLastTime() && currentAvailableStreamTypes != null) {
                 // Same stream/part so we know this type is available and
                 // therefore no need to update tabs as
