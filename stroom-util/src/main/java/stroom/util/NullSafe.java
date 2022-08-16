@@ -309,6 +309,10 @@ public class NullSafe {
         }
     }
 
+    /**
+     * If value is non-null apply getter1 to it.
+     * If the result of that is non-null consume the result.
+     */
     public static <T1, T2> void consume(final T1 value,
                                         final Function<T1, T2> getter1,
                                         final Consumer<T2> consumer) {
@@ -426,6 +430,26 @@ public class NullSafe {
                     return Optional.empty();
                 } else {
                     return Optional.ofNullable(Objects.requireNonNull(getter3).apply(value3));
+                }
+            }
+        }
+    }
+
+    /**
+     * If value is non-null apply getter1 to it.
+     * If the result of that is non-null apply getter2 to the result.
+     * If the result of that is non-null consume the result.
+     */
+    public static <T1, T2, T3> void consume(final T1 value,
+                                            final Function<T1, T2> getter1,
+                                            final Function<T2, T3> getter2,
+                                            final Consumer<T3> consumer) {
+        if (value != null && consumer != null) {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 != null) {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 != null) {
+                    consumer.accept(value3);
                 }
             }
         }
