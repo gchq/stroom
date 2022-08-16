@@ -669,12 +669,12 @@ public class DataFetcher {
                                             final long streamSizeBytes) throws IOException {
 
         final CountingInputStream countingInputStream = new CountingInputStream(inputStream);
-        // Always use utf8 for the right hand decoded col as we are decoding single bytes at a time.
+        // Always use ascii for the right hand decoded col as we are decoding single bytes at a time.
         // If we used the charset of the feed and the feed is say utf16 (which is all multi-byte) then
         // you will never see anything in the
         final String hexDump = HexDumpUtil.hexDump(
                 countingInputStream,
-                StandardCharsets.UTF_8,
+                StandardCharsets.US_ASCII,
                 sourceConfig.getMaxHexDumpLines());
 
         final long len = hexDump.length();
