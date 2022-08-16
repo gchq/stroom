@@ -37,7 +37,6 @@ select
     iv.node_name volume_node_name,
     iv.index_volume_group_id,
     iv.index_volume_group_name,
-    s.old_index_id,
     s.index_uuid,
     s.commit_document_count,
     s.commit_duration_ms,
@@ -60,5 +59,7 @@ select
     from_unixtime(s.partition_to_ms / 1000) partition_to_time
 from index_shard s
 inner join v_index_volume iv on s.fk_volume_id = iv.index_volume_id;
+
+SET SQL_NOTES=@OLD_SQL_NOTES;
 
 -- vim: set tabstop=4 shiftwidth=4 expandtab:

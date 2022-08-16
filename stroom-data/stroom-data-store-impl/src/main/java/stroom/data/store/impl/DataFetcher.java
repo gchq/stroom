@@ -47,6 +47,7 @@ import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
@@ -125,6 +126,7 @@ public class DataFetcher {
     private final Provider<MetaDataHolder> metaDataHolderProvider;
     private final Provider<PipelineHolder> pipelineHolderProvider;
     private final Provider<MetaHolder> metaHolderProvider;
+    private final Provider<CurrentUserHolder> currentUserHolderProvider;
     private final PipelineStore pipelineStore;
     private final Provider<PipelineFactory> pipelineFactoryProvider;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
@@ -151,6 +153,7 @@ public class DataFetcher {
                 final Provider<MetaDataHolder> metaDataHolderProvider,
                 final Provider<PipelineHolder> pipelineHolderProvider,
                 final Provider<MetaHolder> metaHolderProvider,
+                final Provider<CurrentUserHolder> currentUserHolderProvider,
                 final PipelineStore pipelineStore,
                 final Provider<PipelineFactory> pipelineFactoryProvider,
                 final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
@@ -165,6 +168,7 @@ public class DataFetcher {
         this.metaDataHolderProvider = metaDataHolderProvider;
         this.pipelineHolderProvider = pipelineHolderProvider;
         this.metaHolderProvider = metaHolderProvider;
+        this.currentUserHolderProvider = currentUserHolderProvider;
         this.pipelineStore = pipelineStore;
         this.pipelineFactoryProvider = pipelineFactoryProvider;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
@@ -479,14 +483,14 @@ public class DataFetcher {
 
         if (DataType.SEGMENTED.equals(dataType)) {
             rawResult = getSegmentedData(
-                    sourceLocation,
+                    fetchDataRequest,
                     segmentInputStream,
                     encoding,
                     displayMode);
         } else {
             // Non-segmented data
             rawResult = getNonSegmentedData(
-                    sourceLocation,
+                    fetchDataRequest,
                     segmentInputStream,
                     encoding,
                     displayMode);
@@ -580,7 +584,7 @@ public class DataFetcher {
                 charset.newDecoder().averageCharsPerByte() * totalBytes));
     }
 
-    private RawResult getSegmentedData(final SourceLocation sourceLocation,
+    private RawResult getSegmentedData(final FetchDataRequest fetchDataRequest,
                                        final SegmentInputStream segmentInputStream,
                                        final String encoding,
                                        final DisplayMode displayMode) throws IOException {
@@ -597,7 +601,7 @@ public class DataFetcher {
 //        pageTotalIsExact = true;
 
         // Make sure we can't exceed the page total.
-        recordIndex = sourceLocation.getRecordIndex();
+        recordIndex = fetchDataRequest.getSourceLocation().getRecordIndex();
         if (recordIndex >= pageTotal) {
             recordIndex = pageTotal - 1;
         }
@@ -615,12 +619,12 @@ public class DataFetcher {
 //        return StreamUtil.streamToString(segmentInputStream, Charset.forName(encoding));
         final RawResult rawResult = switch (displayMode) {
             case TEXT -> extractDataRange(
-                    sourceLocation,
+                    fetchDataRequest,
                     segmentInputStream,
                     encoding,
                     segmentInputStream.size());
             case HEX -> extractDataRangeAsHex(
-                    sourceLocation,
+                    fetchDataRequest.getSourceLocation(),
                     segmentInputStream,
                     encoding,
                     segmentInputStream.size());
@@ -633,14 +637,15 @@ public class DataFetcher {
         return rawResult;
     }
 
-    private RawResult getNonSegmentedData(final SourceLocation sourceLocation,
+    private RawResult getNonSegmentedData(final FetchDataRequest fetchDataRequest,
                                           final SegmentInputStream segmentInputStream,
                                           final String encoding,
                                           final DisplayMode displayMode) throws IOException {
 
+        final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
         final RawResult rawResult = switch (displayMode) {
             case TEXT -> extractDataRange(
-                    sourceLocation,
+                    fetchDataRequest,
                     segmentInputStream,
                     encoding,
                     segmentInputStream.size());
@@ -664,12 +669,12 @@ public class DataFetcher {
                                             final long streamSizeBytes) throws IOException {
 
         final CountingInputStream countingInputStream = new CountingInputStream(inputStream);
-        // Always use utf8 for the right hand decoded col as we are decoding single bytes at a time.
+        // Always use ascii for the right hand decoded col as we are decoding single bytes at a time.
         // If we used the charset of the feed and the feed is say utf16 (which is all multi-byte) then
         // you will never see anything in the
         final String hexDump = HexDumpUtil.hexDump(
                 countingInputStream,
-                StandardCharsets.UTF_8,
+                StandardCharsets.US_ASCII,
                 sourceConfig.getMaxHexDumpLines());
 
         final long len = hexDump.length();
@@ -702,10 +707,11 @@ public class DataFetcher {
         return rawResult;
     }
 
-    private RawResult extractDataRange(final SourceLocation sourceLocation,
+    private RawResult extractDataRange(final FetchDataRequest fetchDataRequest,
                                        final InputStream inputStream,
                                        final String encoding,
                                        final long streamSizeBytes) throws IOException {
+        final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
         // We could have:
         // One potentially VERY long line, too big to display
         // Lots of small lines
@@ -738,16 +744,20 @@ public class DataFetcher {
         boolean isMultiLine = false;
         Count<Long> totalCharCount = Count.of(0L, false);
 
-        // If no range supplied then use a default one
-        final DataRange dataRange = sourceLocation.getOptDataRange()
-                .orElse(DataRange.fromCharOffset(0, sourceConfig.getMaxCharactersPerFetch()));
+        final boolean hasPipeline = fetchDataRequest.getPipeline() != null;
+        // If no range supplied then use a default one.
+        // If there is a pipeline then we need to get all the data then limit the output of that.
+        final DataRange dataRange = fetchDataRequest.getSourceLocation().getOptDataRange()
+                .orElseGet(() -> hasPipeline
+                        ? DataRange.fromCharOffset(0)
+                        : DataRange.fromCharOffset(0, sourceConfig.getMaxCharactersPerFetch()));
 
         final CharReader charReader = new CharReader(inputStream, false, encoding);
 
         final NonSegmentedIncludeCharPredicate inclusiveFromPredicate = buildInclusiveFromPredicate(
                 dataRange);
         final NonSegmentedIncludeCharPredicate exclusiveToPredicate = buildExclusiveToPredicate(
-                dataRange);
+                dataRange, !hasPipeline);
 
         // Ideally we would jump to the requested offset, but if we do, we can't
         // track the line/colcharOffset info for the requested range, i.e.
@@ -1016,10 +1026,13 @@ public class DataFetcher {
     /**
      * @return True if we have gone past our desired range
      */
-    private NonSegmentedIncludeCharPredicate buildExclusiveToPredicate(final DataRange dataRange) {
+    private NonSegmentedIncludeCharPredicate buildExclusiveToPredicate(final DataRange dataRange,
+                                                                       final boolean limitChars) {
         // TO (exclusive)
 
-        long maxChars = sourceConfig.getMaxCharactersPerFetch();
+        long maxChars = limitChars
+                ? sourceConfig.getMaxCharactersPerFetch()
+                : Long.MAX_VALUE;
 
         final NonSegmentedIncludeCharPredicate exclusiveToPredicate;
         if (dataRange == null || !dataRange.hasBoundedEnd()) {
@@ -1071,6 +1084,8 @@ public class DataFetcher {
                 final MetaHolder metaHolder = metaHolderProvider.get();
                 final PipelineFactory pipelineFactory = pipelineFactoryProvider.get();
                 final ErrorReceiverProxy errorReceiverProxy = errorReceiverProxyProvider.get();
+                currentUserHolderProvider.get()
+                        .setCurrentUser(securityContext.getUserId());
 
                 final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
                 errorReceiverProxy.setErrorReceiver(errorReceiver);
@@ -1151,7 +1166,11 @@ public class DataFetcher {
                     }
                 }
 
-                final String data = baos.toString(StreamUtil.DEFAULT_CHARSET_NAME);
+                String data = baos.toString(StreamUtil.DEFAULT_CHARSET_NAME);
+                // Now limit the output of the pipeline
+                if (data.length() > sourceConfig.getMaxCharactersPerFetch()) {
+                    data = data.substring(0, (int) sourceConfig.getMaxCharactersPerFetch());
+                }
 
                 if (!errorReceiver.isAllOk()) {
                     throw new TransformerException(errorReceiver.toString());

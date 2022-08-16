@@ -83,6 +83,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
 
@@ -565,7 +567,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private void update(final boolean fireEvents,
                         final String streamTypeName) {
-        if (!ignoreActions) {
+        // No point in updating if a currentSourceLocation has not been set
+        if (!ignoreActions && currentSourceLocation != null) {
             if (isSameStreamAndPartAsLastTime() && currentAvailableStreamTypes != null) {
                 // Same stream/part so we know this type is available and
                 // therefore no need to update tabs as
@@ -1027,6 +1030,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     : "text");
             final String errorText = String.join("\n", lastResult.getErrors());
             textPresenter.setErrorText(title, errorText);
+            textPresenter.setControlsVisible(playButtonVisible);
         } else {
             final boolean shouldFormatData = lastResult != null
                     && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
@@ -1208,9 +1212,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 + childStreamText
                 + displayModeText;
 
-        final String errorText = errors != null
-                ? String.join("\n", errors)
-                : null;
+        final String errorText = Stream.concat(
+                        errors != null
+                                ? errors.stream()
+                                : Stream.empty(),
+                        Stream.of("You can right click this pane and select 'View as hex' to see the raw data in " +
+                                "hexadecimal form."))
+                .collect(Collectors.joining("\n"));
+
         textPresenter.setErrorText(title, errorText);
         getView().setSourceLinkVisible(false, false);
         showTextPresenter();

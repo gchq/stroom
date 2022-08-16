@@ -27,4 +27,6 @@ select
 from job j
 inner join job_node jn on jn.job_id = j.id;
 
+SET SQL_NOTES=@OLD_SQL_NOTES;
+
 -- vim: set tabstop=4 shiftwidth=4 expandtab:

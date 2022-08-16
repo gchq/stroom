@@ -11,6 +11,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
 import stroom.db.util.JooqUtil;
+import stroom.node.impl.NodeConfig;
 import stroom.util.BuildInfoProvider;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
@@ -35,20 +36,32 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
+import javax.validation.constraints.NotNull;
 
 public class BootstrapUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BootstrapUtil.class);
 
     private static final String BUILD_VERSION_TABLE_NAME = "build_version";
-    private static final int BUILD_VERSION_TABLE_ID = 1;
-    private static final String INITIAL_VERSION = "UNKNOWN_VERSION";
+    private static final String BUILD_VERSION_COL_NAME = "build_version";
+    private static final String ID_COL_NAME = "id";
+    private static final String OUTCOME_COL_NAME = "outcome";
+    private static final String EXECUTING_NODE_COL_NAME = "executing_node";
+    private static final List<String> ALL_COLUMNS = List.of(
+            ID_COL_NAME,
+            BUILD_VERSION_COL_NAME,
+            EXECUTING_NODE_COL_NAME,
+            OUTCOME_COL_NAME);
+
+    private static final int BUILD_VERSION_TABLE_ROW_ID = 1;
+    private static final String INITIAL_BUILD_VERSION = "UNKNOWN_VERSION";
     private static final String SNAPSHOT_VERSION = "SNAPSHOT";
 
     private BootstrapUtil() {
@@ -95,11 +108,20 @@ public class BootstrapUtil {
         // In dev the build ver will always be SNAPSHOT so append the now time to make
         // it different to force the migrations to always run in dev.
         String buildVersion = Objects.requireNonNullElse(buildInfo.getBuildVersion(), SNAPSHOT_VERSION);
+        // Comment out this statement if you want dev to behave like prod and respect the version value
+        // but you will need to clear the build version in the db to make a mig happen
         buildVersion = SNAPSHOT_VERSION.equals(buildVersion)
                 ? SNAPSHOT_VERSION + "_" + DateUtil.createNormalDateTimeString()
                 : buildVersion;
 
         LOGGER.debug("buildVersion: '{}'", buildVersion);
+
+        LOGGER.warn("node: {}", NullSafe.getOrElse(
+                configuration,
+                Config::getYamlAppConfig,
+                AppConfig::getNodeConfig,
+                NodeConfig::getNodeName,
+                "UNKNOWN NODE"));
 
         return BootstrapUtil.doWithBootstrapLock(
                 configuration,
@@ -126,12 +148,6 @@ public class BootstrapUtil {
                                     .map(name -> "  " + name)
                                     .sorted()
                                     .collect(Collectors.joining("\n"))));
-
-                    LOGGER.info("""
-
-                            -----------------------------------------------------------
-                              Completed database migrations
-                            -----------------------------------------------------------""");
 
                     return injector;
                 });
@@ -166,6 +182,13 @@ public class BootstrapUtil {
         final AtomicBoolean doneWork = new AtomicBoolean(false);
         T workOutput;
 
+        final String thisNodeName = NullSafe.getOrElse(
+                config,
+                Config::getYamlAppConfig,
+                AppConfig::getNodeConfig,
+                NodeConfig::getNodeName,
+                "UNKNOWN NODE");
+
         try (Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
             // Need read committed so that once we have acquired the lock we can see changes
             // committed by other nodes.
@@ -174,19 +197,20 @@ public class BootstrapUtil {
 
             workOutput = context.transactionResult(txnConfig -> {
                 // make sure we have a populated build_version table to check and lock on
-                ensureBuildVersionTable(txnConfig, conn);
+                ensureBuildVersionTable(txnConfig, conn, thisNodeName);
 
-                String dbBuildVersion = getBuildVersionFromDb(txnConfig);
-                boolean isDbBuildVersionUpToDate = dbBuildVersion.equals(buildVersion);
+                BootstrapInfo bootstrapInfo = getBootstrapInfoFromDb(txnConfig);
+                boolean isDbBuildVersionUpToDate = bootstrapInfo.getBuildVersion().equals(buildVersion);
 
                 T output = null;
                 if (isDbBuildVersionUpToDate) {
-                    LOGGER.info("Found required build version '{}' in {} table, no lock or DB migration required.",
-                            dbBuildVersion,
-                            BUILD_VERSION_TABLE_NAME);
+                    handleCorrectBuildVersion(bootstrapInfo, "no lock or DB migration required.");
                 } else {
-                    LOGGER.info("Found old build version '{}' in {} table. Bootstrap lock and DB migration required.",
-                            dbBuildVersion, BUILD_VERSION_TABLE_NAME);
+                    LOGGER.info("Found old build version '{}' in {} table with outcome {}. " +
+                                    "Bootstrap lock required.",
+                            bootstrapInfo.getBuildVersion(),
+                            BUILD_VERSION_TABLE_NAME,
+                            bootstrapInfo.getUpgradeOutcome());
                     acquireBootstrapLock(connectionConfig, txnConfig);
 
                     // We now hold a cluster wide lock
@@ -194,26 +218,43 @@ public class BootstrapUtil {
 
                     // Re-check the lock table state now we are under lock
                     // For the first node these should be the same as when checked above
-                    dbBuildVersion = getBuildVersionFromDb(txnConfig);
-                    isDbBuildVersionUpToDate = dbBuildVersion.equals(buildVersion);
+                    bootstrapInfo = getBootstrapInfoFromDb(txnConfig);
+                    isDbBuildVersionUpToDate = bootstrapInfo.getBuildVersion().equals(buildVersion);
 
                     if (isDbBuildVersionUpToDate) {
-                        // Another node has done the bootstrap so we can just drop out of the txn/connection to
-                        // free up the lock
-                        LOGGER.info("Found required build version '{}' in {} table, releasing lock. " +
-                                        "No DB migration required.",
-                                buildVersion, BUILD_VERSION_TABLE_NAME);
+                        handleCorrectBuildVersion(bootstrapInfo, "releasing lock. No DB migration required.");
                     } else {
-                        LOGGER.info("Upgrading stroom from '{}' to '{}' under lock", dbBuildVersion, buildVersion);
+                        LOGGER.info("Upgrading stroom from '{}' to '{}' under lock",
+                                bootstrapInfo.getBuildVersion(), buildVersion);
 
                         // We hold the lock and the db version is out of date so perform work under lock
                         // including doing all the flyway migrations
-                        output = work.get();
+                        try {
+                            output = work.get();
+                        } catch (Exception e) {
+                            final String msg = LogUtil.message(
+                                    "Error upgrading stroom to {}: {}", buildVersion, e.getMessage(), e);
+                            LOGGER.error(msg);
+                            // Failure in the migration so need to indicate to other nodes that it has failed
+                            // so they can stop
+                            updateDbBuildVersion(txnConfig, buildVersion, thisNodeName, UpgradeOutcome.FAILED);
+                            LOGGER.info(LogUtil.message("Releasing bootstrap lock after {}",
+                                    Duration.between(startTime, Instant.now())));
+                            // This will release the bootstrap lock
+                            conn.commit();
+                            throw new BootstrapFailureException(msg, e);
+                        }
                         doneWork.set(true);
+
+                        LOGGER.info("""
+
+                                -----------------------------------------------------------
+                                  Completed database migrations
+                                -----------------------------------------------------------""");
 
                         // If anything fails and we don't update/insert these it is fine, it will just
                         // get done on next successful boot
-                        updateDbBuildVersion(buildVersion, txnConfig);
+                        updateDbBuildVersion(txnConfig, buildVersion, thisNodeName, UpgradeOutcome.SUCCESS);
                     }
                     // We are the first node to get the lock for this build version so now release the lock
                     LOGGER.info(LogUtil.message("Releasing bootstrap lock after {}",
@@ -229,41 +270,102 @@ public class BootstrapUtil {
             throw new RuntimeException("Error obtaining bootstrap lock: " + e.getMessage(), e);
         }
 
-        // If we didn't do it under lock then we need to do it now
+        // We didn't execute work under lock, i.e. the db was found to be at the right version, but
+        // we still need to set up all the db modules, but each node can now do it concurrently.
+        // Flyway will discover that each db module is at the right version so won't do anything either.
         if (!doneWork.get()) {
             workOutput = work.get();
         }
         return workOutput;
     }
 
-    private static void updateDbBuildVersion(final String buildVersion,
-                                             final Configuration txnConfig) {
-        LOGGER.info("Updating {} table with current build version: {}",
-                BUILD_VERSION_TABLE_NAME, buildVersion);
-        DSL.using(txnConfig)
-                .execute(LogUtil.message("""
-                                UPDATE {}
-                                SET build_version = ?
-                                WHERE id = ?
-                                """, BUILD_VERSION_TABLE_NAME),
-                        buildVersion, BUILD_VERSION_TABLE_ID);
+    private static void handleCorrectBuildVersion(final BootstrapInfo bootstrapInfo,
+                                                  final String msgSuffix) {
+        switch (bootstrapInfo.getUpgradeOutcome()) {
+            case SUCCESS -> {
+                LOGGER.info("Found required build version '{}' in {} table with outcome {}, " +
+                                msgSuffix,
+                        bootstrapInfo.getBuildVersion(),
+                        BUILD_VERSION_TABLE_NAME,
+                        bootstrapInfo.getUpgradeOutcome());
+                // Quickly drop out of the lock so the other waiting nodes can find this out.
+            }
+            case FAILED -> {
+                // Another node has failed when upgrading to this ver
+                logFailureAndThrow(bootstrapInfo);
+            }
+            default -> throw new RuntimeException("Null upgradeOutcome, should never happen");
+        }
     }
 
-    private static String getBuildVersionFromDb(final Configuration txnConfig) {
+    private static void logFailureAndThrow(final BootstrapInfo bootstrapInfo) {
+        final String msg = LogUtil.message("Build version {} is marked as {} by node {}. " +
+                        "Either deploy a new version; or fix the issue, set column {}.{} to null " +
+                        "then re-try this version. Aborting application startup.",
+                bootstrapInfo.getBuildVersion(),
+                bootstrapInfo.getUpgradeOutcome(),
+                bootstrapInfo.getExecutingNode(),
+                BUILD_VERSION_TABLE_NAME,
+                OUTCOME_COL_NAME);
+
+        LOGGER.error(msg);
+        throw new BootstrapFailureException(msg);
+    }
+
+    private static void updateDbBuildVersion(final Configuration txnConfig,
+                                             final String buildVersion,
+                                             final String thisNodeName,
+                                             final UpgradeOutcome upgradeOutcome) {
+        LOGGER.info("Updating {} table with current build version: {} and outcome: {}",
+                BUILD_VERSION_TABLE_NAME, buildVersion, upgradeOutcome);
+        DSL.using(txnConfig)
+                .execute(LogUtil.message("""
+                                        UPDATE {}
+                                        SET
+                                          {} = ?,
+                                          {} = ?,
+                                          {} = ?
+                                        WHERE id = ?
+                                        """,
+                                BUILD_VERSION_TABLE_NAME,
+                                BUILD_VERSION_COL_NAME,
+                                EXECUTING_NODE_COL_NAME,
+                                OUTCOME_COL_NAME),
+                        buildVersion, thisNodeName, upgradeOutcome.toString(), BUILD_VERSION_TABLE_ROW_ID);
+    }
+
+    @NotNull
+    private static BootstrapInfo getBootstrapInfoFromDb(final Configuration txnConfig) {
         return DSL.using(txnConfig)
-                .fetchOne(LogUtil.message("""
-                                SELECT build_version
-                                FROM {}
-                                WHERE id = ?""", BUILD_VERSION_TABLE_NAME),
-                        BUILD_VERSION_TABLE_ID)
-                .get(0, String.class);
+                .fetchOptional(LogUtil.message("""
+                                        SELECT {}, {}, {}
+                                        FROM {}
+                                        WHERE id = ?""",
+                                BUILD_VERSION_COL_NAME,
+                                EXECUTING_NODE_COL_NAME,
+                                OUTCOME_COL_NAME,
+                                BUILD_VERSION_TABLE_NAME),
+                        BUILD_VERSION_TABLE_ROW_ID)
+                .map(record -> {
+                    final String outcomeStr = record.get(OUTCOME_COL_NAME, String.class);
+                    final UpgradeOutcome upgradeOutcome = outcomeStr != null
+                            ? UpgradeOutcome.valueOf(outcomeStr)
+                            : null;
+                    return new BootstrapInfo(
+                            record.get(BUILD_VERSION_COL_NAME, String.class),
+                            record.get(EXECUTING_NODE_COL_NAME, String.class),
+                            upgradeOutcome);
+                })
+                .orElseThrow(() ->
+                        new RuntimeException(LogUtil.message("Row with id {} not found in {}",
+                                BUILD_VERSION_TABLE_ROW_ID, BUILD_VERSION_TABLE_NAME)));
     }
 
     private static void acquireBootstrapLock(final ConnectionConfig connectionConfig,
                                              final Configuration txnConfig) {
         LOGGER.info("Waiting to acquire bootstrap lock on table: {}, id: {}, user: {}, url: {}",
                 BUILD_VERSION_TABLE_NAME,
-                BUILD_VERSION_TABLE_ID,
+                BUILD_VERSION_TABLE_ROW_ID,
                 connectionConfig.getUser(),
                 connectionConfig.getUrl());
         final Instant startTime = Instant.now();
@@ -279,7 +381,7 @@ public class BootstrapUtil {
             try {
                 // Wait to get a row lock on the one record in the table
                 DSL.using(txnConfig)
-                        .execute(sql, BUILD_VERSION_TABLE_ID);
+                        .execute(sql, BUILD_VERSION_TABLE_ROW_ID);
                 LOGGER.info("Waited {} to acquire bootstrap lock",
                         Duration.between(startTime, Instant.now()));
                 acquiredLock = true;
@@ -299,32 +401,50 @@ public class BootstrapUtil {
         }
     }
 
-    private static void ensureBuildVersionTable(final Configuration txnConfig, final Connection connection) {
+    private static void ensureBuildVersionTable(final Configuration txnConfig,
+                                                final Connection connection,
+                                                final String thisNodeName) {
         try {
-            // Need read committed so that once we have acquired the lock we can see changes
-            // committed by other nodes, e.g. we want to see if another node has inserted the
-            // new record.
-            // Create a table that we can use to get a table lock on
-            final String createTableSql = LogUtil.message("""
-                            CREATE TABLE IF NOT EXISTS {} (
-                                id INT NOT NULL,
-                                build_version VARCHAR(255) NOT NULL,
-                                PRIMARY KEY (id)
-                            ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci""",
-                    BUILD_VERSION_TABLE_NAME);
+            // Try to create it in case this is an old version without it
+            createBuildVersionTableIfNotExists(txnConfig);
 
-            LOGGER.debug("Ensuring table {} exists", BUILD_VERSION_TABLE_NAME);
-            // Causes implicit commit
-            DSL.using(txnConfig)
-                    .execute(createTableSql);
+            // Now check whatever flavour of the table is there has the right cols
+            final String listColsSql = """
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_schema = schema()
+                    AND table_name = ?""";
+
+            final Set<Object> columnNames = DSL.using(txnConfig)
+                    .fetch(listColsSql, BUILD_VERSION_TABLE_NAME)
+                    .stream()
+                    .map(record -> record.get(0))
+                    .collect(Collectors.toSet());
+
+            if (!columnNames.containsAll(ALL_COLUMNS)) {
+                // This is an old version of the table, so we need to re-create it with the right cols
+
+                // Another node may have already dropped it so allow for it to not exist
+                final String dropTableSql = LogUtil.message("""
+                                DROP TABLE IF EXISTS {}""",
+                        BUILD_VERSION_TABLE_NAME);
+                // Causes implicit commit
+                DSL.using(txnConfig)
+                        .execute(dropTableSql);
+
+                // Another node my beat us to this
+                createBuildVersionTableIfNotExists(txnConfig);
+            }
 
             // Do a select first to avoid being blocked by the row lock with the insert stmt below
             final boolean isRecordPresent = DSL.using(txnConfig)
                     .fetchOptional(LogUtil.message("""
-                                    SELECT build_version
-                                    FROM {}
-                                    WHERE id = ?""", BUILD_VERSION_TABLE_NAME),
-                            BUILD_VERSION_TABLE_ID)
+                                            SELECT {}
+                                            FROM {}
+                                            WHERE id = ?""",
+                                    BUILD_VERSION_COL_NAME,
+                                    BUILD_VERSION_TABLE_NAME),
+                            BUILD_VERSION_TABLE_ROW_ID)
                     .isPresent();
 
             if (!isRecordPresent) {
@@ -334,9 +454,10 @@ public class BootstrapUtil {
                 // that is fine.
                 final String insertSql = LogUtil.message("""
                                 INSERT INTO {} (
-                                    id,
-                                    build_version)
-                                SELECT ?, ?
+                                    {},
+                                    {},
+                                    {})
+                                SELECT ?, ?, ?
                                 FROM DUAL
                                 WHERE NOT EXISTS (
                                     SELECT NULL
@@ -344,13 +465,17 @@ public class BootstrapUtil {
                                     WHERE ID = ?)
                                 LIMIT 1""",
                         BUILD_VERSION_TABLE_NAME,
+                        ID_COL_NAME,
+                        BUILD_VERSION_COL_NAME,
+                        EXECUTING_NODE_COL_NAME,
                         BUILD_VERSION_TABLE_NAME);
 
                 final int result = DSL.using(txnConfig)
                         .execute(insertSql,
-                                BUILD_VERSION_TABLE_ID,
-                                INITIAL_VERSION,
-                                BUILD_VERSION_TABLE_ID);
+                                BUILD_VERSION_TABLE_ROW_ID,
+                                INITIAL_BUILD_VERSION,
+                                thisNodeName,
+                                BUILD_VERSION_TABLE_ROW_ID);
                 // Make sure other nodes can see it
                 if (result > 0) {
                     LOGGER.info("Committing new {} row", BUILD_VERSION_TABLE_NAME);
@@ -364,14 +489,39 @@ public class BootstrapUtil {
         }
     }
 
+    private static void createBuildVersionTableIfNotExists(final Configuration txnConfig) {
+        // Need read committed so that once we have acquired the lock we can see changes
+        // committed by other nodes, e.g. we want to see if another node has inserted the
+        // new record.
+        // Create a table that we can use to get a table lock on
+        final String createTableSql = LogUtil.message("""
+                        CREATE TABLE IF NOT EXISTS {} (
+                            {} INT NOT NULL,
+                            {} VARCHAR(255) NOT NULL,
+                            {} VARCHAR(255) NOT NULL,
+                            {} VARCHAR(10),
+                            PRIMARY KEY (id)
+                        ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci""",
+                BUILD_VERSION_TABLE_NAME,
+                ID_COL_NAME,
+                BUILD_VERSION_COL_NAME,
+                EXECUTING_NODE_COL_NAME,
+                OUTCOME_COL_NAME);
+
+        LOGGER.debug("Ensuring table {} exists", BUILD_VERSION_TABLE_NAME);
+        // Causes implicit commit
+        DSL.using(txnConfig)
+                .execute(createTableSql);
+    }
+
     private static ConnectionConfig getClusterLockConnectionConfig(final Config config) {
         final CommonDbConfig yamlCommonDbConfig = Objects.requireNonNullElse(
                 config.getYamlAppConfig().getCommonDbConfig(),
                 new CommonDbConfig());
         final ClusterLockDbConfig yamlClusterLockDbConfig = NullSafe.getAsOptional(
-                config.getYamlAppConfig(),
-                AppConfig::getClusterLockConfig,
-                ClusterLockConfig::getDbConfig)
+                        config.getYamlAppConfig(),
+                        AppConfig::getClusterLockConfig,
+                        ClusterLockConfig::getDbConfig)
                 .orElse(new ClusterLockDbConfig());
 
         final AbstractDbConfig mergedClusterLockDbConfig = yamlCommonDbConfig.mergeConfig(yamlClusterLockDbConfig);
@@ -385,5 +535,65 @@ public class BootstrapUtil {
         DbUtil.validate(connectionConfig);
 
         return connectionConfig;
+    }
+
+    private static class BootstrapInfo {
+
+        private final String buildVersion;
+        private final String executingNode;
+        private final UpgradeOutcome upgradeOutcome;
+
+        public BootstrapInfo(final String buildVersion,
+                             final String executingNode,
+                             final UpgradeOutcome upgradeOutcome) {
+            this.buildVersion = buildVersion;
+            this.executingNode = executingNode;
+            this.upgradeOutcome = upgradeOutcome;
+        }
+
+        public String getBuildVersion() {
+            return buildVersion;
+        }
+
+        public String getExecutingNode() {
+            return executingNode;
+        }
+
+        public UpgradeOutcome getUpgradeOutcome() {
+            return upgradeOutcome;
+        }
+
+        public boolean isSuccess() {
+            return UpgradeOutcome.SUCCESS.equals(upgradeOutcome);
+        }
+
+        public boolean isFailed() {
+            return UpgradeOutcome.FAILED.equals(upgradeOutcome);
+        }
+
+        @Override
+        public String toString() {
+            return "BootstrapInfo{" +
+                    "buildVersion='" + buildVersion + '\'' +
+                    ", executingNode='" + executingNode + '\'' +
+                    ", upgradeOutcome=" + upgradeOutcome +
+                    '}';
+        }
+    }
+
+    private enum UpgradeOutcome {
+        SUCCESS,
+        FAILED
+    }
+
+    public static class BootstrapFailureException extends RuntimeException {
+
+        public BootstrapFailureException(final String message) {
+            super(message);
+        }
+
+        public BootstrapFailureException(final String message, final Throwable cause) {
+            super(message, cause);
+        }
     }
 }

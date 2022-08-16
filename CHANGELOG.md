@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Add system info for pool caches, e.g. XSLT pool cache.
+
+* Add button on Caches screen to evict expired entries. Move cache stats from info icon to table columns. Add Hit ratio figure.
+
+* Issue **#2995** : Remove old_index_id column from v_index_shard view. Remove unused old_index_id column from index_shard table (if it exists).
+
+* Add system info for listing keys of a named cache.
+
+* Issue **#2997** : Stop other nodes booting if migration fails on the first node.
+
 
 ## [v7.1-beta.14] - 2022-07-20
 

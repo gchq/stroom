@@ -22,10 +22,15 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.PermissionException;
+import stroom.util.sysinfo.HasSystemInfo;
 
+import java.util.Map;
 import java.util.function.Supplier;
 
-public abstract class AbstractDocPool<K extends Doc, V> extends AbstractPoolCache<K, V> implements Pool<K, V> {
+public abstract class AbstractDocPool<K extends Doc, V>
+        extends AbstractPoolCache<K, V>
+        implements Pool<K, V>, HasSystemInfo {
+
     private final DocumentPermissionCache documentPermissionCache;
     private final SecurityContext securityContext;
 
@@ -60,4 +65,16 @@ public abstract class AbstractDocPool<K extends Doc, V> extends AbstractPoolCach
     }
 
     protected abstract V createValue(final K key);
+
+    @Override
+    Object mapKeyForSystemInfo(final K key) {
+        if (key == null) {
+            return null;
+        } else {
+            return Map.of(
+                   "name", key.getName(),
+                    "uuid", key.getUuid(),
+                    "version", key.getVersion());
+        }
+    }
 }

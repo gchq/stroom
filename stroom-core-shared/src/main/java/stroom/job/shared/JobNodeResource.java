@@ -27,6 +27,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -41,6 +42,7 @@ import javax.ws.rs.core.MediaType;
 public interface JobNodeResource extends RestResource, DirectRestService {
 
     String BASE_PATH = "/jobNode" + ResourcePaths.V1;
+    String FIND_PATH_PART = "/find";
     String INFO_PATH_PART = "/info";
     String SCHEDULE_PATH_PART = "/schedule";
     String ENABLED_PATH_PART = "/enabled";
@@ -50,9 +52,18 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     @GET
     @Operation(
             summary = "Lists job nodes",
-            operationId = "listJobsNodes")
+            operationId = "listJobNodes")
     ResultPage<JobNode> list(@QueryParam("jobName") String jobName,
                              @QueryParam("nodeName") String nodeName);
+
+    @POST
+    @Path("/find")
+    @Operation(
+            summary = "Finds job nodes matching criteria and sort order",
+            operationId = "findJobNodes")
+    ResultPage<JobNode> find(
+            @Parameter(description = "findJobNodeCriteria",
+                    required = true) final FindJobNodeCriteria findJobNodeCriteria);
 
     @GET
     @Path(INFO_PATH_PART)

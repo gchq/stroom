@@ -33,4 +33,6 @@ public interface CacheManagerService {
     Long clear(FindCacheInfoCriteria criteria);
 
     void evictExpiredElements();
+
+    Long evictExpiredElements(FindCacheInfoCriteria criteria);
 }
