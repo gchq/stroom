@@ -394,6 +394,12 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         metaRelationListPresenter.refresh();
     }
 
+    public void refreshData() {
+        if (dataPresenter != null) {
+            dataPresenter.update(false);
+        }
+    }
+
     public FindMetaCriteria getCriteria() {
         return metaListPresenter.getCriteria();
     }

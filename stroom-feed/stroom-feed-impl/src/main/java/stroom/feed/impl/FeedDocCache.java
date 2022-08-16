@@ -22,7 +22,14 @@ import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +37,12 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class FeedDocCache implements Clearable {
+@EntityEventHandler(
+        type = FeedDoc.DOCUMENT_TYPE,
+        action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
+public class FeedDocCache implements Clearable, EntityEvent.Handler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FeedDocCache.class);
 
     private static final String CACHE_NAME = "Feed Doc Cache";
 
@@ -65,5 +77,26 @@ public class FeedDocCache implements Clearable {
     @Override
     public void clear() {
         cache.clear();
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        LOGGER.debug("Received event {}", event);
+        final EntityAction eventAction = event.getAction();
+        switch (eventAction) {
+            case CLEAR_CACHE -> {
+                LOGGER.debug("Clearing cache");
+                clear();
+            }
+            case UPDATE, DELETE -> NullSafe.consume(
+                    event,
+                    EntityEvent::getDocRef,
+                    DocRef::getName,
+                    feedName -> {
+                        LOGGER.debug("Invalidating feed {}", feedName);
+                        cache.invalidate(feedName);
+                    });
+            default -> LOGGER.debug("Unexpected event action {}", eventAction);
+        }
     }
 }
