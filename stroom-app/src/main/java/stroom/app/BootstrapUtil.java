@@ -203,18 +203,11 @@ public class BootstrapUtil {
                 boolean isDbBuildVersionUpToDate = bootstrapInfo.getBuildVersion().equals(buildVersion);
 
                 T output = null;
-                if (isDbBuildVersionUpToDate && bootstrapInfo.isSuccess()) {
-                    LOGGER.info("Found required build version '{}' in {} table with outcome {}, " +
-                                    "no lock or DB migration required.",
-                            bootstrapInfo.getBuildVersion(),
-                            BUILD_VERSION_TABLE_NAME,
-                            bootstrapInfo.getUpgradeOutcome());
-                    // Quickly drop out of the lock so the other waiting nodes can find this out.
-                } else if (bootstrapInfo.isFailed()) {
-                    logFailureAndThrow(bootstrapInfo);
+                if (isDbBuildVersionUpToDate) {
+                    handleCorrectBuildVersion(bootstrapInfo, "no lock or DB migration required.");
                 } else {
                     LOGGER.info("Found old build version '{}' in {} table with outcome {}. " +
-                                    "Bootstrap lock and DB migration required.",
+                                    "Bootstrap lock required.",
                             bootstrapInfo.getBuildVersion(),
                             BUILD_VERSION_TABLE_NAME,
                             bootstrapInfo.getUpgradeOutcome());
@@ -228,16 +221,8 @@ public class BootstrapUtil {
                     bootstrapInfo = getBootstrapInfoFromDb(txnConfig);
                     isDbBuildVersionUpToDate = bootstrapInfo.getBuildVersion().equals(buildVersion);
 
-                    if (isDbBuildVersionUpToDate && bootstrapInfo.isSuccess()) {
-                        // Another node has done the bootstrap, so we can just drop out of the txn/connection to
-                        // free up the lock
-                        LOGGER.info("Found required build version '{}' in {} table with outcome {}, releasing lock. " +
-                                        "No DB migration required.",
-                                bootstrapInfo.getBuildVersion(),
-                                BUILD_VERSION_TABLE_NAME,
-                                bootstrapInfo.getUpgradeOutcome());
-                    } else if (bootstrapInfo.isFailed()) {
-                        logFailureAndThrow(bootstrapInfo);
+                    if (isDbBuildVersionUpToDate) {
+                        handleCorrectBuildVersion(bootstrapInfo, "releasing lock. No DB migration required.");
                     } else {
                         LOGGER.info("Upgrading stroom from '{}' to '{}' under lock",
                                 bootstrapInfo.getBuildVersion(), buildVersion);
@@ -253,6 +238,9 @@ public class BootstrapUtil {
                             // Failure in the migration so need to indicate to other nodes that it has failed
                             // so they can stop
                             updateDbBuildVersion(txnConfig, buildVersion, thisNodeName, UpgradeOutcome.FAILED);
+                            LOGGER.info(LogUtil.message("Releasing bootstrap lock after {}",
+                                    Duration.between(startTime, Instant.now())));
+                            // This will release the bootstrap lock
                             conn.commit();
                             throw new BootstrapFailureException(msg, e);
                         }
@@ -289,6 +277,25 @@ public class BootstrapUtil {
             workOutput = work.get();
         }
         return workOutput;
+    }
+
+    private static void handleCorrectBuildVersion(final BootstrapInfo bootstrapInfo,
+                                                  final String msgSuffix) {
+        switch (bootstrapInfo.getUpgradeOutcome()) {
+            case SUCCESS -> {
+                LOGGER.info("Found required build version '{}' in {} table with outcome {}, " +
+                                msgSuffix,
+                        bootstrapInfo.getBuildVersion(),
+                        BUILD_VERSION_TABLE_NAME,
+                        bootstrapInfo.getUpgradeOutcome());
+                // Quickly drop out of the lock so the other waiting nodes can find this out.
+            }
+            case FAILED -> {
+                // Another node has failed when upgrading to this ver
+                logFailureAndThrow(bootstrapInfo);
+            }
+            default -> throw new RuntimeException("Null upgradeOutcome, should never happen");
+        }
     }
 
     private static void logFailureAndThrow(final BootstrapInfo bootstrapInfo) {

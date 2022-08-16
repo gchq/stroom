@@ -33,6 +33,7 @@ import stroom.pipeline.filter.ExitSteppingException;
 import stroom.pipeline.filter.NullXMLFilter;
 import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.filter.XMLFilterForkFactory;
+import stroom.pipeline.reader.ByteStreamDecoder.DecoderException;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -204,6 +205,9 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
                         exception = cause;
                         break;
                     } else if (cause instanceof TransformerException) {
+                        exception = cause;
+                        break;
+                    } else if (cause instanceof DecoderException) {
                         exception = cause;
                         break;
                     } else {

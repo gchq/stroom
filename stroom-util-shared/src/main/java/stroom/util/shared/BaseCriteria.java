@@ -140,4 +140,12 @@ public abstract class BaseCriteria {
     public int hashCode() {
         return Objects.hash(pageRequest, sortList);
     }
+
+    @Override
+    public String toString() {
+        return "BaseCriteria{" +
+                "pageRequest=" + pageRequest +
+                ", sortList=" + sortList +
+                '}';
+    }
 }

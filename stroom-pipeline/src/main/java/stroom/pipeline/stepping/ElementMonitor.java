@@ -20,7 +20,10 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Element;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.writer.XMLWriter;
+import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 
 public class ElementMonitor {
@@ -76,14 +79,27 @@ public class ElementMonitor {
         final ElementData elementData = new ElementData(elementId, elementType);
 
         if (inputRecorder != null) {
-            final Object data = inputRecorder.getData(textRange);
-            elementData.setInput(data);
-            elementData.setFormatInput(!(data == null || data instanceof String));
+            try {
+                final Object data = inputRecorder.getData(textRange);
+                elementData.setInput(data);
+                elementData.setFormatInput(!(data == null || data instanceof String));
+            } catch (Exception e) {
+                elementData.setInput(null);
+                elementData.setFormatInput(false);
+                logError(loggingErrorReceiver, textRange, "input", e);
+            }
         }
+
         if (outputRecorder != null) {
-            final Object data = outputRecorder.getData(textRange);
-            elementData.setOutput(data);
-            elementData.setFormatOutput(!(data == null || data instanceof String) || element instanceof XMLWriter);
+            try {
+                final Object data = outputRecorder.getData(textRange);
+                elementData.setOutput(data);
+                elementData.setFormatOutput(!(data == null || data instanceof String) || element instanceof XMLWriter);
+            } catch (Exception e) {
+                elementData.setOutput(null);
+                elementData.setFormatOutput(false);
+                logError(loggingErrorReceiver, textRange, "output", e);
+            }
         }
 
         if (loggingErrorReceiver != null) {
@@ -101,5 +117,22 @@ public class ElementMonitor {
         }
 
         return elementData;
+    }
+
+    private void logError(final LoggingErrorReceiver loggingErrorReceiver,
+                          final TextRange textRange,
+                          final String pane,
+                          final Exception e) {
+        NullSafe.consume(loggingErrorReceiver, receiver ->
+                receiver.log(
+                        Severity.FATAL_ERROR,
+                        textRange.getFrom(),
+                        elementId,
+                        LogUtil.message(
+                                "Error getting {} data for element {}: {}",
+                                pane,
+                                elementType.getType(),
+                                e.getMessage()),
+                        e));
     }
 }

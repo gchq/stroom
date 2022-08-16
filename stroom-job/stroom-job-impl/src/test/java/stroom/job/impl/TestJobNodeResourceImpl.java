@@ -1,6 +1,7 @@
 package stroom.job.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
