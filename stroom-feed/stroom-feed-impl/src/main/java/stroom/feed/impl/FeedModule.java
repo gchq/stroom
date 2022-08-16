@@ -24,6 +24,7 @@ import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.meta.api.MetaSecurityFilter;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
@@ -47,6 +48,9 @@ public class FeedModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(FeedDocCache.class)
                 .addBinding(MetaSecurityFilterImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(FeedDocCache.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(FeedDoc.DOCUMENT_TYPE, FeedStoreImpl.class);
