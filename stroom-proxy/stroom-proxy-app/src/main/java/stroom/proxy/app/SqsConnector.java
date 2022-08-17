@@ -6,6 +6,7 @@ import stroom.proxy.app.event.EventStore;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.AmazonSQSException;
@@ -33,7 +34,10 @@ public class SqsConnector {
     public void poll(final SqsConnectorConfig config) {
         try {
             LOGGER.debug(() -> "Getting sqs client");
-            final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+            final AmazonSQS sqs = AmazonSQSClientBuilder.standard()
+                    .withRegion(config.getAwsRegionName())
+                    .withCredentials(new ProfileCredentialsProvider(config.getAwsProfileName()))
+                    .build();
 
 //            try {
 //                CreateQueueResult create_result = sqs.createQueue(QUEUE_NAME);
