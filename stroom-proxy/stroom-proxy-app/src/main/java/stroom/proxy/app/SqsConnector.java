@@ -7,6 +7,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -37,7 +38,7 @@ public class SqsConnector {
             LOGGER.debug(() -> "Getting sqs client");
             final AmazonSQS sqs = AmazonSQSClientBuilder.standard()
                     .withRegion(config.getAwsRegionName())
-                    .withCredentials(new EC2ContainerCredentialsProviderWrapper())
+                    .withCredentials(new InstanceProfileCredentialsProvider(false))
                     .build();
 
 //            try {
