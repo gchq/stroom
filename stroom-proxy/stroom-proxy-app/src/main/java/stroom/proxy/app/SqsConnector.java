@@ -46,11 +46,14 @@ public class SqsConnector {
 //                }
 //            }
 
-            LOGGER.debug(() -> "Getting queue name");
-            final String queueName = config.getQueueName();
-            LOGGER.debug(() -> "Getting queue URL for queue: " + queueName);
-            final String queueUrl = sqs.getQueueUrl(queueName).getQueueUrl();
-            LOGGER.debug(() -> "Got queue URL: " + queueUrl);
+            String queueUrl = config.getQueueUrl();
+            if (queueUrl == null) {
+                LOGGER.debug(() -> "Getting queue name");
+                final String queueName = config.getQueueName();
+                LOGGER.debug(() -> "Getting queue URL for queue: " + queueName);
+                queueUrl = sqs.getQueueUrl(queueName).getQueueUrl();
+            }
+            LOGGER.debug( "Got queue URL: " + queueUrl);
 
 //    SendMessageRequest send_msg_request = new SendMessageRequest()
 //            .withQueueUrl(queueUrl)
