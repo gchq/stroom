@@ -64,6 +64,7 @@ public class SqsConnector {
                 final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
                         .queueUrl(queueUrl)
                         .waitTimeSeconds(waitTimeSeconds)  // forces long polling
+                        .messageAttributeNames("All") // Message attribute wildcard.
                         .build();
 
                 messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
@@ -88,7 +89,7 @@ public class SqsConnector {
                         }
 
                         // FALLBACK
-                        if (attributeMap.containsKey(StandardHeaderArguments.FEED)) {
+                        if (!attributeMap.containsKey(StandardHeaderArguments.FEED)) {
                             LOGGER.debug(() -> "Adding fallback feed TEST");
                             attributeMap.putIfAbsent(StandardHeaderArguments.FEED, "TEST");
                         }
