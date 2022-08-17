@@ -53,7 +53,7 @@ public class SqsConnector {
                 LOGGER.debug(() -> "Getting queue URL for queue: " + queueName);
                 queueUrl = sqs.getQueueUrl(queueName).getQueueUrl();
             }
-            LOGGER.debug( "Got queue URL: " + queueUrl);
+            LOGGER.debug("Got queue URL: " + queueUrl);
 
 //    SendMessageRequest send_msg_request = new SendMessageRequest()
 //            .withQueueUrl(queueUrl)
