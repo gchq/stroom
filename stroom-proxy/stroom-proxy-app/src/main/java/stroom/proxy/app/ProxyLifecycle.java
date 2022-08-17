@@ -178,9 +178,10 @@ public class ProxyLifecycle implements Managed {
 
         if (proxyConfig.getSqsConnectors() != null) {
             for (final SqsConnectorConfig sqsConnectorConfig : proxyConfig.getSqsConnectors()) {
+                final SqsConnector sqsConnector = new SqsConnector(eventStore, sqsConnectorConfig);
                 // Add executor to forward event store.
                 addFrequencyExecutor("SQS - poll",
-                        () -> () -> new SqsConnector(eventStore).poll(sqsConnectorConfig),
+                        () -> sqsConnector::poll,
                         sqsConnectorConfig.getPollFrequency().toMillis());
             }
         }
