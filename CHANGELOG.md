@@ -11,6 +11,33 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.1-beta.15] - 2022-08-17
+
+* Issue **#3002** : Fix bootstrap process for deployment of a new version.
+
+* Issue **#3001** : Fix the Source display when stepping context data.
+
+* Issue **#2988** : Remove mention of hex viewer in the error message when viewing raw data that can't be decoded in the stepper. Also ensure stepping up to the un-decodable data works ok.
+
+* Issue **#3018** : Fix incorrect cast of a SQLException to an InterruptedException.
+
+* Issue **#3011** : Fix issue of data being truncated in text pane before the pipeline is run.
+
+* Issue **#3008** : Fix `current-user()` call not returning anything when used in a pipeline on a dash text pane.
+
+* Issue **#2993** : Add sorting to columns on Nodes screen.
+
+* Issue **#2993** : Add column sorting to Jobs screen. Set default sort to node name.
+
+* Issue **#2867** : Stop the XML formatter used in the data preview from formatting non-XML data as XML when it finds angle brackets in the data.
+
+* Change the hex dump display to render single bytes using US_ASCII instead of UTF8.
+
+* Issue **#3028** : Catch entity change events so modified feed entities are removed from the cache. Also update the data display if a feed's encoding is changed.
+
+* Issue **#3031** : Add connectors to poll from AWS SQS.
+
 * Add system info for pool caches, e.g. XSLT pool cache.
 
 * Add button on Caches screen to evict expired entries. Move cache stats from info icon to table columns. Add Hit ratio figure.
@@ -4317,7 +4344,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.15...HEAD
+[v7.1-beta.15]: https://github.com/gchq/stroom/compare/v7.1-beta.14...v7.1-beta.15
 [v7.1-beta.14]: https://github.com/gchq/stroom/compare/v7.1-beta.13...v7.1-beta.14
 [v7.1-beta.13]: https://github.com/gchq/stroom/compare/v7.1-beta.12...v7.1-beta.13
 [v7.1-beta.12]: https://github.com/gchq/stroom/compare/v7.1-beta.11...v7.1-beta.12
