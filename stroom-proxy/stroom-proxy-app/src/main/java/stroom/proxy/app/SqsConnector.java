@@ -3,6 +3,8 @@ package stroom.proxy.app;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.event.EventStore;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -20,7 +22,7 @@ import java.util.List;
 
 public class SqsConnector {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SqsConnector.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqsConnector.class);
 
     private final EventStore eventStore;
 
@@ -29,8 +31,9 @@ public class SqsConnector {
     }
 
     public void poll(final SqsConnectorConfig config) {
-        LOGGER.debug("Getting sqs client");
-        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+        try {
+            LOGGER.debug(() -> "Getting sqs client");
+            final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
 
 //            try {
 //                CreateQueueResult create_result = sqs.createQueue(QUEUE_NAME);
@@ -40,11 +43,11 @@ public class SqsConnector {
 //                }
 //            }
 
-        LOGGER.debug("Getting queue name");
-        final String queueName = config.getQueueName();
-        LOGGER.debug("Getting queue URL for queue: " + queueName);
-        final String queueUrl = sqs.getQueueUrl(queueName).getQueueUrl();
-        LOGGER.debug("Got queue URL: " + queueUrl);
+            LOGGER.debug(() -> "Getting queue name");
+            final String queueName = config.getQueueName();
+            LOGGER.debug(() -> "Getting queue URL for queue: " + queueName);
+            final String queueUrl = sqs.getQueueUrl(queueName).getQueueUrl();
+            LOGGER.debug(() -> "Got queue URL: " + queueUrl);
 
 //    SendMessageRequest send_msg_request = new SendMessageRequest()
 //            .withQueueUrl(queueUrl)
@@ -64,28 +67,31 @@ public class SqsConnector {
 //                            .withDelaySeconds(10));
 //    sqs.sendMessageBatch(send_batch_request);
 
-        List<Message> messages;
-        do {
-            // receive messages from the queue
-            LOGGER.debug("Getting messages");
-            messages = sqs.receiveMessage(queueUrl).getMessages();
+            List<Message> messages;
+            do {
+                // receive messages from the queue
+                LOGGER.debug(() -> "Getting messages");
+                messages = sqs.receiveMessage(queueUrl).getMessages();
 
-            // delete messages from the queue
-            for (final Message message : messages) {
-                try {
-                    final AttributeMap attributeMap = new AttributeMap();
-                    if (message.getAttributes() != null) {
-                        attributeMap.putAll(message.getAttributes());
+                // delete messages from the queue
+                for (final Message message : messages) {
+                    try {
+                        final AttributeMap attributeMap = new AttributeMap();
+                        if (message.getAttributes() != null) {
+                            attributeMap.putAll(message.getAttributes());
+                        }
+
+                        attributeMap.putIfAbsent(StandardHeaderArguments.FEED, "TEST");
+
+                        eventStore.consume(attributeMap, message.getMessageId(), message.getBody());
+                        sqs.deleteMessage(queueUrl, message.getReceiptHandle());
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
                     }
-
-                    attributeMap.putIfAbsent(StandardHeaderArguments.FEED, "TEST");
-
-                    eventStore.consume(attributeMap, message.getMessageId(), message.getBody());
-                    sqs.deleteMessage(queueUrl, message.getReceiptHandle());
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
                 }
-            }
-        } while (messages.size() > 0);
+            } while (messages.size() > 0);
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
     }
 }

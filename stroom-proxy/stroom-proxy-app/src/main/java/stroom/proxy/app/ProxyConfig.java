@@ -54,8 +54,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final RestClientConfig restClientConfig;
     private final ThreadConfig threadConfig;
     private final StroomDuration retryFrequency;
-
-    private final List<SqsConnectorConfig> sqsConnectorConfigs;
+    private final List<SqsConnectorConfig> sqsConnectors;
 
     public ProxyConfig() {
         useDefaultOpenIdCredentials = DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS;
@@ -77,7 +76,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         restClientConfig = new RestClientConfig();
         threadConfig = new ThreadConfig();
         retryFrequency = StroomDuration.ofMinutes(1);
-        sqsConnectorConfigs = new ArrayList<>();
+        sqsConnectors = new ArrayList<>();
     }
 
     @JsonCreator
@@ -100,7 +99,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty("restClient") final RestClientConfig restClientConfig,
             @JsonProperty("threads") final ThreadConfig threadConfig,
             @JsonProperty("retryFrequency") final StroomDuration retryFrequency,
-            @JsonProperty("sqsConnectorConfigs") final List<SqsConnectorConfig> sqsConnectorConfigs) {
+            @JsonProperty("sqsConnectors") final List<SqsConnectorConfig> sqsConnectors) {
 
         this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
@@ -120,7 +119,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.restClientConfig = restClientConfig;
         this.threadConfig = threadConfig;
         this.retryFrequency = retryFrequency;
-        this.sqsConnectorConfigs = sqsConnectorConfigs;
+        this.sqsConnectors = sqsConnectors;
     }
 
     @AssertTrue(
@@ -228,7 +227,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonPropertyDescription("Configurations for AWS SQS connectors")
     @JsonProperty
     public List<SqsConnectorConfig> getSqsConnectorConfigs() {
-        return sqsConnectorConfigs;
+        return sqsConnectors;
     }
 
     public static Builder builder() {
@@ -256,7 +255,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private RestClientConfig restClientConfig = new RestClientConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
         private StroomDuration retryFrequency = StroomDuration.ofMinutes(1);
-        private List<SqsConnectorConfig> sqsConnectorConfigs = new ArrayList<>();
+        private List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
 
         private Builder() {
 
@@ -352,8 +351,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
-        public Builder addSqsConnector(final SqsConnectorConfig sqsConnectorConfig) {
-            this.sqsConnectorConfigs.add(sqsConnectorConfig);
+        public Builder addSqsConnector(final SqsConnectorConfig sqsConnector) {
+            this.sqsConnectors.add(sqsConnector);
             return this;
         }
 
@@ -377,7 +376,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     restClientConfig,
                     threadConfig,
                     retryFrequency,
-                    sqsConnectorConfigs);
+                    sqsConnectors);
         }
     }
 }
