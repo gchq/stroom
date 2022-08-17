@@ -11,6 +11,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 import java.util.List;
@@ -71,11 +72,26 @@ public class SqsConnector {
                 for (final Message message : messages) {
                     try {
                         final AttributeMap attributeMap = new AttributeMap();
-                        final Map<String, String> attributesAsStrings = message.attributesAsStrings();
-                        if (attributesAsStrings != null) {
+
+                        LOGGER.debug(() -> "Has Attributes: " + message.hasAttributes());
+                        if (message.hasAttributes()) {
+                            final Map<String, String> attributesAsStrings = message.attributesAsStrings();
+                            LOGGER.debug(() -> "Attributes: " + attributesAsStrings);
                             attributeMap.putAll(attributesAsStrings);
                         }
-                        attributeMap.putIfAbsent(StandardHeaderArguments.FEED, "TEST");
+
+                        LOGGER.debug(() -> "Has Message Attributes: " + message.hasMessageAttributes());
+                        if (message.hasMessageAttributes()) {
+                            final Map<String, MessageAttributeValue> messageAttributes = message.messageAttributes();
+                            LOGGER.debug(() -> "Message Attributes: " + messageAttributes);
+                            messageAttributes.forEach((k, v) -> attributeMap.put(k, v.stringValue()));
+                        }
+
+                        // FALLBACK
+                        if (attributeMap.containsKey(StandardHeaderArguments.FEED)) {
+                            LOGGER.debug(() -> "Adding fallback feed TEST");
+                            attributeMap.putIfAbsent(StandardHeaderArguments.FEED, "TEST");
+                        }
 
                         eventStore.consume(attributeMap, message.messageId(), message.body());
 
