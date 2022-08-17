@@ -36,7 +36,6 @@ public class SqsConnector {
             LOGGER.debug(() -> "Getting sqs client");
             final AmazonSQS sqs = AmazonSQSClientBuilder.standard()
                     .withRegion(config.getAwsRegionName())
-                    .withCredentials(new ProfileCredentialsProvider(config.getAwsProfileName()))
                     .build();
 
 //            try {
