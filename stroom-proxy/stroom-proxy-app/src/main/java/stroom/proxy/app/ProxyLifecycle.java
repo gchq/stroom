@@ -176,8 +176,8 @@ public class ProxyLifecycle implements Managed {
                 () -> eventStore::forwardAll,
                 eventStoreConfig.getRollFrequency().toMillis());
 
-        if (proxyConfig.getSqsConnectorConfigs() != null) {
-            for (final SqsConnectorConfig sqsConnectorConfig : proxyConfig.getSqsConnectorConfigs()) {
+        if (proxyConfig.getSqsConnectors() != null) {
+            for (final SqsConnectorConfig sqsConnectorConfig : proxyConfig.getSqsConnectors()) {
                 // Add executor to forward event store.
                 addFrequencyExecutor("SQS - poll",
                         () -> () -> new SqsConnector(eventStore).poll(sqsConnectorConfig),

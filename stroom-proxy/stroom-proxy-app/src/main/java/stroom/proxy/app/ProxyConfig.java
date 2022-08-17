@@ -226,7 +226,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     @JsonPropertyDescription("Configurations for AWS SQS connectors")
     @JsonProperty
-    public List<SqsConnectorConfig> getSqsConnectorConfigs() {
+    public List<SqsConnectorConfig> getSqsConnectors() {
         return sqsConnectors;
     }
 
