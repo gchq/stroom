@@ -2697,7 +2697,7 @@ paths:
       - Jobs
   /jobNode/v1:
     get:
-      operationId: listJobsNodes
+      operationId: listJobNodes
       parameters:
       - in: query
         name: jobName
@@ -2715,6 +2715,26 @@ paths:
                 $ref: '#/components/schemas/ResultPageJobNode'
           description: default response
       summary: Lists job nodes
+      tags:
+      - Jobs (Node)
+  /jobNode/v1/find:
+    post:
+      operationId: findJobNodes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindJobNodeCriteria'
+        description: findJobNodeCriteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageJobNode'
+          description: default response
+      summary: Finds job nodes matching criteria and sort order
       tags:
       - Jobs (Node)
   /jobNode/v1/info:
@@ -2993,19 +3013,6 @@ paths:
       summary: Get a meta record for a given id, if permitted.
       tags:
       - Meta
-  /node/v1:
-    get:
-      operationId: findNodes
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FetchNodeStatusResponse'
-          description: default response
-      summary: Lists nodes
-      tags:
-      - Nodes
   /node/v1/all:
     get:
       operationId: listAllNodes
@@ -3060,6 +3067,26 @@ paths:
                 type: boolean
           description: default response
       summary: Sets whether a node is enabled
+      tags:
+      - Nodes
+  /node/v1/find:
+    post:
+      operationId: findNodes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindNodeStatusCriteria'
+        description: findNodeStatusCriteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FetchNodeStatusResponse'
+          description: default response
+      summary: Finds nodes matching criteria and sort order
       tags:
       - Nodes
   /node/v1/info/{nodeName}:
@@ -7916,6 +7943,22 @@ components:
             $ref: '#/components/schemas/CriteriaFieldSort'
         volumeIdSet:
           $ref: '#/components/schemas/SelectionInteger'
+    FindJobNodeCriteria:
+      type: object
+      properties:
+        jobName:
+          $ref: '#/components/schemas/StringCriteria'
+        nodeName:
+          $ref: '#/components/schemas/StringCriteria'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
     FindMetaCriteria:
       type: object
       properties:
@@ -7923,6 +7966,18 @@ components:
           $ref: '#/components/schemas/ExpressionOperator'
         fetchRelationships:
           type: boolean
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+    FindNodeStatusCriteria:
+      type: object
+      properties:
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
         sort:
