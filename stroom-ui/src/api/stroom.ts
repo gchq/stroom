@@ -1287,10 +1287,24 @@ export interface FindIndexShardCriteria {
   volumeIdSet?: SelectionInteger;
 }
 
+export interface FindJobNodeCriteria {
+  jobName?: StringCriteria;
+  nodeName?: StringCriteria;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
 export interface FindMetaCriteria {
   /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   fetchRelationships?: boolean;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface FindNodeStatusCriteria {
   pageRequest?: PageRequest;
   sort?: string;
   sortList?: CriteriaFieldSort[];
@@ -6220,17 +6234,36 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Jobs (Node)
-     * @name ListJobsNodes
+     * @name ListJobNodes
      * @summary Lists job nodes
      * @request GET:/jobNode/v1
      * @secure
      */
-    listJobsNodes: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
+    listJobNodes: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, ResultPageJobNode>({
         path: `/jobNode/v1`,
         method: "GET",
         query: query,
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Jobs (Node)
+     * @name FindJobNodes
+     * @summary Finds job nodes matching criteria and sort order
+     * @request POST:/jobNode/v1/find
+     * @secure
+     */
+    findJobNodes: (data: FindJobNodeCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageJobNode>({
+        path: `/jobNode/v1/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
 
@@ -6481,23 +6514,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Nodes
-     * @name FindNodes
-     * @summary Lists nodes
-     * @request GET:/node/v1
-     * @secure
-     */
-    findNodes: (params: RequestParams = {}) =>
-      this.request<any, FetchNodeStatusResponse>({
-        path: `/node/v1`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Nodes
      * @name ListAllNodes
      * @summary Lists all nodes
      * @request GET:/node/v1/all
@@ -6541,6 +6557,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, boolean>({
         path: `/node/v1/enabled/${nodeName}`,
         method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Nodes
+     * @name FindNodes
+     * @summary Finds nodes matching criteria and sort order
+     * @request POST:/node/v1/find
+     * @secure
+     */
+    findNodes: (data: FindNodeStatusCriteria, params: RequestParams = {}) =>
+      this.request<any, FetchNodeStatusResponse>({
+        path: `/node/v1/find`,
+        method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,

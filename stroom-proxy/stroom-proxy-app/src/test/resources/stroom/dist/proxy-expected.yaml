@@ -91,6 +91,7 @@ proxyConfig:
     validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
   retryFrequency: "PT1M"
+  sqsConnectorConfigs: []
   threads:
     examineSourceThreadCount: 3
     forwardRetryThreadCount: 2
