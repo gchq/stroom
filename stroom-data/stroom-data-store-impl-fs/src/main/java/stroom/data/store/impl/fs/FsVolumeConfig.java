@@ -12,13 +12,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 import javax.validation.constraints.Pattern;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -53,6 +50,7 @@ public class FsVolumeConfig extends AbstractConfig {
     private List<String> defaultStreamVolumePaths;
     private final double defaultStreamVolumeFilesystemUtilisation;
     private final boolean createDefaultStreamVolumesOnStart;
+    private final int findOrphanedMetaBatchSize;
 
     private final CacheConfig feedPathCache;
     private final CacheConfig typePathCache;
@@ -66,6 +64,7 @@ public class FsVolumeConfig extends AbstractConfig {
         defaultStreamVolumePaths = List.of("volumes/default_stream_volume");
         defaultStreamVolumeFilesystemUtilisation = 0.9;
         createDefaultStreamVolumesOnStart = true;
+        findOrphanedMetaBatchSize = 7_000;
 
         feedPathCache = CacheConfig.builder()
                 .maximumSize(1000L)
@@ -88,7 +87,8 @@ public class FsVolumeConfig extends AbstractConfig {
             @JsonProperty("createDefaultStreamVolumesOnStart") final boolean createDefaultStreamVolumesOnStart,
             @JsonProperty("feedPathCache") final CacheConfig feedPathCache,
             @JsonProperty("typePathCache") final CacheConfig typePathCache,
-            @JsonProperty("metaTypeExtensions") Map<String, String> metaTypeExtensions) {
+            @JsonProperty("metaTypeExtensions") final Map<String, String> metaTypeExtensions,
+            @JsonProperty("findOrphanedMetaBatchSize") final int findOrphanedMetaBatchSize) {
         this.volumeSelector = volumeSelector;
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
         this.defaultStreamVolumeFilesystemUtilisation = defaultStreamVolumeFilesystemUtilisation;
@@ -96,6 +96,7 @@ public class FsVolumeConfig extends AbstractConfig {
         this.feedPathCache = feedPathCache;
         this.typePathCache = typePathCache;
         this.metaTypeExtensions = metaTypeExtensions;
+        this.findOrphanedMetaBatchSize = findOrphanedMetaBatchSize;
     }
 
     @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
@@ -139,7 +140,12 @@ public class FsVolumeConfig extends AbstractConfig {
         return defaultStreamVolumeFilesystemUtilisation;
     }
 
-    public FsVolumeConfig withDefaultStreamVolumePaths(List<String> defaultStreamVolumePaths) {
+    @JsonPropertyDescription("Number of meta records to check in each batch.")
+    public int getFindOrphanedMetaBatchSize() {
+        return findOrphanedMetaBatchSize;
+    }
+
+    public FsVolumeConfig withDefaultStreamVolumePaths(final List<String> defaultStreamVolumePaths) {
         return new FsVolumeConfig(
                 volumeSelector,
                 defaultStreamVolumePaths,
@@ -147,7 +153,8 @@ public class FsVolumeConfig extends AbstractConfig {
                 createDefaultStreamVolumesOnStart,
                 feedPathCache,
                 typePathCache,
-                metaTypeExtensions);
+                metaTypeExtensions,
+                findOrphanedMetaBatchSize);
     }
 
     @JsonPropertyDescription("Map of meta type names to their file extension. " +
@@ -173,12 +180,15 @@ public class FsVolumeConfig extends AbstractConfig {
 
     @Override
     public String toString() {
-        return "VolumeConfig{" +
+        return "FsVolumeConfig{" +
                 "volumeSelector='" + volumeSelector + '\'' +
+                ", defaultStreamVolumePaths=" + defaultStreamVolumePaths +
+                ", defaultStreamVolumeFilesystemUtilisation=" + defaultStreamVolumeFilesystemUtilisation +
                 ", createDefaultStreamVolumesOnStart=" + createDefaultStreamVolumesOnStart +
-                ", defaultStreamVolumePaths=" + "\"" + defaultStreamVolumePaths + "\"" +
-                ", defaultStreamVolumeFilesystemUtilisation=" + "\"" + defaultStreamVolumeFilesystemUtilisation + "\"" +
-                ", metaTypeExtensions=" + "\"" + metaTypeExtensions + "\"" +
+                ", findOrphanedMetaBatchSize=" + findOrphanedMetaBatchSize +
+                ", feedPathCache=" + feedPathCache +
+                ", typePathCache=" + typePathCache +
+                ", metaTypeExtensions=" + metaTypeExtensions +
                 '}';
     }
 }

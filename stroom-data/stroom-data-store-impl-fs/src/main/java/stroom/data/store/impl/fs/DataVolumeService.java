@@ -11,12 +11,15 @@ public class DataVolumeService {
 
     private final DataVolumeDao dataVolumeDao;
     private final SecurityContext securityContext;
+    private final FsOrphanedMetaDao fsOrphanedMetaDao;
 
     @Inject
     DataVolumeService(final DataVolumeDao dataVolumeDao,
-                      final SecurityContext securityContext) {
+                      final SecurityContext securityContext,
+                      final FsOrphanedMetaDao fsOrphanedMetaDao) {
         this.dataVolumeDao = dataVolumeDao;
         this.securityContext = securityContext;
+        this.fsOrphanedMetaDao = fsOrphanedMetaDao;
     }
 
     public ResultPage<DataVolume> find(final FindDataVolumeCriteria criteria) {
@@ -39,5 +42,14 @@ public class DataVolumeService {
     public DataVolume createDataVolume(final long metaId, final FsVolume volume) {
         return securityContext.secureResult(() ->
                 dataVolumeDao.createDataVolume(metaId, volume));
+    }
+
+    public long getLastMinMetaId() {
+        return securityContext.secureResult(fsOrphanedMetaDao::getLastMinMetaId);
+    }
+
+    void updateLastMinMetaId(final long lastMinMetaId) {
+        securityContext.secure(() ->
+                fsOrphanedMetaDao.updateLastMinMetaId(lastMinMetaId));
     }
 }
