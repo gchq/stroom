@@ -152,6 +152,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         this.marshaller = marshaller;
         this.docRefInfoService = docRefInfoService;
 
+        // TODO AT: This could be moved out into a singleton class, see IndexShardValueMapper
+        //  to save it being create each time
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorTaskFields.CREATE_TIME,
                 PROCESSOR_TASK.CREATE_TIME_MS,
@@ -183,6 +185,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 value -> TaskStatus.valueOf(value.toUpperCase()).getPrimitiveValue());
         expressionMapper.map(ProcessorTaskFields.TASK_ID, PROCESSOR_TASK.ID, Long::valueOf);
 
+        // TODO AT: This could be moved out into a singleton class, see IndexShardValueMapper
+        //  to save it being create each time
         valueMapper = new ValueMapper();
         valueMapper.map(ProcessorTaskFields.CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS, ValLong::create);
         valueMapper.map(ProcessorTaskFields.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, ValLong::create);
