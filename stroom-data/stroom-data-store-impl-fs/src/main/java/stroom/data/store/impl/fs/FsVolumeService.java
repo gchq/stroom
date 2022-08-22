@@ -14,6 +14,8 @@ import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.TaskContext;
 import stroom.util.AuditUtil;
+import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -26,6 +28,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 import stroom.util.shared.ResultPage;
+import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.SystemInfoResult;
 
 import com.google.common.collect.ImmutableSortedMap;
 
@@ -34,25 +38,25 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-/**
- * TODO JC: I'm not clear what currentVolumeList is for. Add comments?
- */
 @Singleton
 @EntityEventHandler(type = FsVolumeService.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
-public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushable {
+public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushable, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeService.class);
 
@@ -85,6 +89,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private final ClusterLockService clusterLockService;
     private final Provider<EntityEventBus> entityEventBusProvider;
     private final PathCreator pathCreator;
+    // Hold a cache of the current picture of available volumes, with their used/free/total/etc. stats.
+    // Allows for fast volume selection without having to hit the db each time.
     private final AtomicReference<VolumeList> currentVolumeList = new AtomicReference<>();
     private final NodeInfo nodeInfo;
     private final TaskContext taskContext;
@@ -548,6 +554,40 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         }
     }
 
+    @Override
+    public SystemInfoResult getSystemInfo() {
+
+        final VolumeList volumeList = getCurrentVolumeList();
+
+        // Need to wrap with optional as Map.ofEntries does not support null values.
+        final var volInfoList = volumeList.getList()
+                .stream()
+                .map(vol -> Map.ofEntries(
+                        new SimpleEntry<>("path", Optional.ofNullable(vol.getPath())),
+                        new SimpleEntry<>("limit", Optional.ofNullable(vol.getByteLimit())),
+                        new SimpleEntry<>("state", Optional.ofNullable(vol.getStatus())),
+                        new SimpleEntry<>("free", Optional.ofNullable(NullSafe.get(
+                                vol.getVolumeState(),
+                                FsVolumeState::getBytesFree))),
+                        new SimpleEntry<>("total", Optional.ofNullable(NullSafe.get(
+                                vol.getVolumeState(),
+                                FsVolumeState::getBytesTotal))),
+                        new SimpleEntry<>("used", Optional.ofNullable(NullSafe.get(
+                                vol.getVolumeState(),
+                                FsVolumeState::getBytesUsed))),
+                        new SimpleEntry<>("dbStateUpdateTime", Optional.ofNullable(NullSafe.get(
+                                vol.getVolumeState(),
+                                FsVolumeState::getBytesUsed,
+                                DateUtil::createNormalDateTimeString)))))
+                .collect(Collectors.toList());
+
+        return SystemInfoResult.builder(this)
+                .addDetail("volumeSelector", volumeConfigProvider.get().getVolumeSelector())
+                .addDetail("volumeListCreateTime", DateUtil.createNormalDateTimeString(volumeList.getCreateTime()))
+                .addDetail("volumeList", volInfoList)
+                .build();
+    }
+
     private static class VolumeList {
 
         private final long createTime;
@@ -556,6 +596,14 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         VolumeList(final long createTime, final List<FsVolume> list) {
             this.createTime = createTime;
             this.list = list;
+        }
+
+        public List<FsVolume> getList() {
+            return list;
+        }
+
+        public long getCreateTime() {
+            return createTime;
         }
     }
 }

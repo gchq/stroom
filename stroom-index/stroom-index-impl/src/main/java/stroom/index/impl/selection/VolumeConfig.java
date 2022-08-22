@@ -44,7 +44,7 @@ public class VolumeConfig extends AbstractConfig {
         this.defaultIndexVolumeFilesystemUtilisation = defaultIndexVolumeFilesystemUtilisation;
     }
 
-    @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
+    @JsonPropertyDescription("How should index volumes be selected for use? Possible volume selectors " +
             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
             "'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') " +
             "default is 'RoundRobin'")
