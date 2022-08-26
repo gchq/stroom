@@ -18,6 +18,7 @@ package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasCapacity;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -28,6 +29,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.OptionalDouble;
+import java.util.OptionalLong;
 
 /**
  * Some path on the network where we can store stuff.
@@ -50,11 +54,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "indexVolumeGroupId"
 })
 @JsonInclude(Include.NON_NULL)
-public class IndexVolume implements HasAuditInfo, HasIntegerId {
+public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
 
-    private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
-    private static final double NINETY_NINE_PERCENT = 0.99D;
     private static final double ONE_HUNDRED = 100D;
+    private static final long HEADROOM_BYTES = 10L * 1024L * 1024L * 1024L; // 10G
+    private static final double MAX_USED_FRACTION = 0.99D;
 
     @JsonProperty
     private Integer id;
@@ -236,11 +240,11 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
         // that we will allow.
         // Choose the higher limit of either the total storage minus 10Gb or 99%
         // of total storage.
-        final long minusTenGig = bytesTotal - TEN_GB;
-        final long percentage = (long) (bytesTotal * NINETY_NINE_PERCENT);
-        final long max = Math.max(minusTenGig, percentage);
+        final long totalMinusFixedHeadroom = bytesTotal - HEADROOM_BYTES;
+        final long scaledTotal = (long) (bytesTotal * MAX_USED_FRACTION);
+        final long maxUsed = Math.max(totalMinusFixedHeadroom, scaledTotal);
 
-        return bytesUsed >= max;
+        return bytesUsed >= maxUsed;
     }
 
     public Long getBytesUsed() {
@@ -275,14 +279,14 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
         this.statusMs = statusMs;
     }
 
-    @JsonIgnore
-    public Long getPercentUsed() {
-        Long percent = null;
-        if (bytesUsed != null && bytesTotal != null) {
-            percent = Double.valueOf(((double) bytesUsed) / ((double) bytesTotal) * ONE_HUNDRED).longValue();
-        }
-        return percent;
-    }
+//    @JsonIgnore
+//    public Long getPercentUsed() {
+//        Long percent = null;
+//        if (bytesUsed != null && bytesTotal != null) {
+//            percent = Double.valueOf(((double) bytesUsed) / ((double) bytesTotal) * 100).longValue();
+//        }
+//        return percent;
+//    }
 
     public static Builder builder() {
         return new Builder();
@@ -290,6 +294,56 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
 
     public Builder copy() {
         return new Builder(this);
+    }
+
+    @JsonIgnore
+    @Override
+    public OptionalLong getCapacityUsedBytes() {
+        return bytesUsed != null
+                ? OptionalLong.of(bytesUsed)
+                : OptionalLong.empty();
+    }
+
+    @JsonIgnore
+    @Override
+    public OptionalLong getCapacityLimitBytes() {
+        return bytesLimit != null
+                ? OptionalLong.of(bytesLimit)
+                : OptionalLong.empty();
+    }
+
+    @JsonIgnore
+    @Override
+    public OptionalLong getTotalCapacityBytes() {
+        return bytesTotal != null
+                ? OptionalLong.of(bytesTotal)
+                : OptionalLong.empty();
+    }
+
+    @JsonIgnore
+    @Override
+    public OptionalLong getFreeCapacityBytes() {
+        return bytesFree != null
+                ? OptionalLong.of(bytesFree)
+                : OptionalLong.empty();
+    }
+
+    @JsonIgnore
+    @Override
+    public OptionalDouble getFreeCapacityPercent() {
+        if (bytesLimit != null) {
+            if (bytesUsed != null && bytesTotal != null) {
+                return OptionalDouble.of((bytesLimit - bytesUsed) / (double) bytesLimit * 100);
+            } else {
+                return OptionalDouble.empty();
+            }
+        } else {
+            if (bytesFree != null && bytesTotal != null) {
+                return OptionalDouble.of(bytesFree / (double) bytesTotal * 100);
+            } else {
+                return OptionalDouble.empty();
+            }
+        }
     }
 
     public enum VolumeUseState implements HasDisplayValue, HasPrimitiveValue {
@@ -393,6 +447,11 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
 
         public Builder bytesTotal(final Long bytesTotal) {
             this.bytesTotal = bytesTotal;
+            return this;
+        }
+
+        public Builder bytesLimit(final Long bytesLimit) {
+            this.bytesLimit = bytesLimit;
             return this;
         }
 

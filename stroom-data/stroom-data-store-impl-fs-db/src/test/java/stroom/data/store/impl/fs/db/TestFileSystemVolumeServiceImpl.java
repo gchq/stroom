@@ -35,6 +35,7 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
+import stroom.util.io.capacity.HasCapacitySelectorFactory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -108,7 +109,8 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 null,
                 pathCreator,
                 nodeInfo,
-                new SimpleTaskContext());
+                new SimpleTaskContext(),
+                new HasCapacitySelectorFactory());
 
 //        volumeService.volumeList = volumeList;
     }

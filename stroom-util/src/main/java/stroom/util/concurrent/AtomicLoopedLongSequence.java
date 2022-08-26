@@ -1,10 +1,10 @@
-package stroom.test.common.util.test.data;
+package stroom.util.concurrent;
 
 import com.google.common.base.Preconditions;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-class AtomicLoopedLongSequence {
+public class AtomicLoopedLongSequence {
 
     private final long startInc;
     private final long endExc;

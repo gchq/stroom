@@ -1,12 +1,8 @@
 package stroom.index.impl.db;
 
-import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexException;
-import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.AuditUtil;
@@ -14,11 +10,6 @@ import stroom.util.AuditUtil;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestIndexShardDaoImpl {
 
@@ -76,65 +67,65 @@ class TestIndexShardDaoImpl {
 //        assertThat(byIdIndexShard.getVolume()).isNotNull();
 //    }
 
-    @Test
-    void createShardEmptyGroup() {
-        // Given
-        final String partitionName = "ALL";
-        final DocRef index = DocRef.builder()
-                .uuid(UUID.randomUUID().toString())
-                .name(TestData.createIndexName())
-                .type(IndexDoc.DOCUMENT_TYPE)
-                .build();
-        final Long shardFrom = System.currentTimeMillis();
-        final Long shardTo = shardFrom + 3600;
-        final String nodeName = TestData.createNodeName();
-        final String volumeGroupName = TestData.createVolumeGroupName();
-
-        // When
-        createGroup(volumeGroupName);
-        final IndexShardKey indexShardKey = IndexShardKey
-                .builder()
-                .indexUuid(index.getUuid())
-                .partition(partitionName)
-                .shardNo(0)
-                .partitionFromTime(shardFrom)
-                .partitionToTime(shardTo)
-                .build();
-
-        // Then
-        assertThrows(IndexException.class,
-                () -> indexShardDao.create(indexShardKey, volumeGroupName, nodeName, "1.0-test"));
-
-    }
-
-    @Test
-    void createShardNonExistentGroup() {
-        // Given
-        final String partitionName = "ALL";
-        final DocRef index = DocRef.builder()
-                .uuid(UUID.randomUUID().toString())
-                .name(TestData.createIndexName())
-                .type(IndexDoc.DOCUMENT_TYPE)
-                .build();
-        final Long shardFrom = System.currentTimeMillis();
-        final Long shardTo = shardFrom + 3600;
-        final String nodeName = TestData.createNodeName();
-        final String volumeGroupName = TestData.createVolumeGroupName();
-
-        // When
-        final IndexShardKey indexShardKey = IndexShardKey
-                .builder()
-                .indexUuid(index.getUuid())
-                .partition(partitionName)
-                .shardNo(0)
-                .partitionFromTime(shardFrom)
-                .partitionToTime(shardTo)
-                .build();
-
-        // Then
-        assertThrows(IndexException.class,
-                () -> indexShardDao.create(indexShardKey, volumeGroupName, nodeName, "1.0-test"));
-    }
+//    @Test
+//    void createShardEmptyGroup() {
+//        // Given
+//        final String partitionName = "ALL";
+//        final DocRef index = DocRef.builder()
+//                .uuid(UUID.randomUUID().toString())
+//                .name(TestData.createIndexName())
+//                .type(IndexDoc.DOCUMENT_TYPE)
+//                .build();
+//        final Long shardFrom = System.currentTimeMillis();
+//        final Long shardTo = shardFrom + 3600;
+//        final String nodeName = TestData.createNodeName();
+//        final String volumeGroupName = TestData.createVolumeGroupName();
+//
+//        // When
+//        createGroup(volumeGroupName);
+//        final IndexShardKey indexShardKey = IndexShardKey
+//                .builder()
+//                .indexUuid(index.getUuid())
+//                .partition(partitionName)
+//                .shardNo(0)
+//                .partitionFromTime(shardFrom)
+//                .partitionToTime(shardTo)
+//                .build();
+//
+//        // Then
+//        assertThrows(IndexException.class,
+//                () -> indexShardDao.create(indexShardKey, volumeGroupName, nodeName, "1.0-test"));
+//
+//    }
+//
+//    @Test
+//    void createShardNonExistentGroup() {
+//        // Given
+//        final String partitionName = "ALL";
+//        final DocRef index = DocRef.builder()
+//                .uuid(UUID.randomUUID().toString())
+//                .name(TestData.createIndexName())
+//                .type(IndexDoc.DOCUMENT_TYPE)
+//                .build();
+//        final Long shardFrom = System.currentTimeMillis();
+//        final Long shardTo = shardFrom + 3600;
+//        final String nodeName = TestData.createNodeName();
+//        final String volumeGroupName = TestData.createVolumeGroupName();
+//
+//        // When
+//        final IndexShardKey indexShardKey = IndexShardKey
+//                .builder()
+//                .indexUuid(index.getUuid())
+//                .partition(partitionName)
+//                .shardNo(0)
+//                .partitionFromTime(shardFrom)
+//                .partitionToTime(shardTo)
+//                .build();
+//
+//        // Then
+//        assertThrows(IndexException.class,
+//                () -> indexShardDao.create(indexShardKey, volumeGroupName, nodeName, "1.0-test"));
+//    }
 
     private IndexVolume createVolume(final String nodeName, final String path) {
         final IndexVolume indexVolume = new IndexVolume();

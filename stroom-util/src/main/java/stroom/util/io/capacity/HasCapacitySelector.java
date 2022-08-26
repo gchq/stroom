@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.index.impl.selection;
+package stroom.util.io.capacity;
 
-import stroom.index.shared.IndexVolume;
+import stroom.util.shared.HasCapacity;
 
 import java.util.List;
 
-public interface VolumeSelector {
+public interface HasCapacitySelector {
 
     String getName();
 
-    IndexVolume select(List<IndexVolume> list);
+    <T extends HasCapacity> T select(List<T> list);
 }

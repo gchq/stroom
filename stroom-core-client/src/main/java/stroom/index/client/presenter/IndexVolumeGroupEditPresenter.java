@@ -222,7 +222,7 @@ public class IndexVolumeGroupEditPresenter
             };
 
             final PopupSize popupSize =
-                    new PopupSize(1000, 600, 350, 250, true);
+                    new PopupSize(1100, 600, 350, 250, true);
             ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
                     popupUiHandlers);
         }

@@ -125,6 +125,7 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 1000
       findOrphanedMetaBatchSize: 7000
+      maxVolumeStateAge: "PT30S"
       metaTypeExtensions:
         Detections: "dtxn"
         Error: "err"
@@ -937,3 +938,7 @@ appConfig:
     defaultIndexVolumeGroupPaths:
     - "volumes/default_index_volume"
     volumeSelector: "RoundRobin"
+    volumeSelectorCache:
+      expireAfterAccess: "P10D"
+      expireAfterWrite: null
+      maximumSize: 1000

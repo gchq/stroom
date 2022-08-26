@@ -6,13 +6,14 @@ import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
-import stroom.index.impl.selection.RoundRobinVolumeSelector;
+import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
@@ -29,11 +30,16 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
+@Singleton // holding all the volume selectors
 class IndexShardDaoImpl implements IndexShardDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardDaoImpl.class);
 
     private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> {
         final IndexShard indexShard = new IndexShard();
@@ -76,24 +82,42 @@ class IndexShardDaoImpl implements IndexShardDao {
 
     private static final Map<String, Field<?>> FIELD_MAP = new HashMap<>();
 
+//    private static final Map<String, HasCapacitySelector> VOLUME_SELECTOR_MAP;
+//    private static final HasCapacitySelector DEFAULT_VOLUME_SELECTOR;
+
     static {
         FIELD_MAP.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
         FIELD_MAP.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME);
+
+//        VOLUME_SELECTOR_MAP = Stream.of(
+//                        new MostFreePercentCapacitySelector(),
+//                        new MostFreeCapacitySelector(),
+//                        new RandomCapacitySelector(),
+//                        new RoundRobinIgnoreLeastFreePercentCapacitySelector(),
+//                        new RoundRobinIgnoreLeastFreeCapacitySelector(),
+//                        new RoundRobinCapacitySelector(),
+//                        new WeightedFreePercentRandomCapacitySelector(),
+//                        new WeightedFreeRandomCapacitySelector()
+//                )
+//                .collect(Collectors.toMap(HasCapacitySelector::getName, Function.identity()));
+//        DEFAULT_VOLUME_SELECTOR = VOLUME_SELECTOR_MAP.get(RoundRobinCapacitySelector.NAME);
     }
 
     private final IndexDbConnProvider indexDbConnProvider;
     private final IndexVolumeDao indexVolumeDao;
     private final IndexVolumeGroupService indexVolumeGroupService;
+    private final Provider<VolumeConfig> volumeConfigProvider;
     private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
-    private final RoundRobinVolumeSelector volumeSelector = new RoundRobinVolumeSelector();
 
     @Inject
     IndexShardDaoImpl(final IndexDbConnProvider indexDbConnProvider,
                       final IndexVolumeDao indexVolumeDao,
-                      final IndexVolumeGroupService indexVolumeGroupService) {
+                      final IndexVolumeGroupService indexVolumeGroupService,
+                      final Provider<VolumeConfig> volumeConfigProvider) {
         this.indexDbConnProvider = indexDbConnProvider;
         this.indexVolumeDao = indexVolumeDao;
         this.indexVolumeGroupService = indexVolumeGroupService;
+        this.volumeConfigProvider = volumeConfigProvider;
         genericDao = new GenericDao<>(
                 indexDbConnProvider,
                 INDEX_SHARD,
@@ -156,35 +180,40 @@ class IndexShardDaoImpl implements IndexShardDao {
 
     @Override
     public IndexShard create(final IndexShardKey indexShardKey,
-                             final String volumeGroupName,
+                             final IndexVolume indexVolume,
                              final String ownerNodeName,
                              final String indexVersion) {
         // TODO : @66 Add some caching here. Maybe do this as part of volume selection.
-        List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
-        if (indexVolumes == null || indexVolumes.size() == 0) {
-            //Could be due to default volume groups not having been created - but this will force as side effect
-            List<String> groupNames = indexVolumeGroupService.getNames();
-            indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
-
-            //Check again.
-            if (indexVolumes == null || indexVolumes.size() == 0) {
-                throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName +
-                        ((groupNames == null || groupNames.size() == 0)
-                                ? " No index groups defined."
-                                :
-                                        " Available index volume groups: " + String.join(", ", groupNames)));
-            }
-        }
-
-        // TODO : @66 Add volume selection based on strategy for using least full etc, like we do for data store.
-        final IndexVolume indexVolume = volumeSelector.select(indexVolumes);
-        if (indexVolume == null) {
-            final String msg = "No shard can be created as no volumes are available for group: " +
-                    volumeGroupName +
-                    " indexUuid: " +
-                    indexShardKey.getIndexUuid();
-            throw new IndexException(msg);
-        }
+//        List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
+//
+//        if (indexVolumes.size() == 0) {
+//            //Could be due to default volume groups not having been created - but this will force as side effect
+//            final List<String> groupNames = indexVolumeGroupService.getNames();
+//
+//            // Now re-fetch
+//            indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
+//
+//            //Check again.
+//            if (indexVolumes == null || indexVolumes.size() == 0) {
+//                throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName +
+//                        ((groupNames == null || groupNames.size() == 0)
+//                                ? " No index groups defined."
+//                                :
+//                                        " Available index volume groups: " + String.join(", ", groupNames)));
+//            }
+//        }
+//
+//        indexVolumes = VolumeListUtil.removeFullVolumes(indexVolumes);
+//
+//        final HasCapacitySelector volumeSelector = getVolumeSelector();
+//        final IndexVolume indexVolume = volumeSelector.select(indexVolumes);
+//        if (indexVolume == null) {
+//            final String msg = "No shard can be created as no volumes are available for group: " +
+//                    volumeGroupName +
+//                    " indexUuid: " +
+//                    indexShardKey.getIndexUuid();
+//            throw new IndexException(msg);
+//        }
 
         final IndexShard indexShard = new IndexShard();
         indexShard.setIndexUuid(indexShardKey.getIndexUuid());
@@ -235,4 +264,23 @@ class IndexShardDaoImpl implements IndexShardDao {
                 )
                 .execute());
     }
+
+//    private HasCapacitySelector getVolumeSelector() {
+//        HasCapacitySelector volumeSelector = null;
+//
+//        try {
+//            final String value = volumeConfigProvider.get().getVolumeSelector();
+//            if (value != null) {
+//                volumeSelector = VOLUME_SELECTOR_MAP.get(value);
+//            }
+//        } catch (final RuntimeException e) {
+//            LOGGER.debug(e::getMessage);
+//        }
+//
+//        if (volumeSelector == null) {
+//            volumeSelector = DEFAULT_VOLUME_SELECTOR;
+//        }
+//
+//        return volumeSelector;
+//    }
 }

@@ -52,4 +52,9 @@ public class MockIndexVolumeService implements IndexVolumeService {
     @Override
     public void rescan() {
     }
+
+    @Override
+    public IndexVolume selectVolume(final String groupName, final String nodeName) {
+        return null;
+    }
 }

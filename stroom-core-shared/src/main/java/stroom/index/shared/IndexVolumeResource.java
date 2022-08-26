@@ -66,7 +66,7 @@ public interface IndexVolumeResource extends RestResource, DirectRestService, Fe
             operationId = "deleteIndexVolume")
     Boolean delete(@PathParam("id") Integer id);
 
-    @DELETE
+    @GET
     @Path(RESCAN_SUB_PATH)
     @Operation(
             summary = "Rescans index volumes",

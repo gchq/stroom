@@ -102,7 +102,12 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
             currentGroupName = current.getName();
         }
 
-        final IndexVolumeGroup saved = genericDao.update(indexVolumeGroup);
+        final IndexVolumeGroup saved;
+        try {
+            saved = genericDao.update(indexVolumeGroup);
+        } catch (Exception e) {
+            throw e;
+        }
 
         // If the group name has changed then update indexes to point to the new group name.
         if (currentGroupName != null && !currentGroupName.equals(saved.getName())) {
@@ -144,7 +149,6 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                 .map(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER)
                 .orElse(null);
     }
-
 
     @Override
     public List<String> getNames() {

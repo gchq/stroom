@@ -19,9 +19,12 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -151,6 +154,24 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                         .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
                         .fetch())
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply);
+    }
+
+    @Override
+    public Map<String, List<IndexVolume>> getVolumesOnNodeGrouped(final String nodeName) {
+        final Map<String, List<IndexVolume>> map = new HashMap<>();
+        JooqUtil.contextResult(indexDbConnProvider, context -> context
+                        .select(INDEX_VOLUME_GROUP.NAME, INDEX_VOLUME.asterisk())
+                        .from(INDEX_VOLUME)
+                        .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
+                        .where(INDEX_VOLUME.NODE_NAME.eq(nodeName))
+                        .fetch())
+                .forEach(rec -> {
+                    final String groupName = rec.get(INDEX_VOLUME_GROUP.NAME);
+                    final IndexVolume indexVolume = RECORD_TO_INDEX_VOLUME_MAPPER.apply(rec);
+                    map.computeIfAbsent(groupName, k -> new ArrayList<>())
+                            .add(indexVolume);
+                });
+        return map;
     }
 
     @Override

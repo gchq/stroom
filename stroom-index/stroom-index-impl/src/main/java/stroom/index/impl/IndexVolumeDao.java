@@ -5,6 +5,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.util.shared.ResultPage;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface IndexVolumeDao {
@@ -45,6 +46,8 @@ public interface IndexVolumeDao {
     List<IndexVolume> getVolumesInGroupOnNode(String groupName, String nodeName);
 
     List<IndexVolume> getVolumesInGroup(String groupName);
+
+    Map<String, List<IndexVolume>> getVolumesOnNodeGrouped(final String nodeName);
 
     ResultPage<IndexVolume> find(ExpressionCriteria criteria);
 //

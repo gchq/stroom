@@ -14,29 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.index.impl.selection;
+package stroom.util.io.capacity;
 
-import stroom.index.shared.IndexVolume;
+
+import stroom.util.shared.HasCapacity;
 
 import java.util.List;
 
-public class RandomVolumeSelector implements VolumeSelector {
-
+public class RandomCapacitySelector implements HasCapacitySelector {
     public static final String NAME = "Random";
 
     @Override
-    public IndexVolume select(final List<IndexVolume> list) {
-        if (list.size() == 0) {
-            return null;
-        }
-        if (list.size() == 1) {
+    public <T extends HasCapacity> T select(final List<T> list) {
+        if (list == null || list.isEmpty()) {
+            throw new RuntimeException("No items provided to select from");
+        } else if (list.size() == 1) {
             return list.get(0);
+        } else {
+            final double random = Math.random();
+            final int index = (int) (random * list.size());
+
+            return list.get(index);
         }
-
-        final double random = Math.random();
-        final int index = (int) (random * list.size());
-
-        return list.get(index);
     }
 
     @Override

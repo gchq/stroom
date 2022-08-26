@@ -25,6 +25,7 @@ import stroom.lifecycle.api.LifecycleBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
@@ -70,6 +71,9 @@ public class IndexModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
 
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(IndexVolumeServiceImpl.class);
+
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(IndexShardDelete.class, builder -> builder
                         .name("Index Shard Delete")
@@ -96,6 +100,9 @@ public class IndexModule extends AbstractModule {
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(IndexShardWriterCacheStartup.class)
                 .bindShutdownTaskTo(IndexShardWriterCacheShutdown.class);
+
+        HasSystemInfoBinder.create(binder())
+                .bind(IndexVolumeServiceImpl.class);
     }
 
     private static class IndexShardDelete extends RunnableWrapper {

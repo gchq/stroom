@@ -1,10 +1,12 @@
-package stroom.test.common.util.test.data;
+package stroom.util.concurrent;
 
 import com.google.common.base.Preconditions;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.concurrent.ThreadSafe;
 
-class AtomicLoopedIntegerSequence {
+@ThreadSafe
+public class AtomicLoopedIntegerSequence {
 
     private final int startInc;
     private final int endExc;
