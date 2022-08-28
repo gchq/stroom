@@ -24,6 +24,7 @@ public class MetaModule extends AbstractModule {
     protected void configure() {
         bind(MetaService.class).to(MetaServiceImpl.class);
         bind(PhysicalDelete.class).to(PhysicalDeleteImpl.class);
+        bind(MetaSuggestionsQueryHandler.class).to(MetaSuggestionsQueryHandlerImpl.class);
 
         OptionalBinder.newOptionalBinder(binder(), MetaSecurityFilter.class);
 

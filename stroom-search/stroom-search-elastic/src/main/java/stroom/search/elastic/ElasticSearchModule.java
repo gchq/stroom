@@ -45,7 +45,8 @@ public class ElasticSearchModule extends AbstractModule {
 
         // Services
 
-        bind(stroom.search.elastic.ElasticIndexService.class).to(ElasticIndexServiceImpl.class);
+        bind(ElasticIndexService.class).to(ElasticIndexServiceImpl.class);
+        bind(ElasticSuggestionsQueryHandler.class).to(ElasticSuggestionsQueryHandlerImpl.class);
 
         // Caches
 

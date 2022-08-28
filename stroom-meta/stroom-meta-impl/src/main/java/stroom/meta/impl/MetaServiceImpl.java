@@ -1,5 +1,6 @@
 package stroom.meta.impl;
 
+import stroom.core.query.SuggestionsService;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
@@ -82,6 +83,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final MetaFeedDao metaFeedDao,
                     final MetaValueDao metaValueDao,
                     final MetaRetentionTrackerDao metaRetentionTrackerDao,
+                    final MetaSuggestionsQueryHandler metaSuggestionsQueryHandler,
                     final Provider<MetaServiceConfig> metaServiceConfigProvider,
                     final DocRefInfoService docRefInfoService,
                     final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
@@ -89,6 +91,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final SecurityContext securityContext,
                     final TaskContextFactory taskContextFactory,
                     final UserQueryRegistry userQueryRegistry,
+                    final SuggestionsService suggestionsService,
                     final TaskManager taskManager) {
         this.metaDao = metaDao;
         this.metaFeedDao = metaFeedDao;
@@ -102,6 +105,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
         this.taskContextFactory = taskContextFactory;
         this.userQueryRegistry = userQueryRegistry;
         this.taskManager = taskManager;
+
+        suggestionsService.registerHandler(MetaFields.STREAM_STORE_TYPE, metaSuggestionsQueryHandler);
     }
 
     @Override

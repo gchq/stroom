@@ -4,15 +4,21 @@ dependencies {
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-mock')
     implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-retention-api')
     implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-feed:stroom-feed-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
@@ -41,6 +47,8 @@ dependencies {
     
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
     
     // the following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

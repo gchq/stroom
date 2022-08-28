@@ -17,6 +17,7 @@
 
 package stroom.search.elastic;
 
+import stroom.core.query.SuggestionsService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -71,13 +72,17 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                                    final ElasticIndexStore elasticIndexStore,
                                    final SecurityContext securityContext,
                                    final SearchResponseCreatorManager searchResponseCreatorManager,
-                                   final ElasticSearchStoreFactory storeFactory) {
+                                   final ElasticSearchStoreFactory storeFactory,
+                                   final SuggestionsService suggestionsService,
+                                   final ElasticSuggestionsQueryHandler elasticSuggestionsProvider) {
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
         this.elasticIndexStore = elasticIndexStore;
         this.securityContext = securityContext;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.storeFactory = storeFactory;
+
+        suggestionsService.registerHandler(ElasticIndexDoc.DOCUMENT_TYPE, elasticSuggestionsProvider);
     }
 
     @Override
