@@ -51,4 +51,16 @@ public class DoubleField extends AbstractNumericField {
     public String getType() {
         return FieldTypes.DOUBLE;
     }
+
+    @Override
+    public String getShortTypeName() {
+        return "double";
+    }
+
+    @Override
+    public String getTypeDescription() {
+        return "Double-precision floating point field type\n" +
+               "\n" +
+               "Decimal value supporting equality and range queries.";
+    }
 }

@@ -72,6 +72,12 @@ public abstract class AbstractField implements Serializable, HasDisplayValue {
 
     public abstract String getType();
 
+    public abstract String getShortTypeName();
+
+    public String getTypeDescription() {
+        return null;
+    }
+
     public String getName() {
         return name;
     }

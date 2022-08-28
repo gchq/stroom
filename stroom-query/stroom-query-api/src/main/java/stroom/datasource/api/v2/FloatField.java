@@ -51,4 +51,16 @@ public class FloatField extends AbstractNumericField {
     public String getType() {
         return FieldTypes.FLOAT;
     }
+
+    @Override
+    public String getShortTypeName() {
+        return "float";
+    }
+
+    @Override
+    public String getTypeDescription() {
+        return "Floating-point field type\n" +
+               "\n" +
+               "Decimal value supporting equality and range queries.";
+    }
 }

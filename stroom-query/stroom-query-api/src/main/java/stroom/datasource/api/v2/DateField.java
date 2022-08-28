@@ -64,4 +64,22 @@ public class DateField extends AbstractField {
     public String getType() {
         return FieldTypes.DATE;
     }
+
+    @Override
+    public String getShortTypeName() {
+        return "date";
+    }
+
+    @Override
+    public String getTypeDescription() {
+        return "Date field type\n" +
+               "\n" +
+               "Accepts a text-based date, in ISO8601 date/time format: yyyy-MM-ddTHH:mm:ss[.SSS][Z].\n" +
+               "Relative values are supported, including: now(), year(), month(), day().\n" +
+               "\n" +
+               "Examples (omit quotes):\n" +
+               " * Current time plus 2 days: 'now() + 2d'\n" +
+               " * Current time minus 1 hour: 'now() - 1h'\n" +
+               " * Current time plus 2 weeks, minus 1 day 10 hours: 'now() + 2w - 1d10h'";
+    }
 }
