@@ -86,8 +86,4 @@ public class AsyncSuggestOracle extends SuggestOracle {
             requestTimer.schedule(DEBOUNCE_PERIOD_MILLIS);
         }
     }
-
-    private void scheduleRequest(final Request request, final Callback callback) {
-
-    }
 }
