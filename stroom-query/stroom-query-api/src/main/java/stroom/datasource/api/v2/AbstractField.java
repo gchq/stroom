@@ -45,6 +45,7 @@ import java.util.Objects;
         @Type(value = DoubleField.class, name = FieldTypes.DOUBLE),
         @Type(value = DateField.class, name = FieldTypes.DATE),
         @Type(value = TextField.class, name = FieldTypes.TEXT),
+        @Type(value = KeywordField.class, name = FieldTypes.KEYWORD),
         @Type(value = IpV4AddressField.class, name = FieldTypes.IPV4_ADDRESS),
         @Type(value = DocRefField.class, name = FieldTypes.DOC_REF)
 })

@@ -25,6 +25,7 @@ import stroom.datasource.api.v2.FloatField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.IpV4AddressField;
+import stroom.datasource.api.v2.KeywordField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.HasDisplayValue;
@@ -52,6 +53,8 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     DATE(FieldTypes.DATE, "Date", false, new String[]{ "date" }),
     TEXT(FieldTypes.TEXT, "Text", false,
             new String[]{ "text", "keyword", "constant_keyword", "wildcard" }),
+    KEYWORD(FieldTypes.KEYWORD, "Keyword", false,
+            new String[]{ "keyword", "constant_keyword", "wildcard" }),
     IPV4_ADDRESS(FieldTypes.IPV4_ADDRESS, "IpV4Address", false, new String[]{ "ip" });
 
     private static Map<String, ElasticIndexFieldType> nativeTypeRegistry = new HashMap<>();
@@ -169,6 +172,8 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
                 return new DateField(fieldName, isIndexed, supportedConditions);
             case FieldTypes.TEXT:
                 return new TextField(fieldName, isIndexed, supportedConditions);
+            case FieldTypes.KEYWORD:
+                return new KeywordField(fieldName, isIndexed, supportedConditions);
             case FieldTypes.IPV4_ADDRESS:
                 return new IpV4AddressField(fieldName, isIndexed, supportedConditions);
             default:
