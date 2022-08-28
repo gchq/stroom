@@ -562,17 +562,11 @@ export interface DashboardConfig {
 
 export interface DashboardDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   dashboardConfig?: DashboardConfig;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -680,17 +674,11 @@ export interface DataRetentionRule {
 
 export interface DataRetentionRules {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   name?: string;
   rules?: DataRetentionRule[];
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -757,9 +745,6 @@ export interface DestroySearchRequest {
 
 export interface DictionaryDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
@@ -767,9 +752,6 @@ export interface DictionaryDoc {
   imports?: DocRef[];
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -856,17 +838,11 @@ export interface ElasticClusterDoc {
   connection?: ElasticConnectionConfig;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -896,9 +872,6 @@ export interface ElasticIndexDoc {
   clusterRef?: DocRef;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -915,9 +888,6 @@ export interface ElasticIndexDoc {
   /** @format int32 */
   searchSlices?: number;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -1121,9 +1091,6 @@ export interface FeedDoc {
   contextEncoding?: string;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -1136,9 +1103,6 @@ export interface FeedDoc {
   status?: "RECEIVE" | "REJECT" | "DROP";
   streamType?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -1532,9 +1496,6 @@ export interface ImportState {
 
 export interface IndexDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -1554,9 +1515,6 @@ export interface IndexDoc {
   /** @format int32 */
   shardsPerPartition?: number;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -1745,18 +1703,12 @@ export interface JobNodeInfo {
 
 export interface KafkaConfigDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
   description?: string;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -2013,9 +1965,6 @@ export interface PipelineData {
 
 export interface PipelineDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -2025,9 +1974,6 @@ export interface PipelineDoc {
   parentPipeline?: DocRef;
   pipelineData?: PipelineData;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -2417,18 +2363,12 @@ export interface ReceiveDataRule {
 
 export interface ReceiveDataRules {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   fields?: AbstractField[];
   name?: string;
   rules?: ReceiveDataRule[];
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -2732,9 +2672,6 @@ export interface ScheduledTimes {
 
 export interface ScriptDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
@@ -2742,9 +2679,6 @@ export interface ScriptDoc {
   description?: string;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -2943,9 +2877,6 @@ export interface SolrIndexDoc {
   collection?: string;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   deletedFields?: SolrIndexField[];
@@ -2958,9 +2889,6 @@ export interface SolrIndexDoc {
   solrConnectionConfig?: SolrConnectionConfig;
   solrSynchState?: SolrSynchState;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -3099,9 +3027,6 @@ export interface StatisticStoreDoc {
   config?: StatisticsDataSourceData;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -3113,9 +3038,6 @@ export interface StatisticStoreDoc {
   rollUpType?: "NONE" | "ALL" | "CUSTOM";
   statisticType?: "COUNT" | "VALUE";
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -3208,9 +3130,6 @@ export interface StroomStatsStoreDoc {
   config?: StroomStatsStoreEntityData;
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -3220,9 +3139,6 @@ export interface StroomStatsStoreDoc {
   rollUpType?: "NONE" | "ALL" | "CUSTOM";
   statisticType?: "COUNT" | "VALUE";
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -3368,18 +3284,12 @@ export interface TextConverterDoc {
   converterType?: "NONE" | "DATA_SPLITTER" | "XML_FRAGMENT";
 
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
   description?: string;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -3566,9 +3476,6 @@ export type VisResultRequest = ComponentResultRequest & {
 
 export interface VisualisationDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
@@ -3579,9 +3486,6 @@ export interface VisualisationDoc {
   scriptRef?: DocRef;
   settings?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -3604,9 +3508,6 @@ export interface XPathFilter {
 
 export interface XmlSchemaDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
@@ -3619,9 +3520,6 @@ export interface XmlSchemaDoc {
   type?: string;
 
   /** @format int64 */
-  updateTime?: number;
-
-  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
@@ -3630,18 +3528,12 @@ export interface XmlSchemaDoc {
 
 export interface XsltDoc {
   /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
   description?: string;
   name?: string;
   type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
 
   /** @format int64 */
   updateTimeMs?: number;

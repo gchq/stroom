@@ -26,7 +26,7 @@ class ExpressionValidator {
         // Ensure there are no unidentified tokens.
         for (final ExpressionTokeniser.Token token : tokens) {
             if (ExpressionTokeniser.Token.Type.UNIDENTIFIED.equals(token.getType())) {
-                throw new ParseException("Unexpected expression content '" + token.toString() + "'", token.getStart());
+                throw new ParseException("Unexpected expression content '" + token + "'", token.getStart());
             }
         }
 

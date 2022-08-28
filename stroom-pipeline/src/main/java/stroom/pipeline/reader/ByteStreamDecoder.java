@@ -5,6 +5,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.string.HexDumpUtil;
 
 import java.io.InputStream;
@@ -23,7 +24,7 @@ public class ByteStreamDecoder {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteStreamDecoder.class);
 
     private final CharsetDecoder charsetDecoder;
-//    private final Supplier<Byte> byteSupplier;
+    private long lastSuppliedByteOffset = -1;
 
     private static final int MAX_BYTES_PER_CHAR = 10;
 
@@ -62,12 +63,8 @@ public class ByteStreamDecoder {
 
         DecodedChar result = null;
         boolean endOfSupply = false;
-
-        // Start trying to decode a char from this position
-//            int byteOffset = startOffset;
-
         boolean charDecoded = false;
-        int loopCnt = 0;
+        // Count of the number of bytes we have consumed for this char
         int byteCnt = 0;
 
         try {
@@ -75,6 +72,7 @@ public class ByteStreamDecoder {
                 byte b = 0;
                 try {
                     final Byte suppliedByte = byteSupplier.get();
+                    lastSuppliedByteOffset++;
                     byteCnt++;
                     if (suppliedByte == null) {
                         // end of stream
@@ -145,7 +143,8 @@ public class ByteStreamDecoder {
             if (!charDecoded && !endOfSupply) {
                 final byte[] malformedBytes = new byte[inputBuffer.remaining()];
                 inputBuffer.get(malformedBytes);
-                throw new DecoderException(charsetDecoder.charset(), malformedBytes);
+                final long offsetOfBadBytes = lastSuppliedByteOffset - (byteCnt - 1);
+                throw new DecoderException(charsetDecoder.charset(), malformedBytes, offsetOfBadBytes);
             }
         } catch (DecoderException e) {
             throw e;
@@ -191,23 +190,25 @@ public class ByteStreamDecoder {
         private final Charset charset;
 
         public DecoderException(final Charset charset,
-                                final byte[] malformedBytes) {
-            super(buildErrorMessage(charset, malformedBytes));
+                                final byte[] malformedBytes,
+                                final long offset) {
+            super(buildErrorMessage(charset, malformedBytes, offset));
 
             this.malformedBytes = malformedBytes;
             this.charset = charset;
         }
 
         private static String buildErrorMessage(final Charset charset,
-                                                final byte[] malformedBytes) {
+                                                final byte[] malformedBytes,
+                                                final long offset) {
             final String printableStr = HexDumpUtil.decodeAsPrintableChars(malformedBytes, charset);
             return "Unable to decode a "
                     + charset.displayName()
-                    + " character starting at bytes ["
+                    + " character starting at byte offset " + ModelStringUtil.formatCsv(offset)
+                    + ". Showing ten bytes at this offset: ["
                     + ByteArrayUtils.byteArrayToHex(malformedBytes)
-                    + "] [" + printableStr
-                    + "]. You can right click this pane and select 'View as hex' to see the "
-                    + "raw data in hexadecimal form.";
+                    + "] as hex, [" + printableStr
+                    + "] as characters.";
         }
 
         public byte[] getMalformedBytes() {

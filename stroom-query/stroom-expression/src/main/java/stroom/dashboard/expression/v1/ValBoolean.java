@@ -20,9 +20,9 @@ import java.util.Objects;
 
 public final class ValBoolean implements Val {
 
+    public static final Type TYPE = Type.BOOLEAN;
     static final ValBoolean TRUE = new ValBoolean(true);
     static final ValBoolean FALSE = new ValBoolean(false);
-    public static final Type TYPE = Type.BOOLEAN;
     private final boolean value;
 
     private ValBoolean(final boolean value) {

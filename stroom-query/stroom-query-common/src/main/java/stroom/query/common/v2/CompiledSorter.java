@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Sort;
@@ -28,7 +27,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class CompiledSorter<E extends HasGenerators> implements Comparator<E>, Function<Stream<E>, Stream<E>> {
+public class CompiledSorter<E extends Item> implements Comparator<E>, Function<Stream<E>, Stream<E>> {
 
     private final List<CompiledSort> compiledSorts = new ArrayList<>();
 
@@ -36,8 +35,8 @@ public class CompiledSorter<E extends HasGenerators> implements Comparator<E>, F
     }
 
     @SuppressWarnings("unchecked")
-    public static <E extends HasGenerators> CompiledSorter<E>[] create(final int maxDepth,
-                                                                       final CompiledField[] compiledFields) {
+    public static <E extends Item> CompiledSorter<E>[] create(final int maxDepth,
+                                                              final CompiledField[] compiledFields) {
         final CompiledSorter<E>[] sorters = new CompiledSorter[maxDepth + 1];
 
         if (compiledFields != null) {
@@ -92,21 +91,18 @@ public class CompiledSorter<E extends HasGenerators> implements Comparator<E>, F
 
     @Override
     public int compare(final E o1, final E o2) {
-        final Generator[] generators1 = o1.getGenerators();
-        final Generator[] generators2 = o2.getGenerators();
         for (final CompiledSort compiledSort : compiledSorts) {
             final int fieldPos = compiledSort.getFieldIndex();
-            final Generator g1 = generators1[fieldPos];
-            final Generator g2 = generators2[fieldPos];
+
+            final Val v1 = o1.getValue(fieldPos, true);
+            final Val v2 = o2.getValue(fieldPos, true);
 
             int res = 0;
-            if (g1 != null && g2 != null) {
-                final Val v1 = g1.eval();
-                final Val v2 = g2.eval();
+            if (v1 != null && v2 != null) {
                 res = compiledSort.getComparator().compare(v1, v2);
-            } else if (g1 != null) {
+            } else if (v1 != null) {
                 res = 1;
-            } else if (g2 != null) {
+            } else if (v2 != null) {
                 res = -1;
             }
 

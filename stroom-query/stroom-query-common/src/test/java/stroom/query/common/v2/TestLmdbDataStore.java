@@ -35,6 +35,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -42,7 +43,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.UUID;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,10 +52,17 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
     private final Sizes defaultMaxResultsSizes = Sizes.create(50);
     private Path tempDir;
+    private ExecutorService executorService;
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
         this.tempDir = tempDir;
+        executorService = Executors.newCachedThreadPool();
+    }
+
+    @AfterEach
+    void after() {
+        executorService.shutdown();
     }
 
     @Override
@@ -69,7 +77,6 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 pathCreator,
                 tempDirProvider,
                 () -> lmdbLibraryConfig);
-        final Executor executor = Executors.newCachedThreadPool();
 
         return new LmdbDataStore(
                 lmdbEnvFactory,
@@ -81,7 +88,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 Collections.emptyMap(),
                 maxResults,
                 false,
-                () -> executor,
+                () -> executorService,
                 new ErrorConsumerImpl());
     }
 

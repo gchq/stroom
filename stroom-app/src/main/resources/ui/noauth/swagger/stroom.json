@@ -9754,10 +9754,6 @@
       "DashboardDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -9773,10 +9769,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -9997,10 +9989,6 @@
       "DataRetentionRules" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10019,10 +10007,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -10161,10 +10145,6 @@
       "DictionaryDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10189,10 +10169,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -10383,10 +10359,6 @@
           "connection" : {
             "$ref" : "#/components/schemas/ElasticConnectionConfig"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10402,10 +10374,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -10466,10 +10434,6 @@
           "clusterRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10505,10 +10469,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -10940,10 +10900,6 @@
           "contextEncoding" : {
             "type" : "string"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10976,10 +10932,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -11901,10 +11853,6 @@
       "IndexDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -11946,10 +11894,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -12301,10 +12245,6 @@
       "KafkaConfigDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -12323,10 +12263,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -12841,10 +12777,6 @@
       "PipelineDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -12866,10 +12798,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -13717,10 +13645,6 @@
       "ReceiveDataRules" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -13745,10 +13669,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -14306,10 +14226,6 @@
       "ScriptDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -14334,10 +14250,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -14797,10 +14709,6 @@
           "collection" : {
             "type" : "string"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -14837,10 +14745,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15072,10 +14976,6 @@
           "config" : {
             "$ref" : "#/components/schemas/StatisticsDataSourceData"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15106,10 +15006,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15329,10 +15225,6 @@
           "config" : {
             "$ref" : "#/components/schemas/StroomStatsStoreEntityData"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15363,10 +15255,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15779,10 +15667,6 @@
             "type" : "string",
             "enum" : [ "NONE", "DATA_SPLITTER", "XML_FRAGMENT" ]
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15801,10 +15685,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -16219,10 +16099,6 @@
       "VisualisationDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16247,10 +16123,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -16302,10 +16174,6 @@
       "XmlSchemaDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16337,10 +16205,6 @@
           "type" : {
             "type" : "string"
           },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16359,10 +16223,6 @@
       "XsltDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16381,10 +16241,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",

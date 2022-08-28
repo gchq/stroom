@@ -17,9 +17,11 @@
 package stroom.dashboard.expression.v1;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 @ArchitecturalFunction
 public class StaticValueFunction implements Function, Appendable {
+
     private final Val value;
     private final Generator gen;
 
@@ -66,12 +68,11 @@ public class StaticValueFunction implements Function, Appendable {
     }
 
     @Override
-    public boolean isChildSelector() {
+    public boolean requiresChildData() {
         return false;
     }
 
     private static final class Gen extends AbstractNoChildGenerator {
-        private static final long serialVersionUID = -7551073465232523106L;
 
         private final Val value;
 
@@ -80,7 +81,7 @@ public class StaticValueFunction implements Function, Appendable {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             return value;
         }
     }

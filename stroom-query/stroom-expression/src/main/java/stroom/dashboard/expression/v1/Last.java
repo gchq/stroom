@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 
 @FunctionDef(
         name = Last.NAME,
@@ -34,10 +33,9 @@ import java.io.Serializable;
                                 description = "Grouped field or the result of another function",
                                 argType = Val.class)
                 }))
-public class Last extends AbstractSelectorFunction implements Serializable {
+public class Last extends AbstractSelectorFunction {
 
     static final String NAME = "last";
-    private static final long serialVersionUID = -305845496003936297L;
 
     public Last(final String name) {
         super(name, 1, 1);
@@ -48,19 +46,22 @@ public class Last extends AbstractSelectorFunction implements Serializable {
         return new LastSelector(super.createGenerator());
     }
 
-    public static class LastSelector extends Selector {
-
-        private static final long serialVersionUID = 8153777070911899616L;
+    static class LastSelector extends Selector {
 
         LastSelector(final Generator childGenerator) {
             super(childGenerator);
         }
 
-        public Val select(final Selection<Val> selection) {
-            if (selection.size() > 0) {
-                return selection.get(selection.size() - 1);
-            }
-            return eval();
+        @Override
+        Val select(final ChildData childData) {
+            return childData.last();
         }
+
+//        public Val select(final Selection<Val> selection) {
+//            if (selection.size() > 0) {
+//                return selection.get(selection.size() - 1);
+//            }
+//            return eval();
+//        }
     }
 }

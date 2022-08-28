@@ -32,6 +32,7 @@ dependencies {
     implementation libs.guava
     implementation libs.guice5
     implementation libs.jackson_annotations
+    implementation libs.jakarta_validation_api
     implementation libs.javax_inject
     implementation libs.jaxb_api
     implementation libs.restygwt

@@ -19,7 +19,10 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.util.function.Supplier;
+
 abstract class AbstractAggregateFunction extends AbstractManyChildFunction implements AggregateFunction {
+
     private final Calculator calculator;
 
     AbstractAggregateFunction(final String name, final Calculator calculator) {
@@ -50,7 +53,6 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
     }
 
     private static final class AggregateGen extends AbstractSingleChildGenerator {
-        private static final long serialVersionUID = -5622353515345145314L;
 
         private final Calculator calculator;
 
@@ -64,11 +66,11 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
         @Override
         public void set(final Val[] values) {
             childGenerator.set(values);
-            current = calculator.calc(current, childGenerator.eval());
+            current = calculator.calc(current, childGenerator.eval(null));
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             return current;
         }
 
@@ -93,7 +95,6 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
-        private static final long serialVersionUID = -5622353515345145314L;
 
         private final Calculator calculator;
 
@@ -110,10 +111,10 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             Val value = ValNull.INSTANCE;
             for (final Generator gen : childGenerators) {
-                final Val val = gen.eval();
+                final Val val = gen.eval(childDataSupplier);
                 if (!val.type().isValue()) {
                     return val;
                 }

@@ -11,6 +11,96 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Add system info for pool caches, e.g. XSLT pool cache.
+
+* Add button on Caches screen to evict expired entries. Move cache stats from info icon to table columns. Add Hit ratio figure.
+
+* Issue **#2995** : Remove old_index_id column from v_index_shard view. Remove unused old_index_id column from index_shard table (if it exists).
+
+* Add system info for listing keys of a named cache.
+
+* Issue **#2997** : Stop other nodes booting if migration fails on the first node.
+
+
+## [v7.1-beta.14] - 2022-07-20
+
+* Issue **#2998** : Add feature to receive individual accounting events.
+
+
+## [v7.1-beta.13] - 2022-07-19
+
+* Issue **#2969** : Fix search termination for Elastic searches.
+
+* Issue **#2981** : On-heap searches now complete automatically once the table result limit is reached.
+
+* Issue **#2030** : Add stats for reference data and search LMDB off heap store sizes on disk. Requires the import of content pack internal-statistics-sql-v2.2.
+
+* Issue **#2942** : Add `v_fs_volume`, `v_doc`, `v_feed_doc`, `v_index_volume`, `v_job_node`, `v_processor_task` & `v_permission` DB views. Add `id` col to `v_meta` DB view.
+
+* Issue **#2978** : Handle lock wait errors when waiting for bootstrap lock. It now keeps retrying until it gets the lock.
+
+* Issue **#2985** : Add warning when caches evict items due to size constraint.
+
+* Issue **#2987** : Fix search termination.
+
+* Issue **#2984** : Change the purge of partial ref loads to happen as part of the purge job and not on boot.
+
+* Issue **#2977** : Fix to destroy stale searches.
+
+
+## [v7.1-beta.12] - 2022-07-05
+
+* Issue **#2834** : Fix `countGroups` search table expression.
+
+* Issue **#2961** : Fix sorting on selector and countGroups columns.
+
+* Issue **#2897** : On boot, delete ref streams from the store that have a state of LOAD_IN_PROGRESS or PURGE_IN_PROGRESS.
+
+* Issue **#2965** : Fix server tasks paging.
+
+* Issue **#2964** : Fix server tasks paging.
+
+* Issue **#2967** : Change application instance message.
+
+* Issue **#2966** : Fix interrupts being ignored in stats aggregation and improve task info messages.
+
+* Issue **#2834** : Fix `countGroups` search table expression.
+
+* Issue **#2961** : Fix sorting on selector and countGroups columns.
+
+* Issue **#2960** : Stop releasing owned tasks under lock.
+
+* Issue **#2939** : Remove duplicate createTime and updateTime doc properties.
+
+* Issue **#2959** : Turn off source line numbering in Saxon.
+
+* Issue **#2939** : Add DB migration to remove duplicate keys from `doc.data` json column.
+
+* Issue **#2966** : Add batching to stage 2 stats aggregation. Add new property `statisticAggregationStageTwoBatchSize`. Remove interruption checks in stats flush to avoid loss of data.
+
+* Improve error messages for ref data value deserialisation.
+
+* Issue **#2938** : Fix StreamId error when querying annotations data source.
+
+* Issue **#2944** : Truncate error messages for processor_filter_tracker status to fit DB.
+
+* Issue **#2935** : Remove query UUID in query download.
+
+* Issue **#2945** : Fix deadlock updating processor task by updating individually.
+
+* Issue **#2946** : Add property `statisticFlushBatchSize`.
+
+* Issue **#2946** : Change SQL Statistics flush to use single large prepared statements for more efficient inserts to SQL_STAT_VAL_SRC.
+
+* Issue **#2954** : Stop logging SQL exceptions as errors in JooqUtil.
+
+* Issue **#2948** : Processing tasks will complete normally when data deleted.
+
+* Issue **#2946** : Add statistics properties `inMemAggregatorPoolSize`, `inMemPooledAggregatorSizeThreshold`, `inMemPooledAggregatorAgeThreshold` and `inMemFinalAggregatorSizeThreshold`.
+
+* Issue **#2931** : Set cluster state update frequency to 1m.
+
+* Issue **#2933** : Change structure of config object for http-call function to allow setting various HTTP client configuration properties, including HTTP protocol version.
 
 * Issue **#2902** : Release queued tasks if no longer master and from dead nodes.
 
@@ -68,7 +158,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * No changes, failed build.
 
-* Issue **#2855** : Add propety `stroom.index.writer.slowIndexWriteWarningThreshold` to configure the threshold for warning about slow index shard writes.
+* Issue **#2855** : Add property `stroom.index.writer.slowIndexWriteWarningThreshold` to configure the threshold for warning about slow index shard writes.
 
 * Issue **#2856** : Strip `[` and `]` from IPv6 addresses in the logged events to ensure schema compliance.
 
@@ -4227,7 +4317,10 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.14...HEAD
+[v7.1-beta.14]: https://github.com/gchq/stroom/compare/v7.1-beta.13...v7.1-beta.14
+[v7.1-beta.13]: https://github.com/gchq/stroom/compare/v7.1-beta.12...v7.1-beta.13
+[v7.1-beta.12]: https://github.com/gchq/stroom/compare/v7.1-beta.11...v7.1-beta.12
 [v7.1-beta.11]: https://github.com/gchq/stroom/compare/v7.1-beta.10...v7.1-beta.11
 [v7.1-beta.10]: https://github.com/gchq/stroom/compare/v7.1-beta.9...v7.1-beta.10
 [v7.1-beta.9]: https://github.com/gchq/stroom/compare/v7.1-beta.8...v7.1-beta.9

@@ -139,7 +139,7 @@
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-        "name" : "Example extraction"
+        "name" : "Example Extraction"
       },
       "maxResults" : [ 1000000 ],
       "conditionalFormattingRules" : [ ],
@@ -154,7 +154,7 @@
       "dataSource" : {
         "type" : "Index",
         "uuid" : "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
-        "name" : "Example index"
+        "name" : "Example Index"
       },
       "expression" : {
         "type" : "operator",

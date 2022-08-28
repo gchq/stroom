@@ -1,8 +1,8 @@
 package stroom.dashboard.expression.v1;
 
-public abstract class Selector extends AbstractSingleChildGenerator {
+import java.util.function.Supplier;
 
-    private static final long serialVersionUID = 8153777070911899616L;
+abstract class Selector extends AbstractSingleChildGenerator {
 
     Selector(final Generator childGenerator) {
         super(childGenerator);
@@ -14,9 +14,23 @@ public abstract class Selector extends AbstractSingleChildGenerator {
     }
 
     @Override
-    public Val eval() {
-        return childGenerator.eval();
+    public Val eval(final Supplier<ChildData> childDataSupplier) {
+        Val val = null;
+        if (childDataSupplier != null) {
+            final ChildData childData = childDataSupplier.get();
+            if (childData != null) {
+                val = select(childData);
+            }
+        }
+
+        if (val == null) {
+            val = childGenerator.eval(childDataSupplier);
+        }
+
+        return val;
     }
 
-    public abstract Val select(Selection<Val> selection);
+    Val select(ChildData childData) {
+        return null;
+    }
 }

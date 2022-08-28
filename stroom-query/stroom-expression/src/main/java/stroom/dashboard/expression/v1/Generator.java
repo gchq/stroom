@@ -19,16 +19,9 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.io.Serializable;
+import java.util.function.Supplier;
 
-public interface Generator extends Serializable, Comparable<Generator> {
-
-    /**
-     * For countGroups() we need to know what child keys are used.
-     *
-     * @param key The key of a child group.
-     */
-    void addChildKey(GroupKey key);
+public interface Generator extends Comparable<Generator> {
 
     /**
      * Set values that can be used to source whatever data is required by value
@@ -42,9 +35,11 @@ public interface Generator extends Serializable, Comparable<Generator> {
      * Evaluate this generator by applying the function that this generator
      * performs to the values supplied by set().
      *
+     * @param childDataSupplier Supplier for child row data if needed to perform evaluation.
+     *                          This is used for `countGroups()` and child selection functions.
      * @return The result of applying this function to the supplied values.
      */
-    Val eval();
+    Val eval(Supplier<ChildData> childDataSupplier);
 
     /**
      * Merge the values from another generator into this generator, e.g. for a

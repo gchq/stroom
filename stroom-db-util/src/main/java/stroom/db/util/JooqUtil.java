@@ -632,7 +632,7 @@ public final class JooqUtil {
      * @return A runtime exception.
      */
     private static RuntimeException convertException(final Exception e) {
-        return convertException(e, true);
+        return convertException(e, false);
     }
 
     private static RuntimeException convertException(final Exception e, final boolean logError) {
@@ -642,7 +642,7 @@ public final class JooqUtil {
             // Continue to interrupt the current thread.
             Thread.currentThread().interrupt();
             // Throw an unchecked form of the interrupted exception.
-            return new UncheckedInterruptedException((InterruptedException) e);
+            return new UncheckedInterruptedException((InterruptedException) e.getCause());
         } else {
             if (logError) {
                 LOGGER.error(e::getMessage, e);

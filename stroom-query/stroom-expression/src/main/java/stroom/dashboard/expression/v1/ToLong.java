@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -33,11 +32,10 @@ import java.io.Serializable;
                         name = "value",
                         description = "Field, the result of another function or a constant.",
                         argType = Val.class)))
-class ToLong extends AbstractCast implements Serializable {
+class ToLong extends AbstractCast {
 
     static final String NAME = "toLong";
     private static final ValErr ERROR = ValErr.create("Unable to cast to a long");
-    private static final long serialVersionUID = -305845496003936297L;
     private static final Cast CAST = new Cast();
 
     public ToLong(final String name) {

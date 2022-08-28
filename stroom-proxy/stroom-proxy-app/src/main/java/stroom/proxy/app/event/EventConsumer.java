@@ -9,5 +9,6 @@ import java.util.function.Consumer;
 public interface EventConsumer {
 
     void consume(final AttributeMap attributeMap,
-                 final Consumer<OutputStream> consumer);
+                 final String requestUuid,
+                 final String data);
 }

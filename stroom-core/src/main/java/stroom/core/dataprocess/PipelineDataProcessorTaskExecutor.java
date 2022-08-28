@@ -90,7 +90,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
@@ -356,7 +356,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                 final InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat(
                         InternalStatisticKey.PIPELINE_STREAM_PROCESSOR,
                         System.currentTimeMillis(),
-                        ImmutableMap.of(
+                        ImmutableSortedMap.of(
                                 "Feed", feedName,
                                 "Pipeline", pipelineDoc.getName(),
                                 "Node", nodeInfo.getThisNodeName()));
@@ -566,7 +566,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                             final ProcessorTask task = taskMap.get(oldMeta.getProcessorTaskId());
                             if (task == null ||
                                     TaskStatus.COMPLETE.equals(task.getStatus()) ||
-                                    TaskStatus.FAILED.equals(task.getStatus()) ||
                                     TaskStatus.DELETED.equals(task.getStatus())) {
                                 // If the task associated with the other output is complete in some way then delete the
                                 // output.

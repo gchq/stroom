@@ -248,7 +248,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 // Make sure the executable points at the local error handler.
                 final Configuration configuration = xsltExecutable.getUnderlyingCompiledStylesheet().getConfiguration();
                 configuration.setErrorListener(errorListener);
-                configuration.setLineNumbering(!pipelineContext.isStepping());
+//                configuration.setLineNumbering(!pipelineContext.isStepping());
 
                 // Create a handler to receive all SAX events.
                 final TemplatesImpl templates = new TemplatesImpl(xsltExecutable);

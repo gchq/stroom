@@ -225,7 +225,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
             }
             // Do not execute the task if we are no longer supposed to be running.
             if (stop.get()) {
-                throw new TaskTerminatedException(stop.get());
+                throw new TaskTerminatedException(true);
             }
             if (taskName == null) {
                 throw new IllegalStateException("All tasks must have a name");
@@ -263,10 +263,6 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
 
                 taskRegistry.put(taskId, subTaskContext);
                 LOGGER.debug(() -> "execAsync()->exec() - " + taskName + " took " + logExecutionTime);
-
-                if (stop.get() || currentThread.isInterrupted()) {
-                    throw new TaskTerminatedException(stop.get());
-                }
 
                 final Function<TaskContextImpl, R> pipelineScopeFunction = (tc) ->
                         pipelineScopeRunnable.scopeResult(() -> {

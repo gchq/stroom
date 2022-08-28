@@ -1,6 +1,7 @@
 package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
+import stroom.proxy.app.ProxyConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -11,9 +12,7 @@ import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -21,17 +20,22 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 
 public class KafkaEventConsumer implements EventConsumer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KafkaEventConsumer.class);
 
     private final KafkaEventConsumerConfig config;
+    private final ProxyConfig proxyConfig;
+    private final EventSerialiser eventSerialiser;
     private final KafkaProducer<byte[], byte[]> kafkaProducer;
 
-    public KafkaEventConsumer(final KafkaEventConsumerConfig config) {
+    public KafkaEventConsumer(final KafkaEventConsumerConfig config,
+                              final ProxyConfig proxyConfig,
+                              final EventSerialiser eventSerialiser) {
         this.config = config;
+        this.proxyConfig = proxyConfig;
+        this.eventSerialiser = eventSerialiser;
         final Properties properties = new KafkaProducerProperties(config.getProducerConfig()).getProperties();
 
         try {
@@ -69,24 +73,33 @@ public class KafkaEventConsumer implements EventConsumer {
     }
 
     @Override
-    public void consume(final AttributeMap attributeMap, final Consumer<OutputStream> consumer) {
+    public void consume(final AttributeMap attributeMap,
+                        final String requestUuid,
+                        final String data) {
         try {
-            // Get value.
-            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            consumer.accept(byteArrayOutputStream);
-            byteArrayOutputStream.flush();
-
             final List<Header> headers = new ArrayList<>(attributeMap.size());
             attributeMap.forEach((k, v) -> {
                 final Header header = new RecordHeader(k, v.getBytes(StandardCharsets.UTF_8));
                 headers.add(header);
             });
 
+            final String feed = attributeMap.get("Feed");
+            final String type = attributeMap.get("type");
+            final FeedKey feedKey = new FeedKey(feed, type);
+
+            final String string = eventSerialiser.serialise(
+                    requestUuid,
+                    proxyConfig.getProxyId(),
+                    feedKey,
+                    attributeMap,
+                    data);
+
+
             final String topic = config.getTopic();
             final Integer partition = null;
             final Long timestamp = System.currentTimeMillis();
             final byte[] key = createKey(new FeedKey(attributeMap.get("Feed"), attributeMap.get("Type")));
-            final byte[] value = byteArrayOutputStream.toByteArray();
+            final byte[] value = string.getBytes(StandardCharsets.UTF_8);
 
             final ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(
                     topic,

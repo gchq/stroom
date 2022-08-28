@@ -49,7 +49,6 @@ class FloorMinute extends RoundDate {
 
     static class Calc extends RoundDateCalculator {
 
-        private static final long serialVersionUID = -5893918049538006730L;
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {

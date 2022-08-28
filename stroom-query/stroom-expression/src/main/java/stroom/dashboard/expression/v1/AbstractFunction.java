@@ -20,6 +20,7 @@ import java.text.ParseException;
 import java.util.Map;
 
 abstract class AbstractFunction implements Function, Appendable {
+
     final String name;
     private final int minParams;
     private final int maxParams;
@@ -96,7 +97,7 @@ abstract class AbstractFunction implements Function, Appendable {
     }
 
     @Override
-    public boolean isChildSelector() {
+    public boolean requiresChildData() {
         return false;
     }
 }

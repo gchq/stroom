@@ -87,6 +87,7 @@ class SteppingResourceImpl implements SteppingResource {
                         request.getPipeline(),
                         e);
             }
+            throw e;
         }
 
         return result;

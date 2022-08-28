@@ -19,6 +19,7 @@ package stroom.job.impl;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
@@ -68,25 +69,34 @@ class JobNodeResourceImpl implements JobNodeResource {
 
     @Override
     public JobNodeListResponse list(final String jobName, final String nodeName) {
+        final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
+        if (jobName != null) {
+            findJobNodeCriteria.getJobName().setString(jobName);
+        }
+        if (nodeName != null) {
+            findJobNodeCriteria.getNodeName().setString(nodeName);
+        }
+        return find(findJobNodeCriteria);
+    }
+
+    @Override
+    public JobNodeListResponse find(final FindJobNodeCriteria findJobNodeCriteria) {
         JobNodeListResponse response = null;
 
         And.Builder<Void> andBuilder = And.builder();
 
-        final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
-        if (jobName != null && !jobName.isEmpty()) {
-            findJobNodeCriteria.getJobName().setString(jobName);
+        if (findJobNodeCriteria.getJobName().isConstrained()) {
             andBuilder.addTerm(Term.builder()
                     .withName("Job")
                     .withCondition(TermCondition.EQUALS)
-                    .withValue(jobName)
+                    .withValue(findJobNodeCriteria.getJobName().getString())
                     .build());
         }
-        if (nodeName != null && !nodeName.isEmpty()) {
-            findJobNodeCriteria.getNodeName().setString(nodeName);
+        if (findJobNodeCriteria.getNodeName().isConstrained()) {
             andBuilder.addTerm(Term.builder()
                     .withName("NodeName")
                     .withCondition(TermCondition.EQUALS)
-                    .withValue(nodeName)
+                    .withValue(findJobNodeCriteria.getNodeName().getString())
                     .build());
         }
 
@@ -97,7 +107,9 @@ class JobNodeResourceImpl implements JobNodeResource {
                 .build();
         try {
 
-            response = jobNodeServiceProvider.get().find(findJobNodeCriteria);
+            response = jobNodeServiceProvider.get()
+                    .find(findJobNodeCriteria);
+
             documentEventLogProvider.get().search(
                     "ListJobNodes",
                     query,

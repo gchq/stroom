@@ -20,7 +20,7 @@ public abstract class AbstractFunctionTest<T extends Function> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFunctionTest.class);
 
     @TestFactory
-    Stream<DynamicTest> functionTests() throws ParseException {
+    Stream<DynamicTest> functionTests() {
 
         final T function = getFunctionSupplier().get();
 
@@ -45,8 +45,7 @@ public abstract class AbstractFunctionTest<T extends Function> {
                                 argToString(testCase.getExpectedReturn()));
 
                         if (!testCase.getParams().isEmpty()) {
-                            Param[] params = testCase.getParams()
-                                    .toArray(new Param[testCase.getParams().size()]);
+                            Param[] params = testCase.getParams().toArray(new Param[0]);
                             function.setParams(params);
                         }
                         final Generator generator = function.createGenerator();
@@ -61,11 +60,11 @@ public abstract class AbstractFunctionTest<T extends Function> {
 
                         // Run the function
                         final Val returnVal;
-                        if (generator instanceof Selector) {
-                            returnVal = ((Selector) generator).select(createSelection(testCase.getAggregateValues()));
-                        } else {
-                            returnVal = generator.eval();
-                        }
+
+                        final Supplier<ChildData> childDataSupplier =
+                                AbstractExpressionParserTest.createChildDataSupplier(testCase.getAggregateValues());
+
+                        returnVal = generator.eval(childDataSupplier);
 
                         LOGGER.info("Return val: {}", argToString(returnVal));
 
@@ -85,20 +84,6 @@ public abstract class AbstractFunctionTest<T extends Function> {
                 });
     }
 
-    private Selection<Val> createSelection(final List<Val> vals) {
-        return new Selection<Val>() {
-            @Override
-            public int size() {
-                return vals.size();
-            }
-
-            @Override
-            public Val get(final int pos) {
-                return vals.get(pos);
-            }
-        };
-    }
-
     Supplier<T> getFunctionSupplier() {
         Class<T> clazz = getFunctionType();
         return () -> {
@@ -115,23 +100,9 @@ public abstract class AbstractFunctionTest<T extends Function> {
 
     abstract Stream<TestCase> getTestCases();
 
-    <T_SELECTION extends Val> Selection<T_SELECTION> buildSelection(final T_SELECTION... values) {
-        return new Selection<T_SELECTION>() {
-            @Override
-            public int size() {
-                return values.length;
-            }
-
-            @Override
-            public T_SELECTION get(final int pos) {
-                return values[pos];
-            }
-        };
-    }
-
     private String argToString(final Param param) {
         final String val = param instanceof ValString
-                ? "'" + param.toString() + "'"
+                ? "'" + param + "'"
                 : param.toString();
         return "[" + param.getClass().getSimpleName() +
                 ": " + val + "]";

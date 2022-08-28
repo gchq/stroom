@@ -1,5 +1,7 @@
 package stroom.proxy.app;
 
+import stroom.proxy.app.event.EventStore;
+import stroom.proxy.app.event.EventStoreConfig;
 import stroom.proxy.app.forwarder.ForwardConfig;
 import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.repo.AggregateForwarder;
@@ -41,6 +43,7 @@ public class ProxyLifecycle implements Managed {
                           final ProxyDbConfig proxyDbConfig,
                           final ProxyRepoConfig proxyRepoConfig,
                           final AggregatorConfig aggregatorConfig,
+                          final EventStoreConfig eventStoreConfig,
                           final ThreadConfig threadConfig,
                           final Provider<SequentialFileStore> sequentialFileStoreProvider,
                           final Provider<RepoSources> proxyRepoSourcesProvider,
@@ -50,7 +53,8 @@ public class ProxyLifecycle implements Managed {
                           final Provider<SourceForwarder> sourceForwarderProvider,
                           final Provider<Cleanup> cleanupProvider,
                           final Provider<Set<Flushable>> flushableProvider,
-                          final Provider<FileScanners> fileScannersProvider) {
+                          final Provider<FileScanners> fileScannersProvider,
+                          final Provider<EventStore> eventStoreProvider) {
 
         // Get forwarding destinations.
         final List<ForwardConfig> forwardDestinations = proxyConfig.getForwardDestinations();
@@ -161,6 +165,16 @@ public class ProxyLifecycle implements Managed {
                     () -> cleanup::cleanupSources,
                     proxyDbConfig.getCleanupFrequency().toMillis());
         }
+
+        // Add executor to roll event store.
+        final EventStore eventStore = eventStoreProvider.get();
+        addFrequencyExecutor("Event Store - roll",
+                () -> eventStore::tryRoll,
+                eventStoreConfig.getRollFrequency().toMillis());
+        // Add executor to forward event store.
+        addFrequencyExecutor("Event Store - forward",
+                () -> eventStore::forwardAll,
+                eventStoreConfig.getRollFrequency().toMillis());
     }
 
     private void addParallelExecutor(final String threadName,

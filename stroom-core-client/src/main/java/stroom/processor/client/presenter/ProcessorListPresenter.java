@@ -66,6 +66,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -107,7 +108,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         request = new FetchProcessorRequest();
         dataProvider = new RestDataProvider<ProcessorListRow, ProcessorListRowResultPage>(eventBus) {
             @Override
-            protected void exec(final Consumer<ProcessorListRowResultPage> dataConsumer,
+            protected void exec(final Range range,
+                                final Consumer<ProcessorListRowResultPage> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 final Rest<ProcessorListRowResultPage> rest = restFactory.create();
                 rest

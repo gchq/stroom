@@ -19,6 +19,8 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.util.function.Supplier;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = "count",
@@ -54,8 +56,6 @@ class Count extends AbstractFunction {
 
     private static final class Gen extends AbstractNoChildGenerator {
 
-        private static final long serialVersionUID = 9222017471352363944L;
-
         private long count;
 
         @Override
@@ -64,7 +64,7 @@ class Count extends AbstractFunction {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             return ValLong.create(count);
         }
 

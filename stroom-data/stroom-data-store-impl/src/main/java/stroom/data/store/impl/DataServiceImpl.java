@@ -39,6 +39,7 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
@@ -102,14 +103,15 @@ class DataServiceImpl implements DataService {
                     final Provider<MetaDataHolder> metaDataHolderProvider,
                     final Provider<PipelineHolder> pipelineHolderProvider,
                     final Provider<MetaHolder> metaHolderProvider,
+                    final Provider<CurrentUserHolder> currentUserHolderProvider,
                     final PipelineStore pipelineStore,
                     final Provider<PipelineFactory> pipelineFactoryProvider,
                     final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                     final PipelineDataCache pipelineDataCache,
                     final PipelineScopeRunnable pipelineScopeRunnable,
                     final SourceConfig sourceConfig,
-                    final TaskContextFactory taskContextFactory
-    ) {
+                    final TaskContextFactory taskContextFactory) {
+
         this.resourceStore = resourceStore;
         this.dataUploadTaskHandlerProvider = dataUploadTaskHandler;
         this.dataDownloadTaskHandlerProvider = dataDownloadTaskHandler;
@@ -125,6 +127,7 @@ class DataServiceImpl implements DataService {
                 metaDataHolderProvider,
                 pipelineHolderProvider,
                 metaHolderProvider,
+                currentUserHolderProvider,
                 pipelineStore,
                 pipelineFactoryProvider,
                 errorReceiverProxyProvider,

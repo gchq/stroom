@@ -16,8 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -31,10 +31,10 @@ import java.text.ParseException;
                         @FunctionArg(
                                 name = "input",
                                 description = "The string to find the length of.",
-                                argType = ValString.class) }))
-class StringLength extends AbstractFunction implements Serializable {
+                                argType = ValString.class)}))
+class StringLength extends AbstractFunction {
+
     static final String NAME = "stringLength";
-    private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
     private Function function;
     private boolean hasAggregate;
@@ -77,7 +77,6 @@ class StringLength extends AbstractFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
-        private static final long serialVersionUID = 8153777070911899616L;
 
         Gen(final Generator childGenerator) {
             super(childGenerator);
@@ -89,8 +88,8 @@ class StringLength extends AbstractFunction implements Serializable {
         }
 
         @Override
-        public Val eval() {
-            final Val val = childGenerator.eval();
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerator.eval(childDataSupplier);
             if (!val.type().isValue()) {
                 return ValErr.wrap(val);
             }

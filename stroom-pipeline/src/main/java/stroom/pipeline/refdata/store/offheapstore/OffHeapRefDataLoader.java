@@ -159,7 +159,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             LOGGER.debug("Acquired lock in {} for {}", timeToAcquireLock, refStreamDefinition);
 
             if (timeToAcquireLock.getSeconds() > 1 && !LOGGER.isDebugEnabled()) {
-                LOGGER.info("Waited for {} to acquired lock for {}",
+                LOGGER.info("Waited for {} to acquire lock for {}",
                         timeToAcquireLock, refStreamDefinition);
             }
         } catch (InterruptedException e) {
