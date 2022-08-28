@@ -74,7 +74,8 @@ public class TextField extends AbstractField {
                "\n" +
                " * Full-text search: matches against any of the provided search terms\n" +
                " * Case insensitive\n" +
-               " * Typically ignores whitespace and punctuation (incl. hyphens, commas, periods and special characters)\n" +
+               " * Typically ignores whitespace and punctuation (incl. hyphens, commas, periods and special " +
+               "characters)\n" +
                "\n" +
                "Examples (omit single quotes):\n" +
                " * Match one or more terms in any order: 'the cat sat on the mat'\n" +
