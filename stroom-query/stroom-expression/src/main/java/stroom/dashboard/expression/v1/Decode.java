@@ -16,8 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -57,10 +57,9 @@ import java.util.regex.Pattern;
                                 name = "otherwise",
                                 description = "The result of the function if none of the test arguments match.",
                                 argType = ValString.class)}))
-class Decode extends AbstractManyChildFunction implements Serializable {
+class Decode extends AbstractManyChildFunction {
 
     static final String NAME = "decode";
-    private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
     private boolean simple;
 
@@ -144,8 +143,6 @@ class Decode extends AbstractManyChildFunction implements Serializable {
 
     private static final class Gen extends AbstractManyChildGenerator {
 
-        private static final long serialVersionUID = 8153777070911899616L;
-
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
         }
@@ -158,22 +155,22 @@ class Decode extends AbstractManyChildFunction implements Serializable {
         }
 
         @Override
-        public Val eval() {
-            final Val val = childGenerators[0].eval();
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerators[0].eval(childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }
 
             try {
                 final String value = val.toString();
-                Val newVal = childGenerators[childGenerators.length - 1].eval();
+                Val newVal = childGenerators[childGenerators.length - 1].eval(childDataSupplier);
                 if (!newVal.type().isValue()) {
                     return ValErr.wrap(newVal);
                 }
                 String newValue = newVal.toString();
 
                 for (int i = 1; i < childGenerators.length - 1; i += 2) {
-                    final Val valRegex = childGenerators[i].eval();
+                    final Val valRegex = childGenerators[i].eval(childDataSupplier);
                     if (!valRegex.type().isValue()) {
                         return ValErr.wrap(valRegex);
                     }
@@ -185,7 +182,7 @@ class Decode extends AbstractManyChildFunction implements Serializable {
 
                     final Pattern pattern = PatternCache.get(regex);
                     if (pattern.matcher(value).matches()) {
-                        newVal = childGenerators[i + 1].eval();
+                        newVal = childGenerators[i + 1].eval(childDataSupplier);
                         if (!newVal.type().isValue()) {
                             return ValErr.wrap(newVal);
                         }

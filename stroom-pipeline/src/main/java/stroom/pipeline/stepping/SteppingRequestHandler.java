@@ -53,6 +53,7 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 
 import org.slf4j.Logger;
@@ -213,7 +214,7 @@ class SteppingRequestHandler {
                 return new SteppingResult(
                         request.getStepFilterMap(),
                         currentLocation,
-                        stepData.convertToShared(),
+                        NullSafe.get(stepData, StepData::convertToShared),
                         curentStreamOffset,
                         controller.isFound(),
                         generalErrors,

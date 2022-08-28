@@ -44,6 +44,7 @@ import stroom.util.io.TempDirProvider;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,7 +63,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -75,9 +76,12 @@ class TestSearchResultCreation {
     private final Path resourcesDir = SearchDebugUtil.initialise();
 
     private DataStoreFactory dataStoreFactory;
+    private ExecutorService executorService;
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
+        executorService = Executors.newCachedThreadPool();
+
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
@@ -85,12 +89,16 @@ class TestSearchResultCreation {
                 pathCreator,
                 tempDirProvider,
                 () -> lmdbLibraryConfig);
-        final Executor executor = Executors.newCachedThreadPool();
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvFactory,
                 ResultStoreConfig::new,
                 pathCreator,
-                () -> executor);
+                () -> executorService);
+    }
+
+    @AfterEach
+    void afterEach() {
+        executorService.shutdown();
     }
 
     @Test
@@ -465,7 +473,7 @@ class TestSearchResultCreation {
         dataStore.getData(data -> {
             final Items dataItems = data.get();
             final Item dataItem = dataItems.iterator().next();
-            final Val val = dataItem.getValue(2);
+            final Val val = dataItem.getValue(2, true);
             assertThat(val.toLong())
                     .isEqualTo(count);
         });
@@ -725,7 +733,7 @@ class TestSearchResultCreation {
                 .extractValues(true)
                 .extractionPipeline(new DocRef("Pipeline",
                         "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-                        "Example extraction"))
+                        "Example Extraction"))
                 .addMaxResults(1000000)
                 .build();
     }
@@ -818,7 +826,7 @@ class TestSearchResultCreation {
                 .extractValues(true)
                 .extractionPipeline(new DocRef("Pipeline",
                         "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-                        "Example extraction"))
+                        "Example Extraction"))
                 .addMaxResults(1000000)
                 .build();
     }

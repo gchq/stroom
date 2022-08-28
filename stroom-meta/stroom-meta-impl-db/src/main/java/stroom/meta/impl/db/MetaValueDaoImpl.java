@@ -27,6 +27,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 
 import org.jooq.BatchBindStep;
@@ -38,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -88,7 +90,11 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
 
                                         return Optional.of(row);
                                     } catch (final NumberFormatException e) {
-                                        LOGGER.debug(e::getMessage, e);
+                                        LOGGER.debug(() ->
+                                                LogUtil.message("Ignoring meta attribute value with key: {}, " +
+                                                                "value: {} as value can't be converted to a number. {}",
+                                                        entry.getKey(), entry.getValue(), e.getMessage()));
+                                        // Silently ignore entries with non-numeric values
                                         return Optional.empty();
                                     }
                                 }))
@@ -96,12 +102,16 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 .map(Optional::get);
 
         final List<Row> records = stream.collect(Collectors.toList());
-        if (metaValueConfigProvider.get().isAddAsync()) {
-            final Optional<List<Row>> optional = add(records, metaValueConfigProvider.get()
-                    .getFlushBatchSize());
-            optional.ifPresent(this::insertRecords);
+        if (records.isEmpty()) {
+            LOGGER.debug("records is empty");
         } else {
-            insertRecords(records);
+            if (metaValueConfigProvider.get().isAddAsync()) {
+                final Optional<List<Row>> optional = add(records, metaValueConfigProvider.get()
+                        .getFlushBatchSize());
+                optional.ifPresent(this::insertRecords);
+            } else {
+                insertRecords(records);
+            }
         }
     }
 
@@ -126,7 +136,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
 
     private void insertRecords(final List<Row> rows) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.debug(() -> "Processing batch of " + rows.size());
+        LOGGER.debug(() -> "Inserting meta_val batch of " + rows.size());
 
         JooqUtil.context(metaDbConnProvider, context -> {
             BatchBindStep batchBindStep = context
@@ -143,7 +153,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
             batchBindStep.execute();
         });
 
-        LOGGER.debug(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
+        LOGGER.debug(() -> "Inserted " + rows.size() + " meta_val rows, completed in " + logExecutionTime);
     }
 
     @Override
@@ -154,61 +164,44 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
             taskContext.info(() -> "Deleting old meta values");
             final long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
             final int batchSize = metaValueConfigProvider.get().getDeleteBatchSize();
+            LOGGER.debug(() ->
+                    "Processing batch age " + createTimeThresholdEpochMs + ", batch size is " + batchSize);
+            final LongAdder totalCount = new LongAdder();
             int count = batchSize;
             while (count >= batchSize) {
                 if (Thread.currentThread().isInterrupted()) {
-                    LOGGER.error("Aborting meta value deletion due to thread interruption. " +
-                            "Deletion will continue as normal on the next run.");
+                    LOGGER.warn("Aborting meta value deletion due to thread interruption. " +
+                            "Deletion will continue as normal on the next run. Deleted so far: " +
+                            totalCount + ".");
                     break;
                 }
-                count = deleteBatchOfOldValues(createTimeThresholdEpochMs, batchSize);
+                count = deleteBatchOfOldValues(createTimeThresholdEpochMs, batchSize, totalCount);
             }
         });
     }
 
-    private int deleteBatchOfOldValues(final long createTimeThresholdEpochMs, final int batchSize) {
+    private int deleteBatchOfOldValues(final long createTimeThresholdEpochMs,
+                                       final int batchSize,
+                                       final LongAdder totalCount) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.debug(() -> "Processing batch age " + createTimeThresholdEpochMs + ", batch size is " + batchSize);
 
+        // We don't care what order we delete in, just that we eventually delete everything
+        // prior to our threshold time.
         final int count = JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        // TODO : @66 Maybe try delete with limits again after un upgrade to MySQL 5.7.
-//            count = context
-//                    .delete(META_VAL)
-//                    .where(META_VAL.ID.in(
-//                            context.select(META_VAL.ID)
-//                                    .from(META_VAL)
-//                                    .where(META_VAL.CREATE_TIME.lessThan(age))
-//                                    .orderBy(META_VAL.ID)
-//                                    .limit(batchSize)
-//                    ))
-//                    .execute();
+                .delete(META_VAL)
+                .where(META_VAL.CREATE_TIME.lessThan(createTimeThresholdEpochMs))
+                .limit(batchSize)
+                .execute());
 
+        totalCount.add(count);
 
-                        .execute("DELETE FROM {0} WHERE {1} < {2} ORDER BY {3} LIMIT {4}",
-                                META_VAL,
-                                META_VAL.CREATE_TIME,
-                                createTimeThresholdEpochMs,
-                                META_VAL.ID,
-                                batchSize)
-        );
+        LOGGER.debug(() -> "Deleted " + count
+                + ", total so far " + totalCount
+                + ", completed in " + logExecutionTime);
 
-        LOGGER.debug(() -> "Deleted " + count + ", completed in " + logExecutionTime);
+        taskContext.info(() ->
+                LogUtil.message("Deleting old meta values ({} deleted so far, batch size {})", totalCount, batchSize));
         return count;
-
-//        final SqlBuilder sql = new SqlBuilder();
-//        sql.append("SELECT ");
-//        sql.append(MetaValue.ID);
-//        sql.append(" FROM ");
-//        sql.append(MetaValue.TABLE_NAME);
-//        sql.append(" WHERE ");
-//        sql.append(MetaValue.CREATE_MS);
-//        sql.append(" < ");
-//        sql.arg(age);
-//        sql.append(" ORDER BY ");
-//        sql.append(MetaValue.ID);
-//        sql.append(" LIMIT ");
-//        sql.arg(batchSize);
-//        return stroomEntityManager.executeNativeQueryResultList(sql);
     }
 
     /**
@@ -234,14 +227,14 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 .collect(Collectors.toList());
 
         JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(
-                        META_VAL.META_ID,
-                        META_VAL.META_KEY_ID,
-                        META_VAL.VAL
-                )
-                .from(META_VAL)
-                .where(META_VAL.META_ID.in(idList))
-                .fetch())
+                        .select(
+                                META_VAL.META_ID,
+                                META_VAL.META_KEY_ID,
+                                META_VAL.VAL
+                        )
+                        .from(META_VAL)
+                        .where(META_VAL.META_ID.in(idList))
+                        .fetch())
                 .forEach(r -> {
                     final int keyId = r.get(META_VAL.META_KEY_ID);
                     metaKeyService.getNameForId(keyId).ifPresent(name -> {

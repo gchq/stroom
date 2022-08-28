@@ -5328,6 +5328,27 @@ paths:
       summary: Get all system info result names
       tags:
       - System Info
+  /systemInfo/v1/params/{name}:
+    get:
+      operationId: getSystemInfoParams
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParamInfo'
+          description: default response
+      summary: Gets the parameters for this system info provider
+      tags:
+      - System Info
   /systemInfo/v1/{name}:
     get:
       operationId: getSystemInfoByName
@@ -6702,9 +6723,6 @@ components:
     DashboardDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -6716,9 +6734,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -6883,9 +6898,6 @@ components:
     DataRetentionRules:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -6899,9 +6911,6 @@ components:
             $ref: '#/components/schemas/DataRetentionRule'
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -7002,9 +7011,6 @@ components:
     DictionaryDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -7022,9 +7028,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -7167,9 +7170,6 @@ components:
       properties:
         connection:
           $ref: '#/components/schemas/ElasticConnectionConfig'
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -7181,9 +7181,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -7223,9 +7220,6 @@ components:
       properties:
         clusterRef:
           $ref: '#/components/schemas/DocRef'
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -7251,9 +7245,6 @@ components:
           format: int32
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -7597,9 +7588,6 @@ components:
           type: string
         contextEncoding:
           type: string
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -7626,9 +7614,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -8307,9 +8292,6 @@ components:
     IndexDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -8344,9 +8326,6 @@ components:
           format: int32
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -8621,9 +8600,6 @@ components:
     KafkaConfigDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -8637,9 +8613,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -8945,6 +8918,18 @@ components:
       required:
       - key
       - value
+    ParamInfo:
+      type: object
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        paramType:
+          type: string
+          enum:
+          - OPTIONAL
+          - MANDATORY
     PasswordPolicyConfig:
       type: object
       properties:
@@ -9011,9 +8996,6 @@ components:
     PipelineDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -9029,9 +9011,6 @@ components:
           $ref: '#/components/schemas/PipelineData'
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -9653,9 +9632,6 @@ components:
     ReceiveDataRules:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -9673,9 +9649,6 @@ components:
             $ref: '#/components/schemas/ReceiveDataRule'
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -10091,9 +10064,6 @@ components:
     ScriptDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -10111,9 +10081,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -10459,9 +10426,6 @@ components:
       properties:
         collection:
           type: string
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -10487,9 +10451,6 @@ components:
           $ref: '#/components/schemas/SolrSynchState'
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -10676,9 +10637,6 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/StatisticsDataSourceData'
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -10706,9 +10664,6 @@ components:
           - VALUE
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -10870,9 +10825,6 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -10905,9 +10857,6 @@ components:
           - VALUE
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -11217,9 +11166,6 @@ components:
           - NONE
           - DATA_SPLITTER
           - XML_FRAGMENT
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -11233,9 +11179,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -11333,6 +11276,9 @@ components:
           type: string
         activity:
           $ref: '#/components/schemas/ActivityConfig'
+        applicationInstanceKeepAliveIntervalMs:
+          type: integer
+          format: int32
         defaultMaxResults:
           type: string
         helpSubPathExpressions:
@@ -11527,9 +11473,6 @@ components:
     VisualisationDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -11547,9 +11490,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -11587,9 +11527,6 @@ components:
     XmlSchemaDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -11611,9 +11548,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64
@@ -11626,9 +11560,6 @@ components:
     XsltDoc:
       type: object
       properties:
-        createTime:
-          type: integer
-          format: int64
         createTimeMs:
           type: integer
           format: int64
@@ -11642,9 +11573,6 @@ components:
           type: string
         type:
           type: string
-        updateTime:
-          type: integer
-          format: int64
         updateTimeMs:
           type: integer
           format: int64

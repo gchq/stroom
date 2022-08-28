@@ -21,11 +21,14 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -151,6 +154,40 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
 
             assertThat(foundProcessingState).isEqualTo(processingState);
         }
+    }
+
+
+
+    @Test
+    void testCreateProcessingStatePredicate() {
+        RefDataProcessingInfo refDataProcessingInfo1 = new RefDataProcessingInfo(
+                0L,
+                1000L,
+                100L,
+                ProcessingState.COMPLETE);
+
+        RefDataProcessingInfo refDataProcessingInfo2 = new RefDataProcessingInfo(
+                0L,
+                1000L,
+                100L,
+                ProcessingState.FAILED);
+
+        RefDataProcessingInfo refDataProcessingInfo3 = new RefDataProcessingInfo(
+                0L,
+                1000L,
+                100L,
+                ProcessingState.TERMINATED);
+
+        final Predicate<ByteBuffer> processingStatePredicate =
+                RefDataProcessingInfoSerde.createProcessingStatePredicate(
+                        ProcessingState.COMPLETE,
+                        ProcessingState.FAILED);
+
+        Assertions.assertThat(Stream.of(refDataProcessingInfo1, refDataProcessingInfo2, refDataProcessingInfo3)
+                        .map(this::serialize)
+                        .filter(processingStatePredicate)
+                        .count())
+                .isEqualTo(2);
     }
 
     @Override

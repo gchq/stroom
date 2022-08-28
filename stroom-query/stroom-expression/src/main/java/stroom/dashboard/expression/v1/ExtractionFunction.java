@@ -16,10 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
 
-abstract class ExtractionFunction extends AbstractFunction implements Serializable {
+abstract class ExtractionFunction extends AbstractFunction {
+
     private Generator gen;
     private Function function;
     private boolean hasAggregate;

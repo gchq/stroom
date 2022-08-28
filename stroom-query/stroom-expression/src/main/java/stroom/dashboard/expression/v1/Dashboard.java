@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import java.util.function.Supplier;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Dashboard.NAME,
@@ -64,8 +66,6 @@ class Dashboard extends AbstractLink {
 
     private static final class Gen extends AbstractLinkGen {
 
-        private static final long serialVersionUID = 217968020285584214L;
-
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
         }
@@ -78,17 +78,17 @@ class Dashboard extends AbstractLink {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             Val link = ValNull.INSTANCE;
 
             if (childGenerators.length == 2) {
-                final Val text = childGenerators[0].eval();
-                final Val uuid = childGenerators[1].eval();
+                final Val text = childGenerators[0].eval(childDataSupplier);
+                final Val uuid = childGenerators[1].eval(childDataSupplier);
                 link = makeDashboardLink(text, uuid, ValNull.INSTANCE);
             } else if (childGenerators.length == 3) {
-                final Val text = childGenerators[0].eval();
-                final Val uuid = childGenerators[1].eval();
-                final Val params = childGenerators[2].eval();
+                final Val text = childGenerators[0].eval(childDataSupplier);
+                final Val uuid = childGenerators[1].eval(childDataSupplier);
+                final Val params = childGenerators[2].eval(childDataSupplier);
                 link = makeDashboardLink(text, uuid, params);
             }
 

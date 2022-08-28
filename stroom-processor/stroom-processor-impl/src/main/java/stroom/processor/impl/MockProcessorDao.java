@@ -49,6 +49,14 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
     }
 
     @Override
+    public Optional<Processor> fetchByPipelineUuid(final String pipelineUuid) {
+        return dao.getMap().values()
+                .stream()
+                .filter(processor -> processor.getPipelineUuid().equals(pipelineUuid))
+                .findAny();
+    }
+
+    @Override
     public Processor update(final Processor processor) {
         return dao.update(processor);
     }

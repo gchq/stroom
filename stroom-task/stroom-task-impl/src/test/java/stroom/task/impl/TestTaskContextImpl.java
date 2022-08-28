@@ -55,6 +55,6 @@ class TestTaskContextImpl {
     }
 
     private TaskContextImpl create() {
-        return new TaskContextImpl(TaskIdFactory.create(), "test", () -> null, new AtomicBoolean(false));
+        return new TaskContextImpl(TaskIdFactory.create(), "test", () -> null, false, new AtomicBoolean(false));
     }
 }

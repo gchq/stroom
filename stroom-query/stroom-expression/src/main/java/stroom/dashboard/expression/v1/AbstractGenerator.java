@@ -19,17 +19,14 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.io.Serializable;
-
-abstract class AbstractGenerator implements Generator, Serializable, Comparable<Generator> {
-    private static final long serialVersionUID = 513621715143449935L;
+abstract class AbstractGenerator implements Generator, Comparable<Generator> {
 
     private static final AutoComparator COMPARATOR = new AutoComparator();
 
     @Override
     public final int compareTo(final Generator gen) {
-        final Val o1 = eval();
-        final Val o2 = gen.eval();
+        final Val o1 = eval(null);
+        final Val o2 = gen.eval(null);
         return COMPARATOR.compare(o1, o2);
     }
 

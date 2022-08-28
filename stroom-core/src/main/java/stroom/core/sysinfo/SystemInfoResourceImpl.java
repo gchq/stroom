@@ -3,23 +3,33 @@ package stroom.core.sysinfo;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.sysinfo.HasSystemInfo.ParamInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
 
 import event.logging.Resource;
 import event.logging.ViewEventAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 public class SystemInfoResourceImpl implements SystemInfoResource {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SystemInfoResourceImpl.class);
 
     private final Provider<SystemInfoService> systemInfoServiceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
@@ -57,21 +67,76 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
     }
 
     @Override
-    public SystemInfoResult get(final String name) {
+    public List<ParamInfo> getParams(final String name) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId("getAllSystemInfo")
+                .withDescription("Getting all system info result names")
+                .withDefaultEventAction(buildViewEventAction(NAMES_PATH_PART))
+                .withSimpleLoggedResult(() -> systemInfoServiceProvider.get().getParamInfo(name))
+                .getResultAndLog();
+    }
 
-        if (name == null || name.isEmpty()) {
+    @Override
+    public SystemInfoResult get(final UriInfo uriInfo,
+                                final String providerName) {
+
+        if (providerName == null || providerName.isEmpty()) {
             throw RestUtil.badRequest("name not supplied");
         }
 
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId("getSystemInfo")
-                .withDescription("Getting system info results for " + name)
+                .withDescription("Getting system info results for " + providerName)
                 .withDefaultEventAction(buildViewEventAction("/"))
-                .withSimpleLoggedResult(() ->
-                        systemInfoServiceProvider.get().get(name)
+                .withSimpleLoggedResult(() -> {
+                    try {
+                        final Map<String, String> queryParams = getQueryParams(uriInfo);
+                        validateParams(queryParams, providerName);
+
+                        LOGGER.debug("Params: [{}]",
+                                queryParams.entrySet()
+                                        .stream()
+                                        .map(entry -> entry.getKey() + "=" + entry.getValue())
+                                        .collect(Collectors.joining(", ")));
+
+                        return systemInfoServiceProvider.get().get(providerName, queryParams)
                                 .orElseThrow(() ->
-                                        new NotFoundException(LogUtil.message("Name {} not found", name))))
+                                        new NotFoundException(LogUtil.message("Name {} not found", providerName)));
+                    } catch (Exception e) {
+                        LOGGER.error(LogUtil.message("Error getting system info for {}. {}",
+                                providerName, e.getMessage()), e);
+                        throw e;
+                    }
+                })
                 .getResultAndLog();
+    }
+
+    private void validateParams(final Map<String, String> params,
+                                final String providerName) {
+        final List<ParamInfo> paramInfo = systemInfoServiceProvider.get().getParamInfo(providerName);
+
+        final String missingMandatoryParams = paramInfo.stream()
+                .filter(ParamInfo::isMandatory)
+                .map(ParamInfo::getName)
+                .filter(paramName -> !params.containsKey(paramName))
+                .collect(Collectors.joining(", "));
+
+        if (!missingMandatoryParams.isBlank()) {
+            throw new RuntimeException(LogUtil.message(
+                    "The following query parameter(s) must have a value [{}]",
+                    missingMandatoryParams));
+        }
+    }
+
+    private Map<String, String> getQueryParams(final UriInfo uriInfo) {
+        final MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+        // TODO For now just take the first value for each key.
+        //  In future we may want to pass down the MultivaluedMap or a Guava MultiMap
+        return queryParameters.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Entry::getKey,
+                        entry -> NullSafe.get(entry.getValue(), list -> list.get(0))));
     }
 
     private ViewEventAction buildViewEventAction(final String subPath) {

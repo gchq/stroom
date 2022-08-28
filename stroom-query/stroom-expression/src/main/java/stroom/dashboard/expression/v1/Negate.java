@@ -54,7 +54,6 @@ class Negate extends NumericFunction {
 
     static class Calc extends Calculator {
 
-        private static final long serialVersionUID = 1099553839843710283L;
 
         private static final ValInteger MINUS_ONE = ValInteger.create(-1);
 

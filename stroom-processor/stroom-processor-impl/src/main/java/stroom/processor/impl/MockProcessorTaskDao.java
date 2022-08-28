@@ -16,8 +16,10 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
@@ -28,16 +30,54 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     private final MockIntCrud<ProcessorTask> dao = new MockIntCrud<>();
 
     @Override
-    public void releaseOwnedTasks() {
+    public void releaseOwnedTasks(final String nodeName) {
+        releaseTasks(Set.of(nodeName), null, null);
+    }
+
+    @Override
+    public void retainOwnedTasks(final Set<String> retainForNodes,
+                                 final Instant statusOlderThan) {
+        releaseTasks(null, retainForNodes, statusOlderThan);
+    }
+
+    private void releaseTasks(final Set<String> releaseForNodes,
+                              final Set<String> retainForNodes,
+                              final Instant statusOlderThan) {
         final long now = System.currentTimeMillis();
         dao.getMap().values().forEach(task -> {
             if (TaskStatus.UNPROCESSED.equals(task.getStatus()) ||
                     TaskStatus.ASSIGNED.equals(task.getStatus()) ||
                     TaskStatus.PROCESSING.equals(task.getStatus())) {
-                task.setStatus(TaskStatus.UNPROCESSED);
-                task.setStatusTimeMs(now);
-                task.setNodeName(null);
-                dao.update(task);
+
+                boolean release = false;
+                if (releaseForNodes != null) {
+                    for (final String node : releaseForNodes) {
+                        if (node.equals(task.getNodeName())) {
+                            release = true;
+                        }
+                    }
+
+                } else if (retainForNodes != null) {
+                    release = true;
+                    for (final String node : retainForNodes) {
+                        if (node.equals(task.getNodeName())) {
+                            release = false;
+                        }
+                    }
+                }
+
+                if (release && statusOlderThan != null) {
+                    if (statusOlderThan.toEpochMilli() < task.getStatusTimeMs()) {
+                        release = false;
+                    }
+                }
+
+                if (release) {
+                    task.setStatus(TaskStatus.UNPROCESSED);
+                    task.setStatusTimeMs(now);
+                    task.setNodeName(null);
+                    dao.update(task);
+                }
             }
         });
     }

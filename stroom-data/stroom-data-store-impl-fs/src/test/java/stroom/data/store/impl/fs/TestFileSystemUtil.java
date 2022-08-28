@@ -95,7 +95,10 @@ class TestFileSystemUtil {
         final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
         when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("1");
 
-        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
+        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(
+                fileSystemFeedPaths,
+                new MockFsTypePaths(),
+                new StreamTypeExtensions(FsVolumeConfig::new));
 
         final Path volumePath = Paths.get(buildTestVolume().getPath());
         final Path rootFile = fileSystemStreamPathHelper.getRootPath(volumePath, meta, StreamTypeNames.EVENTS);
@@ -115,7 +118,10 @@ class TestFileSystemUtil {
         final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
         when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("1");
 
-        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
+        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(
+                fileSystemFeedPaths,
+                new MockFsTypePaths(),
+                new StreamTypeExtensions(FsVolumeConfig::new));
 
         final Path volumePath = Paths.get(buildTestVolume().getPath());
         final Path rootFile = fileSystemStreamPathHelper.getRootPath(volumePath, meta,
@@ -270,7 +276,10 @@ class TestFileSystemUtil {
         final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
         when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("2");
 
-        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
+        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(
+                fileSystemFeedPaths,
+                new MockFsTypePaths(),
+                new StreamTypeExtensions(FsVolumeConfig::new));
 
         Path path = Paths.get("");
         assertThat(fileSystemStreamPathHelper.getRootPath(path, meta, StreamTypeNames.EVENTS))
@@ -289,7 +298,10 @@ class TestFileSystemUtil {
         final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
         when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("2");
 
-        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
+        final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(
+                fileSystemFeedPaths,
+                new MockFsTypePaths(),
+                new StreamTypeExtensions(FsVolumeConfig::new));
 
         Path path = Paths.get("");
         assertThat(fileSystemStreamPathHelper.getRootPath(path, meta, StreamTypeNames.EVENTS))

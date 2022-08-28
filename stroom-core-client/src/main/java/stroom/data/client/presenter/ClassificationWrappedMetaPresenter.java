@@ -50,4 +50,10 @@ public class ClassificationWrappedMetaPresenter extends ClassificationWrapperPre
     public HandlerRegistration addDataSelectionHandler(DataSelectionHandler<Selection<Long>> handler) {
         return metaPresenter.addDataSelectionHandler(handler);
     }
+
+    public void refreshData() {
+        if (metaPresenter != null) {
+            metaPresenter.refreshData();
+        }
+    }
 }

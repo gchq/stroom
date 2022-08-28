@@ -16,13 +16,11 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 import java.text.ParseException;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-abstract class AbstractIncludeExclude extends AbstractManyChildFunction implements Serializable {
-
-    private static final long serialVersionUID = -305845496003936297L;
+abstract class AbstractIncludeExclude extends AbstractManyChildFunction {
 
     private Generator gen;
     private boolean simple;
@@ -107,8 +105,6 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction implemen
 
     abstract static class AbstractGen extends AbstractManyChildGenerator {
 
-        private static final long serialVersionUID = 8153777070911899616L;
-
         AbstractGen(final Generator[] childGenerators) {
             super(childGenerators);
         }
@@ -121,8 +117,8 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction implemen
         }
 
         @Override
-        public Val eval() {
-            final Val val = childGenerators[0].eval();
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerators[0].eval(childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }
@@ -132,7 +128,7 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction implemen
 
                 boolean found = false;
                 for (int i = 1; i < childGenerators.length && !found; i++) {
-                    final Val v = childGenerators[i].eval();
+                    final Val v = childGenerators[i].eval(childDataSupplier);
                     if (v.type().isValue()) {
                         final String regex = v.toString();
                         if (regex.length() > 0) {

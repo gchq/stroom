@@ -28,6 +28,7 @@ import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
+import stroom.receive.common.StroomStreamStatus;
 import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -35,7 +36,6 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -140,7 +140,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                             });
                         } catch (final RuntimeException | IOException e) {
                             LOGGER.error(e.getMessage(), e);
-                            StroomStreamException.createAndThrow(e, attributeMap);
+                            throw StroomStreamException.create(e, attributeMap);
                         }
                     }).run();
                 } else {
@@ -151,30 +151,13 @@ class ReceiveDataRequestHandler implements RequestHandler {
                 // Set the response status.
                 final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
                 response.setStatus(stroomStatusCode.getHttpCode());
-                logSuccess(attributeMap, stroomStatusCode);
+                logSuccess(new StroomStreamStatus(stroomStatusCode, attributeMap));
             }
         });
     }
 
-    private void logSuccess(final AttributeMap attributeMap, final StroomStatusCode stroomStatusCode) {
-        final StringBuilder clientDetailsStringBuilder = new StringBuilder();
-        AttributeMapUtil.appendAttributes(
-                attributeMap,
-                clientDetailsStringBuilder,
-                StandardHeaderArguments.X_FORWARDED_FOR,
-                StandardHeaderArguments.REMOTE_HOST,
-                StandardHeaderArguments.REMOTE_ADDRESS,
-                StandardHeaderArguments.RECEIVED_PATH);
-
-        final String clientDetailsStr = clientDetailsStringBuilder.isEmpty()
-                ? ""
-                : " - " + clientDetailsStringBuilder;
-
-        LOGGER.info(() -> LogUtil.message(
-                "Sending success response {} - {}{}",
-                stroomStatusCode.getHttpCode(),
-                StroomStreamException.buildStatusMessage(stroomStatusCode, attributeMap),
-                clientDetailsStr));
+    private void logSuccess(final StroomStreamStatus stroomStreamStatus) {
+        LOGGER.info(() -> "Sending success response " + stroomStreamStatus);
     }
 
     private void debug(final String message, final AttributeMap attributeMap) {

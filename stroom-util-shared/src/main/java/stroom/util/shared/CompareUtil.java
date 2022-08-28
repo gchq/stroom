@@ -112,27 +112,46 @@ public final class CompareUtil {
      */
     public static <T> Comparator<T> buildCriteriaComparator(
             final Map<String, Comparator<T>> fieldComparatorsMap,
-            final BaseCriteria criteria) {
+            final BaseCriteria criteria,
+            final String... defaultSortFields) {
 
         Objects.requireNonNull(fieldComparatorsMap);
         Objects.requireNonNull(criteria);
-        Objects.requireNonNull(criteria.getSortList());
 
-        Comparator<T> comparator = Comparator.comparingInt(dbTableStatus -> 1);
+        Comparator<T> comparator = null;
 
-        for (final CriteriaFieldSort sort : criteria.getSortList()) {
-            final String field = sort.getId();
+        if (criteria.getSortList() != null) {
+            for (final CriteriaFieldSort sort : criteria.getSortList()) {
+                final String field = sort.getId();
 
-            Comparator<T> fieldComparator = fieldComparatorsMap.get(field);
+                Comparator<T> fieldComparator = fieldComparatorsMap.get(field);
 
-            Objects.requireNonNull(fieldComparator, () ->
-                    "Missing comparator for field " + field);
+                Objects.requireNonNull(fieldComparator, () ->
+                        "Missing comparator for field " + field);
 
-            if (sort.isDesc()) {
-                fieldComparator = fieldComparator.reversed();
+                if (sort.isDesc()) {
+                    fieldComparator = fieldComparator.reversed();
+                }
+
+                comparator = comparator == null
+                        ? fieldComparator
+                        : comparator.thenComparing(fieldComparator);
             }
+        } else if (defaultSortFields.length > 0) {
+            for (final String defaultField : defaultSortFields) {
 
-            comparator = comparator.thenComparing(fieldComparator);
+                Comparator<T> fieldComparator = fieldComparatorsMap.get(defaultField);
+
+                Objects.requireNonNull(fieldComparator, () ->
+                        "Missing comparator for field " + defaultField);
+
+                comparator = comparator == null
+                        ? fieldComparator
+                        : comparator.thenComparing(fieldComparator);
+            }
+        } else {
+            // No comparator
+            comparator = Comparator.comparingInt(x -> 0);
         }
         return comparator;
     }

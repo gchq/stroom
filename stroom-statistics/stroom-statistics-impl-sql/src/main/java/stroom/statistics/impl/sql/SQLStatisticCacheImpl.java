@@ -37,42 +37,25 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache, HasSystemInfo {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticCacheImpl.class);
 
-    /**
-     * By default we only want to hold a million values in memory before
-     * flushing.
-     */
-    private static final int DEFAULT_MAX_SIZE = 1000000;
-
     private final Provider<SQLStatisticFlushTaskHandler> sqlStatisticFlushTaskHandlerProvider;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
+    private final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider;
 
     private volatile SQLStatisticAggregateMap map = new SQLStatisticAggregateMap();
     private final ReentrantLock mapLock = new ReentrantLock();
     // private final ReentrantLock flushLock = new ReentrantLock();
     private final LinkedBlockingQueue<SQLStatisticAggregateMap> flushQueue = new LinkedBlockingQueue<>(1);
 
-    private final int maxSize;
-
     @Inject
     public SQLStatisticCacheImpl(final Provider<SQLStatisticFlushTaskHandler> sqlStatisticFlushTaskHandlerProvider,
                                  final Executor executor,
-                                 final TaskContextFactory taskContextFactory) {
-        this.maxSize = DEFAULT_MAX_SIZE;
+                                 final TaskContextFactory taskContextFactory,
+                                 final Provider<SQLStatisticsConfig> sqlStatisticsConfigProvider) {
         this.sqlStatisticFlushTaskHandlerProvider = sqlStatisticFlushTaskHandlerProvider;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
-    }
-
-    public SQLStatisticCacheImpl() {
-        this(DEFAULT_MAX_SIZE);
-    }
-
-    public SQLStatisticCacheImpl(final int maxSize) {
-        this.maxSize = maxSize;
-        this.sqlStatisticFlushTaskHandlerProvider = null;
-        this.executor = null;
-        this.taskContextFactory = null;
+        this.sqlStatisticsConfigProvider = sqlStatisticsConfigProvider;
     }
 
     @Override
@@ -80,7 +63,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache, HasSystemInfo {
         mapLock.lock();
         try {
             // If we need to flush then switch out the map.
-            if (this.map.size() > maxSize) {
+            if (this.map.size() > sqlStatisticsConfigProvider.get().getInMemFinalAggregatorSizeThreshold()) {
                 final SQLStatisticAggregateMap flushMap = this.map;
                 // Switch out the current map under lock.
                 LOGGER.debug("add() - Switch out the current map under lock. {}", flushMap);
@@ -162,12 +145,6 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache, HasSystemInfo {
         }
     }
 
-    void shutdown() {
-        // Do a final blocking flush.
-        //TODO run as proc user
-        flush(true);
-    }
-
     public void execute() {
         // Kick off a flush
         flush(false);
@@ -175,7 +152,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache, HasSystemInfo {
 
     @Override
     public SystemInfoResult getSystemInfo() {
-        return SystemInfoResult.builder().name(getSystemInfoName())
+        return SystemInfoResult.builder(this)
                 .addDetail("mapAge", map.getAge().toString())
                 .addDetail("countMapSize", map.countEntrySet().size())
                 .addDetail("valueMapSize", map.valueEntrySet().size())

@@ -20,6 +20,10 @@ import javax.inject.Inject;
 @SuppressWarnings("unused")
 @ConfigurableElement(
         type = "StroomStatsFilter",
+        description = """
+                An element to allow the source data (conforming to the `statistics` XML Schema) \
+                to be sent to an external stroom-stats service.
+                """,
         category = PipelineElementType.Category.FILTER,
         roles = {
                 PipelineElementType.ROLE_TARGET,

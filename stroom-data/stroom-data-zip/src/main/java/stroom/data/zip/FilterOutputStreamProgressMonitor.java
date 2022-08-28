@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.function.Consumer;
 
-class FilterOutputStreamProgressMonitor extends WrappedOutputStream {
+public class FilterOutputStreamProgressMonitor extends WrappedOutputStream {
 
     private final Consumer<Long> progressHandler;
 
-    FilterOutputStreamProgressMonitor(OutputStream outputStream, final Consumer<Long> progressHandler) {
+    public FilterOutputStreamProgressMonitor(OutputStream outputStream, final Consumer<Long> progressHandler) {
         super(outputStream);
         this.progressHandler = progressHandler;
     }

@@ -16,11 +16,7 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
-import java.util.HashSet;
-import java.util.Set;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -56,57 +52,28 @@ class CountGroups extends AbstractFunction {
         return isAggregate();
     }
 
+    @Override
+    public boolean requiresChildData() {
+        return true;
+    }
+
     private static final class Gen extends AbstractNoChildGenerator {
 
-        private static final long serialVersionUID = -9130548669643582369L;
-
-        private final Set<GroupKey> childGroups = new HashSet<>();
-        private long nonGroupedChildCount;
-
         @Override
-        public Val eval() {
-            final long count = nonGroupedChildCount + childGroups.size();
-            if (count == 0) {
-                return ValNull.INSTANCE;
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
+            Val val = null;
+            if (childDataSupplier != null) {
+                final ChildData childData = childDataSupplier.get();
+                if (childData != null) {
+                    val = childData.count();
+                }
             }
 
-            return ValLong.create(count);
-        }
-
-        @Override
-        public void addChildKey(final GroupKey key) {
-            if (key == null) {
-                nonGroupedChildCount++;
-            } else {
-                childGroups.add(key);
+            if (val == null) {
+                val = ValNull.INSTANCE;
             }
-        }
 
-        @Override
-        public void merge(final Generator generator) {
-            final Gen countGen = (Gen) generator;
-            nonGroupedChildCount += countGen.nonGroupedChildCount;
-            childGroups.addAll(countGen.childGroups);
-            super.merge(generator);
-        }
-
-        @Override
-        public void read(final Input input) {
-            childGroups.clear();
-            final int length = input.readInt(true);
-            for (int i = 0; i < length; i++) {
-                childGroups.add(GroupKeySerialiser.read(input));
-            }
-            nonGroupedChildCount = input.readLong(true);
-        }
-
-        @Override
-        public void write(final Output output) {
-            output.writeInt(childGroups.size(), true);
-            for (final GroupKey key : childGroups) {
-                GroupKeySerialiser.write(output, key);
-            }
-            output.writeLong(nonGroupedChildCount, true);
+            return val;
         }
     }
 }

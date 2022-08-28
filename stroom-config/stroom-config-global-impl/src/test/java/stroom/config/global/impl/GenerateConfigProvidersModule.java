@@ -1,9 +1,5 @@
 package stroom.config.global.impl;
 
-import stroom.core.receive.ProxyAggregationConfig;
-import stroom.core.receive.ProxyAggregationRepoDbConfig;
-import stroom.proxy.repo.RepoConfig;
-import stroom.proxy.repo.RepoDbConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
@@ -100,22 +96,22 @@ public class GenerateConfigProvidersModule {
                                 (Class<? extends AbstractConfig>) clazz))
                 .collect(Collectors.joining("\n"));
 
-        final String repoConfigMethodStr = buildMethod(
-                simpleNames,
-                simpleNameToFullNamesMap,
-                ProxyAggregationConfig.class,
-                RepoConfig.class);
-        final String repoDbConfigMethodStr = buildMethod(
-                simpleNames,
-                simpleNameToFullNamesMap,
-                ProxyAggregationRepoDbConfig.class,
-                RepoDbConfig.class);
+//        final String repoConfigMethodStr = buildMethod(
+//                simpleNames,
+//                simpleNameToFullNamesMap,
+//                ProxyAggregationConfig.class,
+//                RepoConfig.class);
+//        final String repoDbConfigMethodStr = buildMethod(
+//                simpleNames,
+//                simpleNameToFullNamesMap,
+//                ProxyAggregationRepoDbConfig.class,
+//                RepoDbConfig.class);
 
         final String fileContent = String.join(
                 "\n",
                 header,
-                repoConfigMethodStr,
-                repoDbConfigMethodStr,
+//                repoConfigMethodStr,
+//                repoDbConfigMethodStr,
                 SEPARATOR,
                 methodsStr,
                 """

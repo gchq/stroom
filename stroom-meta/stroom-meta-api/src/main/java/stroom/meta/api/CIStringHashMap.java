@@ -15,6 +15,101 @@ import java.util.function.Function;
  */
 class CIStringHashMap implements Map<String, String> {
 
+    private final HashMap<CIString, String> map = new HashMap<>();
+
+    @Override
+    public void clear() {
+        map.clear();
+    }
+
+    @Override
+    public boolean containsKey(final Object key) {
+        return map.containsKey(new CIString((String) key));
+    }
+
+    @Override
+    public boolean containsValue(final Object value) {
+        return map.containsValue(value);
+    }
+
+    @Override
+    public String get(final Object key) {
+        return map.get(new CIString((String) key));
+    }
+
+    @Override
+    public String getOrDefault(Object key, String defaultVal) {
+        String val = map.get(new CIString((String) key));
+        return val == null
+                ? defaultVal
+                : val;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
+
+    public String computeIfAbsent(final String key, final Function<String, String> mappingFunction) {
+        return map.computeIfAbsent(new CIString(key), k -> mappingFunction.apply(k.key));
+    }
+
+    @Override
+    public String put(final String key, String value) {
+        if (value != null) {
+            value = value.trim();
+        }
+        final CIString newKey = new CIString(key);
+        final String oldValue = map.remove(newKey);
+        map.put(newKey, value);
+        return oldValue;
+    }
+
+    @Override
+    public String remove(final Object key) {
+        return map.remove(new CIString((String) key));
+    }
+
+    @Override
+    public int size() {
+        return map.size();
+    }
+
+    @Override
+    public Set<Entry<String, String>> entrySet() {
+        final Set<Entry<String, String>> rtnSet = new HashSet<>();
+        for (final Entry<CIString, String> entry : map.entrySet()) {
+            rtnSet.add(new CIEntryAdaptor(entry));
+        }
+        return rtnSet;
+    }
+
+    @Override
+    public Set<String> keySet() {
+        final Set<String> rtnSet = new HashSet<>();
+        for (final CIString entry : map.keySet()) {
+            rtnSet.add(entry.key);
+        }
+        return rtnSet;
+    }
+
+    @Override
+    public void putAll(final Map<? extends String, ? extends String> m) {
+        for (final Entry<? extends String, ? extends String> entry : m.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
+    }
+
+    @Override
+    public Collection<String> values() {
+        return map.values();
+    }
+
+    @Override
+    public String toString() {
+        return map.toString();
+    }
+
     protected static class CIString implements Comparable<CIString>, Serializable {
 
         private final String key;
@@ -83,100 +178,5 @@ class CIStringHashMap implements Map<String, String> {
         public String setValue(final String value) {
             return realEntry.setValue(value);
         }
-    }
-
-    protected HashMap<CIString, String> realMap = new HashMap<>();
-
-    @Override
-    public void clear() {
-        realMap.clear();
-    }
-
-    @Override
-    public boolean containsKey(final Object key) {
-        return realMap.containsKey(new CIString((String) key));
-    }
-
-    @Override
-    public boolean containsValue(final Object value) {
-        return realMap.containsValue(value);
-    }
-
-    @Override
-    public String get(final Object key) {
-        return realMap.get(new CIString((String) key));
-    }
-
-    @Override
-    public String getOrDefault(Object key, String defaultVal) {
-        String val = realMap.get(new CIString((String) key));
-        return val == null
-                ? defaultVal
-                : val;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return realMap.isEmpty();
-    }
-
-    public String computeIfAbsent(final String key, final Function<String, String> mappingFunction) {
-        return realMap.computeIfAbsent(new CIString(key), k -> mappingFunction.apply(k.key));
-    }
-
-    @Override
-    public String put(final String key, String value) {
-        if (value != null) {
-            value = value.trim();
-        }
-        final CIString newKey = new CIString(key);
-        final String oldValue = realMap.remove(newKey);
-        realMap.put(newKey, value);
-        return oldValue;
-    }
-
-    @Override
-    public String remove(final Object key) {
-        return realMap.remove(new CIString((String) key));
-    }
-
-    @Override
-    public int size() {
-        return realMap.size();
-    }
-
-    @Override
-    public Set<Entry<String, String>> entrySet() {
-        final Set<Entry<String, String>> rtnSet = new HashSet<>();
-        for (final Entry<CIString, String> entry : realMap.entrySet()) {
-            rtnSet.add(new CIEntryAdaptor(entry));
-        }
-        return rtnSet;
-    }
-
-    @Override
-    public Set<String> keySet() {
-        final Set<String> rtnSet = new HashSet<>();
-        for (final CIString entry : realMap.keySet()) {
-            rtnSet.add(entry.key);
-        }
-        return rtnSet;
-    }
-
-    @Override
-    public void putAll(final Map<? extends String, ? extends String> m) {
-        for (final Entry<? extends String, ? extends String> entry : m.entrySet()) {
-            put(entry.getKey(), entry.getValue());
-        }
-    }
-
-    @Override
-    public Collection<String> values() {
-        return realMap.values();
-    }
-
-    @Override
-    public String toString() {
-        return realMap.toString();
     }
 }

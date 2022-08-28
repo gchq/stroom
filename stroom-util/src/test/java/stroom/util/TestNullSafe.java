@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 class TestNullSafe {
 
@@ -205,6 +207,31 @@ class TestNullSafe {
                         Level3::getNonNullLevel4,
                         Level4::getLevel))
                 .isEqualTo(4L);
+    }
+
+    @Test
+    void testTest0NonNullTrue() {
+        Assertions.assertThat(
+                        NullSafe.test(
+                                "foo",
+                                str -> str.equals("foo")))
+                .isTrue();
+    }
+
+    @Test
+    void testTest0NonNullFalse() {
+        Assertions.assertThat(NullSafe.test(
+                        "foo",
+                        str -> str.equals("bar")))
+                .isFalse();
+    }
+
+    @Test
+    void testTest0Null() {
+        Assertions.assertThat(NullSafe.test(
+                        null,
+                        str -> str.equals("foo")))
+                .isFalse();
     }
 
     @Test
@@ -431,6 +458,59 @@ class TestNullSafe {
         Assertions.assertThat(NullSafe.isBlankString(nonNullStringWrapper, StringWrapper::getNonNullNonEmptyString))
                 .isFalse();
     }
+
+    @Test
+    void testConsume1() {
+        doConsumeTest(consumer ->
+                        NullSafe.consume(123L, consumer),
+                123L);
+    }
+
+    @Test
+    void testConsume1_null() {
+        doConsumeTest(consumer ->
+                        NullSafe.consume(null, consumer),
+                -1);
+    }
+
+    @Test
+    void testConsume2() {
+        doConsumeTest(consumer ->
+                        NullSafe.consume(nonNullLevel1, Level1::getLevel, consumer),
+                1L);
+    }
+
+    @Test
+    void testConsume2_null() {
+        doConsumeTest(consumer ->
+                        NullSafe.consume(nullLevel1, Level1::getLevel, consumer),
+                -1L);
+    }
+
+    @Test
+    void testConsume3() {
+        doConsumeTest(consumer ->
+                        NullSafe.consume(nonNullLevel1, Level1::getNonNullLevel2, Level2::getLevel, consumer),
+                2L);
+    }
+
+    @Test
+    void testConsume3_null() {
+        doConsumeTest(consumer ->
+                        NullSafe.consume(nonNullLevel1, Level1::getNullLevel2, Level2::getLevel, consumer),
+                -1L);
+    }
+
+    private void doConsumeTest(final Consumer<Consumer<Long>> action, final long expectedValue) {
+        final AtomicLong val = new AtomicLong(-1);
+        final Consumer<Long> consumer = val::set;
+
+        action.accept(consumer);
+
+        Assertions.assertThat(val)
+                .hasValue(expectedValue);
+    }
+
 
     @Test
     @Disabled

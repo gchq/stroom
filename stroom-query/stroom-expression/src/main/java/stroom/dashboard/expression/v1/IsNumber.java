@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -32,10 +31,9 @@ import java.io.Serializable;
                                 description = "Field, the result of another function or a constant.",
                                 argType = Val.class)
                 }))
-class IsNumber extends AbstractIsFunction implements Serializable {
+class IsNumber extends AbstractIsFunction {
 
     static final String NAME = "isNumber";
-    private static final long serialVersionUID = -305145496413936297L;
     private static final NumberTest TEST = new NumberTest();
 
     public IsNumber(final String name) {

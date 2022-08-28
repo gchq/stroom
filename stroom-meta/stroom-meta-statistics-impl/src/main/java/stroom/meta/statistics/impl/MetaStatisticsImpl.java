@@ -26,9 +26,10 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -95,7 +96,7 @@ class MetaStatisticsImpl implements MetaStatistics {
             return null;
         }
 
-        final Map<String, String> statisticTags = new HashMap<>();
+        final SortedMap<String, String> statisticTags = new TreeMap<>();
 
         for (final String tagName : template.getTagAttributeList()) {
             final String tagValue = metaData.get(tagName);
