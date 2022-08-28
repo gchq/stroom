@@ -128,6 +128,16 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+      metaTypeExtensions:
+        Detections: "dtxn"
+        Error: "err"
+        Events: "evt"
+        Raw Events: "revt"
+        Raw Reference: "rref"
+        Records: "rec"
+        Reference: "ref"
+        Test Events: "tevt"
+        Test Reference: "tref"
       typePathCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
@@ -270,8 +280,8 @@ appConfig:
     enabled: false
   feed:
     feedDocCache:
-      expireAfterAccess: "PT10S"
-      expireAfterWrite: null
+      expireAfterAccess: null
+      expireAfterWrite: "PT1M"
       maximumSize: 1000
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     unknownClassification: "UNKNOWN CLASSIFICATION"
@@ -472,6 +482,7 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     deleteAge: "P1D"
+    disownDeadTasksAfter: "PT10M"
     fillTaskQueue: true
     processorCache:
       expireAfterAccess: "PT10S"
@@ -507,22 +518,6 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-  proxyAggregation:
-    aggregator:
-      aggregationFrequency: "PT1M"
-      enabled: true
-      maxAggregateAge: "PT10M"
-      maxItemsPerAggregate: 1000
-      maxUncompressedByteSize: "1.0G"
-    repoDb:
-      connectionPragma:
-      - "pragma synchronous = normal;"
-      - "pragma temp_store = memory;"
-      - "pragma mmap_size = 30000000000;"
-      dbDir: "proxi_repo_db"
-      globalPragma:
-      - "pragma journal_mode = WAL;"
-    repoDir: "proxy_repo"
   publicUri:
     hostname: null
     pathPrefix: null
@@ -810,6 +805,41 @@ appConfig:
       - type: "StroomStatsStore"
         uuid: "efd9bad4-0bab-460f-ae98-79e9717deeaf"
         name: "PipelineStreamProcessor"
+      refDataStoreEntryCount:
+      - type: "StatisticStore"
+        uuid: "f1587262-9cbc-46b4-80eb-51deb011b2c1"
+        name: "Reference Data Store Entry Count"
+      - type: "StroomStatsStore"
+        uuid: "TODO"
+        name: "Reference Data Store Entry Count"
+      refDataStoreSize:
+      - type: "StatisticStore"
+        uuid: "e57959bf-0b2d-4008-98a7-ffcae4bbc4bb"
+        name: "Reference Data Store Size"
+      - type: "StroomStatsStore"
+        uuid: "TODO"
+        name: "Reference Data Store Size"
+      refDataStoreStreamCount:
+      - type: "StatisticStore"
+        uuid: "0dfd4e00-e068-4667-9c60-d3f6163a6c04"
+        name: "Reference Data Store Stream Count"
+      - type: "StroomStatsStore"
+        uuid: "TODO"
+        name: "Reference Data Store Stream Count"
+      searchResultsStoreCount:
+      - type: "StatisticStore"
+        uuid: "35d60e7d-f11a-45c9-981d-16d8ddda081e"
+        name: "Search Results Store Count"
+      - type: "StroomStatsStore"
+        uuid: "TODO"
+        name: "Search Results Store Count"
+      searchResultsStoreSize:
+      - type: "StatisticStore"
+        uuid: "de5b831d-3b7e-4bb5-836f-2f438ec30568"
+        name: "Search Results Store Size"
+      - type: "StroomStatsStore"
+        uuid: "TODO"
+        name: "Search Results Store Size"
       streamTaskQueueSize:
       - type: "StatisticStore"
         uuid: "946a7f0f-a59a-11e6-bdc4-0242ac110002"
@@ -846,12 +876,18 @@ appConfig:
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
       docRefType: "StatisticStore"
+      inMemAggregatorPoolSize: 10
+      inMemFinalAggregatorSizeThreshold: 1000000
+      inMemPooledAggregatorAgeThreshold: "PT5M"
+      inMemPooledAggregatorSizeThreshold: 1000000
       maxProcessingAge: null
       search:
         fetchSize: 5000
         maxResults: 100000
       slowQueryWarningThreshold: "PT1S"
       statisticAggregationBatchSize: 1000000
+      statisticAggregationStageTwoBatchSize: 200000
+      statisticFlushBatchSize: 8000
   ui:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"

@@ -41,6 +41,7 @@ dependencies {
     implementation libs.lucene_queryparser
     implementation libs.slf4j_api
     implementation libs.swagger_annotations
+    implementation libs.vavr
     implementation libs.ws_rs_api
 
     testImplementation project(':stroom-lmdb')

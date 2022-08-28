@@ -17,12 +17,30 @@
 package stroom.task.api;
 
 import stroom.task.shared.TaskId;
+import stroom.util.NullSafe;
+
+import org.slf4j.Logger;
 
 import java.util.function.Supplier;
 
 public interface TaskContext extends Terminator {
 
     void info(Supplier<String> messageSupplier);
+
+    /**
+     * Set the messageSupplier on the taskContext and if logger has debug enabled
+     * then log the message as well.
+     */
+    default void info(final Supplier<String> messageSupplier, final Logger logger) {
+
+        info(messageSupplier);
+
+        if (logger != null && logger.isDebugEnabled() && messageSupplier != null) {
+            logger.debug("TaskId: {}, info: {}",
+                    NullSafe.get(getTaskId(), TaskId::getId),
+                    messageSupplier.get());
+        }
+    }
 
     /**
      * Get the task id of this context.

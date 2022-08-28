@@ -21,7 +21,7 @@ import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContextFactory;
-import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.AbstractStatisticsCoreIntegrationTest;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.time.StroomDuration;
 
@@ -42,7 +42,7 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
+class TestSQLStatisticAggregationManager extends AbstractStatisticsCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticAggregationManager.class);
     private static final long STAT_VALUE = 10L;
@@ -75,7 +75,6 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
      */
     @Test
     void testCountAggregation() throws SQLException {
-        sqlStatisticAggregationManager.setBatchSize(55);
 
         final StatisticType statisticType = StatisticType.COUNT;
         // final long startDateMs =
@@ -87,6 +86,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final int statNameCount = 4;
         final int timesCount = 10;
         final int numberOfDifferentPrecisions = 4;
+        final int totalFlushCount = statNameCount * timesCount * numberOfDifferentPrecisions;
 
         final long expectedCountTotalByPrecision = statNameCount * timesCount
                 * (statisticType.equals(StatisticType.COUNT)
@@ -95,6 +95,14 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final long expectedValueTotalByPrecision = statNameCount * timesCount * STAT_VALUE;
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
+
+        // Ensure we exercise batching with two full and one partial batch
+        final int stage1BatchSize = (int) (totalFlushCount * 0.4);
+        final int stage2BatchSize = (int) (timesCount * 0.4);
+        sqlStatisticAggregationManager.setStage1BatchSize(stage1BatchSize);
+        sqlStatisticAggregationManager.setStage2BatchSize(stage2BatchSize);
+        LOGGER.info("Stage 1 batch size: {}", stage1BatchSize);
+        LOGGER.info("Stage 2 batch size: {}", stage2BatchSize);
 
         final LogExecutionTime time = new LogExecutionTime();
 
@@ -253,10 +261,12 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         // final long startDateMs =
         // DateUtil.parseNormalDateTimeString("2015-01-01T00:00:00.000Z");
         //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
-        final Instant startDate = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
+        final Instant startDate = LocalDateTime.of(
+                2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
         final int statNameCount = 4;
-        final int timesCount = 100;
+        final int timesCount = 10;
         final int numberOfDifferentPrecisions = 3;
+        final int totalFlushCount = statNameCount * timesCount * numberOfDifferentPrecisions;
 
         final long expectedCountTotalByPrecision = statNameCount * timesCount
                 * (statisticType.equals(StatisticType.COUNT)
@@ -266,6 +276,14 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
         final long expectedValueTotal = expectedValueTotalByPrecision * numberOfDifferentPrecisions;
+
+        // Ensure we exercise batching with two full and one partial batch
+        final int stage1BatchSize = (int) (totalFlushCount * 0.4);
+        final int stage2BatchSize = (int) (timesCount * 0.4);
+        sqlStatisticAggregationManager.setStage1BatchSize(stage1BatchSize);
+        sqlStatisticAggregationManager.setStage2BatchSize(stage2BatchSize);
+        LOGGER.info("Stage 1 batch size: {}", stage1BatchSize);
+        LOGGER.info("Stage 2 batch size: {}", stage2BatchSize);
 
         final LogExecutionTime time = new LogExecutionTime();
 
@@ -333,11 +351,6 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         loadData(futureDate, statNameCount, timesCount, statisticType);
         runAggregation(futureDate);
 
-        assertThat(getAggregateTotal(COL_NAME_CNT))
-                .isEqualTo(expectedCountTotal * 2);
-        assertThat(getAggregateTotal(COL_NAME_VAL))
-                .isEqualTo(expectedValueTotal * 2);
-
         assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
                 .isEqualTo(expectedValueTotalByPrecision * 1);
 
@@ -356,6 +369,11 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
                 .isEqualTo(expectedCountTotalByPrecision * 2);
 
+        assertThat(getAggregateTotal(COL_NAME_CNT))
+                .isEqualTo(expectedCountTotal * 2);
+        assertThat(getAggregateTotal(COL_NAME_VAL))
+                .isEqualTo(expectedValueTotal * 2);
+
         LOGGER.info("run aggregation again but pretend we are 32days in the future");
         futureDate = startDate.plus(65, ChronoUnit.DAYS);
         LOGGER.info("futureDate: " + futureDate);
@@ -365,11 +383,6 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         loadData(futureDate, statNameCount, timesCount, statisticType);
         runAggregation(futureDate);
 
-        assertThat(getAggregateTotal(COL_NAME_CNT))
-                .isEqualTo(expectedCountTotal * 3);
-        assertThat(getAggregateTotal(COL_NAME_VAL))
-                .isEqualTo(expectedValueTotal * 3);
-
         assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
                 .isEqualTo(expectedValueTotalByPrecision * 1);
 
@@ -387,16 +400,16 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
                 .isEqualTo(expectedCountTotalByPrecision * 7);
+
+        assertThat(getAggregateTotal(COL_NAME_CNT))
+                .isEqualTo(expectedCountTotal * 3);
+        assertThat(getAggregateTotal(COL_NAME_VAL))
+                .isEqualTo(expectedValueTotal * 3);
 
         LOGGER.info("run aggregation again with no new data so day data can roll up to month");
         LOGGER.info("futureDate: " + futureDate);
         runAggregation(futureDate);
 
-        assertThat(getAggregateTotal(COL_NAME_CNT))
-                .isEqualTo(expectedCountTotal * 3);
-        assertThat(getAggregateTotal(COL_NAME_VAL))
-                .isEqualTo(expectedValueTotal * 3);
-
         assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
                 .isEqualTo(expectedValueTotalByPrecision * 1);
 
@@ -414,6 +427,11 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
                 .isEqualTo(expectedCountTotalByPrecision * 7);
+
+        assertThat(getAggregateTotal(COL_NAME_CNT))
+                .isEqualTo(expectedCountTotal * 3);
+        assertThat(getAggregateTotal(COL_NAME_VAL))
+                .isEqualTo(expectedValueTotal * 3);
 
         LOGGER.info("Test ran in {}", time);
     }
@@ -421,13 +439,15 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     @Test
     void testDeletingOldStats() throws SQLException {
         final StatisticType statisticType = StatisticType.VALUE;
-        //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
-        final Instant startDate = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
-        //the number of different satst names to use in the test
+        // Use a fixed start date to avoid any oddities caused by the power of 10 rounding
+        final Instant startDate = LocalDateTime.of(
+                2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
+        // the number of different stats names to use in the test
         final int statNameCount = 4;
-        //the number of different data points per stat name
+        // the number of different data points per stat name
         final int timesCount = 100;
         final int numberOfDifferentPrecisions = 3 + 1;
+        final int totalFlushCount = statNameCount * timesCount * numberOfDifferentPrecisions;
 
         final long expectedCountTotalByPrecision = statNameCount * timesCount
                 * (statisticType.equals(StatisticType.COUNT)
@@ -437,6 +457,14 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
         final long expectedValueTotal = expectedValueTotalByPrecision * numberOfDifferentPrecisions;
+
+        // Ensure we exercise batching with two full and one partial batch
+        final int stage1BatchSize = (int) (totalFlushCount * 0.4);
+        final int stage2BatchSize = (int) (statNameCount * timesCount * 0.4);
+        sqlStatisticAggregationManager.setStage1BatchSize(stage1BatchSize);
+        sqlStatisticAggregationManager.setStage2BatchSize(stage2BatchSize);
+        LOGGER.info("Stage 1 batch size: {}", stage1BatchSize);
+        LOGGER.info("Stage 2 batch size: {}", stage2BatchSize);
 
         final LogExecutionTime time = new LogExecutionTime();
 
@@ -516,7 +544,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final Instant startDate = LocalDateTime.of(
                 2016, 12, 13, 11, 59, 3)
                 .toInstant(ZoneOffset.UTC);
-        //the number of different satst names to use in the test
+        //the number of different stats names to use in the test
         final int statNameCount = 4;
         //the number of different data points per stat name
         final int timesCount = 100;
@@ -606,7 +634,9 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
                 .isZero();
     }
 
-    private void loadData(final Instant startDate, final int statNameCount, final int timesCount,
+    private void loadData(final Instant startDate,
+                          final int statNameCount,
+                          final int timesCount,
                           final StatisticType statisticType) throws SQLException {
 
         LOGGER.info("Filling STAT_VAL_SRC");
@@ -678,7 +708,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
+                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext, SQLStatisticsConfig::new);
         taskHandler.exec(sqlStatisticAggregateMap);
     }
 

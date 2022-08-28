@@ -67,8 +67,7 @@ class TestNodeStatusServiceUtil {
 
     @Test
     void testCreateLinuxStats() {
-        final NodeStatusServiceUtil nodeStatusServiceUtil = new NodeStatusServiceUtil(null, null);
-        final CPUStats cpuStats = nodeStatusServiceUtil.createLinuxStats(output);
+        final CPUStats cpuStats = NodeStatusServiceUtil.createLinuxStats(output);
 
         assertThat(cpuStats.user.longValue()).isEqualTo(4723476392L);
         assertThat(cpuStats.nice.longValue()).isEqualTo(160361L);

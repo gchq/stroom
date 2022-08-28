@@ -7766,6 +7766,36 @@
         "tags" : [ "System Info" ]
       }
     },
+    "/systemInfo/v1/params/{name}" : {
+      "get" : {
+        "operationId" : "getSystemInfoParams",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ParamInfo"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets the parameters for this system info provider",
+        "tags" : [ "System Info" ]
+      }
+    },
     "/systemInfo/v1/{name}" : {
       "get" : {
         "operationId" : "getSystemInfoByName",
@@ -9724,10 +9754,6 @@
       "DashboardDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -9743,10 +9769,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -9967,10 +9989,6 @@
       "DataRetentionRules" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -9989,10 +10007,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -10131,10 +10145,6 @@
       "DictionaryDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10159,10 +10169,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -10353,10 +10359,6 @@
           "connection" : {
             "$ref" : "#/components/schemas/ElasticConnectionConfig"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10372,10 +10374,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -10436,10 +10434,6 @@
           "clusterRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10475,10 +10469,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -10910,10 +10900,6 @@
           "contextEncoding" : {
             "type" : "string"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -10946,10 +10932,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -11871,10 +11853,6 @@
       "IndexDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -11916,10 +11894,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -12271,10 +12245,6 @@
       "KafkaConfigDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -12293,10 +12263,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -12709,6 +12675,21 @@
         },
         "required" : [ "key", "value" ]
       },
+      "ParamInfo" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "paramType" : {
+            "type" : "string",
+            "enum" : [ "OPTIONAL", "MANDATORY" ]
+          }
+        }
+      },
       "PasswordPolicyConfig" : {
         "type" : "object",
         "properties" : {
@@ -12796,10 +12777,6 @@
       "PipelineDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -12821,10 +12798,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -13672,10 +13645,6 @@
       "ReceiveDataRules" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -13700,10 +13669,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -14261,10 +14226,6 @@
       "ScriptDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -14289,10 +14250,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -14752,10 +14709,6 @@
           "collection" : {
             "type" : "string"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -14792,10 +14745,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15027,10 +14976,6 @@
           "config" : {
             "$ref" : "#/components/schemas/StatisticsDataSourceData"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15061,10 +15006,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15284,10 +15225,6 @@
           "config" : {
             "$ref" : "#/components/schemas/StroomStatsStoreEntityData"
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15318,10 +15255,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15734,10 +15667,6 @@
             "type" : "string",
             "enum" : [ "NONE", "DATA_SPLITTER", "XML_FRAGMENT" ]
           },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15756,10 +15685,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15890,6 +15815,10 @@
           },
           "activity" : {
             "$ref" : "#/components/schemas/ActivityConfig"
+          },
+          "applicationInstanceKeepAliveIntervalMs" : {
+            "type" : "integer",
+            "format" : "int32"
           },
           "defaultMaxResults" : {
             "type" : "string"
@@ -16170,10 +16099,6 @@
       "VisualisationDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16198,10 +16123,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -16253,10 +16174,6 @@
       "XmlSchemaDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16288,10 +16205,6 @@
           "type" : {
             "type" : "string"
           },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16310,10 +16223,6 @@
       "XsltDoc" : {
         "type" : "object",
         "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16332,10 +16241,6 @@
           },
           "type" : {
             "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
           },
           "updateTimeMs" : {
             "type" : "integer",

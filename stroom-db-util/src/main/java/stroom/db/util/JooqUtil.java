@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -111,6 +112,13 @@ public final class JooqUtil {
     public static <R extends Record> int getTableCount(final DataSource dataSource,
                                                        final Table<R> table) {
 
+        return getTableCountWhen(dataSource, table, null);
+    }
+
+    public static <R extends Record> int getTableCountWhen(final DataSource dataSource,
+                                                           final Table<R> table,
+                                                           final Condition condition) {
+
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 checkDataSource(dataSource);
@@ -118,9 +126,9 @@ public final class JooqUtil {
                 return context
                         .selectCount()
                         .from(table)
-                        .fetchOptional()
-                        .map(Record1::value1)
-                        .orElse(0);
+                        .where(Objects.requireNonNullElseGet(condition, DSL::trueCondition))
+                        .fetchOne()
+                        .value1();
             } finally {
                 releaseDataSource();
             }
@@ -129,7 +137,8 @@ public final class JooqUtil {
         }
     }
 
-    public static <R> R contextResult(final DataSource dataSource, final Function<DSLContext, R> function) {
+    public static <R> R contextResult(final DataSource dataSource,
+                                      final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
             try {
@@ -623,7 +632,7 @@ public final class JooqUtil {
      * @return A runtime exception.
      */
     private static RuntimeException convertException(final Exception e) {
-        return convertException(e, true);
+        return convertException(e, false);
     }
 
     private static RuntimeException convertException(final Exception e, final boolean logError) {
@@ -633,7 +642,7 @@ public final class JooqUtil {
             // Continue to interrupt the current thread.
             Thread.currentThread().interrupt();
             // Throw an unchecked form of the interrupted exception.
-            return new UncheckedInterruptedException((InterruptedException) e);
+            return new UncheckedInterruptedException((InterruptedException) e.getCause());
         } else {
             if (logError) {
                 LOGGER.error(e::getMessage, e);
@@ -672,5 +681,49 @@ public final class JooqUtil {
 
     private static void releaseDataSource() {
         DATA_SOURCE_THREAD_LOCAL.set(null);
+    }
+
+    public static <T> Optional<T> getMinId(final DSLContext context,
+                                           final Table<?> table,
+                                           final Field<T> idField) {
+        return context
+                .select(DSL.min(idField))
+                .from(table)
+                .fetchOptional()
+                .map(Record1::value1);
+    }
+
+    public static <T> Optional<T> getMaxId(final DSLContext context,
+                                           final Table<?> table,
+                                           final Field<T> idField) {
+        return context
+                .select(DSL.max(idField))
+                .from(table)
+                .fetchOptional()
+                .map(Record1::value1);
+    }
+
+    public static int count(final DSLContext context,
+                            final Table<?> table) {
+        return context
+                .select(DSL.count())
+                .from(table)
+                .fetchOptional()
+                .map(Record1::value1)
+                .orElse(0);
+    }
+
+    public static int deleteAll(final DSLContext context,
+                                final Table<?> table) {
+        return context
+                .deleteFrom(table)
+                .execute();
+    }
+
+    public static void checkEmpty(final DSLContext context,
+                                  final Table<?> table) {
+        if (count(context, table) > 0) {
+            throw new RuntimeException("Unexpected data");
+        }
     }
 }

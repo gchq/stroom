@@ -1,0 +1,25 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <elements>
+      <remove>
+         <element>
+            <id>xsltFilter2</id>
+            <type>XSLTFilter</type>
+         </element>
+      </remove>
+   </elements>
+   <links>
+      <add>
+         <link>
+            <from>xsltFilter1</from>
+            <to>schemaFilter</to>
+         </link>
+      </add>
+      <remove>
+         <link>
+            <from>xsltFilter1</from>
+            <to>xsltFilter2</to>
+         </link>
+      </remove>
+   </links>
+</pipeline>

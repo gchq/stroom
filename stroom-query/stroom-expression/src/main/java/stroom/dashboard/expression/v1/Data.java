@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import java.util.function.Supplier;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Data.NAME,
@@ -111,8 +113,6 @@ class Data extends AbstractLink {
 
     private static final class Gen extends AbstractLinkGen {
 
-        private static final long serialVersionUID = 217968020285584214L;
-
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
         }
@@ -125,7 +125,7 @@ class Data extends AbstractLink {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             final StringBuilder sb = new StringBuilder();
 
             append(sb, 1, ARG_ID);
@@ -139,14 +139,14 @@ class Data extends AbstractLink {
             append(sb, 9, ARG_DISPLAY_TYPE);
 
             return makeLink(
-                    getEscapedString(childGenerators[0].eval()),
+                    getEscapedString(childGenerators[0].eval(childDataSupplier)),
                     EncodingUtil.encodeUrl(sb.toString()),
                     "data");
         }
 
         private void append(final StringBuilder sb, final int index, final String key) {
             if (index < childGenerators.length) {
-                final Val val = childGenerators[index].eval();
+                final Val val = childGenerators[index].eval(null);
                 if (val.type().isValue()) {
                     if (sb.length() > 0) {
                         sb.append("&");

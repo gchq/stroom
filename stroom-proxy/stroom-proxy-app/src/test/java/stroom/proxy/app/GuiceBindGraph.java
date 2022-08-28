@@ -2,6 +2,7 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.guice.ProxyModule;
 
+import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.grapher.graphviz.GraphvizGrapher;
@@ -27,6 +28,8 @@ public class GuiceBindGraph {
     public void produceGraph() throws IOException {
 
         Environment environment = Mockito.mock(Environment.class);
+        Mockito.when(environment.healthChecks())
+                .thenReturn(new HealthCheckRegistry());
 
         Config config = new Config();
         config.setProxyConfig(new ProxyConfig());

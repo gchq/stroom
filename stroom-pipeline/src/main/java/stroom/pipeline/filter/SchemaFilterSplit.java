@@ -30,10 +30,20 @@ import javax.xml.XMLConstants;
 /**
  * An XML filter for performing inline schema validation of XML.
  */
-@ConfigurableElement(type = "SchemaFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
-        PipelineElementType.ROLE_VALIDATOR}, icon = ElementIcons.XSD)
+@ConfigurableElement(
+        type = "SchemaFilter",
+        description = """
+                Checks the format of the source data against one of a number of XML schemas.
+                This ensures that if non-compliant data is generated, it will be flagged as in error and \
+                will not be passed to any subsequent processing elements.
+                """,
+        category = Category.FILTER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_STEPPING,
+                PipelineElementType.ROLE_VALIDATOR},
+        icon = ElementIcons.XSD)
 public class SchemaFilterSplit extends AbstractXMLFilter {
 
     private final SchemaFilter schemaFilter;

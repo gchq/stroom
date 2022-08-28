@@ -5,7 +5,7 @@ public class ForwardAggregate {
     private final long id;
     private final long updateTimeMs;
     private final Aggregate aggregate;
-    private final ForwardUrl forwardUrl;
+    private final ForwardDest forwardDest;
     private final boolean success;
     private final String error;
     private final long tries;
@@ -13,14 +13,14 @@ public class ForwardAggregate {
     public ForwardAggregate(final long id,
                             final long updateTimeMs,
                             final Aggregate aggregate,
-                            final ForwardUrl forwardUrl,
+                            final ForwardDest forwardDest,
                             final boolean success,
                             final String error,
                             final long tries) {
         this.id = id;
         this.updateTimeMs = updateTimeMs;
         this.aggregate = aggregate;
-        this.forwardUrl = forwardUrl;
+        this.forwardDest = forwardDest;
         this.success = success;
         this.error = error;
         this.tries = tries;
@@ -38,8 +38,8 @@ public class ForwardAggregate {
         return aggregate;
     }
 
-    public ForwardUrl getForwardUrl() {
-        return forwardUrl;
+    public ForwardDest getForwardDest() {
+        return forwardDest;
     }
 
     public boolean isSuccess() {
@@ -67,7 +67,7 @@ public class ForwardAggregate {
         private long id;
         private long updateTimeMs;
         private Aggregate aggregate;
-        private ForwardUrl forwardUrl;
+        private ForwardDest forwardDest;
         private boolean success;
         private String error;
         private long tries;
@@ -79,7 +79,7 @@ public class ForwardAggregate {
             this.id = forwardAggregate.id;
             this.updateTimeMs = forwardAggregate.updateTimeMs;
             this.aggregate = forwardAggregate.aggregate;
-            this.forwardUrl = forwardAggregate.forwardUrl;
+            this.forwardDest = forwardAggregate.forwardDest;
             this.success = forwardAggregate.success;
             this.error = forwardAggregate.error;
             this.tries = forwardAggregate.tries;
@@ -100,8 +100,8 @@ public class ForwardAggregate {
             return this;
         }
 
-        public Builder forwardUrl(final ForwardUrl forwardUrl) {
-            this.forwardUrl = forwardUrl;
+        public Builder forwardDest(final ForwardDest forwardDest) {
+            this.forwardDest = forwardDest;
             return this;
         }
 
@@ -121,7 +121,7 @@ public class ForwardAggregate {
         }
 
         public ForwardAggregate build() {
-            return new ForwardAggregate(id, updateTimeMs, aggregate, forwardUrl, success, error, tries);
+            return new ForwardAggregate(id, updateTimeMs, aggregate, forwardDest, success, error, tries);
         }
     }
 }

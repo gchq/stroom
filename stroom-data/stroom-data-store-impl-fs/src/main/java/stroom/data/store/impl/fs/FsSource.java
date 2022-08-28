@@ -237,7 +237,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
         final List<Path> allDescendantStreamFileList = fileSystemStreamPathHelper.findAllDescendantStreamFileList(
                 getFile());
         return allDescendantStreamFileList.stream()
-                .map(fileSystemStreamPathHelper::decodeStreamType)
+                .map(fileSystemStreamPathHelper::decodeChildStreamType)
                 .collect(Collectors.toSet());
     }
 

@@ -54,9 +54,18 @@ import javax.inject.Inject;
 /**
  * The statistic filter used to gather event based statistics.
  */
-@ConfigurableElement(type = "StatisticsFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
-        PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STATISTICS)
+@ConfigurableElement(
+        type = "StatisticsFilter",
+        description = """
+                An element to allow the source data (conforming to the `statistics` XML Schema) \
+                to be sent to the MySQL based statistics data store.
+                """,
+        category = Category.FILTER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE},
+        icon = ElementIcons.STATISTICS)
 public class StatisticsFilter extends AbstractXMLFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsFilter.class);

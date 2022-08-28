@@ -52,6 +52,7 @@ task generateApi {
 }
 
 task removeYarnBuild {
+    group "yarn"
     doLast {
         println 'Deleting compiled output: ' + outputDir.toString()
         delete outputDir
@@ -59,6 +60,7 @@ task removeYarnBuild {
 }
 
 task yarnBuild {
+    group "yarn"
     dependsOn removeYarnBuild
     dependsOn generateApi
 
@@ -73,6 +75,7 @@ task yarnBuild {
 }
 
 task copyYarnBuild(dependsOn: yarnBuild, type: Copy) {
+    group "yarn"
     outputs.upToDateWhen { false }
     from "${project.buildDir}"
     into "${outputDir}"

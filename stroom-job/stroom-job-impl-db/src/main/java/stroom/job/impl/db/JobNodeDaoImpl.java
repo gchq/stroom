@@ -2,9 +2,9 @@ package stroom.job.impl.db;
 
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
-import stroom.job.impl.FindJobNodeCriteria;
 import stroom.job.impl.JobNodeDao;
 import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
+import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
@@ -32,7 +32,10 @@ import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
 public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
-            FindJobNodeCriteria.FIELD_ID, JOB_NODE.ID);
+            FindJobNodeCriteria.FIELD_ID_ID, JOB_NODE.ID,
+            FindJobNodeCriteria.FIELD_ID_NODE, JOB_NODE.NODE_NAME,
+            FindJobNodeCriteria.FIELD_ID_ENABLED, JOB_NODE.ENABLED,
+            FindJobNodeCriteria.FIELD_ID_LAST_EXECUTED, JOB_NODE.UPDATE_TIME_MS);
 
     private static final Function<Record, Job> RECORD_TO_JOB_MAPPER = record -> {
         final Job job = new Job();
@@ -131,7 +134,8 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getJobName()),
                 JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()));
 
-        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria, JOB_NODE.NODE_NAME);
+
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final List<JobNode> list = JooqUtil.contextResult(jobDbConnProvider, context -> context

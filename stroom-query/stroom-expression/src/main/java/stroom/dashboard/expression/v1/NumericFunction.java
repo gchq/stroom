@@ -16,7 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import java.util.function.Supplier;
+
 public abstract class NumericFunction extends AbstractManyChildFunction {
+
     private final boolean usingOperator;
 
     public NumericFunction(final String name, final int minParams, final int maxParams) {
@@ -58,7 +61,6 @@ public abstract class NumericFunction extends AbstractManyChildFunction {
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
-        private static final long serialVersionUID = 217968020285584214L;
 
         private final Calculator calculator;
 
@@ -75,10 +77,10 @@ public abstract class NumericFunction extends AbstractManyChildFunction {
         }
 
         @Override
-        public Val eval() {
+        public Val eval(final Supplier<ChildData> childDataSupplier) {
             final Val[] vals = new Val[childGenerators.length];
             for (int i = 0; i < vals.length; i++) {
-                final Val val = childGenerators[i].eval();
+                final Val val = childGenerators[i].eval(childDataSupplier);
 
                 if (!val.type().isValue()) {
                     return val;

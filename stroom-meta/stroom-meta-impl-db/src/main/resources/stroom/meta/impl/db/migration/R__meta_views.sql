@@ -6,6 +6,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- meta, meta_feed, meta_type, meta_processor
 CREATE OR REPLACE VIEW v_meta AS
     SELECT
+        m.id,
         FROM_UNIXTIME(m.create_time / 1000) create_time,
         FROM_UNIXTIME(m.effective_time / 1000) effective_time,
         m.parent_id,

@@ -113,7 +113,7 @@ ext.versions = [
         dropwizard        : '2.0.28', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '7.17.1',
         httpcore          : '4.4.12', // Transient dependency of Elasticsearch
-        guice5            : '5.0.1',
+        guice5            : '5.1.0',
         gwt               : '2.9.0',
         hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
@@ -268,7 +268,7 @@ ext.libs = [
         swagger_annotations            : "io.swagger.core.v3:swagger-annotations:$versions.swagger",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
         vavr                           : "io.vavr:vavr:0.10.4",
-        wiremock                       : 'com.github.tomakehurst:wiremock:2.27.2',
+        wiremock                       : 'com.github.tomakehurst:wiremock-jre8:2.33.1',
         wix_embedded_mysql             : "com.wix:wix-embedded-mysql:4.6.1",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1.1",
         xml_apis                       : "xml-apis:xml-apis:2.0.2",

@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
 public final class GroupKeySerialiser {
+
     public static GroupKey read(final Input input) {
         // Read the parent values.
         final int parentLength = input.readInt();

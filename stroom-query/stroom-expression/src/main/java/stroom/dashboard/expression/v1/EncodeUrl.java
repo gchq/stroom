@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.io.Serializable;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -33,10 +32,9 @@ import java.io.Serializable;
                                 description = "The URL or string to encode.",
                                 argType = ValString.class)
                 }))
-class EncodeUrl extends AbstractStringFunction implements Serializable {
+class EncodeUrl extends AbstractStringFunction {
 
     static final String NAME = "encodeUrl";
-    private static final long serialVersionUID = -305845496003936297L;
 
     private static final Operation OPERATION = EncodingUtil::encodeUrl;
 

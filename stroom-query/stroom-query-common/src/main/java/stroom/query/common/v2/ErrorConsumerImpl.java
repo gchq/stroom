@@ -21,6 +21,10 @@ public class ErrorConsumerImpl implements ErrorConsumer {
     private final Set<Throwable> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final AtomicInteger errorCount = new AtomicInteger();
 
+    public ErrorConsumerImpl() {
+        LOGGER.debug("Creating errorConsumer {}", this);
+    }
+
     @Override
     public void add(final Throwable exception) {
         LOGGER.debug(exception::getMessage, exception);
@@ -39,8 +43,9 @@ public class ErrorConsumerImpl implements ErrorConsumer {
                     .stream()
                     .map(ExceptionStringUtil::getMessage)
                     .collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
         }
-        return null;
     }
 
     @Override
@@ -52,12 +57,19 @@ public class ErrorConsumerImpl implements ErrorConsumer {
                     .stream()
                     .map(ExceptionStringUtil::getMessage)
                     .collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
         }
-        return null;
     }
 
     @Override
     public boolean hasErrors() {
         return errorCount.get() > 0;
+    }
+
+    @Override
+    public String toString() {
+        return "id=" + System.identityHashCode(this)
+                + " errorCount=" + errorCount.get();
     }
 }

@@ -50,6 +50,10 @@ import javax.inject.Inject;
  */
 @ConfigurableElement(
         type = "HDFSFileAppender",
+        description = """
+                A destination used to write an output stream to a file on a Hadoop Distributed File System.
+                If multiple paths are specified in the 'outputPaths' property it will pick one at random.
+                """,
         category = Category.DESTINATION,
         roles = {
                 PipelineElementType.ROLE_TARGET,

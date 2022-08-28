@@ -138,6 +138,11 @@ public class NullSafe {
         }
     }
 
+    /**
+     * Apply getter to value if value is non-null.
+     *
+     * @return The result of applying getter to value if value is non-null, else null.
+     */
     public static <T1, R> R get(final T1 value,
                                 final Function<T1, R> getter) {
         if (value == null) {
@@ -147,18 +152,30 @@ public class NullSafe {
         }
     }
 
+    /**
+     * Apply getter to value if value is non-null. If value or the result of
+     * applying getter to value is null, return other.
+     */
     public static <T1, R> R getOrElse(final T1 value,
                                       final Function<T1, R> getter,
                                       final R other) {
         return Objects.requireNonNullElse(get(value, getter), other);
     }
 
+    /**
+     * Apply getter to value if value is non-null. If value or the result of
+     * applying getter to value is null, return the value supplied by otherSupplier.
+     */
     public static <T1, R> R getOrElseGet(final T1 value,
                                          final Function<T1, R> getter,
                                          final Supplier<R> otherSupplier) {
         return Objects.requireNonNullElseGet(get(value, getter), otherSupplier);
     }
 
+    /**
+     * Apply getter to value if value is non-null and return wrapper in an {@link Optional}.
+     * If this result or value are null return an empty {@link Optional}.
+     */
     public static <T1, R> Optional<R> getAsOptional(final T1 value,
                                                     final Function<T1, R> getter) {
         if (value == null) {
@@ -168,10 +185,32 @@ public class NullSafe {
         }
     }
 
+    /**
+     * If value is non-null pass it to the consumer, else it is a no-op.
+     */
     public static <T> void consume(final T value,
                                    final Consumer<T> consumer) {
         if (value != null && consumer != null) {
             consumer.accept(value);
+        }
+    }
+
+    /**
+     * Allows you to test a value without worrying if the value is null, e.g.
+     * <pre><code>
+     *    boolean hasValues = NullSafe.test(myList, list -> !list.isEmpty());
+     * </code></pre>
+     *
+     * @return false if value is null
+     * else return the value of the predicate when applied
+     * to the non-null value.
+     */
+    public static <T> boolean test(final T value,
+                                   final Predicate<T> predicate) {
+        if (value == null) {
+            return false;
+        } else {
+            return predicate.test(value);
         }
     }
 
@@ -270,6 +309,10 @@ public class NullSafe {
         }
     }
 
+    /**
+     * If value is non-null apply getter1 to it.
+     * If the result of that is non-null consume the result.
+     */
     public static <T1, T2> void consume(final T1 value,
                                         final Function<T1, T2> getter1,
                                         final Consumer<T2> consumer) {
@@ -387,6 +430,26 @@ public class NullSafe {
                     return Optional.empty();
                 } else {
                     return Optional.ofNullable(Objects.requireNonNull(getter3).apply(value3));
+                }
+            }
+        }
+    }
+
+    /**
+     * If value is non-null apply getter1 to it.
+     * If the result of that is non-null apply getter2 to the result.
+     * If the result of that is non-null consume the result.
+     */
+    public static <T1, T2, T3> void consume(final T1 value,
+                                            final Function<T1, T2> getter1,
+                                            final Function<T2, T3> getter2,
+                                            final Consumer<T3> consumer) {
+        if (value != null && consumer != null) {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 != null) {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 != null) {
+                    consumer.accept(value3);
                 }
             }
         }

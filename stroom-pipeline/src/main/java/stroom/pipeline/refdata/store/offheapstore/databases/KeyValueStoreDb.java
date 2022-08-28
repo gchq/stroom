@@ -97,21 +97,22 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
             int totalCount = 0;
 
             while (!isComplete) {
+                boolean foundMatchingEntry;
                 try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
                         batchingWriteTxn.getTxn(), keyRange)) {
 
                     int batchCount = 0;
-                    boolean foundEntry = false;
+                    foundMatchingEntry = false;
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
                     while (iterator.hasNext()) {
-                        foundEntry = true;
                         final KeyVal<ByteBuffer> keyVal = iterator.next();
-                        LAMBDA_LOGGER.trace(() -> LogUtil.message("Found entry {} {}",
+                        LAMBDA_LOGGER.trace(() -> LogUtil.message("Entry {} {}",
                                 ByteBufferUtils.byteBufferInfo(keyVal.key()),
                                 ByteBufferUtils.byteBufferInfo(keyVal.val())));
 
                         if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
+                            foundMatchingEntry = true;
                             // prefixed with our UID
 
                             // pass the found kv pair from this entry to the consumer
@@ -121,11 +122,10 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
                             iterator.remove();
                             batchCount++;
 
-                            // Having deleted one entry and associated value, commit if we have reached our batch size
-                            final boolean isBatchFull = batchingWriteTxn.incrementBatchCount();
-
-                            if (isBatchFull) {
-                                // txn is now gone so need to break out and start another cursor with a new txn
+                            // Can't use batchingWriteTxn.commitIfRequired() as the commit would close
+                            // the txn which then causes an error in the cursorIterable auto close
+                            if (batchingWriteTxn.incrementBatchCount()) {
+                                // Batch is full so break out
                                 break;
                             }
                         } else {
@@ -136,7 +136,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
                         }
                     }
 
-                    if (foundEntry) {
+                    if (foundMatchingEntry) {
                         totalCount += batchCount;
                         LOGGER.debug("Deleted {} {} entries this iteration, total deleted: {}",
                                 batchCount, DB_NAME, totalCount);
@@ -145,10 +145,17 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
                     }
                 }
 
-                // Force the commit as we either have a full batch or we have finished
-                // We may now have a partial purge committed but we are still under write lock so no other threads
-                // can purge or load and there is a lock on the ref stream.
-                batchingWriteTxn.commit();
+                if (foundMatchingEntry) {
+                    // Force the commit as we either have a full batch or we have finished
+                    // We may now have a partial purge committed but we are still under write
+                    // lock so no other threads can purge or load and there is a lock on the
+                    // ref stream.
+                    LOGGER.debug("Committing, totalCount {}", totalCount);
+                    batchingWriteTxn.commit();
+                } else {
+                    LOGGER.debug("No entry found since last commit, not committing, totalCount {}",
+                            totalCount);
+                }
             }
         }
     }

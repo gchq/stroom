@@ -51,7 +51,6 @@ class Subtract extends NumericFunction {
 
     static class Calc extends Calculator {
 
-        private static final long serialVersionUID = 1099553839843710283L;
 
         @Override
         protected double op(final double cur, final double val) {

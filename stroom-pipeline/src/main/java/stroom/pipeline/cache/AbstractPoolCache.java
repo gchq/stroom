@@ -18,21 +18,29 @@ package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
+import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.Clearable;
+import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.SystemInfoResult;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-public abstract class AbstractPoolCache<K, V> implements Clearable {
+public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInfo {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCache.class);
+    private static final String PARAM_NAME_LIMIT = "limit";
 
     private final ICache<PoolKey<K>, PoolItem<V>> cache;
     private final Map<K, LinkedBlockingDeque<PoolKey<K>>> keyMap = new ConcurrentHashMap<>();
@@ -150,5 +158,50 @@ public abstract class AbstractPoolCache<K, V> implements Clearable {
         sb.append(size.get());
 
         return sb.toString();
+    }
+
+    abstract Object mapKeyForSystemInfo(final K key);
+
+    @Override
+    public SystemInfoResult getSystemInfo(final Map<String, String> params) {
+        final Integer limit = NullSafe.getOrElse(
+                params.get(PARAM_NAME_LIMIT),
+                Integer::valueOf,
+                Integer.MAX_VALUE);
+
+        final List<Object> mappedKeys = keyMap
+                .entrySet()
+                .stream()
+                .limit(limit)
+                .map(entry ->
+                        Map.of(
+                                "key", mapKeyForSystemInfo(entry.getKey()),
+                                "poolItemCount", NullSafe.get(entry.getValue(), Collection::size)))
+                .collect(Collectors.toList());
+
+        final int totalCount = keyMap.values()
+                .stream()
+                .mapToInt(Collection::size)
+                .sum();
+
+        return SystemInfoResult.builder(this)
+                .description("List of pool keys")
+                .addDetail("keys", mappedKeys)
+                .addDetail("totalItemCount", totalCount)
+                .addDetail("keyCount", keyMap.size())
+                .build();
+    }
+
+    @Override
+    public SystemInfoResult getSystemInfo() {
+        return getSystemInfo(Collections.emptyMap());
+
+    }
+
+    @Override
+    public List<ParamInfo> getParamInfo() {
+        return List.of(
+                ParamInfo.optionalParam(PARAM_NAME_LIMIT,
+                        "A limit on the number of keys to return, default is unlimited."));
     }
 }

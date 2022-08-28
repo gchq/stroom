@@ -42,7 +42,7 @@ public class MetaHolder implements Holder {
     }
 
     public void setChildDataType(final String childDataType) {
-        if (!StreamTypeNames.META.equals(childDataType) && !StreamTypeNames.CONTEXT.equals(childDataType)) {
+        if (!StreamTypeNames.META.equals(childDataType)) {
             this.childDataType = childDataType;
         }
     }

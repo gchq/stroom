@@ -17,20 +17,16 @@
 package stroom.dashboard.expression.v1;
 
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionParserUris extends AbstractExpressionParserTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionParserUris.class);
-
     @Test
     void testExtractAuthorityFromUri() {
         createGenerator("extractAuthorityFromUri(${val1})", gen -> {
             gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("www.example.com:1234");
         });
     }
@@ -39,7 +35,7 @@ class TestExpressionParserUris extends AbstractExpressionParserTest {
     void testExtractFragmentFromUri() {
         createGenerator("extractFragmentFromUri(${val1})", gen -> {
             gen.set(getVals("http://www.example.com:1234/this/is/a/path#frag"));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("frag");
         });
     }
@@ -48,7 +44,7 @@ class TestExpressionParserUris extends AbstractExpressionParserTest {
     void testExtractHostFromUri() {
         createGenerator("extractHostFromUri(${val1})", gen -> {
             gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("www.example.com");
         });
     }
@@ -57,7 +53,7 @@ class TestExpressionParserUris extends AbstractExpressionParserTest {
     void testExtractPathFromUri() {
         createGenerator("extractPathFromUri(${val1})", gen -> {
             gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("/this/is/a/path");
         });
     }
@@ -66,7 +62,7 @@ class TestExpressionParserUris extends AbstractExpressionParserTest {
     void testExtractPortFromUri() {
         createGenerator("extractPortFromUri(${val1})", gen -> {
             gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("1234");
         });
     }
@@ -75,7 +71,7 @@ class TestExpressionParserUris extends AbstractExpressionParserTest {
     void testExtractQueryFromUri() {
         createGenerator("extractQueryFromUri(${val1})", gen -> {
             gen.set(getVals("http://www.example.com:1234/this/is/a/path?this=that&foo=bar"));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("this=that&foo=bar");
         });
     }
@@ -84,7 +80,7 @@ class TestExpressionParserUris extends AbstractExpressionParserTest {
     void testExtractSchemeFromUri() {
         createGenerator("extractSchemeFromUri(${val1})", gen -> {
             gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("http");
         });
     }
@@ -93,7 +89,7 @@ class TestExpressionParserUris extends AbstractExpressionParserTest {
     void testExtractSchemeSpecificPartFromUri() {
         createGenerator("extractSchemeSpecificPartFromUri(${val1})", gen -> {
             gen.set(getVals("http://www.example.com:1234/this/is/a/path"));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("//www.example.com:1234/this/is/a/path");
         });
     }
@@ -102,7 +98,7 @@ class TestExpressionParserUris extends AbstractExpressionParserTest {
     void testExtractUserInfoFromUri() {
         createGenerator("extractUserInfoFromUri(${val1})", gen -> {
             gen.set(getVals("http://john:doe@example.com:81/"));
-            Val out = gen.eval();
+            Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("john:doe");
         });
     }

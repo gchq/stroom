@@ -22,24 +22,6 @@ public class ProxyConfigProvidersModule extends AbstractModule {
                 stroom.proxy.app.ProxyPathConfig.class);
     }
 
-    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.proxy.repo.RepoConfig getRepoConfig(
-            final ProxyConfigProvider proxyConfigProvider) {
-        return proxyConfigProvider.getConfigObject(
-                stroom.proxy.repo.ProxyRepoConfig.class);
-    }
-
-    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.proxy.repo.RepoDbConfig getRepoDbConfig(
-            final ProxyConfigProvider proxyConfigProvider) {
-        return proxyConfigProvider.getConfigObject(
-                stroom.proxy.repo.ProxyRepoDbConfig.class);
-    }
-
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
@@ -90,10 +72,10 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.forwarder.ForwarderConfig getForwarderConfig(
+    stroom.proxy.app.event.EventStoreConfig getEventStoreConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.forwarder.ForwarderConfig.class);
+                stroom.proxy.app.event.EventStoreConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
@@ -135,28 +117,19 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.proxy.repo.ProxyDbConfig getProxyDbConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.repo.ProxyDbConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.proxy.repo.ProxyRepoConfig getProxyRepoConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
                 stroom.proxy.repo.ProxyRepoConfig.class);
-    }
-
-    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.proxy.repo.ProxyRepoDbConfig getProxyRepoDbConfig(
-            final ProxyConfigProvider proxyConfigProvider) {
-        return proxyConfigProvider.getConfigObject(
-                stroom.proxy.repo.ProxyRepoDbConfig.class);
-    }
-
-    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.proxy.repo.ProxyRepoFileScannerConfig getProxyRepoFileScannerConfig(
-            final ProxyConfigProvider proxyConfigProvider) {
-        return proxyConfigProvider.getConfigObject(
-                stroom.proxy.repo.ProxyRepoFileScannerConfig.class);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,10 +137,20 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.forwarder.ForwardDestinationConfig getForwardDestinationConfigButThrow(
+    stroom.proxy.app.forwarder.ForwardHttpPostConfig getForwardHttpPostConfigButThrow(
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
-                "stroom.proxy.app.forwarder.ForwardDestinationConfig cannot be injected directly. "
+                "stroom.proxy.app.forwarder.ForwardHttpPostConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.forwarder.ForwardFileConfig getForwardFileConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.forwarder.ForwardFileConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

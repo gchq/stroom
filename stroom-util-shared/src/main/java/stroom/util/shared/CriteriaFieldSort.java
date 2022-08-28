@@ -55,4 +55,15 @@ public class CriteriaFieldSort implements Serializable {
     public boolean isIgnoreCase() {
         return ignoreCase;
     }
+
+    @Override
+    public String toString() {
+        final String ascDesc = desc
+                ? "▼"
+                : "▲";
+        final String ignoreCaseStr = ignoreCase
+                ? " (ignore)"
+                : "";
+        return id + " " + ascDesc + ignoreCaseStr;
+    }
 }

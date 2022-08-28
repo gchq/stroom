@@ -16,13 +16,15 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.ChildData;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.Selection;
-import stroom.dashboard.expression.v1.Selector;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValLong;
+import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
@@ -36,12 +38,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
@@ -139,7 +141,7 @@ public class MapDataStore implements DataStore, Data {
 
                             // If we are filtering then we need to evaluate this field
                             // now so that we can filter the resultant value.
-                            value = generator.eval();
+                            value = generator.eval(null);
 
                             if (value != null && !compiledFilter.match(value.toString())) {
                                 // We want to exclude this item so get out of this method ASAP.
@@ -154,7 +156,7 @@ public class MapDataStore implements DataStore, Data {
                         if (generator == null) {
                             generator = expression.createGenerator();
                             generator.set(values);
-                            value = generator.eval();
+                            value = generator.eval(null);
                         }
                         groupValues[groupIndex++] = value;
                     }
@@ -196,7 +198,7 @@ public class MapDataStore implements DataStore, Data {
                                final Generator[] generators) {
         LOGGER.trace(() -> "addToChildMap called for item");
         if (Thread.currentThread().isInterrupted() || hasEnoughData) {
-            return;
+            completionState.signalComplete();
         }
 
         // Update the total number of results that we have received.
@@ -283,6 +285,11 @@ public class MapDataStore implements DataStore, Data {
 
         if (result == null) {
             result = new Items() {
+                @Override
+                public Item get(final int index) {
+                    return null;
+                }
+
                 @Override
                 public int size() {
                     return 0;
@@ -431,11 +438,6 @@ public class MapDataStore implements DataStore, Data {
             }
         }
 
-        @Override
-        public int size() {
-            return list.size();
-        }
-
         private synchronized void sortAndTrim() {
             if (!trimmed) {
                 // We won't group, sort or trim lists with only a single item obviously.
@@ -475,19 +477,27 @@ public class MapDataStore implements DataStore, Data {
         }
 
         @Override
+        public Item get(final int index) {
+            return copy().get(index);
+        }
+
+        @Override
+        public int size() {
+            return list.size();
+        }
+
+        @Override
         @NotNull
         public Iterator<Item> iterator() {
             return copy().iterator();
         }
     }
 
-    public static class ItemImpl implements Item, HasGenerators {
+    public static class ItemImpl implements Item {
 
         private final MapDataStore dataStore;
-
         private final Key key;
         private final Generator[] generators;
-        private Optional<Selection<Val>> childSelection;
 
         public ItemImpl(final MapDataStore dataStore,
                         final Key key,
@@ -503,69 +513,97 @@ public class MapDataStore implements DataStore, Data {
         }
 
         @Override
-        public Generator[] getGenerators() {
-            return generators;
-        }
-
-        @Override
-        public Val getValue(final int index) {
+        public Val getValue(final int index, final boolean evaluateChildren) {
             Val val = null;
-
-            final Generator[] generators = getGenerators();
 
             if (index >= 0 && index < generators.length) {
                 final Generator generator = generators[index];
                 if (generator != null) {
-                    if (generator instanceof Selector) {
-                        if (childSelection == null) {
-                            childSelection = Optional.ofNullable(getChildSelection(index));
-                        }
+                    if (evaluateChildren) {
+                        final Supplier<ChildData> childDataSupplier = () -> new ChildData() {
+                            @Override
+                            public Val first() {
+                                final Items items = dataStore.get(key);
+                                if (items != null && items.size() > 0) {
+                                    return items.get(0).getValue(index, false);
+                                }
+                                return ValNull.INSTANCE;
+                            }
 
-                        if (childSelection.isPresent()) {
-                            // Make the selector select from the list of child generators.
-                            final Selector selector = (Selector) generator;
-                            val = selector.select(childSelection.get());
+                            @Override
+                            public Val last() {
+                                final Items items = dataStore.get(key);
+                                if (items != null && items.size() > 0) {
+                                    return items.get(items.size() - 1).getValue(index, false);
+                                }
+                                return ValNull.INSTANCE;
+                            }
 
-                        } else {
-                            // If there are are no child items then just evaluate the inner expression
-                            // provided to the selector function.
-                            val = generator.eval();
-                        }
+                            @Override
+                            public Val nth(final int pos) {
+                                final Items items = dataStore.get(key);
+                                if (items != null && items.size() > pos) {
+                                    return items.get(pos).getValue(index, false);
+                                }
+                                return ValNull.INSTANCE;
+                            }
+
+                            @Override
+                            public Val top(final String delimiter, final int limit) {
+                                return join(delimiter, limit, false);
+                            }
+
+                            @Override
+                            public Val bottom(final String delimiter, final int limit) {
+                                return join(delimiter, limit, true);
+                            }
+
+                            @Override
+                            public Val count() {
+                                final Items items = dataStore.get(key);
+                                if (items != null) {
+                                    return ValLong.create(items.size());
+                                }
+                                return ValNull.INSTANCE;
+                            }
+
+                            private Val join(final String delimiter, final int limit, final boolean trimTop) {
+                                final Items items = dataStore.get(key);
+                                if (items != null && items.size() > 0) {
+
+                                    int start;
+                                    int end;
+                                    if (trimTop) {
+                                        end = items.size() - 1;
+                                        start = Math.max(0, end - limit);
+                                    } else {
+                                        end = Math.min(limit, items.size());
+                                        start = 0;
+                                    }
+
+                                    final StringBuilder sb = new StringBuilder();
+                                    for (int i = start; i <= end; i++) {
+                                        final Val val = items.get(i).getValue(index, false);
+                                        if (val.type().isValue()) {
+                                            if (sb.length() > 0) {
+                                                sb.append(delimiter);
+                                            }
+                                            sb.append(val);
+                                        }
+                                    }
+                                    return ValString.create(sb.toString());
+                                }
+                                return ValNull.INSTANCE;
+                            }
+                        };
+                        val = generator.eval(childDataSupplier);
+
                     } else {
-                        // Convert all list into fully resolved objects evaluating functions where
-                        // necessary.
-                        val = generator.eval();
+                        val = generator.eval(null);
                     }
                 }
             }
             return val;
-        }
-
-        private Selection<Val> getChildSelection(final int index) {
-            final Key key = getKey();
-            final Key parentKey = key.getParent();
-
-            if (parentKey != null) {
-                // If the generator is a selector then select a child row.
-                final ItemsImpl childItems = (ItemsImpl) dataStore.get(parentKey);
-                if (childItems != null) {
-                    final List<Item> items = childItems.copy();
-
-                    return new Selection<>() {
-                        @Override
-                        public int size() {
-                            return items.size();
-                        }
-
-                        @Override
-                        public Val get(final int pos) {
-                            return items.get(pos).getValue(index);
-                        }
-                    };
-                }
-            }
-
-            return null;
         }
     }
 
@@ -574,9 +612,9 @@ public class MapDataStore implements DataStore, Data {
         @Override
         public Stream<ItemImpl> apply(final Stream<ItemImpl> stream) {
             final Map<Key, Generator[]> groupingMap = new ConcurrentHashMap<>();
-            stream.forEach(unpackedItem -> {
-                final Key rawKey = unpackedItem.getKey();
-                final Generator[] generators = unpackedItem.getGenerators();
+            stream.forEach(item -> {
+                final Key rawKey = item.getKey();
+                final Generator[] generators = item.generators;
 
                 groupingMap.compute(rawKey, (k, v) -> {
                     Generator[] result = v;

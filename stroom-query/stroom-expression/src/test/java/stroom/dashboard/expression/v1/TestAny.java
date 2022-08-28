@@ -16,24 +16,15 @@ class TestAny extends AbstractFunctionTest<Any> {
                 TestCase.ofAggregate(
                         "ascending",
                         ValLong.create(1),
-                        List.of(
-                                ValLong.create(1),
-                                ValLong.create(2),
-                                ValLong.create(3))),
+                        List.of(ValLong.create(1))),
                 TestCase.ofAggregate(
                         "descending",
                         ValLong.create(3),
-                        List.of(
-                                ValLong.create(3),
-                                ValLong.create(2),
-                                ValLong.create(1))),
+                        List.of(ValLong.create(3))),
                 TestCase.ofAggregate(
                         "null",
                         ValLong.create(2),
-                        List.of(
-                                ValNull.INSTANCE,
-                                ValLong.create(2),
-                                ValLong.create(3)))
+                        List.of(ValLong.create(2)))
         );
     }
 }

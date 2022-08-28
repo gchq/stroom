@@ -3,47 +3,48 @@ package stroom.statistics.api;
 import com.google.common.base.Preconditions;
 
 import java.util.Collections;
-import java.util.Map;
+import java.util.SortedMap;
 
 public class InternalStatisticEvent {
 
     private final InternalStatisticKey key;
     private final Type type;
     private final long timeMs;
-    private final Map<String, String> tags;
+    // Tags must be in tag order
+    private final SortedMap<String, String> tags;
     private final Object value;
 
     private InternalStatisticEvent(final InternalStatisticKey key,
                                    final Type type,
                                    final long timeMs,
-                                   final Map<String, String> tags,
+                                   final SortedMap<String, String> tags,
                                    final Object value) {
         Preconditions.checkArgument(timeMs >= 0);
         this.key = Preconditions.checkNotNull(key);
         this.type = Preconditions.checkNotNull(type);
         this.timeMs = timeMs;
         this.tags = tags == null
-                ? Collections.emptyMap()
+                ? Collections.emptySortedMap()
                 : tags;
         this.value = Preconditions.checkNotNull(value);
     }
 
     public static InternalStatisticEvent createPlusOneCountStat(final InternalStatisticKey key,
                                                                 final long timeMs,
-                                                                final Map<String, String> tags) {
+                                                                final SortedMap<String, String> tags) {
         return new InternalStatisticEvent(key, Type.COUNT, timeMs, tags, 1L);
     }
 
     public static InternalStatisticEvent createPlusNCountStat(final InternalStatisticKey key,
                                                               final long timeMs,
-                                                              final Map<String, String> tags,
+                                                              final SortedMap<String, String> tags,
                                                               final long count) {
         return new InternalStatisticEvent(key, Type.COUNT, timeMs, tags, count);
     }
 
     public static InternalStatisticEvent createValueStat(final InternalStatisticKey key,
                                                          final long timeMs,
-                                                         final Map<String, String> tags,
+                                                         final SortedMap<String, String> tags,
                                                          final double value) {
         return new InternalStatisticEvent(key, Type.VALUE, timeMs, tags, value);
     }
@@ -60,7 +61,7 @@ public class InternalStatisticEvent {
         return timeMs;
     }
 
-    public Map<String, String> getTags() {
+    public SortedMap<String, String> getTags() {
         return tags;
     }
 

@@ -18,7 +18,6 @@ package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.event.shared.GwtEvent;
@@ -36,19 +35,11 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
 
     private Range requestedRange;
     private boolean fetching;
-    private int fetchCount;
     private boolean refetch;
     private TreeRowHandler<R> treeRowHandler;
 
-    private PageRequest pageRequest;
-
     public RestDataProvider(final EventBus eventBus) {
         this.eventBus = eventBus;
-    }
-
-    public RestDataProvider(final EventBus eventBus, final PageRequest pageRequest) {
-        this.eventBus = eventBus;
-        this.pageRequest = pageRequest;
     }
 
     @Override
@@ -70,31 +61,28 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
     }
 
     private void doFetch(final Range range) {
-        if (pageRequest != null) {
-            pageRequest.setOffset(range.getStart());
-            pageRequest.setLength(range.getLength());
-        }
+        exec(range,
+                resultList -> {
+                    if (requestedRange.equals(range) && !refetch) {
+                        if (resultList != null) {
+                            changeData(resultList);
+                        }
+                        fetching = false;
+                    } else {
+                        refetch = false;
+                        doFetch(requestedRange);
+                    }
+                }, caught -> {
+                    fetching = false;
+                    refetch = false;
 
-        fetchCount++;
-        exec(resultList -> {
-            if (requestedRange.equals(range) && !refetch) {
-                if (resultList != null) {
-                    changeData(resultList);
-                }
-                fetching = false;
-            } else {
-                refetch = false;
-                doFetch(requestedRange);
-            }
-        }, caught -> {
-            fetching = false;
-            refetch = false;
-
-            AlertEvent.fireErrorFromException(this, caught, null);
-        });
+                    AlertEvent.fireErrorFromException(this, caught, null);
+                });
     }
 
-    protected abstract void exec(final Consumer<T> dataConsumer, final Consumer<Throwable> throwableConsumer);
+    protected abstract void exec(final Range range,
+                                 final Consumer<T> dataConsumer,
+                                 final Consumer<Throwable> throwableConsumer);
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {
@@ -112,10 +100,6 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
 
     public void refresh() {
         fetch(requestedRange, true);
-    }
-
-    public int getFetchCount() {
-        return fetchCount;
     }
 
     public void setTreeRowHandler(final TreeRowHandler<R> treeRowHandler) {

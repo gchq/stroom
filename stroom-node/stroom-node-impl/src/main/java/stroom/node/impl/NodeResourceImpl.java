@@ -27,10 +27,13 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
+import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.StringCriteria;
 
 import event.logging.AdvancedQuery;
 import event.logging.And;
@@ -38,6 +41,7 @@ import event.logging.Query;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -53,6 +57,16 @@ class NodeResourceImpl implements NodeResource {
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<ClusterNodeManager> clusterNodeManagerProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
+
+    private static final Map<String, Comparator<Node>> FIELD_COMPARATORS = Map.of(
+            FindNodeStatusCriteria.FIELD_ID_NAME,
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Node::getName),
+            FindNodeStatusCriteria.FIELD_ID_URL,
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Node::getUrl),
+            FindNodeStatusCriteria.FIELD_ID_PRIORITY,
+            Comparator.comparing(Node::getPriority),
+            FindNodeStatusCriteria.FIELD_ID_ENABLED,
+            Comparator.comparing(Node::isEnabled));
 
     @Inject
     NodeResourceImpl(final Provider<NodeServiceImpl> nodeServiceProvider,
@@ -90,9 +104,13 @@ class NodeResourceImpl implements NodeResource {
                 .collect(Collectors.toList());
     }
 
+    private FetchNodeStatusResponse find() {
+        return find(new FindNodeStatusCriteria());
+    }
+
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
-    public FetchNodeStatusResponse find() {
+    public FetchNodeStatusResponse find(final FindNodeStatusCriteria findNodeStatusCriteria) {
         FetchNodeStatusResponse response = null;
 
         final Query query = Query.builder()
@@ -104,15 +122,30 @@ class NodeResourceImpl implements NodeResource {
 
         final String typeId = StroomEventLoggingUtil.buildTypeId(this, "find");
         try {
+            final FindNodeCriteria findNodeCriteria;
+
+            if (findNodeStatusCriteria != null) {
+                findNodeCriteria = new FindNodeCriteria(
+                        findNodeStatusCriteria.getPageRequest(),
+                        findNodeStatusCriteria.getSortList(),
+                        new StringCriteria(),
+                        null);
+            } else {
+                findNodeCriteria = new FindNodeCriteria();
+            }
+
             final List<Node> nodes = nodeServiceProvider.get()
-                    .find(new FindNodeCriteria())
+                    .find(findNodeCriteria)
                     .getValues();
 
             final ClusterState clusterState = clusterNodeManagerProvider.get().getClusterState();
             final String masterNodeName = clusterState.getMasterNodeName();
 
+            final Comparator<Node> comparator = CompareUtil.buildCriteriaComparator(
+                    FIELD_COMPARATORS, findNodeStatusCriteria, FindNodeStatusCriteria.FIELD_ID_NAME);
+
             final List<NodeStatusResult> resultList = nodes.stream()
-                    .sorted(Comparator.comparing(Node::getName))
+                    .sorted(comparator)
                     .map(node ->
                             new NodeStatusResult(node, node.getName().equals(masterNodeName)))
                     .collect(Collectors.toList());

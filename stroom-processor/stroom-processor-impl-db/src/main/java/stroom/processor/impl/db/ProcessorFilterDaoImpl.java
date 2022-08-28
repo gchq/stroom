@@ -13,6 +13,7 @@ import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.TaskStatus;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -22,6 +23,9 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
@@ -30,11 +34,14 @@ import java.util.Optional;
 import java.util.function.Function;
 import javax.inject.Inject;
 
+import static stroom.processor.impl.db.jooq.Tables.PROCESSOR_TASK;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
 
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
@@ -138,11 +145,36 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public boolean logicalDelete(final int id) {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .update(PROCESSOR_FILTER)
-                .set(PROCESSOR_FILTER.DELETED, true)
-                .where(PROCESSOR_FILTER.ID.eq(id))
-                .execute()) > 0;
+        final boolean success = JooqUtil.transactionResult(processorDbConnProvider, context -> {
+            // Logically delete any associated unprocessed tasks.
+            // Once the filter is logically deleted no new tasks will be created for it
+            // but we may still have active tasks for 'deleted' filters.
+            final int processor_task_update_count = context
+                    .update(PROCESSOR_TASK)
+                    .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                    .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
+                    .where(DSL.exists(
+                            DSL.selectZero()
+                                    .from(PROCESSOR_FILTER)
+                                    .where(PROCESSOR_FILTER.ID.eq(id))))
+                    .and(PROCESSOR_TASK.STATUS.in(
+                            TaskStatus.UNPROCESSED.getPrimitiveValue(),
+                            TaskStatus.ASSIGNED.getPrimitiveValue()))
+                    .execute();
+
+            LOGGER.debug("Logically deleted {} tasks for processor filter Id {}",
+                    processor_task_update_count, id);
+
+            return context
+                    .update(PROCESSOR_FILTER)
+                    .set(PROCESSOR_FILTER.DELETED, true)
+                    .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
+                    .where(PROCESSOR_FILTER.ID.eq(id))
+                    .execute();
+        }) > 0;
+
+        LOGGER.debug("Logically deleted processor filter {}, success: {}", id, success);
+        return success;
     }
 
     @Override

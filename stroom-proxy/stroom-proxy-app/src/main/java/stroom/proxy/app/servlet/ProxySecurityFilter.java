@@ -124,22 +124,28 @@ public class ProxySecurityFilter implements Filter {
             final boolean isApiRequest = requestURI.contains(ResourcePaths.API_ROOT_PATH);
 
             if (isApiRequest) {
-                try {
-                    final String configuredApiKey = getConfiguredApiKey(requestURI);
-                    final String requestApiKey = getJWS(request);
-
-                    if (!configuredApiKey.equals(requestApiKey)) {
-                        throw new RuntimeException(
-                                LogUtil.message(
-                                        "Supplied API key from {} to {} is invalid",
-                                        request.getRemoteHost(), requestURI));
-                    }
-
+                // Allow all event requests through as security is applied elsewhere.
+                if (requestURI.contains("/event")) {
                     chain.doFilter(request, response);
 
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                    response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
+                } else {
+                    try {
+                        final String configuredApiKey = getConfiguredApiKey(requestURI);
+                        final String requestApiKey = getJWS(request);
+
+                        if (!configuredApiKey.equals(requestApiKey)) {
+                            throw new RuntimeException(
+                                    LogUtil.message(
+                                            "Supplied API key from {} to {} is invalid",
+                                            request.getRemoteHost(), requestURI));
+                        }
+
+                        chain.doFilter(request, response);
+
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
+                    }
                 }
 
             } else {

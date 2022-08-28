@@ -31,6 +31,7 @@ dependencies {
     implementation libs.javax_inject
     implementation libs.jooq
     implementation libs.slf4j_api
+    implementation libs.sqlite
 
     testImplementation project(':stroom-proxy:stroom-proxy-remote-api')
     testImplementation project(':stroom-test-common')

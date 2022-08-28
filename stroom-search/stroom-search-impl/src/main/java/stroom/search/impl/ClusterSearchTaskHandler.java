@@ -37,7 +37,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import javax.inject.Inject;
 
 class ClusterSearchTaskHandler {
@@ -49,8 +49,8 @@ class ClusterSearchTaskHandler {
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
 
-    private final AtomicLong hitCount = new AtomicLong();
-    private final AtomicLong extractionCount = new AtomicLong();
+    private final LongAdder hitCount = new LongAdder();
+    private final LongAdder extractionCount = new LongAdder();
 
     private TaskContext taskContext;
 
@@ -143,10 +143,10 @@ class ClusterSearchTaskHandler {
         taskContext.info(() -> "" +
                 "Searching... " +
                 "found "
-                + hitCount.get() +
+                + hitCount.sum() +
                 " documents" +
                 " performed " +
-                extractionCount.get() +
+                extractionCount.sum() +
                 " extractions");
     }
 }

@@ -288,7 +288,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                     final Generator generator = expression.createGenerator();
 
                     generator.set(vals);
-                    Val value = generator.eval();
+                    Val value = generator.eval(null);
                     output[index] = new CompiledFieldValue(compiledField, value);
 
                     if (compiledField.getCompiledFilter() != null) {

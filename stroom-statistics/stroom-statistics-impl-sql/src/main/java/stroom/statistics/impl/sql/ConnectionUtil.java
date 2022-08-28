@@ -153,7 +153,7 @@ public class ConnectionUtil {
                               final Supplier<String> resultSupplier,
                               final Supplier<String> sqlSupplier,
                               final List<Object> args) {
-        final long time = logExecutionTime.getDuration();
+        final long time = logExecutionTime.getDurationMs();
         final StroomDuration warningThreshold = sqlStatisticsConfigProvider.get()
                 .getSlowQueryWarningThreshold();
         final long warningThresholdMs = warningThreshold.toMillis();

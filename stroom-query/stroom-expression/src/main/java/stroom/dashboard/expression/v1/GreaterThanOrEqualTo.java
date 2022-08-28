@@ -37,6 +37,7 @@ package stroom.dashboard.expression.v1;
                                 description = "Field, the result of another function or a constant.",
                                 argType = Val.class)}))
 class GreaterThanOrEqualTo extends AbstractEqualityFunction {
+
     static final String NAME = ">=";
     static final String ALIAS = "greaterThanOrEqualTo";
     private static final GreaterThanEvaluator EVALUATOR = new GreaterThanEvaluator();
@@ -51,6 +52,7 @@ class GreaterThanOrEqualTo extends AbstractEqualityFunction {
     }
 
     private static class GreaterThanEvaluator extends Evaluator {
+
         @Override
         protected Val evaluate(final Val a, final Val b) {
             if (a.getClass().equals(b.getClass())) {

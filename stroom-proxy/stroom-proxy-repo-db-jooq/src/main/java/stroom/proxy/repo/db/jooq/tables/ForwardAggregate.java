@@ -60,9 +60,9 @@ public class ForwardAggregate extends TableImpl<ForwardAggregateRecord> {
     public final TableField<ForwardAggregateRecord, Long> UPDATE_TIME_MS = createField(DSL.name("update_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>forward_aggregate.fk_forward_url_id</code>.
+     * The column <code>forward_aggregate.fk_forward_dest_id</code>.
      */
-    public final TableField<ForwardAggregateRecord, Integer> FK_FORWARD_URL_ID = createField(DSL.name("fk_forward_url_id"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<ForwardAggregateRecord, Integer> FK_FORWARD_DEST_ID = createField(DSL.name("fk_forward_dest_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>forward_aggregate.fk_aggregate_id</code>.

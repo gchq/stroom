@@ -10,7 +10,6 @@ import com.codahale.metrics.json.HealthCheckModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Strings;
-import io.dropwizard.setup.Environment;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -55,8 +54,8 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
     private final ObjectMapper objectMapper;
 
     @Inject
-    public FilteredHealthCheckServlet(final Environment environment) {
-        this.healthCheckRegistry = environment.healthChecks();
+    public FilteredHealthCheckServlet(final HealthCheckRegistry healthCheckRegistry) {
+        this.healthCheckRegistry = healthCheckRegistry;
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new HealthCheckModule());
     }

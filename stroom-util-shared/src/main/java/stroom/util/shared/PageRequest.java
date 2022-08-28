@@ -29,7 +29,6 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class PageRequest implements Serializable, Copyable<PageRequest> {
 
-    public static final int DEFAULT_PAGE_SIZE = 100;
     /**
      * Offset from the start 0 is no offset.
      */

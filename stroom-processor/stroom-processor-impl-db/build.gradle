@@ -31,8 +31,18 @@ dependencies {
     implementation libs.jooq
     implementation libs.slf4j_api
 
+    testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
+    testImplementation project(':stroom-event-logging:stroom-event-logging-api')
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-task:stroom-task-mock')
+    testImplementation project(':stroom-test-common')
+
     testImplementation libs.assertj_core
+    testImplementation libs.eventLogging
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 
     runtimeOnly libs.mysql_connector_java
 
