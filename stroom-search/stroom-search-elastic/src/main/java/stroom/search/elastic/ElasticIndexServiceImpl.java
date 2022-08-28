@@ -25,6 +25,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.search.elastic.search.ElasticSearchConfig;
 import stroom.search.elastic.search.ElasticSearchStoreFactory;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -74,7 +75,8 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                                    final SearchResponseCreatorManager searchResponseCreatorManager,
                                    final ElasticSearchStoreFactory storeFactory,
                                    final SuggestionsService suggestionsService,
-                                   final ElasticSuggestionsQueryHandler elasticSuggestionsProvider) {
+                                   final ElasticSuggestionsQueryHandler elasticSuggestionsProvider,
+                                   final ElasticSearchConfig elasticSearchConfig) {
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
         this.elasticIndexStore = elasticIndexStore;
@@ -82,7 +84,9 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.storeFactory = storeFactory;
 
-        suggestionsService.registerHandler(ElasticIndexDoc.DOCUMENT_TYPE, elasticSuggestionsProvider);
+        if (elasticSearchConfig.getUseSuggesters()) {
+            suggestionsService.registerHandler(ElasticIndexDoc.DOCUMENT_TYPE, elasticSuggestionsProvider);
+        }
     }
 
     @Override
