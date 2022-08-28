@@ -28,6 +28,41 @@
 	background-color: transparent;
 	border: none;
 	vertical-align: top;
+	background-position: right;
+	background-origin: border-box;
+	min-width: 50px;
+}
+
+.termEditor-item.wide {
+	width: 300px;
+}
+
+.termEditor-item.narrow {
+	width: 175px;
+}
+
+.termEditor-item.dropdown {
+	text-overflow: ellipsis;
+	padding-right: 25px;
+}
+
+.termEditor-item.field {
+	width: auto;
+}
+
+.termEditor-item.condition {
+	width: auto;
+}
+
+.termEditor-item.docRef {
+	width: 200px;
+	margin-top: 1px;
+}
+
+.termEditor-item.textBox {
+	padding-left: 5px;
+	padding-right: 5px;
+	border-radius: 5px;
 }
 
 .termEditor-label {
@@ -38,4 +73,26 @@
 	background-color: transparent;
 	border: none;
 	vertical-align: top;
+}
+
+.termEditor-label.fieldType {
+	padding: 2px 8px;
+	position: absolute;
+	right: -5px;
+	transform: translateX(100%);
+	background-color: rgb(32 148 243 / 60%);
+	border-radius: 10px;
+	font-weight: bold;
+	border: solid 1px rgb(33 150 243);
+}
+
+.termEditor-label.fieldType {
+	padding: 2px 8px;
+	position: absolute;
+	right: -5px;
+	transform: translateX(100%);
+	background-color: rgb(32 148 243 / 60%);
+	border-radius: 10px;
+	font-weight: bold;
+	border: solid 1px rgb(33 150 243);
 }
