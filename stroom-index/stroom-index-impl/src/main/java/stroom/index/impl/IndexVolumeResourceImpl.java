@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -49,7 +50,20 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
 
     @Override
     public ValidationResult validate(final IndexVolume indexVolume) {
-        return indexVolumeServiceProvider.get().validate(indexVolume);
+        if (indexVolume.getNodeName() == null || indexVolume.getNodeName().isEmpty()) {
+            return indexVolumeServiceProvider.get().validate(indexVolume);
+        } else {
+            return nodeServiceProvider.get().remoteRestResult(
+                    indexVolume.getNodeName(),
+                    ValidationResult.class,
+                    () -> ResourcePaths.buildAuthenticatedApiPath(
+                            IndexVolumeResource.BASE_PATH,
+                            IndexVolumeResource.VALIDATE_SUB_PATH),
+                    () ->
+                            indexVolumeServiceProvider.get().validate(indexVolume),
+                    builder ->
+                            builder.post(Entity.json(indexVolume)));
+        }
     }
 
     @Override

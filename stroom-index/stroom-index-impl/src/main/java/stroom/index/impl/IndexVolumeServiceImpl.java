@@ -11,6 +11,7 @@ import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.ValidationResult;
 import stroom.node.api.NodeInfo;
+import stroom.node.api.NodeService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.api.SecurityContext;
@@ -112,6 +113,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     private final IndexVolumeGroupService indexVolumeGroupService;
     private final ICache<String, HasCapacitySelector> volGroupToVolSelectorCache;
     private final HasCapacitySelectorFactory hasCapacitySelectorFactory;
+    private final NodeService nodeService;
 
     // Holds map of groupName => index vols BELONGING TO THIS NODE
     private final AtomicReference<VolumeMap> currentVolumeMap = new AtomicReference<>();
@@ -126,7 +128,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                            final Provider<VolumeConfig> volumeConfigProvider,
                            final IndexVolumeGroupService indexVolumeGroupService,
                            final CacheManager cacheManager,
-                           final HasCapacitySelectorFactory hasCapacitySelectorFactory) {
+                           final HasCapacitySelectorFactory hasCapacitySelectorFactory,
+                           final NodeService nodeService) {
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
@@ -136,6 +139,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         this.volumeConfigProvider = volumeConfigProvider;
         this.indexVolumeGroupService = indexVolumeGroupService;
         this.hasCapacitySelectorFactory = hasCapacitySelectorFactory;
+        this.nodeService = nodeService;
+
         // Most selectors are stateful, and we need one per vol grp so the round-robin works.
         this.volGroupToVolSelectorCache = cacheManager.create(
                 CACHE_NAME,
@@ -174,6 +179,9 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         }
         if (validationResult.isOk()) {
             validationResult = validateForDupPathInThisGroup(indexVolume);
+        }
+        if (validationResult.isOk()) {
+            validationResult = validateVolumePath(indexVolume.getPath());
         }
         return validationResult;
     }
@@ -225,6 +233,33 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         } else {
             return ValidationResult.ok();
         }
+    }
+
+    private ValidationResult validateVolumePath(final String indexVolPath) {
+        final Path path = Paths.get(indexVolPath);
+
+        if (!Files.exists(path)) {
+            try {
+                Files.createDirectories(path);
+            } catch (IOException e) {
+                final String msg;
+                if (indexVolPath.equals(e.getMessage())) {
+                    // Some java IO exceptions just have the path as the message, helpful.
+                    msg = e.getClass().getSimpleName();
+                } else {
+                    msg = e.getMessage();
+                }
+                return ValidationResult.error(LogUtil.message(
+                        "Error creating index volume path '{}': {}",
+                        indexVolPath,
+                        msg));
+            }
+        } else if (!Files.isDirectory(path)) {
+            return ValidationResult.error(LogUtil.message(
+                    "Error creating index volume path '{}': The path exists but is not a directory.",
+                    indexVolPath));
+        }
+        return ValidationResult.ok();
     }
 
     @Override
