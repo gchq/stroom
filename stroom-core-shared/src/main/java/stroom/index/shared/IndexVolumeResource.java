@@ -39,6 +39,13 @@ public interface IndexVolumeResource extends RestResource, DirectRestService, Fe
     ResultPage<IndexVolume> find(@Parameter(description = "request", required = true) ExpressionCriteria request);
 
     @POST
+    @Path("/validate")
+    @Operation(
+            summary = "Validates an index volume",
+            operationId = "validateIndexVolume")
+    ValidationResult validate(@Parameter(description = "request", required = true) IndexVolume request);
+
+    @POST
     @Operation(
             summary = "Creates an index volume",
             operationId = "createIndexVolume")

@@ -484,4 +484,15 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
                     indexVolumeGroupId);
         }
     }
+
+    @Override
+    public String toString() {
+        return "IndexVolume{" +
+                "id=" + id +
+                ", path='" + path + '\'' +
+                ", nodeName='" + nodeName + '\'' +
+                ", state=" + state +
+                ", indexVolumeGroupId=" + indexVolumeGroupId +
+                '}';
+    }
 }

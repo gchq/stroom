@@ -48,6 +48,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class IndexVolumeGroupEditPresenter
@@ -203,12 +204,8 @@ public class IndexVolumeGroupEditPresenter
                     if (ok) {
                         volumeGroup.setName(getView().getName());
                         try {
-                            final Rest<IndexVolumeGroup> rest = restFactory.create();
-                            rest
-                                    .onSuccess(consumer)
-                                    .call(INDEX_VOLUME_GROUP_RESOURCE)
-                                    .update(volumeGroup.getId(), volumeGroup);
-
+                            doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
+                                    createVolumeGroup(consumer, volumeGroup));
                         } catch (final RuntimeException e) {
                             AlertEvent.fireError(
                                     IndexVolumeGroupEditPresenter.this,
@@ -226,6 +223,42 @@ public class IndexVolumeGroupEditPresenter
             ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
                     popupUiHandlers);
         }
+    }
+
+    private void doWithGroupNameValidation(final String groupName,
+                                           final Integer groupId,
+                                           final Runnable work) {
+        if (groupName == null || groupName.isEmpty()) {
+            AlertEvent.fireError(
+                    IndexVolumeGroupEditPresenter.this,
+                    "You must provide a name for the index volume group.",
+                    null);
+        } else {
+            final Rest<IndexVolumeGroup> rest = restFactory.create();
+            rest
+                    .onSuccess(grp -> {
+                        if (grp != null && !Objects.equals(groupId, grp.getId())) {
+                            AlertEvent.fireError(
+                                    IndexVolumeGroupEditPresenter.this,
+                                    "Group name '"
+                                            + groupName
+                                            + "' is already in use by another group.",
+                                    null);
+                        } else {
+                            work.run();
+                        }
+                    })
+                    .call(INDEX_VOLUME_GROUP_RESOURCE)
+                    .fetchByName(getView().getName());
+        }
+    }
+
+    private void createVolumeGroup(final Consumer<IndexVolumeGroup> consumer, final IndexVolumeGroup volumeGroup) {
+        final Rest<IndexVolumeGroup> rest = restFactory.create();
+        rest
+                .onSuccess(consumer)
+                .call(INDEX_VOLUME_GROUP_RESOURCE)
+                .update(volumeGroup.getId(), volumeGroup);
     }
 
     void hide() {

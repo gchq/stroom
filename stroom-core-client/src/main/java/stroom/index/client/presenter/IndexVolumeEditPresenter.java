@@ -18,12 +18,14 @@
 package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeResource;
+import stroom.index.shared.ValidationResult;
 import stroom.item.client.ItemListBox;
 import stroom.node.client.NodeManager;
 import stroom.util.shared.ModelStringUtil;
@@ -75,21 +77,18 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                             if (ok) {
                                 try {
                                     write();
-                                    final Rest<IndexVolume> rest = restFactory.create();
+
                                     if (volume.getId() != null) {
-                                        rest
-                                                .onSuccess(consumer)
-                                                .call(INDEX_VOLUME_RESOURCE)
-                                                .update(volume.getId(), volume);
+                                        doWithVolumeValidation(volume, () -> updateVolume(consumer, volume));
                                     } else {
-                                        rest
-                                                .onSuccess(consumer)
-                                                .call(INDEX_VOLUME_RESOURCE)
-                                                .create(volume);
+                                        doWithVolumeValidation(volume, () -> createIndexVolume(consumer, volume));
                                     }
 
                                 } catch (final RuntimeException e) {
-                                    AlertEvent.fireError(IndexVolumeEditPresenter.this, e.getMessage(), null);
+                                    AlertEvent.fireError(
+                                            IndexVolumeEditPresenter.this,
+                                            e.getMessage(),
+                                            null);
                                 }
                             } else {
                                 consumer.accept(null);
@@ -97,13 +96,78 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                         }
                     };
 
-                    final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
-                    ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, popupUiHandlers);
+                    final PopupSize popupSize = new PopupSize(
+                            400,
+                            197,
+                            400,
+                            197,
+                            1000,
+                            197,
+                            true);
+                    ShowPopupEvent.fire(
+                            this,
+                            this,
+                            PopupType.OK_CANCEL_DIALOG,
+                            popupSize,
+                            caption,
+                            popupUiHandlers);
                 },
                 throwable -> {
                     AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), null);
                     consumer.accept(null);
                 });
+    }
+
+    private void doWithVolumeValidation(final IndexVolume volume,
+                                        final Runnable work) {
+
+        final Rest<ValidationResult> rest = restFactory.create();
+        rest
+                .onSuccess(validationResult -> {
+                    if (validationResult.isOk()) {
+                        if (work != null) {
+                            work.run();
+                        }
+                    } else if (validationResult.isWarning()) {
+                        ConfirmEvent.fireWarn(
+                                IndexVolumeEditPresenter.this,
+                                validationResult.getMessage(),
+                                confirmOk -> {
+                                    if (confirmOk) {
+                                        if (work != null) {
+                                            work.run();
+                                        }
+                                    }
+                                });
+                    } else {
+                        AlertEvent.fireError(
+                                IndexVolumeEditPresenter.this,
+                                validationResult.getMessage(),
+                                null);
+                    }
+                })
+                .onFailure(throwable -> {
+                    AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), null);
+                })
+                .call(INDEX_VOLUME_RESOURCE)
+                .validate(volume);
+    }
+
+    private void createIndexVolume(final Consumer<IndexVolume> savedVolumeConsumer, final IndexVolume volume) {
+        final Rest<IndexVolume> rest = restFactory.create();
+        rest
+                .onSuccess(savedVolumeConsumer)
+                .call(INDEX_VOLUME_RESOURCE)
+                .create(volume);
+    }
+
+    private void updateVolume(final Consumer<IndexVolume> consumer,
+                              final IndexVolume volume) {
+        final Rest<IndexVolume> rest = restFactory.create();
+        rest
+                .onSuccess(consumer)
+                .call(INDEX_VOLUME_RESOURCE)
+                .update(volume.getId(), volume);
     }
 
     void hide() {

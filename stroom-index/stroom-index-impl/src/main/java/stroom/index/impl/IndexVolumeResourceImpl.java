@@ -4,6 +4,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeResource;
+import stroom.index.shared.ValidationResult;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -44,6 +45,11 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
     @Override
     public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
         return indexVolumeServiceProvider.get().find(criteria);
+    }
+
+    @Override
+    public ValidationResult validate(final IndexVolume indexVolume) {
+        return indexVolumeServiceProvider.get().validate(indexVolume);
     }
 
     @Override

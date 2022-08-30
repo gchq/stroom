@@ -8,6 +8,8 @@ import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeFields;
+import stroom.index.shared.IndexVolumeGroup;
+import stroom.index.shared.ValidationResult;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
@@ -57,7 +59,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -153,6 +157,74 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     @Override
     public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
         return securityContext.secureResult(() -> indexVolumeDao.find(criteria));
+    }
+
+    @Override
+    public ValidationResult validate(final IndexVolume indexVolume) {
+        ValidationResult validationResult = ValidationResult.ok();
+        if (indexVolume.getNodeName() == null || indexVolume.getNodeName().isEmpty()) {
+            validationResult = ValidationResult.error("You must select a node for the volume.");
+        }
+        if (validationResult.isOk()
+                && NullSafe.isBlankString(indexVolume, IndexVolume::getPath)) {
+            validationResult = ValidationResult.error("You must provide a path for the volume.");
+        }
+        if (validationResult.isOk()) {
+            validationResult = validateForDupPathInOtherGroups(indexVolume);
+        }
+        if (validationResult.isOk()) {
+            validationResult = validateForDupPathInThisGroup(indexVolume);
+        }
+        return validationResult;
+    }
+
+    private ValidationResult validateForDupPathInThisGroup(final IndexVolume indexVolume) {
+        final List<IndexVolume> volumeGroups = securityContext.secureResult(() ->
+                indexVolumeDao.getVolumesInGroup(indexVolume.getIndexVolumeGroupId()));
+
+        final boolean foundDupPathAndNode = volumeGroups.stream()
+                .anyMatch(vol ->
+                        !Objects.equals(vol.getId(), indexVolume.getId())
+                                && Objects.equals(vol.getPath(), indexVolume.getPath())
+                                && Objects.equals(vol.getNodeName(), indexVolume.getNodeName()));
+
+        if (foundDupPathAndNode) {
+            return ValidationResult.error(
+                    LogUtil.message("An index volume already exists in this group with node '{}' and path '{}'.",
+                            indexVolume.getNodeName(),
+                            indexVolume.getPath()));
+        } else {
+            return ValidationResult.ok();
+        }
+    }
+
+    private ValidationResult validateForDupPathInOtherGroups(final IndexVolume indexVolume) {
+        // Get all groups holding with this path and node name
+        final Set<IndexVolumeGroup> volumeGroups = securityContext.secureResult(() -> indexVolumeDao.getGroups(
+                indexVolume.getNodeName(),
+                indexVolume.getPath()));
+
+        final Set<String> dupGroupNames = volumeGroups.stream()
+                .filter(grp -> !Objects.equals(indexVolume.getIndexVolumeGroupId(), grp.getId()))
+                .map(IndexVolumeGroup::getName)
+                .collect(Collectors.toSet());
+
+        if (!dupGroupNames.isEmpty()) {
+            return ValidationResult.warning(LogUtil.message("""
+                            Path '{}' on node '{}' is already a member of index volume Group{} {}.
+                            It is NOT recommended to have the same index volume node and path belonging to \
+                            multiple volume groups. Click OK to ignore this and set it anyway.""",
+                    indexVolume.getPath(),
+                    indexVolume.getNodeName(),
+                    (dupGroupNames.size() > 1
+                            ? "s"
+                            : ""),
+                    dupGroupNames.stream()
+                            .map(grp -> "'" + grp + "'")
+                            .collect(Collectors.joining(", "))));
+        } else {
+            return ValidationResult.ok();
+        }
     }
 
     @Override

@@ -20,12 +20,18 @@ package stroom.index.mock;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.ValidationResult;
 import stroom.util.shared.ResultPage;
 
 public class MockIndexVolumeService implements IndexVolumeService {
 
     @Override
     public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
+        return null;
+    }
+
+    @Override
+    public ValidationResult validate(final IndexVolume request) {
         return null;
     }
 

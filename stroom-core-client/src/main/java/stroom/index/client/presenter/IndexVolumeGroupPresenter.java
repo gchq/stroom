@@ -121,6 +121,7 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
                         .onSuccess(indexVolumeGroup -> {
                             edit(indexVolumeGroup);
                             presenter.hide();
+                            refresh();
                         })
                         .call(INDEX_VOLUME_GROUP_RESOURCE)
                         .create(name);

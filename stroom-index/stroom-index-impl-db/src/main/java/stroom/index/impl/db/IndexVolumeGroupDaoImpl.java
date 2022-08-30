@@ -10,7 +10,9 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexVolumeGroup;
 
 import org.jooq.Record;
+import org.jooq.exception.DataAccessException;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -22,7 +24,7 @@ import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
 
 class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
-    private static final Function<Record, IndexVolumeGroup> RECORD_TO_INDEX_VOLUME_GROUP_MAPPER = record -> {
+    static final Function<Record, IndexVolumeGroup> RECORD_TO_INDEX_VOLUME_GROUP_MAPPER = record -> {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setId(record.get(INDEX_VOLUME_GROUP.ID));
         indexVolumeGroup.setVersion(record.get(INDEX_VOLUME_GROUP.VERSION));
@@ -105,7 +107,18 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
         final IndexVolumeGroup saved;
         try {
             saved = genericDao.update(indexVolumeGroup);
-        } catch (Exception e) {
+        } catch (DataAccessException e) {
+            if (e.getCause() != null
+                    && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                if (sqlEx.getErrorCode() == 1062
+                        && sqlEx.getMessage().contains("Duplicate entry")
+                        && sqlEx.getMessage().contains("key")
+                        && sqlEx.getMessage().contains(INDEX_VOLUME_GROUP.NAME.getName())) {
+                    throw new RuntimeException("An index volume group already exists with name '"
+                            + indexVolumeGroup.getName() + "'");
+                }
+            }
             throw e;
         }
 

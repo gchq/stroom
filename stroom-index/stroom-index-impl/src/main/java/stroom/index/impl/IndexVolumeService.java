@@ -2,10 +2,13 @@ package stroom.index.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.ValidationResult;
 import stroom.util.shared.ResultPage;
 
 public interface IndexVolumeService {
     ResultPage<IndexVolume> find(ExpressionCriteria criteria);
+
+    ValidationResult validate(final IndexVolume request);
 
     IndexVolume create(IndexVolume indexVolume);
 

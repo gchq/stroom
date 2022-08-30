@@ -6,10 +6,12 @@ import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeDao;
+import stroom.index.impl.db.jooq.Tables;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeFields;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -23,9 +25,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -102,6 +106,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         expressionMapper.map(IndexVolumeFields.ID, INDEX_VOLUME.ID, Integer::valueOf);
         expressionMapper.map(IndexVolumeFields.GROUP_ID, INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID, Integer::valueOf);
         expressionMapper.map(IndexVolumeFields.NODE_NAME, INDEX_VOLUME.NODE_NAME, value -> value);
+        expressionMapper.map(IndexVolumeFields.PATH, INDEX_VOLUME.PATH, value -> value);
     }
 
     @Override
@@ -152,6 +157,16 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                         .from(INDEX_VOLUME)
                         .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
                         .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
+                        .fetch())
+                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply);
+    }
+
+    @Override
+    public List<IndexVolume> getVolumesInGroup(final int groupId) {
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                        .select()
+                        .from(INDEX_VOLUME)
+                        .where(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID.eq(groupId))
                         .fetch())
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply);
     }
@@ -224,6 +239,18 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                         .limit(offset, numberOfRows)
                         .fetch())
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply);
+    }
+
+    @Override
+    public Set<IndexVolumeGroup> getGroups(final String nodeName, final String path) {
+        return new HashSet<>(JooqUtil.contextResult(indexDbConnProvider, context -> context
+                        .select(Tables.INDEX_VOLUME_GROUP.asterisk())
+                        .from(Tables.INDEX_VOLUME_GROUP)
+                        .innerJoin(Tables.INDEX_VOLUME).on(Tables.INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID.eq(Tables.INDEX_VOLUME_GROUP.ID))
+                        .where(Tables.INDEX_VOLUME.PATH.eq(path))
+                        .and(Tables.INDEX_VOLUME.NODE_NAME.eq(nodeName))
+                        .fetch())
+                .map(IndexVolumeGroupDaoImpl.RECORD_TO_INDEX_VOLUME_GROUP_MAPPER::apply));
     }
 
     private Condition createCondition(final ExpressionCriteria criteria) {

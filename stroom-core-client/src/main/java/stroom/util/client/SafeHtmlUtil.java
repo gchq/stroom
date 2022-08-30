@@ -20,6 +20,50 @@ public class SafeHtmlUtil {
     }
 
     /**
+     * One html paragraph block for each line where a line is delimited by \n.
+     */
+    public static SafeHtml toParagraphs(final String string) {
+        if (string == null) {
+            return null;
+        } else {
+            String str = string;
+            if (str.startsWith("\n")) {
+                str = str.substring(1);
+            }
+            if (str.endsWith("\n")) {
+                str = str.substring(0, str.length());
+            }
+            // One <p>...</p> block for each line
+            final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+            int lineBreakIdx;
+            while (!str.isEmpty()) {
+                lineBreakIdx = str.indexOf("\n");
+                final String line;
+                if (lineBreakIdx == -1) {
+                    line = str;
+                    str = "";
+                } else {
+                    line = str.substring(0, lineBreakIdx);
+                    if (str.length() > lineBreakIdx + 1) {
+                        // Remove the line just appended
+                        str = str.substring(lineBreakIdx + 1);
+                    } else {
+                        str = "";
+                    }
+                }
+
+                if (!line.isEmpty()) {
+                    builder
+                            .appendHtmlConstant("<p>")
+                            .appendEscaped(line)
+                            .appendHtmlConstant("</p>");
+                }
+            }
+            return builder.toSafeHtml();
+        }
+    }
+
+    /**
      * @return Text coloured grey if enabled is false
      */
     public static SafeHtml getSafeHtml(final String string, final boolean enabled) {
