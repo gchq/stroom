@@ -9,10 +9,16 @@ pushd "${SCRIPT_DIR}" > /dev/null
 # Latest version of `wagger-typescript-api` 8.0.3 but doesn't seem to work.
 echo "npx swagger-typescript-api@6.4.2 -p ../stroom-app/src/main/resources/ui/noauth/swagger/stroom.json -o ./src/api -n stroom.ts"
 
+# swagger_typescript_api_root is so that we can use a package.json file that forces
+# the version of the typescript dep to 4.7.4, 
+# see https://github.com/acacode/swagger-typescript-api/issues/370
+pushd "swagger_typescript_api_root" > /dev/null
+
 echo "PWD: $PWD"
 
-npx \
-  swagger-typescript-api@6.4.2 \
-  -p ../stroom-app/src/main/resources/ui/noauth/swagger/stroom.json \
-  -o ./src/api \
-  -n stroom.ts
+npx npm-force-resolutions \
+  && npx \
+    swagger-typescript-api@6.4.2 \
+    -p ../../stroom-app/src/main/resources/ui/noauth/swagger/stroom.json \
+    -o .././src/api \
+    -n ../stroom.ts
