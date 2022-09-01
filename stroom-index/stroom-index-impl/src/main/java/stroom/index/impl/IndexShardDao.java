@@ -1,5 +1,8 @@
 package stroom.index.impl;
 
+import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
@@ -25,6 +28,10 @@ public interface IndexShardDao {
      * @return Index Shards matching the criteria
      */
     ResultPage<IndexShard> find(FindIndexShardCriteria criteria);
+
+    void search(final ExpressionCriteria criteria,
+                       final AbstractField[] fields,
+                       final ValuesConsumer consumer);
 
     /**
      * Create a new Index Shard

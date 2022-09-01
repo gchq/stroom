@@ -22,6 +22,7 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.shared.IndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
+import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -62,6 +63,9 @@ public class IndexModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(IndexStoreImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+                .addBinding(IndexShardServiceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(IndexResourceImpl.class)

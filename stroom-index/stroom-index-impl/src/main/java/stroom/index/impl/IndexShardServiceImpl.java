@@ -17,12 +17,17 @@
 
 package stroom.index.impl;
 
+import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -36,9 +41,15 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class IndexShardServiceImpl implements IndexShardService {
+public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardServiceImpl.class);
+
+    private static final DocRef INDEX_SHARDS_PSEUDO_DOC_REF = new DocRef(
+            "Searchable", "Index Shards", "Index Shards");
+
+    private static final String PERMISSION = PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION;
+
 
     private final SecurityContext securityContext;
     private final IndexStructureCache indexStructureCache;
@@ -122,5 +133,23 @@ public class IndexShardServiceImpl implements IndexShardService {
                     ModelStringUtil.formatDurationString(commitDurationMs)));
             indexShardDao.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
         });
+    }
+
+    @Override
+    public DocRef getDocRef() {
+        return INDEX_SHARDS_PSEUDO_DOC_REF;
+    }
+
+    @Override
+    public DataSource getDataSource() {
+        return new DataSource(IndexShardFields.getFields());
+    }
+
+    @Override
+    public void search(final ExpressionCriteria criteria,
+                       final AbstractField[] fields,
+                       final ValuesConsumer consumer) {
+        securityContext.secure(PERMISSION, () ->
+                indexShardDao.search(criteria, fields, consumer));
     }
 }

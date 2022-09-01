@@ -1,39 +1,72 @@
 package stroom.index.impl.db;
 
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValInteger;
+import stroom.dashboard.expression.v1.ValLong;
+import stroom.dashboard.expression.v1.ValNull;
+import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapper.Converter;
+import stroom.db.util.ExpressionMapper.MultiConverter;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.ValueMapper;
+import stroom.db.util.ValueMapper.Mapper;
+import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexShardDao;
+import stroom.index.impl.IndexShardFields;
+import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
 import org.jooq.Condition;
+import org.jooq.Cursor;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Result;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
+import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 @Singleton // holding all the volume selectors
@@ -108,16 +141,23 @@ class IndexShardDaoImpl implements IndexShardDao {
     private final IndexVolumeGroupService indexVolumeGroupService;
     private final Provider<VolumeConfig> volumeConfigProvider;
     private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
+    private final IndexShardValueMapper indexShardValueMapper;
+    private final IndexShardExpressionMapper indexShardExpressionMapper;
 
     @Inject
     IndexShardDaoImpl(final IndexDbConnProvider indexDbConnProvider,
                       final IndexVolumeDao indexVolumeDao,
                       final IndexVolumeGroupService indexVolumeGroupService,
-                      final Provider<VolumeConfig> volumeConfigProvider) {
+                      final Provider<VolumeConfig> volumeConfigProvider,
+                      final IndexShardValueMapper indexShardValueMapper,
+                      final IndexShardExpressionMapper indexShardExpressionMapper) {
+
         this.indexDbConnProvider = indexDbConnProvider;
         this.indexVolumeDao = indexVolumeDao;
         this.indexVolumeGroupService = indexVolumeGroupService;
         this.volumeConfigProvider = volumeConfigProvider;
+        this.indexShardValueMapper = indexShardValueMapper;
+        this.indexShardExpressionMapper = indexShardExpressionMapper;
         genericDao = new GenericDao<>(
                 indexDbConnProvider,
                 INDEX_SHARD,
@@ -176,6 +216,76 @@ class IndexShardDaoImpl implements IndexShardDao {
                 });
 
         return ResultPage.createCriterialBasedList(list, criteria);
+    }
+
+    @Override
+    public void search(final ExpressionCriteria criteria,
+                       final AbstractField[] fields,
+                       final ValuesConsumer consumer) {
+
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final List<AbstractField> fieldList = Arrays.asList(fields);
+        final List<Field<?>> dbFields = new ArrayList<>(indexShardValueMapper.getFields(fieldList));
+        final Mapper<?>[] mappers = indexShardValueMapper.getMappers(fields);
+        final PageRequest pageRequest = criteria.getPageRequest();
+        final Condition condition = indexShardExpressionMapper.apply(criteria.getExpression());
+
+        final boolean volumeUsed = isUsed(
+                Set.of(IndexShardFields.FIELD_VOLUME_PATH, IndexShardFields.FIELD_VOLUME_GROUP),
+                fieldList,
+                criteria);
+        final boolean volumeGroupUsed = isUsed(
+                Set.of(IndexShardFields.FIELD_VOLUME_GROUP),
+                fieldList,
+                criteria);
+
+        JooqUtil.context(indexDbConnProvider, context -> {
+            Integer offset = null;
+            Integer numberOfRows = null;
+
+            if (pageRequest != null) {
+                offset = pageRequest.getOffset();
+                numberOfRows = pageRequest.getLength();
+            }
+
+            var select = context
+                    .select(dbFields)
+                    .from(INDEX_SHARD);
+
+            if (volumeUsed) {
+                select = select.join(INDEX_VOLUME)
+                        .on(INDEX_VOLUME.ID.eq(INDEX_SHARD.FK_VOLUME_ID));
+            }
+
+            if (volumeGroupUsed) {
+                select = select.join(INDEX_VOLUME_GROUP)
+                        .on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID));
+            }
+
+            try (final Cursor<?> cursor = select
+                    .where(condition)
+                    .orderBy(orderFields)
+                    .limit(offset, numberOfRows)
+                    .fetchLazy()) {
+
+                while (cursor.hasNext()) {
+                    final Result<?> result = cursor.fetchNext(1000);
+
+                    result.forEach(r -> {
+                        final Val[] arr = new Val[fields.length];
+                        for (int i = 0; i < fields.length; i++) {
+                            Val val = ValNull.INSTANCE;
+                            final Mapper<?> mapper = mappers[i];
+                            if (mapper != null) {
+                                val = mapper.map(r);
+                            }
+                            arr[i] = val;
+                        }
+                        consumer.add(arr);
+                    });
+                }
+            }
+        });
     }
 
     @Override
@@ -265,22 +375,164 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .execute());
     }
 
-//    private HasCapacitySelector getVolumeSelector() {
-//        HasCapacitySelector volumeSelector = null;
-//
-//        try {
-//            final String value = volumeConfigProvider.get().getVolumeSelector();
-//            if (value != null) {
-//                volumeSelector = VOLUME_SELECTOR_MAP.get(value);
-//            }
-//        } catch (final RuntimeException e) {
-//            LOGGER.debug(e::getMessage);
-//        }
-//
-//        if (volumeSelector == null) {
-//            volumeSelector = DEFAULT_VOLUME_SELECTOR;
-//        }
-//
-//        return volumeSelector;
-//    }
+    private boolean isUsed(final Set<AbstractField> fieldSet,
+                           final List<AbstractField> resultFields,
+                           final ExpressionCriteria criteria) {
+        return resultFields.stream().filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
+                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
+    }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    @Singleton
+    private static class IndexShardValueMapper {
+
+        private final ValueMapper valueMapper;
+        private final DocRefInfoService docRefInfoService;
+
+        @Inject
+        private IndexShardValueMapper(final ValueMapper valueMapper,
+                                      final DocRefInfoService docRefInfoService) {
+            this.valueMapper = valueMapper;
+            this.docRefInfoService = docRefInfoService;
+
+            valueMapper.map(IndexShardFields.FIELD_NODE, INDEX_SHARD.NODE_NAME, ValString::create);
+            valueMapper.map(IndexShardFields.FIELD_INDEX, INDEX_SHARD.INDEX_UUID, this::getDocRefName);
+            valueMapper.map(IndexShardFields.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME, ValString::create);
+            valueMapper.map(IndexShardFields.FIELD_DOC_COUNT, INDEX_SHARD.DOCUMENT_COUNT, ValInteger::create);
+            valueMapper.map(IndexShardFields.FIELD_FILE_SIZE, INDEX_SHARD.FILE_SIZE, ValLong::create);
+            valueMapper.map(IndexShardFields.FIELD_STATUS, INDEX_SHARD.STATUS, this::getStatus);
+            valueMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, ValLong::create);
+            valueMapper.map(IndexShardFields.FIELD_VOLUME_PATH, INDEX_VOLUME.PATH, ValString::create);
+            valueMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, ValString::create);
+        }
+
+        private Val getDocRefName(final String uuid) {
+            String val = uuid;
+            if (docRefInfoService != null) {
+                val = docRefInfoService.name(new DocRef(IndexDoc.DOCUMENT_TYPE, uuid))
+                        .orElse(uuid);
+            }
+            return ValString.create(val);
+        }
+
+        private Val getStatus(final byte statusPrimitive) {
+            final IndexShardStatus indexShardStatus = IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                    statusPrimitive);
+            return ValString.create(indexShardStatus.getDisplayValue());
+        }
+
+        public <T> void map(final AbstractField dataSourceField,
+                            final Field<T> field,
+                            final Function<T, Val> handler) {
+            valueMapper.map(dataSourceField, field, handler);
+        }
+
+        public List<Field<?>> getFields(final List<AbstractField> fields) {
+            return valueMapper.getFields(fields);
+        }
+
+        public Mapper<?>[] getMappers(final AbstractField[] fields) {
+            return valueMapper.getMappers(fields);
+        }
+    }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    @Singleton
+    private static class IndexShardExpressionMapper {
+
+        private final ExpressionMapper expressionMapper;
+        private final IndexStore indexStore;
+
+        private final Map<String, List<String>> indexNameToUuidsMap = new ConcurrentHashMap<>();
+
+        @Inject
+        private IndexShardExpressionMapper(final ExpressionMapperFactory expressionMapperFactory,
+                                           final IndexStore indexStore) {
+            this.indexStore = indexStore;
+
+            this.expressionMapper = expressionMapperFactory.create();
+            expressionMapper.map(IndexShardFields.FIELD_NODE, INDEX_SHARD.NODE_NAME, value -> value);
+            expressionMapper.multiMap(
+                    IndexShardFields.FIELD_INDEX, INDEX_SHARD.INDEX_UUID, this::getIndexUuids, true);
+            expressionMapper.map(IndexShardFields.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME, value -> value);
+            expressionMapper.map(IndexShardFields.FIELD_DOC_COUNT, INDEX_SHARD.DOCUMENT_COUNT, Integer::valueOf);
+            expressionMapper.map(IndexShardFields.FIELD_FILE_SIZE, INDEX_SHARD.FILE_SIZE, Long::valueOf);
+            expressionMapper.map(IndexShardFields.FIELD_STATUS, INDEX_SHARD.STATUS, value ->
+                    IndexShardStatus.fromDisplayValue(value).getPrimitiveValue());
+            expressionMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, Long::valueOf);
+            expressionMapper.map(IndexShardFields.FIELD_VOLUME_PATH, INDEX_VOLUME.PATH, value -> value);
+            expressionMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, value -> value);
+        }
+
+        private List<String> getIndexUuids(final String indexName) {
+            final Predicate<DocRef> predicate;
+            if (indexName.contains("*")) {
+                // Split on the wildcard char so we can make the literal parts
+                // safe for regex, e.g. escape meta chars, then join them back up with
+                // .* in between each one.
+                final String[] parts = indexName.split("\\*");
+                String patternStr = Arrays.stream(parts)
+                        .map(Pattern::quote)
+                        .collect(Collectors.joining(".*"));
+                // Add any prefix/suffix wild cards back on
+                if (indexName.startsWith("*")) {
+                    patternStr = ".*" + patternStr;
+                }
+                if (indexName.endsWith("*")) {
+                    patternStr = patternStr + ".*";
+                }
+                final Pattern pattern = Pattern.compile(patternStr);
+                predicate = docRef ->
+                        pattern.matcher(docRef.getName()).matches();
+            } else {
+                predicate = docRef ->
+                        Objects.equals(docRef.getName(), indexName);
+            }
+
+            // TODO AT: This is not very efficient, need to push the predicate down to the db really
+            return indexStore.list()
+                    .stream()
+                    .filter(predicate)
+                    .map(DocRef::getUuid)
+                    .collect(Collectors.toList());
+        }
+
+        public <T> void map(final AbstractField dataSourceField,
+                            final Field<T> field,
+                            final Converter<T> converter) {
+            expressionMapper.map(dataSourceField, field, converter);
+        }
+
+        public <T> void map(final AbstractField dataSourceField,
+                            final Field<T> field,
+                            final Converter<T> converter, final boolean useName) {
+            expressionMapper.map(dataSourceField, field, converter, useName);
+        }
+
+        public <T> void multiMap(final AbstractField dataSourceField,
+                                 final Field<T> field,
+                                 final MultiConverter<T> converter) {
+            expressionMapper.multiMap(dataSourceField, field, converter);
+        }
+
+        public <T> void multiMap(final AbstractField dataSourceField,
+                                 final Field<T> field,
+                                 final MultiConverter<T> converter, final boolean useName) {
+            expressionMapper.multiMap(dataSourceField, field, converter, useName);
+        }
+
+        public void ignoreField(final AbstractField dataSourceField) {
+            expressionMapper.ignoreField(dataSourceField);
+        }
+
+        public Condition apply(final ExpressionItem expressionItem) {
+            return expressionMapper.apply(expressionItem);
+        }
+    }
 }

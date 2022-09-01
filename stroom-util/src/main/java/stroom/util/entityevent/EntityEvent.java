@@ -26,32 +26,62 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"docRef", "action"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class EntityEvent {
 
     @JsonProperty
     private final DocRef docRef;
+
+    @JsonProperty
+    private final DocRef oldDocRef; // For a re-name, the docRef before the change
+
     @JsonProperty
     private final EntityAction action;
 
     @JsonCreator
     public EntityEvent(@JsonProperty("docRef") final DocRef docRef,
+                       @JsonProperty("oldDocRef") final DocRef oldDocRef,
                        @JsonProperty("action") final EntityAction action) {
         this.docRef = docRef;
+        this.oldDocRef = oldDocRef;
         this.action = action;
+    }
+
+    public EntityEvent(final DocRef docRef,
+                       final EntityAction action) {
+        this(docRef, null, action);
+    }
+
+    public static void fire(final EntityEventBus eventBus,
+                            final DocRef docRef,
+                            final DocRef oldDocRef,
+                            final EntityAction action) {
+        if (eventBus != null) {
+            eventBus.fire(new EntityEvent(docRef, oldDocRef, action));
+        }
     }
 
     public static void fire(final EntityEventBus eventBus,
                             final DocRef docRef,
                             final EntityAction action) {
-        if (eventBus != null) {
-            eventBus.fire(new EntityEvent(docRef, action));
-        }
+        fire(eventBus, docRef, null, action);
     }
 
+    /**
+     * @return The {@link DocRef} of the {@link stroom.util.shared.Document} affected by this event,
+     * as it is after the event happened.
+     */
     public DocRef getDocRef() {
         return docRef;
+    }
+
+    /**
+     * @return The {@link DocRef} of the {@link stroom.util.shared.Document} affected by this event,
+     * as it is before the event happened. May be null.
+     */
+    public DocRef getOldDocRef() {
+        return oldDocRef;
     }
 
     public EntityAction getAction() {
@@ -67,6 +97,7 @@ public class EntityEvent {
     public String toString() {
         return "EntityEvent{" +
                 "docRef=" + docRef +
+                ", oldDocRef=" + oldDocRef +
                 ", action=" + action +
                 '}';
     }
@@ -80,11 +111,12 @@ public class EntityEvent {
             return false;
         }
         final EntityEvent that = (EntityEvent) o;
-        return Objects.equals(docRef, that.docRef) && action == that.action;
+        return Objects.equals(docRef, that.docRef) && Objects.equals(oldDocRef,
+                that.oldDocRef) && action == that.action;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(docRef, action);
+        return Objects.hash(docRef, oldDocRef, action);
     }
 }
