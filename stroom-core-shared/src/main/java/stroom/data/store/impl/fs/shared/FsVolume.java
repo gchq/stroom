@@ -176,6 +176,10 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         this.updateUser = updateUser;
     }
 
+    /**
+     * @return The path the volume resides in. This may be a relative path in which case
+     * it should be resolved relative to stroom.home before use.
+     */
     public String getPath() {
         return path;
     }

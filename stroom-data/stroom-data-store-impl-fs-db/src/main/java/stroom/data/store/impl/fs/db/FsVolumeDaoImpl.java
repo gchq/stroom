@@ -16,8 +16,10 @@ import org.jooq.Result;
 import org.jooq.TableField;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -107,6 +109,25 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
 
         final List<FsVolume> list = result.map(this::recordToVolume);
         return ResultPage.createCriterialBasedList(list, criteria);
+    }
+
+    @Override
+    public Set<FsVolume> get(final String path) {
+        return new HashSet<>(JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                        .select()
+                        .from(FS_VOLUME)
+                        .where(FS_VOLUME.PATH.eq(path))
+                        .fetch())
+                .map(this::recordToVolume));
+    }
+
+    @Override
+    public List<FsVolume> getAll() {
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                        .select()
+                        .from(FS_VOLUME)
+                        .fetch())
+                .map(this::recordToVolume);
     }
 
     private void volumeToRecord(final FsVolume fileVolume, final FsVolumeRecord record) {

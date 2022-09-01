@@ -24,6 +24,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -111,13 +112,15 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                                 final IndexConfig indexConfig,
                                 final IndexStructure indexStructure,
                                 final IndexShardKey indexShardKey,
-                                final IndexShard indexShard) throws IOException {
+                                final IndexShard indexShard,
+                                final PathCreator pathCreator) throws IOException {
         this(indexShardManager,
                 indexConfig,
                 indexStructure,
                 indexShardKey,
                 indexShard,
-                DEFAULT_RAM_BUFFER_MB_SIZE);
+                DEFAULT_RAM_BUFFER_MB_SIZE,
+                pathCreator);
     }
 
     IndexShardWriterImpl(final IndexShardManager indexShardManager,
@@ -125,7 +128,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                          final IndexStructure indexStructure,
                          final IndexShardKey indexShardKey,
                          final IndexShard indexShard,
-                         final int ramBufferSizeMB) throws IOException {
+                         final int ramBufferSizeMB,
+                         final PathCreator pathCreator) throws IOException {
         this.indexShardManager = indexShardManager;
         this.slowIndexWriteWarningThreshold = NullSafe.getOrElse(
                 indexConfig,
@@ -138,7 +142,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         this.lastUsedTime = Instant.ofEpochMilli(creationTime);
 
         // Find the index shard dir.
-        dir = IndexShardUtil.getIndexPath(indexShard);
+        dir = IndexShardUtil.getIndexPath(indexShard, pathCreator);
         LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating index shard writer for dir {} {}", dir, this));
 
         // Make sure the index writer is primed with the necessary analysers.

@@ -11,7 +11,6 @@ import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.ValidationResult;
 import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.api.SecurityContext;
@@ -29,6 +28,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.io.capacity.HasCapacitySelector;
 import stroom.util.io.capacity.HasCapacitySelectorFactory;
 import stroom.util.io.capacity.MostFreeCapacitySelector;
@@ -64,6 +64,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -113,7 +116,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     private final IndexVolumeGroupService indexVolumeGroupService;
     private final ICache<String, HasCapacitySelector> volGroupToVolSelectorCache;
     private final HasCapacitySelectorFactory hasCapacitySelectorFactory;
-    private final NodeService nodeService;
+    private final PathCreator pathCreator;
 
     // Holds map of groupName => index vols BELONGING TO THIS NODE
     private final AtomicReference<VolumeMap> currentVolumeMap = new AtomicReference<>();
@@ -129,7 +132,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                            final IndexVolumeGroupService indexVolumeGroupService,
                            final CacheManager cacheManager,
                            final HasCapacitySelectorFactory hasCapacitySelectorFactory,
-                           final NodeService nodeService) {
+                           final PathCreator pathCreator) {
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
@@ -139,7 +142,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         this.volumeConfigProvider = volumeConfigProvider;
         this.indexVolumeGroupService = indexVolumeGroupService;
         this.hasCapacitySelectorFactory = hasCapacitySelectorFactory;
-        this.nodeService = nodeService;
+        this.pathCreator = pathCreator;
 
         // Most selectors are stateful, and we need one per vol grp so the round-robin works.
         this.volGroupToVolSelectorCache = cacheManager.create(
@@ -166,6 +169,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public ValidationResult validate(final IndexVolume indexVolume) {
+
         ValidationResult validationResult = ValidationResult.ok();
         if (indexVolume.getNodeName() == null || indexVolume.getNodeName().isEmpty()) {
             validationResult = ValidationResult.error("You must select a node for the volume.");
@@ -174,14 +178,25 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 && NullSafe.isBlankString(indexVolume, IndexVolume::getPath)) {
             validationResult = ValidationResult.error("You must provide a path for the volume.");
         }
-        if (validationResult.isOk()) {
-            validationResult = validateForDupPathInOtherGroups(indexVolume);
-        }
-        if (validationResult.isOk()) {
-            validationResult = validateForDupPathInThisGroup(indexVolume);
-        }
-        if (validationResult.isOk()) {
-            validationResult = validateVolumePath(indexVolume.getPath());
+
+        // Don't need to make absolute here as comparing like with like
+        final Optional<IndexVolume> existingIndexVolume = indexVolume.getId() != null
+                ? securityContext.secureResult(() -> indexVolumeDao.fetch(indexVolume.getId()))
+                : Optional.empty();
+        final boolean hasPathChanged = existingIndexVolume.filter(existingVol ->
+                        Objects.equals(existingVol.getPath(), indexVolume.getPath()))
+                .isEmpty();
+
+        if (hasPathChanged) {
+            if (validationResult.isOk()) {
+                validationResult = validateForDupPathInOtherGroups(indexVolume);
+            }
+            if (validationResult.isOk()) {
+                validationResult = validateForDupPathInThisGroup(indexVolume);
+            }
+            if (validationResult.isOk()) {
+                validationResult = validateVolumePath(indexVolume);
+            }
         }
         return validationResult;
     }
@@ -191,10 +206,10 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 indexVolumeDao.getVolumesInGroup(indexVolume.getIndexVolumeGroupId()));
 
         final boolean foundDupPathAndNode = volumeGroups.stream()
-                .anyMatch(vol ->
-                        !Objects.equals(vol.getId(), indexVolume.getId())
-                                && Objects.equals(vol.getPath(), indexVolume.getPath())
-                                && Objects.equals(vol.getNodeName(), indexVolume.getNodeName()));
+                .anyMatch(dbVol ->
+                        !Objects.equals(dbVol.getId(), indexVolume.getId())
+                                && Objects.equals(getAbsVolumePath(dbVol), getAbsVolumePath(indexVolume))
+                                && Objects.equals(dbVol.getNodeName(), indexVolume.getNodeName()));
 
         if (foundDupPathAndNode) {
             return ValidationResult.error(
@@ -206,15 +221,25 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         }
     }
 
-    private ValidationResult validateForDupPathInOtherGroups(final IndexVolume indexVolume) {
-        // Get all groups holding with this path and node name
-        final Set<IndexVolumeGroup> volumeGroups = securityContext.secureResult(() -> indexVolumeDao.getGroups(
-                indexVolume.getNodeName(),
-                indexVolume.getPath()));
+    private String getAbsVolumePath(final IndexVolume volume) {
+        return pathCreator.makeAbsolute(
+                pathCreator.replaceSystemProperties(volume.getPath()));
+    }
 
-        final Set<String> dupGroupNames = volumeGroups.stream()
-                .filter(grp -> !Objects.equals(indexVolume.getIndexVolumeGroupId(), grp.getId()))
-                .map(IndexVolumeGroup::getName)
+    private ValidationResult validateForDupPathInOtherGroups(final IndexVolume indexVolume) {
+        final String path = getAbsVolumePath(indexVolume);
+        final List<IndexVolume> volumes = securityContext.secureResult(indexVolumeDao::getAll);
+
+        // Need to turn both our path and all db paths into consistent absolute paths, e.g.
+        // one may be /tmp/x/../y and the other /tmp/y, both are the same
+        final Set<String> dupGroupNames = volumes.stream()
+                .filter(dbVol ->
+                        !Objects.equals(dbVol.getIndexVolumeGroupId(), indexVolume.getIndexVolumeGroupId())
+                                && Objects.equals(dbVol.getNodeName(), indexVolume.getNodeName())
+                                && Objects.equals(getAbsVolumePath(dbVol), path))
+                .map(dbVol -> NullSafe.get(
+                        indexVolumeGroupService.get(dbVol.getIndexVolumeGroupId()),
+                        IndexVolumeGroup::getName))
                 .collect(Collectors.toSet());
 
         if (!dupGroupNames.isEmpty()) {
@@ -235,31 +260,66 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         }
     }
 
-    private ValidationResult validateVolumePath(final String indexVolPath) {
-        final Path path = Paths.get(indexVolPath);
+    private ValidationResult validateVolumePath(final IndexVolume volume) {
+        final Path path = Paths.get(getAbsVolumePath(volume));
+        LOGGER.debug("path: {}", path);
 
         if (!Files.exists(path)) {
             try {
                 Files.createDirectories(path);
             } catch (IOException e) {
-                final String msg;
-                if (indexVolPath.equals(e.getMessage())) {
-                    // Some java IO exceptions just have the path as the message, helpful.
-                    msg = e.getClass().getSimpleName();
-                } else {
-                    msg = e.getMessage();
-                }
                 return ValidationResult.error(LogUtil.message(
                         "Error creating index volume path '{}': {}",
-                        indexVolPath,
-                        msg));
+                        path,
+                        getExceptionMessage(e, path)));
             }
         } else if (!Files.isDirectory(path)) {
             return ValidationResult.error(LogUtil.message(
                     "Error creating index volume path '{}': The path exists but is not a directory.",
-                    indexVolPath));
+                    path));
         }
+
+        // Can't seem to find a good way of checking if we have write perms on the dir so create a file
+        // then delete it, after a small delay
+        try {
+            final Path tempFile = Files.createTempFile(path, "stroomIndexVolumeValidation", null);
+
+            // Wait a few secs before we delete the file in case some file systems prevent deletion
+            // immediately after creation
+            final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+            executorService.schedule(() -> {
+                LOGGER.debug("About to delete file {}", tempFile);
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException e) {
+                    LOGGER.error("Unable to delete temporary file {}. You can manually delete this file.",
+                            tempFile, e);
+                }
+            }, 5, TimeUnit.SECONDS);
+
+        } catch (IOException e) {
+            return ValidationResult.error(LogUtil.message(
+                    "Error creating test file in directory {}. " +
+                            "Does Stroom have the right permissions on this directory? " +
+                            "Error message: {} {}",
+                    path,
+                    e.getClass().getSimpleName(),
+                    e.getMessage()));
+        }
+
         return ValidationResult.ok();
+    }
+
+    private String getExceptionMessage(final IOException ioException, final Path path) {
+
+        final String msg;
+        if (path.toString().equals(ioException.getMessage())) {
+            // Some java IO exceptions just have the path as the message, helpful.
+            msg = ioException.getClass().getSimpleName();
+        } else {
+            msg = ioException.getMessage();
+        }
+        return msg;
     }
 
     @Override

@@ -21,6 +21,7 @@ import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
+import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.util.io.PathCreator;
@@ -35,6 +36,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /**
@@ -56,6 +58,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final VolumeConfig volumeConfig;
     private final FsVolumeService fsVolumeService;
     private final PathCreator pathCreator;
+    private final IndexVolumeService indexVolumeService;
 
     private static boolean needsCleanup;
 
@@ -69,7 +72,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final VolumeConfig volumeConfig,
                               final FsVolumeConfig fsVolumeConfig,
                               final FsVolumeService fsVolumeService,
-                              final PathCreator pathCreator) {
+                              final PathCreator pathCreator,
+                              final IndexVolumeService indexVolumeService) {
         this.contentImportService = contentImportService;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -80,6 +84,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.fsVolumeConfig = fsVolumeConfig;
         this.fsVolumeService = fsVolumeService;
         this.pathCreator = pathCreator;
+        this.indexVolumeService = indexVolumeService;
     }
 
     @Override
@@ -99,10 +104,11 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             indexVolDir = tempDir;
         }
 
-        LOGGER.debug("Creating stream volumes in {}", fsVolDir.toAbsolutePath().normalize().toString());
+        LOGGER.info("Creating default stream volumes in {}", fsVolDir.toAbsolutePath().normalize());
         fsVolumeConfig.setDefaultStreamVolumePaths(List.of(fsVolDir.toString()));
+        fsVolumeService.ensureDefaultVolumes();
 
-        LOGGER.debug("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize().toString());
+        LOGGER.info("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize());
         volumeCreator.setup(indexVolDir);
 
         // Ensure we can create tasks.
@@ -133,13 +139,21 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
         // Make sure we don't delete database entries without clearing the pool.
         indexShardWriterCache.shutdown();
+        LOGGER.info("Deleting shards from disk");
         indexShardManager.deleteFromDisk();
 
         // Delete the contents of all stream store volumes.
+        LOGGER.info("Clearing fsVolumeService");
         fsVolumeService.clear();
 
         // Clear all caches or files that might have been created by previous tests.
-        clearables.forEach(Clearable::clear);
+
+        final String clearedList = clearables.stream()
+                .peek(Clearable::clear)
+                .map(clearable -> clearable.getClass().getSimpleName())
+                .sorted()
+                .collect(Collectors.joining(", "));
+        LOGGER.info("Cleared the following clearables [{}]", clearedList);
 
         LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
     }

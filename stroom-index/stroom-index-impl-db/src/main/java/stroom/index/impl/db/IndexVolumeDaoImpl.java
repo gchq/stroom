@@ -246,7 +246,8 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         return new HashSet<>(JooqUtil.contextResult(indexDbConnProvider, context -> context
                         .select(Tables.INDEX_VOLUME_GROUP.asterisk())
                         .from(Tables.INDEX_VOLUME_GROUP)
-                        .innerJoin(Tables.INDEX_VOLUME).on(Tables.INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID.eq(Tables.INDEX_VOLUME_GROUP.ID))
+                        .innerJoin(Tables.INDEX_VOLUME)
+                        .on(Tables.INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID.eq(Tables.INDEX_VOLUME_GROUP.ID))
                         .where(Tables.INDEX_VOLUME.PATH.eq(path))
                         .and(Tables.INDEX_VOLUME.NODE_NAME.eq(nodeName))
                         .fetch())

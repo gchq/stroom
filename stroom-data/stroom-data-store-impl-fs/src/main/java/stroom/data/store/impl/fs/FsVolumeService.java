@@ -6,6 +6,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.docref.DocRef;
+import stroom.index.shared.ValidationResult;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -53,6 +54,9 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -120,14 +124,18 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     public FsVolume create(final FsVolume fileVolume) {
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
             FsVolume result = null;
-            String pathString = fileVolume.getPath();
+            String pathString = getAbsVolumePath(fileVolume);
             try {
                 if (pathString != null) {
                     Path path = Paths.get(pathString);
-                    if (Files.isDirectory(path)) {
+                    if (Files.exists(path) && !Files.isDirectory(path)) {
+                        throw new RuntimeException(LogUtil.message(
+                                "Unable to create volume as path '{}' exists but is not a directory.", path));
+                    } else if (Files.isDirectory(path)) {
                         final long count = FileUtil.count(path);
                         if (count > 0) {
-                            throw new IOException("Attempt to create volume in a directory that is not empty: " + path);
+                            throw new RuntimeException(
+                                    "Attempt to create volume in a directory that is not empty: " + path);
                         }
                     }
 
@@ -150,6 +158,17 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 result.setVolumeState(fileVolume.getVolumeState());
             } catch (IOException e) {
                 LOGGER.error("Unable to create volume due to an error creating directory {}", pathString, e);
+                final String msg;
+                if (pathString.equals(e.getMessage())) {
+                    // Some java IO exceptions just have the path as the message, helpful.
+                    msg = e.getClass().getSimpleName();
+                } else {
+                    msg = e.getMessage();
+                }
+
+                throw new RuntimeException(LogUtil.message(
+                        "Unable to create volume due to an error creating directory {}: {}",
+                        pathString, msg), e);
             }
 
             fireChange(EntityAction.CREATE);
@@ -282,11 +301,16 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     @Override
     public void onChange(final EntityEvent event) {
         LOGGER.debug("Clearing currentVolumeList");
+
+        clearCurrentVolumeList();
+    }
+
+    private synchronized void clearCurrentVolumeList() {
         currentVolumeList.set(null);
     }
 
     private void fireChange(final EntityAction action) {
-        currentVolumeList.set(null);
+        clearCurrentVolumeList();
         if (entityEventBusProvider != null) {
             try {
                 final EntityEventBus entityEventBus = entityEventBusProvider.get();
@@ -299,12 +323,17 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         }
     }
 
+    /**
+     * For use in testing
+     */
     @Override
     public void clear() {
         final List<FsVolume> volumeList = doFind(FindFsVolumeCriteria.matchAll()).getValues();
         for (final FsVolume volume : volumeList) {
-            final String path = volume.getPath();
+            final String path = getAbsVolumePath(volume);
             FileUtil.deleteDir(Paths.get(path));
+            // Delete the db record
+            fsVolumeDao.delete(volume.getId());
         }
 
         // Delete default volumes.
@@ -321,8 +350,10 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         }
 
         // Clear state between tests.
-        currentVolumeList.set(null);
+        clearCurrentVolumeList();
+        // Now recreate the default vols
         createdDefaultVolumes = false;
+        ensureDefaultVolumes();
     }
 
     private VolumeList getCurrentVolumeList() {
@@ -374,7 +405,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 || isForcedRefresh
                 || optMinUpdateTimeEpochMs.get() < updateTimeCutOffEpochMs) {
             for (final FsVolume volume : dbVolumes) {
-                taskContext.info(() -> "Refreshing volume '" + volume.getPath() + "'");
+                taskContext.info(() -> "Refreshing volume '" + getAbsVolumePath(volume) + "'");
                 // Update the volume state and save in the DB.
                 updateVolumeState(volume);
 
@@ -424,7 +455,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         if (bytes != null) {
             SortedMap<String, String> tags = ImmutableSortedMap.<String, String>naturalOrder()
                     .put("Id", String.valueOf(volume.getId()))
-                    .put("Path", volume.getPath())
+                    .put("Path", getAbsVolumePath(volume))
                     .put("Type", type)
                     .put("Node", nodeInfo.getThisNodeName())
                     .build();
@@ -436,20 +467,20 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     private void updateVolumeState(final FsVolume volume) {
-        final Path path = Paths.get(volume.getPath());
+        final Path absPath = Paths.get(getAbsVolumePath(volume));
 
         try {
             FsVolumeState volumeState = volume.getVolumeState();
             volumeState.setUpdateTimeMs(System.currentTimeMillis());
 
             // Ensure the path exists
-            if (Files.isDirectory(path)) {
-                LOGGER.debug(() -> LogUtil.message("updateVolumeState() path exists: {}", path));
-                setSizes(path, volume, volumeState);
+            if (Files.isDirectory(absPath)) {
+                LOGGER.debug(() -> LogUtil.message("updateVolumeState() path exists: {}", absPath));
+                setSizes(absPath, volume, volumeState);
             } else {
-                Files.createDirectories(path);
-                LOGGER.debug(() -> LogUtil.message("updateVolumeState() path created: {}", path));
-                setSizes(path, volume, volumeState);
+                Files.createDirectories(absPath);
+                LOGGER.debug(() -> LogUtil.message("updateVolumeState() path created: {}", absPath));
+                setSizes(absPath, volume, volumeState);
             }
 
             volumeState = saveVolumeState(volumeState);
@@ -458,7 +489,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             LOGGER.debug(() -> LogUtil.message("updateVolumeState() exit {}", volume));
 
         } catch (final IOException | RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("updateVolumeState() path not created: {}", path));
+            LOGGER.error(() -> LogUtil.message("updateVolumeState() path not created: {}", absPath));
         }
     }
 
@@ -489,7 +520,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         return fileSystemVolumeStateDao.updateWithoutOptimisticLocking(volumeState);
     }
 
-    private void ensureDefaultVolumes() {
+    public void ensureDefaultVolumes() {
         if (!createdDefaultVolumes) {
             securityContext.asProcessingUser(() -> createDefaultVolumes());
         }
@@ -601,7 +632,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         final var volInfoList = volumeList.getList()
                 .stream()
                 .map(vol -> Map.ofEntries(
-                        new SimpleEntry<>("path", Optional.ofNullable(vol.getPath())),
+                        new SimpleEntry<>("path", Optional.ofNullable(getAbsVolumePath(vol))),
                         new SimpleEntry<>("limit", Optional.ofNullable(vol.getByteLimit())),
                         new SimpleEntry<>("state", Optional.ofNullable(vol.getStatus())),
                         new SimpleEntry<>("free", Optional.ofNullable(NullSafe.get(
@@ -624,6 +655,109 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 .addDetail("volumeListCreateTime", DateUtil.createNormalDateTimeString(volumeList.getCreateTime()))
                 .addDetail("volumeList", volInfoList)
                 .build();
+    }
+
+    public ValidationResult validate(final FsVolume volume) {
+        ValidationResult validationResult = ValidationResult.ok();
+
+        if (NullSafe.isBlankString(volume, FsVolume::getPath)) {
+            validationResult = ValidationResult.error("You must select a node for the volume.");
+        }
+
+        // Don't need to make absolute here as comparing like with like
+        final FsVolume existingVol = volume.getId() != null
+                ? securityContext.secureResult(() -> fsVolumeDao.fetch(volume.getId()))
+                : null;
+        final boolean hasPathChanged = !Objects.equals(
+                NullSafe.get(existingVol, FsVolume::getPath),
+                volume.getPath());
+
+        if (hasPathChanged) {
+            if (validationResult.isOk()) {
+                validationResult = validateForDupPath(volume);
+            }
+            if (validationResult.isOk()) {
+                validationResult = validateVolumePath(volume);
+            }
+        }
+        return validationResult;
+    }
+
+    private ValidationResult validateForDupPath(final FsVolume volume) {
+        final String absPath = getAbsVolumePath(volume);
+        final List<FsVolume> volumes = fsVolumeDao.getAll();
+        // We need to get all, so we can make all the db one's absolute in the same was as our one
+        final boolean foundDup = volumes.stream()
+                .anyMatch(dbVol ->
+                        !Objects.equals(dbVol.getId(), volume.getId())
+                && Objects.equals(getAbsVolumePath(dbVol), absPath));
+        if (foundDup) {
+            return ValidationResult.error(LogUtil.message(
+                    "Another volume already exists with path '{}'", absPath));
+        } else {
+            return ValidationResult.ok();
+        }
+    }
+
+    private ValidationResult validateVolumePath(final FsVolume volume) {
+        final Path absPath = Paths.get(getAbsVolumePath(volume));
+        LOGGER.debug("path: {}", absPath);
+
+        if (!Files.exists(absPath)) {
+            try {
+                Files.createDirectories(absPath);
+            } catch (IOException e) {
+                final String msg;
+                if (absPath.toString().equals(e.getMessage())) {
+                    // Some java IO exceptions just have the path as the message, helpful.
+                    msg = e.getClass().getSimpleName();
+                } else {
+                    msg = e.getMessage();
+                }
+                return ValidationResult.error(LogUtil.message(
+                        "Error creating index volume path '{}': {}",
+                        absPath,
+                        msg));
+            }
+        } else if (!Files.isDirectory(absPath)) {
+            return ValidationResult.error(LogUtil.message(
+                    "Error creating index volume path '{}': The path exists but is not a directory.",
+                    absPath));
+        }
+
+        // Can't seem to find a good way of checking if we have write perms on the dir so create a file
+        // then delete it, after a small delay
+        try {
+            final Path tempFile = Files.createTempFile(absPath, "stroomIndexVolumeValidation", null);
+
+            // Wait a few secs before we delete the file in case some file systems prevent deletion
+            // immediately after creation
+            final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+            executorService.schedule(() -> {
+                LOGGER.debug("About to delete file {}", tempFile);
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException e) {
+                    LOGGER.error("Unable to delete temporary file {}", tempFile, e);
+                }
+            }, 5, TimeUnit.SECONDS);
+
+        } catch (IOException e) {
+            return ValidationResult.error(LogUtil.message(
+                    "Error creating test file in directory {}. " +
+                            "Does Stroom have the right permissions on this directory? " +
+                            "Error message: {} {}",
+                    absPath,
+                    e.getClass().getSimpleName(),
+                    e.getMessage()));
+        }
+
+        return ValidationResult.ok();
+    }
+
+    private String getAbsVolumePath(final FsVolume volume) {
+        return pathCreator.makeAbsolute(
+                pathCreator.replaceSystemProperties(volume.getPath()));
     }
 
     private static class VolumeList {

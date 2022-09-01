@@ -30,6 +30,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -64,6 +65,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     private final TaskContext taskContext;
     private final Provider<IndexShardSearchConfig> indexShardSearchConfigProvider;
     private final SecurityContext securityContext;
+    private final PathCreator pathCreator;
 
     private volatile ICache<Key, IndexShardSearcher> cache;
 
@@ -75,7 +77,8 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                                 final TaskContextFactory taskContextFactory,
                                 final TaskContext taskContext,
                                 final Provider<IndexShardSearchConfig> indexShardSearchConfigProvider,
-                                final SecurityContext securityContext) {
+                                final SecurityContext securityContext,
+                                final PathCreator pathCreator) {
         this.cacheManager = cacheManager;
         this.indexShardService = indexShardService;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -83,6 +86,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
         this.taskContext = taskContext;
         this.indexShardSearchConfigProvider = indexShardSearchConfigProvider;
         this.securityContext = securityContext;
+        this.pathCreator = pathCreator;
 
         final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Searcher Cache", 3);
         executor = executorProvider.get(threadPool);
@@ -117,7 +121,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                 throw new SearchException("Unable to find index shard with id = " + key.indexShardId);
             }
 
-            return new IndexShardSearcher(indexShard, key.indexWriter);
+            return new IndexShardSearcher(indexShard, key.indexWriter, pathCreator);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw e;
