@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
-
 import javax.xml.bind.JAXBException;
 
 class TestProcessorFilterMarshaller {
@@ -22,25 +21,25 @@ class TestProcessorFilterMarshaller {
 
     @Test
     void testMarshall() throws JAXBException {
-        QueryData queryData = new QueryData();
-                queryData.setDataSource(DocRef.builder()
-                                .uuid(UUID.randomUUID().toString())
-                                .type("Index")
-                                .name("Some idx")
-                        .build());
-                queryData.setExpression(
-                        ExpressionOperator.builder()
-                                .addTerm(ExpressionTerm.builder()
-                                        .field("SomeField")
-                                        .condition(Condition.EQUALS)
-                                        .value("xxxx")
-                                        .build())
-                                .build()
+        final QueryData queryData = new QueryData();
+        queryData.setDataSource(DocRef.builder()
+                .uuid(UUID.randomUUID().toString())
+                .type("Index")
+                .name("Some idx")
+                .build());
+        queryData.setExpression(
+                ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder()
+                                .field("SomeField")
+                                .condition(Condition.EQUALS)
+                                .value("xxxx")
+                                .build())
+                        .build()
 
-                );
-                queryData.setParams("");
+        );
+        queryData.setParams("");
 
-        ProcessorFilter processorFilter = new ProcessorFilter();
+        final ProcessorFilter processorFilter = new ProcessorFilter();
         // Blank tracker
         processorFilter.setReprocess(true);
         processorFilter.setEnabled(true);
@@ -50,11 +49,11 @@ class TestProcessorFilterMarshaller {
         processorFilter.setMinMetaCreateTimeMs(System.currentTimeMillis());
         processorFilter.setMaxMetaCreateTimeMs(System.currentTimeMillis());
 
-        ProcessorFilterMarshaller processorFilterMarshaller = new ProcessorFilterMarshaller();
+        final ProcessorFilterMarshaller processorFilterMarshaller = new ProcessorFilterMarshaller();
         final ProcessorFilter marshalled = processorFilterMarshaller.marshal(processorFilter);
 
         Assertions.assertThat(marshalled.getData())
                 .isNotBlank();
-        LOGGER.info("marshalled:\n{}", marshalled.getData());
+        LOGGER.debug("marshalled:\n{}", marshalled.getData());
     }
 }
