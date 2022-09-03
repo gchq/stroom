@@ -25,6 +25,8 @@ import stroom.search.elastic.indexing.ElasticIndexingElementModule;
 import stroom.search.elastic.search.ElasticIndexQueryResourceImpl;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandler;
+import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandlerImpl;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;

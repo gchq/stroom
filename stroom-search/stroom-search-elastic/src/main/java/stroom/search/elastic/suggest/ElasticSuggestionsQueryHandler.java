@@ -1,4 +1,4 @@
-package stroom.search.elastic;
+package stroom.search.elastic.suggest;
 
 import stroom.core.query.SuggestionsQueryHandler;
 

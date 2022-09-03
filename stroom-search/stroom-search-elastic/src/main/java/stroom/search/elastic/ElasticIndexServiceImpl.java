@@ -25,12 +25,12 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.search.elastic.search.ElasticSearchConfig;
 import stroom.search.elastic.search.ElasticSearchStoreFactory;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
+import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandler;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -75,8 +75,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                                    final SearchResponseCreatorManager searchResponseCreatorManager,
                                    final ElasticSearchStoreFactory storeFactory,
                                    final SuggestionsService suggestionsService,
-                                   final ElasticSuggestionsQueryHandler elasticSuggestionsProvider,
-                                   final ElasticSearchConfig elasticSearchConfig) {
+                                   final ElasticSuggestionsQueryHandler elasticSuggestionsProvider) {
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
         this.elasticIndexStore = elasticIndexStore;
@@ -84,9 +83,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.storeFactory = storeFactory;
 
-        if (elasticSearchConfig.getUseSuggesters()) {
-            suggestionsService.registerHandler(ElasticIndexDoc.DOCUMENT_TYPE, elasticSuggestionsProvider);
-        }
+        suggestionsService.registerHandler(ElasticIndexDoc.DOCUMENT_TYPE, elasticSuggestionsProvider);
     }
 
     @Override
