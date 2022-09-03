@@ -144,10 +144,6 @@ class TestMetaSuggestionsQueryHandler {
                         .map(name -> DocRef.builder().name(name).build())
                         .collect(Collectors.toList()));
 
-        try {
-            return queryHandler.getSuggestions(MetaFields.STREAM_STORE_DOC_REF, MetaFields.FEED, userInput).get();
-        } catch (InterruptedException | ExecutionException e) {
-            return Collections.emptyList();
-        }
+        return queryHandler.getSuggestions(MetaFields.STREAM_STORE_DOC_REF, MetaFields.FEED, userInput);
     }
 }
