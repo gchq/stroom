@@ -1,6 +1,5 @@
 package stroom.meta.impl;
 
-import stroom.core.query.SuggestionsQueryHandler;
 import stroom.core.query.SuggestionsService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
@@ -63,23 +62,19 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
         this.securityContext = securityContext;
         this.feedStore = feedStore;
         this.taskContextFactory = taskContextFactory;
-
-        suggestionsService.registerHandler(MetaFields.STREAM_STORE_TYPE, this);
     }
 
     @Override
-    public CompletableFuture<List<String>> getSuggestions(final DocRef dataSource, final AbstractField field,
+    public List<String> getSuggestions(final DocRef dataSource, final AbstractField field,
                                                           final String query) {
-        return CompletableFuture.supplyAsync(() -> securityContext.secureResult(() -> {
-            List<String> result = Collections.emptyList();
+        List<String> result = Collections.emptyList();
 
-            final String fieldName = field.getName();
-            final Function<String, List<String>> suggestionFunc = fieldNameToFunctionMap.get(fieldName);
-            if (suggestionFunc != null) {
-                result = suggestionFunc.apply(query);
-            }
-            return result;
-        }));
+        final String fieldName = field.getName();
+        final Function<String, List<String>> suggestionFunc = fieldNameToFunctionMap.get(fieldName);
+        if (suggestionFunc != null) {
+            result = suggestionFunc.apply(query);
+        }
+        return result;
     }
 
     @NotNull
