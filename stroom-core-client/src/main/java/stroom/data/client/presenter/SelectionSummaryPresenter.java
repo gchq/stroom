@@ -58,10 +58,11 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
                     .getSelectionSummary(criteria);
         }
 
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, caption, new PopupUiHandlers() {
+        final PopupType popupType = postAction != null ? PopupType.OK_CANCEL_DIALOG : PopupType.CLOSE_DIALOG;
+        ShowPopupEvent.fire(this, this, popupType, caption, new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
+                if (ok && runnable != null) {
                     runnable.run();
                 }
                 HidePopupEvent.fire(SelectionSummaryPresenter.this, SelectionSummaryPresenter.this, autoClose, ok);
@@ -76,8 +77,12 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
     private void update(final String postAction, final String action, final SelectionSummary result) {
         final SafeHtmlBuilder sb = new SafeHtmlBuilder();
         appendRow(sb, "item", "items", result.getItemCount());
-        sb.appendEscaped(" will be ");
-        sb.appendEscaped(postAction);
+        if (postAction != null) {
+            sb.appendEscaped(" will be ");
+            sb.appendEscaped(postAction);
+        } else {
+            sb.appendEscaped(" selected.");
+        }
         sb.appendHtmlConstant("</br>");
         sb.appendHtmlConstant("</br>");
         sb.appendEscaped("The selected items include:");
@@ -103,17 +108,21 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
         } else {
             sb.appendEscaped("Created at any time.");
         }
-        sb.appendHtmlConstant("</br>");
-        sb.appendHtmlConstant("<b>");
-        sb.appendEscaped("Unless the database is modified in the meantime.");
-        sb.appendHtmlConstant("</b>");
-        sb.appendHtmlConstant("</br>");
-        sb.appendHtmlConstant("</br>");
-        sb.appendEscaped("Are you sure you want to ");
-        sb.appendEscaped(action);
-        sb.appendEscaped("?");
-
-        getView().setQuestion(sb.toSafeHtml());
+        if (action != null) {
+            sb.appendHtmlConstant("</br>");
+            sb.appendHtmlConstant("</br>");
+            sb.appendHtmlConstant("<b>");
+            sb.appendEscaped("Unless the database is modified in the meantime.");
+            sb.appendHtmlConstant("</b>");
+            sb.appendHtmlConstant("</br>");
+            sb.appendHtmlConstant("</br>");
+            sb.appendEscaped("Are you sure you want to ");
+            sb.appendEscaped(action);
+            sb.appendEscaped("?");
+            getView().setQuestion(sb.toSafeHtml());
+        } else {
+            getView().setInfo(sb.toSafeHtml());
+        }
     }
 
     private void appendRow(final SafeHtmlBuilder sb, final String type, final String pluralType, final long count) {
