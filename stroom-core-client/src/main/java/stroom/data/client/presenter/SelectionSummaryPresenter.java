@@ -14,6 +14,7 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -117,7 +118,7 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
 
     private void appendRow(final SafeHtmlBuilder sb, final String type, final String pluralType, final long count) {
         sb.appendHtmlConstant("<b>");
-        sb.append(count);
+        sb.appendEscaped(NumberFormat.getDecimalFormat().format(count));
         sb.appendHtmlConstant("</b>");
         sb.appendEscaped(" ");
 
