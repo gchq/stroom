@@ -90,13 +90,11 @@ public class DbTestUtil {
     }
 
     private static String createTestDbName() {
-        String uuid = UUID.randomUUID().toString();
-        int index = uuid.indexOf("-");
-        if (index != -1) {
-            uuid = uuid.substring(0, index);
-        }
-
-        return "test_" + Thread.currentThread().getId() + "_" + uuid;
+        return String.join("",
+                "test_",
+                Long.toString(Thread.currentThread().getId()),
+                "_",
+                UUID.randomUUID().toString().replace("-", ""));
     }
 
     public static DataSource createTestDataSource() {
@@ -175,9 +173,11 @@ public class DbTestUtil {
             connectionProps.put("user", rootConnectionConfig.getUser());
             connectionProps.put("password", rootConnectionConfig.getPassword());
 
-            LOGGER.info("Connecting to DB as root connection with URL: " + rootConnectionConfig.getUrl());
+            LOGGER.info("Connecting to DB as root connection with URL: {}", rootConnectionConfig.getUrl());
 
             final String dbName = DbTestUtil.createTestDbName();
+            LOGGER.info(LogUtil.inBox("Using random test database name: {}", dbName));
+
             try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
                     connectionProps)) {
                 try (final Statement statement = connection.createStatement()) {

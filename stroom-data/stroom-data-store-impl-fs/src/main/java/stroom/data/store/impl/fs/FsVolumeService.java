@@ -25,6 +25,8 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.capacity.HasCapacitySelector;
 import stroom.util.io.capacity.HasCapacitySelectorFactory;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -91,8 +93,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private final TaskContext taskContext;
     private final HasCapacitySelectorFactory hasCapacitySelectorFactory;
 
-    private volatile boolean createdDefaultVolumes;
-    private volatile boolean creatingDefaultVolumes;
+    private volatile boolean createdDefaultVolumes = false;
 
     @Inject
     public FsVolumeService(final FsVolumeDao fsVolumeDao,
@@ -210,7 +211,10 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         return fsVolumeDao.find(criteria);
     }
 
-    FsVolume getVolume() {
+    /**
+     * @return An active and non-full volume selected by the configured volume selector
+     */
+    public FsVolume getVolume() {
         return securityContext.insecureResult(() -> {
             final Set<FsVolume> set = getVolumeSet(VolumeUseStatus.ACTIVE);
             if (set.size() > 0) {
@@ -242,9 +246,31 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     freeVolumes.size(),
                     streamStatus,
                     filteredVolumeList.size());
+
+            LOGGER.debug(() -> LogUtil.message("All FS Volumes:\n{}",
+                    generateAllVolumesAsciiTable(allVolumeList)));
         }
 
         return set;
+    }
+
+    private String generateAllVolumesAsciiTable(final List<FsVolume> allVolumes) {
+        return AsciiTable.builder(allVolumes)
+                .withColumn(Column.of("Path", FsVolume::getPath))
+                .withColumn(Column.of("Status", FsVolume::getStatus))
+                .withColumn(Column.integer(
+                        "Total",
+                                vol -> vol.getTotalCapacityBytes().orElse(-1)))
+                .withColumn(Column.decimal(
+                        "Used %",
+                        vol -> vol.getUsedCapacityPercent().orElse(-1),
+                        2))
+                .withColumn(Column.decimal(
+                        "Free %",
+                        vol -> vol.getFreeCapacityPercent().orElse(-1),
+                        2))
+                .withColumn(Column.of("Is Full", FsVolume::isFull))
+                .build();
     }
 
     private List<FsVolume> getFilteredVolumeList(final List<FsVolume> allVolumes, final VolumeUseStatus streamStatus) {
@@ -327,7 +353,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
      * For use in testing
      */
     @Override
-    public void clear() {
+    public synchronized void clear() {
         final List<FsVolume> volumeList = doFind(FindFsVolumeCriteria.matchAll()).getValues();
         for (final FsVolume volume : volumeList) {
             final String path = getAbsVolumePath(volume);
@@ -353,7 +379,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         clearCurrentVolumeList();
         // Now recreate the default vols
         createdDefaultVolumes = false;
-        ensureDefaultVolumes();
+        LOGGER.debug("createdDefaultVolumes set to false");
     }
 
     private VolumeList getCurrentVolumeList() {
@@ -520,16 +546,23 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         return fileSystemVolumeStateDao.updateWithoutOptimisticLocking(volumeState);
     }
 
+    /**
+     * Public for use in tests that tear down volumes
+     */
     public void ensureDefaultVolumes() {
+        LOGGER.debug("ensureDefaultVolumes called, createdDefaultVolumes: {}", createdDefaultVolumes);
         if (!createdDefaultVolumes) {
-            securityContext.asProcessingUser(() -> createDefaultVolumes());
+            // will check createdDefaultVolumes again under sync inside createDefaultVolumes()
+            securityContext.asProcessingUser(this::createDefaultVolumes);
         }
     }
 
     private synchronized void createDefaultVolumes() {
-        if (!createdDefaultVolumes && !creatingDefaultVolumes) {
+        LOGGER.debug("createDefaultVolumes called, createDefaultVolumes: {}", createdDefaultVolumes);
+
+        // (re-)check state now we hold synch lock
+        if (!createdDefaultVolumes) {
             try {
-                creatingDefaultVolumes = true;
                 securityContext.insecure(() -> {
                     final FsVolumeConfig volumeConfig = volumeConfigProvider.get();
                     final boolean isEnabled = volumeConfig.isCreateDefaultStreamVolumesOnStart();
@@ -564,8 +597,10 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 LOGGER.error(e::getMessage, e);
             } finally {
                 createdDefaultVolumes = true;
-                creatingDefaultVolumes = false;
+                LOGGER.debug("createdDefaultVolumes set to true");
             }
+        } else {
+            LOGGER.debug("Volumes already created");
         }
     }
 
@@ -690,7 +725,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         final boolean foundDup = volumes.stream()
                 .anyMatch(dbVol ->
                         !Objects.equals(dbVol.getId(), volume.getId())
-                && Objects.equals(getAbsVolumePath(dbVol), absPath));
+                                && Objects.equals(getAbsVolumePath(dbVol), absPath));
         if (foundDup) {
             return ValidationResult.error(LogUtil.message(
                     "Another volume already exists with path '{}'", absPath));

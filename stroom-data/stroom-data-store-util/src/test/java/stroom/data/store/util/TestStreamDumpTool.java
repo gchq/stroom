@@ -94,6 +94,7 @@ class TestStreamDumpTool {
         // Clear any lingering volumes or data. Need to do this after the db clear
         // to ensure the local vol list gets reset
         fsVolumeService.clear();
+        fsVolumeService.ensureDefaultVolumes();
     }
 
     private FsVolumeConfig getVolumeConfig() {

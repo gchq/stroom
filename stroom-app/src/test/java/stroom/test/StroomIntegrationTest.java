@@ -18,11 +18,14 @@ package stroom.test;
 
 import stroom.security.api.SecurityContext;
 import stroom.test.common.util.test.StroomTest;
+import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
+import com.google.inject.Injector;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +49,8 @@ public abstract class StroomIntegrationTest implements StroomTest {
     private SecurityContext securityContext;
     @Inject
     private TempDirProvider tempDirProvider;
+    @Inject
+    private Injector injector;
 
     private Path testTempDir;
 
@@ -56,14 +61,20 @@ public abstract class StroomIntegrationTest implements StroomTest {
      */
     @BeforeEach
     public final void setup(final TestInfo testInfo) {
-        debug("setup", testInfo);
+        info("BeforeEach setup", testInfo);
         if (CURRENT_TEST_CLASS_THREAD_LOCAL.get() == null) {
             testTempDir = tempDirProvider.get();
             if (testTempDir == null) {
                 throw new NullPointerException("Temp dir is null");
             }
             securityContext.asProcessingUser(() -> commonTestControl.setup(testTempDir));
+
             CURRENT_TEST_CLASS_THREAD_LOCAL.set(this);
+            LOGGER.debug("Set CURRENT_TEST_CLASS_THREAD_LOCAL to {} ({})",
+                    this.getClass().getSimpleName(), System.identityHashCode(this));
+        } else {
+            LOGGER.info("Previous test class on this thread: {}",
+                    CURRENT_TEST_CLASS_THREAD_LOCAL.get().getClass().getSimpleName());
         }
     }
 
@@ -74,9 +85,9 @@ public abstract class StroomIntegrationTest implements StroomTest {
      */
     @AfterEach
     public final void cleanup(final TestInfo testInfo) {
-        debug("cleanup", testInfo);
+        info("AfterEach cleanup", testInfo);
         if (CURRENT_TEST_CLASS_THREAD_LOCAL.get() == null) {
-            throw new IllegalStateException("Cleanup called without setup");
+            throw new IllegalStateException("Cleanup called without setup. Did setup fail part way through?");
         } else if (cleanupBetweenTests()) {
             cleanup(securityContext, commonTestControl, testTempDir);
         }
@@ -89,20 +100,26 @@ public abstract class StroomIntegrationTest implements StroomTest {
     public static void finalCleanup() {
         final StroomIntegrationTest stroomIntegrationTest = CURRENT_TEST_CLASS_THREAD_LOCAL.get();
         if (stroomIntegrationTest != null) {
+            LOGGER.info("Final cleanup");
             cleanup(stroomIntegrationTest.securityContext,
                     stroomIntegrationTest.commonTestControl,
                     stroomIntegrationTest.testTempDir);
         }
     }
 
-    private void debug(final String message,
-                       final TestInfo testInfo) {
-        LOGGER.debug(() -> message + " " +
-                testInfo.getTestClass()
-                        .map(Class::getSimpleName)
-                        .orElse("") +
-                " " +
-                testInfo.getDisplayName());
+    private void info(final String message,
+                      final TestInfo testInfo) {
+        LOGGER.info(() -> {
+            final String className = testInfo.getTestClass()
+                    .map(Class::getSimpleName)
+                    .orElse("");
+            final String testName = testInfo.getDisplayName();
+            final String threadName = Thread.currentThread().getName();
+            final String injectorInstance = NullSafe.get(injector, System::identityHashCode, i -> Integer.toString(i));
+
+            return LogUtil.message("{} {}.{}, thread: {}, injector: {}, cleanupBetweenTests: {}",
+                    message, className, testName, threadName, injectorInstance, cleanupBetweenTests());
+        });
     }
 
     private static void cleanup(final SecurityContext securityContext,
@@ -112,6 +129,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
         // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
         FileUtil.deleteContents(tempDir);
         CURRENT_TEST_CLASS_THREAD_LOCAL.set(null);
+        LOGGER.debug("Set CURRENT_TEST_CLASS_THREAD_LOCAL to null");
     }
 
     @Override
