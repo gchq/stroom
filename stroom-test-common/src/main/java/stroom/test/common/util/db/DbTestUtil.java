@@ -250,20 +250,22 @@ public class DbTestUtil {
 
         if (!HAVE_ALREADY_SHOWN_DB_MSG) {
             if (useEmbeddedDb) {
-                String msg = "" +
-                        "\n---------------------------------------------------------------" +
-                        "\n                    Using embedded MySQL" +
-                        "\n To use an external DB for better performance add the following" +
-                        "\n   -D{}=false" +
-                        "\n to Run Configurations -> Templates -> Junit -> VM Options" +
-                        "\n You many need to restart IntelliJ for this to work" +
-                        "\n---------------------------------------------------------------";
+                String msg = """
+
+                        ---------------------------------------------------------------
+                                            Using embedded MySQL
+                         To use an external DB for better performance add the following
+                           -D{}=false
+                         to Run Configurations -> Templates -> Junit -> VM Options
+                         You many need to restart IntelliJ for this to work
+                        ---------------------------------------------------------------""";
                 LOGGER.info(ConsoleColour.green(msg), USE_EMBEDDED_MYSQL_PROP_NAME);
             } else {
-                String msg = "" +
-                        "\n---------------------------------------------------------------" +
-                        "\n                    Using external MySQL" +
-                        "\n---------------------------------------------------------------";
+                String msg = """
+
+                        ---------------------------------------------------------------
+                                            Using external MySQL
+                        ---------------------------------------------------------------""";
                 LOGGER.info(ConsoleColour.cyan(msg));
             }
             HAVE_ALREADY_SHOWN_DB_MSG = true;

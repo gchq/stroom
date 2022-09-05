@@ -119,7 +119,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         this.taskContext = taskContext;
         this.hasCapacitySelectorFactory = hasCapacitySelectorFactory;
 
-        ensureDefaultVolumes();
+        // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
     }
 
     public FsVolume create(final FsVolume fileVolume) {
@@ -200,7 +200,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public FsVolume fetch(final int id) {
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> fsVolumeDao.fetch(id));
+        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () ->
+                fsVolumeDao.fetch(id));
     }
 
     public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
@@ -208,6 +209,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     private ResultPage<FsVolume> doFind(final FindFsVolumeCriteria criteria) {
+        // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
+        ensureDefaultVolumes();
         return fsVolumeDao.find(criteria);
     }
 
@@ -216,6 +219,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
      */
     public FsVolume getVolume() {
         return securityContext.insecureResult(() -> {
+            // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
+            ensureDefaultVolumes();
+
             final Set<FsVolume> set = getVolumeSet(VolumeUseStatus.ACTIVE);
             if (set.size() > 0) {
                 final FsVolume volume = set.iterator().next();
@@ -411,6 +417,10 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     private synchronized VolumeList refresh(final boolean isForcedRefresh) {
         taskContext.info(() -> "Refreshing volumes");
+
+        // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
+        ensureDefaultVolumes();
+
         final Instant now = Instant.now();
         final List<FsVolume> volumes = new ArrayList<>();
 
