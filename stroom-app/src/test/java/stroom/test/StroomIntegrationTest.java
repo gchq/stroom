@@ -35,7 +35,15 @@ import java.nio.file.Path;
 import javax.inject.Inject;
 
 /**
- * This class should be common to all component and integration tests.
+ * This class should be common to all component and integration tests that need a DB.
+ *
+ * Each test class gets a new Guice {@link Injector} instance.
+ * Each test thread get a new empty DB with a randomly generated name, which ensures
+ * test isolation when running tests concurrently. The DB tables and in-memory state
+ * are cleared down after each test method (unless cleanupBetweenTests is overridden).
+ * Each test class also gets its own temporary directory for any file system state, e.g.
+ * streams/indexes which is cleared down after each test method (unless
+ * cleanupBetweenTests is overridden).
  */
 public abstract class StroomIntegrationTest implements StroomTest {
 
