@@ -34,4 +34,13 @@ public class AtomicLoopedIntegerSequence {
             return newVal;
         });
     }
+
+    @Override
+    public String toString() {
+        return "AtomicLoopedIntegerSequence{" +
+                "startInc=" + startInc +
+                ", endExc=" + endExc +
+                ", lastVal=" + lastVal +
+                '}';
+    }
 }

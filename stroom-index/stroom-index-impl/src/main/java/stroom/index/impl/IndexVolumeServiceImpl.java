@@ -7,6 +7,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.ValidationResult;
@@ -31,14 +32,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.capacity.HasCapacitySelector;
 import stroom.util.io.capacity.HasCapacitySelectorFactory;
-import stroom.util.io.capacity.MostFreeCapacitySelector;
-import stroom.util.io.capacity.MostFreePercentCapacitySelector;
-import stroom.util.io.capacity.RandomCapacitySelector;
-import stroom.util.io.capacity.RoundRobinCapacitySelector;
-import stroom.util.io.capacity.RoundRobinIgnoreLeastFreeCapacitySelector;
-import stroom.util.io.capacity.RoundRobinIgnoreLeastFreePercentCapacitySelector;
-import stroom.util.io.capacity.WeightedFreePercentRandomCapacitySelector;
-import stroom.util.io.capacity.WeightedFreeRandomCapacitySelector;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -47,6 +40,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSortedMap;
 
 import java.io.IOException;
@@ -54,9 +48,11 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,14 +64,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-
-import static com.google.common.base.Strings.isNullOrEmpty;
 
 @Singleton // Because of currentVolumeMap
 @EntityEventHandler(type = IndexVolumeServiceImpl.ENTITY_TYPE, action = {
@@ -94,18 +86,6 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
     private static final String CACHE_NAME = "Index Volume Selector Cache";
 
-    private static final Map<String, HasCapacitySelector> VOLUME_SELECTOR_MAP = Stream.of(
-                    new MostFreePercentCapacitySelector(),
-                    new MostFreeCapacitySelector(),
-                    new RandomCapacitySelector(),
-                    new RoundRobinIgnoreLeastFreePercentCapacitySelector(),
-                    new RoundRobinIgnoreLeastFreeCapacitySelector(),
-                    new RoundRobinCapacitySelector(),
-                    new WeightedFreePercentRandomCapacitySelector(),
-                    new WeightedFreeRandomCapacitySelector()
-            )
-            .collect(Collectors.toMap(HasCapacitySelector::getName, Function.identity()));
-
     private final IndexVolumeDao indexVolumeDao;
     private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
@@ -114,11 +94,11 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     private final Provider<EntityEventBus> entityEventBusProvider;
     private final Provider<VolumeConfig> volumeConfigProvider;
     private final IndexVolumeGroupService indexVolumeGroupService;
-    private final ICache<String, HasCapacitySelector> volGroupToVolSelectorCache;
+    private final ICache<VolGroupNode, HasCapacitySelector> volGroupNodeToVolSelectorCache;
     private final HasCapacitySelectorFactory hasCapacitySelectorFactory;
     private final PathCreator pathCreator;
 
-    // Holds map of groupName => index vols BELONGING TO THIS NODE
+    // Holds map of groupName|nodeName => index vols but only entries for this node
     private final AtomicReference<VolumeMap> currentVolumeMap = new AtomicReference<>();
 
     @Inject
@@ -145,10 +125,10 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         this.pathCreator = pathCreator;
 
         // Most selectors are stateful, and we need one per vol grp so the round-robin works.
-        this.volGroupToVolSelectorCache = cacheManager.create(
+        this.volGroupNodeToVolSelectorCache = cacheManager.create(
                 CACHE_NAME,
                 () -> volumeConfigProvider.get().getVolumeSelectorCache(),
-                volGroupName -> createVolumeSelector());
+                volGroupNode -> createVolumeSelector());
     }
 
     private HasCapacitySelector createVolumeSelector() {
@@ -326,14 +306,14 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     public IndexVolume create(IndexVolume indexVolume) {
         AuditUtil.stamp(securityContext.getUserId(), indexVolume);
 
-        final List<String> names = indexVolumeDao.getAll().stream().map(i -> isNullOrEmpty(i.getNodeName())
+        final List<String> names = indexVolumeDao.getAll().stream().map(i -> Strings.isNullOrEmpty(i.getNodeName())
                         ? ""
                         : i.getNodeName())
                 .collect(Collectors.toList());
-        indexVolume.setNodeName(isNullOrEmpty(indexVolume.getNodeName())
+        indexVolume.setNodeName(Strings.isNullOrEmpty(indexVolume.getNodeName())
                 ? NextNameGenerator.getNextName(names, "New index volume")
                 : indexVolume.getNodeName());
-        indexVolume.setPath(isNullOrEmpty(indexVolume.getPath())
+        indexVolume.setPath(Strings.isNullOrEmpty(indexVolume.getPath())
                 ? null
                 : indexVolume.getPath());
         indexVolume.setIndexVolumeGroupId(indexVolume.getIndexVolumeGroupId());
@@ -398,9 +378,10 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         }
 
         taskContext.info(() -> "Caching index volumes for node " + nodeName);
-        // Now cache the index vols for this node, grouped by vol group name
+        // Now cache the index vols for THIS node only, grouped by vol group name
         final VolumeMap newMap = new VolumeMap(
                 System.currentTimeMillis(),
+                nodeName,
                 indexVolumeDao.getVolumesOnNodeGrouped(nodeName));
 
         final VolumeMap currentList = currentVolumeMap.get();
@@ -519,16 +500,17 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
         if (nodeInfo.getThisNodeName().equals(nodeName)) {
             // we can check local vol map
-            indexVolumes = getCurrentVolumeMap().getVolumes(groupName)
+            indexVolumes = getCurrentVolumeMap().getVolumes(groupName, nodeName)
                     .orElseGet(() -> indexVolumeDao.getVolumesInGroupOnNode(groupName, nodeName));
         } else {
             // Not this node so have to read the DB
             indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(groupName, nodeName);
         }
 
-        indexVolumes = removeFullVolumes(indexVolumes);
+        indexVolumes = removeIneligibleVolumes(indexVolumes);
+        indexVolumes.sort(Comparator.nullsFirst(Comparator.comparing(IndexVolume::getPath)));
 
-        final HasCapacitySelector volumeSelector = getVolumeSelector(groupName);
+        final HasCapacitySelector volumeSelector = getVolumeSelector(groupName, nodeName);
 
         final IndexVolume indexVolume = volumeSelector.select(indexVolumes);
 
@@ -541,12 +523,13 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         return indexVolume;
     }
 
-    private static List<IndexVolume> removeFullVolumes(final List<IndexVolume> list) {
+    private static List<IndexVolume> removeIneligibleVolumes(final List<IndexVolume> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
         } else {
             return list.stream()
                     .filter(indexVolume -> !indexVolume.isFull())
+                    .filter(indexVolume -> VolumeUseState.ACTIVE.equals(indexVolume.getState()))
                     .collect(Collectors.toList());
         }
     }
@@ -586,8 +569,10 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         }
     }
 
-    private HasCapacitySelector getVolumeSelector(final String groupName) {
-        HasCapacitySelector currentSelector = volGroupToVolSelectorCache.get(groupName);
+    private HasCapacitySelector getVolumeSelector(final String groupName,
+                                                  final String nodeName) {
+        final VolGroupNode volGroupNode = new VolGroupNode(groupName, nodeName);
+        HasCapacitySelector currentSelector = volGroupNodeToVolSelectorCache.get(volGroupNode);
 
         String requiredSelectorName = HasCapacitySelectorFactory.DEFAULT_SELECTOR_NAME;
 
@@ -599,12 +584,12 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
         if (!currentSelector.getName().equals(requiredSelectorName)) {
             synchronized (this) {
-                currentSelector = volGroupToVolSelectorCache.get(groupName);
+                currentSelector = volGroupNodeToVolSelectorCache.get(volGroupNode);
                 // Retest under lock
                 if (!currentSelector.getName().equals(requiredSelectorName)) {
                     // Config has changed so replace the selector with the configured one
-                    volGroupToVolSelectorCache.remove(groupName);
-                    currentSelector = volGroupToVolSelectorCache.get(groupName);
+                    volGroupNodeToVolSelectorCache.remove(volGroupNode);
+                    currentSelector = volGroupNodeToVolSelectorCache.get(volGroupNode);
                 }
             }
         }
@@ -648,23 +633,84 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     private static class VolumeMap {
 
         private final long createTime;
-        private final Map<String, List<IndexVolume>> groupNameToVolumesMap;
+        private final Map<VolGroupNode, List<IndexVolume>> groupNameToVolumesMap;
 
-        VolumeMap(final long createTime, final Map<String, List<IndexVolume>> groupNameToVolumesMap) {
+        VolumeMap(final long createTime,
+                  final String nodeName,
+                  final Map<String, List<IndexVolume>> groupNameToVolumesMap) {
             this.createTime = createTime;
-            this.groupNameToVolumesMap = groupNameToVolumesMap;
+            this.groupNameToVolumesMap = groupNameToVolumesMap.entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(
+                            entry -> new VolGroupNode(entry.getKey(), nodeName),
+                            Entry::getValue));
         }
 
-        public Map<String, List<IndexVolume>> getGroupNameToVolumesMap() {
+        public Map<VolGroupNode, List<IndexVolume>> getGroupNameToVolumesMap() {
             return groupNameToVolumesMap;
         }
 
-        public Optional<List<IndexVolume>> getVolumes(final String groupName) {
-            return Optional.ofNullable(groupNameToVolumesMap.get(groupName));
+        public Optional<List<IndexVolume>> getVolumes(final String groupName, final String nodeName) {
+            return Optional.ofNullable(groupNameToVolumesMap.get(new VolGroupNode(groupName, nodeName)));
         }
 
         public long getCreateTime() {
             return createTime;
+        }
+
+        @Override
+        public String toString() {
+            return "VolumeMap{" +
+                    "createTime=" + Instant.ofEpochMilli(createTime) +
+                    "groupNameToVolumesMap(size)=" + groupNameToVolumesMap.size() +
+                    '}';
+        }
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    private static class VolGroupNode {
+        private final String groupName;
+        private final String nodeName;
+        private final int hashcode;
+
+        private VolGroupNode(final String groupName, final String nodeName) {
+            this.groupName = Objects.requireNonNull(groupName);
+            this.nodeName = Objects.requireNonNull(nodeName);
+            this.hashcode = Objects.hash(groupName, nodeName);
+        }
+
+        public String getGroupName() {
+            return groupName;
+        }
+
+        public String getNodeName() {
+            return nodeName;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final VolGroupNode that = (VolGroupNode) o;
+            return groupName.equals(that.groupName) && nodeName.equals(that.nodeName);
+        }
+
+        @Override
+        public int hashCode() {
+            return hashcode;
+        }
+
+        @Override
+        public String toString() {
+            return "VolGroupNode{" +
+                    "groupName='" + groupName + '\'' +
+                    ", nodeName='" + nodeName + '\'' +
+                    '}';
         }
     }
 }

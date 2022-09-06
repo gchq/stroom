@@ -153,6 +153,19 @@ public class FsVolumeConfig extends AbstractConfig {
                 maxVolumeStateAge);
     }
 
+    public FsVolumeConfig withVolumeSelector(final String volumeSelector) {
+        return new FsVolumeConfig(
+                volumeSelector,
+                defaultStreamVolumePaths,
+                defaultStreamVolumeFilesystemUtilisation,
+                createDefaultStreamVolumesOnStart,
+                feedPathCache,
+                typePathCache,
+                metaTypeExtensions,
+                findOrphanedMetaBatchSize,
+                maxVolumeStateAge);
+    }
+
     @JsonPropertyDescription("Map of meta type names to their file extension. " +
             "You should only change this property if you need to support legacy file extensions used " +
             "before Stroom v7. If a meta type does not have an entry in this map then the extension " +

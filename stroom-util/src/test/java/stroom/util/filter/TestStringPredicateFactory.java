@@ -3,6 +3,8 @@ package stroom.util.filter;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Execution(ExecutionMode.CONCURRENT)
 class TestStringPredicateFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStringPredicateFactory.class);

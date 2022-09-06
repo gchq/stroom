@@ -15,12 +15,12 @@ public class HasCapacitySelectorFactory {
     // Can't be built dynamically as it is used in annotations
     // Must be kept in sync with the map below.
     public static final String VOLUME_SELECTOR_PATTERN = "^(" +
-            RoundRobinCapacitySelector.NAME + "|" +
             MostFreePercentCapacitySelector.NAME + "|" +
             MostFreeCapacitySelector.NAME + "|" +
+            RoundRobinCapacitySelector.NAME + "|" +
             RandomCapacitySelector.NAME + "|" +
-            RoundRobinIgnoreLeastFreePercentCapacitySelector.NAME + "|" +
             RoundRobinIgnoreLeastFreeCapacitySelector.NAME + "|" +
+            RoundRobinIgnoreLeastFreePercentCapacitySelector.NAME + "|" +
             RoundRobinCapacitySelector.NAME + "|" +
             WeightedFreePercentRandomCapacitySelector.NAME + "|" +
             WeightedFreeRandomCapacitySelector.NAME + ")$";

@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
 
@@ -348,6 +349,48 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
                 return OptionalDouble.empty();
             }
         }
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final IndexVolume that = (IndexVolume) o;
+        return Objects.equals(id, that.id) && Objects.equals(version,
+                that.version) && Objects.equals(createTimeMs, that.createTimeMs) && Objects.equals(
+                createUser,
+                that.createUser) && Objects.equals(updateTimeMs, that.updateTimeMs) && Objects.equals(
+                updateUser,
+                that.updateUser) && Objects.equals(path, that.path) && Objects.equals(nodeName,
+                that.nodeName) && state == that.state && Objects.equals(bytesLimit,
+                that.bytesLimit) && Objects.equals(bytesUsed, that.bytesUsed) && Objects.equals(
+                bytesFree,
+                that.bytesFree) && Objects.equals(bytesTotal, that.bytesTotal) && Objects.equals(
+                statusMs,
+                that.statusMs) && Objects.equals(indexVolumeGroupId, that.indexVolumeGroupId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id,
+                version,
+                createTimeMs,
+                createUser,
+                updateTimeMs,
+                updateUser,
+                path,
+                nodeName,
+                state,
+                bytesLimit,
+                bytesUsed,
+                bytesFree,
+                bytesTotal,
+                statusMs,
+                indexVolumeGroupId);
     }
 
     public enum VolumeUseState implements HasDisplayValue, HasPrimitiveValue {

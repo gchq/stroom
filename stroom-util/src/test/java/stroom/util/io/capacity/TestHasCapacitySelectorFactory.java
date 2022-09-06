@@ -2,9 +2,15 @@ package stroom.util.io.capacity;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
+@Execution(ExecutionMode.CONCURRENT)
 class TestHasCapacitySelectorFactory {
 
     @Test
@@ -65,5 +71,24 @@ class TestHasCapacitySelectorFactory {
                 .isNotNull();
         Assertions.assertThat(selector.getName())
                 .isEqualTo(HasCapacitySelectorFactory.DEFAULT_SELECTOR_NAME);
+    }
+
+    /**
+     * Make sure the pattern for validating the selector names matches the names of the selectors.
+     * This is because we can't build the validation pattern dynamically so this protects against a
+     * dev changing one without the other.
+     */
+    @Test
+    void testSelectorPattern() {
+
+        String pattern = HasCapacitySelectorFactory.VOLUME_SELECTOR_PATTERN;
+        pattern = pattern.replaceAll("^\\^\\(", "")
+                .replaceAll("\\)\\$$", "");
+        final Set<String> selectorNamesInPattern = new HashSet<>(Arrays.asList(pattern.split("\\|")));
+
+        final Set<String> selectorNames = HasCapacitySelectorFactory.getSelectorNames();
+
+        Assertions.assertThat(selectorNamesInPattern)
+                .containsExactlyInAnyOrderElementsOf(selectorNames);
     }
 }

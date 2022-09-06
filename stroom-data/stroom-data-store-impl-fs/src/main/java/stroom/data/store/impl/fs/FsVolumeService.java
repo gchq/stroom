@@ -205,12 +205,12 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
+        // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
+        ensureDefaultVolumes();
         return doFind(criteria);
     }
 
     private ResultPage<FsVolume> doFind(final FindFsVolumeCriteria criteria) {
-        // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
-        ensureDefaultVolumes();
         return fsVolumeDao.find(criteria);
     }
 

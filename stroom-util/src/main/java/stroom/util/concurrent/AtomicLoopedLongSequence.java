@@ -32,4 +32,13 @@ public class AtomicLoopedLongSequence {
             return newVal;
         });
     }
+
+    @Override
+    public String toString() {
+        return "AtomicLoopedLongSequence{" +
+                "startInc=" + startInc +
+                ", endExc=" + endExc +
+                ", lastVal=" + lastVal +
+                '}';
+    }
 }

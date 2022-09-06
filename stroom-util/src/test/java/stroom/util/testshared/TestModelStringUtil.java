@@ -20,6 +20,8 @@ package stroom.util.testshared;
 import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +29,7 @@ import java.util.Collections;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+@Execution(ExecutionMode.CONCURRENT)
 class TestModelStringUtil {
 
     @Test

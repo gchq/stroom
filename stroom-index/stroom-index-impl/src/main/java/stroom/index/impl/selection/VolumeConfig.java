@@ -101,6 +101,16 @@ public class VolumeConfig extends AbstractConfig {
         return volumeSelectorCache;
     }
 
+    public VolumeConfig withVolumeSelector(final String volumeSelector) {
+        return new VolumeConfig(
+                volumeSelector,
+                createDefaultIndexVolumesOnStart,
+                defaultIndexVolumeGroupName,
+                defaultIndexVolumeGroupPaths,
+                defaultIndexVolumeFilesystemUtilisation,
+                volumeSelectorCache);
+    }
+
     @Override
     public String toString() {
         return "VolumeConfig{" +
