@@ -126,6 +126,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                         .select()
                         .from(FS_VOLUME)
+                        .leftOuterJoin(FS_VOLUME_STATE).on(FS_VOLUME.FK_FS_VOLUME_STATE_ID.eq(FS_VOLUME_STATE.ID))
                         .fetch())
                 .map(this::recordToVolume);
     }

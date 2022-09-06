@@ -76,6 +76,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private static final String LOCK_NAME = "REFRESH_FS_VOLUMES";
     static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
     private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
+    protected static final String TEMP_FILE_PREFIX = "stroomFsVolVal";
 
     private final FsVolumeDao fsVolumeDao;
     private final FsVolumeStateDao fileSystemVolumeStateDao;
@@ -128,25 +129,27 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             String pathString = getAbsVolumePath(fileVolume);
             try {
                 if (pathString != null) {
-                    Path path = Paths.get(pathString);
-                    if (Files.exists(path) && !Files.isDirectory(path)) {
+                    Path volPath = Paths.get(pathString);
+                    if (Files.exists(volPath) && !Files.isDirectory(volPath)) {
                         throw new RuntimeException(LogUtil.message(
-                                "Unable to create volume as path '{}' exists but is not a directory.", path));
-                    } else if (Files.isDirectory(path)) {
-                        final long count = FileUtil.count(path);
+                                "Unable to create volume as path '{}' exists but is not a directory.", volPath));
+                    } else if (Files.isDirectory(volPath)) {
+                        // The validation step creates a temp file to test access, so need to ignore that
+                        final long count = FileUtil.count(volPath, filePath ->
+                                filePath.getFileName().toString().startsWith(TEMP_FILE_PREFIX));
                         if (count > 0) {
                             throw new RuntimeException(
-                                    "Attempt to create volume in a directory that is not empty: " + path);
+                                    "Attempt to create volume in a directory that is not empty: " + volPath);
                         }
                     }
 
-                    Files.createDirectories(path);
+                    Files.createDirectories(volPath);
                     LOGGER.info(() -> LogUtil.message("Creating volume in {}", pathString));
 
                     if (fileVolume.getByteLimit() == null) {
                         //set an arbitrary default limit size of 250MB on each volume to prevent the
                         //filesystem from running out of space, assuming they have 500MB free of course.
-                        getDefaultVolumeLimit(path).ifPresent(fileVolume::setByteLimit);
+                        getDefaultVolumeLimit(volPath).ifPresent(fileVolume::setByteLimit);
                     }
                 }
                 fileVolume.setStatus(FsVolume.VolumeUseStatus.ACTIVE);
@@ -266,7 +269,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 .withColumn(Column.of("Status", FsVolume::getStatus))
                 .withColumn(Column.integer(
                         "Total",
-                                vol -> vol.getTotalCapacityBytes().orElse(-1)))
+                        vol -> vol.getTotalCapacityBytes().orElse(-1)))
                 .withColumn(Column.decimal(
                         "Used %",
                         vol -> vol.getUsedCapacityPercent().orElse(-1),
@@ -772,20 +775,10 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
         // Can't seem to find a good way of checking if we have write perms on the dir so create a file
         // then delete it, after a small delay
+        Path tempFile = null;
         try {
-            final Path tempFile = Files.createTempFile(absPath, "stroomIndexVolumeValidation", null);
+            tempFile = Files.createTempFile(absPath, TEMP_FILE_PREFIX, null);
 
-            // Wait a few secs before we delete the file in case some file systems prevent deletion
-            // immediately after creation
-            final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-            executorService.schedule(() -> {
-                LOGGER.debug("About to delete file {}", tempFile);
-                try {
-                    Files.deleteIfExists(tempFile);
-                } catch (IOException e) {
-                    LOGGER.error("Unable to delete temporary file {}", tempFile, e);
-                }
-            }, 5, TimeUnit.SECONDS);
 
         } catch (IOException e) {
             return ValidationResult.error(LogUtil.message(
@@ -795,6 +788,21 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     absPath,
                     e.getClass().getSimpleName(),
                     e.getMessage()));
+        } finally {
+            // Wait a few secs before we delete the file in case some file systems prevent deletion
+            // immediately after creation
+            if (tempFile != null) {
+                final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+                final Path finalTempFile = tempFile;
+                executorService.schedule(() -> {
+                    LOGGER.debug("About to delete file {}", finalTempFile);
+                    try {
+                        Files.deleteIfExists(finalTempFile);
+                    } catch (IOException e) {
+                        LOGGER.error("Unable to delete temporary file {}", finalTempFile, e);
+                    }
+                }, 5, TimeUnit.SECONDS);
+            }
         }
 
         return ValidationResult.ok();
@@ -823,4 +831,5 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             return createTime;
         }
     }
+
 }

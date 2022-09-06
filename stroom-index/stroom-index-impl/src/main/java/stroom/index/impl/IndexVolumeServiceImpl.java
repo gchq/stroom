@@ -85,6 +85,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     static final String ENTITY_TYPE = "INDEX_VOLUME";
     private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
     private static final String CACHE_NAME = "Index Volume Selector Cache";
+    protected static final String TEMP_FILE_PREFIX = "stroomIdxVolVal";
 
     private final IndexVolumeDao indexVolumeDao;
     private final SecurityContext securityContext;
@@ -169,10 +170,10 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
         if (hasPathChanged) {
             if (validationResult.isOk()) {
-                validationResult = validateForDupPathInOtherGroups(indexVolume);
+                validationResult = validateForDupPathInThisGroup(indexVolume);
             }
             if (validationResult.isOk()) {
-                validationResult = validateForDupPathInThisGroup(indexVolume);
+                validationResult = validateForDupPathInOtherGroups(indexVolume);
             }
             if (validationResult.isOk()) {
                 validationResult = validateVolumePath(indexVolume);
@@ -224,7 +225,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
         if (!dupGroupNames.isEmpty()) {
             return ValidationResult.warning(LogUtil.message("""
-                            Path '{}' on node '{}' is already a member of index volume Group{} {}.
+                            Path '{}' on node '{}' is already a member of index volume Group{} [{}].
                             It is NOT recommended to have the same index volume node and path belonging to \
                             multiple volume groups. Click OK to ignore this and set it anyway.""",
                     indexVolume.getPath(),
@@ -262,7 +263,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         // Can't seem to find a good way of checking if we have write perms on the dir so create a file
         // then delete it, after a small delay
         try {
-            final Path tempFile = Files.createTempFile(path, "stroomIndexVolumeValidation", null);
+            final Path tempFile = Files.createTempFile(path, TEMP_FILE_PREFIX, null);
 
             // Wait a few secs before we delete the file in case some file systems prevent deletion
             // immediately after creation

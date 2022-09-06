@@ -24,33 +24,12 @@ import java.util.List;
 public class RoundRobinCapacitySelector implements HasCapacitySelector {
     public static final String NAME = "RoundRobin";
 
-//    private final AtomicInteger roundRobinPosition = new AtomicInteger();
     private final AtomicLoopedItemSequence atomicLoopedIntegerSequence = AtomicLoopedItemSequence.create();
 
     @Override
     public <T extends HasCapacity> T select(final List<T> list) {
         return atomicLoopedIntegerSequence.getNextItem(list)
                 .orElse(null);
-//        if (list.size() == 0) {
-//            return null;
-//        }
-//        if (list.size() == 1) {
-//            return list.get(0);
-//        }
-//
-//        final int pos = atomicLoopedIntegerSequence.getNext();
-
-        // Ensure the position is limited.
-//        if (pos > 1_000_000) {
-//            synchronized (roundRobinPosition) {
-//                if (roundRobinPosition.get() > 10_000) {
-//                    roundRobinPosition.addAndGet(-10_000);
-//                }
-//            }
-//        }
-
-//        final int index = pos % list.size();
-//        return list.get(index);
     }
 
     @Override
