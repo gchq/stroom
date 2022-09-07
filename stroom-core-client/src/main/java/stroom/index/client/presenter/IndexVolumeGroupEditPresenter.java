@@ -202,15 +202,20 @@ public class IndexVolumeGroupEditPresenter
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
-                        volumeGroup.setName(getView().getName());
-                        try {
-                            doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                    createVolumeGroup(consumer, volumeGroup));
-                        } catch (final RuntimeException e) {
-                            AlertEvent.fireError(
-                                    IndexVolumeGroupEditPresenter.this,
-                                    e.getMessage(),
-                                    null);
+                        if (!Objects.equals(volumeGroup.getName(), getView().getName())) {
+                            volumeGroup.setName(getView().getName());
+                            try {
+                                doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
+                                        createVolumeGroup(consumer, volumeGroup));
+                            } catch (final RuntimeException e) {
+                                AlertEvent.fireError(
+                                        IndexVolumeGroupEditPresenter.this,
+                                        e.getMessage(),
+                                        null);
+                            }
+                        } else {
+                            // Name not changed so nothing to do
+                            consumer.accept(null);
                         }
                     } else {
                         consumer.accept(null);
@@ -253,7 +258,8 @@ public class IndexVolumeGroupEditPresenter
         }
     }
 
-    private void createVolumeGroup(final Consumer<IndexVolumeGroup> consumer, final IndexVolumeGroup volumeGroup) {
+    private void createVolumeGroup(final Consumer<IndexVolumeGroup> consumer,
+                                   final IndexVolumeGroup volumeGroup) {
         final Rest<IndexVolumeGroup> rest = restFactory.create();
         rest
                 .onSuccess(consumer)

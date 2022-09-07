@@ -4,11 +4,14 @@ import stroom.bytebuffer.ByteBufferUtils;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 
+@Execution(ExecutionMode.CONCURRENT)
 class TestUID {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestUID.class);

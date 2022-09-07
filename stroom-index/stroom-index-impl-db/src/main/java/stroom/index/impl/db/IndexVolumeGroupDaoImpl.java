@@ -11,6 +11,8 @@ import stroom.index.shared.IndexVolumeGroup;
 
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
@@ -23,6 +25,8 @@ import javax.inject.Provider;
 import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
 
 class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexVolumeGroupDaoImpl.class);
 
     static final Function<Record, IndexVolumeGroup> RECORD_TO_INDEX_VOLUME_GROUP_MAPPER = record -> {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
@@ -132,6 +136,11 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                     if (indexDoc.getVolumeGroupName() != null &&
                             indexDoc.getVolumeGroupName().equals(currentGroupName)) {
                         indexDoc.setVolumeGroupName(saved.getName());
+                        LOGGER.info("Updating index {} ({}) to change volume group name from {} to {}",
+                                indexDoc.getName(),
+                                indexDoc.getUuid(),
+                                currentGroupName,
+                                saved.getName());
                         indexStore.writeDocument(indexDoc);
                     }
                 }

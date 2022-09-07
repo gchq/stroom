@@ -45,6 +45,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
@@ -79,6 +81,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 // TODO : Need to try and migrate tests from v4 code base to give better coverage
+@Execution(ExecutionMode.CONCURRENT)
 class TestDS3 extends StroomUnitTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDS3.class);

@@ -5,6 +5,8 @@ import io.github.classgraph.ScanResult;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
+@Execution(ExecutionMode.CONCURRENT)
 class TestFunctionFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFunctionFactory.class);
