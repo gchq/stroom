@@ -10,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This listener is registered by service loader using the files like
- * src/test/resources/META-INF/services/org.junit.platform.launcher.TestExecutionListener
+ * This test listener is registered by service loader using the file
+ * stroom-test-common/src/main/resources/META-INF/services/org.junit.platform.launcher.TestExecutionListener
  */
 public class StroomTestExecutionListener implements TestExecutionListener {
 

@@ -101,7 +101,10 @@ public abstract class StroomIntegrationTest implements StroomTest {
         if (CURRENT_TEST_CLASS_THREAD_LOCAL.get() == null) {
             throw new IllegalStateException("Cleanup called without setup. Did setup fail part way through?");
         } else if (cleanupBetweenTests()) {
-            cleanup(securityContext, commonTestControl, testTempDir);
+            cleanup();
+//            cleanup(securityContext, commonTestControl, testTempDir);
+        } else {
+            LOGGER.info("Cleanup not required between tests");
         }
     }
 
@@ -109,13 +112,14 @@ public abstract class StroomIntegrationTest implements StroomTest {
      * Ensure final cleanup even if we aren't clearing between tests.
      */
     @AfterAll
-    public static void finalCleanup() {
+    public static void finalCleanup(final TestInfo testInfo) {
+
         final StroomIntegrationTest stroomIntegrationTest = CURRENT_TEST_CLASS_THREAD_LOCAL.get();
         if (stroomIntegrationTest != null) {
-            LOGGER.info("Final cleanup");
-            cleanup(stroomIntegrationTest.securityContext,
-                    stroomIntegrationTest.commonTestControl,
-                    stroomIntegrationTest.testTempDir);
+            stroomIntegrationTest.info("AfterAll cleanup", testInfo);
+            stroomIntegrationTest.cleanup();
+        } else {
+            LOGGER.info("CURRENT_TEST_CLASS_THREAD_LOCAL is null");
         }
     }
 
@@ -127,20 +131,29 @@ public abstract class StroomIntegrationTest implements StroomTest {
                     .orElse("");
             final String testName = testInfo.getDisplayName();
             final String threadName = Thread.currentThread().getName();
-            final String injectorInstance = NullSafe.get(injector, System::identityHashCode, i -> Integer.toString(i));
+            final long threadId = Thread.currentThread().getId();
+            final String injectorInstance = NullSafe.get(
+                    injector,
+                    System::identityHashCode, i -> Integer.toString(i));
 
-            return LogUtil.message("{} {}.{}, thread: {}, injector: {}, cleanupBetweenTests: {}",
-                    message, className, testName, threadName, injectorInstance, cleanupBetweenTests());
+            return LogUtil.message("{} {}.{}, test instance: {}, thread: '{}' ({}), " +
+                            "injector instance: {}, cleanupBetweenTests: {}",
+                    message,
+                    className,
+                    testName,
+                    System.identityHashCode(this),
+                    threadName,
+                    threadId,
+                    injectorInstance,
+                    cleanupBetweenTests());
         });
     }
 
-    private static void cleanup(final SecurityContext securityContext,
-                                final CommonTestControl commonTestControl,
-                                final Path tempDir) {
+    private void cleanup() {
         securityContext.asProcessingUser(commonTestControl::cleanup);
         // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
-        LOGGER.info("Deleting contents of {}", tempDir);
-        FileUtil.deleteContents(tempDir);
+        LOGGER.info("Deleting contents of {}", testTempDir);
+        FileUtil.deleteContents(testTempDir);
         CURRENT_TEST_CLASS_THREAD_LOCAL.set(null);
         LOGGER.debug("Set CURRENT_TEST_CLASS_THREAD_LOCAL to null");
     }

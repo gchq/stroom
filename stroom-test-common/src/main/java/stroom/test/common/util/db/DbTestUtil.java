@@ -278,16 +278,26 @@ public class DbTestUtil {
             THREAD_LOCAL_DB_NAME.set(dbName);
             LOGGER.info(LogUtil.inBox("Creating test database: {}", dbName));
 
+            // ********************************************************************************
+            // NOTE: the test database created here for this thread will be dropped once
+            // all tests (on this JVM) have finished. See:
+            // stroom.test.common.util.test.StroomTestExecutionListener
+            // See also stroom.test.DatabaseCommonTestControl#main for a manual way of deleting
+            // all these test DBs.
+            // ********************************************************************************
+
             try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
                     connectionProps)) {
                 try (final Statement statement = connection.createStatement()) {
-                    int result = 0;
-                    result = statement.executeUpdate("CREATE DATABASE `" + dbName +
+
+                    statement.executeUpdate("CREATE DATABASE `" + dbName +
                             "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
-                    result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
+
+                    statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
                             connectionConfig.getUser() + "'@'%' IDENTIFIED BY '" +
                             connectionConfig.getPassword() + "';");
-                    result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
+
+                    statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
                             connectionConfig.getUser() + "'@'%' WITH GRANT OPTION;");
                 }
             } catch (final SQLException e) {

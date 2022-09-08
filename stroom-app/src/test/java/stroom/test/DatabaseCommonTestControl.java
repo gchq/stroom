@@ -66,7 +66,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
 //    private static boolean needsCleanup;
     // Thread local for parallel test running
-    private static final ThreadLocal<Boolean> NEEDS_CLEAN_UP_THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<Boolean> NEEDS_CLEAN_UP_THREAD_LOCAL = ThreadLocal.withInitial(() -> false);
 
     @Inject
     DatabaseCommonTestControl(final ContentImportService contentImportService,
@@ -91,14 +91,15 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.fsVolumeService = fsVolumeService;
         this.pathCreator = pathCreator;
         this.indexVolumeService = indexVolumeService;
-        NEEDS_CLEAN_UP_THREAD_LOCAL.set(false);
     }
 
     @Override
     public void setup(final Path tempDir) {
         LOGGER.debug("temp dir: {}", tempDir);
         final Instant startTime = Instant.now();
-        LOGGER.info(() -> LogUtil.inSeparatorLine("Starting setup"));
+        LOGGER.info(() -> LogUtil.inSeparatorLine("Starting setup of thread '{}' ({})",
+                Thread.currentThread().getName(),
+                Thread.currentThread().getId()));
 
         Path fsVolDir;
         Path indexVolDir;
@@ -131,16 +132,19 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         processorTaskManager.startup();
         // Only allow tasks to be created synchronously for the purposes of testing.
         processorTaskManager.setAllowAsyncTaskCreation(false);
+
+        LOGGER.info("Setting NEEDS_CLEAN_UP_THREAD_LOCAL to true");
+        NEEDS_CLEAN_UP_THREAD_LOCAL.set(true);
+
         LOGGER.info(() -> LogUtil.inSeparatorLine(
                 "Test environment setup completed in {}", Duration.between(startTime, Instant.now())));
-
-        NEEDS_CLEAN_UP_THREAD_LOCAL.set(true);
     }
 
     @Override
     public void cleanup() {
         if (NEEDS_CLEAN_UP_THREAD_LOCAL.get()) {
             clear();
+            LOGGER.info("Setting NEEDS_CLEAN_UP_THREAD_LOCAL to false");
             NEEDS_CLEAN_UP_THREAD_LOCAL.set(false);
         } else {
             LOGGER.info("Teardown not required");
@@ -153,7 +157,9 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     @Override
     public void clear() {
         final Instant startTime = Instant.now();
-        LOGGER.info(() -> LogUtil.inSeparatorLine("Starting teardown"));
+        LOGGER.info(() -> LogUtil.inSeparatorLine("Starting teardown of thread '{}' ({})",
+                Thread.currentThread().getName(),
+                Thread.currentThread().getId()));
         // Make sure we are no longer creating tasks.
         processorTaskManager.shutdown();
 
