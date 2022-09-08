@@ -126,7 +126,7 @@ public class DbTestUtil {
         if (!DB_NAME_PATTERN.asMatchPredicate().test(dbName)) {
             throw new RuntimeException(LogUtil.message("dbName '{}' does not match pattern {}",
                     dbName, DB_NAME_PATTERN));
-        };
+        }
 
         DB_NAMES_IN_USE.add(dbName);
         return dbName;
