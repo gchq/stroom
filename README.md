@@ -25,7 +25,7 @@ To run Stroom in docker do the following:
 
 ``` bash
 # Download and extract Stroom v7.0 stack
-bash <(curl -s https://gchq.github.io/stroom-resources/7.0/get_stroom.sh)
+bash <(curl -s https://gchq.github.io/stroom-resources/v7.0/get_stroom.sh)
 
 # Navigate into the new stack directory
 cd stroom_core_test/stroom_core_test*
