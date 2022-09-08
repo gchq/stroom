@@ -25,6 +25,7 @@ import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.processor.impl.ProcessorTaskManager;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -177,5 +178,14 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     @Override
     public void createRequiredXMLSchemas() {
         contentImportService.importStandardPacks();
+    }
+
+    /**
+     * Useful if you want to manually delete all the test databases that may have been
+     * left by test runs. Tests should clean up after themselves, but exceptions may stop
+     * this happening.
+     */
+    public static void main(String[] args) {
+        DbTestUtil.dropAllTestDatabases();
     }
 }

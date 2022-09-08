@@ -17,6 +17,7 @@
 package stroom.test;
 
 import stroom.security.api.SecurityContext;
+import stroom.test.common.util.TestClassLogger;
 import stroom.test.common.util.test.StroomTest;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
@@ -36,7 +37,7 @@ import javax.inject.Inject;
 
 /**
  * This class should be common to all component and integration tests that need a DB.
- *
+ * <p>
  * Each test class gets a new Guice {@link Injector} instance.
  * Each test thread get a new empty DB with a randomly generated name, which ensures
  * test isolation when running tests concurrently. The DB tables and in-memory state
@@ -84,6 +85,9 @@ public abstract class StroomIntegrationTest implements StroomTest {
             LOGGER.info("Previous test class on this thread: {}",
                     CURRENT_TEST_CLASS_THREAD_LOCAL.get().getClass().getSimpleName());
         }
+
+        // Record the test class and method
+        TestClassLogger.logTestClasses(testInfo);
     }
 
     /**
@@ -135,6 +139,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
                                 final Path tempDir) {
         securityContext.asProcessingUser(commonTestControl::cleanup);
         // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
+        LOGGER.info("Deleting contents of {}", tempDir);
         FileUtil.deleteContents(tempDir);
         CURRENT_TEST_CLASS_THREAD_LOCAL.set(null);
         LOGGER.debug("Set CURRENT_TEST_CLASS_THREAD_LOCAL to null");

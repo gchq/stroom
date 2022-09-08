@@ -38,14 +38,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -59,17 +62,21 @@ public class DbTestUtil {
     private static final String USE_EMBEDDED_MYSQL_PROP_NAME = "useEmbeddedMySql";
     private static final String EMBEDDED_MYSQL_DB_PASSWORD = "test";
     private static final String EMBEDDED_MYSQL_DB_USERNAME = "test";
-    private static final String FIND_TABLES = "" +
-            "SELECT TABLE_NAME " +
-            "FROM INFORMATION_SCHEMA.TABLES " +
-            "WHERE TABLE_SCHEMA = database() " +
-            "AND TABLE_TYPE LIKE '%BASE TABLE%' " +
-            "AND TABLE_NAME NOT LIKE '%schema%';";
-    private static final ThreadLocal<AbstractDbConfig> THREAD_LOCAL = new ThreadLocal<>();
+    private static final String FIND_TABLES = """
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_TYPE LIKE '%BASE TABLE%'
+            AND TABLE_NAME NOT LIKE '%schema%'""";
+    private static final ThreadLocal<AbstractDbConfig> THREAD_LOCAL_DB_CONFIG = new ThreadLocal<>();
+    private static final ThreadLocal<String> THREAD_LOCAL_DB_NAME = new ThreadLocal<>();
     private static final ThreadLocal<Set<DataSource>> LOCAL_DATA_SOURCES = new ThreadLocal<>();
     private static final ConcurrentMap<DataSourceKey, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
+    private static final Set<String> DB_NAMES_IN_USE = new ConcurrentSkipListSet<>();
     private static volatile EmbeddedMysql EMBEDDED_MYSQL;
     private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
+    // See createTestDbName
+    private static final Pattern DB_NAME_PATTERN = Pattern.compile("^test_[0-9]+_[0-9]+_[0-9a-zA-Z]+$");
 
     private DbTestUtil() {
     }
@@ -89,12 +96,40 @@ public class DbTestUtil {
                 });
     }
 
+    public static String getGradleWorker() {
+        // This is the name of the forked gradle worker, i.e. a name for the jvm
+        return Objects.requireNonNullElse(
+                System.getProperty("org.gradle.test.worker"),
+                "0");
+    }
+
     private static String createTestDbName() {
-        return String.join("",
-                "test_",
+        final String uuid = UUID.randomUUID()
+                .toString()
+                .toLowerCase()
+                .replace("-", "");
+
+        // Include the gradle worker id (unique to the JVM) and the thread ID to ensure there
+        // is no clash between JVMs or threads
+        String dbName = String.join("_",
+                "test",
+                getGradleWorker(),
                 Long.toString(Thread.currentThread().getId()),
-                "_",
-                UUID.randomUUID().toString().replace("-", ""));
+                uuid);
+
+        // Truncate to max 64 chars to ensure we don't blow db name limit
+        if (dbName.length() > 64) {
+            dbName = dbName.substring(0, 64);
+        }
+
+        // We use the pattern to drop dbs after all tests have run, so ensure the name matches the pattern now.
+        if (!DB_NAME_PATTERN.asMatchPredicate().test(dbName)) {
+            throw new RuntimeException(LogUtil.message("dbName '{}' does not match pattern {}",
+                    dbName, DB_NAME_PATTERN));
+        };
+
+        DB_NAMES_IN_USE.add(dbName);
+        return dbName;
     }
 
     public static DataSource createTestDataSource() {
@@ -116,57 +151,121 @@ public class DbTestUtil {
                 .orElseGet(valueSupplier);
     }
 
+    public static void dropUnusedTestDatabases() {
+        final ConnectionConfig connectionConfig = createConnectionConfig(new CommonDbConfig());
+        final ConnectionConfig rootConnectionConfig = createRootConnectionConfig(connectionConfig);
+
+        // Create new db.
+        final Properties connectionProps = new Properties();
+        connectionProps.put("user", rootConnectionConfig.getUser());
+        connectionProps.put("password", rootConnectionConfig.getPassword());
+
+        // Only match dbs with this gradle worker in the name
+        final Pattern dbNamePatternThisWorker = Pattern.compile(
+                "^test_" + Pattern.quote(getGradleWorker()) + "_.*$");
+        LOGGER.info("Dropping databases matching pattern '{}'", dbNamePatternThisWorker);
+
+//        "^test_" + Pattern.quote(getGradleWorker()) + "_[0-9]+_[0-9a-zA-Z]+$");
+        final Predicate<String> dbNameMatchPredicate = dbNamePatternThisWorker.asMatchPredicate();
+
+        try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
+                connectionProps)) {
+            try (final Statement statement = connection.createStatement()) {
+                final ResultSet resultSet = statement.executeQuery("SHOW DATABASES;");
+                final List<String> dbNames = new ArrayList<>();
+                while (resultSet.next()) {
+                    final String dbName = resultSet.getString(1);
+                    if (dbNameMatchPredicate.test(dbName)) {
+                        dbNames.add(dbName);
+                    }
+                }
+
+                for (String dbName : dbNames) {
+                    LOGGER.info("Dropping test database {}", dbName);
+                    statement.executeUpdate("DROP DATABASE " + dbName + ";");
+                }
+            }
+        } catch (final SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    public static void dropAllTestDatabases() {
+        final ConnectionConfig connectionConfig = createConnectionConfig(new CommonDbConfig());
+        final ConnectionConfig rootConnectionConfig = createRootConnectionConfig(connectionConfig);
+
+        // Create new db.
+        final Properties connectionProps = new Properties();
+        connectionProps.put("user", rootConnectionConfig.getUser());
+        connectionProps.put("password", rootConnectionConfig.getPassword());
+
+        final Predicate<String> dbNameMatchPredicate = DB_NAME_PATTERN.asMatchPredicate();
+
+        try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
+                connectionProps)) {
+            try (final Statement statement = connection.createStatement()) {
+                final ResultSet resultSet = statement.executeQuery("SHOW DATABASES;");
+                final List<String> dbNames = new ArrayList<>();
+                while (resultSet.next()) {
+                    final String dbName = resultSet.getString(1);
+                    if (dbNameMatchPredicate.test(dbName)) {
+                        dbNames.add(dbName);
+                    }
+                }
+
+                for (String dbName : dbNames) {
+                    LOGGER.info("Dropping test database {}", dbName);
+                    statement.executeUpdate("DROP DATABASE " + dbName + ";");
+                }
+            }
+        } catch (final SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Drop the database used by the current thread
+     */
+    public static void dropThreadTestDatabase() {
+        final String dbName = THREAD_LOCAL_DB_NAME.get();
+        if (dbName != null) {
+            final ConnectionConfig connectionConfig = createConnectionConfig(new CommonDbConfig());
+            final ConnectionConfig rootConnectionConfig = createRootConnectionConfig(connectionConfig);
+
+            // Create new db.
+            final Properties connectionProps = new Properties();
+            connectionProps.put("user", rootConnectionConfig.getUser());
+            connectionProps.put("password", rootConnectionConfig.getPassword());
+
+            try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
+                    connectionProps)) {
+                try (final Statement statement = connection.createStatement()) {
+                    LOGGER.info("Dropping test database {}", dbName);
+                    statement.executeUpdate("DROP DATABASE " + dbName + ";");
+                    DB_NAMES_IN_USE.remove(dbName);
+                }
+            } catch (final SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        } else {
+            LOGGER.info("Thread has no database to drop");
+        }
+    }
+
     public static DataSource createTestDataSource(final AbstractDbConfig dbConfig,
                                                   final String name,
                                                   final boolean unique) {
         // See if we have a local data source.
-        AbstractDbConfig testDbConfig = THREAD_LOCAL.get();
+        AbstractDbConfig testDbConfig = THREAD_LOCAL_DB_CONFIG.get();
+        boolean createJunitLogTable = false;
         if (testDbConfig == null) {
+            createJunitLogTable = true;
             // Create a merged config using the common db config as a base.
-            ConnectionConfig connectionConfig = dbConfig.getConnectionConfig();
+            ConnectionConfig connectionConfig;
             ConnectionConfig rootConnectionConfig;
 
-            if (isUseEmbeddedDb()) {
-                connectionConfig = DbTestUtil.createEmbeddedMySqlInstance();
-
-                rootConnectionConfig = connectionConfig
-                        .copy()
-                        .user("root")
-                        .password("")
-                        .build();
-
-            } else {
-                final DbUrl dbUrl = DbUrl.parse(connectionConfig.getUrl());
-
-                // Allow the db conn details to be overridden with env vars, e.g. when we want to run tests
-                // from within a container so we need a different host to localhost
-                final String effectiveHost = getValueOrOverride(
-                        "STROOM_JDBC_DRIVER_HOST",
-                        "JDBC hostname",
-                        dbUrl::getHost,
-                        Function.identity());
-                final int effectivePort = getValueOrOverride(
-                        "STROOM_JDBC_DRIVER_PORT",
-                        "JDBC port",
-                        dbUrl::getPort,
-                        Integer::parseInt);
-
-                final String url = DbUrl
-                        .builder()
-                        .scheme(dbUrl.getScheme())
-                        .host(effectiveHost)
-                        .port(effectivePort)
-                        .query(dbUrl.getQuery())
-                        .build()
-                        .toString();
-
-                rootConnectionConfig = connectionConfig
-                        .copy()
-                        .url(url)
-                        .user("root")
-                        .password("my-secret-pw")
-                        .build();
-            }
+            connectionConfig = createConnectionConfig(dbConfig);
+            rootConnectionConfig = createRootConnectionConfig(connectionConfig);
 
             // Create new db.
             final Properties connectionProps = new Properties();
@@ -176,7 +275,8 @@ public class DbTestUtil {
             LOGGER.info("Connecting to DB as root connection with URL: {}", rootConnectionConfig.getUrl());
 
             final String dbName = DbTestUtil.createTestDbName();
-            LOGGER.info(LogUtil.inBox("Using random test database name: {}", dbName));
+            THREAD_LOCAL_DB_NAME.set(dbName);
+            LOGGER.info(LogUtil.inBox("Creating test database: {}", dbName));
 
             try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
                     connectionProps)) {
@@ -219,16 +319,10 @@ public class DbTestUtil {
                 }
             };
 
-            THREAD_LOCAL.set(testDbConfig);
+            THREAD_LOCAL_DB_CONFIG.set(testDbConfig);
         }
 
-        // Get a data source from a map to limit connections where connection details are common.
-        final DataSourceKey dataSourceKey = new DataSourceKey(testDbConfig, name, unique);
-        final DataSource dataSource = DATA_SOURCE_MAP.computeIfAbsent(dataSourceKey, k -> {
-            final HikariConfig hikariConfig = HikariUtil.createConfig(
-                    k.getConfig(), null, null, null);
-            return new HikariDataSource(hikariConfig);
-        });
+        final DataSource dataSource = createDataSource(name, unique, testDbConfig);
 
         Set<DataSource> dataSources = LOCAL_DATA_SOURCES.get();
         if (dataSources == null) {
@@ -238,6 +332,72 @@ public class DbTestUtil {
         dataSources.add(dataSource);
 
         return dataSource;
+    }
+
+    private static DataSource createDataSource(final String name,
+                                               final boolean unique,
+                                               final AbstractDbConfig testDbConfig) {
+        // Get a data source from a map to limit connections where connection details are common.
+        final DataSourceKey dataSourceKey = new DataSourceKey(testDbConfig, name, unique);
+        final DataSource dataSource = DATA_SOURCE_MAP.computeIfAbsent(dataSourceKey, k -> {
+            final HikariConfig hikariConfig = HikariUtil.createConfig(
+                    k.getConfig(), null, null, null);
+            return new HikariDataSource(hikariConfig);
+        });
+        return dataSource;
+    }
+
+    private static ConnectionConfig createRootConnectionConfig(final ConnectionConfig connectionConfig) {
+        ConnectionConfig rootConnectionConfig;
+        if (isUseEmbeddedDb()) {
+            rootConnectionConfig = connectionConfig
+                    .copy()
+                    .user("root")
+                    .password("")
+                    .build();
+        } else {
+            final DbUrl dbUrl = DbUrl.parse(connectionConfig.getUrl());
+
+            // Allow the db conn details to be overridden with env vars, e.g. when we want to run tests
+            // from within a container so we need a different host to localhost
+            final String effectiveHost = getValueOrOverride(
+                    "STROOM_JDBC_DRIVER_HOST",
+                    "JDBC hostname",
+                    dbUrl::getHost,
+                    Function.identity());
+            final int effectivePort = getValueOrOverride(
+                    "STROOM_JDBC_DRIVER_PORT",
+                    "JDBC port",
+                    dbUrl::getPort,
+                    Integer::parseInt);
+
+            final String url = DbUrl
+                    .builder()
+                    .scheme(dbUrl.getScheme())
+                    .host(effectiveHost)
+                    .port(effectivePort)
+                    .query(dbUrl.getQuery())
+                    .build()
+                    .toString();
+            rootConnectionConfig = connectionConfig
+                    .copy()
+                    .url(url)
+                    .user("root")
+                    .password("my-secret-pw")
+                    .build();
+        }
+        return rootConnectionConfig;
+    }
+
+    private static ConnectionConfig createConnectionConfig(final AbstractDbConfig dbConfig) {
+        ConnectionConfig connectionConfig;
+        if (isUseEmbeddedDb()) {
+            connectionConfig = DbTestUtil.createEmbeddedMySqlInstance();
+        } else {
+            // Create a merged config using the common db config as a base.
+            connectionConfig = dbConfig.getConnectionConfig();
+        }
+        return connectionConfig;
     }
 
     private static boolean isUseEmbeddedDb() {
@@ -423,6 +583,7 @@ public class DbTestUtil {
         if (dataSources != null) {
             for (final DataSource dataSource : dataSources) {
                 // Clear the database.
+                LOGGER.info("Clearing all tables in DB {}", THREAD_LOCAL_DB_NAME.get());
                 try (final Connection connection = dataSource.getConnection()) {
                     DbTestUtil.clearAllTables(connection);
                 } catch (final SQLException e) {
