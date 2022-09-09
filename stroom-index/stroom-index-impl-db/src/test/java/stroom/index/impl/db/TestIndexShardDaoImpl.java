@@ -141,7 +141,9 @@ class TestIndexShardDaoImpl {
                 .isEqualTo(nowMs);
     }
 
-    private IndexVolume createVolume(final String nodeName, final String path, final IndexVolumeGroup indexVolumeGroup) {
+    private IndexVolume createVolume(final String nodeName,
+                                     final String path,
+                                     final IndexVolumeGroup indexVolumeGroup) {
         final IndexVolume indexVolume = new IndexVolume();
         indexVolume.setNodeName(nodeName);
         indexVolume.setPath(path);
