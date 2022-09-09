@@ -3,15 +3,11 @@ package stroom.util.io.capacity;
 import stroom.util.shared.HasCapacity;
 import stroom.util.shared.HasCapacityInfo;
 
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-
 import java.util.List;
 import java.util.OptionalLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Execution(ExecutionMode.CONCURRENT)
 public class AbstractHasCapacitySelectorTest {
 
     protected static final String PATH_1 = "path1";

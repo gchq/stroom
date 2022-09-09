@@ -25,8 +25,6 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +56,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
-@Execution(ExecutionMode.CONCURRENT)
 class TestRestResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRestResources.class);

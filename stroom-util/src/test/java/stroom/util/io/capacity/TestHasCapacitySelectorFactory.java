@@ -2,15 +2,12 @@ package stroom.util.io.capacity;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-@Execution(ExecutionMode.CONCURRENT)
 class TestHasCapacitySelectorFactory {
 
     @Test

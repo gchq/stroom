@@ -57,7 +57,6 @@ import java.util.stream.Stream;
  * 6. Build complex JSON annotated objects and perform serialisation testing.
  * 7. Ensure all JSON classes that use Map have a string key
  */
-@Execution(ExecutionMode.CONCURRENT)
 class TestJsonSerialisation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestJsonSerialisation.class);

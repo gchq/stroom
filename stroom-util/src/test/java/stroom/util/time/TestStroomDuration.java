@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -14,7 +12,6 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Execution(ExecutionMode.CONCURRENT)
 class TestStroomDuration {
 
     @Test

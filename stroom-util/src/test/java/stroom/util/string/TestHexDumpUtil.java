@@ -3,8 +3,6 @@ package stroom.util.string;
 import com.google.common.base.Strings;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +11,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-@Execution(ExecutionMode.CONCURRENT)
 class TestHexDumpUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHexDumpUtil.class);

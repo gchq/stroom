@@ -12,8 +12,6 @@ import org.jooq.impl.DSL;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +23,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Execution(ExecutionMode.CONCURRENT)
 class TestCommonExpressionMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestCommonExpressionMapper.class);
