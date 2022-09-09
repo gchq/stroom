@@ -184,7 +184,12 @@ public class IndexVolumeGroupEditPresenter
             opening = true;
             final ExpressionOperator expression = ExpressionUtil.equals(IndexVolumeFields.GROUP_ID,
                     volumeGroup.getId());
-            volumeStatusListPresenter.init(new ExpressionCriteria(expression), volumes ->
+            final ExpressionCriteria expressionCriteria = new ExpressionCriteria(expression);
+            // TODO: 09/09/2022 Need to implement user defined sorting
+            expressionCriteria.setSort(IndexVolumeFields.NODE_NAME.getName());
+            expressionCriteria.setSort(IndexVolumeFields.PATH.getName());
+
+            volumeStatusListPresenter.init(expressionCriteria, volumes ->
                     open(volumeGroup, title, consumer));
         }
     }
