@@ -26,4 +26,6 @@ public class PoolKey<K> {
     public K getKey() {
         return key;
     }
+
+    // Lack of hashcode is intentional so object instance id is used
 }

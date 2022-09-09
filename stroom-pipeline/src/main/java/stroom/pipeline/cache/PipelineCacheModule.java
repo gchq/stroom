@@ -45,6 +45,7 @@ public class PipelineCacheModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(ParserFactoryPoolImpl.class)
-                .addBinding(SchemaPoolImpl.class);
+                .addBinding(SchemaPoolImpl.class)
+                .addBinding(XsltPoolImpl.class);
     }
 }

@@ -22,6 +22,7 @@ import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
+import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
@@ -35,7 +36,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@EntityEventHandler(type = XmlSchemaDoc.DOCUMENT_TYPE)
+@EntityEventHandler(
+        type = XmlSchemaDoc.DOCUMENT_TYPE,
+        action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
         implements SchemaPool, EntityEvent.Handler {
 

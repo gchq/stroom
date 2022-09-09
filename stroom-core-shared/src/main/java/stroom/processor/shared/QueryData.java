@@ -18,6 +18,7 @@ package stroom.processor.shared;
 
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.util.shared.StringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -53,7 +54,7 @@ public class QueryData implements Serializable {
                      @JsonProperty("limits") final Limits limits) {
         this.dataSource = dataSource;
         this.expression = expression;
-        this.params = params;
+        this.params = StringUtil.blankAsNull(params);
         this.limits = limits;
     }
 
@@ -81,7 +82,7 @@ public class QueryData implements Serializable {
     }
 
     public void setParams(final String params) {
-        this.params = params;
+        this.params = StringUtil.blankAsNull(params);
     }
 
     @XmlElement

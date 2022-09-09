@@ -4,6 +4,7 @@
 package stroom.data.store.impl.fs.db.jooq;
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,6 +14,7 @@ import org.jooq.impl.SchemaImpl;
 
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
 import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
@@ -40,6 +42,11 @@ public class Stroom extends SchemaImpl {
      * The table <code>stroom.fs_meta_volume</code>.
      */
     public final FsMetaVolume FS_META_VOLUME = FsMetaVolume.FS_META_VOLUME;
+
+    /**
+     * The table <code>stroom.fs_orphaned_meta_tracker</code>.
+     */
+    public final FsOrphanedMetaTracker FS_ORPHANED_META_TRACKER = stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER;
 
     /**
      * The table <code>stroom.fs_type_path</code>.
@@ -74,6 +81,7 @@ public class Stroom extends SchemaImpl {
         return Arrays.asList(
             FsFeedPath.FS_FEED_PATH,
             FsMetaVolume.FS_META_VOLUME,
+            FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER,
             FsTypePath.FS_TYPE_PATH,
             FsVolume.FS_VOLUME,
             FsVolumeState.FS_VOLUME_STATE
