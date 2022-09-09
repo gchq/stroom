@@ -273,6 +273,8 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                 field = INDEX_VOLUME.ID;
             } else if (IndexVolumeFields.FIELD_NODE_NAME.equals(sort.getId())) {
                 field = INDEX_VOLUME.NODE_NAME;
+            } else if (IndexVolumeFields.FIELD_PATH.equals(sort.getId())) {
+                field = INDEX_VOLUME.PATH;
             } else {
                 field = INDEX_VOLUME.ID;
             }

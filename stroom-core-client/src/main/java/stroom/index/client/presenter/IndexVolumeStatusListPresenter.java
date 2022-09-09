@@ -26,6 +26,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.util.client.BorderUtil;
 import stroom.util.shared.ModelStringUtil;
@@ -68,15 +69,6 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
      * Add the columns to the table.
      */
     private void initTableColumns() {
-        // Path.
-        final Column<IndexVolume, String> volumeColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                return volume.getPath();
-            }
-        };
-        getView().addResizableColumn(volumeColumn, "Path", 300);
-
         // Node.
         final Column<IndexVolume, String> nodeColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
@@ -84,7 +76,16 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 return volume.getNodeName();
             }
         };
-        getView().addResizableColumn(nodeColumn, "Node", 90);
+
+        getView().addResizableColumn(nodeColumn, IndexVolumeFields.FIELD_NODE_NAME, 90);
+        // Path.
+        final Column<IndexVolume, String> volumeColumn = new Column<IndexVolume, String>(new TextCell()) {
+            @Override
+            public String getValue(final IndexVolume volume) {
+                return volume.getPath();
+            }
+        };
+        getView().addResizableColumn(volumeColumn, IndexVolumeFields.FIELD_PATH, 300);
 
         // State.
         final Column<IndexVolume, String> streamStatusColumn = new Column<IndexVolume, String>(new TextCell()) {

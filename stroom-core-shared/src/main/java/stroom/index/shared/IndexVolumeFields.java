@@ -15,7 +15,7 @@ public class IndexVolumeFields {
     public static final String INDEX_VOLUME_TYPE = "IndexVolume";
     public static final String FIELD_ID = "Id";
     public static final String FIELD_GROUP_ID = "Group Id";
-    public static final String FIELD_NODE_NAME = "Node Name";
+    public static final String FIELD_NODE_NAME = "Node";
     public static final String FIELD_PATH = "Path";
 
     private static final List<AbstractField> FIELDS = new ArrayList<>();
