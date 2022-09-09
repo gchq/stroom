@@ -1,6 +1,7 @@
 package stroom.util.io.capacity;
 
 import stroom.util.shared.HasCapacity;
+import stroom.util.shared.HasCapacityInfo;
 
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -91,24 +92,30 @@ public class AbstractHasCapacitySelectorTest {
         }
 
         @Override
-        public OptionalLong getCapacityUsedBytes() {
-            return used != null
-                    ? OptionalLong.of(used)
-                    : OptionalLong.empty();
-        }
+        public HasCapacityInfo getCapacityInfo() {
+            return new HasCapacityInfo() {
 
-        @Override
-        public OptionalLong getCapacityLimitBytes() {
-            return limit != null
-                    ? OptionalLong.of(limit)
-                    : OptionalLong.empty();
-        }
+                @Override
+                public OptionalLong getCapacityUsedBytes() {
+                    return used != null
+                            ? OptionalLong.of(used)
+                            : OptionalLong.empty();
+                }
 
-        @Override
-        public OptionalLong getTotalCapacityBytes() {
-            return total != null
-                    ? OptionalLong.of(total)
-                    : OptionalLong.empty();
+                @Override
+                public OptionalLong getCapacityLimitBytes() {
+                    return limit != null
+                            ? OptionalLong.of(limit)
+                            : OptionalLong.empty();
+                }
+
+                @Override
+                public OptionalLong getTotalCapacityBytes() {
+                    return total != null
+                            ? OptionalLong.of(total)
+                            : OptionalLong.empty();
+                }
+            };
         }
     }
 }

@@ -30,7 +30,7 @@ public class VolumeListUtil {
             return Collections.emptyList();
         } else {
             return list.stream()
-                    .filter(indexVolume -> !indexVolume.isFull())
+                    .filter(indexVolume -> !indexVolume.getCapacityInfo().isFull())
                     .collect(Collectors.toList());
         }
     }

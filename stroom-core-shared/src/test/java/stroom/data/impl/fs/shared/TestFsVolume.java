@@ -29,12 +29,11 @@ public class TestFsVolume {
                     "bytesTotal":259874553856,
                     "updateTimeMs":1572597679531,
                     "percentUsed":7
-                },
-                "full":false
+                }
             }""";
 
     /**
-     * Use this method to diagnose why your JSON-to-POJO bindings are failing.j
+     * Use this method to diagnose why your JSON-to-POJO bindings are failing.
      */
     @Test
     public void testJsonBindings() throws IOException {

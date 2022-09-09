@@ -30,7 +30,7 @@ public class WeightedFreePercentRandomCapacitySelector implements HasCapacitySel
     @Override
     public <T extends HasCapacity> T select(final List<T> list) {
         final List<T> filtered = list.stream()
-                .filter(HasCapacity::hasValidState)
+                .filter(hasCapacity -> hasCapacity.getCapacityInfo().hasValidState())
                 .collect(Collectors.toList());
 
         if (filtered.size() == 0) {
@@ -57,7 +57,8 @@ public class WeightedFreePercentRandomCapacitySelector implements HasCapacitySel
 
         double totalFractionFree = 0;
         for (final T item : list) {
-            final double fractionFree = item.getFreeCapacityPercent().getAsDouble() / 100;
+            @SuppressWarnings("OptionalGetWithoutIsPresent") // hasValidState has been checked
+            final double fractionFree = item.getCapacityInfo().getFreeCapacityPercent().getAsDouble() / 100;
 
             totalFractionFree += fractionFree;
         }
@@ -66,7 +67,8 @@ public class WeightedFreePercentRandomCapacitySelector implements HasCapacitySel
         final double[] thresholds = new double[list.size()];
         int i = 0;
         for (final T item : list) {
-            final double fractionFree = item.getFreeCapacityPercent().getAsDouble() / 100;
+            @SuppressWarnings("OptionalGetWithoutIsPresent") // hasValidState has been checked
+            final double fractionFree = item.getCapacityInfo().getFreeCapacityPercent().getAsDouble() / 100;
 
             thresholds[i] = increment * fractionFree;
             if (i > 0) {

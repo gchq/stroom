@@ -40,7 +40,7 @@ public class RoundRobinIgnoreLeastFreePercentCapacitySelector implements HasCapa
             double lowestFreePercent = Long.MAX_VALUE;
             List<Integer> lowestFreePercentIdxs = Collections.emptyList();
             for (int i = 0; i < list.size(); i++) {
-                final OptionalDouble optFreePercent = list.get(i).getFreeCapacityPercent();
+                final OptionalDouble optFreePercent = list.get(i).getCapacityInfo().getFreeCapacityPercent();
                 if (optFreePercent.isPresent()) {
                     double freePercent = optFreePercent.getAsDouble();
                     if (freePercent < lowestFreePercent) {

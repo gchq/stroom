@@ -69,7 +69,7 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 
         Assertions.assertThat(indexVolume)
                 .isNotNull();
-        Assertions.assertThat(indexVolume.isFull())
+        Assertions.assertThat(indexVolume.getCapacityInfo().isFull())
                 .isFalse();
     }
 

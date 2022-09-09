@@ -39,7 +39,7 @@ public class MostFreeCapacitySelector implements HasCapacitySelector {
             long largestBytesFree = 0;
             T selected = null;
             for (final T item : list) {
-                final OptionalLong optBytesFree = item.getFreeCapacityBytes();
+                final OptionalLong optBytesFree = item.getCapacityInfo().getFreeCapacityBytes();
                 if (optBytesFree.isPresent() &&
                         optBytesFree.getAsLong() > largestBytesFree) {
                     largestBytesFree = optBytesFree.getAsLong();

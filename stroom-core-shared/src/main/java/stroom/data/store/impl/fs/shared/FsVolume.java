@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs.shared;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasCapacity;
+import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -30,7 +31,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
-import java.util.OptionalDouble;
 import java.util.OptionalLong;
 
 /**
@@ -39,8 +39,8 @@ import java.util.OptionalLong;
 @JsonInclude(Include.NON_NULL)
 public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
 
-    private static final long HEADROOM_BYTES = 10L * 1024L * 1024L * 1024L; // 10G
-    private static final double MAX_USED_FRACTION = 0.99D;
+//    private static final long HEADROOM_BYTES = 10L * 1024L * 1024L * 1024L; // 10G
+//    private static final double MAX_USED_FRACTION = 0.99D;
 
     @JsonProperty
     private Integer id;
@@ -62,6 +62,9 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
     private Long byteLimit;
     @JsonProperty
     private FsVolumeState volumeState;
+
+    @JsonIgnore
+    private final HasCapacityInfo capacityInfo = new CapacityInfo();
 
     public FsVolume() {
         status = VolumeUseStatus.ACTIVE;
@@ -213,33 +216,9 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
     }
 
     @JsonIgnore
-    public boolean isFull() {
-        // If we haven't established how many bytes are used on a volume then
-        // assume it is not full (could be dangerous but worst case we will get
-        // an IO error).
-        if (volumeState.getBytesUsed() == null || volumeState.getBytesTotal() == null) {
-            return false;
-        }
-
-        final long used = volumeState.getBytesUsed();
-        final long total = volumeState.getBytesTotal();
-
-        // If a byte limit has been set then ensure it is less than the total
-        // number of bytes on the volume and if it is return whether the number
-        // of bytes used are greater than this limit.
-        if (byteLimit != null && byteLimit < total) {
-            return used >= byteLimit;
-        }
-
-        // No byte limit has been set by the user so establish the maximum size
-        // that we will allow.
-        // Choose the higher limit of either the total storage minus 10Gb or 99%
-        // of total storage.
-        final long totalMinusFixedHeadroom = total - HEADROOM_BYTES;
-        final long scaledTotal = (long) (total * MAX_USED_FRACTION);
-        final long maxUsed = Math.max(totalMinusFixedHeadroom, scaledTotal);
-
-        return used >= maxUsed;
+    @Override
+    public HasCapacityInfo getCapacityInfo() {
+        return capacityInfo;
     }
 
     @Override
@@ -286,78 +265,6 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         return volume;
     }
 
-    @JsonIgnore
-    @Override
-    public OptionalLong getCapacityUsedBytes() {
-        if (volumeState == null) {
-            return OptionalLong.empty();
-        } else {
-            final Long bytesUsed = volumeState.getBytesUsed();
-            return bytesUsed != null
-                    ? OptionalLong.of(bytesUsed)
-                    : OptionalLong.empty();
-        }
-    }
-
-    @JsonIgnore
-    @Override
-    public OptionalLong getCapacityLimitBytes() {
-        return byteLimit != null
-                ? OptionalLong.of(byteLimit)
-                : OptionalLong.empty();
-    }
-
-    @JsonIgnore
-    @Override
-    public OptionalLong getTotalCapacityBytes() {
-        if (volumeState == null) {
-            return OptionalLong.empty();
-        } else {
-            final Long bytesTotal = volumeState.getBytesTotal();
-            return bytesTotal != null
-                    ? OptionalLong.of(bytesTotal)
-                    : OptionalLong.empty();
-        }
-    }
-
-    @JsonIgnore
-    @Override
-    public OptionalLong getFreeCapacityBytes() {
-        if (volumeState == null) {
-            return OptionalLong.empty();
-        } else {
-            final Long bytesFree = volumeState.getBytesFree();
-            return bytesFree != null
-                    ? OptionalLong.of(bytesFree)
-                    : OptionalLong.empty();
-        }
-    }
-
-    @JsonIgnore
-    @Override
-    public OptionalDouble getFreeCapacityPercent() {
-        if (volumeState == null) {
-            return OptionalDouble.empty();
-        } else {
-            if (byteLimit != null) {
-                final Long bytesUsed = volumeState.getBytesUsed();
-                if (bytesUsed != null) {
-                    return OptionalDouble.of((byteLimit - bytesUsed) / (double) byteLimit * 100);
-                } else {
-                    return OptionalDouble.empty();
-                }
-            } else {
-                final Long bytesTotal = volumeState.getBytesTotal();
-                final Long bytesFree = volumeState.getBytesFree();
-                if (bytesFree != null && bytesTotal != null) {
-                    return OptionalDouble.of(bytesFree / (double) bytesTotal * 100);
-                } else {
-                    return OptionalDouble.empty();
-                }
-            }
-        }
-    }
-
     public enum VolumeUseStatus implements HasDisplayValue, HasPrimitiveValue {
         ACTIVE("Active", 0), // Currently being written to.
         INACTIVE("Inactive", 1), // No longer being written to but still accessible for reading.
@@ -382,6 +289,57 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         @Override
         public byte getPrimitiveValue() {
             return primitiveValue;
+        }
+    }
+
+    private class CapacityInfo implements HasCapacityInfo {
+
+        @Override
+        public OptionalLong getCapacityUsedBytes() {
+            if (volumeState == null) {
+                return OptionalLong.empty();
+            } else {
+                final Long bytesUsed = volumeState.getBytesUsed();
+                return bytesUsed != null
+                        ? OptionalLong.of(bytesUsed)
+                        : OptionalLong.empty();
+            }
+        }
+
+        @Override
+        public OptionalLong getCapacityLimitBytes() {
+            return byteLimit != null
+                    ? OptionalLong.of(byteLimit)
+                    : OptionalLong.empty();
+        }
+
+        @Override
+        public OptionalLong getTotalCapacityBytes() {
+            if (volumeState == null) {
+                return OptionalLong.empty();
+            } else {
+                final Long bytesTotal = volumeState.getBytesTotal();
+                return bytesTotal != null
+                        ? OptionalLong.of(bytesTotal)
+                        : OptionalLong.empty();
+            }
+        }
+
+        @Override
+        public OptionalLong getFreeCapacityBytes() {
+            if (volumeState == null) {
+                return OptionalLong.empty();
+            } else {
+                final Long bytesFree = volumeState.getBytesFree();
+                return bytesFree != null
+                        ? OptionalLong.of(bytesFree)
+                        : OptionalLong.empty();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return asString();
         }
     }
 }

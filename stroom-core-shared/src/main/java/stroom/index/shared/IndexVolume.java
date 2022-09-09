@@ -19,6 +19,7 @@ package stroom.index.shared;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasCapacity;
+import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -31,7 +32,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import java.util.OptionalDouble;
 import java.util.OptionalLong;
 
 /**
@@ -58,8 +58,8 @@ import java.util.OptionalLong;
 public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
 
     private static final double ONE_HUNDRED = 100D;
-    private static final long HEADROOM_BYTES = 10L * 1024L * 1024L * 1024L; // 10G
-    private static final double MAX_USED_FRACTION = 0.99D;
+//    private static final long HEADROOM_BYTES = 10L * 1024L * 1024L * 1024L; // 10G
+//    private static final double MAX_USED_FRACTION = 0.99D;
 
     @JsonProperty
     private Integer id;
@@ -91,6 +91,9 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
     private Long statusMs;
     @JsonProperty
     private Integer indexVolumeGroupId;
+
+    @JsonIgnore
+    private final HasCapacityInfo capacityInfo = new CapacityInfo();
 
     public IndexVolume() {
     }
@@ -225,33 +228,6 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         this.bytesLimit = bytesLimit;
     }
 
-    @JsonIgnore
-    public boolean isFull() {
-        // If we haven't established how many bytes are used on a volume then
-        // assume it is not full (could be dangerous but worst case we will get
-        // an IO error).
-        if (bytesUsed == null || bytesTotal == null) {
-            return false;
-        }
-
-        // If a byte limit has been set then ensure it is less than the total
-        // number of bytes on the volume and if it is return whether the number
-        // of bytes used are greater than this limit.
-        if (bytesLimit != null && bytesLimit < bytesTotal) {
-            return bytesUsed >= bytesLimit;
-        }
-
-        // No byte limit has been set by the user so establish the maximum size
-        // that we will allow.
-        // Choose the higher limit of either the total storage minus 10Gb or 99%
-        // of total storage.
-        final long totalMinusFixedHeadroom = bytesTotal - HEADROOM_BYTES;
-        final long scaledTotal = (long) (bytesTotal * MAX_USED_FRACTION);
-        final long maxUsed = Math.max(totalMinusFixedHeadroom, scaledTotal);
-
-        return bytesUsed >= maxUsed;
-    }
-
     public Long getBytesUsed() {
         return bytesUsed;
     }
@@ -284,15 +260,6 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         this.statusMs = statusMs;
     }
 
-//    @JsonIgnore
-//    public Long getPercentUsed() {
-//        Long percent = null;
-//        if (bytesUsed != null && bytesTotal != null) {
-//            percent = Double.valueOf(((double) bytesUsed) / ((double) bytesTotal) * 100).longValue();
-//        }
-//        return percent;
-//    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -302,53 +269,8 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
     }
 
     @JsonIgnore
-    @Override
-    public OptionalLong getCapacityUsedBytes() {
-        return bytesUsed != null
-                ? OptionalLong.of(bytesUsed)
-                : OptionalLong.empty();
-    }
-
-    @JsonIgnore
-    @Override
-    public OptionalLong getCapacityLimitBytes() {
-        return bytesLimit != null
-                ? OptionalLong.of(bytesLimit)
-                : OptionalLong.empty();
-    }
-
-    @JsonIgnore
-    @Override
-    public OptionalLong getTotalCapacityBytes() {
-        return bytesTotal != null
-                ? OptionalLong.of(bytesTotal)
-                : OptionalLong.empty();
-    }
-
-    @JsonIgnore
-    @Override
-    public OptionalLong getFreeCapacityBytes() {
-        return bytesFree != null
-                ? OptionalLong.of(bytesFree)
-                : OptionalLong.empty();
-    }
-
-    @JsonIgnore
-    @Override
-    public OptionalDouble getFreeCapacityPercent() {
-        if (bytesLimit != null) {
-            if (bytesUsed != null && bytesTotal != null) {
-                return OptionalDouble.of((bytesLimit - bytesUsed) / (double) bytesLimit * 100);
-            } else {
-                return OptionalDouble.empty();
-            }
-        } else {
-            if (bytesFree != null && bytesTotal != null) {
-                return OptionalDouble.of(bytesFree / (double) bytesTotal * 100);
-            } else {
-                return OptionalDouble.empty();
-            }
-        }
+    public HasCapacityInfo getCapacityInfo() {
+        return capacityInfo;
     }
 
     @Override
@@ -541,5 +463,41 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
                 ", state=" + state +
                 ", indexVolumeGroupId=" + indexVolumeGroupId +
                 '}';
+    }
+
+    private class CapacityInfo implements HasCapacityInfo {
+
+        @Override
+        public OptionalLong getCapacityUsedBytes() {
+            return bytesUsed != null
+                    ? OptionalLong.of(bytesUsed)
+                    : OptionalLong.empty();
+        }
+
+        @Override
+        public OptionalLong getCapacityLimitBytes() {
+            return bytesLimit != null
+                    ? OptionalLong.of(bytesLimit)
+                    : OptionalLong.empty();
+        }
+
+        @Override
+        public OptionalLong getTotalCapacityBytes() {
+            return bytesTotal != null
+                    ? OptionalLong.of(bytesTotal)
+                    : OptionalLong.empty();
+        }
+
+        @Override
+        public OptionalLong getFreeCapacityBytes() {
+            return bytesFree != null
+                    ? OptionalLong.of(bytesFree)
+                    : OptionalLong.empty();
+        }
+
+        @Override
+        public String toString() {
+            return asString();
+        }
     }
 }

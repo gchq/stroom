@@ -42,6 +42,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
 
@@ -100,7 +101,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
         final Column<IndexVolume, String> totalColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
             public String getValue(final IndexVolume volume) {
-                return getSizeString(volume.getTotalCapacityBytes());
+                return getSizeString(volume.getCapacityInfo().getTotalCapacityBytes());
             }
         };
         getView().addResizableColumn(totalColumn, "Total", ColumnSizeConstants.SMALL_COL);
@@ -112,7 +113,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 if (volume.getBytesLimit() == null) {
                     return "";
                 }
-                return getSizeString(volume.getCapacityLimitBytes());
+                return getSizeString(volume.getCapacityInfo().getCapacityLimitBytes());
             }
         };
         getView().addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);
@@ -121,7 +122,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
         final Column<IndexVolume, String> usedColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
             public String getValue(final IndexVolume volume) {
-                return getSizeString(volume.getCapacityUsedBytes());
+                return getSizeString(volume.getCapacityInfo().getCapacityUsedBytes());
             }
         };
         getView().addResizableColumn(usedColumn, "Used", ColumnSizeConstants.SMALL_COL);
@@ -130,7 +131,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
         final Column<IndexVolume, String> freeColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
             public String getValue(final IndexVolume volume) {
-                return getSizeString(volume.getFreeCapacityBytes());
+                return getSizeString(volume.getCapacityInfo().getFreeCapacityBytes());
             }
         };
         getView().addResizableColumn(freeColumn, "Free", ColumnSizeConstants.SMALL_COL);
@@ -139,8 +140,9 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
         final Column<IndexVolume, String> usePercentColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
             public String getValue(final IndexVolume volume) {
-                return volume.getUsedCapacityPercent().isPresent()
-                        ? ((long) volume.getUsedCapacityPercent().getAsDouble()) + "%"
+                final OptionalDouble optUsedCapacityPercent = volume.getCapacityInfo().getUsedCapacityPercent();
+                return optUsedCapacityPercent.isPresent()
+                        ? ((long) optUsedCapacityPercent.getAsDouble()) + "%"
                         : "?";
             }
         };
@@ -150,7 +152,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
         final Column<IndexVolume, String> isFullColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
             public String getValue(final IndexVolume volume) {
-                return volume.isFull()
+                return volume.getCapacityInfo().isFull()
                         ? "Yes"
                         : "No";
             }

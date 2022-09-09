@@ -269,16 +269,16 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 .withColumn(Column.of("Status", FsVolume::getStatus))
                 .withColumn(Column.integer(
                         "Total",
-                        vol -> vol.getTotalCapacityBytes().orElse(-1)))
+                        vol -> vol.getCapacityInfo().getTotalCapacityBytes().orElse(-1)))
                 .withColumn(Column.decimal(
                         "Used %",
-                        vol -> vol.getUsedCapacityPercent().orElse(-1),
+                        vol -> vol.getCapacityInfo().getUsedCapacityPercent().orElse(-1),
                         2))
                 .withColumn(Column.decimal(
                         "Free %",
-                        vol -> vol.getFreeCapacityPercent().orElse(-1),
+                        vol -> vol.getCapacityInfo().getFreeCapacityPercent().orElse(-1),
                         2))
-                .withColumn(Column.of("Is Full", FsVolume::isFull))
+                .withColumn(Column.of("Is Full", vol -> vol.getCapacityInfo().isFull()))
                 .build();
     }
 
@@ -541,7 +541,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         final long totalSpace = fileStore.getTotalSpace();
         final long usedSpace = totalSpace - osFreeSpace;
         // Calc free space based on the limit if one is set
-        final long freeSpace = fsVolume.getCapacityLimitBytes()
+        final long freeSpace = fsVolume.getCapacityInfo().getCapacityLimitBytes()
                 .stream()
                 .map(limit -> Math.max(limit - usedSpace, 0))
                 .findAny()

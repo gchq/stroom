@@ -38,7 +38,7 @@ public class MostFreePercentCapacitySelector implements HasCapacitySelector {
             double largestPercentFree = 0;
             T selected = null;
             for (final T item : list) {
-                final OptionalDouble optPercentFree = item.getFreeCapacityPercent();
+                final OptionalDouble optPercentFree = item.getCapacityInfo().getFreeCapacityPercent();
                 if (optPercentFree.isPresent() &&
                         optPercentFree.getAsDouble() > largestPercentFree) {
                     largestPercentFree = optPercentFree.getAsDouble();

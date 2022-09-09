@@ -40,7 +40,7 @@ public class RoundRobinIgnoreLeastFreeCapacitySelector implements HasCapacitySel
             long lowestFreeCapacity = Long.MAX_VALUE;
             List<Integer> lowestFreeCapacityIdxs = Collections.emptyList();
             for (int i = 0; i < list.size(); i++) {
-                final OptionalLong optFreeCapacity = list.get(i).getFreeCapacityBytes();
+                final OptionalLong optFreeCapacity = list.get(i).getCapacityInfo().getFreeCapacityBytes();
                 if (optFreeCapacity.isPresent()) {
                     long freeCapacity = optFreeCapacity.getAsLong();
                     if (freeCapacity < lowestFreeCapacity) {

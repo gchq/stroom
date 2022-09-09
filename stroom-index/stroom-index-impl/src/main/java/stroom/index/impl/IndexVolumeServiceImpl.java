@@ -421,7 +421,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
             final long totalSpace = fileStore.getTotalSpace();
             final long usedSpace = totalSpace - osFreeSpace;
             // Calc free space based on the limit if one is set
-            final long freeSpace = indexVolume.getCapacityLimitBytes()
+            final long freeSpace = indexVolume.getCapacityInfo().getCapacityLimitBytes()
                     .stream()
                     .map(limit -> Math.max(limit - usedSpace, 0))
                     .findAny()
@@ -529,7 +529,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
             return Collections.emptyList();
         } else {
             return list.stream()
-                    .filter(indexVolume -> !indexVolume.isFull())
+                    .filter(indexVolume -> !indexVolume.getCapacityInfo().isFull())
                     .filter(indexVolume -> VolumeUseState.ACTIVE.equals(indexVolume.getState()))
                     .collect(Collectors.toList());
         }

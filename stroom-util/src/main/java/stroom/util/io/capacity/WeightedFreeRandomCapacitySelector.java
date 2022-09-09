@@ -30,7 +30,7 @@ public class WeightedFreeRandomCapacitySelector implements HasCapacitySelector {
     @Override
     public <T extends HasCapacity> T select(final List<T> list) {
         final List<T> filtered = list.stream()
-                .filter(HasCapacity::hasValidState)
+                .filter(hasCapacity -> hasCapacity.getCapacityInfo().hasValidState())
                 .collect(Collectors.toList());
 
         if (filtered.size() == 0) {
@@ -56,7 +56,8 @@ public class WeightedFreeRandomCapacitySelector implements HasCapacitySelector {
     private <T extends HasCapacity> double[] getWeightingThresholds(final List<T> list) {
         double totalFree = 0;
         for (final T item : list) {
-            final double free = item.getFreeCapacityBytes().getAsLong();
+            @SuppressWarnings("OptionalGetWithoutIsPresent") // hasValidState has been checked
+            final double free = item.getCapacityInfo().getFreeCapacityBytes().getAsLong();
 
             totalFree += free;
         }
@@ -65,7 +66,8 @@ public class WeightedFreeRandomCapacitySelector implements HasCapacitySelector {
         final double[] thresholds = new double[list.size()];
         int i = 0;
         for (final T item : list) {
-            final double free = item.getFreeCapacityBytes().getAsLong();
+            @SuppressWarnings("OptionalGetWithoutIsPresent") // hasValidState has been checked
+            final double free = item.getCapacityInfo().getFreeCapacityBytes().getAsLong();
 
             thresholds[i] = increment * free;
             if (i > 0) {

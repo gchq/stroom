@@ -105,7 +105,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         final Column<FsVolume, String> totalColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
-                return getSizeString(volume.getTotalCapacityBytes());
+                return getSizeString(volume.getCapacityInfo().getTotalCapacityBytes());
             }
         };
         getView().addResizableColumn(totalColumn, "Total", ColumnSizeConstants.SMALL_COL);
@@ -117,7 +117,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
                 if (volume.getByteLimit() == null) {
                     return "";
                 }
-                return getSizeString(volume.getCapacityLimitBytes());
+                return getSizeString(volume.getCapacityInfo().getCapacityLimitBytes());
             }
         };
         getView().addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);
@@ -126,7 +126,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         final Column<FsVolume, String> usedColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
-                return getSizeString(volume.getCapacityUsedBytes());
+                return getSizeString(volume.getCapacityInfo().getCapacityUsedBytes());
             }
         };
         getView().addResizableColumn(usedColumn, "Used", ColumnSizeConstants.SMALL_COL);
@@ -135,7 +135,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         final Column<FsVolume, String> freeColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
-                return getSizeString(volume.getFreeCapacityBytes());
+                return getSizeString(volume.getCapacityInfo().getFreeCapacityBytes());
             }
         };
         getView().addResizableColumn(freeColumn, "Free", ColumnSizeConstants.SMALL_COL);
@@ -144,7 +144,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         final Column<FsVolume, String> usePercentColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
-                final OptionalDouble optUsedPercent = volume.getUsedCapacityPercent();
+                final OptionalDouble optUsedPercent = volume.getCapacityInfo().getUsedCapacityPercent();
                 return optUsedPercent.isPresent()
                         ? ((long) optUsedPercent.getAsDouble()) + "%"
                         : "?";
@@ -156,7 +156,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         final Column<FsVolume, String> isFullColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
-                return volume.isFull()
+                return volume.getCapacityInfo().isFull()
                         ? "Yes"
                         : "No";
             }
