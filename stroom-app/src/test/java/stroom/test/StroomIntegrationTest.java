@@ -18,6 +18,7 @@ package stroom.test;
 
 import stroom.security.api.SecurityContext;
 import stroom.test.common.util.TestClassLogger;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.StroomTest;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
@@ -39,12 +40,17 @@ import javax.inject.Inject;
  * This class should be common to all component and integration tests that need a DB.
  * <p>
  * Each test class gets a new Guice {@link Injector} instance.
+ * Unless @Execution is used each test method will run sequentially in the same thread
+ * but with a new test class instance (and injector).
  * Each test thread get a new empty DB with a randomly generated name, which ensures
  * test isolation when running tests concurrently. The DB tables and in-memory state
  * are cleared down after each test method (unless cleanupBetweenTests is overridden).
  * Each test class also gets its own temporary directory for any file system state, e.g.
  * streams/indexes which is cleared down after each test method (unless
- * cleanupBetweenTests is overridden).
+ * cleanupBetweenTests is overridden), and this dir is re-used in all test methods.
+ * Gradle provides concurrency by running tests in multiple JVMs so any state outside the JVM,
+ * e.g. files/database must be namespaced that JVM somehow, e.g. using
+ * {@link DbTestUtil#getGradleWorker()} in the name.
  */
 public abstract class StroomIntegrationTest implements StroomTest {
 
