@@ -19,7 +19,7 @@ import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class FsOrphanedMetaTrackerRecord extends UpdatableRecordImpl<FsOrphanedMetaTrackerRecord> implements Record2<Integer, Long> {
 
-    private static final long serialVersionUID = -131885210;
+    private static final long serialVersionUID = 1L;
 
     /**
      * Setter for <code>stroom.fs_orphaned_meta_tracker.id</code>.
@@ -138,7 +138,7 @@ public class FsOrphanedMetaTrackerRecord extends UpdatableRecordImpl<FsOrphanedM
     public FsOrphanedMetaTrackerRecord(Integer id, Long minMetaId) {
         super(FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER);
 
-        set(0, id);
-        set(1, minMetaId);
+        setId(id);
+        setMinMetaId(minMetaId);
     }
 }

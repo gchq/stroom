@@ -4,26 +4,23 @@
 package stroom.data.store.impl.fs.db.jooq.tables;
 
 
-import stroom.data.store.impl.fs.db.jooq.Keys;
-import stroom.data.store.impl.fs.db.jooq.Stroom;
-import stroom.data.store.impl.fs.db.jooq.tables.records.FsOrphanedMetaTrackerRecord;
-
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Identity;
-import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Row2;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.data.store.impl.fs.db.jooq.Keys;
+import stroom.data.store.impl.fs.db.jooq.Stroom;
+import stroom.data.store.impl.fs.db.jooq.tables.records.FsOrphanedMetaTrackerRecord;
 
 
 /**
@@ -32,7 +29,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class FsOrphanedMetaTracker extends TableImpl<FsOrphanedMetaTrackerRecord> {
 
-    private static final long serialVersionUID = 628062263;
+    private static final long serialVersionUID = 1L;
 
     /**
      * The reference instance of <code>stroom.fs_orphaned_meta_tracker</code>
@@ -50,12 +47,36 @@ public class FsOrphanedMetaTracker extends TableImpl<FsOrphanedMetaTrackerRecord
     /**
      * The column <code>stroom.fs_orphaned_meta_tracker.id</code>.
      */
-    public final TableField<FsOrphanedMetaTrackerRecord, Integer> ID = createField(DSL.name("id"), org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<FsOrphanedMetaTrackerRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>stroom.fs_orphaned_meta_tracker.min_meta_id</code>.
      */
-    public final TableField<FsOrphanedMetaTrackerRecord, Long> MIN_META_ID = createField(DSL.name("min_meta_id"), org.jooq.impl.SQLDataType.BIGINT.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BIGINT)), this, "");
+    public final TableField<FsOrphanedMetaTrackerRecord, Long> MIN_META_ID = createField(DSL.name("min_meta_id"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BIGINT)), this, "");
+
+    private FsOrphanedMetaTracker(Name alias, Table<FsOrphanedMetaTrackerRecord> aliased) {
+        this(alias, aliased, null);
+    }
+
+    private FsOrphanedMetaTracker(Name alias, Table<FsOrphanedMetaTrackerRecord> aliased, Field<?>[] parameters) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
+    }
+
+    /**
+     * Create an aliased <code>stroom.fs_orphaned_meta_tracker</code> table
+     * reference
+     */
+    public FsOrphanedMetaTracker(String alias) {
+        this(DSL.name(alias), FS_ORPHANED_META_TRACKER);
+    }
+
+    /**
+     * Create an aliased <code>stroom.fs_orphaned_meta_tracker</code> table
+     * reference
+     */
+    public FsOrphanedMetaTracker(Name alias) {
+        this(alias, FS_ORPHANED_META_TRACKER);
+    }
 
     /**
      * Create a <code>stroom.fs_orphaned_meta_tracker</code> table reference
@@ -64,57 +85,18 @@ public class FsOrphanedMetaTracker extends TableImpl<FsOrphanedMetaTrackerRecord
         this(DSL.name("fs_orphaned_meta_tracker"), null);
     }
 
-    /**
-     * Create an aliased <code>stroom.fs_orphaned_meta_tracker</code> table reference
-     */
-    public FsOrphanedMetaTracker(String alias) {
-        this(DSL.name(alias), FS_ORPHANED_META_TRACKER);
-    }
-
-    /**
-     * Create an aliased <code>stroom.fs_orphaned_meta_tracker</code> table reference
-     */
-    public FsOrphanedMetaTracker(Name alias) {
-        this(alias, FS_ORPHANED_META_TRACKER);
-    }
-
-    private FsOrphanedMetaTracker(Name alias, Table<FsOrphanedMetaTrackerRecord> aliased) {
-        this(alias, aliased, null);
-    }
-
-    private FsOrphanedMetaTracker(Name alias, Table<FsOrphanedMetaTrackerRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""));
-    }
-
     public <O extends Record> FsOrphanedMetaTracker(Table<O> child, ForeignKey<O, FsOrphanedMetaTrackerRecord> key) {
         super(child, key, FS_ORPHANED_META_TRACKER);
     }
 
     @Override
     public Schema getSchema() {
-        return Stroom.STROOM;
-    }
-
-    @Override
-    public List<Index> getIndexes() {
-        return null;
-//        return Arrays.<Index>asList(Indexes.FS_ORPHANED_META_TRACKER_PRIMARY);
-    }
-
-    @Override
-    public Identity<FsOrphanedMetaTrackerRecord, Integer> getIdentity() {
-        return null;
-//        return Keys.IDENTITY_FS_ORPHANED_META_TRACKER;
+        return aliased() ? null : Stroom.STROOM;
     }
 
     @Override
     public UniqueKey<FsOrphanedMetaTrackerRecord> getPrimaryKey() {
         return Keys.KEY_FS_ORPHANED_META_TRACKER_PRIMARY;
-    }
-
-    @Override
-    public List<UniqueKey<FsOrphanedMetaTrackerRecord>> getKeys() {
-        return Arrays.<UniqueKey<FsOrphanedMetaTrackerRecord>>asList(Keys.KEY_FS_ORPHANED_META_TRACKER_PRIMARY);
     }
 
     @Override

@@ -23,5 +23,5 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     public static final Index PROCESSOR_TASK_PROCESSOR_TASK_META_ID_IDX = Internal.createIndex(DSL.name("processor_task_meta_id_idx"), ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.META_ID }, false);
-    public static final Index PROCESSOR_TASK_PROCESSOR_TASK_STATUS_IDX = Internal.createIndex(DSL.name("processor_task_status_idx"), ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.STATUS }, false);
+    public static final Index PROCESSOR_TASK_PROCESSOR_TASK_STATUS_CREATE_TIME_MS_IDX = Internal.createIndex(DSL.name("processor_task_status_create_time_ms_idx"), ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.STATUS, ProcessorTask.PROCESSOR_TASK.CREATE_TIME_MS }, false);
 }

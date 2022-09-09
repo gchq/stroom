@@ -4,7 +4,6 @@
 package stroom.data.store.impl.fs.db.jooq;
 
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -46,7 +45,7 @@ public class Stroom extends SchemaImpl {
     /**
      * The table <code>stroom.fs_orphaned_meta_tracker</code>.
      */
-    public final FsOrphanedMetaTracker FS_ORPHANED_META_TRACKER = stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER;
+    public final FsOrphanedMetaTracker FS_ORPHANED_META_TRACKER = FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER;
 
     /**
      * The table <code>stroom.fs_type_path</code>.
