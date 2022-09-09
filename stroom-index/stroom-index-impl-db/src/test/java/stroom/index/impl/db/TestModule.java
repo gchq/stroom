@@ -37,7 +37,7 @@ class TestModule extends AbstractModule {
         bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
         });
         bind(IndexVolumeGroupService.class).toInstance(new MockIndexVolumeGroupService());
-        bind(IndexStore.class).toProvider(() -> null);
+        bind(IndexStore.class).toInstance(mock(IndexStore.class));
     }
 
     @Provides

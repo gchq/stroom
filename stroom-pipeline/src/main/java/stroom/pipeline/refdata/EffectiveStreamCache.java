@@ -23,12 +23,14 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.Period;
 import stroom.util.shared.Clearable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.NavigableSet;
 import java.util.Set;
@@ -105,14 +107,7 @@ public class EffectiveStreamCache implements Clearable {
                             effectiveStream = new EffectiveStream(meta.getId(), meta.getCreateMs());
                         }
 
-                        final boolean success = effectiveStreamSet.add(effectiveStream);
-
-                        // Warn if there are more than one effective stream for
-                        // exactly the same time.
-                        if (!success) {
-                            LOGGER.warn("Attempt to insert effective stream with id=" + effectiveStream.getStreamId()
-                                    + ". Duplicate match found with effectiveMs=" + effectiveStream.getEffectiveMs());
-                        }
+                        addEffectiveStream(effectiveStreamSet, effectiveStream);
                     }
                 }
 
@@ -131,6 +126,38 @@ public class EffectiveStreamCache implements Clearable {
 
             return effectiveStreamSet;
         });
+    }
+
+    private void addEffectiveStream(final NavigableSet<EffectiveStream> effectiveStreamSet,
+                                    final EffectiveStream effectiveStream) {
+        final boolean success = effectiveStreamSet.add(effectiveStream);
+
+        // Warn if there are more than one effective stream for
+        // exactly the same time.
+        if (!success) {
+            EffectiveStream existingEffectiveStream = null;
+            try {
+                // Establish the one we are clashing with
+                final NavigableSet<EffectiveStream> subSet = effectiveStreamSet.subSet(
+                        effectiveStream,
+                        true,
+                        effectiveStream,
+                        true);
+                existingEffectiveStream = subSet.first();
+            } catch (Exception e) {
+                LOGGER.debug("Error finding existingEffectiveStream, {}", e.getMessage(), e);
+            }
+            final Long existingStreamId = NullSafe.get(
+                    existingEffectiveStream, EffectiveStream::getStreamId);
+
+            LOGGER.warn("Failed attempt to insert effective stream with id="
+                    + effectiveStream.getStreamId()
+                    + ". Duplicate match found with id=" + existingStreamId
+                    + ", effectiveMs=" + effectiveStream.getEffectiveMs()
+                    + " (" + Instant.ofEpochMilli(effectiveStream.getEffectiveMs()) + "). "
+                    + "You have >1 ref streams with the same effective date, only stream with id="
+                    + existingStreamId + " will be used.");
+        }
     }
 
     long size() {
