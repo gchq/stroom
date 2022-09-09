@@ -515,6 +515,13 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
         final IndexVolume indexVolume = volumeSelector.select(indexVolumes);
 
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Selected volume {} ({}) out of {} eligible volumes.",
+                    indexVolume.getPath(),
+                    indexVolume.getCapacityInfo(),
+                    indexVolumes.size());
+        }
+
         if (indexVolume == null) {
             throw new IndexException(
                     "Unable to find any non-full index volumes for index volume group '"

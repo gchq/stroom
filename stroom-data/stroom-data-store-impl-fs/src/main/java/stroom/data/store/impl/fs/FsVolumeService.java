@@ -245,16 +245,20 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
         final List<FsVolume> filteredVolumeList = getFilteredVolumeList(freeVolumes, streamStatus);
         if (filteredVolumeList.size() > 0) {
-            set = Collections.singleton(volumeSelector.select(filteredVolumeList));
+            final FsVolume selectedVolume = volumeSelector.select(filteredVolumeList);
+            LOGGER.debug(() -> LogUtil.message("Selected volume {} ({}) out of {} eligible volumes.",
+                    selectedVolume.getPath(),
+                    selectedVolume.getCapacityInfo(),
+                    filteredVolumeList.size()));
+            set = Collections.singleton(selectedVolume);
         }
 
         if (set.isEmpty()) {
-            LOGGER.warn("No {} volume found, all vols: {}, non-full vols: {}, non-full {} vols: {}",
+            LOGGER.warn("No eligible {} volumes found, all vols: {}, non-full vols: {}, non-full {} vols: 0",
                     streamStatus,
                     allVolumeList.size(),
                     freeVolumes.size(),
-                    streamStatus,
-                    filteredVolumeList.size());
+                    streamStatus);
 
             LOGGER.debug(() -> LogUtil.message("All FS Volumes:\n{}",
                     generateAllVolumesAsciiTable(allVolumeList)));
