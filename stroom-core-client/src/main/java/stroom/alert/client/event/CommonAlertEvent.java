@@ -46,7 +46,7 @@ public abstract class CommonAlertEvent<H extends EventHandler> extends GwtEvent<
     }
 
     static SafeHtml fromString(final String string) {
-        return SafeHtmlUtil.toParagraphs(string);
+        return SafeHtmlUtil.withLineBreaks(string);
     }
 
     public SafeHtml getMessage() {

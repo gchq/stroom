@@ -227,7 +227,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
             return ValidationResult.warning(LogUtil.message("""
                             Path '{}' on node '{}' is already a member of index volume group{} [{}].
                             It is NOT recommended to have the same index volume node and path belonging to \
-                            multiple volume groups. Click OK to ignore this and set it anyway.""",
+                            multiple volume groups.
+                            Click OK to ignore this and set it anyway.""",
                     indexVolume.getPath(),
                     indexVolume.getNodeName(),
                     (dupGroupNames.size() > 1

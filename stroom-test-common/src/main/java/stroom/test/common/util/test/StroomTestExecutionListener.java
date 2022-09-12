@@ -4,10 +4,13 @@ import stroom.test.common.util.TestClassLogger;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.NullSafe;
 
+import org.flywaydb.core.internal.util.ExceptionUtils;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.SQLException;
 
 /**
  * This test listener is registered by service loader using the file
@@ -28,7 +31,21 @@ public class StroomTestExecutionListener implements TestExecutionListener {
             if (!DROPPED_TEST_DATABASES) {
                 synchronized (StroomTestExecutionListener.class) {
                     if (!DROPPED_TEST_DATABASES) {
-                        DbTestUtil.dropUnusedTestDatabases();
+                        try {
+                            DbTestUtil.dropUnusedTestDatabases();
+                        } catch (Exception e) {
+                            final Throwable rootCause = ExceptionUtils.getRootCause(e);
+                            // TODO: 12/09/2022 There ought to be a better way to do this so we can avoid logging
+                            //  stuff about a DB for a pure unit test, but not sure we can tell what is a db
+                            //  test and what is a unit test.
+                            if (rootCause instanceof SQLException
+                                    && rootCause.getMessage().contains("No suitable driver found")) {
+                                LOGGER.info("No DB connection to drop test databases. " +
+                                        "Assuming this is not an integration test");
+                            } else {
+                                throw e;
+                            }
+                        }
                         DROPPED_TEST_DATABASES = true;
                     }
                 }
