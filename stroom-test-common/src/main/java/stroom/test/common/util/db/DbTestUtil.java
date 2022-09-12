@@ -151,6 +151,27 @@ public class DbTestUtil {
                 .orElseGet(valueSupplier);
     }
 
+    /**
+     * Verify there is a connection to the database on the root account.
+     * @return
+     */
+    public static boolean isDbAvailable() {
+        final ConnectionConfig connectionConfig = createConnectionConfig(new CommonDbConfig());
+        final ConnectionConfig rootConnectionConfig = createRootConnectionConfig(connectionConfig);
+
+        // Create new db.
+        final Properties connectionProps = new Properties();
+        connectionProps.put("user", rootConnectionConfig.getUser());
+        connectionProps.put("password", rootConnectionConfig.getPassword());
+
+        try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
+                connectionProps)) {
+            return connection.isValid(5);
+        } catch (final SQLException e) {
+            return false;
+        }
+    }
+
     public static void dropUnusedTestDatabases() {
         final ConnectionConfig connectionConfig = createConnectionConfig(new CommonDbConfig());
         final ConnectionConfig rootConnectionConfig = createRootConnectionConfig(connectionConfig);
@@ -165,7 +186,6 @@ public class DbTestUtil {
                 "^test_" + Pattern.quote(getGradleWorker()) + "_.*$");
         LOGGER.info("Dropping databases matching pattern '{}'", dbNamePatternThisWorker);
 
-//        "^test_" + Pattern.quote(getGradleWorker()) + "_[0-9]+_[0-9a-zA-Z]+$");
         final Predicate<String> dbNameMatchPredicate = dbNamePatternThisWorker.asMatchPredicate();
 
         try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),

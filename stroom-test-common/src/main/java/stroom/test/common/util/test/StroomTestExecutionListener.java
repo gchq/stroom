@@ -15,6 +15,7 @@ import java.sql.SQLException;
 /**
  * This test listener is registered by service loader using the file
  * stroom-test-common/src/main/resources/META-INF/services/org.junit.platform.launcher.TestExecutionListener
+ * Its methods will be called for any tests that include stroom-test-common as a dependency.
  */
 public class StroomTestExecutionListener implements TestExecutionListener {
 
@@ -24,29 +25,33 @@ public class StroomTestExecutionListener implements TestExecutionListener {
 
     @Override
     public void testPlanExecutionStarted(TestPlan testPlan) {
-        // Note this may be run in a different thread to the actual test(s)
-        if (!keepTestDatabases()) {
-            // Tidy up any test databases from previous runs
-            LOGGER.info("Dropping all test databases. Set {}=true to prevent this.", KEEP_TEST_DATABASES);
-            if (!DROPPED_TEST_DATABASES) {
-                synchronized (StroomTestExecutionListener.class) {
-                    if (!DROPPED_TEST_DATABASES) {
-                        try {
-                            DbTestUtil.dropUnusedTestDatabases();
-                        } catch (Exception e) {
-                            final Throwable rootCause = ExceptionUtils.getRootCause(e);
-                            // TODO: 12/09/2022 There ought to be a better way to do this so we can avoid logging
-                            //  stuff about a DB for a pure unit test, but not sure we can tell what is a db
-                            //  test and what is a unit test.
-                            if (rootCause instanceof SQLException
-                                    && rootCause.getMessage().contains("No suitable driver found")) {
-                                LOGGER.info("No DB connection to drop test databases. " +
-                                        "Assuming this is not an integration test");
-                            } else {
-                                throw e;
+        // If we don't have a DB conn don't bother doing anything, e.g. is a pure unit test
+        // TODO: 12/09/2022 There ought to be a better way to do this so we can avoid logging
+        //  stuff about a DB for a pure unit test, but not sure we can tell what is a db
+        //  test and what is a unit test.
+        if (DbTestUtil.isDbAvailable()) {
+            // Called before any tests have started on this JVM.
+            // Note this may be run in a different thread to the actual test(s)
+            if (!keepTestDatabases()) {
+                // Tidy up any test databases from previous runs
+                LOGGER.info("Dropping all test databases. Set {}=true to prevent this.", KEEP_TEST_DATABASES);
+                if (!DROPPED_TEST_DATABASES) {
+                    synchronized (StroomTestExecutionListener.class) {
+                        if (!DROPPED_TEST_DATABASES) {
+                            try {
+                                DbTestUtil.dropUnusedTestDatabases();
+                            } catch (Exception e) {
+                                final Throwable rootCause = ExceptionUtils.getRootCause(e);
+                                if (rootCause instanceof SQLException
+                                        && rootCause.getMessage().contains("No suitable driver found")) {
+                                    LOGGER.info("No DB connection to drop test databases. " +
+                                            "Assuming this is not an integration test");
+                                } else {
+                                    throw e;
+                                }
                             }
+                            DROPPED_TEST_DATABASES = true;
                         }
-                        DROPPED_TEST_DATABASES = true;
                     }
                 }
             }
@@ -57,16 +62,19 @@ public class StroomTestExecutionListener implements TestExecutionListener {
 
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
+        // Called after all tests have run on this JVM.
         LOGGER.info("Finished test plan");
 
         TestClassLogger.writeTestClassesLogToDisk();
 
-        if (keepTestDatabases()) {
-            LOGGER.info("{}=true so won't drop all test databases.", KEEP_TEST_DATABASES);
-        } else {
-            LOGGER.info("Dropping test database for current gradle worker. Set {}=true to prevent this.",
-                    KEEP_TEST_DATABASES);
-            DbTestUtil.dropUnusedTestDatabases();
+        if (DbTestUtil.isDbAvailable()) {
+            if (keepTestDatabases()) {
+                LOGGER.info("{}=true so won't drop all test databases.", KEEP_TEST_DATABASES);
+            } else {
+                LOGGER.info("Dropping test database for current gradle worker. Set {}=true to prevent this.",
+                        KEEP_TEST_DATABASES);
+                DbTestUtil.dropUnusedTestDatabases();
+            }
         }
     }
 
