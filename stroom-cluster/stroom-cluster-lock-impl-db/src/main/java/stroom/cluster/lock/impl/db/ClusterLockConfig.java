@@ -40,8 +40,8 @@ public class ClusterLockConfig extends AbstractConfig implements HasDbConfig {
     }
 
     @JsonProperty("lockTimeout")
-    @JsonPropertyDescription("The minimum timeout period when attempting to get a cluster lock in order to perform " +
-            "an action under lock. The actual timeout may be greater than this due to the timeout set by the database.")
+    @JsonPropertyDescription("The minimum period of time to keep trying to obtain a cluster lock for. " +
+            "This allows a timeout to be set that is greater than that configured on the database, but not less. ")
     public StroomDuration getLockTimeout() {
         return lockTimeout;
     }
