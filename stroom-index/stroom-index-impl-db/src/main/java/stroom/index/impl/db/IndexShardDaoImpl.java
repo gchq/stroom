@@ -21,10 +21,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardFields;
 import stroom.index.impl.IndexStore;
-import stroom.index.impl.IndexVolumeDao;
-import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
-import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
@@ -49,7 +46,6 @@ import org.jooq.Result;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,7 +58,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
@@ -113,49 +108,21 @@ class IndexShardDaoImpl implements IndexShardDao {
                 return record;
             };
 
-    private static final Map<String, Field<?>> FIELD_MAP = new HashMap<>();
-
-//    private static final Map<String, HasCapacitySelector> VOLUME_SELECTOR_MAP;
-//    private static final HasCapacitySelector DEFAULT_VOLUME_SELECTOR;
-
-    static {
-        FIELD_MAP.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
-        FIELD_MAP.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME);
-
-//        VOLUME_SELECTOR_MAP = Stream.of(
-//                        new MostFreePercentCapacitySelector(),
-//                        new MostFreeCapacitySelector(),
-//                        new RandomCapacitySelector(),
-//                        new RoundRobinIgnoreLeastFreePercentCapacitySelector(),
-//                        new RoundRobinIgnoreLeastFreeCapacitySelector(),
-//                        new RoundRobinCapacitySelector(),
-//                        new WeightedFreePercentRandomCapacitySelector(),
-//                        new WeightedFreeRandomCapacitySelector()
-//                )
-//                .collect(Collectors.toMap(HasCapacitySelector::getName, Function.identity()));
-//        DEFAULT_VOLUME_SELECTOR = VOLUME_SELECTOR_MAP.get(RoundRobinCapacitySelector.NAME);
-    }
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
+            FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID,
+            FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME);
 
     private final IndexDbConnProvider indexDbConnProvider;
-    private final IndexVolumeDao indexVolumeDao;
-    private final IndexVolumeGroupService indexVolumeGroupService;
-    private final Provider<VolumeConfig> volumeConfigProvider;
     private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
     private final IndexShardValueMapper indexShardValueMapper;
     private final IndexShardExpressionMapper indexShardExpressionMapper;
 
     @Inject
     IndexShardDaoImpl(final IndexDbConnProvider indexDbConnProvider,
-                      final IndexVolumeDao indexVolumeDao,
-                      final IndexVolumeGroupService indexVolumeGroupService,
-                      final Provider<VolumeConfig> volumeConfigProvider,
                       final IndexShardValueMapper indexShardValueMapper,
                       final IndexShardExpressionMapper indexShardExpressionMapper) {
 
         this.indexDbConnProvider = indexDbConnProvider;
-        this.indexVolumeDao = indexVolumeDao;
-        this.indexVolumeGroupService = indexVolumeGroupService;
-        this.volumeConfigProvider = volumeConfigProvider;
         this.indexShardValueMapper = indexShardValueMapper;
         this.indexShardExpressionMapper = indexShardExpressionMapper;
         genericDao = new GenericDao<>(
@@ -293,37 +260,6 @@ class IndexShardDaoImpl implements IndexShardDao {
                              final IndexVolume indexVolume,
                              final String ownerNodeName,
                              final String indexVersion) {
-        // TODO : @66 Add some caching here. Maybe do this as part of volume selection.
-//        List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
-//
-//        if (indexVolumes.size() == 0) {
-//            //Could be due to default volume groups not having been created - but this will force as side effect
-//            final List<String> groupNames = indexVolumeGroupService.getNames();
-//
-//            // Now re-fetch
-//            indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
-//
-//            //Check again.
-//            if (indexVolumes == null || indexVolumes.size() == 0) {
-//                throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName +
-//                        ((groupNames == null || groupNames.size() == 0)
-//                                ? " No index groups defined."
-//                                :
-//                                        " Available index volume groups: " + String.join(", ", groupNames)));
-//            }
-//        }
-//
-//        indexVolumes = VolumeListUtil.removeFullVolumes(indexVolumes);
-//
-//        final HasCapacitySelector volumeSelector = getVolumeSelector();
-//        final IndexVolume indexVolume = volumeSelector.select(indexVolumes);
-//        if (indexVolume == null) {
-//            final String msg = "No shard can be created as no volumes are available for group: " +
-//                    volumeGroupName +
-//                    " indexUuid: " +
-//                    indexShardKey.getIndexUuid();
-//            throw new IndexException(msg);
-//        }
 
         final IndexShard indexShard = new IndexShard();
         indexShard.setIndexUuid(indexShardKey.getIndexUuid());
