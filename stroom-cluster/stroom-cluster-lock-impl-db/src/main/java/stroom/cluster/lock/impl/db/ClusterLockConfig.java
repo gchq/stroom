@@ -6,9 +6,11 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -16,21 +18,32 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class ClusterLockConfig extends AbstractConfig implements HasDbConfig {
 
     private final ClusterLockDbConfig dbConfig;
+    private final StroomDuration lockTimeout;
 
     public ClusterLockConfig() {
         dbConfig = new ClusterLockDbConfig();
+        lockTimeout = StroomDuration.ofMinutes(10);
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ClusterLockConfig(@JsonProperty("db") final ClusterLockDbConfig dbConfig) {
+    public ClusterLockConfig(@JsonProperty("db") final ClusterLockDbConfig dbConfig,
+                             @JsonProperty("lockTimeout") final StroomDuration lockTimeout) {
         this.dbConfig = dbConfig;
+        this.lockTimeout = lockTimeout;
     }
 
     @Override
     @JsonProperty("db")
     public ClusterLockDbConfig getDbConfig() {
         return dbConfig;
+    }
+
+    @JsonProperty("lockTimeout")
+    @JsonPropertyDescription("The minimum timeout period when attempting to get a cluster lock in order to perform " +
+            "an action under lock. The actual timeout may be greater than this due to the timeout set by the database.")
+    public StroomDuration getLockTimeout() {
+        return lockTimeout;
     }
 
     @BootStrapConfig
@@ -47,5 +60,13 @@ public class ClusterLockConfig extends AbstractConfig implements HasDbConfig {
                 @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
             super(connectionConfig, connectionPoolConfig);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ClusterLockConfig{" +
+                "dbConfig=" + dbConfig +
+                ", lockTimeout=" + lockTimeout +
+                '}';
     }
 }
