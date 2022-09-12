@@ -14,8 +14,8 @@ import java.util.OptionalLong;
  */
 public interface HasCapacityInfo {
 
-    long HEADROOM_BYTES = 10L * 1024L * 1024L * 1024L; // 10Gb
-    double MAX_USED_FRACTION = 0.99D; // 99%
+    long DEFAULT_HEADROOM_BYTES = 10L * 1024L * 1024L * 1024L; // 10Gb
+    double DEFAULT_MAX_USED_FRACTION = 0.99D; // 99%
 
     HasCapacityInfo UNKNOWN = new HasCapacityInfo() {
         @Override
@@ -180,8 +180,8 @@ public interface HasCapacityInfo {
         // that we will allow.
         // Choose the higher limit of either the total storage minus 10Gb or 99%
         // of total storage.
-        final long totalMinusFixedHeadroom = totalBytes - HEADROOM_BYTES;
-        final long scaledTotal = (long) (totalBytes * MAX_USED_FRACTION);
+        final long totalMinusFixedHeadroom = totalBytes - DEFAULT_HEADROOM_BYTES;
+        final long scaledTotal = (long) (totalBytes * DEFAULT_MAX_USED_FRACTION);
         final long maxUsed = Math.max(totalMinusFixedHeadroom, scaledTotal);
 
         return usedBytes >= maxUsed;

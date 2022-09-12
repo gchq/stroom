@@ -292,6 +292,11 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         }
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Essentially a read-only view of some parts of {@link FsVolume}
+     */
     private class CapacityInfo implements HasCapacityInfo {
 
         @Override
@@ -339,7 +344,7 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
 
         @Override
         public String toString() {
-            return asString();
+            return this.asString();
         }
     }
 }

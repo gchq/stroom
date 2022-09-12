@@ -461,6 +461,11 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
                 '}';
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Essentially a read-only view of some parts of {@link IndexVolume}
+     */
     private class CapacityInfo implements HasCapacityInfo {
 
         @Override
@@ -493,7 +498,7 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
 
         @Override
         public String toString() {
-            return asString();
+            return this.asString();
         }
     }
 }
