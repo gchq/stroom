@@ -339,12 +339,11 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     @Override
     public void onChange(final EntityEvent event) {
-        LOGGER.debug("Clearing currentVolumeList");
-
         clearCurrentVolumeList();
     }
 
     private synchronized void clearCurrentVolumeList() {
+        LOGGER.debug("Clearing currentVolumeList");
         currentVolumeList.set(null);
     }
 

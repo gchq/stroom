@@ -490,7 +490,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                     LOGGER.info("Clearing index volume {}", volume.getPath());
                     FileUtil.deleteContents(Paths.get(volume.getPath()));
                 });
-        currentVolumeMap.set(null);
+        clearCurrentVolumeMap();
     }
 
     @Override
@@ -560,12 +560,16 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     @Override
     public void onChange(final EntityEvent event) {
         // Simpler to just clear it all out and reload
+        clearCurrentVolumeMap();
+    }
+
+    private synchronized void clearCurrentVolumeMap() {
         LOGGER.debug("Clearing currentVolumeMap");
         currentVolumeMap.set(null);
     }
 
     private void fireChange(final EntityAction action) {
-        currentVolumeMap.set(null);
+        clearCurrentVolumeMap();
         if (entityEventBusProvider != null) {
             try {
                 final EntityEventBus entityEventBus = entityEventBusProvider.get();
