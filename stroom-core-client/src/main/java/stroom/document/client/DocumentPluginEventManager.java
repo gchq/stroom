@@ -708,13 +708,19 @@ public class DocumentPluginEventManager extends Plugin {
         final boolean allowUpdate = updatableItems.size() > 0;
         final boolean allowDelete = deletableItems.size() > 0;
         final boolean isInfoEnabled = singleSelection & allowRead;
+
         // Feeds are a special case so can't be renamed, see https://github.com/gchq/stroom/issues/2912
         final boolean isRenameEnabled = singleSelection
                 && allowUpdate
                 && !FeedDoc.DOCUMENT_TYPE.equals(updatableItems.get(0).getType());
 
+        // Feeds are a special case so can't be copied, see https://github.com/gchq/stroom/issues/3048
+        final boolean isCopyEnabled = singleSelection
+                && allowRead
+                && !FeedDoc.DOCUMENT_TYPE.equals(readableItems.get(0).getType());
+
         menuItems.add(createInfoMenuItem(readableItems, 3, isInfoEnabled));
-        menuItems.add(createCopyMenuItem(readableItems, 4, allowRead));
+        menuItems.add(createCopyMenuItem(readableItems, 4, isCopyEnabled));
         menuItems.add(createMoveMenuItem(updatableItems, 5, allowUpdate));
         menuItems.add(createRenameMenuItem(updatableItems, 6, isRenameEnabled));
         menuItems.add(createDeleteMenuItem(deletableItems, 7, allowDelete));
