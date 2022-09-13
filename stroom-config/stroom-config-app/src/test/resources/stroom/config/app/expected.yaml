@@ -417,8 +417,8 @@ appConfig:
       maximumSize: 1000
     referenceData:
       effectiveStreamCache:
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
+        expireAfterAccess: null
+        expireAfterWrite: "PT10M"
         maximumSize: 1000
       lmdb:
         localDir: "reference_data"
