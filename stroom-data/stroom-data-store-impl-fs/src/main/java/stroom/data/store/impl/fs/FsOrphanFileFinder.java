@@ -31,6 +31,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -62,24 +63,32 @@ class FsOrphanFileFinder {
     private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
     private final SecurityContext securityContext;
+    private final PathCreator pathCreator;
 
     @Inject
     public FsOrphanFileFinder(final FsPathHelper fileSystemStreamPathHelper,
                               final MetaService metaService,
-                              final SecurityContext securityContext) {
+                              final SecurityContext securityContext,
+                              final PathCreator pathCreator) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.securityContext = securityContext;
+        this.pathCreator = pathCreator;
     }
 
     public ScanVolumePathResult scanVolumePath(final FsVolume volume,
                                                final Consumer<Path> orphanConsumer,
                                                final long oldestDirTime,
                                                final TaskContext taskContext) {
-        final FsOrphanFileFinderProgress cleanProgress = new FsOrphanFileFinderProgress(volume.getPath(), taskContext);
+        final String volumePathStr = pathCreator.makeAbsolute(
+                pathCreator.replaceSystemProperties(volume.getPath()));
+
+        final FsOrphanFileFinderProgress cleanProgress = new FsOrphanFileFinderProgress(
+                volumePathStr,
+                taskContext);
         return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             final ScanVolumePathResult result = new ScanVolumePathResult();
-            final Path directory = FileSystemUtil.createFileTypeRoot(volume);
+            final Path directory = FileSystemUtil.createFileTypeRoot(volumePathStr);
 
             if (!Files.isDirectory(directory)) {
                 LOGGER.debug(() -> "scanDirectory() - " +

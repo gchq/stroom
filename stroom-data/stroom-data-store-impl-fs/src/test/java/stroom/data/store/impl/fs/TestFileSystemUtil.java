@@ -79,7 +79,7 @@ class TestFileSystemUtil {
 
     @Test
     void testCreateFileTypeRoot() {
-        final String root = FileUtil.getCanonicalPath(FileSystemUtil.createFileTypeRoot(buildTestVolume()));
+        final String root = FileUtil.getCanonicalPath(FileSystemUtil.createFileTypeRoot(buildTestVolume().getPath()));
         assertThat(root).isNotNull();
         assertThat(root).endsWith("store");
     }

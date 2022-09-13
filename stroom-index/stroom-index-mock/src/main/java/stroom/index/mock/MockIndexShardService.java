@@ -25,6 +25,8 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ResultPage;
 
@@ -46,12 +48,16 @@ public class MockIndexShardService implements IndexShardService {
     private final AtomicInteger indexShardsCreated;
     private final AtomicLong indexShardId;
     private final TempDirProvider tempDirProvider;
+    private final PathCreator pathCreator;
 
     @Inject
     public MockIndexShardService(final TempDirProvider tempDirProvider) {
         this.tempDirProvider = tempDirProvider;
         this.indexShardsCreated = new AtomicInteger(0);
         this.indexShardId = new AtomicLong(0);
+        pathCreator = new SimplePathCreator(
+                () -> tempDirProvider.get().resolve("home"),
+                tempDirProvider);
     }
 
     public MockIndexShardService(final AtomicInteger indexShardsCreated,
@@ -60,6 +66,10 @@ public class MockIndexShardService implements IndexShardService {
         this.tempDirProvider = tempDirProvider;
         this.indexShardsCreated = indexShardsCreated;
         this.indexShardId = indexShardId;
+
+        pathCreator = new SimplePathCreator(
+                () -> tempDirProvider.get().resolve("home"),
+                tempDirProvider);
     }
 
     @Override
@@ -83,7 +93,7 @@ public class MockIndexShardService implements IndexShardService {
 
         indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
         map.put(indexShard.getId(), indexShard);
-        final Path indexPath = IndexShardUtil.getIndexPath(indexShard);
+        final Path indexPath = IndexShardUtil.getIndexPath(indexShard, pathCreator);
         if (Files.isDirectory(indexPath)) {
             FileUtil.deleteContents(indexPath);
         }

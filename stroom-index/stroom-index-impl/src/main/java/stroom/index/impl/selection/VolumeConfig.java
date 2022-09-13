@@ -1,7 +1,10 @@
 package stroom.index.impl.selection;
 
+import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.io.capacity.HasCapacitySelectorFactory;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import javax.validation.constraints.Pattern;
 
 @JsonPropertyOrder(alphabetic = true)
 public class VolumeConfig extends AbstractConfig {
@@ -20,6 +24,7 @@ public class VolumeConfig extends AbstractConfig {
     private final String defaultIndexVolumeGroupName;
     private final List<String> defaultIndexVolumeGroupPaths;
     private final double defaultIndexVolumeFilesystemUtilisation;
+    private final CacheConfig volumeSelectorCache;
 
     public VolumeConfig() {
         volumeSelector = "RoundRobin";
@@ -27,6 +32,13 @@ public class VolumeConfig extends AbstractConfig {
         defaultIndexVolumeGroupName = "Default Volume Group";
         defaultIndexVolumeGroupPaths = List.of("volumes/default_index_volume");
         defaultIndexVolumeFilesystemUtilisation = 0.9;
+        // Most volume selectors hold state (e.g. round-robin position) so we need to cache
+        // them. Use a fairly long life do avoid the selector being aged off and the position
+        // being lost.
+        volumeSelectorCache = CacheConfig.builder()
+                .maximumSize(1_000L)
+                .expireAfterAccess(StroomDuration.ofDays(10))
+                .build();
     }
 
     @SuppressWarnings({"unused", "checkstyle:linelength"})
@@ -36,18 +48,21 @@ public class VolumeConfig extends AbstractConfig {
             @JsonProperty("createDefaultIndexVolumesOnStart") final boolean createDefaultIndexVolumesOnStart,
             @JsonProperty(PROP_NAME_DEFUALT_VOLUME_GROUP_NAME) final String defaultIndexVolumeGroupName,
             @JsonProperty("defaultIndexVolumeGroupPaths") final List<String> defaultIndexVolumeGroupPaths,
-            @JsonProperty("defaultIndexVolumeFilesystemUtilisation") final double defaultIndexVolumeFilesystemUtilisation) {
+            @JsonProperty("defaultIndexVolumeFilesystemUtilisation") final double defaultIndexVolumeFilesystemUtilisation,
+            @JsonProperty("volumeSelectorCache") final CacheConfig volumeSelectorCache) {
         this.volumeSelector = volumeSelector;
         this.createDefaultIndexVolumesOnStart = createDefaultIndexVolumesOnStart;
         this.defaultIndexVolumeGroupName = defaultIndexVolumeGroupName;
         this.defaultIndexVolumeGroupPaths = defaultIndexVolumeGroupPaths;
         this.defaultIndexVolumeFilesystemUtilisation = defaultIndexVolumeFilesystemUtilisation;
+        this.volumeSelectorCache = volumeSelectorCache;
     }
 
-    @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
+    @JsonPropertyDescription("How should index volumes be selected for use? Possible volume selectors " +
             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
             "'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') " +
             "default is 'RoundRobin'")
+    @Pattern(regexp = HasCapacitySelectorFactory.VOLUME_SELECTOR_PATTERN)
     public String getVolumeSelector() {
         return volumeSelector;
     }
@@ -80,6 +95,20 @@ public class VolumeConfig extends AbstractConfig {
             "default index volumes that may be created on application start.")
     public double getDefaultIndexVolumeFilesystemUtilisation() {
         return defaultIndexVolumeFilesystemUtilisation;
+    }
+
+    public CacheConfig getVolumeSelectorCache() {
+        return volumeSelectorCache;
+    }
+
+    public VolumeConfig withVolumeSelector(final String volumeSelector) {
+        return new VolumeConfig(
+                volumeSelector,
+                createDefaultIndexVolumesOnStart,
+                defaultIndexVolumeGroupName,
+                defaultIndexVolumeGroupPaths,
+                defaultIndexVolumeFilesystemUtilisation,
+                volumeSelectorCache);
     }
 
     @Override

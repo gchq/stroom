@@ -24,12 +24,19 @@ import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexVolume;
 import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 
@@ -44,7 +51,29 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private IndexVolumeService indexVolumeService;
 
-//    @Override
+    @Test
+    void testSelectIndexVolume_unknownGroup() {
+        assertThrows(IndexException.class,
+                () -> indexVolumeService.selectVolume(
+                        "unknown",
+                        nodeInfo.getThisNodeName()));
+    }
+
+    @Test
+    void testSelectIndexVolume_validGroup() {
+        final String groupName = indexVolumeGroupService.getNames().get(0);
+
+        final IndexVolume indexVolume = indexVolumeService.selectVolume(
+                groupName,
+                nodeInfo.getThisNodeName());
+
+        Assertions.assertThat(indexVolume)
+                .isNotNull();
+        Assertions.assertThat(indexVolume.getCapacityInfo().isFull())
+                .isFalse();
+    }
+
+    //    @Override
 //    protected void onBefore() {
 //        clean();
 //    }

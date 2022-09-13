@@ -222,6 +222,7 @@ dependencies {
     testCompile libs.hikari
     testCompile libs.jinjava
     testCompile libs.junit_jupiter_api
+    testCompile libs.junit_platform_launcher
     testCompile libs.lmdbjava
     testCompile libs.lucene_core
     testCompile libs.saxon_he

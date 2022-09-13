@@ -60,7 +60,6 @@ class TestRestResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRestResources.class);
 
-    private static final Map<String, String> OPERATION_ID_MAP = new HashMap<>();
 
     //    @Disabled // Temp while REST resource refactoring / annotation work is ongoing.
     @TestFactory
@@ -296,6 +295,8 @@ class TestRestResources {
                                     .getInheritedMethodAnnotation(Operation.class, method);
                             final ApiResponse[] responses = operation.responses();
 
+                            final Map<String, String> operationIdMap = new HashMap<>();
+
                             softAssertions
                                     .assertThat(operation.operationId())
                                     .withFailMessage(() ->
@@ -305,7 +306,7 @@ class TestRestResources {
                                     .isNotBlank();
 
                             if (!operation.operationId().isBlank()) {
-                                final String existing = OPERATION_ID_MAP.put(
+                                final String existing = operationIdMap.put(
                                         operation.operationId(),
                                         resourceClass.getName() + "::" + methodSignature.getName());
 

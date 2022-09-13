@@ -26,6 +26,7 @@ dependencies {
     testCompile project(':stroom-test-common')
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api
+    testCompile libs.gwt_dev
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

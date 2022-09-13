@@ -73,6 +73,7 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    lockTimeout: "PT10M"
   commonDbDetails:
     connection:
       jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
@@ -125,6 +126,7 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 1000
       findOrphanedMetaBatchSize: 7000
+      maxVolumeStateAge: "PT30S"
       metaTypeExtensions:
         Detections: "dtxn"
         Error: "err"
@@ -937,3 +939,7 @@ appConfig:
     defaultIndexVolumeGroupPaths:
     - "volumes/default_index_volume"
     volumeSelector: "RoundRobin"
+    volumeSelectorCache:
+      expireAfterAccess: "P10D"
+      expireAfterWrite: null
+      maximumSize: 1000

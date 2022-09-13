@@ -19,18 +19,20 @@ package stroom.index.impl.selection;
 import stroom.index.shared.IndexVolume;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class VolumeListUtil {
 
     public static List<IndexVolume> removeFullVolumes(final List<IndexVolume> list) {
-        final List<IndexVolume> newList = new ArrayList<>(list.size());
-        for (final IndexVolume volume : list) {
-            if (!volume.isFull()) {
-                newList.add(volume);
-            }
+        if (list == null || list.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            return list.stream()
+                    .filter(indexVolume -> !indexVolume.getCapacityInfo().isFull())
+                    .collect(Collectors.toList());
         }
-        return newList;
     }
 
     public static List<IndexVolume> removeVolumesWithoutValidState(final List<IndexVolume> list) {

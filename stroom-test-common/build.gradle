@@ -16,6 +16,7 @@ dependencies {
     compile libs.mockito_junit_jupiter
     compile libs.slf4j_api
     compile libs.wix_embedded_mysql
+    compile libs.junit_platform_launcher
 
     // The following logging libs are needed when running junits outside dropwizard
     runtimeOnly libs.jcl_over_slf4j

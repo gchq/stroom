@@ -35,6 +35,7 @@ import stroom.search.impl.shard.IndexShardSearcher;
 import stroom.search.impl.shard.MaxHitCollector;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.ResultPage;
 
 import org.apache.lucene.document.Document;
@@ -65,6 +66,8 @@ class TestBasicSearch extends AbstractCoreIntegrationTest {
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
     private IndexStore indexStore;
+    @Inject
+    private PathCreator pathCreator;
 
     @Test
     void testSimple() throws IOException {
@@ -113,7 +116,7 @@ class TestBasicSearch extends AbstractCoreIntegrationTest {
         final IndexShardSearcher[] indexShardSearchers = new IndexShardSearcher[shards.size()];
         int i = 0;
         for (final IndexShard indexShard : shards.getValues()) {
-            final IndexShardSearcher indexShardSearcher = new IndexShardSearcher(indexShard);
+            final IndexShardSearcher indexShardSearcher = new IndexShardSearcher(indexShard, pathCreator);
             indexShardSearchers[i++] = indexShardSearcher;
         }
 

@@ -94,6 +94,9 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
                             }
                         });
 
+                        // We don't make use of Weighers in the cache so the weight stats are meaningless
+                        map.remove("EvictionWeight");
+
                         final CacheInfo info = new CacheInfo(cacheName, map);
                         list.add(info);
                     }

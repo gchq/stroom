@@ -65,4 +65,9 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
     public void delete(final int id) {
         groups.removeIf(i -> id == i.getId());
     }
+
+    @Override
+    public void ensureDefaultVolumes() {
+
+    }
 }

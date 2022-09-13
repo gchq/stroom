@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -369,6 +370,9 @@ public class AsciiTable {
             this.alignment = alignment;
         }
 
+        /**
+         * A simple left-aligned column with no additional formatting
+         */
         public static <T_ROW, T_COL> Column<T_ROW, T_COL> of(
                 final String name,
                 final Function<T_ROW, T_COL> columnExtractor) {
@@ -379,6 +383,51 @@ public class AsciiTable {
                     .build();
         }
 
+        /**
+         * A right-aligned column for decimal numeric values, formatted with thousands separator and
+         * the specified fixed number of decimal places.
+         */
+        public static <T_ROW, T_COL extends Number> Column<T_ROW, T_COL> decimal(
+                final String name,
+                final Function<T_ROW, T_COL> columnExtractor,
+                final int decimalPlaces) {
+
+            NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            numberFormat.setGroupingUsed(true);
+            numberFormat.setMinimumFractionDigits(decimalPlaces);
+            numberFormat.setMaximumFractionDigits(decimalPlaces);
+
+            return new ColumnBuilder<>(
+                    Objects.requireNonNull(name),
+                    Objects.requireNonNull(columnExtractor))
+                    .rightAligned()
+                    .withFormat(numberFormat::format)
+                    .build();
+        }
+
+        /**
+         * A right-aligned column for integer numeric values, formatted with thousands separator
+         */
+        public static <T_ROW, T_COL extends Number> Column<T_ROW, T_COL> integer(
+                final String name,
+                final Function<T_ROW, T_COL> columnExtractor) {
+
+            NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            numberFormat.setGroupingUsed(true);
+            numberFormat.setMinimumFractionDigits(0);
+            numberFormat.setMaximumFractionDigits(0);
+
+            return new ColumnBuilder<>(
+                    Objects.requireNonNull(name),
+                    Objects.requireNonNull(columnExtractor))
+                    .rightAligned()
+                    .withFormat(numberFormat::format)
+                    .build();
+        }
+
+        /**
+         * A column builder for when you need full control over the column style
+         */
         public static <T_ROW, T_COL> ColumnBuilder<T_ROW, T_COL> builder(
                 final String name,
                 final Function<T_ROW, T_COL> columnExtractor) {

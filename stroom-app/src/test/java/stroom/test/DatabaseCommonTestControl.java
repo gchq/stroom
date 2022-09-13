@@ -18,16 +18,21 @@ package stroom.test;
 
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
+import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.processor.impl.ProcessorTaskManager;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.assertj.core.api.Assertions;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,6 +40,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /**
@@ -44,7 +50,7 @@ import javax.inject.Inject;
  */
 public class DatabaseCommonTestControl implements CommonTestControl {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
     private final ContentImportService contentImportService;
     private final IndexShardManager indexShardManager;
@@ -56,8 +62,11 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final VolumeConfig volumeConfig;
     private final FsVolumeService fsVolumeService;
     private final PathCreator pathCreator;
+    private final IndexVolumeService indexVolumeService;
 
-    private static boolean needsCleanup;
+//    private static boolean needsCleanup;
+    // Thread local for parallel test running
+    private static final ThreadLocal<Boolean> NEEDS_CLEAN_UP_THREAD_LOCAL = ThreadLocal.withInitial(() -> false);
 
     @Inject
     DatabaseCommonTestControl(final ContentImportService contentImportService,
@@ -69,7 +78,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final VolumeConfig volumeConfig,
                               final FsVolumeConfig fsVolumeConfig,
                               final FsVolumeService fsVolumeService,
-                              final PathCreator pathCreator) {
+                              final PathCreator pathCreator,
+                              final IndexVolumeService indexVolumeService) {
         this.contentImportService = contentImportService;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -80,12 +90,17 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.fsVolumeConfig = fsVolumeConfig;
         this.fsVolumeService = fsVolumeService;
         this.pathCreator = pathCreator;
+        this.indexVolumeService = indexVolumeService;
     }
 
     @Override
     public void setup(final Path tempDir) {
         LOGGER.debug("temp dir: {}", tempDir);
         final Instant startTime = Instant.now();
+        LOGGER.info(() -> LogUtil.inSeparatorLine("Starting setup of thread '{}' ({})",
+                Thread.currentThread().getName(),
+                Thread.currentThread().getId()));
+
         Path fsVolDir;
         Path indexVolDir;
         if (tempDir == null) {
@@ -99,26 +114,40 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             indexVolDir = tempDir;
         }
 
-        LOGGER.debug("Creating stream volumes in {}", fsVolDir.toAbsolutePath().normalize().toString());
+        LOGGER.info("Creating default stream volumes in {}", fsVolDir.toAbsolutePath().normalize());
         fsVolumeConfig.setDefaultStreamVolumePaths(List.of(fsVolDir.toString()));
+        fsVolumeService.ensureDefaultVolumes();
+        fsVolumeService.flush();
 
-        LOGGER.debug("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize().toString());
+        final FsVolume fsVolume = fsVolumeService.getVolume();
+        if (fsVolume == null) {
+            Assertions.fail("No active and non-full volumes found. " +
+                    "Likely a problem with default volume creation in setup, or a too full disk.");
+        }
+
+        LOGGER.info("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize());
         volumeCreator.setup(indexVolDir);
 
         // Ensure we can create tasks.
         processorTaskManager.startup();
         // Only allow tasks to be created synchronously for the purposes of testing.
         processorTaskManager.setAllowAsyncTaskCreation(false);
-        LOGGER.info("test environment setup completed in {}", Duration.between(startTime, Instant.now()));
 
-        needsCleanup = true;
+        LOGGER.info("Setting NEEDS_CLEAN_UP_THREAD_LOCAL to true");
+        NEEDS_CLEAN_UP_THREAD_LOCAL.set(true);
+
+        LOGGER.info(() -> LogUtil.inSeparatorLine(
+                "Test environment setup completed in {}", Duration.between(startTime, Instant.now())));
     }
 
     @Override
     public void cleanup() {
-        if (needsCleanup) {
+        if (NEEDS_CLEAN_UP_THREAD_LOCAL.get()) {
             clear();
-            needsCleanup = false;
+            LOGGER.info("Setting NEEDS_CLEAN_UP_THREAD_LOCAL to false");
+            NEEDS_CLEAN_UP_THREAD_LOCAL.set(false);
+        } else {
+            LOGGER.info("Teardown not required");
         }
     }
 
@@ -128,24 +157,41 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     @Override
     public void clear() {
         final Instant startTime = Instant.now();
+        LOGGER.info(() -> LogUtil.inSeparatorLine("Starting teardown of thread '{}' ({})",
+                Thread.currentThread().getName(),
+                Thread.currentThread().getId()));
         // Make sure we are no longer creating tasks.
         processorTaskManager.shutdown();
 
         // Make sure we don't delete database entries without clearing the pool.
         indexShardWriterCache.shutdown();
+        LOGGER.info("Deleting shards from disk");
         indexShardManager.deleteFromDisk();
 
-        // Delete the contents of all stream store volumes.
-        fsVolumeService.clear();
+        // Clear all caches, files, volumes that might have been created by previous tests.
 
-        // Clear all caches or files that might have been created by previous tests.
-        clearables.forEach(Clearable::clear);
+        final String clearedList = clearables.stream()
+                .peek(Clearable::clear)
+                .map(clearable -> clearable.getClass().getSimpleName())
+                .sorted()
+                .collect(Collectors.joining(", "));
+        LOGGER.info("Cleared the following clearables [{}]", clearedList);
 
-        LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
+        LOGGER.info(() -> LogUtil.inSeparatorLine(
+                "Test environment teardown completed in {}", Duration.between(startTime, Instant.now())));
     }
 
     @Override
     public void createRequiredXMLSchemas() {
         contentImportService.importStandardPacks();
+    }
+
+    /**
+     * Useful if you want to manually delete all the test databases that may have been
+     * left by test runs. Tests should clean up after themselves, but exceptions may stop
+     * this happening.
+     */
+    public static void main(String[] args) {
+        DbTestUtil.dropAllTestDatabases();
     }
 }
