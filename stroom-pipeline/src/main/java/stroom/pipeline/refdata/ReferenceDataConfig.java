@@ -33,7 +33,7 @@ public class ReferenceDataConfig extends AbstractConfig {
 
         effectiveStreamCache = CacheConfig.builder()
                 .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .expireAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
     }
 

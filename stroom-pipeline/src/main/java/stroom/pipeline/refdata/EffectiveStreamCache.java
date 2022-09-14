@@ -38,6 +38,9 @@ import java.util.TreeSet;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+// TODO: 14/09/2022 Ideally this class ought to listen for events each time a strm is created/deleted
+//  or a feed is deleted and then evict the appropriate keys, but that is a LOT of events going over the
+//  cluster.
 @Singleton
 public class EffectiveStreamCache implements Clearable {
 
