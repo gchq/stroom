@@ -293,10 +293,17 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             final Set<String> failedNodes = new ConcurrentSkipListSet<>();
             final AtomicReference<Throwable> exception = new AtomicReference<>();
 
+            final String nodeNameStr = nodeNames.size() == 1
+                    ? "node " + nodeName
+                    : "all nodes";
+            final String taskName = "Reference Data Purge on "
+                    + nodeNameStr
+                    + " (purge age: " + purgeAge.toString() + ")";
+
             taskContextFactory.context(
-                    "Reference Data Purge on all nodes (" + purgeAge.toString() + ")",
+                    taskName,
                     parentTaskContext -> {
-                        nodeNames.stream()
+                        @SuppressWarnings("unchecked") final CompletableFuture<Void>[] futures = nodeNames.stream()
                                 .map(nodeName2 -> {
 
                                     final Runnable runnable = taskContextFactory.childContext(
@@ -332,7 +339,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                 return null;
                                             });
                                 })
-                                .forEach(CompletableFuture::join);
+                                .toArray(CompletableFuture[]::new);
+
+                        CompletableFuture.allOf(futures).join();
 
                         if (!failedNodes.isEmpty()) {
                             throw new RuntimeException(LogUtil.message(
@@ -361,10 +370,18 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             final Set<String> failedNodes = new ConcurrentSkipListSet<>();
             final AtomicReference<Throwable> exception = new AtomicReference<>();
 
+            final String nodeNameStr = nodeNames.size() == 1
+                    ? "node " + nodeName
+                    : "all nodes";
+            final String taskName = "Reference Data Purge on "
+                    + nodeNameStr
+                    + " (Stream: " + refStreamId + ")";
+
             taskContextFactory.context(
-                    LogUtil.message("Reference Data Purge on all nodes (Stream: {})", refStreamId),
+                    taskName,
                     parentTaskContext -> {
-                        nodeNames.stream()
+
+                        @SuppressWarnings("unchecked") final CompletableFuture<Void>[] futures = nodeNames.stream()
                                 .map(nodeName2 -> {
 
                                     final Runnable runnable = taskContextFactory.childContext(
@@ -400,7 +417,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                 return null;
                                             });
                                 })
-                                .forEach(CompletableFuture::join);
+                                .toArray(CompletableFuture[]::new);
+
+                        CompletableFuture.allOf(futures).join();
 
                         if (!failedNodes.isEmpty()) {
                             throw new RuntimeException(LogUtil.message(
@@ -428,15 +447,21 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             final Set<String> failedNodes = new ConcurrentSkipListSet<>();
             final AtomicReference<Throwable> exception = new AtomicReference<>();
 
+            final String nodeNameStr = nodeNames.size() == 1
+                    ? "node " + nodeName
+                    : "all nodes";
+            final String taskName = "Clearing Byte Buffer Pool on "
+                    + nodeNameStr;
+
             taskContextFactory.context(
-                    "Clearing Byte Buffer Pool on all nodes",
+                    nodeNameStr,
                     parentTaskContext -> {
-                        nodeNames.stream()
+                        @SuppressWarnings("unchecked") final CompletableFuture<Void>[] futures = nodeNames.stream()
                                 .map(nodeName2 -> {
 
                                     final Runnable runnable = taskContextFactory.childContext(
                                             parentTaskContext,
-                                            "Reference Data Purge on node " + nodeName2,
+                                            "Clearing Byte Buffer Pool on node " + nodeName2,
                                             taskContext -> {
                                                 nodeService.remoteRestCall(
                                                         nodeName2,
@@ -465,7 +490,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                 return null;
                                             });
                                 })
-                                .forEach(CompletableFuture::join);
+                                .toArray(CompletableFuture[]::new);
+
+                        CompletableFuture.allOf(futures).join();
 
                         if (!failedNodes.isEmpty()) {
                             throw new RuntimeException(LogUtil.message(
