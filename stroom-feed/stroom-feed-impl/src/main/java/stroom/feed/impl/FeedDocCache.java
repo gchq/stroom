@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -83,19 +84,21 @@ public class FeedDocCache implements Clearable, EntityEvent.Handler {
     public void onChange(final EntityEvent event) {
         LOGGER.debug("Received event {}", event);
         final EntityAction eventAction = event.getAction();
+        final Consumer<String> feedNameConsumer = feedName -> {
+            LOGGER.debug("Invalidating feed {}", feedName);
+            cache.invalidate(feedName);
+        };
+
         switch (eventAction) {
             case CLEAR_CACHE -> {
                 LOGGER.debug("Clearing cache");
                 clear();
             }
-            case UPDATE, DELETE -> NullSafe.consume(
-                    event,
-                    EntityEvent::getDocRef,
-                    DocRef::getName,
-                    feedName -> {
-                        LOGGER.debug("Invalidating feed {}", feedName);
-                        cache.invalidate(feedName);
-                    });
+            case UPDATE, DELETE -> {
+                NullSafe.consume(event.getDocRef(), DocRef::getName, feedNameConsumer);
+                // Can't rename feeds, but here just in case
+                NullSafe.consume(event.getOldDocRef(), DocRef::getName, feedNameConsumer);
+            }
             default -> LOGGER.debug("Unexpected event action {}", eventAction);
         }
     }

@@ -78,7 +78,6 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
     @Override
     public void onChange(final EntityEvent event) {
-        final DocRef docRef = event.getDocRef();
-        cache.invalidate(docRef);
+        cache.invalidate(event.getDocRef());
     }
 }

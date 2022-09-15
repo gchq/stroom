@@ -18,16 +18,27 @@ package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
+import stroom.docref.DocRef;
 import stroom.security.shared.User;
+import stroom.util.NullSafe;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-class UserCache implements Clearable {
+@EntityEventHandler(type = UserDocRefUtil.USER, action = {
+        EntityAction.UPDATE,
+        EntityAction.DELETE,
+        EntityAction.CLEAR_CACHE})
+class UserCache implements Clearable, EntityEvent.Handler {
 
     private static final String CACHE_NAME = "User Cache";
 
@@ -56,5 +67,26 @@ class UserCache implements Clearable {
     @Override
     public void clear() {
         cache.clear();
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        final Consumer<DocRef> docRefConsumer = docRef -> {
+            if (docRef.getName() != null) {
+                cache.invalidate(docRef.getName());
+            } else {
+                cache.invalidateEntries((userName, user) ->
+                        user.isPresent() && Objects.equals(
+                                docRef.getUuid(),
+                                user.get().getUuid()));
+            }
+        };
+
+        if (EntityAction.CLEAR_CACHE.equals(event.getAction())) {
+            clear();
+        } else if (UserDocRefUtil.USER.equals(event.getDocRef().getType())) {
+            NullSafe.consume(event.getDocRef(), docRefConsumer);
+            NullSafe.consume(event.getOldDocRef(), docRefConsumer);
+        }
     }
 }

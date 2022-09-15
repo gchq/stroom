@@ -31,7 +31,10 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-@EntityEventHandler(type = UserDocRefUtil.USER, action = {EntityAction.CLEAR_CACHE})
+@EntityEventHandler(type = UserDocRefUtil.USER, action = {
+        EntityAction.UPDATE,
+        EntityAction.DELETE,
+        EntityAction.CLEAR_CACHE})
 public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
 
     private static final String CACHE_NAME = "User App Permissions Cache";
@@ -63,9 +66,15 @@ public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
 
     @Override
     public void onChange(final EntityEvent event) {
-        final DocRef docRef = event.getDocRef();
-        if (docRef != null && UserDocRefUtil.USER.equals(docRef.getType())) {
-            cache.invalidate(docRef.getUuid());
+        if (EntityAction.CLEAR_CACHE.equals(event.getAction())) {
+            clear();
+        } else {
+            final DocRef docRef = event.getDocRef();
+            if (docRef != null) {
+                if (UserDocRefUtil.USER.equals(docRef.getType())) {
+                    cache.invalidate(docRef.getUuid());
+                }
+            }
         }
     }
 

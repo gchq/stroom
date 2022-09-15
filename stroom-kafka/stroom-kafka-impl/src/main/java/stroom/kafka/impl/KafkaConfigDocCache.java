@@ -21,7 +21,14 @@ import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -29,7 +36,12 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class KafkaConfigDocCache implements Clearable {
+@EntityEventHandler(
+        type = KafkaConfigDoc.DOCUMENT_TYPE,
+        action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
+public class KafkaConfigDocCache implements Clearable, EntityEvent.Handler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConfigDocCache.class);
 
     private static final String CACHE_NAME = "Kafka Config Doc Cache";
 
@@ -60,5 +72,27 @@ public class KafkaConfigDocCache implements Clearable {
     @Override
     public void clear() {
         cache.clear();
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        LOGGER.debug("Received event {}", event);
+        final EntityAction eventAction = event.getAction();
+
+        switch (eventAction) {
+            case CLEAR_CACHE -> {
+                LOGGER.debug("Clearing cache");
+                clear();
+            }
+            case UPDATE, DELETE -> {
+                NullSafe.consume(
+                        event.getDocRef(),
+                        docRef -> {
+                            LOGGER.debug("Invalidating docRef {}", docRef);
+                            cache.invalidate(docRef);
+                        });
+            }
+            default -> LOGGER.debug("Unexpected event action {}", eventAction);
+        }
     }
 }

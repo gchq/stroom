@@ -35,11 +35,9 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
@@ -64,7 +62,8 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
     }
 
     @Override
-    public <K, V> ICache<K, V> create(final String name, final Supplier<CacheConfig> cacheConfigSupplier) {
+    public <K, V> ICache<K, V> create(final String name,
+                                      final Supplier<CacheConfig> cacheConfigSupplier) {
         return create(name, cacheConfigSupplier, null, null);
     }
 
@@ -121,130 +120,13 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
             final LoadingCache<K, V> cache = cacheBuilder.build(cacheLoader);
             registerCache(name, cacheBuilder, cache);
 
-            return new ICache<K, V>() {
-                @Override
-                public V get(final K key) {
-                    LOGGER.trace(() -> "get() - " + key);
-                    return cache.get(key);
-                }
-
-                @Override
-                public void put(final K key, final V value) {
-                    LOGGER.trace(() -> "put() - " + key);
-                    cache.put(key, value);
-                }
-
-                @Override
-                public Optional<V> getOptional(final K key) {
-                    LOGGER.trace(() -> "getOptional() - " + key);
-                    return Optional.ofNullable(cache.getIfPresent(key));
-                }
-
-                @Override
-                public Map<K, V> asMap() {
-                    return cache.asMap();
-                }
-
-                @Override
-                public Collection<V> values() {
-                    return cache.asMap().values();
-                }
-
-                @Override
-                public void invalidate(final K key) {
-                    LOGGER.trace(() -> "invalidate() - " + key);
-                    cache.invalidate(key);
-                }
-
-                @Override
-                public void remove(final K key) {
-                    LOGGER.trace(() -> "remove() - " + key);
-                    cache.invalidate(key);
-                    cache.cleanUp();
-                }
-
-                @Override
-                public void evictExpiredElements() {
-                    LOGGER.trace(() -> "evictExpiredElements()");
-                    cache.cleanUp();
-                }
-
-                @Override
-                public long size() {
-                    return cache.estimatedSize();
-                }
-
-                @Override
-                public void clear() {
-                    LOGGER.trace(() -> "clear()");
-                    CacheUtil.clear(cache);
-                }
-            };
-
+            return new LoadingICache<K, V>(cache, name);
         } else {
 
             final Cache<K, V> cache = cacheBuilder.build();
             registerCache(name, cacheBuilder, cache);
 
-            return new ICache<K, V>() {
-                @Override
-                public V get(final K key) {
-                    LOGGER.trace(() -> "get() - " + key);
-                    return cache.getIfPresent(key);
-                }
-
-                @Override
-                public void put(final K key, final V value) {
-                    LOGGER.trace(() -> "put() - " + key);
-                    cache.put(key, value);
-                }
-
-                @Override
-                public Optional<V> getOptional(final K key) {
-                    LOGGER.trace(() -> "getOptional() - " + key);
-                    return Optional.ofNullable(cache.getIfPresent(key));
-                }
-
-                @Override
-                public Map<K, V> asMap() {
-                    return cache.asMap();
-                }
-
-                @Override
-                public Collection<V> values() {
-                    return cache.asMap().values();
-                }
-
-                @Override
-                public void invalidate(final K key) {
-                    LOGGER.trace(() -> "invalidate() - " + key);
-                    cache.invalidate(key);
-                }
-
-                @Override
-                public void remove(final K key) {
-                    LOGGER.trace(() -> "remove() - " + key);
-                    cache.invalidate(key);
-                    cache.cleanUp();
-                }
-
-                @Override
-                public void evictExpiredElements() {
-                    LOGGER.trace(() -> "evictExpiredElements()");
-                    cache.cleanUp();
-                }
-
-                @Override
-                public long size() {
-                    return cache.estimatedSize();
-                }
-
-                @Override
-                public void clear() {
-                    LOGGER.trace(() -> "clear()");
-                    CacheUtil.clear(cache);
-                }
-            };
+            return new SimpleICache<K, V>(cache, name);
         }
     }
 
