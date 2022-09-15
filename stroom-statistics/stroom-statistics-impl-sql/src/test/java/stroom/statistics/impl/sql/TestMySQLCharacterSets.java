@@ -144,6 +144,7 @@ class TestMySQLCharacterSets {
         }
     }
 
+    @SuppressWarnings("checkstyle:AvoidEscapedUnicodeCharacters")
     @Test
     void testDelimiter() throws SQLException {
         try (final Connection connection = getConnection()) {
@@ -155,6 +156,7 @@ class TestMySQLCharacterSets {
 
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
                     "INSERT INTO CHAR_SET_TEST VALUES (?)")) {
+                // Same delimiter as above but in unicode
                 preparedStatement.setString(1, "a\u00acb\u00acc\u00acd");
                 preparedStatement.execute();
             }

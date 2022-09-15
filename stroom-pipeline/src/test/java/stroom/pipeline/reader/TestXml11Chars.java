@@ -33,6 +33,7 @@ class TestXml11Chars {
 //    }
 
     @Test
+    @SuppressWarnings("checkstyle:AvoidEscapedUnicodeCharacters")
     void isValid() {
         doTest('a', true, true);
         doTest('1', true, true);
@@ -40,6 +41,8 @@ class TestXml11Chars {
         doTest('Σ', true, true); // \u03a3
         doTest('\u0080', true, false);
         doTest('\u0082', true, false);
+        doTest('\ufffe', false, false);
+        doTest('\uffff', false, false);
     }
 
     @Test
@@ -74,7 +77,7 @@ class TestXml11Chars {
         Assertions.assertThat(validCodePoint)
                 .isTrue();
 
-        Xml11Chars xml11Chars = new Xml11Chars();
+        final Xml11Chars xml11Chars = new Xml11Chars();
 
         Assertions.assertThat(xml11Chars.isValid(chr))
                 .isEqualTo(isValid);

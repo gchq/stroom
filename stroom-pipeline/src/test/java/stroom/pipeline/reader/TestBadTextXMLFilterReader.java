@@ -38,6 +38,7 @@ class TestBadTextXMLFilterReader {
     static final String m_aTrivialInValidXMLcorrected = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
             + "<TopLevelEntity>" + "<Leaf>The leaf contains &gt; and &lt; and &amp; characters</Leaf>"
             + "<Leaf>bogus &lt;enter&gt; and &lt;/exit&gt; tags</Leaf>" + "</TopLevelEntity>");
+    @SuppressWarnings("checkstyle:AvoidEscapedUnicodeCharacters")
     static final String m_aOddValidXML = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
             + "<TopLevelEntity  argA=\"String\" argB='String'>" + "<Leaf argC=\"with \"\" characters\">Leaf Text"
             + "</Leaf>" + "< InvalidTag>< /InvalidTag>" + "<Leaf >Test with space</Leaf>"
