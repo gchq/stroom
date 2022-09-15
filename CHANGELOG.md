@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.2] - 2022-09-15
+
+* Issue **#3057** : Change InvalidXmlCharFilterReader to filter out restricted control characters.
+
+
 ## [v7.0.1] - 2022-07-20
 
 * Add system info for pool caches, e.g. XSLT pool cache.
@@ -4548,7 +4553,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.2...HEAD
+[v7.0.2]: https://github.com/gchq/stroom/compare/v7.0.1...v7.0.2
 [v7.0.1]: https://github.com/gchq/stroom/compare/v7.0.0...v7.0.1
 [v7.0.0]: https://github.com/gchq/stroom/compare/v7.0-beta.218...v7.0.0
 [v7.0-beta.218]: https://github.com/gchq/stroom/compare/v7.0-beta.217...v7.0-beta.218
