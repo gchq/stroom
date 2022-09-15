@@ -99,6 +99,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         textPresenter.setUiHandlers(this);
 
         characterNavigatorPresenter.setDisplay(dataNavigatorData);
+
+        textPresenter.getViewAsHexOption().setChangeHandler((isOn) ->
+                setSourceLocation(requestedSourceLocation, true));
     }
 
     private void setupProgressBar(final SourceView view,
@@ -120,7 +123,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         textPresenter.getBasicAutoCompletionOption().setUnavailable();
         textPresenter.getFormatAction().setUnavailable();
-        textPresenter.getViewAsHexOption().setUnavailable();
+        textPresenter.getViewAsHexOption().setAvailable();
     }
 
     private void updateStepControlVisibility() {
@@ -330,6 +333,12 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 .withHighlight(sourceLocation.getHighlight())
                 .withChildStreamType(sourceLocation.getChildType());
         final FetchDataRequest request = new FetchDataRequest(builder.build());
+
+        if (textPresenter.getViewAsHexOption().isOnAndAvailable()) {
+            request.setDisplayMode(FetchDataRequest.DisplayMode.HEX);
+        } else {
+            request.setDisplayMode(FetchDataRequest.DisplayMode.TEXT);
+        }
 
         final Rest<AbstractFetchDataResult> rest = restFactory.create();
 
