@@ -322,4 +322,11 @@ public class Xml10Chars implements XmlChars {
         return (c < 0x10000 && (CHARS[c] & MASK_VALID) != 0) ||
                 (0x10000 <= c && c <= 0x10FFFF);
     }
+
+    @Override
+    public boolean isValidLiteral(final int c) {
+        // TODO: AT 15/09/2022 XML10 doesn't seem to define a set of control chars so just use
+        //  isValid for now.
+        return isValid(c);
+    }
 }
