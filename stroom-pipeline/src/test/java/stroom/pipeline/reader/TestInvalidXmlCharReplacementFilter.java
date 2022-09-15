@@ -191,15 +191,10 @@ public class TestInvalidXmlCharReplacementFilter {
                             assertThat(isValidXmlCP(chr, mode))
                                     .withFailMessage(() ->
                                             LogUtil.message(
-                                                    "Expecting [{}] (unicode hex: {}) to be invalid",
+                                                    "Expecting [{}] (unicode hex: {}) to be valid",
                                                     chr, Integer.toHexString(chr)))
                                     .isTrue();
 
-                            if (!isValidXmlCP(chr, mode)) {
-                                LOGGER.warn("Expecting [{}] (unicode hex: {}) to be invalid",
-                                        chr, Integer.toHexString(chr));
-
-                            }
                             assertThat(brokenUTF16Str[origidx] == buf[i] || buf[i] == REPLACE_CHAR).isTrue();
                         }
                     }
