@@ -16,8 +16,12 @@
 
 package stroom.pipeline.reader;
 
+import stroom.util.logging.LogUtil;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
@@ -27,6 +31,8 @@ import java.util.Random;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestInvalidXmlCharReplacementFilter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestInvalidXmlCharReplacementFilter.class);
 
     public static final char REPLACE_CHAR = 0xfffd;
 
@@ -44,8 +50,15 @@ public class TestInvalidXmlCharReplacementFilter {
                     || (ch >= 0x10000 && ch <= 0x10ffff);
         }
 
+        // See
+        // https://en.wikipedia.org/wiki/Valid_characters_in_XML
+        // https://www.w3.org/TR/xml11/#NT-RestrictedChar
         if (mode.getClass().equals(Xml11Chars.class)) {
-            return (ch >= 0x1 && ch <= 0xd7ff)
+            return (ch > 0x8 && ch < 0xb ||
+                    ch == 0xd ||
+                    ch > 0x1f && ch < 0x7f ||
+                    ch == 0x85 ||
+                    ch > 0x9f && ch <= 0xd7ff)
                     || (ch >= 0xe000 && ch <= 0xfffd)
                     || (ch >= 0x10000 && ch <= 0x10ffff);
         }
@@ -140,8 +153,9 @@ public class TestInvalidXmlCharReplacementFilter {
 
     private void readArrayFullUTF16(final char[] testData, final XmlChars mode)
             throws IOException {
+        int counter = 0;
         for (final int chunkSize : testChunkSizes) {
-            final Reader r = getReader(testData, new Xml10Chars());
+            final Reader r = getReader(testData, mode);
             final char[] buf = new char[chunkSize];
             int origidx = 0;
             final int trail_size = testData.length % chunkSize;
@@ -155,6 +169,7 @@ public class TestInvalidXmlCharReplacementFilter {
                     break;
                 }
                 final int rch = r.read(buf, 0, buf.length);
+                counter++;
                 if (rch != expect_read) {
                     // as idx < floor(char_len / chunk_len)
                     assertThat(rch).isEqualTo(expect_read);
@@ -169,8 +184,21 @@ public class TestInvalidXmlCharReplacementFilter {
                         if (Character.isHighSurrogate(buf[i])) {
                             highSurrogate = buf[i];
                         } else {
-                            if (!isValidXmlCP(buf[i], mode)) {
-                                assertThat(isValidXmlCP(buf[i], mode)).isTrue();
+                            final char chr = buf[i];
+
+                            // All chars by this point should be valid as we have removed/replaced
+                            // the invalid ones.
+                            assertThat(isValidXmlCP(chr, mode))
+                                    .withFailMessage(() ->
+                                            LogUtil.message(
+                                                    "Expecting [{}] (unicode hex: {}) to be invalid",
+                                                    chr, Integer.toHexString(chr)))
+                                    .isTrue();
+
+                            if (!isValidXmlCP(chr, mode)) {
+                                LOGGER.warn("Expecting [{}] (unicode hex: {}) to be invalid",
+                                        chr, Integer.toHexString(chr));
+
                             }
                             assertThat(brokenUTF16Str[origidx] == buf[i] || buf[i] == REPLACE_CHAR).isTrue();
                         }
@@ -179,6 +207,7 @@ public class TestInvalidXmlCharReplacementFilter {
             }
             final int reof = r.read();
             assertThat(reof).isEqualTo(-1);
+            LOGGER.info("Tested {} chars", counter);
         }
     }
 
