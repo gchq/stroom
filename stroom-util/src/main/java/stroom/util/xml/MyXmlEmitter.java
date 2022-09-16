@@ -188,6 +188,7 @@ public class MyXmlEmitter extends XMLEmitter {
      * @param c The char to test.
      * @return True if the char is forbidden.
      */
+    @SuppressWarnings("checkstyle:AvoidEscapedUnicodeCharacters")
     private boolean isForbidden(final char c) {
         // surrogates, U+FFFE and U+FFFF are forbidden in XML.
         return c == '\ufffe' || c == '\uffff';
