@@ -22,11 +22,6 @@ echo -e \
 # see https://github.com/acacode/swagger-typescript-api/issues/370
 pushd "swagger_typescript_api_root" > /dev/null
 
-# swagger_typescript_api_root is so that we can use a package.json file that forces
-# the version of the typescript dep to 4.7.4, 
-# see https://github.com/acacode/swagger-typescript-api/issues/370
-pushd "swagger_typescript_api_root" > /dev/null
-
 echo "PWD: $PWD"
 
 npx npm-force-resolutions \
