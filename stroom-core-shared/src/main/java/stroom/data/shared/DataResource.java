@@ -26,6 +26,7 @@ import stroom.util.shared.RestResource;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
@@ -51,6 +52,17 @@ public interface DataResource extends RestResource, DirectRestService {
             summary = "Download matching data",
             operationId = "downloadData")
     ResourceGeneration download(@Parameter(description = "criteria", required = true) FindMetaCriteria criteria);
+
+    @POST
+    @Path("downloadZip")
+    @Operation(
+            summary = "Retrieve the content matching the provided criteria as a zip file",
+            operationId = "downloadZip",
+            responses = {
+                    @ApiResponse(description = "Returns Stroom content data as a zip file")
+            })
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    Object downloadZip(@Parameter(description = "criteria", required = true) FindMetaCriteria criteria);
 
     @POST
     @Path("upload")
