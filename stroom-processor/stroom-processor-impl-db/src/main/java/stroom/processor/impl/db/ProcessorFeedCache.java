@@ -18,7 +18,7 @@
 package stroom.processor.impl.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.db.util.JooqUtil;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFeedRecord;
@@ -26,6 +26,7 @@ import stroom.util.shared.Clearable;
 
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
@@ -35,15 +36,18 @@ class ProcessorFeedCache implements Clearable {
 
     private static final String CACHE_NAME = "Processor Feed Cache";
 
-    private final ICache<String, Integer> cache;
+    private final LoadingICache<String, Integer> cache;
     private final ProcessorDbConnProvider processorDbConnProvider;
 
     @Inject
     ProcessorFeedCache(final ProcessorDbConnProvider processorDbConnProvider,
                        final CacheManager cacheManager,
-                       final ProcessorConfig processorConfig) {
+                       final Provider<ProcessorConfig> processorConfigProvider) {
         this.processorDbConnProvider = processorDbConnProvider;
-        cache = cacheManager.create(CACHE_NAME, processorConfig::getProcessorFeedCache, this::load);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> processorConfigProvider.get().getProcessorFeedCache(),
+                this::load);
     }
 
     private int load(final String name) {

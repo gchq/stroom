@@ -75,6 +75,15 @@ public class CacheConfig extends AbstractConfig {
         return expireAfterWrite;
     }
 
+    @Override
+    public String toString() {
+        return "CacheConfig{" +
+                "maximumSize=" + maximumSize +
+                ", expireAfterAccess=" + expireAfterAccess +
+                ", expireAfterWrite=" + expireAfterWrite +
+                '}';
+    }
+
     public static Builder builder() {
         return new Builder();
     }

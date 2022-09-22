@@ -176,7 +176,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
             try (CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
-                        cacheManager, null, null, null, new ReferenceDataConfig()) {
+                        cacheManager, null, null, null, ReferenceDataConfig::new) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -396,7 +396,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         null,
                         null,
-                        new ReferenceDataConfig()) {
+                        ReferenceDataConfig::new) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -475,7 +475,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         null,
                         null,
-                        new ReferenceDataConfig()) {
+                        ReferenceDataConfig::new) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;

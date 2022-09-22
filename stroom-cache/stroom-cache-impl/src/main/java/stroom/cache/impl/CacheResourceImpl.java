@@ -43,6 +43,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
@@ -109,14 +110,12 @@ class CacheResourceImpl implements CacheResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public CacheInfoResponse info(final String cacheName, final String nodeName) {
-        CacheInfoResponse result;
+        final List<CacheInfo> cacheInfoList;
         // If this is the node that was contacted then just return our local info.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(cacheName, null));
-            final List<CacheInfo> list = cacheManagerService.get().find(criteria);
-            result = new CacheInfoResponse(list);
-
+            cacheInfoList = cacheManagerService.get().find(criteria);
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.INFO_PATH);
@@ -130,21 +129,23 @@ class CacheResourceImpl implements CacheResource {
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);
                 }
+                CacheInfoResponse result;
                 result = response.readEntity(CacheInfoResponse.class);
                 if (result == null) {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
+                cacheInfoList = result.getValues();
             } catch (Exception e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
 
         // Add the node name.
-        for (final CacheInfo value : result.getValues()) {
-            value.setNodeName(nodeName);
-        }
+        final List<CacheInfo> decoratedCacheInfoList = cacheInfoList.stream()
+                .map(cacheInfo -> cacheInfo.withNodeName(nodeName))
+                .collect(Collectors.toList());
 
-        return result;
+        return new CacheInfoResponse(decoratedCacheInfoList);
     }
 
     @Override

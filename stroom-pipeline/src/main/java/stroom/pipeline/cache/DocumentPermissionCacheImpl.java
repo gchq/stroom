@@ -17,7 +17,7 @@
 package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.pipeline.PipelineConfig;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -25,6 +25,7 @@ import stroom.util.shared.Clearable;
 
 import java.util.Objects;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -33,14 +34,17 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
     private static final String CACHE_NAME = "Document Permission Cache";
 
     private final SecurityContext securityContext;
-    private final ICache<DocumentPermission, Boolean> cache;
+    private final LoadingICache<DocumentPermission, Boolean> cache;
 
     @Inject
     DocumentPermissionCacheImpl(final CacheManager cacheManager,
                                 final SecurityContext securityContext,
-                                final PipelineConfig pipelineConfig) {
+                                final Provider<PipelineConfig> pipelineConfigProvider) {
         this.securityContext = securityContext;
-        cache = cacheManager.create(CACHE_NAME, pipelineConfig::getDocumentPermissionCache, this::create);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> pipelineConfigProvider.get().getDocumentPermissionCache(),
+                this::create);
     }
 
     private boolean create(final DocumentPermission documentPermission) {

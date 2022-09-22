@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.docref.DocRef;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -37,7 +37,7 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
     private static final String CACHE_NAME = "User Groups Cache";
 
     private final Provider<EntityEventBus> eventBusProvider;
-    private final ICache<String, Set<String>> cache;
+    private final LoadingICache<String, Set<String>> cache;
 
     @Inject
     UserGroupsCache(final CacheManager cacheManager,
@@ -45,7 +45,7 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
                     final Provider<EntityEventBus> eventBusProvider,
                     final Provider<AuthorisationConfig> authorisationConfigProvider) {
         this.eventBusProvider = eventBusProvider;
-        cache = cacheManager.create(
+        cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> authorisationConfigProvider.get().getUserGroupsCache(),
                 userService::findGroupUuidsForUser);

@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.cache.api'
 
 dependencies {
+    compile project(':stroom-core-shared')
     compile project(':stroom-util')
 
 //    compile libs.guava

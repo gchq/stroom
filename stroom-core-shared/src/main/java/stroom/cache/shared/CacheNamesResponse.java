@@ -22,4 +22,9 @@ public class CacheNamesResponse extends ResultPage<String> {
                               @JsonProperty("pageResponse") final PageResponse pageResponse) {
         super(values, pageResponse);
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        return super.equals(o);
+    }
 }

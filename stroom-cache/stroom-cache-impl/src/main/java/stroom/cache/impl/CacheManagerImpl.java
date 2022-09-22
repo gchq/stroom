@@ -18,6 +18,7 @@ package stroom.cache.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.json.JsonUtil;
@@ -28,16 +29,11 @@ import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.CacheLoader;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.github.benmanes.caffeine.cache.RemovalCause;
-import com.github.benmanes.caffeine.cache.RemovalListener;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
@@ -51,107 +47,64 @@ import javax.inject.Singleton;
 public class CacheManagerImpl implements CacheManager, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheManagerImpl.class);
+
     private static final String PARAM_NAME_LIMIT = "limit";
     private static final String PARAM_NAME_CACHE_NAME = "name";
 
-    private final Map<String, CacheHolder> caches = new ConcurrentHashMap<>();
+    private final Map<String, ICache<?, ?>> caches = new ConcurrentHashMap<>();
 
     @Override
     public synchronized void close() {
-        caches.forEach((k, v) -> CacheUtil.clear(v.getCache()));
-    }
-
-    @Override
-    public <K, V> ICache<K, V> create(final String name,
-                                      final Supplier<CacheConfig> cacheConfigSupplier) {
-        return create(name, cacheConfigSupplier, null, null);
+        caches.forEach((name, cache) -> cache.clear());
     }
 
     @Override
     public <K, V> ICache<K, V> create(final String name,
                                       final Supplier<CacheConfig> cacheConfigSupplier,
-                                      final Function<K, V> loadFunction) {
-        return create(name, cacheConfigSupplier, loadFunction, null);
-    }
-
-    @Override
-    public <K, V> ICache<K, V> create(final String name,
-                                      final Supplier<CacheConfig> cacheConfigSupplier,
-                                      final Function<K, V> loadFunction,
                                       final BiConsumer<K, V> removalNotificationConsumer) {
-        final CacheConfig cacheConfig = cacheConfigSupplier.get();
-
-        final Caffeine cacheBuilder = Caffeine.newBuilder();
-        cacheBuilder.recordStats();
-
-        if (cacheConfig.getMaximumSize() != null) {
-            cacheBuilder.maximumSize(cacheConfig.getMaximumSize());
-        }
-        if (cacheConfig.getExpireAfterAccess() != null) {
-            cacheBuilder.expireAfterAccess(cacheConfig.getExpireAfterAccess().getDuration());
-        }
-        if (cacheConfig.getExpireAfterWrite() != null) {
-            cacheBuilder.expireAfterWrite(cacheConfig.getExpireAfterWrite().getDuration());
-        }
-        if (removalNotificationConsumer != null) {
-            final RemovalListener<K, V> removalListener = (key, value, cause) -> {
-                final Supplier<String> messageSupplier = () -> "Removal notification for cache '" +
-                        name +
-                        "' (key=" +
-                        key +
-                        ", value=" +
-                        value +
-                        ", cause=" +
-                        cause + ")";
-
-                if (cause == RemovalCause.SIZE) {
-                    LOGGER.warn(() -> "Cache reached size limit '" + name + "'");
-                    LOGGER.debug(messageSupplier);
-                } else {
-                    LOGGER.trace(messageSupplier);
-                }
-                removalNotificationConsumer.accept(key, value);
-            };
-            cacheBuilder.removalListener(removalListener);
-        }
-
-        if (loadFunction != null) {
-            final CacheLoader<K, V> cacheLoader = loadFunction::apply;
-            final LoadingCache<K, V> cache = cacheBuilder.build(cacheLoader);
-            registerCache(name, cacheBuilder, cache);
-
-            return new LoadingICache<K, V>(cache, name);
-        } else {
-
-            final Cache<K, V> cache = cacheBuilder.build();
-            registerCache(name, cacheBuilder, cache);
-
-            return new SimpleICache<K, V>(cache, name);
-        }
+        final ICache<K, V> cache = new SimpleICacheImpl<>(
+                name,
+                cacheConfigSupplier,
+                removalNotificationConsumer);
+        registerCache(name, cache);
+        return cache;
     }
 
-//    @Override
-//    public void clear(final String name) {
-//        final CacheHolder cacheHolder = caches.get(name);
-//        if (cacheHolder != null) {
-//            CacheUtil.clear(cacheHolder.getCache());
-//        }
-//    }
+    @Override
+    public <K, V> LoadingICache<K, V> createLoadingCache(
+            final String name,
+            final Supplier<CacheConfig> cacheConfigSupplier,
+            final Function<K, V> loadFunction,
+            final BiConsumer<K, V> removalNotificationConsumer) {
 
-    //    @Override
-    public void registerCache(final String alias, final Caffeine cacheBuilder, final Cache cache) {
-        if (caches.containsKey(alias)) {
-            throw new RuntimeException("A cache called '" + alias + "' already exists");
+        Objects.requireNonNull(loadFunction);
+        final LoadingICache<K, V> cache;
+        cache = new LoadingCacheImpl<>(
+                name,
+                cacheConfigSupplier,
+                loadFunction,
+                removalNotificationConsumer);
+        registerCache(name, cache);
+        return cache;
+    }
+
+    public void registerCache(final String name, final ICache<?, ?> cache) {
+        if (caches.containsKey(name)) {
+            throw new RuntimeException("A cache called '" + name + "' already exists");
         }
 
-        final CacheHolder existing = caches.put(alias, new CacheHolder(cacheBuilder, cache));
+        final ICache<?, ?> existing = caches.put(name, cache);
         if (existing != null) {
-            CacheUtil.clear(existing.getCache());
+            cache.clear();
         }
     }
 
-    public Map<String, CacheHolder> getCaches() {
+    Map<String, ICache<?, ?>> getCaches() {
         return caches;
+    }
+
+    public Set<String> getCacheNames() {
+        return caches.keySet();
     }
 
     @Override
@@ -164,12 +117,10 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         final String cacheName = params.get(PARAM_NAME_CACHE_NAME);
 
         if (cacheName != null) {
-            final CacheHolder cacheHolder = caches.get(cacheName);
+            final ICache<?, ?> cache = caches.get(cacheName);
 
-            if (cacheHolder != null) {
-                final Set<?> keySet = cacheHolder.getCache()
-                        .asMap()
-                        .keySet();
+            if (cache != null) {
+                final Set<?> keySet = cache.keySet();
 
                 Stream<?> stream = keySet
                         .stream()

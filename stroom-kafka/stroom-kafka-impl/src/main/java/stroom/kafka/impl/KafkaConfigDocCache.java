@@ -17,7 +17,7 @@
 package stroom.kafka.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.docref.DocRef;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.security.api.SecurityContext;
@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -45,18 +46,21 @@ public class KafkaConfigDocCache implements Clearable, EntityEvent.Handler {
 
     private static final String CACHE_NAME = "Kafka Config Doc Cache";
 
-    private final ICache<DocRef, Optional<KafkaConfigDoc>> cache;
+    private final LoadingICache<DocRef, Optional<KafkaConfigDoc>> cache;
     private final KafkaConfigStore kafkaConfigStore;
     private final SecurityContext securityContext;
 
     @Inject
     public KafkaConfigDocCache(final CacheManager cacheManager,
                                final KafkaConfigStore kafkaConfigStore,
-                               final KafkaConfig kafkaConfig,
+                               final Provider<KafkaConfig> kafkaConfigProvider,
                                final SecurityContext securityContext) {
         this.kafkaConfigStore = kafkaConfigStore;
         this.securityContext = securityContext;
-        cache = cacheManager.create(CACHE_NAME, kafkaConfig::getKafkaConfigDocCache, this::create);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> kafkaConfigProvider.get().getKafkaConfigDocCache(),
+                this::create);
     }
 
     public Optional<KafkaConfigDoc> get(final DocRef kafkaConfigDocRef) {

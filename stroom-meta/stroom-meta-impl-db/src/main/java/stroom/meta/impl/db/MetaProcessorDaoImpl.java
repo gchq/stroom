@@ -18,7 +18,7 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaProcessorDao;
 import stroom.meta.impl.MetaServiceConfig;
@@ -28,6 +28,7 @@ import stroom.util.shared.Clearable;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
@@ -37,15 +38,18 @@ class MetaProcessorDaoImpl implements MetaProcessorDao, Clearable {
 
     private static final String CACHE_NAME = "Meta Processor Cache";
 
-    private final ICache<Key, Integer> cache;
+    private final LoadingICache<Key, Integer> cache;
     private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject
     MetaProcessorDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                          final CacheManager cacheManager,
-                         final MetaServiceConfig metaServiceConfig) {
+                         final Provider<MetaServiceConfig> metaServiceConfigProvider) {
         this.metaDbConnProvider = metaDbConnProvider;
-        cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaProcessorCache, this::load);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> metaServiceConfigProvider.get().getMetaProcessorCache(),
+                this::load);
     }
 
     private int load(final Key key) {

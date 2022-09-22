@@ -1,7 +1,7 @@
 package stroom.event.logging.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 
 import event.logging.Device;
 import event.logging.util.DeviceUtil;
@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -19,13 +20,14 @@ public class DeviceCacheImpl implements DeviceCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceCacheImpl.class);
     private static final String CACHE_NAME = "Device Cache";
 
-    private final ICache<String, Device> deviceCache;
+    private final LoadingICache<String, Device> deviceCache;
 
     @Inject
-    DeviceCacheImpl(final LoggingConfig loggingConfig,
+    DeviceCacheImpl(final Provider<LoggingConfig> loggingConfigProvider,
                     final CacheManager cacheManager) {
-        deviceCache = cacheManager.create(CACHE_NAME,
-                loggingConfig::getDeviceCache,
+        deviceCache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> loggingConfigProvider.get().getDeviceCache(),
                 this::createDevice,
                 this::destroyDevice);
     }

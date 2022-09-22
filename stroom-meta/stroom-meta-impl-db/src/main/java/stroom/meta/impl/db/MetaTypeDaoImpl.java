@@ -18,7 +18,7 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaTypeDao;
@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
@@ -46,21 +47,24 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
 
     private static final String CACHE_NAME = "Meta Type Cache";
 
-    private final ICache<String, Integer> cache;
+    private final LoadingICache<String, Integer> cache;
     private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject
     MetaTypeDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                     final CacheManager cacheManager,
-                    final MetaServiceConfig metaServiceConfig) {
+                    final Provider<MetaServiceConfig> metaServiceConfigProvider) {
 
         LOGGER.debug("Initialising MetaTypeDaoImpl");
 
         this.metaDbConnProvider = metaDbConnProvider;
-        cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaTypeCache, this::load);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> metaServiceConfigProvider.get().getMetaTypeCache(),
+                this::load);
 
         // Ensure some types are preloaded.
-        final Set<String> metaTypes = metaServiceConfig.getMetaTypes();
+        final Set<String> metaTypes = metaServiceConfigProvider.get().getMetaTypes();
         LOGGER.debug("metaTypes: {}", metaTypes);
         if (metaTypes != null) {
             metaTypes.stream()

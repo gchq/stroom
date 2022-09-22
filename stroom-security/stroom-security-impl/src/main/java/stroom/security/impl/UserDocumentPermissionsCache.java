@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.security.impl.event.AddPermissionEvent;
 import stroom.security.impl.event.ClearDocumentPermissionsEvent;
 import stroom.security.impl.event.PermissionChangeEvent;
@@ -33,13 +33,14 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
 
     private static final String CACHE_NAME = "User Document Permissions Cache";
 
-    private final ICache<String, UserDocumentPermissions> cache;
+    private final LoadingICache<String, UserDocumentPermissions> cache;
 
     @Inject
     public UserDocumentPermissionsCache(final CacheManager cacheManager,
                                         final DocumentPermissionDao documentPermissionDao,
                                         final Provider<AuthorisationConfig> authorisationConfigProvider) {
-        cache = cacheManager.create(CACHE_NAME,
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
                 () -> authorisationConfigProvider.get().getUserDocumentPermissionsCache(),
                 documentPermissionDao::getPermissionsForUser);
     }
@@ -58,7 +59,7 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
         if (cache != null) {
             if (event instanceof AddPermissionEvent) {
                 final AddPermissionEvent addPermissionEvent = (AddPermissionEvent) event;
-                cache.getOptional(addPermissionEvent.getUserUuid()).ifPresent(userDocumentPermissions ->
+                cache.getIfPresent(addPermissionEvent.getUserUuid()).ifPresent(userDocumentPermissions ->
                         userDocumentPermissions.addPermission(addPermissionEvent.getDocumentUuid(),
                                 addPermissionEvent.getPermission()));
 
@@ -68,7 +69,7 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
                 if (removePermissionEvent.getDocumentUuid() == null) {
                     cache.invalidate(removePermissionEvent.getUserUuid());
                 } else {
-                    cache.getOptional(removePermissionEvent.getUserUuid()).ifPresent(userDocumentPermissions -> {
+                    cache.getIfPresent(removePermissionEvent.getUserUuid()).ifPresent(userDocumentPermissions -> {
                         if (removePermissionEvent.getPermission() == null) {
                             userDocumentPermissions.clearDocumentPermissions(removePermissionEvent.getDocumentUuid());
                         } else {
@@ -81,13 +82,12 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
             } else if (event instanceof ClearDocumentPermissionsEvent) {
                 final ClearDocumentPermissionsEvent clearDocumentPermissionsEvent =
                         (ClearDocumentPermissionsEvent) event;
-                cache.values().forEach(userDocumentPermissions -> {
+                cache.forEach((userUuid, userDocumentPermissions) -> {
                     if (userDocumentPermissions != null) {
                         userDocumentPermissions.clearDocumentPermissions(
                                 clearDocumentPermissionsEvent.getDocumentUuid());
                     }
                 });
-
             }
         }
     }

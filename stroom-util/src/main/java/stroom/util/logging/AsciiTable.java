@@ -18,7 +18,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -83,6 +85,30 @@ public class AsciiTable {
      */
     public static <T> String from(final Collection<T> data) {
         return from(data, false);
+    }
+
+    /**
+     * Builds a two column table from a map
+     * Attempts to determine the structure of the table from the public getters
+     * of the collection items. The column names are derived from the method name,
+     * e.g. getFirstNameLength() becomes "First Name Length".
+     * Columns MAY be in declared order, but order cannot be guaranteed.
+     * Sub-classes of {@link Number} are right aligned.
+     *
+     * @return A {@link String} containing the markdown style table.
+     */
+    public static <K, V> String from(final Map<K, V> map) {
+        Objects.requireNonNull(map);
+        final Set<Entry<K, V>> data = map.entrySet();
+
+        return builder(data)
+                .withColumn(Column.builder("Key", (Entry<K, V> e) -> e.getKey())
+                        .autoAligned(data)
+                        .build())
+                .withColumn(Column.builder("Value", (Entry<K, V> e) -> e.getValue())
+                        .autoAligned(data)
+                        .build())
+                .build();
     }
 
     /**
@@ -520,6 +546,11 @@ public class AsciiTable {
                 return this;
             }
 
+            public ColumnBuilder<T_ROW, T_COL> withAlignment(final Alignment alignment) {
+                this.alignment = alignment;
+                return this;
+            }
+
             public ColumnBuilder<T_ROW, T_COL> leftAligned() {
                 this.alignment = Alignment.LEFT;
                 return this;
@@ -534,6 +565,19 @@ public class AsciiTable {
                 this.alignment = Alignment.CENTER;
                 return this;
             }
+
+            public ColumnBuilder<T_ROW, T_COL> autoAligned(final Collection<T_ROW> data) {
+
+                final boolean isNumeric = data.stream()
+                        .allMatch(k -> k != null
+                                && Number.class.isAssignableFrom(k.getClass()));
+
+                this.alignment = isNumeric
+                        ? Alignment.RIGHT
+                        : Alignment.LEFT;
+                return this;
+            }
+
 
             public Column<T_ROW, T_COL> build() {
                 // IJ was having issues inferring arguments, hence not inlined

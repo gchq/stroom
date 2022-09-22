@@ -17,7 +17,7 @@
 package stroom.search.impl.shard;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
@@ -67,7 +67,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     private final SecurityContext securityContext;
     private final PathCreator pathCreator;
 
-    private volatile ICache<Key, IndexShardSearcher> cache;
+    private volatile LoadingICache<Key, IndexShardSearcher> cache;
 
     @Inject
     IndexShardSearcherCacheImpl(final CacheManager cacheManager,
@@ -92,13 +92,14 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
         executor = executorProvider.get(threadPool);
     }
 
-    private ICache<Key, IndexShardSearcher> getCache() {
-        ICache<Key, IndexShardSearcher> result = cache;
+    private LoadingICache<Key, IndexShardSearcher> getCache() {
+        LoadingICache<Key, IndexShardSearcher> result = cache;
         if (result == null) {
             synchronized (this) {
                 result = cache;
                 if (result == null) {
-                    result = cacheManager.create(CACHE_NAME,
+                    result = cacheManager.createLoadingCache(
+                            CACHE_NAME,
                             () -> indexShardSearchConfigProvider.get().getIndexShardSearcherCache(),
                             this::create,
                             this::destroy);
@@ -247,10 +248,10 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     @Override
     public void refresh() {
         taskContext.info(() -> "Refreshing index shard searcher cache");
-        final ICache<Key, IndexShardSearcher> cache = getCache();
+        final LoadingICache<Key, IndexShardSearcher> cache = getCache();
         if (cache != null) {
             LOGGER.logDurationIfDebugEnabled(() ->
-                            cache.asMap().values().forEach(v -> {
+                            cache.forEach((k, v) -> {
                                 if (v != null) {
                                     try {
                                         v.getSearcherManager().maybeRefresh();

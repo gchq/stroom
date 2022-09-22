@@ -17,7 +17,7 @@
 package stroom.pipeline.factory;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.pipeline.shared.PipelineDataMerger;
@@ -32,6 +32,7 @@ import stroom.util.shared.PermissionException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -40,7 +41,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
     private static final String CACHE_NAME = "Pipeline Structure Cache";
 
     private final PipelineStackLoader pipelineStackLoader;
-    private final ICache<PipelineDoc, PipelineData> cache;
+    private final LoadingICache<PipelineDoc, PipelineData> cache;
     private final SecurityContext securityContext;
     private final DocumentPermissionCache documentPermissionCache;
 
@@ -49,11 +50,14 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
                                  final PipelineStackLoader pipelineStackLoader,
                                  final SecurityContext securityContext,
                                  final DocumentPermissionCache documentPermissionCache,
-                                 final PipelineConfig pipelineConfig) {
+                                 final Provider<PipelineConfig> pipelineConfigProvider) {
         this.pipelineStackLoader = pipelineStackLoader;
         this.securityContext = securityContext;
         this.documentPermissionCache = documentPermissionCache;
-        cache = cacheManager.create(CACHE_NAME, pipelineConfig::getPipelineDataCache, this::create);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> pipelineConfigProvider.get().getPipelineDataCache(),
+                this::create);
     }
 
     @Override

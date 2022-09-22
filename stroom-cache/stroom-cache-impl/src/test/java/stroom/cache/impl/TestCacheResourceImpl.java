@@ -9,6 +9,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.util.jersey.UriBuilderUtil;
+import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 
 import org.junit.jupiter.api.Test;
@@ -84,13 +85,17 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 .thenAnswer(invocation -> {
                     FindCacheInfoCriteria criteria = (invocation.getArgument(0));
                     if (criteria.getName().isConstrained()) {
-                        return List.of(new CacheInfo(criteria.getName().getString(),
-                                Collections.emptyMap(),
+                        return List.of(buildCacheInfo(
+                                criteria.getName().getString(),
                                 node.getNodeName()));
                     } else {
                         return List.of(
-                                new CacheInfo("cache1", Collections.emptyMap(), node.getNodeName()),
-                                new CacheInfo("cache2", Collections.emptyMap(), node.getNodeName()));
+                                buildCacheInfo(
+                                        "cache1",
+                                        node.getNodeName()),
+                                buildCacheInfo(
+                                        "cache2",
+                                        node.getNodeName()));
                     }
                 });
 
@@ -147,7 +152,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
         final String subPath = ResourcePaths.buildPath(CacheResource.INFO);
 
         List<CacheInfo> cacheInfoList = List.of(
-                new CacheInfo("cache1", Collections.emptyMap(), "node1"));
+                buildCacheInfo("cache1", "node1"));
 
         final CacheInfoResponse expectedResponse = new CacheInfoResponse(cacheInfoList);
 
@@ -169,7 +174,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
         final String subPath = ResourcePaths.buildPath(CacheResource.INFO);
 
         List<CacheInfo> cacheInfoList = List.of(
-                new CacheInfo("cache1", Collections.emptyMap(), "node2"));
+                buildCacheInfo("cache1", "node2"));
 
         final CacheInfoResponse expectedResponse = new CacheInfoResponse(cacheInfoList);
 
@@ -236,6 +241,11 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 .clear(Mockito.any());
         verify(cacheManagerServiceMocks.get("node3"), Mockito.never())
                 .clear(Mockito.any());
+    }
+
+    private CacheInfo buildCacheInfo(final String cacheName,
+                                     final String nodeName) {
+        return new CacheInfo(cacheName, PropertyPath.fromParts("test"), Collections.emptyMap(), nodeName);
     }
 
 }

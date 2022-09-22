@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -49,11 +50,11 @@ class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
 
     @Inject
     SchemaPoolImpl(final CacheManager cacheManager,
-                   final XmlSchemaConfig xmlSchemaConfig,
+                   final Provider<XmlSchemaConfig> xmlSchemaConfigProvider,
                    final SchemaLoader schemaLoader,
                    final XmlSchemaCache xmlSchemaCache,
                    final SecurityContext securityContext) {
-        super(cacheManager, "Schema Pool", xmlSchemaConfig::getCacheConfig);
+        super(cacheManager, "Schema Pool", () -> xmlSchemaConfigProvider.get().getCacheConfig());
         this.schemaLoader = schemaLoader;
         this.securityContext = securityContext;
         xmlSchemaCache.addClearHandler(this::clear);

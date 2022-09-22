@@ -24,6 +24,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -34,9 +35,12 @@ class RemoteSearchResults {
     private final ICache<String, RemoteSearchResultFactory> cache;
 
     @Inject
-    RemoteSearchResults(final CacheManager cacheManager, final IndexShardSearchConfig searchConfig) {
-        cache = cacheManager.create("Remote search results",
-                searchConfig::getRemoteSearchResultCache, null, (k, v) ->
+    RemoteSearchResults(final CacheManager cacheManager,
+                        final Provider<IndexShardSearchConfig> searchConfigProvider) {
+        cache = cacheManager.create(
+                "Remote search results",
+                () -> searchConfigProvider.get().getRemoteSearchResultCache(),
+                (k, v) ->
                         v.destroy());
     }
 

@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.docref.DocRef;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
@@ -43,14 +43,14 @@ class UserCache implements Clearable, EntityEvent.Handler {
     private static final String CACHE_NAME = "User Cache";
 
     private final AuthenticationService authenticationService;
-    private final ICache<String, Optional<User>> cache;
+    private final LoadingICache<String, Optional<User>> cache;
 
     @Inject
     UserCache(final CacheManager cacheManager,
               final Provider<AuthorisationConfig> authorisationConfigProvider,
               final AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
-        cache = cacheManager.create(
+        cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> authorisationConfigProvider.get().getUserCache(),
                 this::getUser);

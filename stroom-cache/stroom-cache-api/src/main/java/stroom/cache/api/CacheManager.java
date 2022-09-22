@@ -24,16 +24,38 @@ import java.util.function.Supplier;
 
 public interface CacheManager extends AutoCloseable {
 
-    <K, V> ICache<K, V> create(String name,
-                               Supplier<CacheConfig> cacheConfigSupplier);
+    <K, V> ICache<K, V> create(
+            final String name,
+            final Supplier<CacheConfig> cacheConfigSupplier,
+            final BiConsumer<K, V> removalNotificationConsumer);
 
-    <K, V> ICache<K, V> create(String name,
-                               Supplier<CacheConfig> cacheConfigSupplier, Function<K, V> loadFunction);
 
-    <K, V> ICache<K, V> create(String name,
-                               Supplier<CacheConfig> cacheConfigSupplier,
-                               Function<K, V> loadFunction,
-                               BiConsumer<K, V> removalNotificationConsumer);
+    <K, V> LoadingICache<K, V> createLoadingCache(
+            final String name,
+            final Supplier<CacheConfig> cacheConfigSupplier,
+            final Function<K, V> loadFunction,
+            final BiConsumer<K, V> removalNotificationConsumer);
 
     void close();
+
+    default <K, V> ICache<K, V> create(
+            final String name,
+            final Supplier<CacheConfig> cacheConfigSupplier) {
+
+        return create(
+                name,
+                cacheConfigSupplier,
+                null);
+    }
+
+    default <K, V> LoadingICache<K, V> createLoadingCache(
+            final String name,
+            final Supplier<CacheConfig> cacheConfigSupplier, Function<K, V> loadFunction) {
+
+        return createLoadingCache(
+                name,
+                cacheConfigSupplier,
+                loadFunction,
+                null);
+    }
 }

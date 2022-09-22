@@ -17,7 +17,7 @@
 package stroom.feed.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingICache;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -47,7 +48,7 @@ public class FeedDocCache implements Clearable, EntityEvent.Handler {
 
     private static final String CACHE_NAME = "Feed Doc Cache";
 
-    private final ICache<String, Optional<FeedDoc>> cache;
+    private final LoadingICache<String, Optional<FeedDoc>> cache;
     private final FeedStore feedStore;
     private final SecurityContext securityContext;
 
@@ -55,10 +56,13 @@ public class FeedDocCache implements Clearable, EntityEvent.Handler {
     public FeedDocCache(final CacheManager cacheManager,
                         final FeedStore feedStore,
                         final SecurityContext securityContext,
-                        final FeedConfig feedConfig) {
+                        final Provider<FeedConfig> feedConfigProvider) {
         this.feedStore = feedStore;
         this.securityContext = securityContext;
-        cache = cacheManager.create(CACHE_NAME, feedConfig::getFeedDocCache, this::create);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> feedConfigProvider.get().getFeedDocCache(),
+                this::create);
     }
 
     public Optional<FeedDoc> get(final String feedName) {

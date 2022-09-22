@@ -40,6 +40,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -55,15 +56,18 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
     @Inject
     ApplicationInstanceManager(final CacheManager cacheManager,
                                final SecurityContext securityContext,
-                               final DashboardConfig dashboardConfig) {
+                               final Provider<DashboardConfig> dashboardConfigProvider) {
         this.securityContext = securityContext;
-        cache = cacheManager
-                .create(CACHE_NAME, dashboardConfig::getApplicationInstanceCache, this::create, this::destroy);
+        cache = cacheManager.create(
+                CACHE_NAME,
+                () -> dashboardConfigProvider.get().getApplicationInstanceCache(),
+                this::destroy);
 
         Executors.newScheduledThreadPool(1)
                 .scheduleWithFixedDelay(() -> {
                     cache.evictExpiredElements();
-                    cache.asMap().values().forEach(ApplicationInstance::keepAlive);
+                    cache.forEach((uuid, applicationInstance) ->
+                            applicationInstance.keepAlive());
                 }, 10, 10, TimeUnit.SECONDS);
     }
 
@@ -86,7 +90,8 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
 
     public ApplicationInstance register() {
         final String uuid = UUID.randomUUID().toString();
-        final ApplicationInstance applicationInstance = cache.get(uuid);
+        // Create and cache a new ApplicationInstance
+        final ApplicationInstance applicationInstance = cache.get(uuid, this::create);
         LOGGER.debug(() -> "Register new application instance: " + applicationInstance);
         return applicationInstance;
     }
@@ -120,8 +125,7 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
 
         final SystemInfoResult.Builder builder = SystemInfoResult.builder(this);
 
-        final Map<String, List<ApplicationInstance>> groupedData = cache.asMap()
-                .values()
+        final Map<String, List<ApplicationInstance>> groupedData = cache.values()
                 .stream()
                 .collect(Collectors.groupingBy(ApplicationInstance::getUserId));
 

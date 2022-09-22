@@ -6,6 +6,7 @@ import stroom.security.identity.config.OpenIdConfig;
 
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -17,8 +18,10 @@ class AccessCodeCache {
 
     @Inject
     AccessCodeCache(final CacheManager cacheManager,
-                    final OpenIdConfig config) {
-        cache = cacheManager.create(CACHE_NAME, config::getAccessCodeCache);
+                    final Provider<OpenIdConfig> openIdConfigProvider) {
+        cache = cacheManager.create(
+                CACHE_NAME,
+                () -> openIdConfigProvider.get().getAccessCodeCache());
     }
 
     Optional<AccessCodeRequest> getAndRemove(final String code) {
