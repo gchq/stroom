@@ -126,31 +126,31 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                             .build())
                     .build();
 
-            stroomEventLoggingServiceProvider.get()
+            return stroomEventLoggingServiceProvider.get()
                     .loggedWorkBuilder()
                     .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "downloadZip"))
                     .withDescription("Downloading stream data as zip")
                     .withDefaultEventAction(exportEventAction)
-                    .withSimpleLoggedResult(() -> true)
+                    .withSimpleLoggedResult(() -> {
+                        // Stream the downloaded content to the client as ZIP data
+                        final StreamingOutput streamingOutput = output -> {
+                            try (final InputStream is = Files.newInputStream(tempFile)) {
+                                StreamUtil.streamToStream(is, output);
+                            } finally {
+                                resourceStore.deleteTempFile(resourceKey);
+                            }
+                        };
+
+                        return Response
+                                .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
+                                .header("Content-Disposition", "attachment; filename=\"" +
+                                        tempFile.getFileName().toString() + "\"")
+                                .build();
+                    })
                     .getResultAndLog();
         } catch (IOException e) {
             throw EntityServiceExceptionUtil.create(e);
         }
-
-        // Stream the downloaded content to the client as ZIP data
-        final StreamingOutput streamingOutput = output -> {
-            try (final InputStream is = Files.newInputStream(tempFile)) {
-                StreamUtil.streamToStream(is, output);
-            } finally {
-                resourceStore.deleteTempFile(resourceKey);
-            }
-        };
-
-        return Response
-                .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
-                .header("Content-Disposition", "attachment; filename=\"" +
-                        tempFile.getFileName().toString() + "\"")
-                .build();
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
