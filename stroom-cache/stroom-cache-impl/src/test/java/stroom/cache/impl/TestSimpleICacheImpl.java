@@ -5,8 +5,10 @@ import stroom.cache.shared.CacheInfo;
 import stroom.test.common.TestUtil;
 import stroom.util.cache.CacheConfig;
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.config.PropertyPathDecorator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 
 import org.assertj.core.api.Assertions;
@@ -51,6 +53,9 @@ class TestSimpleICacheImpl {
 
     @BeforeEach
     void beforeEach() {
+        // Call this to decorate the config with a path
+        getCacheConfig();
+
         cache = new SimpleICacheImpl<>(
                 NAME,
                 this::getCacheConfig,
@@ -81,6 +86,7 @@ class TestSimpleICacheImpl {
     }
 
     public CacheConfig getCacheConfig() {
+        PropertyPathDecorator.decoratePaths(cacheConfig, PropertyPath.fromParts("test", NAME.replace(" ", "")));
         return cacheConfig;
     }
 
@@ -337,6 +343,11 @@ class TestSimpleICacheImpl {
                 .doesNotContain(5);
         Assertions.assertThat(cache.values())
                 .doesNotContain("May");
+
+        TestUtil.waitForIt(
+                numbers::size,
+                1,
+                () -> "numbers size");
 
         Assertions.assertThat(numbers)
                 .containsExactly(5);

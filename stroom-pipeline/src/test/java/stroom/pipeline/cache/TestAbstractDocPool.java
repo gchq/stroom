@@ -9,6 +9,7 @@ import stroom.docstore.shared.Doc;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContext;
 import stroom.util.cache.CacheConfig;
+import stroom.util.shared.PropertyPath;
 import stroom.util.shared.StringCriteria;
 
 import org.assertj.core.api.Assertions;
@@ -21,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @ExtendWith(MockitoExtension.class)
 class TestAbstractDocPool {
@@ -38,8 +40,12 @@ class TestAbstractDocPool {
 
     final AtomicInteger valueCreationCounter = new AtomicInteger();
 
+    final CacheConfig cacheConfig = CacheConfig.builder()
+            .build();
+
     @BeforeEach
     void setUp() {
+        cacheConfig.setBasePath(PropertyPath.fromParts("test", CACHE_NAME));
         Mockito.when(documentPermissionCache.hasDocumentPermission(Mockito.any(), Mockito.any()))
                 .thenReturn(true);
     }
@@ -48,6 +54,7 @@ class TestAbstractDocPool {
     void testBorrowReturn() {
         final MyDocPool myDocPool = new MyDocPool(
                 cacheManager,
+                () -> cacheConfig,
                 documentPermissionCache,
                 this::createPoolValueWithCounter);
 
@@ -94,6 +101,7 @@ class TestAbstractDocPool {
 
         final MyDocPool myDocPool = new MyDocPool(
                 cacheManager,
+                () -> cacheConfig,
                 documentPermissionCache,
                 this::createPoolValueWithCounter);
 
@@ -123,6 +131,7 @@ class TestAbstractDocPool {
     void testBorrowRebuildCacheThenReturn() {
         final MyDocPool myDocPool = new MyDocPool(
                 cacheManager,
+                () -> cacheConfig,
                 documentPermissionCache,
                 this::createPoolValueWithCounter);
 
@@ -165,12 +174,13 @@ class TestAbstractDocPool {
         private final Function<MyDoc, String> valueCreator;
 
         public MyDocPool(final CacheManager cacheManager,
+                         final Supplier<CacheConfig> cacheConfigProvider,
                          final DocumentPermissionCache documentPermissionCache,
                          final Function<MyDoc, String> valueCreator) {
             super(
                     cacheManager,
                     CACHE_NAME,
-                    () -> CacheConfig.builder().build(),
+                    cacheConfigProvider,
                     documentPermissionCache,
                     new MockSecurityContext());
             this.valueCreator = valueCreator;

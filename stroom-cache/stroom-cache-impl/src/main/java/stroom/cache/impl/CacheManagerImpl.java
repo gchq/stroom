@@ -19,6 +19,7 @@ package stroom.cache.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.cache.api.LoadingICache;
+import stroom.cache.shared.CacheIdentity;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.json.JsonUtil;
@@ -107,6 +108,15 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         return caches.keySet();
     }
 
+    public Set<CacheIdentity> getCacheIdentities() {
+        // Note: it is possible to have two caches with the same config, e.g. StatisticsDataSourceCacheImpl
+        return caches.values()
+                .stream()
+                .map(cache ->
+                        new CacheIdentity(cache.name(), cache.getBasePropertyPath()))
+                .collect(Collectors.toSet());
+    }
+
     @Override
     public SystemInfoResult getSystemInfo(final Map<String, String> params) {
         final Integer limit = NullSafe.getOrElse(
@@ -141,7 +151,8 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                                     // Try and serialise it
                                     objectMapper.writeValueAsString(key);
                                 } catch (Exception e) {
-                                    return "Unable to serialise Key";
+                                    return "Unable to serialise Key as JSON, dumping as string: "
+                                            + key.toString().substring(0, 1_000);
                                 }
                                 return key;
                             })

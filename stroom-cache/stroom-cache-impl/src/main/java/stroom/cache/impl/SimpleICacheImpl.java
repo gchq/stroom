@@ -5,6 +5,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -26,8 +27,8 @@ class SimpleICacheImpl<K, V> extends AbstractICache<K, V> {
     }
 
     @Override
-    Cache<K, V> createCacheFromBuilder() {
-        return super.cacheBuilder.build();
+    Cache<K, V> createCacheFromBuilder(final Caffeine<K, V> cacheBuilder) {
+        return cacheBuilder.build();
     }
 
 }

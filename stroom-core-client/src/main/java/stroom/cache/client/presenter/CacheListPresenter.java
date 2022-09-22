@@ -16,6 +16,7 @@
 
 package stroom.cache.client.presenter;
 
+import stroom.cache.shared.CacheIdentity;
 import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
@@ -51,13 +52,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> {
+public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheIdentity>> {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
     private static final int ICON_COL = 18;
 
     private final RestFactory restFactory;
-    private final Set<String> allNames = new HashSet<>();
+    private final Set<CacheIdentity> allCacheIdentities = new HashSet<>();
     private final DelayedUpdate delayedUpdate;
 
     private Range range;
@@ -89,17 +90,25 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
                 });
 
         // Name
-        getView().addResizableColumn(new Column<String, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<CacheIdentity, String>(new TextCell()) {
             @Override
-            public String getValue(final String row) {
-                return row;
+            public String getValue(final CacheIdentity cacheIdentity) {
+                return cacheIdentity.getCacheName();
             }
-        }, "Name", 400);
+        }, "Name", 250);
+
+        // Property Path
+        getView().addResizableColumn(new Column<CacheIdentity, String>(new TextCell()) {
+            @Override
+            public String getValue(final CacheIdentity cacheIdentity) {
+                return cacheIdentity.getBasePropertyPath().toString();
+            }
+        }, "Property Path", 500);
 
         getView().addEndColumn(new EndColumn<>());
 
-        final RestDataProvider<String, CacheNamesResponse> dataProvider =
-                new RestDataProvider<String, CacheNamesResponse>(getEventBus()) {
+        final RestDataProvider<CacheIdentity, CacheNamesResponse> dataProvider =
+                new RestDataProvider<CacheIdentity, CacheNamesResponse>(getEventBus()) {
                     @Override
                     protected void exec(final Range range,
                                         final Consumer<CacheNamesResponse> dataConsumer,
@@ -117,21 +126,23 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
                                      final BiConsumer<String, NativeEvent> action) {
         final ActionCell<String> cell = new stroom.cell.info.client.ActionCell<String>(
                 svgPreset, action);
-        final Column<String, String> col =
-                new Column<String, String>(cell) {
+
+        final Column<CacheIdentity, String> col =
+                new Column<CacheIdentity, String>(cell) {
                     @Override
-                    public String getValue(final String row) {
-                        return row;
+                    public String getValue(final CacheIdentity row) {
+                        return row.getCacheName();
                     }
 
                     @Override
                     public void onBrowserEvent(final Context context,
                                                final Element elem,
-                                               final String rule,
+                                               final CacheIdentity rule,
                                                final NativeEvent event) {
                         super.onBrowserEvent(context, elem, rule, event);
                     }
                 };
+
         getView().addColumn(col, "", ICON_COL);
     }
 
@@ -140,7 +151,7 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
             final Rest<CacheNamesResponse> rest = restFactory.create();
             rest
                     .onSuccess(response -> {
-                        allNames.addAll(response.getValues());
+                        allCacheIdentities.addAll(response.getValues());
                         delayedUpdate.update();
                     })
                     .onFailure(throwable -> {
@@ -152,9 +163,9 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
     }
 
     private void update() {
-        final List<String> list = allNames.stream().sorted().collect(Collectors.toList());
+        final List<CacheIdentity> list = allCacheIdentities.stream().sorted().collect(Collectors.toList());
         final long total = list.size();
-        final List<String> trimmed = new ArrayList<>();
+        final List<CacheIdentity> trimmed = new ArrayList<>();
         for (int i = range.getStart(); i < range.getStart() + range.getLength() && i < list.size(); i++) {
             trimmed.add(list.get(i));
         }
@@ -163,7 +174,7 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
         dataConsumer.accept(response);
     }
 
-    public MultiSelectionModel<String> getSelectionModel() {
+    public MultiSelectionModel<CacheIdentity> getSelectionModel() {
         return getView().getSelectionModel();
     }
 

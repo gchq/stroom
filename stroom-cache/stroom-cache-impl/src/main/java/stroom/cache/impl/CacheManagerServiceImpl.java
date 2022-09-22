@@ -17,6 +17,7 @@
 package stroom.cache.impl;
 
 import stroom.cache.api.ICache;
+import stroom.cache.shared.CacheIdentity;
 import stroom.cache.shared.CacheInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -54,6 +55,15 @@ public class CacheManagerServiceImpl implements CacheManagerService, Clearable {
     public List<String> getCacheNames() {
         return securityContext.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
                 cacheManager.getCacheNames()
+                        .stream()
+                        .sorted(Comparator.naturalOrder())
+                        .collect(Collectors.toList()));
+    }
+
+    @Override
+    public List<CacheIdentity> getCacheIdentities() {
+        return securityContext.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
+                cacheManager.getCacheIdentities()
                         .stream()
                         .sorted(Comparator.naturalOrder())
                         .collect(Collectors.toList()));

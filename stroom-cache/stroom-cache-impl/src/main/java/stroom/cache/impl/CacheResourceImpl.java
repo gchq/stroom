@@ -82,7 +82,7 @@ class CacheResourceImpl implements CacheResource {
 
         // If this is the node that was contacted then just return our local info.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
-            result = new CacheNamesResponse(cacheManagerService.get().getCacheNames());
+            result = new CacheNamesResponse(cacheManagerService.get().getCacheIdentities());
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.LIST_PATH);

@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 
 import java.util.Objects;
@@ -37,8 +38,8 @@ class LoadingCacheImpl<K, V> extends AbstractICache<K, V> implements LoadingICac
     }
 
     @Override
-    Cache<K, V> createCacheFromBuilder() {
-        return super.cacheBuilder.build(loadFunction::apply);
+    Cache<K, V> createCacheFromBuilder(final Caffeine<K, V> cacheBuilder) {
+        return cacheBuilder.build(loadFunction::apply);
     }
 
     @Override

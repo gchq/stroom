@@ -36,6 +36,7 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
 
     protected volatile Cache<K, V> cache = null;
     protected volatile Caffeine<K, V> cacheBuilder = null;
+
     private final String name;
     private final Supplier<CacheConfig> cacheConfigSupplier;
     protected final BiConsumer<K, V> removalNotificationConsumer;
@@ -58,7 +59,7 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
         this.cacheConfigSupplier = cacheConfigSupplier;
     }
 
-    abstract Cache<K, V> createCacheFromBuilder();
+    abstract Cache<K, V> createCacheFromBuilder(final Caffeine<K, V> cacheBuilder);
 
     void doWithCacheUnderWriteLock(final Consumer<Cache<K, V>> work) {
         Objects.requireNonNull(work);
@@ -192,17 +193,17 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
         LOGGER.trace(() -> buildMessage("rebuild"));
 
         final CacheConfig cacheConfig = cacheConfigSupplier.get();
-        final Caffeine cacheBuilder = Caffeine.newBuilder();
-        cacheBuilder.recordStats();
+        final Caffeine newCacheBuilder = Caffeine.newBuilder();
+        newCacheBuilder.recordStats();
 
         if (cacheConfig.getMaximumSize() != null) {
-            cacheBuilder.maximumSize(cacheConfig.getMaximumSize());
+            newCacheBuilder.maximumSize(cacheConfig.getMaximumSize());
         }
         if (cacheConfig.getExpireAfterAccess() != null) {
-            cacheBuilder.expireAfterAccess(cacheConfig.getExpireAfterAccess().getDuration());
+            newCacheBuilder.expireAfterAccess(cacheConfig.getExpireAfterAccess().getDuration());
         }
         if (cacheConfig.getExpireAfterWrite() != null) {
-            cacheBuilder.expireAfterWrite(cacheConfig.getExpireAfterWrite().getDuration());
+            newCacheBuilder.expireAfterWrite(cacheConfig.getExpireAfterWrite().getDuration());
         }
         if (removalNotificationConsumer != null) {
             final RemovalListener<K, V> removalListener = (key, value, cause) -> {
@@ -223,19 +224,24 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
                 }
                 removalNotificationConsumer.accept(key, value);
             };
-            cacheBuilder.removalListener(removalListener);
+            newCacheBuilder.removalListener(removalListener);
         }
+        final Cache<K, V> newCache = createCacheFromBuilder(newCacheBuilder);
 
+        // Now swap out the existing cache/builder under an exclusive lock
         doUnderWriteLock(() -> {
             if (cache != null) {
+                // Don't log initial cache creation, only explicit rebuilds
+                LOGGER.info("Clearing and rebuilding cache '{}' (Property path: '{}') with config: {}",
+                        name, getBasePropertyPath(), cacheConfig);
                 CacheUtil.clear(cache);
             }
 
             LOGGER.debug("Assigning new cache and builder instances");
-            this.cacheBuilder = cacheBuilder;
+            this.cacheBuilder = newCacheBuilder;
 
             // Now create and set the cache
-            this.cache = createCacheFromBuilder();
+            this.cache =  newCache;
         });
     }
 

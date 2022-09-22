@@ -46,7 +46,7 @@ public class ProcessorFilterCache implements Clearable {
         this.securityContext = securityContext;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
-                () -> processorConfigProvider.get().getProcessorCache(),
+                () -> processorConfigProvider.get().getProcessorFilterCache(),
                 this::create);
     }
 

@@ -1,6 +1,7 @@
 package stroom.cache.impl;
 
 
+import stroom.cache.shared.CacheIdentity;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheNamesResponse;
@@ -22,6 +23,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -113,12 +116,17 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
     void list_sameNode() {
         final String subPath = ResourcePaths.buildPath(CacheResource.LIST);
 
-        final List<String> caches = List.of("cache1", "cache2");
+        final List<CacheIdentity> caches = Stream.of(
+                "cache1",
+                "cache2")
+                .map(name -> new CacheIdentity(name, PropertyPath.fromParts("root", name)))
+                .collect(Collectors.toList());
+
         final CacheNamesResponse expectedResponse = new CacheNamesResponse(caches);
 
         initNodes();
 
-        when(cacheManagerServiceMocks.get("node1").getCacheNames())
+        when(cacheManagerServiceMocks.get("node1").getCacheIdentities())
                 .thenReturn(caches);
 
         doGetTest(
@@ -132,12 +140,17 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
     void list_otherNode() {
         final String subPath = ResourcePaths.buildPath(CacheResource.LIST);
 
-        final List<String> caches = List.of("cache1", "cache2");
+        final List<CacheIdentity> caches = Stream.of(
+                        "cache1",
+                        "cache2")
+                .map(name -> new CacheIdentity(name, PropertyPath.fromParts("root", name)))
+                .collect(Collectors.toList());
+
         final CacheNamesResponse expectedResponse = new CacheNamesResponse(caches);
 
         initNodes();
 
-        when(cacheManagerServiceMocks.get("node2").getCacheNames())
+        when(cacheManagerServiceMocks.get("node2").getCacheIdentities())
                 .thenReturn(caches);
 
         doGetTest(
