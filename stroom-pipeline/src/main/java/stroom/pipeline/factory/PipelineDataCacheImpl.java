@@ -100,6 +100,8 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable, Enti
             }
 
             final PipelineData mergedPipelineData = pipelineDataMerger.createMergedData();
+            // Include all the docRefs of the docs in the inheritance chain so we can invalidate
+            // cache entries if any one of them is changed.
             final Set<DocRef> docRefs = pipelines.stream()
                     .map(DocRefUtil::create)
                     .collect(Collectors.toSet());
