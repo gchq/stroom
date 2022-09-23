@@ -49,7 +49,9 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
 
     private boolean create(final DocumentPermission documentPermission) {
         return securityContext.asUserResult(documentPermission.userIdentity, () ->
-                securityContext.hasDocumentPermission(documentPermission.documentUuid, documentPermission.permission));
+                securityContext.hasDocumentPermission(
+                        documentPermission.documentUuid,
+                        documentPermission.permission));
     }
 
     @Override

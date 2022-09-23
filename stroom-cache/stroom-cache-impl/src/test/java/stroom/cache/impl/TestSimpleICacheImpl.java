@@ -13,6 +13,7 @@ import stroom.util.time.StroomDuration;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Month;
@@ -35,6 +36,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Disabled
 class TestSimpleICacheImpl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSimpleICacheImpl.class);

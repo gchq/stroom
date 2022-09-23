@@ -97,13 +97,13 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheIden
             }
         }, "Name", 250);
 
-        // Property Path
+        // Property Path Base
         getView().addResizableColumn(new Column<CacheIdentity, String>(new TextCell()) {
             @Override
             public String getValue(final CacheIdentity cacheIdentity) {
                 return cacheIdentity.getBasePropertyPath().toString();
             }
-        }, "Property Path", 500);
+        }, "Property Path Base", 500);
 
         getView().addEndColumn(new EndColumn<>());
 
@@ -119,7 +119,6 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheIden
                     }
                 };
         dataProvider.addDataDisplay(getView().getDataDisplay());
-
     }
 
     private void addIconButtonColumn(final SvgPreset svgPreset,
