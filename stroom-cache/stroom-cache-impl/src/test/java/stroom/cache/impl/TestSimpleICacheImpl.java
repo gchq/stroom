@@ -36,7 +36,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Disabled
 class TestSimpleICacheImpl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSimpleICacheImpl.class);
@@ -355,6 +354,9 @@ class TestSimpleICacheImpl {
                 .containsExactly(5);
         Assertions.assertThat(monthNames)
                 .containsExactly("May");
+
+        // Now invalidate the same entry again to prove that it is repeatable/idempotent
+        cache.invalidate(5);
     }
 
     @Test
@@ -690,6 +692,7 @@ class TestSimpleICacheImpl {
      * Make sure that many threads can keep hitting the cache while another thread
      * periodically rebuilds it.
      */
+    @Disabled
     @Test
     void testRebuildConcurrency() throws ExecutionException, InterruptedException {
         final int coreCount = Runtime.getRuntime().availableProcessors();

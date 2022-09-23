@@ -2,12 +2,14 @@ package stroom.cache.impl;
 
 import stroom.cache.api.ICache;
 import stroom.cache.shared.CacheInfo;
+import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PropertyPath;
+import stroom.util.time.StroomDuration;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -34,14 +36,16 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractICache.class);
 
-    protected volatile Cache<K, V> cache = null;
-    protected volatile Caffeine<K, V> cacheBuilder = null;
-
     private final String name;
     private final Supplier<CacheConfig> cacheConfigSupplier;
-    protected final BiConsumer<K, V> removalNotificationConsumer;
+    private final BiConsumer<K, V> removalNotificationConsumer;
+
     // This is not re-entrant so need to be careful we don't try to lock twice
     private StampedLock stampedLock = new StampedLock();
+
+    // These two must be changed under the protection of stampedLock
+    protected volatile Cache<K, V> cache = null;
+    protected volatile Caffeine<K, V> cacheBuilder = null;
 
     public AbstractICache(final String name,
                           final Supplier<CacheConfig> cacheConfigSupplier,
@@ -61,181 +65,56 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
 
     abstract Cache<K, V> createCacheFromBuilder(final Caffeine<K, V> cacheBuilder);
 
-    void doWithCacheUnderWriteLock(final Consumer<Cache<K, V>> work) {
-        Objects.requireNonNull(work);
-
-        final long stamp;
-        try {
-            stamp = stampedLock.writeLockInterruptibly();
-            try {
-                work.accept(cache);
-            } finally {
-                stampedLock.unlockWrite(stamp);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted waiting for write lock on cache " + name);
-        }
-    }
-
-    void doWithCacheUnderReadLock(final Consumer<Cache<K, V>> work) {
-        Objects.requireNonNull(work);
-        final long stamp;
-        try {
-            stamp = stampedLock.readLockInterruptibly();
-            try {
-                work.accept(cache);
-            } finally {
-                stampedLock.unlockRead(stamp);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted waiting for read lock on cache " + name);
-        }
-    }
-
-    <T> T getWithCacheUnderReadLock(final Function<Cache<K, V>, T> work) {
-        Objects.requireNonNull(work);
-        final long stamp;
-        try {
-            stamp = stampedLock.readLockInterruptibly();
-            try {
-                return work.apply(cache);
-            } finally {
-                stampedLock.unlockRead(stamp);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted waiting for read lock on cache " + name);
-        }
-    }
-
-    /**
-     * Use the cache to get something. work may be called multiple times so must be
-     * idempotent. Attempts to get T without any locking. If anything else has
-     * obtained an exclusive lock in that time it will retry under a read lock.
-     *
-     * @param work MUST be idempotent
-     */
-    <T> T getWithCacheUnderReadLockOptimistically(final Function<Cache<K, V>, T> work) {
-        Objects.requireNonNull(work);
-        T result = null;
-        final long stamp = stampedLock.tryOptimisticRead();
-
-        if (stamp == 0) {
-            // Another thread holds an exclusive lock, so block and wait for a read lock
-            result = getWithCacheUnderReadLock(work);
-        } else {
-            try {
-                result = work.apply(cache);
-            } catch (Exception e) {
-                // e.g. cache may have been cleared while we used it
-                LOGGER.debug("Error performing work under optimistic lock on cache "
-                        + name + ": " + e.getMessage(), e);
-            }
-
-            if (!stampedLock.validate(stamp)) {
-                // Another thread got an exclusive lock since we got the stamp so retry under
-                // a read lock, blocking if anything holds an exclusive lock.
-                result = getWithCacheUnderReadLock(work);
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Use the cache to do something. work may be called multiple times so must be
-     * idempotent. Attempts to perform work without any locking. If anything else has
-     * obtained an exclusive lock in that time it will retry under a read lock.
-     *
-     * @param work MUST be idempotent
-     */
-    void doWithCacheUnderReadLockOptimistically(final Consumer<Cache<K, V>> work) {
-        Objects.requireNonNull(work);
-        final long stamp = stampedLock.tryOptimisticRead();
-
-        if (stamp == 0) {
-            // Another thread holds an exclusive lock, so block and wait for a read lock
-            doWithCacheUnderReadLock(work);
-        } else {
-            try {
-                work.accept(cache);
-            } catch (Exception e) {
-                // e.g. cache may have been cleared while we used it
-                LOGGER.debug("Error performing work under optimistic lock on cache "
-                        + name + ": " + e.getMessage(), e);
-            }
-
-            if (!stampedLock.validate(stamp)) {
-                // Another thread got an exclusive lock since we got the stamp so retry under
-                // a read lock, blocking if anything holds an exclusive lock.
-                doWithCacheUnderReadLock(work);
-            }
-        }
-    }
-
-    void doUnderWriteLock(final Runnable work) {
-        final long stamp;
-        try {
-            stamp = stampedLock.writeLockInterruptibly();
-            try {
-                work.run();
-            } finally {
-                stampedLock.unlockWrite(stamp);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted waiting for write lock on cache " + name);
-        }
-    }
-
     public void rebuild() {
         LOGGER.trace(() -> buildMessage("rebuild"));
 
-        final CacheConfig cacheConfig = cacheConfigSupplier.get();
-        final Caffeine newCacheBuilder = Caffeine.newBuilder();
-        newCacheBuilder.recordStats();
-
-        if (cacheConfig.getMaximumSize() != null) {
-            newCacheBuilder.maximumSize(cacheConfig.getMaximumSize());
-        }
-        if (cacheConfig.getExpireAfterAccess() != null) {
-            newCacheBuilder.expireAfterAccess(cacheConfig.getExpireAfterAccess().getDuration());
-        }
-        if (cacheConfig.getExpireAfterWrite() != null) {
-            newCacheBuilder.expireAfterWrite(cacheConfig.getExpireAfterWrite().getDuration());
-        }
-        if (removalNotificationConsumer != null) {
-            final RemovalListener<K, V> removalListener = (key, value, cause) -> {
-                final Supplier<String> messageSupplier = () -> "Removal notification for cache '" +
-                        name +
-                        "' (key=" +
-                        key +
-                        ", value=" +
-                        value +
-                        ", cause=" +
-                        cause + ")";
-
-                if (cause == RemovalCause.SIZE) {
-                    LOGGER.warn(() -> "Cache reached size limit '" + name + "'");
-                    LOGGER.debug(messageSupplier);
-                } else {
-                    LOGGER.trace(messageSupplier);
-                }
-                removalNotificationConsumer.accept(key, value);
-            };
-            newCacheBuilder.removalListener(removalListener);
-        }
-        final Cache<K, V> newCache = createCacheFromBuilder(newCacheBuilder);
-
         // Now swap out the existing cache/builder under an exclusive lock
         doUnderWriteLock(() -> {
+            final CacheConfig cacheConfig = cacheConfigSupplier.get();
+
             if (cache != null) {
                 // Don't log initial cache creation, only explicit rebuilds
                 LOGGER.info("Clearing and rebuilding cache '{}' (Property path: '{}') with config: {}",
                         name, getBasePropertyPath(), cacheConfig);
                 CacheUtil.clear(cache);
             }
+
+            final Caffeine newCacheBuilder = Caffeine.newBuilder();
+            newCacheBuilder.recordStats();
+
+            NullSafe.consume(cacheConfig.getMaximumSize(), newCacheBuilder::maximumSize);
+            NullSafe.consume(
+                    cacheConfig.getExpireAfterAccess(),
+                    StroomDuration::getDuration,
+                    newCacheBuilder::expireAfterAccess);
+            NullSafe.consume(
+                    cacheConfig.getExpireAfterWrite(),
+                    StroomDuration::getDuration,
+                    newCacheBuilder::expireAfterWrite);
+
+            if (removalNotificationConsumer != null) {
+                final RemovalListener<K, V> removalListener = (key, value, cause) -> {
+                    final Supplier<String> messageSupplier = () -> "Removal notification for cache '" +
+                            name +
+                            "' (key=" +
+                            key +
+                            ", value=" +
+                            value +
+                            ", cause=" +
+                            cause + ")";
+
+                    if (cause == RemovalCause.SIZE) {
+                        LOGGER.warn(() -> "Cache reached size limit '" + name + "'");
+                        LOGGER.debug(messageSupplier);
+                    } else {
+                        LOGGER.trace(messageSupplier);
+                    }
+                    removalNotificationConsumer.accept(key, value);
+                };
+                newCacheBuilder.removalListener(removalListener);
+            }
+
+            final Cache<K, V> newCache = createCacheFromBuilder(newCacheBuilder);
 
             LOGGER.debug("Assigning new cache and builder instances");
             this.cacheBuilder = newCacheBuilder;
@@ -313,7 +192,6 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
     @Override
     public void invalidate(final K key) {
         LOGGER.trace(() -> buildMessage("invalidate", key));
-        // TODO: 16/09/2022 Assumes invalidate is idempotent????
         doWithCacheUnderReadLockOptimistically(cache ->
                 cache.invalidate(key));
     }
@@ -323,7 +201,6 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
         LOGGER.trace(() -> buildMessage("invalidateEntries"));
         Objects.requireNonNull(entryPredicate);
 
-        // TODO: 16/09/2022 Assumes invalidate is idempotent????
         doWithCacheUnderReadLockOptimistically(cache -> {
             cache.asMap()
                     .entrySet()
@@ -358,7 +235,8 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
     public void clear() {
         LOGGER.trace(() -> buildMessage("clear"));
 
-        // Read lock as we are not changing the reference to the cache
+        // Read lock as we are not changing the reference to the cache.
+        // The cache has its own concurrency protection at the entry level.
         doWithCacheUnderReadLockOptimistically(CacheUtil::clear);
     }
 
@@ -384,6 +262,134 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
 
             return new CacheInfo(name, basePropertyPath, map);
         });
+    }
+
+    void doWithCacheUnderWriteLock(final Consumer<Cache<K, V>> work) {
+        Objects.requireNonNull(work);
+
+        final long stamp;
+        try {
+            stamp = stampedLock.writeLockInterruptibly();
+            try {
+                work.accept(cache);
+            } finally {
+                stampedLock.unlockWrite(stamp);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted waiting for write lock on cache " + name);
+        }
+    }
+
+    private void doWithCacheUnderReadLock(final Consumer<Cache<K, V>> work) {
+        Objects.requireNonNull(work);
+        final long stamp;
+        try {
+            stamp = stampedLock.readLockInterruptibly();
+            try {
+                work.accept(cache);
+            } finally {
+                stampedLock.unlockRead(stamp);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted waiting for read lock on cache " + name);
+        }
+    }
+
+    private <T> T getWithCacheUnderReadLock(final Function<Cache<K, V>, T> work) {
+        Objects.requireNonNull(work);
+        final long stamp;
+        try {
+            stamp = stampedLock.readLockInterruptibly();
+            try {
+                return work.apply(cache);
+            } finally {
+                stampedLock.unlockRead(stamp);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted waiting for read lock on cache " + name);
+        }
+    }
+
+    /**
+     * Use the cache to get something. work may be called multiple times so must be
+     * idempotent. Attempts to get T without any locking. If anything else has
+     * obtained an exclusive lock in that time it will retry under a read lock.
+     *
+     * @param work MUST be idempotent
+     */
+    <T> T getWithCacheUnderReadLockOptimistically(final Function<Cache<K, V>, T> work) {
+        Objects.requireNonNull(work);
+        T result = null;
+        final long stamp = stampedLock.tryOptimisticRead();
+
+        if (stamp == 0) {
+            // Another thread holds an exclusive lock, so block and wait for a read lock
+            result = getWithCacheUnderReadLock(work);
+        } else {
+            try {
+                result = work.apply(cache);
+            } catch (Exception e) {
+                // e.g. cache may have been cleared while we used it
+                LOGGER.debug("Error performing work under optimistic lock on cache "
+                        + name + ": " + e.getMessage(), e);
+            }
+
+            if (!stampedLock.validate(stamp)) {
+                // Another thread got an exclusive lock since we got the stamp so retry under
+                // a read lock, blocking if anything holds an exclusive lock.
+                result = getWithCacheUnderReadLock(work);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Use the cache to do something. work may be called multiple times so must be
+     * idempotent. Attempts to perform work without any locking. If anything else has
+     * obtained an exclusive lock in that time it will retry under a read lock.
+     *
+     * @param work MUST be idempotent
+     */
+    private void doWithCacheUnderReadLockOptimistically(final Consumer<Cache<K, V>> work) {
+        Objects.requireNonNull(work);
+        final long stamp = stampedLock.tryOptimisticRead();
+
+        if (stamp == 0) {
+            // Another thread holds an exclusive lock, so block and wait for a read lock
+            doWithCacheUnderReadLock(work);
+        } else {
+            try {
+                work.accept(cache);
+            } catch (Exception e) {
+                // e.g. cache may have been cleared while we used it
+                LOGGER.debug("Error performing work under optimistic lock on cache "
+                        + name + ": " + e.getMessage(), e);
+            }
+
+            if (!stampedLock.validate(stamp)) {
+                // Another thread got an exclusive lock since we got the stamp so retry under
+                // a read lock, blocking if anything holds an exclusive lock.
+                doWithCacheUnderReadLock(work);
+            }
+        }
+    }
+
+    private void doUnderWriteLock(final Runnable work) {
+        final long stamp;
+        try {
+            stamp = stampedLock.writeLockInterruptibly();
+            try {
+                work.run();
+            } finally {
+                stampedLock.unlockWrite(stamp);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted waiting for write lock on cache " + name);
+        }
     }
 
     private void convertNanosToDuration(final Map<String, String> map,

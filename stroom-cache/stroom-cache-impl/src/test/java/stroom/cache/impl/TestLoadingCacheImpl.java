@@ -7,7 +7,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Month;
@@ -21,7 +20,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-@Disabled
 class TestLoadingCacheImpl {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLoadingCacheImpl.class);
     public static final String NAME = "My Cache";
