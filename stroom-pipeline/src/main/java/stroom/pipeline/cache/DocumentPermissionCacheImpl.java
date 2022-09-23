@@ -42,6 +42,9 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
                                 final SecurityContext securityContext,
                                 final Provider<PipelineConfig> pipelineConfigProvider) {
         this.securityContext = securityContext;
+
+        // We have no change handlers due to the complexity of the number of things that can affect this
+        // cache, so keep the time short and expire after write, not access.
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> pipelineConfigProvider.get().getDocumentPermissionCache(),
