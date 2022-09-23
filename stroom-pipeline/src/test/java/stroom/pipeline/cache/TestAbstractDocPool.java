@@ -46,7 +46,7 @@ class TestAbstractDocPool {
     @BeforeEach
     void setUp() {
         cacheConfig.setBasePath(PropertyPath.fromParts("test", CACHE_NAME));
-        Mockito.when(documentPermissionCache.hasDocumentPermission(Mockito.any(), Mockito.any()))
+        Mockito.when(documentPermissionCache.canUseDocument(Mockito.any()))
                 .thenReturn(true);
     }
 

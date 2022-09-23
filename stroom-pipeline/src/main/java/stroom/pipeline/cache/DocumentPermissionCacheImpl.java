@@ -21,6 +21,7 @@ import stroom.cache.api.LoadingICache;
 import stroom.pipeline.PipelineConfig;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Clearable;
 
 import java.util.Objects;
@@ -55,11 +56,11 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
     }
 
     @Override
-    public boolean hasDocumentPermission(final String documentUuid, final String permission) {
-        final DocumentPermission documentPermission = new DocumentPermission(securityContext.getUserIdentity(),
+    public boolean canUseDocument(final String documentUuid) {
+        return cache.get(new DocumentPermission(
+                securityContext.getUserIdentity(),
                 documentUuid,
-                permission);
-        return cache.get(documentPermission);
+                DocumentPermissionNames.USE));
     }
 
     @Override

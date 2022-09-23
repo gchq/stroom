@@ -25,7 +25,6 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 
@@ -62,7 +61,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
 
     @Override
     public PipelineData get(final PipelineDoc pipelineDoc) {
-        if (!documentPermissionCache.hasDocumentPermission(pipelineDoc.getUuid(), DocumentPermissionNames.USE)) {
+        if (!documentPermissionCache.canUseDocument(pipelineDoc.getUuid())) {
             throw new PermissionException(securityContext.getUserId(),
                     "You do not have permission to use " + pipelineDoc);
         }

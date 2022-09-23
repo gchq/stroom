@@ -141,7 +141,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
         setDbMaxSizeProperty(DB_MAX_SIZE);
         refDataStore = refDataStoreFactory.getOffHeapStore();
 
-        Mockito.when(mockDocumentPermissionCache.hasDocumentPermission(Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(mockDocumentPermissionCache.canUseDocument(Mockito.anyString()))
                 .thenReturn(true);
     }
 

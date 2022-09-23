@@ -37,7 +37,6 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -414,9 +413,9 @@ public class ReferenceData {
         // Check that the current user has permission to read the ref stream.
         final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
                 documentPermissionCache == null ||
-                        documentPermissionCache.hasDocumentPermission(
-                                pipelineReference.getFeed().getUuid(),
-                                DocumentPermissionNames.USE));
+                        documentPermissionCache.canUseDocument(
+                                pipelineReference.getFeed().getUuid()
+                        ));
 
         if (hasPermission) {
             final EffectiveStream effectiveStream = determineEffectiveStream(pipelineReference, time, result);
