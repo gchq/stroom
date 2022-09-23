@@ -18,6 +18,8 @@ package stroom.pipeline.factory;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingICache;
+import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.pipeline.shared.PipelineDataMerger;
@@ -25,22 +27,29 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
+@EntityEventHandler(type = PipelineDoc.DOCUMENT_TYPE)
+public class PipelineDataCacheImpl implements PipelineDataCache, Clearable, EntityEvent.Handler {
 
     private static final String CACHE_NAME = "Pipeline Structure Cache";
 
     private final PipelineStackLoader pipelineStackLoader;
-    private final LoadingICache<PipelineDoc, PipelineData> cache;
+    private final LoadingICache<PipelineDoc, PipelineDataHolder> cache;
     private final SecurityContext securityContext;
     private final DocumentPermissionCache documentPermissionCache;
 
@@ -66,10 +75,11 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
                     "You do not have permission to use " + pipelineDoc);
         }
 
-        return cache.get(pipelineDoc);
+        final PipelineDataHolder pipelineDataHolder = cache.get(pipelineDoc);
+        return NullSafe.get(pipelineDataHolder, PipelineDataHolder::getMergedPipelineData);
     }
 
-    private PipelineData create(final PipelineDoc pipelineDoc) {
+    private PipelineDataHolder create(final PipelineDoc pipelineDoc) {
         return securityContext.asProcessingUserResult(() -> {
             final List<PipelineDoc> pipelines = pipelineStackLoader.loadPipelineStack(pipelineDoc);
             // Iterate over the pipeline list reading the deepest ancestor first.
@@ -89,12 +99,65 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
                 throw new PipelineFactoryException(e);
             }
 
-            return pipelineDataMerger.createMergedData();
+            final PipelineData mergedPipelineData = pipelineDataMerger.createMergedData();
+            final Set<DocRef> docRefs = pipelines.stream()
+                    .map(DocRefUtil::create)
+                    .collect(Collectors.toSet());
+            return new PipelineDataHolder(mergedPipelineData, docRefs);
         });
     }
 
     @Override
     public void clear() {
         cache.clear();
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        if (EntityAction.CLEAR_CACHE.equals(event.getAction())) {
+            clear();
+        } else {
+            final DocRef docRef = event.getDocRef();
+            final DocRef oldDocRef = event.getOldDocRef();
+
+            // The cached PipelineData is a merge of the pipelineData from
+            // all pipelineDocs in the inheritance chain so need to check each
+            // entry to see if any of them relate to the changed docRef(s)
+            cache.invalidateEntries((pipelineDoc, pipelineDataHolder) ->
+                    DocRefUtil.isSameDocument(pipelineDoc, docRef)
+                            || DocRefUtil.isSameDocument(pipelineDoc, oldDocRef)
+                            || pipelineDataHolder.containsDocRef(docRef)
+                            || pipelineDataHolder.containsDocRef(oldDocRef));
+        }
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    private static class PipelineDataHolder {
+
+        private final PipelineData mergedPipelineData;
+        private final Set<DocRef> docRefs;
+
+        private PipelineDataHolder(final PipelineData mergedPipelineData,
+                                   final Set<DocRef> docRefs) {
+            this.mergedPipelineData = mergedPipelineData;
+            this.docRefs = docRefs;
+        }
+
+        PipelineData getMergedPipelineData() {
+            return mergedPipelineData;
+        }
+
+        boolean containsDocRef(final DocRef docRef) {
+            return docRefs.contains(docRef);
+        }
+
+        @Override
+        public String toString() {
+            return "PipelineDataHolder{" +
+                    "mergedPipelineData=" + mergedPipelineData +
+                    ", docRefs=" + docRefs +
+                    '}';
+        }
     }
 }

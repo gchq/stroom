@@ -43,6 +43,7 @@ class TestSimpleICacheImpl {
     protected static final String MAXIMUM_SIZE = "MaximumSize";
     protected static final String EXPIRE_AFTER_WRITE = "ExpireAfterWrite";
     protected static final String EXPIRE_AFTER_ACCESS = "ExpireAfterAccess";
+    protected static final int ALL_MONTHS_COUNT = 12;
 
     private ICache<Integer, String> cache;
     private AtomicReference<BiConsumer<Integer, String>> removalConsumerRef = new AtomicReference<>(null);
@@ -70,7 +71,7 @@ class TestSimpleICacheImpl {
     }
 
     private void populateCache() {
-        for (int i = 1; i <= 12; i++) {
+        for (int i = 1; i <= ALL_MONTHS_COUNT; i++) {
             numbers.add(i);
             final String monthName = numberToMonth(i);
             monthNames.add(monthName);
@@ -81,7 +82,7 @@ class TestSimpleICacheImpl {
         // but can't be sure how many as it is async
         if (cacheConfig.getMaximumSize() == null) {
             Assertions.assertThat(cache.size())
-                    .isEqualTo(12);
+                    .isEqualTo(ALL_MONTHS_COUNT);
         }
     }
 
@@ -136,7 +137,7 @@ class TestSimpleICacheImpl {
     @Test
     void testGetWithValueProvider() {
         // Remove july onwards
-        for (int i = 7; i <= 12; i++) {
+        for (int i = 7; i <= ALL_MONTHS_COUNT; i++) {
             cache.remove(i);
         }
         Assertions.assertThat(cache.size())
@@ -150,7 +151,7 @@ class TestSimpleICacheImpl {
         };
 
         // 6 already in the cache, 6 provided by valueProvider
-        for (int i = 1; i <= 12; i++) {
+        for (int i = 1; i <= ALL_MONTHS_COUNT; i++) {
             final String name = cache.get(i, valueProvider);
             LOGGER.info("i: {}, name: {}", i, name);
             Assertions.assertThat(name)
@@ -161,7 +162,7 @@ class TestSimpleICacheImpl {
 
         // Re-get all values, which should all now be in the cache so valueProvider
         // is not used
-        for (int i = 1; i <= 12; i++) {
+        for (int i = 1; i <= ALL_MONTHS_COUNT; i++) {
             final String name = cache.get(i, valueProvider);
             LOGGER.info("i: {}, name: {}", i, name);
             Assertions.assertThat(name)
@@ -195,7 +196,7 @@ class TestSimpleICacheImpl {
                         .isEmpty();
 
         Assertions.assertThat(cache.size())
-                .isEqualTo(12);
+                .isEqualTo(ALL_MONTHS_COUNT);
 
         cache.put(999, "foo");
         Assertions.assertThat(cache.size())
@@ -209,14 +210,14 @@ class TestSimpleICacheImpl {
     void testPut_overwrite() {
 
         Assertions.assertThat(cache.size())
-                .isEqualTo(12);
+                .isEqualTo(ALL_MONTHS_COUNT);
 
         Assertions.assertThat(cache.getOptional(5))
                 .hasValue("May");
 
         cache.put(5, "NewMay");
         Assertions.assertThat(cache.size())
-                .isEqualTo(12);
+                .isEqualTo(ALL_MONTHS_COUNT);
 
         Assertions.assertThat(cache.getOptional(5))
                 .hasValue("NewMay");
@@ -381,7 +382,7 @@ class TestSimpleICacheImpl {
         });
 
         Assertions.assertThat(cache.size())
-                .isEqualTo(12);
+                .isEqualTo(ALL_MONTHS_COUNT);
 
         // Remove specific entries
         cache.invalidateEntries((i, name) ->
@@ -422,7 +423,7 @@ class TestSimpleICacheImpl {
 
         TestUtil.waitForIt(
                 monthNamesRemoved::size,
-                12,
+                ALL_MONTHS_COUNT,
                 () -> "monthNamesRemoved size");
 
         monthNamesRemoved.clear();
@@ -464,7 +465,7 @@ class TestSimpleICacheImpl {
 
         // Nothing evicted
         Assertions.assertThat(cache.size())
-                .isEqualTo(12);
+                .isEqualTo(ALL_MONTHS_COUNT);
 
         // Now change the config and rebuild the cache
         cacheConfig = cacheConfig.copy()
@@ -488,7 +489,7 @@ class TestSimpleICacheImpl {
 
         // Nothing evicted yet, too soon
         Assertions.assertThat(cache.size())
-                .isEqualTo(12);
+                .isEqualTo(ALL_MONTHS_COUNT);
 
         LOGGER.info("{}", cache.keySet()
                 .stream()
@@ -542,7 +543,7 @@ class TestSimpleICacheImpl {
 
         // Nothing evicted
         Assertions.assertThat(cache.size())
-                .isEqualTo(12);
+                .isEqualTo(ALL_MONTHS_COUNT);
 
         // Now change the config and rebuild the cache
         cacheConfig = cacheConfig.copy()
@@ -564,13 +565,13 @@ class TestSimpleICacheImpl {
 
         // Nothing evicted yet, too soon
         Assertions.assertThat(cache.size())
-                .isEqualTo(12);
+                .isEqualTo(ALL_MONTHS_COUNT);
 
         ThreadUtil.sleepIgnoringInterrupts(100);
 
         // Nothing evicted yet, too soon
         Assertions.assertThat(cache.size())
-                .isEqualTo(12);
+                .isEqualTo(ALL_MONTHS_COUNT);
 
         // Add a new item that is too new to be evicted
         cache.put(999, "foo");
@@ -624,14 +625,14 @@ class TestSimpleICacheImpl {
 
         TestUtil.waitForIt(
                 removedNumbers::size,
-                12,
+                ALL_MONTHS_COUNT,
                 () -> "removedNumbers size");
 
         // Rebuild causes removal of all items
         Assertions.assertThat(removedNumbers)
-                .hasSize(12);
+                .hasSize(ALL_MONTHS_COUNT);
         Assertions.assertThat(removedMonthNames)
-                .hasSize(12);
+                .hasSize(ALL_MONTHS_COUNT);
 
         removedNumbers.clear();
         removedMonthNames.clear();
@@ -705,7 +706,7 @@ class TestSimpleICacheImpl {
             return numberToMonth(monthNo);
         };
 
-        final CountDownLatch countDownLatch = new CountDownLatch(12);
+        final CountDownLatch countDownLatch = new CountDownLatch(coreCount);
 
         for (int i = 0; i < coreCount; i++) {
             final long seed = i;
@@ -714,12 +715,9 @@ class TestSimpleICacheImpl {
                 final Random random = new Random(seed);
                 for (int j = 0; j < iterations; j++) {
 
-                    final int monthNo = random.nextInt(12) + 1;
+                    final int monthNo = random.nextInt(ALL_MONTHS_COUNT) + 1;
 
-
-                    // TODO: 23/09/2022 ignoring cache to see if cache is breaking build
-                    final String name = numberToMonth(monthNo);
-//                    final String name = cache.get(monthNo, valueProvider);
+                    final String name = cache.get(monthNo, valueProvider);
 
                     Assertions.assertThat(name)
                             .isEqualTo(numberToMonth(monthNo));
@@ -736,7 +734,7 @@ class TestSimpleICacheImpl {
             LOGGER.info("Re-builder thread starting");
             while (countDownLatch.getCount() > 0) {
                 LOGGER.info("Rebuilding");
-//                cache.rebuild();
+                cache.rebuild();
                 ThreadUtil.sleepIgnoringInterrupts(random.nextInt(50) + 100);
             }
             LOGGER.info("Re-builder thread finishing");
@@ -746,7 +744,7 @@ class TestSimpleICacheImpl {
     }
 
     private String numberToMonth(final int i) {
-        if (i >= 1 && i <= 12) {
+        if (i >= 1 && i <= ALL_MONTHS_COUNT) {
             return Month.of(i)
                     .getDisplayName(TextStyle.FULL, Locale.ENGLISH);
         } else {
