@@ -269,10 +269,13 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
 
         final long stamp;
         try {
+            LOGGER.trace("Getting write lock");
             stamp = stampedLock.writeLockInterruptibly();
+            LOGGER.trace("Got write lock with stamp {}", stamp);
             try {
                 work.accept(cache);
             } finally {
+                LOGGER.trace("Releasing write lock with stamp {}", stamp);
                 stampedLock.unlockWrite(stamp);
             }
         } catch (InterruptedException e) {
@@ -285,10 +288,13 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
         Objects.requireNonNull(work);
         final long stamp;
         try {
+            LOGGER.trace("Getting read lock");
             stamp = stampedLock.readLockInterruptibly();
+            LOGGER.trace("Got read lock with stamp {}", stamp);
             try {
                 work.accept(cache);
             } finally {
+                LOGGER.trace("Releasing read lock with stamp {}", stamp);
                 stampedLock.unlockRead(stamp);
             }
         } catch (InterruptedException e) {
@@ -301,10 +307,13 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
         Objects.requireNonNull(work);
         final long stamp;
         try {
+            LOGGER.trace("Getting read lock");
             stamp = stampedLock.readLockInterruptibly();
+            LOGGER.trace("Got read lock with stamp {}", stamp);
             try {
                 return work.apply(cache);
             } finally {
+                LOGGER.trace("Releasing read lock with stamp {}", stamp);
                 stampedLock.unlockRead(stamp);
             }
         } catch (InterruptedException e) {
@@ -324,6 +333,7 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
         Objects.requireNonNull(work);
         T result = null;
         final long stamp = stampedLock.tryOptimisticRead();
+        LOGGER.trace("Got optimistic stamp {}", stamp);
 
         if (stamp == 0) {
             // Another thread holds an exclusive lock, so block and wait for a read lock
@@ -338,9 +348,12 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
             }
 
             if (!stampedLock.validate(stamp)) {
+                LOGGER.trace("Stamp {} is invalid, use read lock instead", stamp);
                 // Another thread got an exclusive lock since we got the stamp so retry under
                 // a read lock, blocking if anything holds an exclusive lock.
                 result = getWithCacheUnderReadLock(work);
+            } else {
+                LOGGER.trace("Optimistic action succeeded");
             }
         }
         return result;
@@ -370,9 +383,12 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
             }
 
             if (!stampedLock.validate(stamp)) {
+                LOGGER.trace("Stamp {} is invalid, use read lock instead", stamp);
                 // Another thread got an exclusive lock since we got the stamp so retry under
                 // a read lock, blocking if anything holds an exclusive lock.
                 doWithCacheUnderReadLock(work);
+            } else {
+                LOGGER.trace("Optimistic action succeeded");
             }
         }
     }
