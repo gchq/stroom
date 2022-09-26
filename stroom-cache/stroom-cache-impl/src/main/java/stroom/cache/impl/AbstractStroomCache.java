@@ -53,10 +53,16 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                                final Supplier<CacheConfig> cacheConfigSupplier,
                                final BiConsumer<K, V> removalNotificationConsumer) {
 
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(cacheConfigSupplier);
+
         LOGGER.debug(() -> LogUtil.message("Creating cache {} from config {} ({}), " +
                         "(has removalNotificationConsumer: {})",
                 name,
-                getBasePropertyPath(),
+                NullSafe.getOrElseGet(
+                        cacheConfigSupplier.get(),
+                        CacheConfig::getBasePath,
+                        PropertyPath::blank),
                 cacheConfigSupplier.get(),
                 removalNotificationConsumer != null));
 
@@ -377,9 +383,10 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     private void doWithCacheUnderOptimisticReadLock(final Consumer<Cache<K, V>> work) {
         Objects.requireNonNull(work);
         final long stamp = stampedLock.tryOptimisticRead();
+        LOGGER.trace("Got optimistic stamp {}", stamp);
 
         if (stamp == 0) {
-            // Another thread holds an exclusive lock, so block and wait for a read lock
+            LOGGER.trace("Another thread holds an exclusive lock, so block and wait for a read lock");
             doWithCacheUnderReadLock(work);
         } else {
             try {
@@ -463,7 +470,10 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     @Override
     public PropertyPath getBasePropertyPath() {
         // Don't need to do this under lock
-        return cacheConfigSupplier.get().getBasePath();
+        return NullSafe.getOrElseGet(
+                cacheConfigSupplier.get(),
+                CacheConfig::getBasePath,
+                PropertyPath::blank);
     }
 
     @Override

@@ -150,4 +150,25 @@ public class TestUtil {
                 Duration.ofSeconds(5),
                 Duration.ofMillis(1));
     }
+
+    /**
+     * Repeatedly call test with pollFrequency until it returns true, or timeout is reached.
+     * If timeout is reached before test returns true a {@link RuntimeException} is thrown.
+     * A default timeout of 5s is used with a default pollFrequency of 1ms.
+     *
+     * @param valueSupplier   Supplier of the value to test. This will be called repeatedly until
+     *                        its return value match requiredValue, or timeout is reached.
+     * @param requiredValue   The value that valueSupplier is required to ultimately return.
+     * @param message         The name of the thing being waited for.
+     */
+    public static <T> void waitForIt(final Supplier<T> valueSupplier,
+                                     final T requiredValue,
+                                     final String message) {
+        waitForIt(
+                valueSupplier,
+                requiredValue,
+                () -> message,
+                Duration.ofSeconds(5),
+                Duration.ofMillis(1));
+    }
 }

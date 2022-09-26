@@ -6,6 +6,7 @@ import stroom.test.common.TestUtil;
 import stroom.util.cache.CacheConfig;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.config.PropertyPathDecorator;
+import stroom.util.exception.InterruptibleRunnable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PropertyPath;
@@ -686,6 +687,64 @@ class TestStroomCacheImpl {
                 .contains(EXPIRE_AFTER_WRITE);
         Assertions.assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_WRITE))
                 .isEqualTo("30s");
+    }
+
+    @Test
+    void testOptimisticReadLock() throws ExecutionException, InterruptedException {
+        Assertions.assertThat(cache.size())
+                .isEqualTo(ALL_MONTHS_COUNT);
+
+        final CountDownLatch writeFinishedCountDownLatch = new CountDownLatch(1);
+        final CountDownLatch readStartedCountDownLatch = new CountDownLatch(1);
+        final AtomicInteger callCount = new AtomicInteger();
+
+        // invalidateEntries happens under an optimistic read lock so the BiConsumer
+        // may be called more than once for the same key
+        final CompletableFuture<Void> readFuture = CompletableFuture.runAsync(() -> {
+            cache.invalidateEntries((i, name) -> {
+                readStartedCountDownLatch.countDown();
+                LOGGER.debug("invalidateEntries called for i: " + i);
+                callCount.incrementAndGet();
+                // Wait for the cache rebuild to finish so the optimistic read lock
+                // will have to re-run this lambda under a full read-lock
+                InterruptibleRunnable.unchecked(writeFinishedCountDownLatch::await).run();
+
+                return i == 5;
+            });
+        });
+
+        // Wait for the cacheInvalidation to be underway else it will detect the exclusive
+        // lock and wait.
+        readStartedCountDownLatch.await();
+
+        cache.rebuild();
+        populateCache();
+        TestUtil.waitForIt(
+                cache::size,
+                (long) ALL_MONTHS_COUNT,
+                () -> "cache size");
+        
+        LOGGER.info("Rebuild complete");
+
+        // Cache is now fully rebuilt so let the reader continue
+        writeFinishedCountDownLatch.countDown();
+
+        // Wait for reader to finish
+        readFuture.get();
+
+        // At least one of the invalidateEntries lambda calls will have to be repeated
+        // as the optimistic stamp will have been invalid
+        Assertions.assertThat(callCount)
+                .hasValueGreaterThan(ALL_MONTHS_COUNT);
+
+        // invalidateEntries should remove one item
+        TestUtil.waitForIt(
+                cache::size,
+                (long) ALL_MONTHS_COUNT - 1,
+                "cache size");
+
+        Assertions.assertThat(cache.size())
+                .isEqualTo(ALL_MONTHS_COUNT - 1);
     }
 
     /**
