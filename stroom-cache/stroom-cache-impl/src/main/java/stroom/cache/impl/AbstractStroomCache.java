@@ -41,9 +41,11 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     private final BiConsumer<K, V> removalNotificationConsumer;
 
     // This is not re-entrant so need to be careful we don't try to lock twice
-    private StampedLock stampedLock = new StampedLock();
+    private final StampedLock stampedLock = new StampedLock();
 
-    // These two must be changed under the protection of stampedLock
+    // These two must be changed under the protection of stampedLock. Exclusive access,
+    // i.e. a write-lock is only needed for operations that change the reference attached
+    // to these variables.
     protected volatile Cache<K, V> cache = null;
     protected volatile Caffeine<K, V> cacheBuilder = null;
 
@@ -132,14 +134,14 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     @Override
     public V get(final K key) {
         LOGGER.trace(() -> buildMessage("get", key));
-        return getWithCacheUnderReadLockOptimistically(cache ->
+        return getWithCacheUnderOptimisticReadLock(cache ->
                 cache.getIfPresent(key));
     }
 
     @Override
     public V get(final K key, final Function<K, V> valueProvider) {
         LOGGER.trace(() -> buildMessage("get", key));
-        return getWithCacheUnderReadLockOptimistically(cache ->
+        return getWithCacheUnderOptimisticReadLock(cache ->
                 cache.get(key, valueProvider));
     }
 
@@ -149,14 +151,14 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
         // A read lock as we are not modifying the cache reference, just the innards
         // of the cache
-        doWithCacheUnderReadLockOptimistically(cache ->
+        doWithCacheUnderOptimisticReadLock(cache ->
                 cache.put(key, value));
     }
 
     @Override
     public Optional<V> getOptional(final K key) {
         LOGGER.trace(() -> buildMessage("getOptional", key));
-        return getWithCacheUnderReadLockOptimistically(cache ->
+        return getWithCacheUnderOptimisticReadLock(cache ->
                 Optional.ofNullable(cache.getIfPresent(key)));
     }
 
@@ -165,19 +167,19 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     public boolean containsKey(final K key) {
         LOGGER.trace(() -> buildMessage("containsKey", key));
         // Can't use asMap().containsKey() as that will call the loadfunc
-        return getWithCacheUnderReadLockOptimistically(cache ->
+        return getWithCacheUnderOptimisticReadLock(cache ->
                 cache.asMap().containsKey(key));
     }
 
     @Override
     public Set<K> keySet() {
-        return getWithCacheUnderReadLockOptimistically(cache ->
+        return getWithCacheUnderOptimisticReadLock(cache ->
                 new HashSet<>(cache.asMap().keySet()));
     }
 
     @Override
     public List<V> values() {
-        return getWithCacheUnderReadLockOptimistically(cache ->
+        return getWithCacheUnderOptimisticReadLock(cache ->
                 new ArrayList<>(cache.asMap().values()));
     }
 
@@ -185,6 +187,8 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     public void forEach(final BiConsumer<K, V> entryConsumer) {
         LOGGER.trace(() -> buildMessage("invalidateEntries"));
         Objects.requireNonNull(entryConsumer);
+        // Use a full read lock as we don't really know what consumer will do,
+        // so we don't really want it running twice.
         doWithCacheUnderReadLock(cache ->
                 cache.asMap().forEach(entryConsumer));
     }
@@ -192,7 +196,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     @Override
     public void invalidate(final K key) {
         LOGGER.trace(() -> buildMessage("invalidate", key));
-        doWithCacheUnderReadLockOptimistically(cache ->
+        doWithCacheUnderOptimisticReadLock(cache ->
                 cache.invalidate(key));
     }
 
@@ -201,7 +205,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         LOGGER.trace(() -> buildMessage("invalidateEntries"));
         Objects.requireNonNull(entryPredicate);
 
-        doWithCacheUnderReadLockOptimistically(cache -> {
+        doWithCacheUnderOptimisticReadLock(cache -> {
             cache.asMap()
                     .entrySet()
                     .stream()
@@ -216,19 +220,21 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     @Override
     public void remove(final K key) {
         LOGGER.trace(() -> buildMessage("remove", key));
-        invalidate(key);
-        doWithCacheUnderReadLock(Cache::cleanUp);
+        doWithCacheUnderOptimisticReadLock(cache -> {
+            cache.invalidate(key);
+            cache.cleanUp();
+        });
     }
 
     @Override
     public void evictExpiredElements() {
         LOGGER.trace(() -> buildMessage("evictExpiredElements"));
-        doWithCacheUnderReadLock(Cache::cleanUp);
+        doWithCacheUnderOptimisticReadLock(Cache::cleanUp);
     }
 
     @Override
     public long size() {
-        return getWithCacheUnderReadLockOptimistically(Cache::estimatedSize);
+        return getWithCacheUnderOptimisticReadLock(Cache::estimatedSize);
     }
 
     @Override
@@ -237,14 +243,14 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
         // Read lock as we are not changing the reference to the cache.
         // The cache has its own concurrency protection at the entry level.
-        doWithCacheUnderReadLockOptimistically(CacheUtil::clear);
+        doWithCacheUnderOptimisticReadLock(CacheUtil::clear);
     }
 
     @Override
     public CacheInfo getCacheInfo() {
         final PropertyPath basePropertyPath = getBasePropertyPath();
 
-        return getWithCacheUnderReadLockOptimistically(cache -> {
+        return getWithCacheUnderOptimisticReadLock(cache -> {
             final Map<String, String> map = new HashMap<>();
             map.put("Entries", String.valueOf(cache.estimatedSize()));
             // The lock covers cacheBuilder too
@@ -324,12 +330,13 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
     /**
      * Use the cache to get something. work may be called multiple times so must be
-     * idempotent. Attempts to get T without any locking. If anything else has
-     * obtained an exclusive lock in that time it will retry under a read lock.
+     * idempotent. Initially attempts to perform work without any locking.
+     * If anything else has obtained an exclusive lock in that time it will retry
+     * under a full read lock.
      *
      * @param work MUST be idempotent
      */
-    <T> T getWithCacheUnderReadLockOptimistically(final Function<Cache<K, V>, T> work) {
+    <T> T getWithCacheUnderOptimisticReadLock(final Function<Cache<K, V>, T> work) {
         Objects.requireNonNull(work);
         T result = null;
         final long stamp = stampedLock.tryOptimisticRead();
@@ -361,12 +368,13 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
     /**
      * Use the cache to do something. work may be called multiple times so must be
-     * idempotent. Attempts to perform work without any locking. If anything else has
-     * obtained an exclusive lock in that time it will retry under a read lock.
+     * idempotent. Initially attempts to perform work without any locking.
+     * If anything else has obtained an exclusive lock in that time it will retry
+     * under a full read lock.
      *
      * @param work MUST be idempotent
      */
-    private void doWithCacheUnderReadLockOptimistically(final Consumer<Cache<K, V>> work) {
+    private void doWithCacheUnderOptimisticReadLock(final Consumer<Cache<K, V>> work) {
         Objects.requireNonNull(work);
         final long stamp = stampedLock.tryOptimisticRead();
 

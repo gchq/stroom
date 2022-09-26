@@ -55,7 +55,7 @@ class LoadingStroomCacheImpl<K, V> extends AbstractStroomCache<K, V> implements 
     @Override
     public Optional<V> getIfPresent(final K key) {
         LOGGER.trace(() -> buildMessage("getIfPresent", key));
-        return Optional.ofNullable(getWithCacheUnderReadLockOptimistically(cache ->
+        return Optional.ofNullable(getWithCacheUnderOptimisticReadLock(cache ->
                 cache.getIfPresent(key)));
     }
 }

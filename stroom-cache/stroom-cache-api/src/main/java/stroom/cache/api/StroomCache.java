@@ -54,21 +54,21 @@ public interface StroomCache<K, V> {
     boolean containsKey(K key);
 
     /**
-     * @return A shallow copy of the keys in the map.
+     * @return A shallow copy of the keys in the cache.
      * Changes to this set have no effect on the cache. Changes to the items in the set
-     * will change the values in the map.
+     * will change the values in the cache.
      */
     Set<K> keySet();
 
     /**
-     * @return A shallow copy of the values in the map.
+     * @return A shallow copy of the values in the cache.
      * Changes to this list have no effect on the cache. Changes to the items in the list
-     * will change the values in the map.
+     * will change the values in the cache.
      */
     List<V> values();
 
     /**
-     * Perform work on each item in the map. The order in which entries are consumed is not
+     * Perform work on each item in the cache. The order in which entries are consumed is not
      * defined.
      */
     void forEach(BiConsumer<K, V> entryConsumer);
@@ -101,12 +101,12 @@ public interface StroomCache<K, V> {
     /**
      * Clear the cache of all entries and rebuild from current config. Used when you
      * need to change the expiry or size limit for the cache. The rebuild will happen
-     * under a write lock.
+     * under a write-lock. All cache stats will be reset.
      */
     void rebuild();
 
     /**
-     * Clear the cache of all entries
+     * Clear the cache of all entries.
      */
     void clear();
 
@@ -114,5 +114,4 @@ public interface StroomCache<K, V> {
      * @return The cache configuration settings and usage statistics.
      */
     CacheInfo getCacheInfo();
-
 }
