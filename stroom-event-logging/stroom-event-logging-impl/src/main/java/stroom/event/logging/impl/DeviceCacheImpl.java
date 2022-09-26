@@ -1,7 +1,7 @@
 package stroom.event.logging.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 
 import event.logging.Device;
 import event.logging.util.DeviceUtil;
@@ -20,7 +20,7 @@ public class DeviceCacheImpl implements DeviceCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceCacheImpl.class);
     private static final String CACHE_NAME = "Device Cache";
 
-    private final LoadingICache<String, Device> deviceCache;
+    private final LoadingStroomCache<String, Device> deviceCache;
 
     @Inject
     DeviceCacheImpl(final Provider<LoggingConfig> loggingConfigProvider,

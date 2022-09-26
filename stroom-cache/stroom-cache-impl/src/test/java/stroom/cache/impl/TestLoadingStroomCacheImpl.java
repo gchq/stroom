@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-class TestLoadingCacheImpl {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLoadingCacheImpl.class);
+class TestLoadingStroomCacheImpl {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLoadingStroomCacheImpl.class);
     public static final String NAME = "My Cache";
 
     private LoadingStroomCache<Integer, String> cache;
@@ -34,7 +34,7 @@ class TestLoadingCacheImpl {
 
     @BeforeEach
     void beforeEach() {
-        cache = new LoadingCacheImpl<>(
+        cache = new LoadingStroomCacheImpl<>(
                 NAME,
                 this::getCacheConfig,
                 k -> {

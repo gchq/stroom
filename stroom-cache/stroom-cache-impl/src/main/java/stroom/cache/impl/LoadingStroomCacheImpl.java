@@ -15,25 +15,25 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-class LoadingCacheImpl<K, V> extends AbstractStroomCache<K, V> implements LoadingStroomCache<K, V> {
+class LoadingStroomCacheImpl<K, V> extends AbstractStroomCache<K, V> implements LoadingStroomCache<K, V> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LoadingCacheImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LoadingStroomCacheImpl.class);
 
     private final Function<K, V> loadFunction;
 
-    public LoadingCacheImpl(final String name,
-                            final Supplier<CacheConfig> cacheConfigSupplier,
-                            final Function<K, V> loadFunction,
-                            final BiConsumer<K, V> removalNotificationConsumer) {
+    public LoadingStroomCacheImpl(final String name,
+                                  final Supplier<CacheConfig> cacheConfigSupplier,
+                                  final Function<K, V> loadFunction,
+                                  final BiConsumer<K, V> removalNotificationConsumer) {
         super(name, cacheConfigSupplier, removalNotificationConsumer);
         Objects.requireNonNull(loadFunction);
         this.loadFunction = loadFunction;
         rebuild();
     }
 
-    public LoadingCacheImpl(final String name,
-                            final Supplier<CacheConfig> cacheConfigSupplier,
-                            final Function<K, V> loadFunction) {
+    public LoadingStroomCacheImpl(final String name,
+                                  final Supplier<CacheConfig> cacheConfigSupplier,
+                                  final Function<K, V> loadFunction) {
         this(name, cacheConfigSupplier, loadFunction, null);
     }
 

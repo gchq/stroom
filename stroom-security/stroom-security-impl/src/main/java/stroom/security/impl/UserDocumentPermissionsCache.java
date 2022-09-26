@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.security.impl.event.AddPermissionEvent;
 import stroom.security.impl.event.ClearDocumentPermissionsEvent;
 import stroom.security.impl.event.PermissionChangeEvent;
@@ -33,7 +33,7 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
 
     private static final String CACHE_NAME = "User Document Permissions Cache";
 
-    private final LoadingICache<String, UserDocumentPermissions> cache;
+    private final LoadingStroomCache<String, UserDocumentPermissions> cache;
 
     @Inject
     public UserDocumentPermissionsCache(final CacheManager cacheManager,

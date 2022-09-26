@@ -17,7 +17,7 @@
 package stroom.dashboard.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.StroomCache;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
@@ -51,7 +51,7 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
     private static final String CACHE_NAME = "Application Instance";
 
     private final SecurityContext securityContext;
-    private final ICache<String, ApplicationInstance> cache;
+    private final StroomCache<String, ApplicationInstance> cache;
 
     @Inject
     ApplicationInstanceManager(final CacheManager cacheManager,

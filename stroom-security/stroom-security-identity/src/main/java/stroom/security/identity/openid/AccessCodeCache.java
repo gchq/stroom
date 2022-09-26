@@ -1,7 +1,7 @@
 package stroom.security.identity.openid;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.StroomCache;
 import stroom.security.identity.config.OpenIdConfig;
 
 import java.util.Optional;
@@ -14,7 +14,7 @@ class AccessCodeCache {
 
     private static final String CACHE_NAME = "Access Code Cache";
 
-    private final ICache<String, AccessCodeRequest> cache;
+    private final StroomCache<String, AccessCodeRequest> cache;
 
     @Inject
     AccessCodeCache(final CacheManager cacheManager,

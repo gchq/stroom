@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -40,7 +40,7 @@ public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
     private static final String CACHE_NAME = "User App Permissions Cache";
 
     private final Provider<EntityEventBus> eventBusProvider;
-    private final LoadingICache<String, Set<String>> cache;
+    private final LoadingStroomCache<String, Set<String>> cache;
 
     @Inject
     UserAppPermissionsCache(final CacheManager cacheManager,

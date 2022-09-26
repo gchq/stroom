@@ -18,7 +18,7 @@
 package stroom.search.solr;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
@@ -45,7 +45,7 @@ class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler, Clearab
     private static final String CACHE_NAME = "Solr Index Cache";
 
     private final SolrIndexStore solrIndexStore;
-    private final LoadingICache<DocRef, CachedSolrIndex> cache;
+    private final LoadingStroomCache<DocRef, CachedSolrIndex> cache;
 
     @Inject
     SolrIndexCacheImpl(final CacheManager cacheManager,

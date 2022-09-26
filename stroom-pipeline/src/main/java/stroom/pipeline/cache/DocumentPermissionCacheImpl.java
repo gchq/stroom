@@ -17,7 +17,7 @@
 package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.pipeline.PipelineConfig;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -35,7 +35,7 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
     private static final String CACHE_NAME = "Document Permission Cache";
 
     private final SecurityContext securityContext;
-    private final LoadingICache<DocumentPermission, Boolean> cache;
+    private final LoadingStroomCache<DocumentPermission, Boolean> cache;
 
     @Inject
     DocumentPermissionCacheImpl(final CacheManager cacheManager,

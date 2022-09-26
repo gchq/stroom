@@ -18,7 +18,7 @@
 package stroom.index.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
@@ -37,7 +37,7 @@ public class IndexStructureCacheImpl implements IndexStructureCache, Clearable {
     private static final String CACHE_NAME = "Index Config Cache";
 
     private final IndexStore indexStore;
-    private final LoadingICache<DocRef, IndexStructure> cache;
+    private final LoadingStroomCache<DocRef, IndexStructure> cache;
 
     @Inject
     IndexStructureCacheImpl(final CacheManager cacheManager,

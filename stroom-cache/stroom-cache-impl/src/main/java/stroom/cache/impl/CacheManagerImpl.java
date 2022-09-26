@@ -17,8 +17,8 @@
 package stroom.cache.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
+import stroom.cache.api.StroomCache;
 import stroom.cache.shared.CacheIdentity;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
@@ -52,7 +52,7 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
     private static final String PARAM_NAME_LIMIT = "limit";
     private static final String PARAM_NAME_CACHE_NAME = "name";
 
-    private final Map<String, ICache<?, ?>> caches = new ConcurrentHashMap<>();
+    private final Map<String, StroomCache<?, ?>> caches = new ConcurrentHashMap<>();
 
     @Override
     public synchronized void close() {
@@ -60,10 +60,10 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
     }
 
     @Override
-    public <K, V> ICache<K, V> create(final String name,
-                                      final Supplier<CacheConfig> cacheConfigSupplier,
-                                      final BiConsumer<K, V> removalNotificationConsumer) {
-        final ICache<K, V> cache = new SimpleICacheImpl<>(
+    public <K, V> StroomCache<K, V> create(final String name,
+                                           final Supplier<CacheConfig> cacheConfigSupplier,
+                                           final BiConsumer<K, V> removalNotificationConsumer) {
+        final StroomCache<K, V> cache = new StroomCacheImpl<>(
                 name,
                 cacheConfigSupplier,
                 removalNotificationConsumer);
@@ -72,15 +72,15 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
     }
 
     @Override
-    public <K, V> LoadingICache<K, V> createLoadingCache(
+    public <K, V> LoadingStroomCache<K, V> createLoadingCache(
             final String name,
             final Supplier<CacheConfig> cacheConfigSupplier,
             final Function<K, V> loadFunction,
             final BiConsumer<K, V> removalNotificationConsumer) {
 
         Objects.requireNonNull(loadFunction);
-        final LoadingICache<K, V> cache;
-        cache = new LoadingCacheImpl<>(
+        final LoadingStroomCache<K, V> cache;
+        cache = new LoadingStroomCacheImpl<>(
                 name,
                 cacheConfigSupplier,
                 loadFunction,
@@ -89,18 +89,18 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         return cache;
     }
 
-    public void registerCache(final String name, final ICache<?, ?> cache) {
+    public void registerCache(final String name, final StroomCache<?, ?> cache) {
         if (caches.containsKey(name)) {
             throw new RuntimeException("A cache called '" + name + "' already exists");
         }
 
-        final ICache<?, ?> existing = caches.put(name, cache);
+        final StroomCache<?, ?> existing = caches.put(name, cache);
         if (existing != null) {
             cache.clear();
         }
     }
 
-    Map<String, ICache<?, ?>> getCaches() {
+    Map<String, StroomCache<?, ?>> getCaches() {
         return caches;
     }
 
@@ -127,7 +127,7 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         final String cacheName = params.get(PARAM_NAME_CACHE_NAME);
 
         if (cacheName != null) {
-            final ICache<?, ?> cache = caches.get(cacheName);
+            final StroomCache<?, ?> cache = caches.get(cacheName);
 
             if (cache != null) {
                 final Set<?> keySet = cache.keySet();

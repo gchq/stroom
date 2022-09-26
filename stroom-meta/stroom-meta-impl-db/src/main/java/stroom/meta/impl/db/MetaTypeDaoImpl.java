@@ -18,7 +18,7 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaTypeDao;
@@ -47,7 +47,7 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
 
     private static final String CACHE_NAME = "Meta Type Cache";
 
-    private final LoadingICache<String, Integer> cache;
+    private final LoadingStroomCache<String, Integer> cache;
     private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject

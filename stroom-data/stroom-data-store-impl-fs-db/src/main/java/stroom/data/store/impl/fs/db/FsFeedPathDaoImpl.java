@@ -1,7 +1,7 @@
 package stroom.data.store.impl.fs.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.data.store.impl.fs.FsFeedPathDao;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.db.util.JooqUtil;
@@ -26,7 +26,7 @@ class FsFeedPathDaoImpl implements FsFeedPathDao {
 
     private static final String CACHE_NAME = "Feed Path Cache";
 
-    private final LoadingICache<String, String> cache;
+    private final LoadingStroomCache<String, String> cache;
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject

@@ -17,7 +17,7 @@
 package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
@@ -45,7 +45,7 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
     private static final String PARAM_NAME_LIMIT = "limit";
 
     // Holds all 1-* pooled items for each K. PoolKey hashed on object instance not content.
-    private final LoadingICache<PoolKey<K>, PoolItem<V>> cache;
+    private final LoadingStroomCache<PoolKey<K>, PoolItem<V>> cache;
     // Provides all the cache keys (PoolKey) for each K
     private final Map<K, LinkedBlockingDeque<PoolKey<K>>> keyMap = new ConcurrentHashMap<>();
 

@@ -16,7 +16,7 @@
 
 package stroom.cache.impl;
 
-import stroom.cache.api.ICache;
+import stroom.cache.api.StroomCache;
 import stroom.cache.shared.CacheIdentity;
 import stroom.cache.shared.CacheInfo;
 import stroom.security.api.SecurityContext;
@@ -85,7 +85,7 @@ public class CacheManagerServiceImpl implements CacheManagerService, Clearable {
                 }
 
                 if (include) {
-                    final ICache<?, ?> cache = cacheManager.getCaches().get(cacheName);
+                    final StroomCache<?, ?> cache = cacheManager.getCaches().get(cacheName);
                     final CacheInfo cacheInfo = cache.getCacheInfo();
                     list.add(cacheInfo);
                 }
@@ -127,20 +127,20 @@ public class CacheManagerServiceImpl implements CacheManagerService, Clearable {
      */
     @Override
     public Long clear(final FindCacheInfoCriteria criteria) {
-        return doCacheAction(criteria, ICache::rebuild);
+        return doCacheAction(criteria, StroomCache::rebuild);
     }
 
     @Override
     public Long evictExpiredElements(final FindCacheInfoCriteria criteria) {
-        return doCacheAction(criteria, ICache::evictExpiredElements);
+        return doCacheAction(criteria, StroomCache::evictExpiredElements);
     }
 
     private Long doCacheAction(final FindCacheInfoCriteria criteria,
-                               final Consumer<ICache<?, ?>> cacheAction) {
+                               final Consumer<StroomCache<?, ?>> cacheAction) {
         final List<CacheInfo> caches = find(criteria);
         for (final CacheInfo cacheInfo : caches) {
             final String cacheName = cacheInfo.getName();
-            final ICache<?, ?> cache = cacheManager.getCaches().get(cacheName);
+            final StroomCache<?, ?> cache = cacheManager.getCaches().get(cacheName);
             if (cache != null) {
                 cacheAction.accept(cache);
             } else {

@@ -24,13 +24,13 @@ import java.util.function.Supplier;
 
 public interface CacheManager extends AutoCloseable {
 
-    <K, V> ICache<K, V> create(
+    <K, V> StroomCache<K, V> create(
             final String name,
             final Supplier<CacheConfig> cacheConfigSupplier,
             final BiConsumer<K, V> removalNotificationConsumer);
 
 
-    <K, V> LoadingICache<K, V> createLoadingCache(
+    <K, V> LoadingStroomCache<K, V> createLoadingCache(
             final String name,
             final Supplier<CacheConfig> cacheConfigSupplier,
             final Function<K, V> loadFunction,
@@ -38,7 +38,7 @@ public interface CacheManager extends AutoCloseable {
 
     void close();
 
-    default <K, V> ICache<K, V> create(
+    default <K, V> StroomCache<K, V> create(
             final String name,
             final Supplier<CacheConfig> cacheConfigSupplier) {
 
@@ -48,7 +48,7 @@ public interface CacheManager extends AutoCloseable {
                 null);
     }
 
-    default <K, V> LoadingICache<K, V> createLoadingCache(
+    default <K, V> LoadingStroomCache<K, V> createLoadingCache(
             final String name,
             final Supplier<CacheConfig> cacheConfigSupplier, Function<K, V> loadFunction) {
 

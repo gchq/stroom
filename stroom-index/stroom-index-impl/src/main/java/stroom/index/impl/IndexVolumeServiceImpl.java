@@ -1,7 +1,7 @@
 package stroom.index.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.selection.VolumeConfig;
@@ -95,7 +95,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     private final Provider<EntityEventBus> entityEventBusProvider;
     private final Provider<VolumeConfig> volumeConfigProvider;
     private final IndexVolumeGroupService indexVolumeGroupService;
-    private final LoadingICache<VolGroupNode, HasCapacitySelector> volGroupNodeToVolSelectorCache;
+    private final LoadingStroomCache<VolGroupNode, HasCapacitySelector> volGroupNodeToVolSelectorCache;
     private final HasCapacitySelectorFactory hasCapacitySelectorFactory;
     private final PathCreator pathCreator;
 

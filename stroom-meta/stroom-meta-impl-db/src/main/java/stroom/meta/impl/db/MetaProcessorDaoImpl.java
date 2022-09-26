@@ -18,7 +18,7 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaProcessorDao;
 import stroom.meta.impl.MetaServiceConfig;
@@ -38,7 +38,7 @@ class MetaProcessorDaoImpl implements MetaProcessorDao, Clearable {
 
     private static final String CACHE_NAME = "Meta Processor Cache";
 
-    private final LoadingICache<Key, Integer> cache;
+    private final LoadingStroomCache<Key, Integer> cache;
     private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject

@@ -1,6 +1,6 @@
 package stroom.cache.impl;
 
-import stroom.cache.api.ICache;
+import stroom.cache.api.StroomCache;
 import stroom.cache.shared.CacheInfo;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
@@ -32,9 +32,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-abstract class AbstractICache<K, V> implements ICache<K, V> {
+abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractICache.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractStroomCache.class);
 
     private final String name;
     private final Supplier<CacheConfig> cacheConfigSupplier;
@@ -47,9 +47,9 @@ abstract class AbstractICache<K, V> implements ICache<K, V> {
     protected volatile Cache<K, V> cache = null;
     protected volatile Caffeine<K, V> cacheBuilder = null;
 
-    public AbstractICache(final String name,
-                          final Supplier<CacheConfig> cacheConfigSupplier,
-                          final BiConsumer<K, V> removalNotificationConsumer) {
+    public AbstractStroomCache(final String name,
+                               final Supplier<CacheConfig> cacheConfigSupplier,
+                               final BiConsumer<K, V> removalNotificationConsumer) {
 
         LOGGER.debug(() -> LogUtil.message("Creating cache {} from config {} ({}), " +
                         "(has removalNotificationConsumer: {})",

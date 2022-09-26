@@ -17,7 +17,7 @@
 package stroom.feed.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
@@ -48,7 +48,7 @@ public class FeedDocCache implements Clearable, EntityEvent.Handler {
 
     private static final String CACHE_NAME = "Feed Doc Cache";
 
-    private final LoadingICache<String, Optional<FeedDoc>> cache;
+    private final LoadingStroomCache<String, Optional<FeedDoc>> cache;
     private final FeedStore feedStore;
     private final SecurityContext securityContext;
 

@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
@@ -45,7 +45,7 @@ public final class SearchResponseCreatorManager implements Clearable {
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
-    private final LoadingICache<Key, SearchResponseCreator> cache;
+    private final LoadingStroomCache<Key, SearchResponseCreator> cache;
 
     @Inject
     SearchResponseCreatorManager(final CacheManager cacheManager,

@@ -18,7 +18,7 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaFeedDao;
 import stroom.meta.impl.MetaServiceConfig;
@@ -41,7 +41,7 @@ class MetaFeedDaoImpl implements MetaFeedDao, Clearable {
 
     private static final String CACHE_NAME = "Meta Feed Cache";
 
-    private final LoadingICache<String, Integer> cache;
+    private final LoadingStroomCache<String, Integer> cache;
     private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject

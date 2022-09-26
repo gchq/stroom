@@ -17,7 +17,7 @@
 package stroom.explorer.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -42,7 +42,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocRefInfoCache.class);
     private static final String CACHE_NAME = "Doc Ref Info Cache";
 
-    private final LoadingICache<DocRef, Optional<DocRefInfo>> cache;
+    private final LoadingStroomCache<DocRef, Optional<DocRefInfo>> cache;
 
     @Inject
     DocRefInfoCache(final CacheManager cacheManager,

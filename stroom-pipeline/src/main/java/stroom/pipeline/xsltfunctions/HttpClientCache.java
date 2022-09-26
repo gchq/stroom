@@ -17,7 +17,7 @@
 package stroom.pipeline.xsltfunctions;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.NullSafe;
@@ -58,7 +58,7 @@ public class HttpClientCache {
 
     private static final String CACHE_NAME = "Http Client Cache";
 
-    private final LoadingICache<String, OkHttpClient> cache;
+    private final LoadingStroomCache<String, OkHttpClient> cache;
     private final PathCreator pathCreator;
 
     @Inject

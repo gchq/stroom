@@ -35,9 +35,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-class TestSimpleStroomCacheImpl {
+class TestStroomCacheImpl {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSimpleStroomCacheImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStroomCacheImpl.class);
 
     public static final String NAME = "My Cache";
     protected static final String MAXIMUM_SIZE = "MaximumSize";
@@ -57,7 +57,7 @@ class TestSimpleStroomCacheImpl {
         // Call this to decorate the config with a path
         getCacheConfig();
 
-        cache = new SimpleStroomCacheImpl<>(
+        cache = new StroomCacheImpl<>(
                 NAME,
                 this::getCacheConfig,
                 (k, v) -> {

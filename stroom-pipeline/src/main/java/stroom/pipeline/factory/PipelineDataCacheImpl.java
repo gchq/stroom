@@ -17,7 +17,7 @@
 package stroom.pipeline.factory;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.PipelineConfig;
@@ -49,7 +49,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable, Enti
     private static final String CACHE_NAME = "Pipeline Structure Cache";
 
     private final PipelineStackLoader pipelineStackLoader;
-    private final LoadingICache<PipelineDoc, PipelineDataHolder> cache;
+    private final LoadingStroomCache<PipelineDoc, PipelineDataHolder> cache;
     private final SecurityContext securityContext;
     private final DocumentPermissionCache documentPermissionCache;
 

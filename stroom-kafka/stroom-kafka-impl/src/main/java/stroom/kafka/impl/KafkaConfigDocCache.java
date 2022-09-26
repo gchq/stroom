@@ -17,7 +17,7 @@
 package stroom.kafka.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.security.api.SecurityContext;
@@ -46,7 +46,7 @@ public class KafkaConfigDocCache implements Clearable, EntityEvent.Handler {
 
     private static final String CACHE_NAME = "Kafka Config Doc Cache";
 
-    private final LoadingICache<DocRef, Optional<KafkaConfigDoc>> cache;
+    private final LoadingStroomCache<DocRef, Optional<KafkaConfigDoc>> cache;
     private final KafkaConfigStore kafkaConfigStore;
     private final SecurityContext securityContext;
 

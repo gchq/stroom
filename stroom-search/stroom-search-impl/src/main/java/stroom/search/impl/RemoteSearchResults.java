@@ -17,7 +17,7 @@
 package stroom.search.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.StroomCache;
 import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -32,7 +32,7 @@ class RemoteSearchResults {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteSearchResults.class);
 
-    private final ICache<String, RemoteSearchResultFactory> cache;
+    private final StroomCache<String, RemoteSearchResultFactory> cache;
 
     @Inject
     RemoteSearchResults(final CacheManager cacheManager,

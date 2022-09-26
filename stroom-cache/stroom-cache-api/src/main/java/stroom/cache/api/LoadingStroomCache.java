@@ -3,7 +3,7 @@ package stroom.cache.api;
 import java.util.Optional;
 import java.util.function.Function;
 
-public interface LoadingICache<K, V> extends ICache<K, V> {
+public interface LoadingStroomCache<K, V> extends StroomCache<K, V> {
 
     /**
      * Gets the value associated with key from the cache. If key is not found in the cache
@@ -14,7 +14,7 @@ public interface LoadingICache<K, V> extends ICache<K, V> {
     V get(K key);
 
     /**
-     * Same behaviour as {@link LoadingICache#get(Object)} except the results is wrapped
+     * Same behaviour as {@link LoadingStroomCache#get(Object)} except the results is wrapped
      * in an {@link Optional}
      * @return The value associated with key or an empty {@link Optional} if the
      * loadFunction returns null.

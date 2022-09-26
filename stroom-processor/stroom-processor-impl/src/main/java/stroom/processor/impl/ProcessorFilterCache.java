@@ -17,7 +17,7 @@
 package stroom.processor.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
@@ -33,7 +33,7 @@ public class ProcessorFilterCache implements Clearable {
 
     private static final String CACHE_NAME = "Processor Filter Cache";
 
-    private final LoadingICache<Integer, Optional<ProcessorFilter>> cache;
+    private final LoadingStroomCache<Integer, Optional<ProcessorFilter>> cache;
     private final ProcessorFilterService processorFilterService;
     private final SecurityContext securityContext;
 

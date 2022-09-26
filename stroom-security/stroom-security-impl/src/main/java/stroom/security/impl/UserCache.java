@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
@@ -43,7 +43,7 @@ class UserCache implements Clearable, EntityEvent.Handler {
     private static final String CACHE_NAME = "User Cache";
 
     private final AuthenticationService authenticationService;
-    private final LoadingICache<String, Optional<User>> cache;
+    private final LoadingStroomCache<String, Optional<User>> cache;
 
     @Inject
     UserCache(final CacheManager cacheManager,

@@ -18,7 +18,7 @@
 package stroom.processor.impl.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.db.util.JooqUtil;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFeedRecord;
@@ -36,7 +36,7 @@ class ProcessorFeedCache implements Clearable {
 
     private static final String CACHE_NAME = "Processor Feed Cache";
 
-    private final LoadingICache<String, Integer> cache;
+    private final LoadingStroomCache<String, Integer> cache;
     private final ProcessorDbConnProvider processorDbConnProvider;
 
     @Inject

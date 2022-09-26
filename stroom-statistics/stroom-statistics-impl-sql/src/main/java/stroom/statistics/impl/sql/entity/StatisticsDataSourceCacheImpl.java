@@ -17,7 +17,7 @@
 package stroom.statistics.impl.sql.entity;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.security.api.SecurityContext;
@@ -66,8 +66,8 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
     // The values are held as optionals so that if there is no doc for a name then
     // the cache loader won't keep hitting the db for each get on that name.
-    private volatile LoadingICache<String, Optional<StatisticStoreDoc>> cacheByName;
-    private volatile LoadingICache<DocRef, Optional<StatisticStoreDoc>> cacheByRef;
+    private volatile LoadingStroomCache<String, Optional<StatisticStoreDoc>> cacheByName;
+    private volatile LoadingStroomCache<DocRef, Optional<StatisticStoreDoc>> cacheByRef;
 
     @Inject
     StatisticsDataSourceCacheImpl(final StatisticStoreStore statisticStoreStore,
@@ -80,7 +80,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
         this.sqlStatisticsConfigProvider = sqlStatisticsConfigProvider;
     }
 
-    private LoadingICache<String, Optional<StatisticStoreDoc>> getCacheByName() {
+    private LoadingStroomCache<String, Optional<StatisticStoreDoc>> getCacheByName() {
         if (cacheByName == null) {
             synchronized (this) {
                 if (cacheByName == null) {
@@ -119,7 +119,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
         return cacheByName;
     }
 
-    private LoadingICache<DocRef, Optional<StatisticStoreDoc>> getCacheByRef() {
+    private LoadingStroomCache<DocRef, Optional<StatisticStoreDoc>> getCacheByRef() {
         if (cacheByRef == null) {
             synchronized (this) {
                 if (cacheByRef == null) {
@@ -142,7 +142,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
         return cacheByRef;
     }
 
-    private <K, V> LoadingICache<K, V> createCache(final String name, final Function<K, V> cacheLoader) {
+    private <K, V> LoadingStroomCache<K, V> createCache(final String name, final Function<K, V> cacheLoader) {
         return cacheManager.createLoadingCache(
                 name,
                 () -> sqlStatisticsConfigProvider.get().getDataSourceCache(),
@@ -190,8 +190,8 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
             dumpEntries();
         }
         try {
-            final LoadingICache<String, Optional<StatisticStoreDoc>> cacheByName = getCacheByName();
-            final LoadingICache<DocRef, Optional<StatisticStoreDoc>> cacheByDocRef = getCacheByRef();
+            final LoadingStroomCache<String, Optional<StatisticStoreDoc>> cacheByName = getCacheByName();
+            final LoadingStroomCache<DocRef, Optional<StatisticStoreDoc>> cacheByDocRef = getCacheByRef();
 
             final EntityAction entityAction = event.getAction();
 
@@ -288,7 +288,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
                 docRef.getName() + ":" + docRef.getUuid()));
     }
 
-    private <K> Set<String> cacheMapToString(final LoadingICache<K, Optional<StatisticStoreDoc>> cache,
+    private <K> Set<String> cacheMapToString(final LoadingStroomCache<K, Optional<StatisticStoreDoc>> cache,
                                              final Function<K, String> keyConverter) {
         final Set<String> strings = new HashSet<>();
         cache.forEach((k, v) -> {

@@ -17,7 +17,7 @@
 package stroom.pipeline.refdata;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -49,7 +49,7 @@ public class EffectiveStreamCache implements Clearable {
 
     private static final String CACHE_NAME = "Reference Data - Effective Stream Cache";
 
-    private final LoadingICache<EffectiveStreamKey, NavigableSet<EffectiveStream>> cache;
+    private final LoadingStroomCache<EffectiveStreamKey, NavigableSet<EffectiveStream>> cache;
     private final MetaService metaService;
     private final EffectiveStreamInternPool internPool;
     private final SecurityContext securityContext;
