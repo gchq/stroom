@@ -1,6 +1,6 @@
 package stroom.cache.impl;
 
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -24,7 +24,7 @@ class TestLoadingCacheImpl {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLoadingCacheImpl.class);
     public static final String NAME = "My Cache";
 
-    private LoadingICache<Integer, String> cache;
+    private LoadingStroomCache<Integer, String> cache;
     private AtomicReference<BiConsumer<Integer, String>> removalConsumerRef = new AtomicReference<>(null);
     private CacheConfig cacheConfig = CacheConfig.builder()
             .build();

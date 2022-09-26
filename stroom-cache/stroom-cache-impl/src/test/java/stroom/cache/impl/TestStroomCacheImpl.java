@@ -1,6 +1,6 @@
 package stroom.cache.impl;
 
-import stroom.cache.api.ICache;
+import stroom.cache.api.StroomCache;
 import stroom.cache.shared.CacheInfo;
 import stroom.test.common.TestUtil;
 import stroom.util.cache.CacheConfig;
@@ -35,9 +35,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-class TestSimpleICacheImpl {
+class TestSimpleStroomCacheImpl {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSimpleICacheImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSimpleStroomCacheImpl.class);
 
     public static final String NAME = "My Cache";
     protected static final String MAXIMUM_SIZE = "MaximumSize";
@@ -45,7 +45,7 @@ class TestSimpleICacheImpl {
     protected static final String EXPIRE_AFTER_ACCESS = "ExpireAfterAccess";
     protected static final int ALL_MONTHS_COUNT = 12;
 
-    private ICache<Integer, String> cache;
+    private StroomCache<Integer, String> cache;
     private AtomicReference<BiConsumer<Integer, String>> removalConsumerRef = new AtomicReference<>(null);
     private CacheConfig cacheConfig = CacheConfig.builder()
             .build();
@@ -57,7 +57,7 @@ class TestSimpleICacheImpl {
         // Call this to decorate the config with a path
         getCacheConfig();
 
-        cache = new SimpleICacheImpl<>(
+        cache = new SimpleStroomCacheImpl<>(
                 NAME,
                 this::getCacheConfig,
                 (k, v) -> {

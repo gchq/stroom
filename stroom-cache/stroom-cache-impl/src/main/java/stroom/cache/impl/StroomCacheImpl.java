@@ -10,19 +10,19 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-class SimpleICacheImpl<K, V> extends AbstractICache<K, V> {
+class SimpleStroomCacheImpl<K, V> extends AbstractStroomCache<K, V> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SimpleICacheImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SimpleStroomCacheImpl.class);
 
-    public SimpleICacheImpl(final String name,
-                            final Supplier<CacheConfig> cacheConfigSupplier,
-                            final BiConsumer<K, V> removalNotificationConsumer) {
+    public SimpleStroomCacheImpl(final String name,
+                                 final Supplier<CacheConfig> cacheConfigSupplier,
+                                 final BiConsumer<K, V> removalNotificationConsumer) {
         super(name, cacheConfigSupplier, removalNotificationConsumer);
         rebuild();
     }
 
-    public SimpleICacheImpl(final String name,
-                            final Supplier<CacheConfig> cacheConfigSupplier) {
+    public SimpleStroomCacheImpl(final String name,
+                                 final Supplier<CacheConfig> cacheConfigSupplier) {
         this(name, cacheConfigSupplier, null);
     }
 

@@ -10,7 +10,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 
-public interface ICache<K, V> {
+public interface StroomCache<K, V> {
 
     /**
      * @return The name of the cache instance.
@@ -30,7 +30,7 @@ public interface ICache<K, V> {
     V get(K key);
 
     /**
-     * Same behaviour as {@link ICache#get(Object)} except that a null value is wrapped in
+     * Same behaviour as {@link StroomCache#get(Object)} except that a null value is wrapped in
      * an {@link Optional}.
      */
     Optional<V> getOptional(K key);

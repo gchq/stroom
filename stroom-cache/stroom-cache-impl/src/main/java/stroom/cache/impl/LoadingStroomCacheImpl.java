@@ -1,6 +1,6 @@
 package stroom.cache.impl;
 
-import stroom.cache.api.LoadingICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -15,7 +15,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-class LoadingCacheImpl<K, V> extends AbstractICache<K, V> implements LoadingICache<K, V> {
+class LoadingCacheImpl<K, V> extends AbstractStroomCache<K, V> implements LoadingStroomCache<K, V> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LoadingCacheImpl.class);
 
