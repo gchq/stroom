@@ -21,10 +21,9 @@ class TestInterruptibleConsumer {
 
     @Test
     void unchecked_throws() {
-        Assertions.assertThatThrownBy(() -> {
-                    Stream.of(0)
-                            .forEach(InterruptibleConsumer.unchecked(this::consumeStuff));
-                })
+        Assertions.assertThatThrownBy(() ->
+                        Stream.of(0)
+                                .forEach(InterruptibleConsumer.unchecked(this::consumeStuff)))
                 .isInstanceOf(RuntimeException.class)
                 .getCause()
                 .isInstanceOf(InterruptedException.class);
@@ -39,9 +38,4 @@ class TestInterruptibleConsumer {
         }
         wasStuffDone.set(true);
     }
-
-    private static class MyCheckedException extends Exception {
-
-    }
-
 }

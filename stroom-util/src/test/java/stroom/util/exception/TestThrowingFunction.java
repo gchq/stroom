@@ -25,11 +25,10 @@ class TestThrowingFunction {
 
     @Test
     void unchecked_throws() {
-        Assertions.assertThatThrownBy(() -> {
-                    final List<Integer> list = Stream.of(0)
-                            .map(ThrowingFunction.unchecked(this::addTen))
-                            .collect(Collectors.toList());
-        })
+        Assertions.assertThatThrownBy(() ->
+                        Stream.of(0)
+                                .map(ThrowingFunction.unchecked(this::addTen))
+                                .collect(Collectors.toList()))
                 .isInstanceOf(RuntimeException.class);
     }
 
@@ -41,5 +40,6 @@ class TestThrowingFunction {
     }
 
     private static class MyCheckedException extends Exception {
+
     }
 }

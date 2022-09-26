@@ -20,12 +20,11 @@ class TestInterruptibleRunnable {
     }
 
     @Test
-    void unchecked_throws() throws ExecutionException, InterruptedException {
+    void unchecked_throws() {
         shouldThrow.set(true);
-        Assertions.assertThatThrownBy(() -> {
-                    CompletableFuture.runAsync(InterruptibleRunnable.unchecked(this::doStuff))
-                            .get();
-                })
+        Assertions.assertThatThrownBy(() ->
+                        CompletableFuture.runAsync(InterruptibleRunnable.unchecked(this::doStuff))
+                                .get())
                 .isInstanceOf(ExecutionException.class)
                 .getCause()
                 .isInstanceOf(RuntimeException.class)
@@ -42,8 +41,5 @@ class TestInterruptibleRunnable {
             throw new InterruptedException();
         }
         wasStuffDone.set(true);
-    }
-
-    private static class MyCheckedException extends Exception {
     }
 }

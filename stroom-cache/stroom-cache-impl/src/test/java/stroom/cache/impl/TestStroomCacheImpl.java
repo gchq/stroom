@@ -142,7 +142,7 @@ class TestStroomCacheImpl {
             cache.remove(i);
         }
         Assertions.assertThat(cache.size())
-                        .isEqualTo(6);
+                .isEqualTo(6);
 
         final AtomicInteger callCounter = new AtomicInteger();
 
@@ -194,7 +194,7 @@ class TestStroomCacheImpl {
     @Test
     void testPut() {
         Assertions.assertThat(cache.getOptional(999))
-                        .isEmpty();
+                .isEmpty();
 
         Assertions.assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
@@ -723,7 +723,7 @@ class TestStroomCacheImpl {
                 cache::size,
                 (long) ALL_MONTHS_COUNT,
                 () -> "cache size");
-        
+
         LOGGER.info("Rebuild complete");
 
         // Cache is now fully rebuilt so let the reader continue

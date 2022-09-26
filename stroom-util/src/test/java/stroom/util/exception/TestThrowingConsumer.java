@@ -20,10 +20,9 @@ class TestThrowingConsumer {
 
     @Test
     void unchecked_throws() {
-        Assertions.assertThatThrownBy(() -> {
-                    Stream.of(0)
-                            .forEach(ThrowingConsumer.unchecked(this::consumeStuff));
-                })
+        Assertions.assertThatThrownBy(() ->
+                        Stream.of(0)
+                                .forEach(ThrowingConsumer.unchecked(this::consumeStuff)))
                 .isInstanceOf(RuntimeException.class)
                 .getCause()
                 .isInstanceOf(MyCheckedException.class);

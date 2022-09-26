@@ -21,11 +21,10 @@ class TestInterruptibleFunction {
 
     @Test
     void unchecked_throws() {
-        Assertions.assertThatThrownBy(() -> {
-                    Stream.of(0)
-                            .map(ThrowingFunction.unchecked(this::addTen))
-                            .collect(Collectors.toList());
-                })
+        Assertions.assertThatThrownBy(() ->
+                        Stream.of(0)
+                                .map(ThrowingFunction.unchecked(this::addTen))
+                                .collect(Collectors.toList()))
                 .isInstanceOf(RuntimeException.class)
                 .getCause()
                 .isInstanceOf(InterruptedException.class);
