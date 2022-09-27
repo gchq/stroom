@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ##########################################################################
-# Version: v0.3.0
-# Date: 2021-11-04T10:17:38+00:00
+# Version: v0.4.0
+# Date: 2022-09-27T16:06:12+00:00
 #
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.
@@ -561,6 +561,18 @@ list_unreleased_changes() {
   local found_change_files=false
   local list_output=""
 
+  local format_cmds=()
+  if command -v fmt >/dev/null 2>&1; then
+    format_cmds=( "fmt" "--width=80" )
+  else
+    # No fmt cmd so use tee to just send stdin to stdout
+    format_cmds=( "tee" )
+  fi
+
+  echo "[${git_issue_str}]"
+
+  # git_issue_str may be '*' so we must not quote it else the
+  # globbing won't work
   for file in "${unreleased_dir}/"*__${git_issue_str}.md; do
     if [[ -f "${file}" ]]; then
       local filename
@@ -569,11 +581,12 @@ list_unreleased_changes() {
       found_change_files=true
       filename="$(basename "${file}" )"
 
+      # Get first line of the file and word wrap it
       change_entry_line="$( \
         head \
           -n1 \
           "${file}" \
-      )"
+        | "${format_cmds[@]}" )"
       list_output+="${BLUE}${filename}${NC}:\n${change_entry_line}\n\n"
     fi
   done
