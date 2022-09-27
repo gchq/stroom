@@ -33,6 +33,7 @@ import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -74,6 +75,8 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
     private Indexer indexer;
     @Inject
     private IndexStore indexStore;
+    @Inject
+    private PathCreator pathCreator;
 
     @BeforeEach
     void onBefore() {
@@ -185,7 +188,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
             LOGGER.trace("Null writer");
         }
 
-        final IndexShardSearcher indexShardSearcher = new IndexShardSearcher(indexShard, writer);
+        final IndexShardSearcher indexShardSearcher = new IndexShardSearcher(indexShard, writer, pathCreator);
         searchShard(
                 new String[]{"test"},
                 new LongAdder(),

@@ -30,6 +30,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.concurrent.StripedLock;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -74,6 +75,7 @@ public class IndexShardManager {
     private final TaskContextFactory taskContextFactory;
     private final TaskContext taskContext;
     private final SecurityContext securityContext;
+    private final PathCreator pathCreator;
 
     private final StripedLock shardUpdateLocks = new StripedLock();
     private final AtomicBoolean deletingShards = new AtomicBoolean();
@@ -88,7 +90,8 @@ public class IndexShardManager {
                       final Executor executor,
                       final TaskContextFactory taskContextFactory,
                       final TaskContext taskContext,
-                      final SecurityContext securityContext) {
+                      final SecurityContext securityContext,
+                      final PathCreator pathCreator) {
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
@@ -97,6 +100,7 @@ public class IndexShardManager {
         this.taskContextFactory = taskContextFactory;
         this.taskContext = taskContext;
         this.securityContext = securityContext;
+        this.pathCreator = pathCreator;
 
         // Ensure all but deleted and corrupt states can be set to closed on clean.
         allowedStateTransitions.put(IndexShardStatus.NEW,
@@ -186,7 +190,7 @@ public class IndexShardManager {
     private void deleteFromDisk(final IndexShard shard) {
         try {
             // Find the index shard dir.
-            final Path dir = IndexShardUtil.getIndexPath(shard);
+            final Path dir = IndexShardUtil.getIndexPath(shard, pathCreator);
 
             // See if there are any files in the directory.
             if (!Files.isDirectory(dir) || FileUtil.deleteDir(dir)) {

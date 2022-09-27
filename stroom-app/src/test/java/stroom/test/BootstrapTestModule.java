@@ -5,6 +5,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.FileUtil;
 
 import com.google.inject.AbstractModule;
@@ -86,7 +87,9 @@ public class BootstrapTestModule extends AbstractModule {
 
         ConfigHolderImpl() {
             try {
-                final Path dir = Files.createTempDirectory("stroom");
+                final String gradleWorker = DbTestUtil.getGradleWorker();
+                final String prefix = "stroom_" + gradleWorker + "_";
+                final Path dir = Files.createTempDirectory(prefix);
                 this.path = dir.resolve("test.yml");
 
                 this.appConfig = new AppConfig();

@@ -30,6 +30,7 @@ public interface IndexVolumeResource extends RestResource, DirectRestService, Fe
 
     String BASE_PATH = "/index/volume" + ResourcePaths.V2;
     String RESCAN_SUB_PATH = "/rescan";
+    String VALIDATE_SUB_PATH = "/validate";
 
     @POST
     @Path("find")
@@ -37,6 +38,13 @@ public interface IndexVolumeResource extends RestResource, DirectRestService, Fe
             summary = "Finds index volumes matching request",
             operationId = "findIndexVolumes")
     ResultPage<IndexVolume> find(@Parameter(description = "request", required = true) ExpressionCriteria request);
+
+    @POST
+    @Path(VALIDATE_SUB_PATH)
+    @Operation(
+            summary = "Validates an index volume",
+            operationId = "validateIndexVolume")
+    ValidationResult validate(@Parameter(description = "request", required = true) IndexVolume request);
 
     @POST
     @Operation(
@@ -66,10 +74,11 @@ public interface IndexVolumeResource extends RestResource, DirectRestService, Fe
             operationId = "deleteIndexVolume")
     Boolean delete(@PathParam("id") Integer id);
 
-    @DELETE
+    @GET
     @Path(RESCAN_SUB_PATH)
     @Operation(
             summary = "Rescans index volumes",
             operationId = "rescanIndexVolumes")
     Boolean rescan(@QueryParam("nodeName") String nodeName);
+
 }

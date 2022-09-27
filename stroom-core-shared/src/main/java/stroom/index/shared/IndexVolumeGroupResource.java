@@ -49,6 +49,13 @@ public interface IndexVolumeGroupResource extends RestResource, DirectRestServic
             operationId = "fetchIndexVolumeGroup")
     IndexVolumeGroup fetch(@PathParam("id") Integer id);
 
+    @GET
+    @Path("/fetchByName/{name}")
+    @Operation(
+            summary = "Gets an index volume group by name",
+            operationId = "fetchIndexVolumeGroupByName")
+    IndexVolumeGroup fetchByName(@PathParam("name") String name);
+
     @PUT
     @Path("/{id}")
     @Operation(

@@ -288,6 +288,7 @@ dependencies {
     testImplementation libs.hikari
     testImplementation libs.jinjava
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.junit_platform_launcher
     testImplementation libs.lmdbjava
     testImplementation libs.lucene_core
     testImplementation libs.saxon_he

@@ -16,6 +16,7 @@ import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
@@ -66,18 +67,21 @@ public class IndexShardSystemInfo implements HasSystemInfo {
     private final IndexShardService indexShardService;
     private final IndexStore indexStore;
     private final NodeInfo nodeInfo;
+    private final PathCreator pathCreator;
 
     @Inject
     public IndexShardSystemInfo(final IndexShardWriterCache indexShardWriterCache,
                                 final MetaService metaService,
                                 final IndexShardService indexShardService,
                                 final IndexStore indexStore,
-                                final NodeInfo nodeInfo) {
+                                final NodeInfo nodeInfo,
+                                final PathCreator pathCreator) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.metaService = metaService;
         this.indexShardService = indexShardService;
         this.indexStore = indexStore;
         this.nodeInfo = nodeInfo;
+        this.pathCreator = pathCreator;
     }
 
     @Override
@@ -135,7 +139,7 @@ public class IndexShardSystemInfo implements HasSystemInfo {
 
                 IndexShardSearcher indexShardSearcher = null;
                 try {
-                    indexShardSearcher = new IndexShardSearcher(indexShard, indexWriter);
+                    indexShardSearcher = new IndexShardSearcher(indexShard, indexWriter, pathCreator);
                     return searchShard(indexShardSearcher, indexShard, limit, streamId);
 
                 } finally {

@@ -23,10 +23,9 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.security.api.SecurityContext;
+import stroom.index.shared.ValidationResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Query;
@@ -158,5 +157,10 @@ class FsVolumeResourceImpl implements FsVolumeResource {
     public Boolean rescan() {
         volumeServiceProvider.get().flush();
         return true;
+    }
+
+    @Override
+    public ValidationResult validate(final FsVolume volume) {
+        return volumeServiceProvider.get().validate(volume);
     }
 }

@@ -22,6 +22,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.task.api.TaskContext;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -31,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
 import java.util.function.Consumer;
@@ -52,6 +52,7 @@ class FsOrphanFileFinderExecutor {
     private final Provider<FsOrphanFileFinder> orphanFileFinderProvider;
     //    private final ExecutorProvider executorProvider;
     private final TaskContext taskContext;
+    private final PathCreator pathCreator;
 //    private final DataStoreServiceConfig config;
 
 
@@ -60,11 +61,13 @@ class FsOrphanFileFinderExecutor {
                                final Provider<FsOrphanFileFinder> orphanFileFinderProvider,
 //                               final ExecutorProvider executorProvider,
                                final TaskContext taskContext,
-                               final DataStoreServiceConfig config) {
+                               final DataStoreServiceConfig config,
+                               final PathCreator pathCreator) {
         this.volumeService = volumeService;
         this.orphanFileFinderProvider = orphanFileFinderProvider;
 //        this.executorProvider = executorProvider;
         this.taskContext = taskContext;
+        this.pathCreator = pathCreator;
 //        this.config = config;
 
         Duration age;
@@ -134,10 +137,10 @@ class FsOrphanFileFinderExecutor {
                             final Consumer<Path> orphanConsumer,
                             final long oldestDirTime,
                             final TaskContext taskContext) {
-        final Path dir = Paths.get(volume.getPath());
-        if (!Files.isDirectory(dir)) {
+        final Path absDir = pathCreator.toAppPath(volume.getPath());
+        if (!Files.isDirectory(absDir)) {
             LOGGER.error(() -> "Directory for file delete list does not exist '" +
-                    FileUtil.getCanonicalPath(dir) +
+                    FileUtil.getCanonicalPath(absDir) +
                     "'");
         } else {
             orphanFileFinderProvider.get().scanVolumePath(volume, orphanConsumer, oldestDirTime, taskContext);

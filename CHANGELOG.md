@@ -12,6 +12,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3057** : Change InvalidXmlCharFilterReader to filter out restricted control characters.
+
 * Add system info for pool caches, e.g. XSLT pool cache.
 
 * Add button on Caches screen to evict expired entries. Move cache stats from info icon to table columns. Add Hit ratio figure.

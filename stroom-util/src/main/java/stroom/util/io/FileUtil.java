@@ -44,6 +44,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class FileUtil {
@@ -187,6 +188,26 @@ public final class FileUtil {
         return count.get();
     }
 
+    public static long count(final Path dir,
+                             final Predicate<Path> pathExclusionFilter) {
+        final AtomicLong count = new AtomicLong();
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+            stream
+                    .forEach(file -> {
+                        if (pathExclusionFilter != null && !pathExclusionFilter.test(file)) {
+                            try {
+                                count.incrementAndGet();
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e.getMessage(), e);
+                            }
+                        }
+                    });
+        } catch (final IOException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+        return count.get();
+    }
+
     private static void delete(final Path path, final AtomicBoolean success) {
         try {
             Files.delete(path);
@@ -201,7 +222,7 @@ public final class FileUtil {
     }
 
     /**
-     * Similar to the unix touch cammand. Sets the last modified time to now if the file
+     * Similar to the unix touch command. Sets the last modified time to now if the file
      * exists else, creates the file
      *
      * @throws IOException

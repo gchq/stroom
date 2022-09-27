@@ -10,7 +10,11 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexVolumeGroup;
 
 import org.jooq.Record;
+import org.jooq.exception.DataAccessException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -22,7 +26,9 @@ import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
 
 class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
-    private static final Function<Record, IndexVolumeGroup> RECORD_TO_INDEX_VOLUME_GROUP_MAPPER = record -> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexVolumeGroupDaoImpl.class);
+
+    static final Function<Record, IndexVolumeGroup> RECORD_TO_INDEX_VOLUME_GROUP_MAPPER = record -> {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setId(record.get(INDEX_VOLUME_GROUP.ID));
         indexVolumeGroup.setVersion(record.get(INDEX_VOLUME_GROUP.VERSION));
@@ -102,7 +108,23 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
             currentGroupName = current.getName();
         }
 
-        final IndexVolumeGroup saved = genericDao.update(indexVolumeGroup);
+        final IndexVolumeGroup saved;
+        try {
+            saved = genericDao.update(indexVolumeGroup);
+        } catch (DataAccessException e) {
+            if (e.getCause() != null
+                    && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                if (sqlEx.getErrorCode() == 1062
+                        && sqlEx.getMessage().contains("Duplicate entry")
+                        && sqlEx.getMessage().contains("key")
+                        && sqlEx.getMessage().contains(INDEX_VOLUME_GROUP.NAME.getName())) {
+                    throw new RuntimeException("An index volume group already exists with name '"
+                            + indexVolumeGroup.getName() + "'");
+                }
+            }
+            throw e;
+        }
 
         // If the group name has changed then update indexes to point to the new group name.
         if (currentGroupName != null && !currentGroupName.equals(saved.getName())) {
@@ -114,6 +136,11 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                     if (indexDoc.getVolumeGroupName() != null &&
                             indexDoc.getVolumeGroupName().equals(currentGroupName)) {
                         indexDoc.setVolumeGroupName(saved.getName());
+                        LOGGER.info("Updating index {} ({}) to change volume group name from {} to {}",
+                                indexDoc.getName(),
+                                indexDoc.getUuid(),
+                                currentGroupName,
+                                saved.getName());
                         indexStore.writeDocument(indexDoc);
                     }
                 }
@@ -144,7 +171,6 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                 .map(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER)
                 .orElse(null);
     }
-
 
     @Override
     public List<String> getNames() {

@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -42,11 +44,15 @@ class TestAsciiTable {
                         .build())
                 .withColumn(Column.builder("Date of Birth", Pojo::getDob)
                         .centerAligned()
+                        .withFormat(localDate -> localDate.format(DateTimeFormatter
+                                .ofLocalizedDate(FormatStyle.LONG)))
                         .build())
-                .withColumn(Column.builder("Height", Pojo::getHeightCm)
-                        .rightAligned()
-                        .withFormat(val -> val + "cm")
-                        .build())
+                .withColumn(Column.integer("Height (cm)", Pojo::getHeightCm))
+                .withColumn(Column.decimal(
+                        "Height (m)",
+                        row -> row.getHeightCm() / (double) 100,
+                        2))
+                .withColumn(Column.integer("Height (mm)", pojo -> pojo.getHeightCm() * 10))
                 .withRowLimit(100)
                 .build();
 

@@ -17,18 +17,19 @@
 package stroom.index.impl;
 
 import stroom.index.shared.IndexShard;
+import stroom.util.io.PathCreator;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Not very OO but added here for GWT reasons.
  */
 public class IndexShardUtil {
 
-    public static Path getIndexPath(final IndexShard indexShard) {
-        Path path = Paths.get(indexShard.getVolume().getPath());
+    public static Path getIndexPath(final IndexShard indexShard,
+                                    final PathCreator pathCreator) {
+        Path path = pathCreator.toAppPath(indexShard.getVolume().getPath());
 
         if (!Files.isDirectory(path)) {
             throw new RuntimeException("Volume path not found: " + indexShard.getVolume().getPath());
