@@ -1,7 +1,7 @@
 package stroom.data.store.impl.fs.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.data.store.impl.fs.FsFeedPathDao;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.db.util.JooqUtil;
@@ -11,6 +11,7 @@ import stroom.util.logging.LogUtil;
 
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath.FS_FEED_PATH;
@@ -25,15 +26,18 @@ class FsFeedPathDaoImpl implements FsFeedPathDao {
 
     private static final String CACHE_NAME = "Feed Path Cache";
 
-    private final ICache<String, String> cache;
+    private final LoadingStroomCache<String, String> cache;
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject
     FsFeedPathDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider,
                       final CacheManager cacheManager,
-                      final FsVolumeConfig fsVolumeConfig) {
+                      final Provider<FsVolumeConfig> fsVolumeConfigProvider) {
         this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
-        cache = cacheManager.create(CACHE_NAME, fsVolumeConfig::getFeedPathCache, this::load);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> fsVolumeConfigProvider.get().getFeedPathCache(),
+                this::load);
     }
 
     private String load(final String name) {

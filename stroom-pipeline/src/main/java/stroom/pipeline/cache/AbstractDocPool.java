@@ -20,7 +20,6 @@ import stroom.cache.api.CacheManager;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.cache.CacheConfig;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.logging.LambdaLogger;
@@ -54,7 +53,7 @@ public abstract class AbstractDocPool<K extends Doc, V>
 
     @Override
     public PoolItem<V> borrowObject(final K key, final boolean usePool) {
-        if (!documentPermissionCache.hasDocumentPermission(key.getUuid(), DocumentPermissionNames.USE)) {
+        if (!documentPermissionCache.canUseDocument(key.getUuid())) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to use " + key);
         }
 

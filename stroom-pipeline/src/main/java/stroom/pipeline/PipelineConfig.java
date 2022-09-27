@@ -40,9 +40,12 @@ public class PipelineConfig extends AbstractConfig {
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
+        // The benefit of this cache is limited as it relies on various other caches below it.
+        // We have no change handlers due to the complexity of the number of things that can affect this
+        // cache, so keep the time short and expire after write, not access.
         documentPermissionCache = CacheConfig.builder()
                 .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .expireAfterWrite(StroomDuration.ofSeconds(30))
                 .build();
     }
 

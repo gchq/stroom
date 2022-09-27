@@ -141,7 +141,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
         setDbMaxSizeProperty(DB_MAX_SIZE);
         refDataStore = refDataStoreFactory.getOffHeapStore();
 
-        Mockito.when(mockDocumentPermissionCache.hasDocumentPermission(Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(mockDocumentPermissionCache.canUseDocument(Mockito.anyString()))
                 .thenReturn(true);
     }
 
@@ -176,7 +176,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
             try (CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
-                        cacheManager, null, null, null, new ReferenceDataConfig()) {
+                        cacheManager, null, null, null, ReferenceDataConfig::new) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -396,7 +396,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         null,
                         null,
-                        new ReferenceDataConfig()) {
+                        ReferenceDataConfig::new) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -475,7 +475,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         null,
                         null,
-                        new ReferenceDataConfig()) {
+                        ReferenceDataConfig::new) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;

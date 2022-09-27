@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -54,13 +55,13 @@ class ParserFactoryPoolImpl
 
     @Inject
     ParserFactoryPoolImpl(final CacheManager cacheManager,
-                          final ParserConfig parserConfig,
+                          final Provider<ParserConfig> parserConfigProvider,
                           final DocumentPermissionCache documentPermissionCache,
                           final SecurityContext securityContext,
                           final DSChooser dsChooser) {
         super(cacheManager,
                 "Parser Factory Pool",
-                parserConfig::getCacheConfig,
+                () -> parserConfigProvider.get().getCacheConfig(),
                 documentPermissionCache,
                 securityContext);
         this.dsChooser = dsChooser;

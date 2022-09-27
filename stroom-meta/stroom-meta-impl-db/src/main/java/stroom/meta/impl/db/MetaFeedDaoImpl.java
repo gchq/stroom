@@ -18,7 +18,7 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaFeedDao;
 import stroom.meta.impl.MetaServiceConfig;
@@ -31,6 +31,7 @@ import org.jooq.Field;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
@@ -40,15 +41,18 @@ class MetaFeedDaoImpl implements MetaFeedDao, Clearable {
 
     private static final String CACHE_NAME = "Meta Feed Cache";
 
-    private final ICache<String, Integer> cache;
+    private final LoadingStroomCache<String, Integer> cache;
     private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject
     MetaFeedDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                     final CacheManager cacheManager,
-                    final MetaServiceConfig metaServiceConfig) {
+                    final Provider<MetaServiceConfig> metaServiceConfigProvider) {
         this.metaDbConnProvider = metaDbConnProvider;
-        cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaFeedCache, this::load);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> metaServiceConfigProvider.get().getMetaFeedCache(),
+                this::load);
     }
 
     private int load(final String name) {

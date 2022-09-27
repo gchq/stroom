@@ -17,7 +17,7 @@
 package stroom.pipeline.refdata;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -36,6 +36,7 @@ import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 // TODO: 14/09/2022 Ideally this class ought to listen for events each time a strm is created/deleted
@@ -48,7 +49,7 @@ public class EffectiveStreamCache implements Clearable {
 
     private static final String CACHE_NAME = "Reference Data - Effective Stream Cache";
 
-    private final ICache<EffectiveStreamKey, NavigableSet<EffectiveStream>> cache;
+    private final LoadingStroomCache<EffectiveStreamKey, NavigableSet<EffectiveStream>> cache;
     private final MetaService metaService;
     private final EffectiveStreamInternPool internPool;
     private final SecurityContext securityContext;
@@ -58,12 +59,15 @@ public class EffectiveStreamCache implements Clearable {
                          final MetaService metaService,
                          final EffectiveStreamInternPool internPool,
                          final SecurityContext securityContext,
-                         final ReferenceDataConfig referenceDataConfig) {
+                         final Provider<ReferenceDataConfig> referenceDataConfigProvider) {
         this.metaService = metaService;
         this.internPool = internPool;
         this.securityContext = securityContext;
 
-        cache = cacheManager.create(CACHE_NAME, referenceDataConfig::getEffectiveStreamCache, this::create);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> referenceDataConfigProvider.get().getEffectiveStreamCache(),
+                this::create);
     }
 
     public NavigableSet<EffectiveStream> get(final EffectiveStreamKey effectiveStreamKey) {
