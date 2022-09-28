@@ -10,7 +10,6 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 class TestSafeHtmlUtil {
@@ -19,32 +18,30 @@ class TestSafeHtmlUtil {
 
     @TestFactory
     Stream<DynamicTest> testToParagraphs() {
-        return TestUtil.createDynamicTestStream(
-                List.of(
-                        TestCase.of("hello\nworld", "<p>hello</p><p>world</p>"),
-                        TestCase.of("\nhello\nworld\n", "<p>hello</p><p>world</p>"),
-                        TestCase.of("hello\n", "<p>hello</p>"),
-                        TestCase.of("\nhello", "<p>hello</p>"),
-                        TestCase.of("", ""),
-                        TestCase.of(null, ""),
-                        TestCase.of(
-                                "hello\nworld\ngoodbye",
-                                "<p>hello</p><p>world</p><p>goodbye</p>")),
-                this::doParaTest);
+        return TestUtil.buildDynamicTestStream(String.class)
+                .withTest(this::doParaTest)
+                .addCase("hello\nworld", "<p>hello</p><p>world</p>")
+                .addCase("\nhello\nworld\n", "<p>hello</p><p>world</p>")
+                .addCase("hello\n", "<p>hello</p>")
+                .addCase("\nhello", "<p>hello</p>")
+                .addCase("", "")
+                .addCase(null, "")
+                .addCase("hello\nworld\ngoodbye", "<p>hello</p><p>world</p><p>goodbye</p>")
+                .build();
     }
 
     @TestFactory
     Stream<DynamicTest> testWithLineBreaks() {
-        return TestUtil.createDynamicTestStream(
-                List.of(
-                        TestCase.of("hello\nworld", "hello<br>world"),
-                        TestCase.of("\nhello\nworld\n", "hello<br>world"),
-                        TestCase.of("hello\n", "hello"),
-                        TestCase.of("\nhello", "hello"),
-                        TestCase.of("", ""),
-                        TestCase.of(null, ""),
-                        TestCase.of("hello\nworld\ngoodbye", "hello<br>world<br>goodbye")),
-                this::doLineBreakTest);
+        return TestUtil.buildDynamicTestStream(String.class)
+                .withTest(this::doLineBreakTest)
+                .addCase("hello\nworld", "hello<br>world")
+                .addCase("\nhello\nworld\n", "hello<br>world")
+                .addCase("hello\n", "hello")
+                .addCase("\nhello", "hello")
+                .addCase("", "")
+                .addCase(null, "")
+                .addCase("hello\nworld\ngoodbye", "hello<br>world<br>goodbye")
+                .build();
     }
 
     private void doParaTest(final TestCase<String, String> testCase) {
