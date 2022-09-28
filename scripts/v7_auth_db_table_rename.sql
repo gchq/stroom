@@ -1,3 +1,5 @@
+-- Script to run as part of the migrating from v6 to v7
+-- See https://gchq.github.io/stroom-docs/latest/docs/install-guide/upgrades/v6-to-v7/
 -- This script renames all the legacy auth tables to be prefixed with 'OLD_AUTH_'
 -- This MUST be run on the auth database which should contain the following tables:
 --   
