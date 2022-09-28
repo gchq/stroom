@@ -12,6 +12,66 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.3] - 2022-09-28
+
+* Issue **#3002** : Fix bootstrap process for deployment of a new version.
+
+* Issue **#3001** : Fix the Source display when stepping context data.
+
+* Issue **#2988** : Remove mention of hex viewer in the error message when viewing raw data that can't be decoded in the stepper. Also ensure stepping up to the un-decodable data works ok.
+
+* Issue **#3018** : Fix incorrect cast of a SQLException to an InterruptedException.
+
+* Issue **#3011** : Fix issue of data being truncated in text pane before the pipeline is run.
+
+* Issue **#3008** : Fix `current-user()` call not returning anything when used in a pipeline on a dash text pane.
+
+* Issue **#2993** : Add sorting to columns on Nodes screen.
+
+* Issue **#2993** : Add column sorting to Jobs screen. Set default sort to node name.
+
+* Issue **#2867** : Stop the XML formatter used in the data preview from formatting non-XML data as XML when it finds angle brackets in the data.
+
+* Issue **#3014** : Add `Index Shards` searchable datasource so you can search shards on a dashboard.
+
+* Issue **#3016** : Evict items from XSLT pool cache when an XSLT doc is changed. Also evict XSLTs that import/include the one that has changed.
+
+* Improve warning message for ref streams with the same effective date.
+
+* Change the hex dump display to render single bytes using US_ASCII instead of UTF8.
+
+* Issue **#3028** : Catch entity change events so modified feed entities are removed from the cache. Also update the data display if a feed's encoding is changed.
+
+* Issue **#3027** : Replace processor_task index on status with one on status and create_time_ms.
+
+* Issue **#3032** : Improve performance of Orphan Meta Finder job. Also add new `fs_orphaned_meta_tracker` table to track progress.
+
+* Remove `Eviction Weight` from the cache stats table as it is meaningless when we do not set custom cache item weights.
+
+* Issue **#3034** : Change FS/Index volumes free/used to be based on limit if set. Implement volume selector for index volumes. Add a local volume map to cache index volumes/groups. Fix validation when creating/editing index volumes. Add creation/validation of index volume path to the index volume edit screen. Add validation of FS volumes. Make volumes with relative paths be relative to stroom.home. Change index volume list sort order to Node|Path and make Node the first column.
+
+* Issue **#3043** : Fix SQL error when creating a batch search.
+
+* Change cluster lock mechanism to keep trying to get the lock rather than timing out after 30s. Now times out after 30mins.
+
+* Issue **#3048** : Prevent copying of feeds in the explorer tree. Feeds already cannot be renamed so there is no value in allowing copy if the new copy cannot be renamed.
+
+* Issue **#3052** : Change `Reference Data - Effective Stream Cache` to use a default `expireAfterWrite` of `10m` rather than `expireAfterAccess`.
+
+* Issue **#3051** : Fix `refData/(purgeByAge|purgeByStream|clearBufferPool)` API calls so they process all nodes concurrently.
+
+* Issue **#2992** : Change the cache clear button to clear the cache and rebuild it from current config values.
+
+* Add `Property Path` column to the Caches screen.
+
+* Issue **#3055** : Change `Document Permission Cache` to be expireAfterWrite 30s. Add change handlers to invalidate entries in `Pipeline Structure Cache` when any pipeline in the inheritance chain is changed. Remove unused cache `Index Shard Searcher Cache` and associated job `Index Searcher Cache Refresh`. Add change handlers on `User` entity to `User App Permissions Cache` & `User Cache`.
+
+
+## [v7.0.2] - 2022-09-15
+
+* Issue **#3057** : Change InvalidXmlCharFilterReader to filter out restricted control characters.
+
+
 ## [v7.0.1] - 2022-07-20
 
 * Add system info for pool caches, e.g. XSLT pool cache.
@@ -4548,7 +4608,9 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.3...HEAD
+[v7.0.3]: https://github.com/gchq/stroom/compare/v7.0.2...v7.0.3
+[v7.0.2]: https://github.com/gchq/stroom/compare/v7.0.1...v7.0.2
 [v7.0.1]: https://github.com/gchq/stroom/compare/v7.0.0...v7.0.1
 [v7.0.0]: https://github.com/gchq/stroom/compare/v7.0-beta.218...v7.0.0
 [v7.0-beta.218]: https://github.com/gchq/stroom/compare/v7.0-beta.217...v7.0-beta.218

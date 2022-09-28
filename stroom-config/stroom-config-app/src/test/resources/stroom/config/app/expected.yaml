@@ -398,8 +398,8 @@ appConfig:
     appender:
       maxActiveDestinations: 100
     documentPermissionCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
+      expireAfterAccess: null
+      expireAfterWrite: "PT30S"
       maximumSize: 1000
     httpClientCache:
       expireAfterAccess: "PT10M"

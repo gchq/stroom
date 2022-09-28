@@ -28,6 +28,7 @@ import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
 import stroom.util.NullSafe;
+import stroom.util.config.PropertyPathDecorator;
 import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.ObjectInfo;
 import stroom.util.config.PropertyUtil.Prop;
@@ -323,7 +324,11 @@ public class ConfigMapper {
     private synchronized void rebuildObjectInstanceMap() {
         LOGGER.debug("Rebuilding object instance map");
         final Map<Class<?>, AbstractConfig> newInstanceMap = new HashMap<>();
-        rebuildObjectInstance(AppConfig.ROOT_PROPERTY_PATH, newInstanceMap);
+        final AbstractConfig newConfigTree = rebuildObjectInstance(AppConfig.ROOT_PROPERTY_PATH, newInstanceMap);
+
+        // Decorate all the config instances with their property path information, so they know what their own
+        // path is.
+        PropertyPathDecorator.decoratePaths(newConfigTree, AppConfig.ROOT_PROPERTY_PATH);
 
         // Now swap out the current map with the new one
         this.configInstanceMap = newInstanceMap;

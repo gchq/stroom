@@ -67,7 +67,7 @@ public class TestFindReplaceFilter2 {
         final StringBuilder find = new StringBuilder("[");
         for (int i = 0; i < bmpRepTwice.length; i++) {
             final char c = bmpRepTwice[i];
-            if (!mode.isValid(c)) {
+            if (!mode.isValidLiteral(c)) {
                 find.append(c);
             }
         }

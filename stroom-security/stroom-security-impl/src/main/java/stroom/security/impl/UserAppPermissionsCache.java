@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -31,13 +31,16 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-@EntityEventHandler(type = UserDocRefUtil.USER, action = {EntityAction.CLEAR_CACHE})
+@EntityEventHandler(type = UserDocRefUtil.USER, action = {
+        EntityAction.UPDATE,
+        EntityAction.DELETE,
+        EntityAction.CLEAR_CACHE})
 public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
 
     private static final String CACHE_NAME = "User App Permissions Cache";
 
     private final Provider<EntityEventBus> eventBusProvider;
-    private final ICache<String, Set<String>> cache;
+    private final LoadingStroomCache<String, Set<String>> cache;
 
     @Inject
     UserAppPermissionsCache(final CacheManager cacheManager,
@@ -45,7 +48,8 @@ public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
                             final UserAppPermissionService userAppPermissionService,
                             final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
-        cache = cacheManager.create(CACHE_NAME,
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
                 () -> authorisationConfigProvider.get().getUserAppPermissionsCache(),
                 userAppPermissionService::getPermissionNamesForUser);
     }
@@ -63,9 +67,15 @@ public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
 
     @Override
     public void onChange(final EntityEvent event) {
-        final DocRef docRef = event.getDocRef();
-        if (docRef != null && UserDocRefUtil.USER.equals(docRef.getType())) {
-            cache.invalidate(docRef.getUuid());
+        if (EntityAction.CLEAR_CACHE.equals(event.getAction())) {
+            clear();
+        } else {
+            final DocRef docRef = event.getDocRef();
+            if (docRef != null) {
+                if (UserDocRefUtil.USER.equals(docRef.getType())) {
+                    cache.invalidate(docRef.getUuid());
+                }
+            }
         }
     }
 
