@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DynamicTest;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -223,7 +224,13 @@ public class TestUtil {
 
         public CasesDynamicTestBuilder<I, O> addCase(final TestCase<I, O> testCase) {
             Objects.requireNonNull(testCase);
-            testCases.add(testCase);
+            this.testCases.add(testCase);
+            return this;
+        }
+
+        public CasesDynamicTestBuilder<I, O> addCases(final Collection<TestCase<I, O>> testCases) {
+            Objects.requireNonNull(testCases);
+            this.testCases.addAll(testCases);
             return this;
         }
 
