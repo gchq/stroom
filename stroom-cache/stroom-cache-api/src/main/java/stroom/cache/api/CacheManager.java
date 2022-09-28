@@ -24,16 +24,90 @@ import java.util.function.Supplier;
 
 public interface CacheManager extends AutoCloseable {
 
-    <K, V> ICache<K, V> create(String name,
-                               Supplier<CacheConfig> cacheConfigSupplier);
+    /**
+     * Create a simple cache that must be manually loaded with
+     * {@link StroomCache#put(Object, Object)} or {@link StroomCache#get(Object, Function)}
+     * calls.
+     * Also registers the cache with the {@link CacheManager} so {@link CacheManager#close()} can
+     * be used to clear down all caches.
+     * @param name Name of the cache
+     * @param cacheConfigSupplier Supplier of config for the cache. When {@link Supplier#get()} is
+     *                            called it must supply the latest state of the config as it will
+     *                            be used to rebuild the cache from updated config.
+     * @param removalNotificationConsumer A listener that is called each time an entry is removed.
+     * @return The cache object.
+     */
+    <K, V> StroomCache<K, V> create(
+            final String name,
+            final Supplier<CacheConfig> cacheConfigSupplier,
+            final BiConsumer<K, V> removalNotificationConsumer);
 
-    <K, V> ICache<K, V> create(String name,
-                               Supplier<CacheConfig> cacheConfigSupplier, Function<K, V> loadFunction);
+    /**
+     * Create a simple cache that must be manually loaded with
+     * {@link StroomCache#put(Object, Object)} or {@link StroomCache#get(Object, Function)}
+     * calls.
+     * Also registers the cache with the {@link CacheManager} so {@link CacheManager#close()} can
+     * be used to clear down all caches.
+     * @param name Name of the cache
+     * @param cacheConfigSupplier Supplier of config for the cache. When {@link Supplier#get()} is
+     *                            called it must supply the latest state of the config as it will
+     *                            be used to rebuild the cache from updated config.
+     * @return The cache object.
+     */
+    default <K, V> StroomCache<K, V> create(
+            final String name,
+            final Supplier<CacheConfig> cacheConfigSupplier) {
 
-    <K, V> ICache<K, V> create(String name,
-                               Supplier<CacheConfig> cacheConfigSupplier,
-                               Function<K, V> loadFunction,
-                               BiConsumer<K, V> removalNotificationConsumer);
+        return create(
+                name,
+                cacheConfigSupplier,
+                null);
+    }
 
+    /**
+     * Create a loading cache that will attempt to load entries into the cache on demand.
+     * Also registers the cache with the {@link CacheManager} so {@link CacheManager#close()} can
+     * be used to clear down all caches.
+     * @param name Name of the cache
+     * @param cacheConfigSupplier Supplier of config for the cache. When {@link Supplier#get()} is
+     *                            called it must supply the latest state of the config as it will
+     *                            be used to rebuild the cache from updated config.
+     * @param loadFunction A function to load an entry into the cache for a given key. Function should
+     *                     return null if the key is not know to the load function.
+     * @param removalNotificationConsumer A listener that is called each time an entry is removed.
+     * @return The cache object.
+     */
+    <K, V> LoadingStroomCache<K, V> createLoadingCache(
+            final String name,
+            final Supplier<CacheConfig> cacheConfigSupplier,
+            final Function<K, V> loadFunction,
+            final BiConsumer<K, V> removalNotificationConsumer);
+
+    /**
+     * Create a loading cache that will attempt to load entries into the cache on demand.
+     * Also registers the cache with the {@link CacheManager} so {@link CacheManager#close()} can
+     * be used to clear down all caches.
+     * @param name Name of the cache
+     * @param cacheConfigSupplier Supplier of config for the cache. When {@link Supplier#get()} is
+     *                            called it must supply the latest state of the config as it will
+     *                            be used to rebuild the cache from updated config.
+     * @param loadFunction A function to load an entry into the cache for a given key. Function should
+     *                     return null if the key is not know to the load function.
+     * @return The cache object.
+     */
+    default <K, V> LoadingStroomCache<K, V> createLoadingCache(
+            final String name,
+            final Supplier<CacheConfig> cacheConfigSupplier, Function<K, V> loadFunction) {
+
+        return createLoadingCache(
+                name,
+                cacheConfigSupplier,
+                loadFunction,
+                null);
+    }
+
+    /**
+     * Clears down all caches registered with {@link CacheManager}.
+     */
     void close();
 }

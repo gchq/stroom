@@ -17,7 +17,7 @@
 package stroom.processor.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
@@ -25,6 +25,7 @@ import stroom.util.shared.Clearable;
 
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -32,7 +33,7 @@ public class ProcessorFilterCache implements Clearable {
 
     private static final String CACHE_NAME = "Processor Filter Cache";
 
-    private final ICache<Integer, Optional<ProcessorFilter>> cache;
+    private final LoadingStroomCache<Integer, Optional<ProcessorFilter>> cache;
     private final ProcessorFilterService processorFilterService;
     private final SecurityContext securityContext;
 
@@ -40,10 +41,13 @@ public class ProcessorFilterCache implements Clearable {
     public ProcessorFilterCache(final CacheManager cacheManager,
                                 final ProcessorFilterService processorFilterService,
                                 final SecurityContext securityContext,
-                                final ProcessorConfig processorConfig) {
+                                final Provider<ProcessorConfig> processorConfigProvider) {
         this.processorFilterService = processorFilterService;
         this.securityContext = securityContext;
-        cache = cacheManager.create(CACHE_NAME, processorConfig::getProcessorCache, this::create);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> processorConfigProvider.get().getProcessorFilterCache(),
+                this::create);
     }
 
     public Optional<ProcessorFilter> get(final int id) {

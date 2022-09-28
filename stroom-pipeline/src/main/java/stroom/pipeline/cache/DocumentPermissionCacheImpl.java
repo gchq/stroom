@@ -17,14 +17,16 @@
 package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.pipeline.PipelineConfig;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Clearable;
 
 import java.util.Objects;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -33,27 +35,35 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
     private static final String CACHE_NAME = "Document Permission Cache";
 
     private final SecurityContext securityContext;
-    private final ICache<DocumentPermission, Boolean> cache;
+    private final LoadingStroomCache<DocumentPermission, Boolean> cache;
 
     @Inject
     DocumentPermissionCacheImpl(final CacheManager cacheManager,
                                 final SecurityContext securityContext,
-                                final PipelineConfig pipelineConfig) {
+                                final Provider<PipelineConfig> pipelineConfigProvider) {
         this.securityContext = securityContext;
-        cache = cacheManager.create(CACHE_NAME, pipelineConfig::getDocumentPermissionCache, this::create);
+
+        // We have no change handlers due to the complexity of the number of things that can affect this
+        // cache, so keep the time short and expire after write, not access.
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> pipelineConfigProvider.get().getDocumentPermissionCache(),
+                this::create);
     }
 
     private boolean create(final DocumentPermission documentPermission) {
         return securityContext.asUserResult(documentPermission.userIdentity, () ->
-                securityContext.hasDocumentPermission(documentPermission.documentUuid, documentPermission.permission));
+                securityContext.hasDocumentPermission(
+                        documentPermission.documentUuid,
+                        documentPermission.permission));
     }
 
     @Override
-    public boolean hasDocumentPermission(final String documentUuid, final String permission) {
-        final DocumentPermission documentPermission = new DocumentPermission(securityContext.getUserIdentity(),
+    public boolean canUseDocument(final String documentUuid) {
+        return cache.get(new DocumentPermission(
+                securityContext.getUserIdentity(),
                 documentUuid,
-                permission);
-        return cache.get(documentPermission);
+                DocumentPermissionNames.USE));
     }
 
     @Override

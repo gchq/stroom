@@ -17,5 +17,9 @@
 package stroom.pipeline.cache;
 
 public interface DocumentPermissionCache {
-    boolean hasDocumentPermission(String documentUuid, String permission);
+
+    /**
+     * Return true if the currently logged in user has USE permission on the passed document
+     */
+    boolean canUseDocument(String documentUuid);
 }

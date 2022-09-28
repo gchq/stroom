@@ -21,7 +21,10 @@ public abstract class AbstractConfig implements HasPropertyPath {
     @Override
     @JsonIgnore
     public PropertyPath getBasePath() {
-        Objects.requireNonNull(basePropertyPath);
+        Objects.requireNonNull(
+                basePropertyPath,
+                "The config object has not been decorated with a basePath, see PropertyPathDecorator");
+
         return basePropertyPath;
     }
 
