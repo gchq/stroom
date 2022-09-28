@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
-
 * Issue **#3057** : Change InvalidXmlCharFilterReader to filter out restricted control characters.
 
 * Add system info for pool caches, e.g. XSLT pool cache.
@@ -23,6 +22,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Add system info for listing keys of a named cache.
 
 * Issue **#2997** : Stop other nodes booting if migration fails on the first node.
+
+
+## [v7.1-beta.14] - 2022-07-20
+
+* Issue **#2998** : Add feature to receive individual accounting events.
 
 
 ## [v7.1-beta.13] - 2022-07-19
@@ -4315,7 +4319,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.14...HEAD
+[v7.1-beta.14]: https://github.com/gchq/stroom/compare/v7.1-beta.13...v7.1-beta.14
 [v7.1-beta.13]: https://github.com/gchq/stroom/compare/v7.1-beta.12...v7.1-beta.13
 [v7.1-beta.12]: https://github.com/gchq/stroom/compare/v7.1-beta.11...v7.1-beta.12
 [v7.1-beta.11]: https://github.com/gchq/stroom/compare/v7.1-beta.10...v7.1-beta.11
