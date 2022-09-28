@@ -2819,6 +2819,36 @@
         "tags" : [ "Filesystem Volumes" ]
       }
     },
+    "/fsVolume/v1/validate" : {
+      "post" : {
+        "operationId" : "validateFsVolume",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FsVolume"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ValidationResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Validates a volume",
+        "tags" : [ "Filesystem Volumes" ]
+      }
+    },
     "/fsVolume/v1/{id}" : {
       "delete" : {
         "operationId" : "deleteFsVolume",
@@ -3140,7 +3170,7 @@
       }
     },
     "/index/volume/v2/rescan" : {
-      "delete" : {
+      "get" : {
         "operationId" : "rescanIndexVolumes",
         "parameters" : [ {
           "in" : "query",
@@ -3162,6 +3192,36 @@
           }
         },
         "summary" : "Rescans index volumes",
+        "tags" : [ "Index Volumes" ]
+      }
+    },
+    "/index/volume/v2/validate" : {
+      "post" : {
+        "operationId" : "validateIndexVolume",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/IndexVolume"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ValidationResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Validates an index volume",
         "tags" : [ "Index Volumes" ]
       }
     },
@@ -3283,6 +3343,33 @@
           }
         },
         "summary" : "Creates an index volume group",
+        "tags" : [ "Index Volume Groups" ]
+      }
+    },
+    "/index/volumeGroup/v2/fetchByName/{name}" : {
+      "get" : {
+        "operationId" : "fetchIndexVolumeGroupByName",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IndexVolumeGroup"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets an index volume group by name",
         "tags" : [ "Index Volume Groups" ]
       }
     },
@@ -3461,7 +3548,7 @@
     },
     "/jobNode/v1" : {
       "get" : {
-        "operationId" : "listJobsNodes",
+        "operationId" : "listJobNodes",
         "parameters" : [ {
           "in" : "query",
           "name" : "jobName",
@@ -3488,6 +3575,36 @@
           }
         },
         "summary" : "Lists job nodes",
+        "tags" : [ "Jobs (Node)" ]
+      }
+    },
+    "/jobNode/v1/find" : {
+      "post" : {
+        "operationId" : "findJobNodes",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindJobNodeCriteria"
+              }
+            }
+          },
+          "description" : "findJobNodeCriteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageJobNode"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Finds job nodes matching criteria and sort order",
         "tags" : [ "Jobs (Node)" ]
       }
     },
@@ -3891,25 +4008,6 @@
         "tags" : [ "Meta" ]
       }
     },
-    "/node/v1" : {
-      "get" : {
-        "operationId" : "findNodes",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/FetchNodeStatusResponse"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Lists nodes",
-        "tags" : [ "Nodes" ]
-      }
-    },
     "/node/v1/all" : {
       "get" : {
         "operationId" : "listAllNodes",
@@ -3989,6 +4087,36 @@
           }
         },
         "summary" : "Sets whether a node is enabled",
+        "tags" : [ "Nodes" ]
+      }
+    },
+    "/node/v1/find" : {
+      "post" : {
+        "operationId" : "findNodes",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindNodeStatusCriteria"
+              }
+            }
+          },
+          "description" : "findNodeStatusCriteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FetchNodeStatusResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Finds nodes matching criteria and sort order",
         "tags" : [ "Nodes" ]
       }
     },
@@ -8622,9 +8750,23 @@
           }
         }
       },
+      "CacheIdentity" : {
+        "type" : "object",
+        "properties" : {
+          "basePropertyPath" : {
+            "$ref" : "#/components/schemas/PropertyPath"
+          },
+          "cacheName" : {
+            "type" : "string"
+          }
+        }
+      },
       "CacheInfo" : {
         "type" : "object",
         "properties" : {
+          "basePropertyPath" : {
+            "$ref" : "#/components/schemas/PropertyPath"
+          },
           "map" : {
             "type" : "object",
             "additionalProperties" : {
@@ -8662,7 +8804,7 @@
           "values" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/CacheIdentity"
             }
           }
         }
@@ -9864,6 +10006,9 @@
           },
           "docRef" : {
             "$ref" : "#/components/schemas/DocRef"
+          },
+          "oldDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           }
         }
       },
@@ -10704,6 +10849,30 @@
           }
         }
       },
+      "FindJobNodeCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "jobName" : {
+            "$ref" : "#/components/schemas/StringCriteria"
+          },
+          "nodeName" : {
+            "$ref" : "#/components/schemas/StringCriteria"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
       "FindMetaCriteria" : {
         "type" : "object",
         "properties" : {
@@ -10713,6 +10882,24 @@
           "fetchRelationships" : {
             "type" : "boolean"
           },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "FindNodeStatusCriteria" : {
+        "type" : "object",
+        "properties" : {
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
@@ -15423,6 +15610,18 @@
           },
           "valid" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "ValidationResult" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          },
+          "severity" : {
+            "type" : "string",
+            "enum" : [ "INFO", "WARN", "ERROR", "FATAL" ]
           }
         }
       },
