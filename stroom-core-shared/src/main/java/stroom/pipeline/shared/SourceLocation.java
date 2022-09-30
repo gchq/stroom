@@ -49,8 +49,6 @@ public class SourceLocation {
     private final DataRange dataRange; // The optional specified range of the character data which may be a subset
     @JsonProperty
     private final TextRange highlight; // The optional highlighted range of the character data which may be a subset
-    @JsonProperty
-    private final boolean truncateToWholeLines;
 
     @JsonCreator
     public SourceLocation(@JsonProperty("metaId") final long metaId,
@@ -58,15 +56,13 @@ public class SourceLocation {
                           @JsonProperty("partIndex") final long partIndex,
                           @JsonProperty("recordIndex") final long recordIndex,
                           @JsonProperty("dataRange") final DataRange dataRange,
-                          @JsonProperty("highlight") final TextRange highlight,
-                          @JsonProperty("truncateToWholeLines") final boolean truncateToWholeLines) {
+                          @JsonProperty("highlight") final TextRange highlight) {
         this.metaId = metaId;
         this.childType = childType;
         this.partIndex = partIndex;
         this.recordIndex = recordIndex;
         this.dataRange = dataRange;
         this.highlight = highlight;
-        this.truncateToWholeLines = truncateToWholeLines;
     }
 
     private SourceLocation(final Builder builder) {
@@ -76,7 +72,6 @@ public class SourceLocation {
         recordIndex = builder.recordIndex;
         dataRange = builder.dataRange;
         highlight = builder.highlight;
-        truncateToWholeLines = builder.truncateToWholeLines;
     }
 
     public static Builder builder(final long metaId) {
@@ -138,10 +133,6 @@ public class SourceLocation {
         return Optional.ofNullable(highlight);
     }
 
-    public boolean isTruncateToWholeLines() {
-        return truncateToWholeLines;
-    }
-
     public boolean isSameSource(final SourceLocation other) {
         if (other == null) {
             return false;
@@ -183,7 +174,6 @@ public class SourceLocation {
         return metaId == that.metaId &&
                 partIndex == that.partIndex &&
                 recordIndex == that.recordIndex &&
-                truncateToWholeLines == that.truncateToWholeLines &&
                 Objects.equals(childType, that.childType) &&
                 Objects.equals(dataRange, that.dataRange) &&
                 Objects.equals(highlight, that.highlight);
@@ -191,7 +181,7 @@ public class SourceLocation {
 
     @Override
     public int hashCode() {
-        return Objects.hash(metaId, childType, partIndex, recordIndex, dataRange, highlight, truncateToWholeLines);
+        return Objects.hash(metaId, childType, partIndex, recordIndex, dataRange, highlight);
     }
 
     @Override
@@ -203,7 +193,6 @@ public class SourceLocation {
                 ", recordIndex=" + recordIndex +
                 ", dataRange=" + dataRange +
                 ", highlight=" + highlight +
-                ", truncateToWholeLines=" + truncateToWholeLines +
                 '}';
     }
 
@@ -239,7 +228,6 @@ public class SourceLocation {
             this.recordIndex = currentSourceLocation.recordIndex;
             this.dataRange = currentSourceLocation.dataRange;
             this.highlight = currentSourceLocation.highlight;
-            this.truncateToWholeLines = currentSourceLocation.truncateToWholeLines;
         }
 
         /**

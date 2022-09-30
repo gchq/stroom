@@ -81,7 +81,6 @@ import stroom.util.shared.string.HexDumpLine;
 import stroom.util.string.HexDumpUtil;
 
 import org.apache.commons.io.ByteOrderMark;
-import org.apache.commons.io.input.CountingInputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedOutputStream;
@@ -755,7 +754,6 @@ public class DataFetcher {
         final DataRange dataRange = sourceLocation.getOptDataRange()
                 .orElseGet(() -> DataRange.fromCharOffset(0));
 
-        final CountingInputStream countingInputStream = new CountingInputStream(inputStream);
         final HexDump hexDump = getHexDump(inputStream, dataRange, encoding, streamSizeBytes);
 
         if (!hexDump.isEmpty()) {
@@ -815,7 +813,7 @@ public class DataFetcher {
         // One potentially VERY long line, too big to display
         // Lots of small lines
         // Multiple long lines that are too big to display
-        StringBuilder strBuilderRange = new StringBuilder();
+        final StringBuilder strBuilderRange = new StringBuilder();
         final StringBuilder strBuilderLineSoFar = new StringBuilder();
 
         // Trackers for what we have so far and where we are

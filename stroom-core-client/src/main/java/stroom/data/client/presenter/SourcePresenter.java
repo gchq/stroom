@@ -25,6 +25,7 @@ import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.HasCharacterData;
+import stroom.util.shared.HasCharacterData.NavigationMode;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.string.HexDump;
@@ -98,31 +99,37 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         textPresenter.setUiHandlers(this);
 
-        setDataNavigatorData(textPresenter.getViewAsHexOption().isOnAndAvailable());
+        setDataNavigation(textPresenter.getViewAsHexOption().isOnAndAvailable());
 
         textPresenter.getViewAsHexOption().setChangeHandler((isOn) -> {
-            setDataNavigatorData(isOn);
-            setSourceLocation(requestedSourceLocation, true);
+            setDataNavigation(isOn);
+            final SourceLocation sourceLocation = receivedSourceLocation != null
+                    ? receivedSourceLocation
+                    : requestedSourceLocation;
+            setSourceLocation(sourceLocation, true);
         });
     }
 
-    private void setDataNavigatorData(final boolean isViewAsHex) {
-        final HasCharacterData hasCharacterData;
-        if (isViewAsHex) {
-            hasCharacterData = new HexDumpNavigatorData();
-            characterNavigatorPresenter.setDisplay(new HexDumpNavigatorData());
-        } else {
-            hasCharacterData = new DataNavigatorData();
+    /**
+     * Set how data navigation is managed.
+     */
+    private void setDataNavigation(final boolean isViewAsHex) {
+        // Only want to change the navigator if we don't already have the right one
+        if (isViewAsHex
+                && (dataNavigatorData == null || !NavigationMode.BYTES.equals(dataNavigatorData.getNavigationMode()))) {
+            dataNavigatorData = new HexDumpNavigatorData();
+            characterNavigatorPresenter.setDisplay(dataNavigatorData);
+        } else if (!isViewAsHex
+                && (dataNavigatorData == null || !NavigationMode.CHARS.equals(dataNavigatorData.getNavigationMode()))) {
+            dataNavigatorData = new DataNavigatorData();
+            characterNavigatorPresenter.setDisplay(dataNavigatorData);
         }
-        characterNavigatorPresenter.setDisplay(hasCharacterData);
-        this.dataNavigatorData = hasCharacterData;
     }
 
     private void setupProgressBar(final SourceView view,
                                   final ProgressPresenter progressPresenter) {
         view.setProgressView(progressPresenter.getView());
         progressPresenter.setVisible(false);
-
     }
 
     private void setEditorOptions() {
@@ -171,7 +178,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             requestedSourceLocation = sourceLocation;
 
             doWithConfig(sourceConfig -> {
-                fetchSource(sourceLocation, sourceConfig);
+                fetchSource(sourceLocation);
             });
         }
     }
@@ -337,16 +344,18 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         null));
     }
 
-    private void fetchSource(final SourceLocation sourceLocation,
-                             final SourceConfig sourceConfig) {
+    private void fetchSource(final SourceLocation sourceLocation) {
 
-        final SourceLocation.Builder builder = SourceLocation.builder(sourceLocation.getMetaId())
-                .withPartIndex(sourceLocation.getPartIndex())
-                .withRecordIndex(sourceLocation.getRecordIndex())
-                .withDataRange(sourceLocation.getDataRange())
-                .withHighlight(sourceLocation.getHighlight())
-                .withChildStreamType(sourceLocation.getChildType());
-        final FetchDataRequest request = new FetchDataRequest(builder.build());
+
+//        final SourceLocation.Builder builder = SourceLocation.builder(sourceLocation.getMetaId())
+//                .withPartIndex(sourceLocation.getPartIndex())
+//                .withRecordIndex(sourceLocation.getRecordIndex())
+//                .withDataRange(sourceLocation.getDataRange())
+//                .withHighlight(sourceLocation.getHighlight())
+//                .withChildStreamType(sourceLocation.getChildType());
+
+//        final FetchDataRequest request = new FetchDataRequest(builder.build());
+        final FetchDataRequest request = new FetchDataRequest(sourceLocation);
 
         if (textPresenter.getViewAsHexOption().isOnAndAvailable()) {
             request.setDisplayMode(FetchDataRequest.DisplayMode.HEX);
