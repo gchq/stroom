@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
 
     private static final String TITLE_PREFIX = "Section of the source data visible in the editor";
+    private static final String TITLE_SUFFIX = "\nClick elsewhere in the bar to move the visible section.";
     private static final double UNCERTAINTY_FACTOR_MAX = 3;
     private static final double UNCERTAINTY_FACTOR_MIN = 1.1;
     private static final double UNCERTAINTY_FACTOR_DELTA = 0.1;
@@ -141,10 +142,12 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
             title = TITLE_PREFIX
                     + " ("
                     + formatPercentage(getWindowAsPercentage())
-                    + "%)";
+                    + "%). " + TITLE_SUFFIX;
         } else {
             barColour = BAR_COLOUR_UNKNOWN_BOUND;
-            title = TITLE_PREFIX + " (total size unknown)";
+            title = TITLE_PREFIX
+                    + " (total size unknown). "
+                    + TITLE_SUFFIX;
         }
         getView().setProgressBarColour(barColour);
         getView().setTitle(title);

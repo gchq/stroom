@@ -59,7 +59,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private final UiConfigCache uiConfigCache;
     private final RestFactory restFactory;
     private final ClientSecurityContext clientSecurityContext;
-    private final DataNavigatorData dataNavigatorData;
+    private HasCharacterData dataNavigatorData;
 
     private SourceLocation requestedSourceLocation = null;
     private SourceLocation receivedSourceLocation = null;
@@ -87,7 +87,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
         this.clientSecurityContext = clientSecurityContext;
-        this.dataNavigatorData = new DataNavigatorData();
 
         setEditorOptions();
 
@@ -98,10 +97,24 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         textPresenter.setUiHandlers(this);
 
-        characterNavigatorPresenter.setDisplay(dataNavigatorData);
+        setDataNavigatorData(textPresenter.getViewAsHexOption().isOnAndAvailable());
 
-        textPresenter.getViewAsHexOption().setChangeHandler((isOn) ->
-                setSourceLocation(requestedSourceLocation, true));
+        textPresenter.getViewAsHexOption().setChangeHandler((isOn) -> {
+            setDataNavigatorData(isOn);
+            setSourceLocation(requestedSourceLocation, true);
+        });
+    }
+
+    private void setDataNavigatorData(final boolean isViewAsHex) {
+        final HasCharacterData hasCharacterData;
+        if (isViewAsHex) {
+            hasCharacterData = new HexDumpNavigatorData();
+            characterNavigatorPresenter.setDisplay(new HexDumpNavigatorData());
+        } else {
+            hasCharacterData = new DataNavigatorData();
+        }
+        characterNavigatorPresenter.setDisplay(hasCharacterData);
+        this.dataNavigatorData = hasCharacterData;
     }
 
     private void setupProgressBar(final SourceView view,
@@ -509,16 +522,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     }
 
     private void updateNavigator(final AbstractFetchDataResult result) {
-        if (DataType.SEGMENTED.equals(lastResult.getDataType())) {
-            dataNavigatorData.segmentsCount = result.getTotalItemCount();
-        } else {
-            dataNavigatorData.partsCount = result.getTotalItemCount();
-        }
-
-//        DataRange dataRange = Optional.ofNullable(result.getSourceLocation())
-//                .map(SourceLocation::getDataRange)
-//                .orElse(null);
-//
         characterNavigatorPresenter.refreshNavigator();
     }
 
@@ -536,7 +539,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private void setEditorMode(final FetchDataResult fetchDataResult) {
         final AceEditorMode mode;
 
-        if (fetchDataResult.getSourceLocation() != null
+        if (FetchDataRequest.DisplayMode.HEX.equals(fetchDataResult.getDisplayMode())) {
+            mode = AceEditorMode.STROOM_HEX_DUMP;
+        } else if (fetchDataResult.getSourceLocation() != null
                 && StreamTypeNames.META.equals(fetchDataResult.getSourceLocation().getChildType())) {
             mode = AceEditorMode.PROPERTIES;
         } else { // We have no way of knowing what type the data is (could be csv, json, xml) so assume XML
@@ -600,14 +605,19 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     // ===================================================================
 
 
+    /**
+     * Used for navigating standard char based data using char offsets.
+     */
     private class DataNavigatorData implements HasCharacterData {
-
-        private Count<Long> partsCount = Count.of(0L, false);
-        private Count<Long> segmentsCount = Count.of(0L, false);
 
         @Override
         public boolean areNavigationControlsVisible() {
             return !isSteppingSource;
+        }
+
+        @Override
+        public NavigationMode getNavigationMode() {
+            return NavigationMode.CHARS;
         }
 
         @Override
@@ -620,13 +630,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         @Override
         public void setDataRange(final DataRange dataRange) {
-//            doWithConfig(sourceConfig -> {
             final SourceLocation newSourceLocation = requestedSourceLocation.copy()
                     .withDataRange(dataRange)
                     .build();
 
             setSourceLocation(newSourceLocation);
-//            });
         }
 
         @Override
@@ -636,7 +644,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         @Override
         public Count<Long> getTotalChars() {
-
             if (lastResult != null && lastResult.getTotalCharacterCount() != null) {
                 return lastResult.getTotalCharacterCount();
             } else {
@@ -670,15 +677,75 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         public void advanceCharactersBackwards() {
             doWithConfig(sourceConfig -> {
                 final long maxChars = sourceConfig.getMaxCharactersPerFetch();
-                setDataRange(DataRange.fromCharOffset(
-                        receivedSourceLocation.getDataRange().getCharOffsetFrom() - maxChars,
-                        maxChars));
+                final long newCharOffset = Math.max(0,
+                        receivedSourceLocation.getDataRange().getCharOffsetFrom() - maxChars - 1);
+                setDataRange(DataRange.fromCharOffset(newCharOffset, maxChars));
             });
         }
 
         @Override
         public void refresh() {
             setSourceLocation(requestedSourceLocation, true);
+        }
+    }
+
+
+    // ===================================================================
+
+
+    /**
+     * Used for navigating HexDump data which has to navigate using byte offsets,
+     * not char offsets.
+     */
+    private class HexDumpNavigatorData extends DataNavigatorData {
+
+        @Override
+        public NavigationMode getNavigationMode() {
+            return NavigationMode.BYTES;
+        }
+
+        @Override
+        public DataRange getDataRange() {
+            return Optional.ofNullable(lastResult)
+                    .map(AbstractFetchDataResult::getSourceLocation)
+                    .flatMap(SourceLocation::getOptDataRange)
+                    .orElse(DataRange.fromByteOffset(0));
+        }
+
+        @Override
+        public void setDataRange(final DataRange dataRange) {
+            final SourceLocation newSourceLocation = requestedSourceLocation.copy()
+                    .withDataRange(dataRange)
+                    .build();
+            setSourceLocation(newSourceLocation);
+        }
+
+        @Override
+        public boolean isSegmented() {
+            return false;
+        }
+
+        @Override
+        public void showHeadCharacters() {
+            setDataRange(DataRange.fromByteOffset(0));
+        }
+
+        @Override
+        public void advanceCharactersForward() {
+            final long newByteOffset = Math.max(0, receivedSourceLocation.getDataRange().getByteOffsetTo() + 1);
+            setDataRange(DataRange.fromByteOffset(newByteOffset));
+        }
+
+        @Override
+        public void advanceCharactersBackwards() {
+            doWithConfig(sourceConfig -> {
+                final long maxLines = sourceConfig.getMaxHexDumpLines();
+                final long maxBytesPerFetch = 32 * maxLines;
+                final long newByteOffsetFrom = Math.max(
+                        0,
+                        receivedSourceLocation.getDataRange().getByteOffsetFrom() - maxBytesPerFetch);
+                setDataRange(DataRange.fromByteOffset(newByteOffsetFrom));
+            });
         }
     }
 

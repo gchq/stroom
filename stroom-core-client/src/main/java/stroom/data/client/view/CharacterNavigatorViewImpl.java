@@ -20,6 +20,7 @@ import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigat
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Count;
 import stroom.util.shared.HasCharacterData;
+import stroom.util.shared.HasCharacterData.NavigationMode;
 import stroom.widget.button.client.SvgButton;
 
 import com.google.gwt.dom.client.Style;
@@ -90,6 +91,10 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
         setupButton(refreshBtn, true, true);
     }
 
+    private HasCharacterData getDisplay() {
+        return display;
+    }
+
     private void setupButton(final SvgButton button,
                              final boolean isEnabled,
                              final boolean isVisible) {
@@ -104,11 +109,12 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     }
 
     private void refreshCharacterControls() {
+        final HasCharacterData display = getDisplay();
         if (display != null
                 && display.areNavigationControlsVisible()) {
 
-
-            if (display.getCharOffsetFrom().isPresent()
+            if (NavigationMode.CHARS.equals(display.getNavigationMode())
+                    && display.getCharOffsetFrom().isPresent()
                     && display.getCharOffsetTo().isPresent()) {
 
                 String linesLbl = "";
@@ -143,6 +149,21 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                                 .map(total -> total - 1)
                                 .orElse(Long.MAX_VALUE));
 
+            } else if (NavigationMode.BYTES.equals(display.getNavigationMode())
+                    && display.getByteOffsetFrom().isPresent()
+                    && display.getByteOffsetTo().isPresent()){
+
+                lblLines.setText(null);
+                final long byteFrom = display.getByteOffsetFrom().get();
+                final long byteTo = display.getByteOffsetTo().get();
+
+                showHeadCharactersBtn.setEnabled(byteFrom > 0);
+                advanceCharactersBackwardBtn.setEnabled(byteFrom > 0);
+
+                advanceCharactersForwardBtn.setEnabled(
+                        byteTo < display.getTotalBytes()
+                                .map(total -> total - 1)
+                                .orElse(Long.MAX_VALUE));
             } else {
                 // No char range, must be an error
                 lblLines.setText(LINES_TITLE + " 0 to 0");
@@ -161,8 +182,10 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     }
 
     private void setCharactersControlVisibility(final boolean isVisible) {
-        lblLines.setVisible(isVisible);
-        lblCharacters.setVisible(isVisible);
+        final boolean showCharLabels = NavigationMode.CHARS.equals(getDisplay().getNavigationMode());
+        lblLines.setVisible(isVisible && showCharLabels);
+        lblCharacters.setVisible(isVisible && showCharLabels);
+
         showHeadCharactersBtn.setVisible(isVisible);
         advanceCharactersBackwardBtn.setVisible(isVisible);
         advanceCharactersForwardBtn.setVisible(isVisible);
@@ -229,6 +252,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
     @UiHandler("showHeadCharactersBtn")
     void onClickShowHeadCharacters(final ClickEvent event) {
+        final HasCharacterData display = getDisplay();
         if (display != null) {
             // Disable the control to stop the user clicking it while the position is being changed
             // It will be re-enabled (if applicable) once the position has changed
@@ -239,6 +263,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
     @UiHandler("advanceCharactersBackwardBtn")
     void onClickNextAdvanceCharsBackwards(final ClickEvent event) {
+        final HasCharacterData display = getDisplay();
         if (display != null) {
             advanceCharactersBackwardBtn.setEnabled(false);
             display.advanceCharactersBackwards();
@@ -247,6 +272,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
     @UiHandler("advanceCharactersForwardBtn")
     void onClickAdvanceCharsForwards(final ClickEvent event) {
+        final HasCharacterData display = getDisplay();
         if (display != null) {
             advanceCharactersForwardBtn.setEnabled(false);
             display.advanceCharactersForward();
@@ -255,6 +281,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
     @UiHandler("refreshBtn")
     void onClickRefresh(final ClickEvent event) {
+        final HasCharacterData display = getDisplay();
         if (display != null) {
             refreshBtn.setEnabled(false);
             display.refresh();

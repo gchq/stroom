@@ -197,19 +197,31 @@ public class DataRange {
         return Optional.ofNullable(length);
     }
 
+    /**
+     * Zero based, inclusive
+     */
     public Long getByteOffsetFrom() {
         return byteOffsetFrom;
     }
 
+    /**
+     * Zero based, inclusive
+     */
     @JsonIgnore
     public Optional<Long> getOptByteOffsetFrom() {
         return Optional.ofNullable(byteOffsetFrom);
     }
 
+    /**
+     * Zero based, inclusive
+     */
     public Long getByteOffsetTo() {
         return byteOffsetTo;
     }
 
+    /**
+     * Zero based, inclusive
+     */
     @JsonIgnore
     public Optional<Long> getOptByteOffsetTo() {
         return Optional.ofNullable(byteOffsetTo);
@@ -327,6 +339,9 @@ public class DataRange {
             return this;
         }
 
+        /**
+         * Zero based, inclusive
+         */
         public Builder fromByteOffset(final Long byteOffsetFrom) {
             this.byteOffsetFrom = byteOffsetFrom;
             return this;
@@ -342,6 +357,9 @@ public class DataRange {
             return this;
         }
 
+        /**
+         * Zero based, inclusive
+         */
         public Builder toByteOffset(final Long byteOffsetTo) {
             this.byteOffsetTo = byteOffsetTo;
             return this;
@@ -356,5 +374,4 @@ public class DataRange {
             return new DataRange(this);
         }
     }
-
 }

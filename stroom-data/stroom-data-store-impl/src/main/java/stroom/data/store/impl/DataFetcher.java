@@ -77,6 +77,8 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 import stroom.util.string.HexDumpUtil;
+import stroom.util.string.HexDumpUtil.HexDump;
+import stroom.util.string.HexDumpUtil.HexDumpLine;
 
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.CountingInputStream;
@@ -116,6 +118,10 @@ public class DataFetcher {
      */
     private static final int STREAM_BUFFER_SIZE = 1024 * 100;
     private static final DisplayMode DEFAULT_DISPLAY_MODE = DisplayMode.TEXT;
+    // Always use ascii for the right hand decoded col as we are decoding single bytes at a time.
+    // If we used the charset of the feed and the feed is say utf16 (which is all multi-byte) then
+    // you will never see anything in the
+    private static final Charset HEX_DUMP_CHARSET = StandardCharsets.US_ASCII;
 
     private final Long partsToReturn = 1L;
     private final Long segmentsToReturn = 1L;
@@ -504,9 +510,12 @@ public class DataFetcher {
 //                    "commodo consequat.");
 //        }
 
-        // We are viewing the data with the BOM removed, so remove the size of the BOM from the
-        // total bytes else the progress bar is messed up
-        rawResult.setTotalBytes(segmentInputStream.size() - rawResult.byteOrderMarkLength);
+        // BOM not removed in hex mode (so we can see it)
+        if (!DisplayMode.HEX.equals(displayMode)) {
+            // We are viewing the data with the BOM removed, so remove the size of the BOM from the
+            // total bytes else the progress bar is messed up
+            rawResult.setTotalBytes(segmentInputStream.size() - rawResult.byteOrderMarkLength);
+        }
         if (rawResult.getTotalCharacterCount() == null) {
             rawResult.setTotalCharacterCount(estimateCharCount(segmentInputStream.size(), charset));
         }
@@ -663,48 +672,124 @@ public class DataFetcher {
         return rawResult;
     }
 
+    private HexDump getHexDump(final InputStream inputStream,
+                               final DataRange dataRange,
+                               final String encoding,
+                               final long streamSizeBytes) throws IOException {
+        final HexDump hexDump;
+        if (dataRange.hasBoundedStart()) {
+            // The byte offset is our preferred method of setting the range
+            // as it will tally exactly with the TEXT view.
+            if (dataRange.getOptByteOffsetFrom().isPresent()) {
+                hexDump = HexDumpUtil.hexDump(
+                        inputStream,
+                        HEX_DUMP_CHARSET,
+                        dataRange.getByteOffsetFrom(),
+                        sourceConfig.getMaxHexDumpLines());
+            } else if (dataRange.getOptCharOffsetFrom().isPresent()) {
+                // This is a bit of an approximate location as we don't know how the chars map to the bytes.
+                final Charset charset = Charset.forName(encoding);
+                final Long estimatedCharCount = estimateCharCount(streamSizeBytes, charset).getCount();
+                final double relativeStartPos = dataRange.getCharOffsetFrom() / ((double) estimatedCharCount);
+                final long estimatedStartByteOffset = (long) (relativeStartPos * streamSizeBytes);
+
+                LOGGER.debug(() -> LogUtil.message("streamSizeBytes: {}, charOffsetFrom: {}, " +
+                        "estimatedCharCount: {}, relativeStartPos: {}, estimatedStartByteOffset: {}",
+                                streamSizeBytes,
+                                dataRange.getCharOffsetFrom(),
+                                estimatedCharCount,
+                                relativeStartPos,
+                                estimatedStartByteOffset)
+                        );
+
+                hexDump = HexDumpUtil.hexDump(
+                        inputStream,
+                        HEX_DUMP_CHARSET,
+                        estimatedStartByteOffset,
+                        sourceConfig.getMaxHexDumpLines());
+            } else if (dataRange.getOptLocationFrom().isPresent()) {
+                LOGGER.warn("Setting hex dump location by line no is not yet supported");
+                hexDump = HexDumpUtil.hexDump(
+                        inputStream,
+                        HEX_DUMP_CHARSET,
+                        sourceConfig.getMaxHexDumpLines());
+            } else {
+                hexDump = HexDumpUtil.hexDump(
+                        inputStream,
+                        HEX_DUMP_CHARSET,
+                        sourceConfig.getMaxHexDumpLines());
+            }
+        } else {
+            hexDump = HexDumpUtil.hexDump(
+                    inputStream,
+                    HEX_DUMP_CHARSET,
+                    sourceConfig.getMaxHexDumpLines());
+        }
+        return hexDump;
+    }
+
     private RawResult extractDataRangeAsHex(final SourceLocation sourceLocation,
                                             final InputStream inputStream,
                                             final String encoding,
                                             final long streamSizeBytes) throws IOException {
 
+        final DataRange dataRange = sourceLocation.getOptDataRange()
+                .orElseGet(() -> DataRange.fromCharOffset(0));
+
         final CountingInputStream countingInputStream = new CountingInputStream(inputStream);
-        // Always use ascii for the right hand decoded col as we are decoding single bytes at a time.
-        // If we used the charset of the feed and the feed is say utf16 (which is all multi-byte) then
-        // you will never see anything in the
-        final String hexDump = HexDumpUtil.hexDump(
-                countingInputStream,
-                StandardCharsets.US_ASCII,
-                sourceConfig.getMaxHexDumpLines());
+        final HexDump hexDump = getHexDump(inputStream, dataRange, encoding, streamSizeBytes);
 
-        final long len = hexDump.length();
-        final long bytesRead = countingInputStream.getByteCount();
+        if (!hexDump.isEmpty()) {
+            // The length of the dump, not the length of chars in the dump
+            final long charCount = hexDump.getDumpCharCount();
+            final long bytesRead = hexDump.getDumpByteCount();
+            // Dump is not empty at this point so Optional::get is ok
+            final HexDumpLine firstLine = hexDump.getFirstLine().get();
+            final HexDumpLine lastLine = hexDump.getLastLine().get();
+            // This is the char offset of the hex dump not the actual data
+            // so calculate it from the number of hex dump chars on each line.
+            final long fromCharOffset = Math.max(
+                    0,
+                    ((long) (firstLine.getLineNo() - 1) * hexDump.getMaxDumpCharsPerLine()) - 1);
+            final long toCharOffset = Math.max(
+                    0,
+                    ((long) (lastLine.getLineNo() - 1) * hexDump.getMaxDumpCharsPerLine())
+                    + lastLine.getDumpLineCharCount() - 1);
 
-        final SourceLocation.Builder sourceLocationBuilder = SourceLocation.builder(sourceLocation.getMetaId())
-                .withPartIndex(sourceLocation.getPartIndex())
-                .withChildStreamType(sourceLocation.getOptChildType()
-                        .orElse(null))
-                .withHighlight(sourceLocation.getHighlight()) // pass the requested highlight back
-                .withDataRange(DataRange.builder()
-                        .fromCharOffset(0L)
-                        .toCharOffset(len - 1)
-                        .toByteOffset(bytesRead - 1)
-                        .build());
+            final SourceLocation.Builder sourceLocationBuilder = SourceLocation.builder(sourceLocation.getMetaId())
+                    .withPartIndex(sourceLocation.getPartIndex())
+                    .withChildStreamType(sourceLocation.getOptChildType()
+                            .orElse(null))
+                    .withHighlight(sourceLocation.getHighlight()) // pass the requested highlight back
+                    .withDataRange(DataRange.builder()
+                            .fromCharOffset(fromCharOffset)
+                            .toCharOffset(toCharOffset)
+                            .fromByteOffset(hexDump.getByteOffsetRange().getFrom())
+                            .toByteOffset(hexDump.getByteOffsetRange().getTo() - 1) // ex to inc
+                            .fromLocation(DefaultLocation.of(firstLine.getLineNo(), 1))
+                            .toLocation(DefaultLocation.of(lastLine.getLineNo(), lastLine.getDumpLineCharCount()))
+                            .withLength(hexDump.getDumpCharCount())
+                            .build());
 
-        final RawResult rawResult = new RawResult(
-                sourceLocationBuilder.build(),
-                hexDump,
-                0,
-                DisplayMode.HEX);
-        if (bytesRead == streamSizeBytes) {
-            rawResult.setTotalCharacterCount(Count.exactly(len));
+            final RawResult rawResult = new RawResult(
+                    sourceLocationBuilder.build(),
+                    hexDump.getHexDumpAsStr(),
+                    0,
+                    DisplayMode.HEX);
+
+            final long completeLines = (long) (((double) streamSizeBytes) / hexDump.getMaxBytesPerLine());
+            final long remainingBytes = streamSizeBytes % hexDump.getMaxBytesPerLine();
+            final long totalCharCount = (completeLines * hexDump.getMaxDumpCharsPerLine()) + remainingBytes;
+            rawResult.setTotalCharacterCount(Count.exactly(totalCharCount));
+            rawResult.setTotalBytes(streamSizeBytes);
+            return rawResult;
         } else {
-            // Extrapolate the total char count using the chars we have and the proportion
-            // of all bytes we consumed to get there
-            final long approxCharCount = (streamSizeBytes / bytesRead) * len;
-            rawResult.setTotalCharacterCount(Count.approximately(approxCharCount));
+            return new RawResult(
+                    null,
+                    "## No Data ##",
+                    0,
+                    DisplayMode.HEX);
         }
-        return rawResult;
     }
 
     private RawResult extractDataRange(final FetchDataRequest fetchDataRequest,
