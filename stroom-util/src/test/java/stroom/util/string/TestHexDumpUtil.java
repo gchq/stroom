@@ -1,7 +1,7 @@
 package stroom.util.string;
 
 import stroom.util.shared.Range;
-import stroom.util.string.HexDumpUtil.HexDump;
+import stroom.util.shared.string.HexDump;
 
 import com.google.common.base.Strings;
 import org.assertj.core.api.Assertions;
@@ -75,9 +75,10 @@ class TestHexDumpUtil {
 
         // Dump from our offset
         inputStream = new ByteArrayInputStream(bytes);
-        int lineCount = 2;
-        int offset = 100; // 100 is in the middle of a hex dump line 4
-        int expectedFirstOffset = HexDumpUtil.getMaxBytesPerLine() * 3;
+        final int lineCount = 2;
+        final int offset = 100; // 100 is in the middle of a hex dump line 4
+        final int expectedFirstOffset = HexDump.MAX_BYTES_PER_LINE * 3;
+
         hexDump = HexDumpUtil.hexDump(inputStream, charset, offset, lineCount);
         LOGGER.info("hexDump: \n{}", hexDump.getHexDumpAsStr());
 
@@ -98,7 +99,7 @@ class TestHexDumpUtil {
             final Range<Long> offsetRange = hexDumpLine.getByteOffsetRange();
             // 32 bytes per line
             Assertions.assertThat(offsetRange.getTo() - offsetRange.getFrom())
-                    .isEqualTo(HexDumpUtil.getMaxBytesPerLine());
+                    .isEqualTo(HexDump.MAX_BYTES_PER_LINE);
         });
     }
 

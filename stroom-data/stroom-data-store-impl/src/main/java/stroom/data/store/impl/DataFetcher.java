@@ -76,9 +76,9 @@ import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
+import stroom.util.shared.string.HexDump;
+import stroom.util.shared.string.HexDumpLine;
 import stroom.util.string.HexDumpUtil;
-import stroom.util.string.HexDumpUtil.HexDump;
-import stroom.util.string.HexDumpUtil.HexDumpLine;
 
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.CountingInputStream;
@@ -694,13 +694,13 @@ public class DataFetcher {
                 final long estimatedStartByteOffset = (long) (relativeStartPos * streamSizeBytes);
 
                 LOGGER.debug(() -> LogUtil.message("streamSizeBytes: {}, charOffsetFrom: {}, " +
-                        "estimatedCharCount: {}, relativeStartPos: {}, estimatedStartByteOffset: {}",
-                                streamSizeBytes,
-                                dataRange.getCharOffsetFrom(),
-                                estimatedCharCount,
-                                relativeStartPos,
-                                estimatedStartByteOffset)
-                        );
+                                "estimatedCharCount: {}, relativeStartPos: {}, estimatedStartByteOffset: {}",
+                        streamSizeBytes,
+                        dataRange.getCharOffsetFrom(),
+                        estimatedCharCount,
+                        relativeStartPos,
+                        estimatedStartByteOffset)
+                );
 
                 hexDump = HexDumpUtil.hexDump(
                         inputStream,
@@ -750,11 +750,11 @@ public class DataFetcher {
             // so calculate it from the number of hex dump chars on each line.
             final long fromCharOffset = Math.max(
                     0,
-                    ((long) (firstLine.getLineNo() - 1) * hexDump.getMaxDumpCharsPerLine()) - 1);
+                    ((long) (firstLine.getLineNo() - 1) * HexDump.MAX_CHARS_PER_DUMP_LINE) - 1);
             final long toCharOffset = Math.max(
                     0,
-                    ((long) (lastLine.getLineNo() - 1) * hexDump.getMaxDumpCharsPerLine())
-                    + lastLine.getDumpLineCharCount() - 1);
+                    ((long) (lastLine.getLineNo() - 1) * HexDump.MAX_CHARS_PER_DUMP_LINE)
+                            + lastLine.getDumpLineCharCount() - 1);
 
             final SourceLocation.Builder sourceLocationBuilder = SourceLocation.builder(sourceLocation.getMetaId())
                     .withPartIndex(sourceLocation.getPartIndex())
@@ -777,9 +777,7 @@ public class DataFetcher {
                     0,
                     DisplayMode.HEX);
 
-            final long completeLines = (long) (((double) streamSizeBytes) / hexDump.getMaxBytesPerLine());
-            final long remainingBytes = streamSizeBytes % hexDump.getMaxBytesPerLine();
-            final long totalCharCount = (completeLines * hexDump.getMaxDumpCharsPerLine()) + remainingBytes;
+            final long totalCharCount = HexDumpUtil.calculateHexDumpTotalChars(streamSizeBytes);
             rawResult.setTotalCharacterCount(Count.exactly(totalCharCount));
             rawResult.setTotalBytes(streamSizeBytes);
             return rawResult;

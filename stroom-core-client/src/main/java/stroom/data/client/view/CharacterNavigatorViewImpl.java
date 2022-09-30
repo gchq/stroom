@@ -116,6 +116,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
             if (NavigationMode.CHARS.equals(display.getNavigationMode())
                     && display.getCharOffsetFrom().isPresent()
                     && display.getCharOffsetTo().isPresent()) {
+                // Standard char based data
 
                 String linesLbl = "";
                 if (display.getLineFrom().isPresent() && display.getLineTo().isPresent()) {
@@ -151,9 +152,10 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
             } else if (NavigationMode.BYTES.equals(display.getNavigationMode())
                     && display.getByteOffsetFrom().isPresent()
-                    && display.getByteOffsetTo().isPresent()){
+                    && display.getByteOffsetTo().isPresent()) {
+                // Hex dump data
 
-                lblLines.setText(null);
+                lblLines.setText("");
                 final long byteFrom = display.getByteOffsetFrom().get();
                 final long byteTo = display.getByteOffsetTo().get();
 

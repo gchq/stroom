@@ -2,6 +2,8 @@ package stroom.util.string;
 
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
+import stroom.util.shared.string.HexDump;
+import stroom.util.shared.string.HexDumpLine;
 
 import com.google.common.base.Strings;
 import org.apache.commons.codec.binary.Hex;
@@ -19,8 +21,6 @@ import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class HexDumpUtil {
 
@@ -37,10 +37,6 @@ public class HexDumpUtil {
     @SuppressWarnings("checkstyle:linelength")
     // 0000000580  69 64 69 74  61 74 65 20  6f 64 69 6f  20 64 6f 6c  6f 72 20 61  6e 69 6d 69  20 64 65 73  65 72 75 6e  iditate odio dolor animi deserun
 
-    private static final int MAX_BYTES_PER_LINE = 32;
-    // This depends on how we render the line of MAX_BYTES_PER_LINE (includes the  at the end \n)
-    private static final int MAX_CHARS_PER_DUMP_LINE = 149;
-
     private HexDumpUtil() {
     }
 
@@ -48,7 +44,7 @@ public class HexDumpUtil {
      * {@link HexDumpUtil#hexDump(InputStream, Charset, int)}
      */
     public static HexDump hexDump(final InputStream inputStream,
-                                 final Charset charset) throws IOException {
+                                  final Charset charset) throws IOException {
         return hexDump(inputStream, charset, Integer.MAX_VALUE);
     }
 
@@ -63,8 +59,8 @@ public class HexDumpUtil {
      * @throws IOException
      */
     public static HexDump hexDump(final InputStream inputStream,
-                                 final Charset charset,
-                                 final int maxHexDumpLines) throws IOException {
+                                  final Charset charset,
+                                  final int maxHexDumpLines) throws IOException {
         return hexDump(inputStream, charset, 0, maxHexDumpLines);
     }
 
@@ -78,10 +74,9 @@ public class HexDumpUtil {
         // We want to start at an offset that is at the start of a line
         long effectiveByteOffset = byteOffset == 0
                 ? 0
-                : ((long)((double) byteOffset / MAX_BYTES_PER_LINE)) * MAX_BYTES_PER_LINE;
+                : ((long) ((double) byteOffset / HexDump.MAX_BYTES_PER_LINE)) * HexDump.MAX_BYTES_PER_LINE;
 
         final CharsetDecoder charsetDecoder = getCharsetDecoder(charset);
-        final HexDumpBuilder hexDumpBuilder = new HexDumpBuilder();
         if (effectiveByteOffset > 0) {
             final long lenSkipped = inputStream.skip(effectiveByteOffset);
             if (lenSkipped < effectiveByteOffset) {
@@ -91,8 +86,9 @@ public class HexDumpUtil {
         }
 
         // zero based for simpler maths
-        int lineOffset = (int) (effectiveByteOffset / MAX_BYTES_PER_LINE);
+        int lineOffset = (int) (effectiveByteOffset / HexDump.MAX_BYTES_PER_LINE);
         int lineCount = 0;
+        final HexDumpBuilder hexDumpBuilder = new HexDumpBuilder();
         while (lineCount < maxHexDumpLines) {
             int len = decodeHexDumpLine(inputStream, charsetDecoder, hexDumpBuilder, lineOffset);
             if (len == -1) {
@@ -112,18 +108,18 @@ public class HexDumpUtil {
 
         Objects.requireNonNull(inputStream);
         Objects.requireNonNull(charsetDecoder);
-        final byte[] lineBytes = new byte[MAX_BYTES_PER_LINE];
+        final byte[] lineBytes = new byte[HexDump.MAX_BYTES_PER_LINE];
 
 //        if (!stringBuilder.isEmpty()) {
 //            stringBuilder.append("\n");
 //        }
-        int remaining = MAX_BYTES_PER_LINE;
+        int remaining = HexDump.MAX_BYTES_PER_LINE;
         int len = 0;
         int lineByteCount = 0;
         // Keep reading from the stream till we have a full line of our hex or the
         // stream has ended
         while (remaining > 0 && len >= 0) {
-            len = inputStream.read(lineBytes, MAX_BYTES_PER_LINE - remaining, remaining);
+            len = inputStream.read(lineBytes, HexDump.MAX_BYTES_PER_LINE - remaining, remaining);
             if (len > 0) {
                 lineByteCount += len;
                 remaining -= len;
@@ -136,7 +132,7 @@ public class HexDumpUtil {
                 lineOffset,
                 lineBytes,
                 lineByteCount,
-                MAX_BYTES_PER_LINE,
+                HexDump.MAX_BYTES_PER_LINE,
                 charsetDecoder);
 
         return len;
@@ -252,14 +248,6 @@ public class HexDumpUtil {
         return stringBuilder.toString();
     }
 
-    public static int getMaxBytesPerLine() {
-        return MAX_BYTES_PER_LINE;
-    }
-
-    public static int getDumpCharsPerLine() {
-        return MAX_BYTES_PER_LINE;
-    }
-
     private static void decodeAsPrintableChars(final CharsetDecoder charsetDecoder,
                                                final byte[] bytes,
                                                final StringBuilder stringBuilder) {
@@ -281,169 +269,21 @@ public class HexDumpUtil {
         }
     }
 
-    public static class HexDump {
-        private final List<HexDumpLine> lines;
-        // The charset of the decoded bytes.
-        private final Charset charset;
-        // The range covered by all lines in this hex dump
-        private final Range<Long> byteOffsetRange;
-
-        public HexDump(final List<HexDumpLine> lines,
-                       final Charset charset,
-                       final Range<Long> byteOffsetRange) {
-            this.lines = lines;
-            this.charset = charset;
-            this.byteOffsetRange = byteOffsetRange;
-        }
-
-        public List<HexDumpLine> getLines() {
-            return lines;
-        }
-
-        public boolean isEmpty() {
-            return lines.isEmpty();
-        }
-
-        public Charset getCharset() {
-            return charset;
-        }
-
-        public int getMaxBytesPerLine() {
-            return MAX_BYTES_PER_LINE;
-        }
-
-        public int getMaxDumpCharsPerLine() {
-            return MAX_CHARS_PER_DUMP_LINE;
-        }
-
-        public Optional<HexDumpLine> getLine(final int lineNo) {
-            if (lines.isEmpty()) {
-                return Optional.empty();
-            } else {
-                final long firstLineNo = lines.get(0).getLineNo();
-                if (lineNo < firstLineNo) {
-                    return Optional.empty();
-                } else {
-                    final long idx = lineNo - firstLineNo;
-                    if (idx >= lines.size()) {
-                        return Optional.empty();
-                    } else {
-                        return Optional.ofNullable(lines.get((int) idx));
-                    }
-                }
-            }
-        }
-
-        public int getLineCount() {
-            return lines.size();
-        }
-
-        public Optional<HexDumpLine> getFirstLine() {
-            if (lines.isEmpty()) {
-                return Optional.empty();
-            } else {
-                return Optional.of(lines.get(0));
-            }
-        }
-
-        public Optional<HexDumpLine> getLastLine() {
-            if (lines.isEmpty()) {
-                return Optional.empty();
-            } else {
-                return Optional.of(lines.get(lines.size() - 1));
-            }
-        }
-
-        /**
-         * @return Number of bytes rendered by the hex dump.
-         */
-        public long getDumpByteCount() {
-            return byteOffsetRange.size().longValue();
-        }
-
-        /**
-         * @return The range of bytes rendered by the hex dump, e.g. if only a subset of
-         * an {@link InputStream} is dumped.
-         */
-        public Range<Long> getByteOffsetRange() {
-            return byteOffsetRange;
-        }
-
-        /**
-         * @return The size of the hex dump when output as a string. Not the
-         * number of chars rendered by the hex dump.
-         */
-        public long getDumpCharCount() {
-            return lines.stream()
-                    .mapToInt(HexDumpLine::getDumpLineCharCount)
-                    .sum();
-        }
-
-        public String getHexDumpAsStr() {
-            return lines.stream()
-                    .map(HexDumpLine::getLine)
-                    .collect(Collectors.joining("\n"));
-        }
-
-        @Override
-        public String toString() {
-            return "HexDump{" +
-                    "lines=" + lines +
-                    ", charset=" + charset +
-                    '}';
-        }
+    /**
+     * The size in chars of a rendered hex dump for byteCount input bytes.
+     */
+    public static long calculateHexDumpTotalChars(final long byteCount) {
+        final long completeLines = (long) (((double) byteCount) / HexDump.MAX_BYTES_PER_LINE);
+        final long remainingBytes = byteCount % HexDump.MAX_BYTES_PER_LINE;
+        return (completeLines * HexDump.MAX_CHARS_PER_DUMP_LINE) + remainingBytes;
     }
 
-    public static class HexDumpLine {
-        private final String line;
-        // The number (1 based) of this line in a complete hex dump
-        private final int lineNo;
-        // The range of bytes covered by this line
-        private final Range<Long> byteOffsetRange;
 
-        public HexDumpLine(final String line,
-                           final int lineNo,
-                           final Range<Long> byteOffsetRange) {
-            this.line = line;
-            this.lineNo = lineNo;
-            this.byteOffsetRange = byteOffsetRange;
-        }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-        public String getLine() {
-            return line;
-        }
-
-        public int getLineNo() {
-            return lineNo;
-        }
-
-        public long getByteCount() {
-            return byteOffsetRange.size().longValue();
-        }
-
-        public Range<Long> getByteOffsetRange() {
-            return byteOffsetRange;
-        }
-
-        /**
-         * @return The size of the hex dump line when output as a string. Not the
-         * number of chars rendered by the hex dump.
-         */
-        public int getDumpLineCharCount() {
-            return line.length();
-        }
-
-        @Override
-        public String toString() {
-            return "HexDumpLine{" +
-                    "line='" + line + '\'' +
-                    ", lineNo=" + lineNo +
-                    ", byteOffsetRange=" + byteOffsetRange +
-                    '}';
-        }
-    }
 
     private static class HexDumpBuilder {
+
         private final List<HexDumpLine> lines = new ArrayList<>();
         private long startByteOffsetInc = -1;
         private long endByteOffsetExc = -1;

@@ -27,6 +27,7 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
+import stroom.util.shared.string.HexDump;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.progress.client.presenter.Progress;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
@@ -740,7 +741,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         public void advanceCharactersBackwards() {
             doWithConfig(sourceConfig -> {
                 final long maxLines = sourceConfig.getMaxHexDumpLines();
-                final long maxBytesPerFetch = 32 * maxLines;
+                final long maxBytesPerFetch = HexDump.MAX_BYTES_PER_LINE * maxLines;
                 final long newByteOffsetFrom = Math.max(
                         0,
                         receivedSourceLocation.getDataRange().getByteOffsetFrom() - maxBytesPerFetch);
