@@ -464,7 +464,6 @@ public class DataFetcher {
                                              final InputStreamProvider inputStreamProvider,
                                              final FetchDataRequest fetchDataRequest,
                                              final TaskContext taskContext) throws IOException {
-        final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
         // Read the input stream into a string.
         // If the input stream has multiple segments then we are going to
         // read it in segment mode.
@@ -487,19 +486,36 @@ public class DataFetcher {
         final RawResult rawResult;
         final DisplayMode displayMode = getDisplayModeOrDefault(fetchDataRequest);
 
+        final boolean hasPipeline = fetchDataRequest.getPipeline() != null;
+        final SourceLocation sourceLocation;
+        if (fetchDataRequest.getSourceLocation().getOptDataRange().isPresent()) {
+            sourceLocation = fetchDataRequest.getSourceLocation();
+        } else {
+            // If no range supplied then use a default one.
+            // If there is a pipeline then we need to get all the data then limit the output of that.
+            final DataRange newDataRange = hasPipeline
+                            ? DataRange.fromCharOffset(0)
+                            : DataRange.fromCharOffset(0, sourceConfig.getMaxCharactersPerFetch());
+            sourceLocation = fetchDataRequest.getSourceLocation().copy()
+                    .withDataRange(newDataRange)
+                    .build();
+        }
+
         if (DataType.SEGMENTED.equals(dataType)) {
             rawResult = getSegmentedData(
-                    fetchDataRequest,
+                    sourceLocation,
                     segmentInputStream,
                     encoding,
-                    displayMode);
+                    displayMode,
+                    !hasPipeline);
         } else {
             // Non-segmented data
             rawResult = getNonSegmentedData(
-                    fetchDataRequest,
+                    sourceLocation,
                     segmentInputStream,
                     encoding,
-                    displayMode);
+                    displayMode,
+                    !hasPipeline);
         }
 
         // Useful for testing the displaying of errors in the UI
@@ -593,10 +609,11 @@ public class DataFetcher {
                 charset.newDecoder().averageCharsPerByte() * totalBytes));
     }
 
-    private RawResult getSegmentedData(final FetchDataRequest fetchDataRequest,
+    private RawResult getSegmentedData(final SourceLocation sourceLocation,
                                        final SegmentInputStream segmentInputStream,
                                        final String encoding,
-                                       final DisplayMode displayMode) throws IOException {
+                                       final DisplayMode displayMode,
+                                       final boolean limitChars) throws IOException {
 //        // Get the appropriate encoding for the stream type.
 //        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
@@ -610,7 +627,7 @@ public class DataFetcher {
 //        pageTotalIsExact = true;
 
         // Make sure we can't exceed the page total.
-        recordIndex = fetchDataRequest.getSourceLocation().getRecordIndex();
+        recordIndex = sourceLocation.getRecordIndex();
         if (recordIndex >= pageTotal) {
             recordIndex = pageTotal - 1;
         }
@@ -628,12 +645,13 @@ public class DataFetcher {
 //        return StreamUtil.streamToString(segmentInputStream, Charset.forName(encoding));
         final RawResult rawResult = switch (displayMode) {
             case TEXT -> extractDataRange(
-                    fetchDataRequest,
+                    sourceLocation,
                     segmentInputStream,
                     encoding,
-                    segmentInputStream.size());
+                    segmentInputStream.size(),
+                    limitChars);
             case HEX -> extractDataRangeAsHex(
-                    fetchDataRequest.getSourceLocation(),
+                    sourceLocation,
                     segmentInputStream,
                     encoding,
                     segmentInputStream.size());
@@ -646,18 +664,19 @@ public class DataFetcher {
         return rawResult;
     }
 
-    private RawResult getNonSegmentedData(final FetchDataRequest fetchDataRequest,
+    private RawResult getNonSegmentedData(final SourceLocation sourceLocation,
                                           final SegmentInputStream segmentInputStream,
                                           final String encoding,
-                                          final DisplayMode displayMode) throws IOException {
+                                          final DisplayMode displayMode,
+                                          final boolean limitChars) throws IOException {
 
-        final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
         final RawResult rawResult = switch (displayMode) {
             case TEXT -> extractDataRange(
-                    fetchDataRequest,
+                    sourceLocation,
                     segmentInputStream,
                     encoding,
-                    segmentInputStream.size());
+                    segmentInputStream.size(),
+                    limitChars);
             case HEX -> extractDataRangeAsHex(
                     sourceLocation,
                     segmentInputStream,
@@ -740,9 +759,6 @@ public class DataFetcher {
         final HexDump hexDump = getHexDump(inputStream, dataRange, encoding, streamSizeBytes);
 
         if (!hexDump.isEmpty()) {
-            // The length of the dump, not the length of chars in the dump
-            final long charCount = hexDump.getDumpCharCount();
-            final long bytesRead = hexDump.getDumpByteCount();
             // Dump is not empty at this point so Optional::get is ok
             final HexDumpLine firstLine = hexDump.getFirstLine().get();
             final HexDumpLine lastLine = hexDump.getLastLine().get();
@@ -790,11 +806,11 @@ public class DataFetcher {
         }
     }
 
-    private RawResult extractDataRange(final FetchDataRequest fetchDataRequest,
+    private RawResult extractDataRange(final SourceLocation sourceLocation,
                                        final InputStream inputStream,
                                        final String encoding,
-                                       final long streamSizeBytes) throws IOException {
-        final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
+                                       final long streamSizeBytes,
+                                       final boolean limitChars) throws IOException {
         // We could have:
         // One potentially VERY long line, too big to display
         // Lots of small lines
@@ -827,20 +843,14 @@ public class DataFetcher {
         boolean isMultiLine = false;
         Count<Long> totalCharCount = Count.of(0L, false);
 
-        final boolean hasPipeline = fetchDataRequest.getPipeline() != null;
-        // If no range supplied then use a default one.
-        // If there is a pipeline then we need to get all the data then limit the output of that.
-        final DataRange dataRange = fetchDataRequest.getSourceLocation().getOptDataRange()
-                .orElseGet(() -> hasPipeline
-                        ? DataRange.fromCharOffset(0)
-                        : DataRange.fromCharOffset(0, sourceConfig.getMaxCharactersPerFetch()));
-
         final CharReader charReader = new CharReader(inputStream, false, encoding);
+
+        final DataRange dataRange = sourceLocation.getDataRange();
 
         final NonSegmentedIncludeCharPredicate inclusiveFromPredicate = buildInclusiveFromPredicate(
                 dataRange);
         final NonSegmentedIncludeCharPredicate exclusiveToPredicate = buildExclusiveToPredicate(
-                dataRange, !hasPipeline);
+                dataRange, limitChars);
 
         // Ideally we would jump to the requested offset, but if we do, we can't
         // track the line/colcharOffset info for the requested range, i.e.
@@ -939,9 +949,7 @@ public class DataFetcher {
             }
         }
 
-
         final StringBuilder strBuilderResultRange = new StringBuilder();
-
 
 //        if (isMultiLine && startLineNo != 1) {
 //            // TODO @AT See TODO next to TRUNCATED_TEXT declaration
