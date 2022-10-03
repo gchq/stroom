@@ -18,6 +18,9 @@ package stroom.util.shared;
 
 import stroom.docref.HasDisplayValue;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.Comparator;
 
 public final class ModelStringUtil {
@@ -62,6 +65,10 @@ public final class ModelStringUtil {
             new Divider(60, "h"),
             new Divider(24, "d")
     };
+
+//    private static final NumberFormat ONE_DECIMAL_POINT_WITH_TRAILING_ZEROS_FORMAT = new DecimalFormat("0.0");
+//    private static final NumberFormat ONE_DECIMAL_POINT_WITHOUT_TRAILING_ZEROS_FORMAT = new DecimalFormat("0.#");
+//    private static final NumberFormat NO_DECIMAL_POINTS = new DecimalFormat("0");
 
 //    private static Divider[] TIME_SIZE_DIVIDER_PARSE = new Divider(1, "", new Divider(1, " ms",
 //            new Divider(1000, " s", new Divider(60, " m", new Divider(60, " h", new Divider(24, " d", null))))));
@@ -167,35 +174,27 @@ public final class ModelStringUtil {
             lastDivider = divider;
         }
 
-        // Show the first dec place if the number is smaller than 10
+        // GWT doesn't support Java's NumberFormat so forced to use BigDecimal
+        BigDecimal bigDecimal = BigDecimal.valueOf(nextNumber);
+        final String suffix;
         if (lastDivider != null) {
-            if (nextNumber < 10) {
-                String str = String.valueOf(nextNumber);
-                final int decPt = str.indexOf(".");
-                if (decPt != -1) {
-                    String p1 = str.substring(0, decPt);
-                    String p2 = str.substring(decPt + 1);
+            // Show the first dec place if the number is smaller than 10
+            final int scale = nextNumber < 10
+                    ? 1
+                    : 0;
 
-                    if (p1.length() == 0) {
-                        p1 = "0";
-                    }
-
-                    if (p2.length() > 1) {
-                        p2 = p2.substring(0, 1);
-                    }
-                    if (stripTrailingZeros && ("0".equals(p2))) {
-                        str = p1;
-                    } else {
-                        str = p1 + "." + p2;
-                    }
-                }
-                return str + lastDivider.unit[0];
-            } else {
-                return (long) nextNumber + lastDivider.unit[0];
-            }
+            bigDecimal = bigDecimal
+                    .setScale(scale, RoundingMode.HALF_UP);
+            suffix = lastDivider.unit[0];
+        } else {
+            // No dividers so leave do nothing to the bigDecimal
+            suffix = "";
         }
 
-        return String.valueOf(nextNumber);
+        if (stripTrailingZeros) {
+            bigDecimal = bigDecimal.stripTrailingZeros();
+        }
+        return bigDecimal.toPlainString() + suffix;
     }
 
     public static Long parseNumberString(final String str) throws NumberFormatException {
@@ -383,6 +382,14 @@ public final class ModelStringUtil {
         Divider(final int div, final String... unit) {
             this.div = div;
             this.unit = unit;
+        }
+
+        @Override
+        public String toString() {
+            return "Divider{" +
+                    "div=" + div +
+                    ", unit=" + Arrays.toString(unit) +
+                    '}';
         }
     }
 }

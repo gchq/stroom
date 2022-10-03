@@ -17,127 +17,216 @@
 package stroom.util.testshared;
 
 
+import stroom.test.common.TestUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestModelStringUtil {
 
-    @Test
-    void testCsv() {
-        assertThat(ModelStringUtil.formatCsv((Integer) null)).isEqualTo("");
-        assertThat(ModelStringUtil.formatCsv(1L)).isEqualTo("1");
-        assertThat(ModelStringUtil.formatCsv(123L)).isEqualTo("123");
-        assertThat(ModelStringUtil.formatCsv(1234L)).isEqualTo("1,234");
-        assertThat(ModelStringUtil.formatCsv(123123L)).isEqualTo("123,123");
-        assertThat(ModelStringUtil.formatCsv(1123123L)).isEqualTo("1,123,123");
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestModelStringUtil.class);
+
+    @TestFactory
+    Stream<DynamicTest> testCsv() {
+        return TestUtil.buildDynamicTestStream(Long.class, String.class)
+                .withSimpleEqualityTest(testCase ->
+                        ModelStringUtil.formatCsv(testCase.getInput()))
+                .addCase(null, "")
+                .addCase(1L, "1")
+                .addCase(123L, "123")
+                .addCase(1234L, "1,234")
+                .addCase(123123L, "123,123")
+                .addCase(1123123L, "1,123,123")
+                .build();
     }
 
-    @Test
-    void testDurationString() {
-        assertThat(ModelStringUtil.formatDurationString(null)).isEqualTo("");
-        assertThat(ModelStringUtil.formatDurationString(-10L)).isEqualTo("-10.0ms");
-        assertThat(ModelStringUtil.formatDurationString(0L)).isEqualTo("0.0ms");
-        assertThat(ModelStringUtil.formatDurationString(1L)).isEqualTo("1.0ms");
-        assertThat(ModelStringUtil.formatDurationString(999L)).isEqualTo("999ms");
-        assertThat(ModelStringUtil.formatDurationString(1000L)).isEqualTo("1.0s");
-        assertThat(ModelStringUtil.formatDurationString(2000L)).isEqualTo("2.0s");
-        assertThat(ModelStringUtil.formatDurationString(10000L)).isEqualTo("10s");
-        assertThat(ModelStringUtil.formatDurationString(60 * 1000L)).isEqualTo("1.0m");
-        assertThat(ModelStringUtil.formatDurationString(60 * 60 * 1000L)).isEqualTo("1.0h");
+    @TestFactory
+    Stream<DynamicTest> testFormatDurationString() {
+        return TestUtil.buildDynamicTestStream(Long.class, String.class)
+                .withSimpleEqualityTest(testCase ->
+                        ModelStringUtil.formatDurationString(testCase.getInput()))
+                .addCase(null, "")
+                .addCase(-10L, "-10.0ms")
+                .addCase(0L, "0.0ms")
+                .addCase(1L, "1.0ms")
+                .addCase(999L, "999ms")
+                .addCase(1000L, "1.0s")
+                .addCase(2000L, "2.0s")
+                .addCase(10000L, "10s")
+                .addCase(60 * 1000L, "1.0m")
+                .addCase(60 * 60 * 1000L, "1.0h")
+                .build();
     }
 
-    @Test
-    void testDurationStringStrippingZeros() {
-        assertThat(ModelStringUtil.formatDurationString(null, true)).isEqualTo("");
-        assertThat(ModelStringUtil.formatDurationString(-10L, true)).isEqualTo("-10ms");
-        assertThat(ModelStringUtil.formatDurationString(0L, true)).isEqualTo("0ms");
-        assertThat(ModelStringUtil.formatDurationString(1L, true)).isEqualTo("1ms");
-        assertThat(ModelStringUtil.formatDurationString(999L, true)).isEqualTo("999ms");
-        assertThat(ModelStringUtil.formatDurationString(1000L, true)).isEqualTo("1s");
-        assertThat(ModelStringUtil.formatDurationString(2000L, true)).isEqualTo("2s");
-        assertThat(ModelStringUtil.formatDurationString(10000L, true)).isEqualTo("10s");
-        assertThat(ModelStringUtil.formatDurationString(60 * 1000L, true)).isEqualTo("1m");
-        assertThat(ModelStringUtil.formatDurationString(60 * 60 * 1000L, true)).isEqualTo("1h");
+    @TestFactory
+    Stream<DynamicTest> testDurationStringStrippingZeros() {
+        return TestUtil.buildDynamicTestStream(Long.class, String.class)
+                .withSimpleEqualityTest(testCase ->
+                        ModelStringUtil.formatDurationString(testCase.getInput(), true))
+                .addCase(null, "")
+                .addCase(-10L, "-10ms")
+                .addCase(0L, "0ms")
+                .addCase(1L, "1ms")
+                .addCase(999L, "999ms")
+                .addCase(1000L, "1s")
+                .addCase(2000L, "2s")
+                .addCase(10000L, "10s")
+                .addCase(60 * 1000L, "1m")
+                .addCase(60 * 60 * 1000L, "1h")
+                .build();
     }
 
-    @Test
-    void testFormatMetricByteSizeString() {
-        assertThat(ModelStringUtil.formatMetricByteSizeString(1L)).isEqualTo("1.0B");
-        assertThat(ModelStringUtil.formatMetricByteSizeString(999L)).isEqualTo("999B");
-        assertThat(ModelStringUtil.formatMetricByteSizeString(1000L)).isEqualTo("1.0K");
-        assertThat(ModelStringUtil.formatMetricByteSizeString(1096L)).isEqualTo("1.0K");
-        assertThat(ModelStringUtil.formatMetricByteSizeString(1127L)).isEqualTo("1.1K");
-        assertThat(ModelStringUtil.formatMetricByteSizeString(1946L)).isEqualTo("1.9K");
-        assertThat(ModelStringUtil.formatMetricByteSizeString(10240L)).isEqualTo("10K");
+    @TestFactory
+    Stream<DynamicTest> testFormatMetricByteSizeString() {
+        return TestUtil.buildDynamicTestStream(Long.class, String.class)
+                .withSimpleEqualityTest(testCase ->
+                        ModelStringUtil.formatMetricByteSizeString(testCase.getInput()))
+                .addCase(1L, "1.0B")
+                .addCase(999L, "999B")
+                .addCase(1000L, "1.0K")
+                .addCase(1096L, "1.1K")
+                .addCase(1127L, "1.1K")
+                .addCase(1946L, "1.9K")
+                .addCase(1999L, "2.0K")
+                .addCase(10240L, "10K")
+                .build();
+
     }
 
-    @Test
-    void testFormatIECByteSizeString() {
-        assertThat(ModelStringUtil.formatIECByteSizeString(1L)).isEqualTo("1.0B");
-        assertThat(ModelStringUtil.formatIECByteSizeString(999L)).isEqualTo("999B");
-        assertThat(ModelStringUtil.formatIECByteSizeString(1024L)).isEqualTo("1.0K");
-        assertThat(ModelStringUtil.formatIECByteSizeString(1126L)).isEqualTo("1.0K");
-        assertThat(ModelStringUtil.formatIECByteSizeString(1127L)).isEqualTo("1.1K");
-        assertThat(ModelStringUtil.formatIECByteSizeString(1946L)).isEqualTo("1.9K");
-        assertThat(ModelStringUtil.formatIECByteSizeString(10240L)).isEqualTo("10K");
+    @TestFactory
+    Stream<DynamicTest> testFormatIECByteSizeString() {
+        return TestUtil.buildDynamicTestStream(Long.class, String.class)
+                .withSimpleEqualityTest(testCase ->
+                        ModelStringUtil.formatIECByteSizeString(testCase.getInput()))
+                .addCase(1L, "1.0B")
+                .addCase(1L, "1.0B")
+                .addCase(999L, "999B")
+                .addCase(1_024L, "1.0K")
+                .addCase(1_126L, "1.1K") // 1.099K
+                .addCase(1_127L, "1.1K")
+                .addCase(1_946L, "1.9K")
+                .addCase(10_240L, "10K")
+                .build();
     }
 
-    @Test
-    void testParseString() {
-        assertThat(ModelStringUtil.parseNumberString("")).isNull();
-        assertThat(ModelStringUtil.parseNumberString(" ")).isNull();
-        assertThat(ModelStringUtil.parseNumberString("1").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseNumberString("1.0").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseNumberString("1k").longValue()).isEqualTo(1000);
-        assertThat(ModelStringUtil.parseNumberString("1 k").longValue()).isEqualTo(1000);
-        assertThat(ModelStringUtil.parseNumberString("1.1 k").longValue()).isEqualTo(1100);
-        assertThat(ModelStringUtil.parseNumberString("1m").longValue()).isEqualTo(1000000);
-        assertThat(ModelStringUtil.parseNumberString("1M").longValue()).isEqualTo(1000000);
-        assertThat(ModelStringUtil.parseNumberString("199G").longValue()).isEqualTo(199000000000L);
-        assertThat(ModelStringUtil.parseNumberString("1000G").longValue()).isEqualTo(1000000000000L);
-        assertThat(ModelStringUtil.parseNumberString("1T").longValue()).isEqualTo(1000000000000L);
-
-        assertThat(ModelStringUtil.parseNumberString("1K").longValue()).isEqualTo(1000);
+    @TestFactory
+    Stream<DynamicTest> testParseString() {
+        return TestUtil.buildDynamicTestStream(String.class, Long.class)
+                .withSimpleEqualityTest(testCase ->
+                        ModelStringUtil.parseNumberString(testCase.getInput()))
+                .addCase("", null)
+                .addCase(" ", null)
+                .addCase("1", 1L)
+                .addCase("1.0", 1L)
+                .addCase("1k", 1000L)
+                .addCase("1 k", 1000L)
+                .addCase("1.1 k", 1100L)
+                .addCase("1m", 1000000L)
+                .addCase("1M", 1000000L)
+                .addCase("199G", 199000000000L)
+                .addCase("1000G", 1000000000000L)
+                .addCase("1T", 1000000000000L)
+                .addCase("1K", 1000L)
+                .build();
     }
 
-    @Test
-    void testParseMetricByteSizeString() {
-        assertThat(ModelStringUtil.parseMetricByteSizeString("")).isNull();
-        assertThat(ModelStringUtil.parseMetricByteSizeString(" ")).isNull();
-        assertThat(ModelStringUtil.parseMetricByteSizeString("1").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseMetricByteSizeString("1bytes").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseMetricByteSizeString("1 bytes").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseMetricByteSizeString("1kb").longValue()).isEqualTo(1000);
-        assertThat(ModelStringUtil.parseMetricByteSizeString("1 KB").longValue()).isEqualTo(1000);
-        assertThat(ModelStringUtil.parseMetricByteSizeString("10 KB").longValue()).isEqualTo(10000);
-        assertThat(ModelStringUtil.parseMetricByteSizeString("1 Mb").longValue()).isEqualTo(1000000);
+    @TestFactory
+    Stream<DynamicTest> testParseMetricByteSizeString() {
+        return TestUtil.buildDynamicTestStream(String.class, Long.class)
+                .withTest(testCase -> {
+                    final Long output = ModelStringUtil.parseMetricByteSizeString(testCase.getInput());
+                    Assertions.assertThat(output)
+                            .isEqualTo(testCase.getExpectedOutput());
+                    // Now reverse the conversion then reverse the output of that to ensure we
+                    // keep getting the same numeric value. There are multiple string inputs for
+                    // a single numeric value (e.g. 'xb', 'xbytes', etx.) so can't compare the two
+                    // string values.
+                    final String input2 = ModelStringUtil.formatMetricByteSizeString(output);
+                    final Long output2 = ModelStringUtil.parseMetricByteSizeString(input2);
+                    Assertions.assertThat(output2)
+                            .isEqualTo(output);
+                })
+                .addCase("", null)
+                .addCase(" ", null)
+                .addCase("1", 1L)
+                .addCase("1bytes", 1L)
+                .addCase("1 bytes", 1L)
+                .addCase("1kb", 1000L)
+                .addCase("1 KB", 1000L)
+                .addCase("10 KB", 10000L)
+                .addCase("1 Mb", 1000000L)
+                .build();
     }
 
-    @Test
-    void testParseIECByteSizeString() {
-        assertThat(ModelStringUtil.parseIECByteSizeString("")).isNull();
-        assertThat(ModelStringUtil.parseIECByteSizeString(" ")).isNull();
-        assertThat(ModelStringUtil.parseIECByteSizeString("1").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseIECByteSizeString("1bytes").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseIECByteSizeString("1 bytes").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseIECByteSizeString("1KiB").longValue()).isEqualTo(1024);
-        assertThat(ModelStringUtil.parseIECByteSizeString("1 KiB").longValue()).isEqualTo(1024);
-        assertThat(ModelStringUtil.parseIECByteSizeString("10 KiB").longValue()).isEqualTo(10240);
-        assertThat(ModelStringUtil.parseIECByteSizeString("1 Mib").longValue()).isEqualTo(1048576);
+    @TestFactory
+    Stream<DynamicTest> testParseIECByteSizeString() {
+        return TestUtil.buildDynamicTestStream(String.class, Long.class)
+                .withTest(testCase -> {
+                    final Long output = ModelStringUtil.parseIECByteSizeString(testCase.getInput());
+                    Assertions.assertThat(output)
+                            .isEqualTo(testCase.getExpectedOutput());
+                    // Now reverse the conversion then reverse the output of that to ensure we
+                    // keep getting the same numeric value. There are multiple string inputs for
+                    // a single numeric value (e.g. 'xb', 'xbytes', etx.) so can't compare the two
+                    // string values.
+                    final String input2 = ModelStringUtil.formatIECByteSizeString(output);
+                    final Long output2 = ModelStringUtil.parseIECByteSizeString(input2);
+                    Assertions.assertThat(output2)
+                            .isEqualTo(output);
+                })
+                .addCase("", null)
+                .addCase(" ", null)
+                .addCase("1", 1L)
+                .addCase("1bytes", 1L)
+                .addCase("1 bytes", 1L)
+                .addCase("1KiB", 1024L)
+                .addCase("1 KiB", 1024L)
+                .addCase("10 KiB", 10240L)
+                .addCase("1 Mib", 1048576L)
+                .build();
     }
 
-    @Test
-    void testDurationString2() {
-        assertThat(ModelStringUtil.parseDurationString("1d").longValue()).isEqualTo(1000 * 60 * 60 * 24);
-        assertThat(ModelStringUtil.parseDurationString("1 d").longValue()).isEqualTo(1000 * 60 * 60 * 24);
-        assertThat(ModelStringUtil.parseDurationString("1m").longValue()).isEqualTo(1000 * 60);
+    @TestFactory
+    Stream<DynamicTest> testParseDurationString() {
+        return TestUtil.buildDynamicTestStream(String.class, Long.class)
+                .withTest(testCase -> {
+                    final Long output = ModelStringUtil.parseDurationString(testCase.getInput());
+                    Assertions.assertThat(output)
+                            .isEqualTo(testCase.getExpectedOutput());
+                    // Now reverse the conversion then reverse the output of that to ensure we
+                    // keep getting the same numeric value.
+                    final String input2 = ModelStringUtil.formatDurationString(output);
+                    final Long output2 = ModelStringUtil.parseDurationString(input2);
+                    Assertions.assertThat(output2)
+                            .isEqualTo(output);
+                })
+                .addCase("1", 1L)
+                .addCase("9", 9L)
+                .addCase("10", 10L)
+                .addCase("1ms", 1L)
+                .addCase("1 ms", 1L)
+                .addCase("1s", Duration.ofSeconds(1).toMillis())
+                .addCase("1 s", Duration.ofSeconds(1).toMillis())
+                .addCase("1m", Duration.ofMinutes(1).toMillis())
+                .addCase("1 m", Duration.ofMinutes(1).toMillis())
+                .addCase("1h", Duration.ofHours(1).toMillis())
+                .addCase("1 h", Duration.ofHours(1).toMillis())
+                .addCase("1d", Duration.ofDays(1).toMillis())
+                .addCase("1 d", Duration.ofDays(1).toMillis())
+                .build();
     }
 
     @Test
@@ -153,41 +242,42 @@ class TestModelStringUtil {
 
     }
 
-    @Test
-    void testParseStringAsDuration() {
-        assertThat(ModelStringUtil.parseDurationString("1").longValue()).isEqualTo(1L);
-        assertThat(ModelStringUtil.parseDurationString("10").longValue()).isEqualTo(10L);
-        assertThat(ModelStringUtil.parseDurationString("1s").longValue()).isEqualTo(1000L);
-        assertThat(ModelStringUtil.parseDurationString("1 s").longValue()).isEqualTo(1000L);
-        assertThat(ModelStringUtil.parseDurationString("1ms").longValue()).isEqualTo(1L);
-        assertThat(ModelStringUtil.parseDurationString("1 ms").longValue()).isEqualTo(1L);
-        assertThat(ModelStringUtil.parseDurationString("1 m").longValue()).isEqualTo(60L * 1000L);
+    @TestFactory
+    Stream<DynamicTest> testParseStringQuotes() {
+        return TestUtil.buildDynamicTestStream(String.class, Long.class)
+                .withSimpleEqualityTest(testCase ->
+                        ModelStringUtil.parseNumberString(testCase.getInput()))
+                .addCase("''", null)
+                .addCase("\"", null)
+                .addCase("'1", 1L)
+                .addCase("'1.0'", 1L)
+                .addCase("\"1k\"", 1000L)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testToCamelCase() {
+        return TestUtil.buildDynamicTestStream(String.class)
+                .withSimpleEqualityTest(testCase ->
+                        ModelStringUtil.toCamelCase(testCase.getInput()))
+                .addCase("XMLSchema", "xmlSchema")
+                .addCase("Test", "test")
+                .addCase("NewClassType", "newClassType")
+                .addCase("temp", "temp")
+                .build();
 
     }
 
-    @Test
-    void testParseStringQuotes() {
-        assertThat(ModelStringUtil.parseNumberString("''")).isNull();
-        assertThat(ModelStringUtil.parseNumberString("\"")).isNull();
-        assertThat(ModelStringUtil.parseNumberString("'1").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseNumberString("'1.0'").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseNumberString("\"1k\"").longValue()).isEqualTo(1000);
-    }
-
-    @Test
-    void testToCamelCase() {
-        assertThat(ModelStringUtil.toCamelCase("XMLSchema")).isEqualTo("xmlSchema");
-        assertThat(ModelStringUtil.toCamelCase("Test")).isEqualTo("test");
-        assertThat(ModelStringUtil.toCamelCase("NewClassType")).isEqualTo("newClassType");
-        assertThat(ModelStringUtil.toCamelCase("temp")).isEqualTo("temp");
-    }
-
-    @Test
-    void testToDisplayValue() {
-        assertThat(ModelStringUtil.toDisplayValue("XMLSchema")).isEqualTo("XML Schema");
-        assertThat(ModelStringUtil.toDisplayValue("Test")).isEqualTo("Test");
-        assertThat(ModelStringUtil.toDisplayValue("NewClassType")).isEqualTo("New Class Type");
-        assertThat(ModelStringUtil.toDisplayValue("temp")).isEqualTo("temp");
+    @TestFactory
+    Stream<DynamicTest> testToDisplayValue() {
+        return TestUtil.buildDynamicTestStream(String.class)
+                .withSimpleEqualityTest(testCase ->
+                        ModelStringUtil.toDisplayValue(testCase.getInput()))
+                .addCase("XMLSchema", "XML Schema")
+                .addCase("Test", "Test")
+                .addCase("NewClassType", "New Class Type")
+                .addCase("temp", "temp")
+                .build();
     }
 
     @Test
