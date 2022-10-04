@@ -221,6 +221,12 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         return capacityInfo;
     }
 
+    @JsonIgnore
+    @Override
+    public String getIdentifier() {
+        return path;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

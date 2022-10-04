@@ -22,35 +22,37 @@ import stroom.util.shared.HasCapacity;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class WeightedFreeRandomCapacitySelector implements HasCapacitySelector {
+public class WeightedFreeRandomCapacitySelector extends AbstractSelector {
+
     public static final String NAME = "WeightedFreeRandom";
 
-    private final RandomCapacitySelector randomCapacitySelector = new RandomCapacitySelector();
+    public WeightedFreeRandomCapacitySelector() {
+        super(new RandomCapacitySelector());
+    }
 
     @Override
-    public <T extends HasCapacity> T select(final List<T> list) {
-        final List<T> filtered = list.stream()
-                .filter(hasCapacity -> hasCapacity.getCapacityInfo().hasValidState())
-                .collect(Collectors.toList());
+    public <T extends HasCapacity> T doSelect(final List<T> filteredList) {
 
-        if (filtered.size() == 0) {
-            return randomCapacitySelector.select(list);
-        } else if (filtered.size() == 1) {
-            return filtered.get(0);
-        } else {
-            final double[] thresholds = getWeightingThresholds(filtered);
-            final double random = Math.random();
+        final double[] thresholds = getWeightingThresholds(filteredList);
+        final double random = Math.random();
 
-            int index = thresholds.length - 1;
-            for (int i = 0; i < thresholds.length; i++) {
-                if (thresholds[i] >= random) {
-                    index = i;
-                    break;
-                }
+        int index = thresholds.length - 1;
+        for (int i = 0; i < thresholds.length; i++) {
+            if (thresholds[i] >= random) {
+                index = i;
+                break;
             }
-
-            return filtered.get(index);
         }
+
+        return filteredList.get(index);
+    }
+
+    @Override
+    <T extends HasCapacity> List<T> createFilteredList(final List<T> list) {
+        return list.stream()
+                .filter(hasCapacity ->
+                        hasCapacity.getCapacityInfo().hasValidState())
+                .collect(Collectors.toList());
     }
 
     private <T extends HasCapacity> double[] getWeightingThresholds(final List<T> list) {

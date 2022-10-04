@@ -5,6 +5,11 @@ import org.junit.jupiter.api.Test;
 
 class TestRoundRobinCapacitySelector extends AbstractHasCapacitySelectorTest {
 
+    @Override
+    HasCapacitySelector getSelector() {
+        return new RoundRobinCapacitySelector();
+    }
+
     @Test
     void testLooping() {
         final RoundRobinCapacitySelector roundRobinCapacitySelector = new RoundRobinCapacitySelector();
@@ -24,6 +29,6 @@ class TestRoundRobinCapacitySelector extends AbstractHasCapacitySelectorTest {
     @Test
     void test() {
         final RoundRobinCapacitySelector roundRobinCapacitySelector = new RoundRobinCapacitySelector();
-        testMultipleTimes(roundRobinCapacitySelector, ALL_PATHS);
+        testMultipleTimes(ALL_PATHS);
     }
 }
