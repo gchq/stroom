@@ -39,9 +39,6 @@ import java.util.OptionalLong;
 @JsonInclude(Include.NON_NULL)
 public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
 
-//    private static final long HEADROOM_BYTES = 10L * 1024L * 1024L * 1024L; // 10G
-//    private static final double MAX_USED_FRACTION = 0.99D;
-
     @JsonProperty
     private Integer id;
     @JsonProperty
