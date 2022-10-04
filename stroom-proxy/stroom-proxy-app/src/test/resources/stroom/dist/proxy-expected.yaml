@@ -44,6 +44,11 @@ proxyConfig:
     url: null
   fileScanners: []
   forwardDestinations: []
+  forwardRetry:
+    failedForwardDir: "failures"
+    maxRetryDelay: "PT1H"
+    maxTries: 10
+    retryFrequency: "PT1M"
   haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"

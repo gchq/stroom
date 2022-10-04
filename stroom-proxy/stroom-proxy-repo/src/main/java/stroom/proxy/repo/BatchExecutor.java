@@ -18,26 +18,23 @@ import java.util.concurrent.TransferQueue;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class FrequencyBatchExecutor<T> implements Managed {
+public class BatchExecutor<T> implements Managed {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FrequencyBatchExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BatchExecutor.class);
 
     private final ExecutorService executorService;
     private final int threadCount;
     private final Supplier<Batch<T>> batchSupplier;
     private final Consumer<T> consumer;
-    private final long frequency;
     private final TransferQueue<T> queue = new LinkedTransferQueue<>();
 
-    public FrequencyBatchExecutor(final String threadName,
-                                  final int threadCount,
-                                  final Supplier<Batch<T>> batchSupplier,
-                                  final Consumer<T> consumer,
-                                  final long frequency) {
+    public BatchExecutor(final String threadName,
+                         final int threadCount,
+                         final Supplier<Batch<T>> batchSupplier,
+                         final Consumer<T> consumer) {
         this.threadCount = threadCount;
         this.batchSupplier = batchSupplier;
         this.consumer = consumer;
-        this.frequency = frequency;
         final ThreadFactory threadFactory = new CustomThreadFactory(
                 threadName + " ",
                 StroomThreadGroup.instance(),
@@ -48,7 +45,6 @@ public class FrequencyBatchExecutor<T> implements Managed {
     @Override
     public void start() {
         // Start.
-//        executorService.schedule(this::fillQueue, 0, TimeUnit.MILLISECONDS);
         executorService.execute(this::fillQueue);
 
         for (int i = 0; i < threadCount; i++) {

@@ -49,8 +49,10 @@ public class AggregateForwarder {
     private final ForwardDestinations forwardDestinations;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
     private final ForwarderDestinations forwarderDestinations;
+    private final FailureDestinations failureDestinations;
     private final Sender sender;
     private final ProgressLog progressLog;
+    private final ForwardRetryConfig forwardRetryConfig;
 
     private volatile String hostName = null;
 
@@ -61,17 +63,21 @@ public class AggregateForwarder {
                        final ForwardAggregateDao forwardAggregateDao,
                        final ForwardDestinations forwardDestinations,
                        final ForwarderDestinations forwarderDestinations,
+                       final FailureDestinations failureDestinations,
                        final Sender sender,
-                       final ProgressLog progressLog) {
+                       final ProgressLog progressLog,
+                       final ForwardRetryConfig forwardRetryConfig) {
         this.feedDao = feedDao;
         this.sourceItemDao = sourceItemDao;
         this.aggregator = aggregator;
         this.forwardAggregateDao = forwardAggregateDao;
         this.forwardDestinations = forwardDestinations;
+        this.failureDestinations = failureDestinations;
 
         this.forwarderDestinations = forwarderDestinations;
         this.sender = sender;
         this.progressLog = progressLog;
+        this.forwardRetryConfig = forwardRetryConfig;
 
         init();
     }
@@ -125,18 +131,31 @@ public class AggregateForwarder {
         return forwardAggregateDao.getRetryForwardAggregate();
     }
 
-    public void forwardRetry(final ForwardAggregate forwardAggregate,
-                             final long retryFrequency) {
-        final long oldest = System.currentTimeMillis() - retryFrequency;
+    public void forwardRetry(final ForwardAggregate forwardAggregate) {
         progressLog.increment("AggregateForwarder - forwardRetry");
 
+        final long retryFrequency = forwardRetryConfig.getRetryFrequency().toMillis();
         final long updateTime = forwardAggregate.getUpdateTimeMs();
-        final long delay = updateTime - oldest;
-        // Wait until the item is old enough before sending.
+
+        // The current item will be the oldest so sleep if it isn't at least as old as the min retry frequency.
+        final long delay = retryFrequency - (System.currentTimeMillis() - updateTime);
         if (delay > 0) {
+            // Sleep at least as long as the retry frequency.
             ThreadUtil.sleep(delay);
         }
-        forward(forwardAggregate);
+
+        final long nextExecution = updateTime +
+                (retryFrequency *
+                        forwardAggregate.getTries() *
+                        forwardAggregate.getTries());
+
+        if (nextExecution < System.currentTimeMillis()) {
+            forward(forwardAggregate);
+
+        } else {
+            // We are not ready to try forwarding this item again yet so put it to the end of the queue.
+            forwardAggregateDao.update(forwardAggregate);
+        }
     }
 
     public void forward(final ForwardAggregate forwardAggregate) {
@@ -162,8 +181,14 @@ public class AggregateForwarder {
                 attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
             }
 
-            final StreamHandlers streamHandlers =
-                    forwarderDestinations.getProvider(forwardAggregate.getForwardDest().getName());
+            final StreamHandlers streamHandlers;
+            // If we have reached the max tried limit then send the data to the failure destination for this forwarder.
+            if (forwardAggregate.getTries() >= forwardRetryConfig.getMaxTries()) {
+                attributeMap.put("ForwardError", forwardAggregate.getError());
+                streamHandlers = failureDestinations.getProvider(forwardAggregate.getForwardDest().getName());
+            } else {
+                streamHandlers = forwarderDestinations.getProvider(forwardAggregate.getForwardDest().getName());
+            }
 
             // Start the POST
             try {

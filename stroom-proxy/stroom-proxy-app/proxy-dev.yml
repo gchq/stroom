@@ -105,6 +105,12 @@ proxyConfig:
       forwardUrl: "http://localhost:8080/stroom/noauth/datafeed"
 #      forwardUrl: "http://127.0.0.1:8090/stroom/noauth/datafeed"
 
+  forwardRetry:
+    failedForwardDir: "failures"
+    maxRetryDelay: "PT1H"
+    maxTries: 2
+    retryFrequency: "PT10S"
+
   logStream:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
 

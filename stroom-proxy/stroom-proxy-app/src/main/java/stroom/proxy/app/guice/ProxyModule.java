@@ -27,6 +27,7 @@ import stroom.proxy.app.RequestAuthenticatorImpl;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.RestClientConfigConverter;
 import stroom.proxy.app.event.EventResourceImpl;
+import stroom.proxy.app.forwarder.FailureDestinationsImpl;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyRequestHandler;
@@ -36,6 +37,7 @@ import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
 import stroom.proxy.repo.ErrorReceiver;
 import stroom.proxy.repo.ErrorReceiverImpl;
+import stroom.proxy.repo.FailureDestinations;
 import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProgressLog;
 import stroom.proxy.repo.ProgressLogImpl;
@@ -148,6 +150,7 @@ public class ProxyModule extends AbstractModule {
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
+        bind(FailureDestinations.class).to(FailureDestinationsImpl.class);
         bind(Sender.class).to(SenderImpl.class);
         bind(ProgressLog.class).to(ProgressLogImpl.class);
 
