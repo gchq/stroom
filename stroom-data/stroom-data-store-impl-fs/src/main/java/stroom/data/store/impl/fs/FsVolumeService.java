@@ -241,7 +241,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         LOGGER.trace("allVolumeList {}", allVolumeList);
         final List<FsVolume> freeVolumes = FsVolumeListUtil.removeFullVolumes(allVolumeList);
         LOGGER.trace("freeVolumes {}", freeVolumes);
-        Set<FsVolume> set = Collections.emptySet();
+        final Set<FsVolume> set;
 
         final List<FsVolume> filteredVolumeList = getFilteredVolumeList(freeVolumes, streamStatus);
         if (filteredVolumeList.size() > 0) {
@@ -250,7 +250,19 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     selectedVolume.getPath(),
                     selectedVolume.getCapacityInfo(),
                     filteredVolumeList.size()));
-            set = Collections.singleton(selectedVolume);
+            if (selectedVolume == null) {
+                LOGGER.warn("Selector {} returned null, this should not happen. " +
+                                "all vols: {}, non-full vols: {}, non-full {} vols: 0",
+                        volumeSelector.getClass().getSimpleName(),
+                        allVolumeList.size(),
+                        freeVolumes.size(),
+                        streamStatus);
+                set = Collections.emptySet();
+            } else {
+                set = Collections.singleton(selectedVolume);
+            }
+        } else {
+            set = Collections.emptySet();
         }
 
         if (set.isEmpty()) {

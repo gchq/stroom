@@ -526,9 +526,12 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
             }
             if (selectedIndexVolume == null) {
                 throw new IndexException(
-                        LogUtil.message("Selector returned null for group {}, node {} and volumes [{}]. " +
-                                        "Selector should return something for a non-empty list.",
-                                groupName, nodeName, indexVolumes));
+                        LogUtil.message("Selector {} returned null for group {}, node {} and volumes [{}]. " +
+                                        "Selectors should return something for a non-empty list.",
+                                volumeSelector.getClass().getSimpleName(),
+                                groupName,
+                                nodeName,
+                                indexVolumes));
             }
             return selectedIndexVolume;
         } else {
