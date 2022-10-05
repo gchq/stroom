@@ -533,7 +533,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 }
                 highlights = new ArrayList<>();
                 if (sourceLocation.getHighlight() != null) {
-                    highlights.add(sourceLocation.getHighlight());
+                    sourceLocation.getHighlight()
+                            .getAsTextRange()
+                                    .ifPresent(highlights::add);
                 }
                 highlightMetaId = sourceLocation.getMetaId();
                 highlightPartIndex = sourceLocation.getPartIndex();

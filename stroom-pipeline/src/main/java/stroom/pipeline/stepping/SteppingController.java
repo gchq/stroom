@@ -26,6 +26,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -152,7 +153,9 @@ public class SteppingController {
         // Figure out what the highlighted portion of the input stream should be.
         TextRange highlight = DEFAULT_TEXT_RANGE;
         if (locationHolder != null && locationHolder.getCurrentLocation() != null) {
-            highlight = locationHolder.getCurrentLocation().getHighlight();
+            highlight = NullSafe.get(locationHolder.getCurrentLocation().getHighlight(),
+                    DataRange::getAsTextRange,
+                    opt -> opt.orElse(null));
         }
 
         // First we need to check that the record is ok WRT the location of the

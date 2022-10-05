@@ -30,7 +30,7 @@ class LineTo extends AbstractLocationFunction {
 
     @Override
     String getValue(final SourceLocation sourceLocation) {
-        return String.valueOf(sourceLocation.getHighlight().getTo().getLineNo());
+        return String.valueOf(sourceLocation.getHighlight().getLocationTo().getLineNo());
     }
 
     @Override

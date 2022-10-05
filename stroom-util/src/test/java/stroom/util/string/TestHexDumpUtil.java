@@ -1,11 +1,19 @@
 package stroom.util.string;
 
+import stroom.test.common.TestUtil;
+import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.Location;
 import stroom.util.shared.Range;
+import stroom.util.shared.TextRange;
 import stroom.util.shared.string.HexDump;
 
 import com.google.common.base.Strings;
+import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +21,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.stream.Stream;
 
 class TestHexDumpUtil {
 
@@ -33,7 +43,6 @@ class TestHexDumpUtil {
         Assertions.assertThat(hexDumpStr)
                 .containsOnlyOnce("\n");
     }
-
 
     @Test
     void testHexDump_smallInput() throws IOException {
@@ -140,5 +149,131 @@ class TestHexDumpUtil {
 
         Assertions.assertThat(printableChars)
                 .isEqualTo(expected);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCalculateLocation() throws IOException {
+
+        final Charset charset = StandardCharsets.US_ASCII;
+        final String input = """
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut \
+                labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco \
+                laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in \
+                voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat \
+                non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.""";
+
+        final byte[] bytes = input.getBytes(charset);
+
+        // Dump the full thing
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+        final HexDump hexDump = HexDumpUtil.hexDump(inputStream, charset);
+        LOGGER.info("hexDump: \n{}", hexDump.getHexDumpAsStr());
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Long.class)
+                .withOutputType(Location.class)
+                .withTestAction(testCase ->
+                        Assertions.assertThat(HexDumpUtil.calculateLocation(testCase.getInput()))
+                                .isEqualTo(testCase.getExpectedOutput()))
+                // First byte on first line
+                .addCase(0L, DefaultLocation.of(1, 13))
+                // Fifth byte on first line (i.e. 2nd block)
+                .addCase(4L, DefaultLocation.of(1, 26))
+                // Last byte on first line
+                .addCase(31L, DefaultLocation.of(1, 113))
+                // First byte on second line
+                .addCase(32L, DefaultLocation.of(2, 13))
+                // 11th byte on second line (third byte in 3rd block)
+                .addCase(42L, DefaultLocation.of(2, 45))
+                // 12th byte on second line (last byte in 3rd block)
+                .addCase(43L, DefaultLocation.of(2, 48))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCalculateHighlights_singleLine() throws IOException {
+
+        final Charset charset = StandardCharsets.US_ASCII;
+        final String input = """
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut \
+                labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco \
+                laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in \
+                voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat \
+                non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.""";
+
+        final byte[] bytes = input.getBytes(charset);
+
+        // Dump the full thing
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+        final HexDump hexDump = HexDumpUtil.hexDump(inputStream, charset);
+        LOGGER.info("hexDump: \n{}", hexDump.getHexDumpAsStr());
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(Long.class, Long.class)
+                .withWrappedOutputType(new TypeLiteral<List<TextRange>>() {
+                })
+                .withTestAction(testCase -> {
+                    final Long byteOffsetFrom = testCase.getInput()._1;
+                    final Long byteOffsetTo = testCase.getInput()._2;
+                    final List<TextRange> expectedHighlights = testCase.getExpectedOutput();
+
+                    final List<TextRange> highlights = HexDumpUtil.calculateHighlights(hexDump,
+                            byteOffsetFrom,
+                            byteOffsetTo);
+
+                    Assertions.assertThat(highlights)
+                            .containsExactlyElementsOf(expectedHighlights);
+                })
+                // Run the test then copy the hexdump into a text editor to check the line/col positions.
+                // NOTE: the 'to' col is the first char of the hex pair
+                .addCase(
+                        Tuple.of(0L, 4L),
+                        List.of(TextRange.of(
+                                DefaultLocation.of(1, 13),
+                                DefaultLocation.of(1, 26))))
+                .addCase(
+                        Tuple.of(2L, 31L),
+                        List.of(TextRange.of(
+                                DefaultLocation.of(1, 19),
+                                DefaultLocation.of(1, 113))))
+                // One full line
+                .addCase(
+                        Tuple.of(32L, 63L),
+                        List.of(TextRange.of(
+                                DefaultLocation.of(2, 13),
+                                DefaultLocation.of(2, 113))))
+                // Two partial lines
+                .addCase(
+                        Tuple.of(36L, 71L),
+                        List.of(
+                                TextRange.of(
+                                        DefaultLocation.of(2, 26),
+                                        DefaultLocation.of(2, 113)),
+                                TextRange.of(
+                                        DefaultLocation.of(3, 13),
+                                        DefaultLocation.of(3, 35)))
+                )
+                // Three lines, two partial, one full
+                .addCase(
+                        Tuple.of(3L, 68L),
+                        List.of(
+                                TextRange.of(
+                                        DefaultLocation.of(1, 22),
+                                        DefaultLocation.of(1, 113)), // |    <-------->|
+                                TextRange.of(
+                                        DefaultLocation.of(2, 13),
+                                        DefaultLocation.of(2, 113)), // |<------------>|
+                                TextRange.of(
+                                        DefaultLocation.of(3, 13),
+                                        DefaultLocation.of(3, 26)))  // |<--->         |
+                )
+                .build();
+    }
+
+    @Test
+    void testCalculateLocation_invalid() {
+        Assertions.assertThatThrownBy(() ->
+                        HexDumpUtil.calculateLocation(-1))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

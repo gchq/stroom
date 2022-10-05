@@ -18,8 +18,9 @@ class TestSafeHtmlUtil {
 
     @TestFactory
     Stream<DynamicTest> testToParagraphs() {
-        return TestUtil.buildDynamicTestStream(String.class)
-                .withTest(this::doParaTest)
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestAction(this::doParaTest)
                 .addCase("hello\nworld", "<p>hello</p><p>world</p>")
                 .addCase("\nhello\nworld\n", "<p>hello</p><p>world</p>")
                 .addCase("hello\n", "<p>hello</p>")
@@ -32,8 +33,9 @@ class TestSafeHtmlUtil {
 
     @TestFactory
     Stream<DynamicTest> testWithLineBreaks() {
-        return TestUtil.buildDynamicTestStream(String.class)
-                .withTest(this::doLineBreakTest)
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestAction(this::doLineBreakTest)
                 .addCase("hello\nworld", "hello<br>world")
                 .addCase("\nhello\nworld\n", "hello<br>world")
                 .addCase("hello\n", "hello")

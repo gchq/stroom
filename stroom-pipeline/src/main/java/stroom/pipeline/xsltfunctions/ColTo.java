@@ -30,7 +30,7 @@ class ColTo extends AbstractLocationFunction {
 
     @Override
     String getValue(final SourceLocation location) {
-        return String.valueOf(location.getHighlight().getTo().getColNo());
+        return String.valueOf(location.getHighlight().getLocationTo().getColNo());
     }
 
     @Override

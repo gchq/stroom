@@ -1,7 +1,10 @@
 package stroom.util.string;
 
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.Location;
 import stroom.util.shared.Range;
+import stroom.util.shared.TextRange;
 import stroom.util.shared.string.HexDump;
 import stroom.util.shared.string.HexDumpLine;
 
@@ -19,6 +22,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,6 +36,10 @@ public class HexDumpUtil {
     static final char CARRIAGE_RETURN_REPLACEMENT_CHAR = '↩';
     static final char TAB_REPLACEMENT_CHAR = '↹';
     static final String DEFAULT_REPLACEMENT_STRING = String.valueOf(DEFAULT_REPLACEMENT_CHAR);
+
+    private static final int BYTES_PER_BLOCK = 4;
+    private static final int PADDED_LINE_NO_WIDTH = 10;
+    private static final String SPACER_AFTER_PADDED_LINE_NO = "  ";
 
     // Dump line looks like (assuming MAX_BYTES_PER_LINE == 32)
     @SuppressWarnings("checkstyle:linelength")
@@ -154,14 +162,6 @@ public class HexDumpUtil {
                                           final CharsetDecoder charsetDecoder) {
         final long firstByteNo = ((long) lineOffset) * bytesPerLine;
 
-        // Add the number of the first byte on the line in hex form, zero padded
-        final StringBuilder lineStringBuilder = new StringBuilder();
-        lineStringBuilder
-                .append(Strings.padStart(
-                        Long.toHexString(firstByteNo).toUpperCase(),
-                        10,
-                        '0'))
-                .append("  ");
 
         // Builder for the hex values for each byte
         final StringBuilder hexStringBuilder = new StringBuilder();
@@ -181,6 +181,7 @@ public class HexDumpUtil {
                         .append(hex)
                         .append(" ");
 
+                // Try to decode the byte as ascii for the right-hand column
                 char chr;
                 try {
                     final CharBuffer charBuffer = charsetDecoder.decode(singleByteBuffer);
@@ -192,22 +193,32 @@ public class HexDumpUtil {
                 LOGGER.trace("hex: {}, printableChar {}", hex, printableChar);
                 decodedStringBuilder.append(printableChar);
             } else {
+                // We have gone past the last byte but still need to pad it out with spaces
+                // so the decoded text is in the right place. Three spaces because two where
+                // the hex pair would be then one for the gap between hex pairs
                 hexStringBuilder
                         .append("   ");
                 decodedStringBuilder.append(" ");
             }
 
+            // Add an extra space after each 4 byte block
             if (i != 0
-                    && (i + 1) % 4 == 0) {
+                    && (i + 1) % BYTES_PER_BLOCK == 0) {
                 hexStringBuilder.append(" ");
             }
         }
-        lineStringBuilder
-                .append(hexStringBuilder)
-                .append(decodedStringBuilder);
+        // Add the number of the first byte on the line in hex form, zero padded
+        final String paddedLineNo = Strings.padStart(
+                Long.toHexString(firstByteNo).toUpperCase(),
+                PADDED_LINE_NO_WIDTH,
+                '0');
+        final String lineStr = paddedLineNo
+                + SPACER_AFTER_PADDED_LINE_NO
+                + hexStringBuilder
+                + decodedStringBuilder;
 
         final HexDumpLine hexDumpLine = new HexDumpLine(
-                lineStringBuilder.toString(),
+                lineStr,
                 lineOffset + 1,
                 Range.of(firstByteNo, firstByteNo + len));
         hexDumpBuilder.addLine(hexDumpLine);
@@ -276,6 +287,125 @@ public class HexDumpUtil {
         final long completeLines = (long) (((double) byteCount) / HexDump.MAX_BYTES_PER_LINE);
         final long remainingBytes = byteCount % HexDump.MAX_BYTES_PER_LINE;
         return (completeLines * HexDump.MAX_CHARS_PER_DUMP_LINE) + remainingBytes;
+    }
+
+    /**
+     * Calculates the line/col position (in the rendered hex dump) of a given byte offset.
+     * The line/col position is of the first character of the 2 character hex pair for the
+     * given byte offset.
+     * This method knows nothing about the hex dump in question so if byteOffset is greater
+     * than the number of bytes in the dump then the returned {@link Location} will also
+     * be invalid.
+     */
+    public static Location calculateLocation(final long byteOffset) {
+
+        if (byteOffset < 0) {
+            throw new IllegalArgumentException(LogUtil.message("Invalid byteOffset {}. Must be >= 0", byteOffset));
+        }
+
+        final int lineNo = (int) (byteOffset / HexDump.MAX_BYTES_PER_LINE + 1); // one based
+        final int byteOffsetOnLine = (int) (byteOffset % HexDump.MAX_BYTES_PER_LINE);
+        final int blockOffsetOnLine = byteOffsetOnLine / BYTES_PER_BLOCK;
+        final int charsPerByte = 3; // Two for the hex pair + one space
+        final int colNo = PADDED_LINE_NO_WIDTH // left hand line no col
+                + SPACER_AFTER_PADDED_LINE_NO.length()
+                + (byteOffsetOnLine * charsPerByte) //
+                + blockOffsetOnLine // One extra space after each 4 byte block
+                + 1; // one based
+
+        LOGGER.debug("lineNo: {}, colNo: {}, byteOffsetOnLine: {}, blockOffsetOnLine: {}",
+                lineNo, colNo, byteOffsetOnLine, blockOffsetOnLine);
+
+        return DefaultLocation.of(lineNo, colNo);
+    }
+
+    public static List<TextRange> calculateHighlights(final HexDump hexDump,
+                                               final long byteOffsetFromInc,
+                                               final long byteOffsetToInc) {
+        if (hexDump == null || hexDump.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            validateArgs(hexDump, byteOffsetFromInc, byteOffsetToInc);
+
+            long currByteOffsetFromInc = byteOffsetFromInc;
+            long currByteOffsetToInc;
+            int iteration = 1;
+            final List<TextRange> highlights = new ArrayList<>();
+            while (true) {
+                final long lineNoFrom = currByteOffsetFromInc / HexDump.MAX_BYTES_PER_LINE;
+                final long lineNoTo = byteOffsetToInc / HexDump.MAX_BYTES_PER_LINE;
+                final boolean isLastLineOfHighlight = lineNoFrom == lineNoTo;
+
+                final long firstByteOnLineOffsetInc = ((currByteOffsetFromInc / HexDump.MAX_BYTES_PER_LINE)
+                        * HexDump.MAX_BYTES_PER_LINE);
+
+                if (isLastLineOfHighlight) {
+                    currByteOffsetToInc = byteOffsetToInc;
+                } else {
+                    final long lastByteOnLineOffsetInc =
+                            firstByteOnLineOffsetInc
+                                    + HexDump.MAX_BYTES_PER_LINE
+                                    - 1;
+                    currByteOffsetToInc = lastByteOnLineOffsetInc;
+                }
+
+                final TextRange highlight = new TextRange(
+                        calculateLocation(currByteOffsetFromInc),
+                        calculateLocation(currByteOffsetToInc));
+                highlights.add(highlight);
+
+                LOGGER.debug("iteration: {}, lineNoFrom: {}, lineNoTo: {}, firstByteOnLineOffsetInc: {}, " +
+                                "isLastLineOfHighlight: {}, " +
+                                "currByteOffsetFromInc: {}, currByteOffsetToInc: {}, highlight: {}",
+                        iteration,
+                        lineNoFrom,
+                        lineNoTo,
+                        firstByteOnLineOffsetInc,
+                        isLastLineOfHighlight,
+                        currByteOffsetFromInc,
+                        currByteOffsetToInc,
+                        highlight);
+
+                if (isLastLineOfHighlight) {
+                    break;
+                }
+                // Start next iter at the beginning of the next line.
+                currByteOffsetFromInc = firstByteOnLineOffsetInc + HexDump.MAX_BYTES_PER_LINE;
+                iteration++;
+            }
+            return highlights;
+        }
+    }
+
+    private static void validateArgs(final HexDump hexDump,
+                                     final long byteOffsetFromInc,
+                                     final long byteOffsetToInc) {
+        if (byteOffsetFromInc < 0) {
+            throw new IllegalArgumentException(LogUtil.message("Invalid byteOffsetFromInc {}. Must be >= 0",
+                    byteOffsetFromInc));
+        }
+        if (byteOffsetToInc < 0) {
+            throw new IllegalArgumentException(LogUtil.message("Invalid byteOffsetToExc {}. Must be >= 0",
+                    byteOffsetToInc));
+        }
+        if (byteOffsetToInc <= byteOffsetFromInc) {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "byteOffsetFromInc {} must be less than byteOffsetToExc {}.",
+                    byteOffsetFromInc,
+                    byteOffsetToInc));
+        }
+        if (!hexDump.getByteOffsetRange()
+                .contains(byteOffsetFromInc)) {
+            throw new IllegalArgumentException(LogUtil.message("Hex dump byte offset range {} does not contain " +
+                            "byteOffsetFromInc {}.",
+                    hexDump.getByteOffsetRange(), byteOffsetFromInc));
+        }
+        if (!hexDump.getByteOffsetRange()
+                .contains(byteOffsetToInc)) {
+            throw new IllegalArgumentException(LogUtil.message("Hex dump byte offset range {} does not contain " +
+                            "byteOffsetToExc {}.",
+                    hexDump.getByteOffsetRange(), byteOffsetToInc));
+        }
     }
 
 

@@ -30,7 +30,7 @@ class ColFrom extends AbstractLocationFunction {
 
     @Override
     String getValue(final SourceLocation location) {
-        return String.valueOf(location.getHighlight().getFrom().getColNo());
+        return String.valueOf(location.getHighlight().getLocationFrom().getColNo());
     }
 
     @Override

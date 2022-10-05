@@ -7,6 +7,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.inject.TypeLiteral;
+import io.vavr.Tuple2;
+import io.vavr.Tuple3;
 import org.junit.jupiter.api.DynamicTest;
 
 import java.time.Duration;
@@ -86,15 +89,11 @@ public class TestUtil {
                 });
     }
 
-    public static <I, O> DynamicDynamicTestBuilder<I, O> buildDynamicTestStream(
-            final Class<I> inputType,
-            final Class<O> outputType) {
-        return new DynamicDynamicTestBuilder<>(inputType, outputType);
-    }
-
-    public static <T> DynamicDynamicTestBuilder<T, T> buildDynamicTestStream(
-            final Class<T> inputOutputType) {
-        return new DynamicDynamicTestBuilder<>(inputOutputType, inputOutputType);
+    /**
+     * Builder for creating a Junit5 {@link DynamicTest} {@link Stream}.
+     */
+    public static InitialBuilder buildDynamicTestStream() {
+        return new InitialBuilder();
     }
 
     /**
@@ -197,49 +196,221 @@ public class TestUtil {
                 Duration.ofMillis(1));
     }
 
-    public static class DynamicDynamicTestBuilder<I, O> {
 
-        // Pass in the classes to set the generic types
-        private DynamicDynamicTestBuilder(final Class<I> inputType,
-                                          final Class<O> outputType) {
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    public static class InitialBuilder {
+
+        /**
+         * Define the type of the input for the dynamic tests, e.g.
+         * <pre>{@code withInputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <I> InputBuilder<I> withInputType(final Class<I> inputType) {
+            final TypeLiteral<I> typeLiteral = new TypeLiteral<I>() {
+            };
+            return new InputBuilder<>(typeLiteral);
         }
 
-        public CasesDynamicTestBuilder<I, O> withTest(final Consumer<TestCase<I, O>> test) {
-            Objects.requireNonNull(test);
-            return new CasesDynamicTestBuilder<>(this, test);
+        /**
+         * Define the type of both the input and expected for the dynamic tests,
+         * <pre>{@code withInputAndOutputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <T> OutputBuilder<T, T> withInputAndOutputType(final Class<T> type) {
+            final InputBuilder<T> inputBuilder = new InputBuilder<>(type);
+            final TypeLiteral<T> typeLiteral = new TypeLiteral<T>() {
+            };
+            return new OutputBuilder<T, T>(inputBuilder, typeLiteral);
+        }
+
+        /**
+         * Define the type of the input for the dynamic tests where the type uses generics,
+         * e.g. a {@link Collection<?>} or a {@link io.vavr.Tuple}. Specify the type using a
+         * {@link TypeLiteral}, e.g.
+         * <pre>{@code withWrappedInputType(new TypeLiteral<List<String>>(){})}</pre>
+         * <pre>{@code withWrappedInputType(new TypeLiteral<Tuple2<Integer, String>>(){})}</pre>
+         * If you have multiple wrapped inputs then wrap them in a {@link io.vavr.Tuple} or similar.
+         */
+        @SuppressWarnings("unused")
+        public <I> InputBuilder<I> withWrappedInputType(final TypeLiteral<I> inputType) {
+            return new InputBuilder<>(inputType);
+        }
+
+        /**
+         * Define the types of the two inputs for the dynamic tests, e.g.
+         * <pre>{@code withInputTypes(Integer.class, String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <I extends Tuple2<I1, I2>, I1, I2> InputBuilder<I> withInputTypes(
+                @SuppressWarnings("unused") final Class<I1> input1Type,
+                @SuppressWarnings("unused") final Class<I2> input2Type) {
+
+            @SuppressWarnings("unchecked") final TypeLiteral<I> typeLiteral =
+                    (TypeLiteral<I>) new TypeLiteral<Tuple2<I1, I2>>() {
+                    };
+
+            return new InputBuilder<>(typeLiteral);
+        }
+
+        /**
+         * Define the types of the three inputs for the dynamic tests, e.g.
+         * <pre>{@code withInputTypes(Integer.class, String.class, Long.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <I extends Tuple3<I1, I2, I3>, I1, I2, I3> InputBuilder<I> withInputTypes(
+                @SuppressWarnings("unused") final Class<I1> input1Type,
+                @SuppressWarnings("unused") final Class<I2> input2Type,
+                @SuppressWarnings("unused") final Class<I3> input3Type) {
+
+            @SuppressWarnings("unchecked") final TypeLiteral<I> typeLiteral =
+                    (TypeLiteral<I>) new TypeLiteral<Tuple3<I1, I2, I3>>() {
+                    };
+
+            return new InputBuilder<I>(typeLiteral);
         }
     }
 
-    public static class CasesDynamicTestBuilder<I, O> {
 
-        private final DynamicDynamicTestBuilder<I, O> builder;
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    public static class InputBuilder<I> {
+
+        private InputBuilder(@SuppressWarnings("unused") final Class<I> input1Type) {
+        }
+
+        private InputBuilder(@SuppressWarnings("unused") final TypeLiteral<I> input1Type) {
+        }
+
+        /**
+         * Define the type of the output for the dynamic tests, e.g.
+         * <pre>{@code withOutputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <O> OutputBuilder<I, O> withOutputType(final Class<O> outputType) {
+            final TypeLiteral<O> typeLiteral = new TypeLiteral<O>() {
+            };
+            return new OutputBuilder<>(this, typeLiteral);
+        }
+
+        /**
+         * Define the type of the output for the dynamic tests where the type uses generics,
+         * e.g. a {@link Collection<?>} or a {@link io.vavr.Tuple}. Specify the type using a
+         * {@link TypeLiteral}, e.g.
+         * <pre>{@code withWrappedOutputType(new TypeLiteral<List<String>>(){})}</pre>
+         * <pre>{@code withWrappedOutputType(new TypeLiteral<Tuple2<Integer, String>>(){})}</pre>
+         * If you have multiple wrapped outputs then wrap them in a {@link io.vavr.Tuple} or similar.
+         */
+        @SuppressWarnings("unused")
+        public <O> OutputBuilder<I, O> withWrappedOutputType(final TypeLiteral<O> outputType) {
+            return new OutputBuilder<>(this, outputType);
+        }
+
+        /**
+         * Define the types of the two outputs for the dynamic tests, e.g.
+         * <pre>{@code withOutputTypes(Integer.class, String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <O extends Tuple2<O1, O2>, O1, O2> OutputBuilder<I, O> withOutputTypes(
+                @SuppressWarnings("unused") final Class<O1> output1Type,
+                @SuppressWarnings("unused") final Class<O2> output2Type) {
+
+            @SuppressWarnings("unchecked") final TypeLiteral<O> typeLiteral = (TypeLiteral<O>) new TypeLiteral<Tuple2<O1, O2>>() {
+            };
+
+            return new OutputBuilder<>(this, typeLiteral);
+        }
+
+        /**
+         * Define the types of the three outputs for the dynamic tests, e.g.
+         * <pre>{@code withOutputTypes(Integer.class, String.class, Long.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <O extends Tuple3<O1, O2, O3>, O1, O2, O3> OutputBuilder<I, O> withOutputTypes(
+                @SuppressWarnings("unused") final Class<O1> output1Type,
+                @SuppressWarnings("unused") final Class<O2> output2Type,
+                @SuppressWarnings("unused") final Class<O3> output3Type) {
+
+            @SuppressWarnings("unchecked") final TypeLiteral<O> typeLiteral =
+                    (TypeLiteral<O>) new TypeLiteral<Tuple3<O1, O2, O3>>() {
+                    };
+
+            return new OutputBuilder<>(this, typeLiteral);
+        }
+    }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    public static class OutputBuilder<I, O> {
+
+        private OutputBuilder(@SuppressWarnings("unused") final InputBuilder<I> inputBuilder,
+                              @SuppressWarnings("unused") final TypeLiteral<O> outputType) {
+        }
+
+        /**
+         * Define the action for the dynamic test lambda, where the action consumes a {@link TestCase}
+         * and uses {@link TestCase#getInput()} to produce some output to evaluate against
+         * {@link TestCase#getExpectedOutput()}.
+         */
+        @SuppressWarnings("unused")
+        public CasesBuilder<I, O> withTestAction(final Consumer<TestCase<I, O>> test) {
+            Objects.requireNonNull(test);
+            return new CasesBuilder<>(test);
+        }
+    }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    public static class CasesBuilder<I, O> {
+
         private final Consumer<TestCase<I, O>> test;
         private final List<TestCase<I, O>> testCases = new ArrayList<>();
 
-        private CasesDynamicTestBuilder(final DynamicDynamicTestBuilder<I, O> builder,
-                                        final Consumer<TestCase<I, O>> test) {
-            this.builder = builder;
+        private CasesBuilder(final Consumer<TestCase<I, O>> test) {
             this.test = test;
         }
 
-        public CasesDynamicTestBuilder<I, O> addCase(final TestCase<I, O> testCase) {
+        /**
+         * Add a test case to the {@link DynamicTest} {@link Stream}.
+         */
+        @SuppressWarnings("unused")
+        public CasesBuilder<I, O> addCase(final TestCase<I, O> testCase) {
             Objects.requireNonNull(testCase);
             this.testCases.add(testCase);
             return this;
         }
 
-        public CasesDynamicTestBuilder<I, O> addCases(final Collection<TestCase<I, O>> testCases) {
+        /**
+         * Add a {@link Collection} of test cases to the {@link DynamicTest} {@link Stream}.
+         */
+        @SuppressWarnings("unused")
+        public CasesBuilder<I, O> addCases(final Collection<TestCase<I, O>> testCases) {
             Objects.requireNonNull(testCases);
             this.testCases.addAll(testCases);
             return this;
         }
 
-        public CasesDynamicTestBuilder<I, O> addCase(final I input,
-                                                     final O expectedOutput) {
+        /**
+         * Add a test case to the {@link DynamicTest} {@link Stream} by specifying the input
+         * and expected output of the test.
+         */
+        @SuppressWarnings("unused")
+        public CasesBuilder<I, O> addCase(final I input,
+                                          final O expectedOutput) {
             addCase(TestCase.of(input, expectedOutput));
             return this;
         }
 
+        /**
+         * Build the {@link Stream} of {@link DynamicTest} with all the added test cases.
+         */
+        @SuppressWarnings("unused")
         public Stream<DynamicTest> build() {
             return TestUtil.createDynamicTestStream(testCases, test);
         }

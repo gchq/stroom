@@ -48,7 +48,7 @@ public class SourceLocation {
     @JsonProperty
     private final DataRange dataRange; // The optional specified range of the character data which may be a subset
     @JsonProperty
-    private final TextRange highlight; // The optional highlighted range of the character data which may be a subset
+    private final DataRange highlight; // The optional highlighted range of the character data which may be a subset
 
     @JsonCreator
     public SourceLocation(@JsonProperty("metaId") final long metaId,
@@ -56,7 +56,7 @@ public class SourceLocation {
                           @JsonProperty("partIndex") final long partIndex,
                           @JsonProperty("recordIndex") final long recordIndex,
                           @JsonProperty("dataRange") final DataRange dataRange,
-                          @JsonProperty("highlight") final TextRange highlight) {
+                          @JsonProperty("highlight") final DataRange highlight) {
         this.metaId = metaId;
         this.childType = childType;
         this.partIndex = partIndex;
@@ -124,12 +124,12 @@ public class SourceLocation {
     /**
      * @return The range of data that is highlighted, may be null.
      */
-    public TextRange getHighlight() {
+    public DataRange getHighlight() {
         return highlight;
     }
 
     @JsonIgnore
-    public Optional<TextRange> getOptHighlight() {
+    public Optional<DataRange> getOptHighlight() {
         return Optional.ofNullable(highlight);
     }
 
@@ -211,7 +211,7 @@ public class SourceLocation {
         private String childType;
         private long recordIndex; // Non-segmented data has no record no., zero based
         private DataRange dataRange;
-        private TextRange highlight;
+        private DataRange highlight;
         private boolean truncateToWholeLines = false;
 
         private Builder(final long metaId) {
@@ -267,7 +267,19 @@ public class SourceLocation {
             return this;
         }
 
-        public Builder withHighlight(final TextRange highlight) {
+        public Builder withHighlight(final TextRange textRange) {
+            if (textRange == null) {
+                this.highlight = null;
+            } else {
+                this.highlight = DataRange.builder()
+                        .fromLocation(textRange.getFrom())
+                        .toLocation(textRange.getTo())
+                        .build();
+            }
+            return this;
+        }
+
+        public Builder withHighlight(final DataRange highlight) {
             this.highlight = highlight;
             return this;
         }
