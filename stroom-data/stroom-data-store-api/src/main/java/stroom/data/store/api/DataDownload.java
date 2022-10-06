@@ -18,7 +18,7 @@ import javax.ws.rs.core.Response;
 
 @Tag(name = "Data Download")
 @Path("/dataDownload" + ResourcePaths.V1)
-@Produces(MediaType.APPLICATION_OCTET_STREAM)
+@Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DataDownload extends RestResource {
 
