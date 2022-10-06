@@ -149,6 +149,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                                 .asOptional()
                                 .map(total -> total - 1)
                                 .orElse(Long.MAX_VALUE));
+                refreshBtn.setEnabled(true);
 
             } else if (NavigationMode.BYTES.equals(display.getNavigationMode())
                     && display.getByteOffsetFrom().isPresent()
@@ -166,6 +167,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                         byteTo < display.getTotalBytes()
                                 .map(total -> total - 1)
                                 .orElse(Long.MAX_VALUE));
+                refreshBtn.setEnabled(true);
             } else {
                 // No char range, must be an error
                 lblLines.setText(LINES_TITLE + " 0 to 0");

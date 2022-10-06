@@ -300,11 +300,12 @@ public class DataFetcher {
 
                             // If this is an error stream and the UI is requesting markers then
                             // create a list of markers.
+                            final AbstractFetchDataResult result;
                             if (StreamTypeNames.ERROR.equals(streamTypeName)
                                     && (fetchDataRequest.getDisplayMode() == null
                                     || DisplayMode.MARKER.equals(fetchDataRequest.getDisplayMode()))) {
 
-                                return createErrorMarkerResult(
+                                result = createErrorMarkerResult(
                                         feedName,
                                         streamTypeName,
                                         segmentInputStream,
@@ -318,7 +319,7 @@ public class DataFetcher {
                                 LOGGER.error(msg);
                                 throw new RuntimeException(msg);
                             } else {
-                                return createDataResult(
+                                result = createDataResult(
                                         feedName,
                                         streamTypeName,
                                         segmentInputStream,
@@ -328,6 +329,7 @@ public class DataFetcher {
                                         fetchDataRequest,
                                         taskContext);
                             }
+                            return result;
                         }
                     }
                 } catch (final IOException | RuntimeException e) {
@@ -653,7 +655,8 @@ public class DataFetcher {
                     sourceLocation,
                     segmentInputStream,
                     encoding,
-                    segmentInputStream.size());
+                    segmentInputStream.size(),
+                    DataType.SEGMENTED);
             default -> throw new IllegalArgumentException("Unexpected display mode " + displayMode);
         };
 
@@ -680,7 +683,8 @@ public class DataFetcher {
                     sourceLocation,
                     segmentInputStream,
                     encoding,
-                    segmentInputStream.size());
+                    segmentInputStream.size(),
+                    DataType.NON_SEGMENTED);
             default -> throw new IllegalArgumentException("Unexpected display mode " + displayMode);
         };
 
@@ -772,7 +776,8 @@ public class DataFetcher {
     private RawResult extractDataRangeAsHex(final SourceLocation sourceLocation,
                                             final InputStream inputStream,
                                             final String encoding,
-                                            final long streamSizeBytes) throws IOException {
+                                            final long streamSizeBytes,
+                                            final DataType dataType) throws IOException {
 
         final DataRange dataRange = sourceLocation.getOptDataRange()
                 .orElseGet(() -> DataRange.fromCharOffset(0));
@@ -787,11 +792,8 @@ public class DataFetcher {
             // so calculate it from the number of hex dump chars on each line.
             final long fromCharOffset = Math.max(
                     0,
-                    ((long) (firstLine.getLineNo() - 1) * HexDump.MAX_CHARS_PER_DUMP_LINE) - 1);
-            final long toCharOffset = Math.max(
-                    0,
-                    ((long) (lastLine.getLineNo() - 1) * HexDump.MAX_CHARS_PER_DUMP_LINE)
-                            + lastLine.getDumpLineCharCount() - 1);
+                    ((long) (firstLine.getLineNo() - 1) * HexDump.MAX_CHARS_PER_DUMP_LINE)); // -1 for count => offset
+            final long toCharOffset = fromCharOffset + hexDump.getDumpCharCount() - 1; //-1 for count => offset
 
             final DataRange requestedHighlight = sourceLocation.getHighlights() != null
                     && !sourceLocation.getHighlights().isEmpty()
@@ -820,9 +822,11 @@ public class DataFetcher {
                     0,
                     DisplayMode.HEX);
 
-            final long totalCharCount = HexDumpUtil.calculateHexDumpTotalChars(streamSizeBytes);
-            rawResult.setTotalCharacterCount(Count.exactly(totalCharCount));
-            rawResult.setTotalBytes(streamSizeBytes);
+            rawResult.setTotalCharacterCount(Count.exactly(hexDump.getDumpCharCount()));
+            final long totalBytes = DataType.SEGMENTED.equals(dataType)
+                    ? hexDump.getDumpByteCount()
+                    : streamSizeBytes;
+            rawResult.setTotalBytes(totalBytes);
             return rawResult;
         } else {
             return new RawResult(
@@ -993,7 +997,7 @@ public class DataFetcher {
 
         // Decorate the input highlight with byte offsets in case future calls are in hex mode
         // which can only work in byte terms.
-        actualHighlight = isHighlightDecorationRequired
+        actualHighlight = isHighlightDecorationRequired && tracker.foundHighlight
                 ? NullSafe.get(highlight, highlight2 ->
                 highlight2.copy()
                         .fromByteOffset(tracker.highlightStartByteOffsetInc)
@@ -1279,6 +1283,7 @@ public class DataFetcher {
         int extraCharCount = 0;
 
         boolean foundRange = false;
+        boolean foundHighlight = false;
         boolean isMultiLine = false;
         Count<Long> totalCharCount = Count.of(0L, false);
 
@@ -1308,6 +1313,7 @@ public class DataFetcher {
 
         private void markHighlightStart() {
             highlightStartByteOffsetInc = currByteOffset;
+            foundHighlight = true;
         }
 
         private void markHighlightEnd() {

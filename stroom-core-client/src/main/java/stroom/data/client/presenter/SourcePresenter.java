@@ -59,7 +59,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private final ProgressPresenter progressPresenter;
     private final TextPresenter textPresenter;
     private final CharacterNavigatorPresenter characterNavigatorPresenter;
-    //    private final Provider<SourceLocationPresenter> sourceLocationPresenterProvider;
     private final UiConfigCache uiConfigCache;
     private final RestFactory restFactory;
     private final ClientSecurityContext clientSecurityContext;
@@ -75,7 +74,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private ClassificationUiHandlers classificationUiHandlers;
     private boolean isSteppingSource = false;
     private Count<Long> exactCharCount = null;
-
 
     @Inject
     public SourcePresenter(final EventBus eventBus,
@@ -444,12 +442,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 exactCharCount = null;
                 currentTextHighlight = null;
             }
-            // hold this separately as we may change the highlight without fetching new data
-            final DataRange receivedHighlight = receivedSourceLocation != null
-                    ? receivedSourceLocation.getFirstHighlight()
-                    : null;
+
             if (!textPresenter.getViewAsHexOption().isOnAndAvailable()) {
-                currentTextHighlight = receivedHighlight;
+                recordDecoratedHighlight(receivedSourceLocation);
             }
 
             lastResult = fetchDataResult;
@@ -464,6 +459,40 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                     SourcePresenter.this,
                     "Unexpected type " + result.getClass().getName(),
                     null);
+        }
+    }
+
+    private void recordDecoratedHighlight(final SourceLocation sourceLocation) {
+        final DataRange receivedHighlight = sourceLocation != null
+                ? sourceLocation.getFirstHighlight()
+                : null;
+
+        // When a request is first sent for TEXT data with a highlight, the highlight will
+        // get decorated with the byte offsets of that highlight. Subsequent requests may have
+        // the same highlight but the server may be unable to decorate it if it doesn't encounter the highlight.
+        // Therefore, we mustn't overwrite the byte offsets we hold locally unless the line/col locations
+        // have changed.
+        if (currentTextHighlight == null
+                || !currentTextHighlight.getOptByteOffsetFrom().isPresent()
+                || !currentTextHighlight.getOptByteOffsetTo().isPresent()
+                || !areSameLocations(currentTextHighlight, receivedHighlight)) {
+            currentTextHighlight = receivedHighlight;
+        }
+    }
+
+    /**
+     * Compare the {@link DataRange}s using on the from/to {@link Location};
+     */
+    private boolean areSameLocations(final DataRange highlight1, final DataRange highlight2) {
+        if (highlight1 == null && highlight2 == null) {
+            return true;
+        } else if (highlight1 != null && highlight2 == null) {
+            return false;
+        } else if (highlight1 == null) {
+            return false;
+        } else {
+            return Objects.equals(highlight1.getLocationFrom(), highlight2.getLocationFrom())
+                    && Objects.equals(highlight1.getLocationTo(), highlight2.getLocationTo());
         }
     }
 
@@ -789,7 +818,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         @Override
         public boolean isSegmented() {
-            return false;
+            return DataType.SEGMENTED.equals(lastResult.getDataType());
         }
 
         @Override

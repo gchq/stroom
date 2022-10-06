@@ -14,10 +14,12 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
 
     private static final String TITLE_PREFIX = "Section of the source data visible in the editor";
     private static final String TITLE_SUFFIX = "\nClick elsewhere in the bar to move the visible section.";
+    private static final String TITLE_SUFFIX_DISABLED = "\nUse the Source View to see all of the data.";
     private static final double UNCERTAINTY_FACTOR_MAX = 3;
     private static final double UNCERTAINTY_FACTOR_MIN = 1.1;
     private static final double UNCERTAINTY_FACTOR_DELTA = 0.1;
     private static final String BAR_COLOUR_KNOWN_BOUNDED = "#1e88e5"; // Stroom blue
+    private static final String BAR_COLOUR_KNOWN_BOUNDED_DISABLED = "#616161"; // Material Grey 700
     private static final String BAR_COLOUR_COMPLETE = "#15a32c"; // Stroom green
     private static final String BAR_COLOUR_UNKNOWN_BOUND = "#FFCA28"; // Material Design Amber 300
 
@@ -26,6 +28,8 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
     private Progress progress;
     private double computedUpperBound = 0;
     private double uncertaintyFactor = UNCERTAINTY_FACTOR_MAX;
+    private String titleSuffix = TITLE_SUFFIX_DISABLED;
+    private String barColourKnownBounded = BAR_COLOUR_KNOWN_BOUNDED_DISABLED;
 
     @Inject
     public ProgressPresenter(final EventBus eventBus, final ProgressView view) {
@@ -59,12 +63,19 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
 
         if (valueConsumer == null) {
             getView().setClickHandler(null);
+            titleSuffix = TITLE_SUFFIX_DISABLED;
+            barColourKnownBounded = BAR_COLOUR_KNOWN_BOUNDED_DISABLED;
         } else {
             getView().setClickHandler(percentage ->
                     progress.getUpperBound()
                             .map(upperBound ->
                                     upperBound * percentage / 100)
                             .ifPresent(valueConsumer));
+            titleSuffix = TITLE_SUFFIX;
+            barColourKnownBounded = BAR_COLOUR_KNOWN_BOUNDED;
+        }
+        if (progress != null) {
+            update();
         }
     }
 
@@ -138,16 +149,16 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
             barColour = BAR_COLOUR_COMPLETE;
             title = "All data visible in the editor";
         } else if (progress.hasKnownUpperBound()) {
-            barColour = BAR_COLOUR_KNOWN_BOUNDED;
+            barColour = barColourKnownBounded;
             title = TITLE_PREFIX
                     + " ("
                     + formatPercentage(getWindowAsPercentage())
-                    + "%). " + TITLE_SUFFIX;
+                    + "%). " + titleSuffix;
         } else {
             barColour = BAR_COLOUR_UNKNOWN_BOUND;
             title = TITLE_PREFIX
                     + " (total size unknown). "
-                    + TITLE_SUFFIX;
+                    + titleSuffix;
         }
         getView().setProgressBarColour(barColour);
         getView().setTitle(title);

@@ -98,9 +98,11 @@ public class HexDump {
      * number of chars rendered by the hex dump.
      */
     public long getDumpCharCount() {
+        final int lineBreakCount = Math.max(0, lines.size() - 1); // No \n on last line
         return lines.stream()
-                .mapToInt(HexDumpLine::getDumpLineCharCount)
-                .sum();
+                .mapToInt(HexDumpLine::getDumpLineCharCount) // ignore lack of \n at this point
+                .sum()
+                + lineBreakCount;
     }
 
     public String getHexDumpAsStr() {
