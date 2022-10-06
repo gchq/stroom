@@ -153,7 +153,7 @@ public class SteppingController {
         // Figure out what the highlighted portion of the input stream should be.
         TextRange highlight = DEFAULT_TEXT_RANGE;
         if (locationHolder != null && locationHolder.getCurrentLocation() != null) {
-            highlight = NullSafe.get(locationHolder.getCurrentLocation().getHighlight(),
+            highlight = NullSafe.get(locationHolder.getCurrentLocation().getFirstHighlight(),
                     DataRange::getAsTextRange,
                     opt -> opt.orElse(null));
         }

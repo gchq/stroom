@@ -532,10 +532,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     getView().setNavigatorView(null);
                 }
                 highlights = new ArrayList<>();
-                if (sourceLocation.getHighlight() != null) {
-                    sourceLocation.getHighlight()
-                            .getAsTextRange()
-                                    .ifPresent(highlights::add);
+                if (sourceLocation.getFirstHighlight() != null) {
+                    sourceLocation.getFirstHighlight()
+                                    .getAsTextRange()
+                                            .ifPresent(highlights::add);
                 }
                 highlightMetaId = sourceLocation.getMetaId();
                 highlightPartIndex = sourceLocation.getPartIndex();

@@ -229,6 +229,7 @@ public class DataRange {
         return Optional.ofNullable(byteOffsetTo);
     }
 
+    @JsonIgnore
     public Optional<TextRange> getAsTextRange() {
         if (locationFrom != null && locationTo != null) {
             return Optional.of(new TextRange(locationFrom, locationTo));
@@ -271,18 +272,22 @@ public class DataRange {
                                                             final Function<DataRange, T> fromFunc,
                                                             final Function<DataRange, T> toFunc) {
         final boolean result;
-        final T thisFrom = fromFunc.apply(this);
-        final T thisTo = toFunc.apply(this);
-        if (thisFrom == null || thisTo == null) {
+        if (other == null) {
             result = false;
         } else {
-            final T otherFrom = fromFunc.apply(other);
-            final T otherTo = toFunc.apply(other);
-            if (otherFrom == null || otherTo == null) {
+            final T thisFrom = fromFunc.apply(this);
+            final T thisTo = toFunc.apply(this);
+            if (thisFrom == null || thisTo == null) {
                 result = false;
             } else {
-                result = thisFrom.compareTo(otherFrom) >= 0
-                        && thisTo.compareTo(otherTo) <= 0;
+                final T otherFrom = fromFunc.apply(other);
+                final T otherTo = toFunc.apply(other);
+                if (otherFrom == null || otherTo == null) {
+                    result = false;
+                } else {
+                    result = thisFrom.compareTo(otherFrom) >= 0
+                            && thisTo.compareTo(otherTo) <= 0;
+                }
             }
         }
         return result;

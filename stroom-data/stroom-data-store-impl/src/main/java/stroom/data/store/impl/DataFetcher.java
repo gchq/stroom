@@ -97,6 +97,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Provider;
 import javax.xml.transform.TransformerException;
 
@@ -745,27 +746,25 @@ public class DataFetcher {
         return hexDump;
     }
 
-    private DataRange calculateHexDumpHighlight(final DataRange requestedHighlight) {
+    private List<DataRange> calculateHexDumpHighlights(final DataRange requestedHighlight) {
         if (requestedHighlight == null) {
             return null;
         } else {
             if (requestedHighlight.getOptByteOffsetFrom().isPresent()
                     && requestedHighlight.getOptByteOffsetTo().isPresent()) {
-                final Long byteFromInc = requestedHighlight.getOptByteOffsetFrom().get();
-                final Long byteToInc = requestedHighlight.getOptByteOffsetTo().get();
 
-                final Location locationFrom = HexDumpUtil.calculateLocation(byteFromInc);
-                Location locationTo = HexDumpUtil.calculateLocation(byteToInc);
-                // As this is the end of the range we want the 2nd char of the hex pair
-                locationTo = DefaultLocation.of(locationTo.getLineNo(), locationTo.getColNo() + 1);
-
-                return requestedHighlight.copy()
-                        .fromLocation(locationFrom)
-                        .toLocation(locationTo)
-                        .build();
+                return HexDumpUtil.calculateHighlights(
+                                requestedHighlight.getOptByteOffsetFrom().get(),
+                                requestedHighlight.getOptByteOffsetTo().get())
+                        .stream()
+                        .map(textRange -> DataRange.builder()
+                                .fromLocation(textRange.getFrom())
+                                .toLocation(textRange.getTo())
+                                .build())
+                        .collect(Collectors.toList());
             } else {
                 // Don't have a byte range to work with so can't do anything
-                return requestedHighlight;
+                return List.of(requestedHighlight);
             }
         }
     }
@@ -794,13 +793,17 @@ public class DataFetcher {
                     ((long) (lastLine.getLineNo() - 1) * HexDump.MAX_CHARS_PER_DUMP_LINE)
                             + lastLine.getDumpLineCharCount() - 1);
 
-            final DataRange actualHighlight = calculateHexDumpHighlight(sourceLocation.getHighlight());
+            final DataRange requestedHighlight = sourceLocation.getHighlights() != null
+                    && !sourceLocation.getHighlights().isEmpty()
+                    ? sourceLocation.getHighlights().get(0)
+                    : null;
+            final List<DataRange> actualHighlights = calculateHexDumpHighlights(requestedHighlight);
 
             final SourceLocation.Builder sourceLocationBuilder = SourceLocation.builder(sourceLocation.getMetaId())
                     .withPartIndex(sourceLocation.getPartIndex())
                     .withChildStreamType(sourceLocation.getOptChildType()
                             .orElse(null))
-                    .withHighlight(actualHighlight) // pass the modified highlight back
+                    .withHighlight(actualHighlights) // pass the modified highlight back
                     .withDataRange(DataRange.builder()
                             .fromCharOffset(fromCharOffset)
                             .toCharOffset(toCharOffset)
@@ -849,7 +852,8 @@ public class DataFetcher {
         final NonSegmentedIncludeCharPredicate exclusiveToPredicate = buildExclusiveToPredicate(
                 dataRange, limitChars);
 
-        final DataRange highlight = sourceLocation.getHighlight();
+        // Currently, only support a single highlight for text data
+        final DataRange highlight = sourceLocation.getFirstHighlight();
         // A previous call may have already decorated the highlight byte offsets.
         final boolean isHighlightDecorationRequired = highlight != null
                 && highlight.getOptByteOffsetFrom().isEmpty()
@@ -976,7 +980,7 @@ public class DataFetcher {
 //                            .orElseThrow())
                     .withLength((long) charData.length())
                     .build();
-            actualHighlight = sourceLocation.getHighlight();
+            actualHighlight = highlight;
         } else if (strBuilderResultRange.length() == 0) {
             actualDataRange = null;
             charData = "## No Data ##";
@@ -990,9 +994,8 @@ public class DataFetcher {
         // Decorate the input highlight with byte offsets in case future calls are in hex mode
         // which can only work in byte terms.
         actualHighlight = isHighlightDecorationRequired
-                ? NullSafe.get(
-                highlight,
-                highlight2 -> highlight2.copy()
+                ? NullSafe.get(highlight, highlight2 ->
+                highlight2.copy()
                         .fromByteOffset(tracker.highlightStartByteOffsetInc)
                         .toByteOffset(tracker.highlightEndByteOffsetExc - 1)
                         .build())

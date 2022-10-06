@@ -25,6 +25,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -48,7 +51,10 @@ public class SourceLocation {
     @JsonProperty
     private final DataRange dataRange; // The optional specified range of the character data which may be a subset
     @JsonProperty
-    private final DataRange highlight; // The optional highlighted range of the character data which may be a subset
+    // The optional highlighted ranges of the character data which may be a subset. Multiple highlights currently
+    // to support hex dump view as a contiguous block of highlighted bytes requires multiple highlighted sections
+    // in the rendered hex dump view, e.g. some for the hex pairs and some for the decoded bytes column.
+    private final List<DataRange> highlights;
 
     @JsonCreator
     public SourceLocation(@JsonProperty("metaId") final long metaId,
@@ -56,13 +62,13 @@ public class SourceLocation {
                           @JsonProperty("partIndex") final long partIndex,
                           @JsonProperty("recordIndex") final long recordIndex,
                           @JsonProperty("dataRange") final DataRange dataRange,
-                          @JsonProperty("highlight") final DataRange highlight) {
+                          @JsonProperty("highlights") final List<DataRange> highlights) {
         this.metaId = metaId;
         this.childType = childType;
         this.partIndex = partIndex;
         this.recordIndex = recordIndex;
         this.dataRange = dataRange;
-        this.highlight = highlight;
+        this.highlights = highlights;
     }
 
     private SourceLocation(final Builder builder) {
@@ -71,7 +77,7 @@ public class SourceLocation {
         childType = builder.childType;
         recordIndex = builder.recordIndex;
         dataRange = builder.dataRange;
-        highlight = builder.highlight;
+        highlights = builder.highlights;
     }
 
     public static Builder builder(final long metaId) {
@@ -122,15 +128,23 @@ public class SourceLocation {
     }
 
     /**
-     * @return The range of data that is highlighted, may be null.
+     * @return The range(s) of data that are highlighted or an empty list
      */
-    public DataRange getHighlight() {
-        return highlight;
+    public List<DataRange> getHighlights() {
+        return highlights != null
+                ? highlights
+                : Collections.emptyList();
     }
 
+    /**
+     * Most users of {@link SourceLocation} are only expecting one highlight so this is a helper
+     * for them. Returns null if there isn't one.
+     */
     @JsonIgnore
-    public Optional<DataRange> getOptHighlight() {
-        return Optional.ofNullable(highlight);
+    public DataRange getFirstHighlight() {
+        return highlights != null && !highlights.isEmpty()
+                ? highlights.get(0)
+                : null;
     }
 
     public boolean isSameSource(final SourceLocation other) {
@@ -176,12 +190,12 @@ public class SourceLocation {
                 recordIndex == that.recordIndex &&
                 Objects.equals(childType, that.childType) &&
                 Objects.equals(dataRange, that.dataRange) &&
-                Objects.equals(highlight, that.highlight);
+                Objects.equals(highlights, that.highlights);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(metaId, childType, partIndex, recordIndex, dataRange, highlight);
+        return Objects.hash(metaId, childType, partIndex, recordIndex, dataRange, highlights);
     }
 
     @Override
@@ -192,7 +206,7 @@ public class SourceLocation {
                 ", partIndex=" + partIndex +
                 ", recordIndex=" + recordIndex +
                 ", dataRange=" + dataRange +
-                ", highlight=" + highlight +
+                ", highlight=" + highlights +
                 '}';
     }
 
@@ -211,7 +225,7 @@ public class SourceLocation {
         private String childType;
         private long recordIndex; // Non-segmented data has no record no., zero based
         private DataRange dataRange;
-        private DataRange highlight;
+        private List<DataRange> highlights;
         private boolean truncateToWholeLines = false;
 
         private Builder(final long metaId) {
@@ -227,7 +241,7 @@ public class SourceLocation {
             this.childType = currentSourceLocation.childType;
             this.recordIndex = currentSourceLocation.recordIndex;
             this.dataRange = currentSourceLocation.dataRange;
-            this.highlight = currentSourceLocation.highlight;
+            this.highlights = currentSourceLocation.highlights;
         }
 
         /**
@@ -269,18 +283,32 @@ public class SourceLocation {
 
         public Builder withHighlight(final TextRange textRange) {
             if (textRange == null) {
-                this.highlight = null;
+                this.highlights = null;
             } else {
-                this.highlight = DataRange.builder()
+                // GWT so no List.of() :-(
+                this.highlights = Collections.singletonList(DataRange.builder()
                         .fromLocation(textRange.getFrom())
                         .toLocation(textRange.getTo())
-                        .build();
+                        .build());
             }
             return this;
         }
 
         public Builder withHighlight(final DataRange highlight) {
-            this.highlight = highlight;
+            if (highlight == null) {
+                this.highlights = Collections.emptyList();
+            } else {
+                this.highlights = Arrays.asList(highlight);
+            }
+            return this;
+        }
+
+        public Builder withHighlight(final List<DataRange> highlights) {
+            if (highlights == null) {
+                this.highlights = Collections.emptyList();
+            } else {
+                this.highlights = highlights;
+            }
             return this;
         }
 

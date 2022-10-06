@@ -19,10 +19,14 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.LocationHolder.FunctionType;
+import stroom.util.NullSafe;
+import stroom.util.shared.DataRange;
+import stroom.util.shared.Location;
 
 import javax.inject.Inject;
 
 class ColFrom extends AbstractLocationFunction {
+
     @Inject
     ColFrom(final LocationHolder locationHolder) {
         super(locationHolder);
@@ -30,7 +34,12 @@ class ColFrom extends AbstractLocationFunction {
 
     @Override
     String getValue(final SourceLocation location) {
-        return String.valueOf(location.getHighlight().getLocationFrom().getColNo());
+        return NullSafe.get(
+                location,
+                SourceLocation::getFirstHighlight,
+                DataRange::getLocationFrom,
+                Location::getColNo,
+                String::valueOf);
     }
 
     @Override

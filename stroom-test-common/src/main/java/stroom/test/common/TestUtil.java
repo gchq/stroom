@@ -317,8 +317,9 @@ public class TestUtil {
                 @SuppressWarnings("unused") final Class<O1> output1Type,
                 @SuppressWarnings("unused") final Class<O2> output2Type) {
 
-            @SuppressWarnings("unchecked") final TypeLiteral<O> typeLiteral = (TypeLiteral<O>) new TypeLiteral<Tuple2<O1, O2>>() {
-            };
+            @SuppressWarnings("unchecked") final TypeLiteral<O> typeLiteral =
+                    (TypeLiteral<O>) new TypeLiteral<Tuple2<O1, O2>>() {
+                    };
 
             return new OutputBuilder<>(this, typeLiteral);
         }
@@ -399,11 +400,30 @@ public class TestUtil {
         /**
          * Add a test case to the {@link DynamicTest} {@link Stream} by specifying the input
          * and expected output of the test.
+         *
+         * @param input          The input to the test case.
+         * @param expectedOutput The expected output of the test case.
          */
         @SuppressWarnings("unused")
         public CasesBuilder<I, O> addCase(final I input,
                                           final O expectedOutput) {
             addCase(TestCase.of(input, expectedOutput));
+            return this;
+        }
+
+        /**
+         * Add a test case to the {@link DynamicTest} {@link Stream} by specifying the input
+         * and expected output of the test.
+         *
+         * @param name           The name of the test case.
+         * @param input          The input to the test case.
+         * @param expectedOutput The expected output of the test case.
+         */
+        @SuppressWarnings("unused")
+        public CasesBuilder<I, O> addCase(final String name,
+                                          final I input,
+                                          final O expectedOutput) {
+            addCase(TestCase.of(name, input, expectedOutput));
             return this;
         }
 

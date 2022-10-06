@@ -191,7 +191,7 @@ class TestHexDumpUtil {
     }
 
     @TestFactory
-    Stream<DynamicTest> testCalculateHighlights_singleLine() throws IOException {
+    Stream<DynamicTest> testCalculateHighlights() throws IOException {
 
         final Charset charset = StandardCharsets.US_ASCII;
         final String input = """
@@ -208,6 +208,9 @@ class TestHexDumpUtil {
         final HexDump hexDump = HexDumpUtil.hexDump(inputStream, charset);
         LOGGER.info("hexDump: \n{}", hexDump.getHexDumpAsStr());
 
+        // Run the test then copy the hexdump into a text editor to check the line/col positions.
+        // NOTE: the 'to' col is the 2nd char of the hex pair
+
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(Long.class, Long.class)
                 .withWrappedOutputType(new TypeLiteral<List<TextRange>>() {
@@ -216,56 +219,75 @@ class TestHexDumpUtil {
                     final Long byteOffsetFrom = testCase.getInput()._1;
                     final Long byteOffsetTo = testCase.getInput()._2;
                     final List<TextRange> expectedHighlights = testCase.getExpectedOutput();
+                    final List<TextRange> highlights = HexDumpUtil.calculateHighlights(byteOffsetFrom, byteOffsetTo);
 
-                    final List<TextRange> highlights = HexDumpUtil.calculateHighlights(hexDump,
-                            byteOffsetFrom,
-                            byteOffsetTo);
-
+                    // Order of highlights is not important
                     Assertions.assertThat(highlights)
-                            .containsExactlyElementsOf(expectedHighlights);
+                            .containsExactlyInAnyOrderElementsOf(expectedHighlights);
                 })
-                // Run the test then copy the hexdump into a text editor to check the line/col positions.
-                // NOTE: the 'to' col is the first char of the hex pair
                 .addCase(
                         Tuple.of(0L, 4L),
-                        List.of(TextRange.of(
-                                DefaultLocation.of(1, 13),
-                                DefaultLocation.of(1, 26))))
+                        List.of(TextRange.of(// hex pairs
+                                        DefaultLocation.of(1, 13),
+                                        DefaultLocation.of(1, 27)),
+                                TextRange.of(// decoded chars
+                                        DefaultLocation.of(1, 117),
+                                        DefaultLocation.of(1, 121))))
                 .addCase(
                         Tuple.of(2L, 31L),
-                        List.of(TextRange.of(
-                                DefaultLocation.of(1, 19),
-                                DefaultLocation.of(1, 113))))
+                        List.of(TextRange.of(// hex pairs
+                                        DefaultLocation.of(1, 19),
+                                        DefaultLocation.of(1, 114)),
+                                TextRange.of(// decoded chars
+                                        DefaultLocation.of(1, 119),
+                                        DefaultLocation.of(1, 148))))
                 // One full line
                 .addCase(
                         Tuple.of(32L, 63L),
-                        List.of(TextRange.of(
-                                DefaultLocation.of(2, 13),
-                                DefaultLocation.of(2, 113))))
+                        List.of(TextRange.of(// hex pairs
+                                        DefaultLocation.of(2, 13),
+                                        DefaultLocation.of(2, 114)),
+                                TextRange.of(// decoded chars
+                                        DefaultLocation.of(2, 117),
+                                        DefaultLocation.of(2, 148))))
                 // Two partial lines
                 .addCase(
                         Tuple.of(36L, 71L),
-                        List.of(
-                                TextRange.of(
+                        List.of(TextRange.of(// hex pairs
                                         DefaultLocation.of(2, 26),
-                                        DefaultLocation.of(2, 113)),
-                                TextRange.of(
+                                        DefaultLocation.of(2, 114)),
+                                TextRange.of(// hex pairs
                                         DefaultLocation.of(3, 13),
-                                        DefaultLocation.of(3, 35)))
+                                        DefaultLocation.of(3, 36)),
+                                TextRange.of(// decoded chars
+                                        DefaultLocation.of(2, 121),
+                                        DefaultLocation.of(2, 148)),
+                                TextRange.of(// decoded chars
+                                        DefaultLocation.of(3, 117),
+                                        DefaultLocation.of(3, 124)))
                 )
                 // Three lines, two partial, one full
                 .addCase(
                         Tuple.of(3L, 68L),
                         List.of(
-                                TextRange.of(
+                                TextRange.of(// hex pairs
                                         DefaultLocation.of(1, 22),
-                                        DefaultLocation.of(1, 113)), // |    <-------->|
-                                TextRange.of(
+                                        DefaultLocation.of(1, 114)), // |    <-------->|
+                                TextRange.of(// hex pairs
                                         DefaultLocation.of(2, 13),
-                                        DefaultLocation.of(2, 113)), // |<------------>|
-                                TextRange.of(
+                                        DefaultLocation.of(2, 114)), // |<------------>|
+                                TextRange.of(// hex pairs
                                         DefaultLocation.of(3, 13),
-                                        DefaultLocation.of(3, 26)))  // |<--->         |
+                                        DefaultLocation.of(3, 27)),  // |<--->         |
+                                TextRange.of(// decoded chars
+                                        DefaultLocation.of(1, 120),
+                                        DefaultLocation.of(1, 148)), //                  |   <--->|
+                                TextRange.of(// decoded chars
+                                        DefaultLocation.of(2, 117),
+                                        DefaultLocation.of(2, 148)), //                  |<------>|
+                                TextRange.of(// decoded chars
+                                        DefaultLocation.of(3, 117),
+                                        DefaultLocation.of(3, 121)))  //                 |<-->    |
                 )
                 .build();
     }

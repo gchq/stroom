@@ -19,6 +19,9 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.LocationHolder.FunctionType;
+import stroom.util.NullSafe;
+import stroom.util.shared.DataRange;
+import stroom.util.shared.Location;
 
 import javax.inject.Inject;
 
@@ -30,7 +33,12 @@ class LineTo extends AbstractLocationFunction {
 
     @Override
     String getValue(final SourceLocation sourceLocation) {
-        return String.valueOf(sourceLocation.getHighlight().getLocationTo().getLineNo());
+        return NullSafe.get(
+                sourceLocation,
+                SourceLocation::getFirstHighlight,
+                DataRange::getLocationTo,
+                Location::getLineNo,
+                String::valueOf);
     }
 
     @Override
