@@ -33,5 +33,8 @@ public class DataStoreModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(DataResourceImpl.class);
+
+        RestResourcesBinder.create(binder())
+                .bind(DataDownloadImpl.class);
     }
 }
