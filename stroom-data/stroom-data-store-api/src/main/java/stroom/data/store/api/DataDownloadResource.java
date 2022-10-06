@@ -20,7 +20,7 @@ import javax.ws.rs.core.Response;
 @Path("/dataDownload" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface DataDownload extends RestResource {
+public interface DataDownloadResource extends RestResource {
 
     /*
     This method is defined separately to `DataResource` due to GWT incompatibility with the jaxax `Response` class.

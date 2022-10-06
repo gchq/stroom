@@ -1,6 +1,6 @@
 package stroom.data.store.impl;
 
-import stroom.data.store.api.DataDownload;
+import stroom.data.store.api.DataDownloadResource;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -27,16 +27,16 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-public class DataDownloadImpl implements DataDownload {
+public class DataDownloadResourceImpl implements DataDownloadResource {
 
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<ResourceStore> resourceStoreProvider;
     private final Provider<DataService> dataServiceProvider;
 
     @Inject
-    DataDownloadImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
-                     final Provider<ResourceStore> resourceStoreProvider,
-                     final Provider<DataService> dataServiceProvider) {
+    DataDownloadResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
+                             final Provider<ResourceStore> resourceStoreProvider,
+                             final Provider<DataService> dataServiceProvider) {
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.resourceStoreProvider = resourceStoreProvider;
         this.dataServiceProvider = dataServiceProvider;
