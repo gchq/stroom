@@ -25,6 +25,7 @@ dependencies {
     testImplementation project(':stroom-util')
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
+    testImplementation libs.gwt_dev
     testImplementation libs.junit_jupiter_api
     testImplementation libs.slf4j_api
 

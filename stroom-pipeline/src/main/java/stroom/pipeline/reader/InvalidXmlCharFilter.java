@@ -110,7 +110,7 @@ public class InvalidXmlCharFilter extends TransformReader {
         for (int i = 0; i < length; i++) {
             final char ch = buffer[i];
 
-            if (!xmlChars.isValid(ch)) {
+            if (!xmlChars.isValidLiteral(ch)) {
                 if (Character.isHighSurrogate(ch)) {
                     boolean validSurrogate = false;
 
@@ -122,7 +122,7 @@ public class InvalidXmlCharFilter extends TransformReader {
                         final char ch2 = buffer[i];
                         if (Character.isLowSurrogate(ch2)) {
                             final int supplemental = Character.toCodePoint(ch, ch2);
-                            validSurrogate = xmlChars.isValid(supplemental);
+                            validSurrogate = xmlChars.isValidLiteral(supplemental);
                         }
                     } else {
                         validSurrogate = validLowSurrogateAhead(ch);
@@ -174,7 +174,7 @@ public class InvalidXmlCharFilter extends TransformReader {
 
                 if (Character.isLowSurrogate(ch2)) {
                     final int supplemental = Character.toCodePoint(ch, ch2);
-                    return xmlChars.isValid(supplemental);
+                    return xmlChars.isValidLiteral(supplemental);
                 }
             }
         }

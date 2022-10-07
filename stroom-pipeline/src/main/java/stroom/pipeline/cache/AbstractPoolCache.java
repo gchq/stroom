@@ -17,7 +17,7 @@
 package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
@@ -45,14 +45,18 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
     private static final String PARAM_NAME_LIMIT = "limit";
 
     // Holds all 1-* pooled items for each K. PoolKey hashed on object instance not content.
-    private final ICache<PoolKey<K>, PoolItem<V>> cache;
+    private final LoadingStroomCache<PoolKey<K>, PoolItem<V>> cache;
     // Provides all the cache keys (PoolKey) for each K
     private final Map<K, LinkedBlockingDeque<PoolKey<K>>> keyMap = new ConcurrentHashMap<>();
 
     public AbstractPoolCache(final CacheManager cacheManager,
                              final String cacheName,
                              final Supplier<CacheConfig> cacheConfigSupplier) {
-        cache = cacheManager.create(cacheName, cacheConfigSupplier, this::create, this::destroy);
+        cache = cacheManager.createLoadingCache(
+                cacheName,
+                cacheConfigSupplier,
+                this::create,
+                this::destroy);
     }
 
     private PoolItem<V> create(final PoolKey<K> poolKey) {
@@ -144,8 +148,9 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
             try {
                 final PoolKey<K> poolKey = item.getKey();
 
-                if (cache.getOptional(poolKey).isEmpty()) {
+                if (cache.getIfPresent(poolKey).isEmpty()) {
                     // Item no longer in the cache so no point returning it to the deque
+                    // Cache may have been cleared/rebuilt or the item aged off.
                     LOGGER.debug("Returning item {} whose poolKey is not in the cache, dropping it.", item);
                 } else {
                     // Make this key available again to other threads.

@@ -2,10 +2,13 @@ package stroom.index.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.shared.ResultPage;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface IndexVolumeDao {
 
@@ -46,7 +49,13 @@ public interface IndexVolumeDao {
 
     List<IndexVolume> getVolumesInGroup(String groupName);
 
+    List<IndexVolume> getVolumesInGroup(final int groupid);
+
+    Map<String, List<IndexVolume>> getVolumesOnNodeGrouped(final String nodeName);
+
     ResultPage<IndexVolume> find(ExpressionCriteria criteria);
+
+    Set<IndexVolumeGroup> getGroups(final String nodeName, final String path);
 //
 //    /**
 //     * Add to membership of a volume group.

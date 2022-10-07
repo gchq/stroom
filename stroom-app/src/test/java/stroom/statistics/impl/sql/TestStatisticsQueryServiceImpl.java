@@ -137,7 +137,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
     private final boolean ignoreAllTests = false;
 
     @BeforeEach
-    void setup() {
+    void localSetup() {
 //        try {
 //            sqlStatisticAggregationTransactionHelper
 //                    .clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);

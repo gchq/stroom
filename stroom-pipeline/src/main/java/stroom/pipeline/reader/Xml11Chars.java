@@ -135,4 +135,18 @@ public class Xml11Chars implements XmlChars {
         return (c < 0x10000 && (XML11CHARS[c] & MASK_XML11_VALID) != 0)
                 || (0x10000 <= c && c <= 0x10FFFF);
     }
+
+    /**
+     * Returns true if the specified character is valid and not a control
+     * character.
+     * This method also checks the surrogate character range from 0x10000 to 0x10FFFF.
+     *
+     * @param c The character to check.
+     */
+    @Override
+    public boolean isValidLiteral(int c) {
+        return ((c < 0x10000 && ((XML11CHARS[c] & MASK_XML11_VALID) != 0
+                && (XML11CHARS[c] & MASK_XML11_CONTROL) == 0))
+                || (0x10000 <= c && c <= 0x10FFFF));
+    }
 }

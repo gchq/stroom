@@ -34,7 +34,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
 
         effectiveStreamCache = CacheConfig.builder()
                 .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .expireAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
     }
 

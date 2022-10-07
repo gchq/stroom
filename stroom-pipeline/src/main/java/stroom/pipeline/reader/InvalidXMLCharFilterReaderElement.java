@@ -43,7 +43,7 @@ import javax.inject.Inject;
         icon = ElementIcons.STREAM)
 public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
 
-    private static final char REPLACEMENT_CHAR = 0xfffd; // The <?> symbol.
+    private static final char REPLACEMENT_CHAR = 0xfffd; // The � symbol (3 bytes)
     private static final Xml10Chars XML_10_CHARS = new Xml10Chars();
     private static final Xml11Chars XML_11_CHARS = new Xml11Chars();
 

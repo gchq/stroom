@@ -21,6 +21,7 @@ import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.shared.Clearable;
@@ -45,6 +46,9 @@ public class FsDataStoreModule extends AbstractModule {
 
         ServletBinder.create(binder())
                 .bind(EchoServlet.class);
+
+        HasSystemInfoBinder.create(binder())
+                .bind(FsVolumeService.class);
     }
 
     @Override

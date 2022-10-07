@@ -4,6 +4,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeResource;
+import stroom.index.shared.ValidationResult;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -17,6 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -44,6 +46,24 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
     @Override
     public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
         return indexVolumeServiceProvider.get().find(criteria);
+    }
+
+    @Override
+    public ValidationResult validate(final IndexVolume indexVolume) {
+        if (indexVolume.getNodeName() == null || indexVolume.getNodeName().isEmpty()) {
+            return indexVolumeServiceProvider.get().validate(indexVolume);
+        } else {
+            return nodeServiceProvider.get().remoteRestResult(
+                    indexVolume.getNodeName(),
+                    ValidationResult.class,
+                    () -> ResourcePaths.buildAuthenticatedApiPath(
+                            IndexVolumeResource.BASE_PATH,
+                            IndexVolumeResource.VALIDATE_SUB_PATH),
+                    () ->
+                            indexVolumeServiceProvider.get().validate(indexVolume),
+                    builder ->
+                            builder.post(Entity.json(indexVolume)));
+        }
     }
 
     @Override

@@ -29,10 +29,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestBadTextXMLFilterReader {
 
     //  Used to replace an unknown, unrecognized, or unrepresentable character
+    @SuppressWarnings("checkstyle:AvoidEscapedUnicodeCharacters")
     private static final char REPLACEMENT_CHARACTER = '\ufffd'; // REPLACEMENT CHARACTER
     //  High Surrogates
+    @SuppressWarnings("checkstyle:AvoidEscapedUnicodeCharacters")
     private static final char HIGH_SURROGATE = '\uD801'; // INVALID CHARACTER
     //  Low Surrogates
+    @SuppressWarnings("checkstyle:AvoidEscapedUnicodeCharacters")
     private static final char LOW_SURROGATE = '\uDC01'; // INVALID CHARACTER
 
     private static final String m_aTrivialValidXML = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +

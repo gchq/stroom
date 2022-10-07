@@ -96,6 +96,9 @@ public class FsVolumeState {
         this.bytesUsed = bytesUsed;
     }
 
+    /**
+     * @return The number of bytes free for use, relative to the limit set or the total bytes if no limit is set.
+     */
     public Long getBytesFree() {
         return bytesFree;
     }

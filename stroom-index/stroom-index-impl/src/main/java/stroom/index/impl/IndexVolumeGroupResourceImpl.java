@@ -4,7 +4,6 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
-import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
@@ -33,6 +32,11 @@ class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
     @Override
     public IndexVolumeGroup fetch(final Integer id) {
         return indexVolumeGroupServiceProvider.get().get(id);
+    }
+
+    @Override
+    public IndexVolumeGroup fetchByName(final String name) {
+        return indexVolumeGroupServiceProvider.get().get(name);
     }
 
     @Override

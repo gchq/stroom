@@ -22,6 +22,7 @@ import stroom.app.commands.DbMigrationCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
+import stroom.app.logging.DefaultLoggingFilter;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
@@ -133,6 +134,12 @@ public class App extends Application<Config> {
     }
 
     public static void main(final String[] args) throws Exception {
+        // hibernate-validator seems to use jboss-logging which spits the following ERROR
+        // out to the console if this prop is not set:
+        //   ERROR StatusLogger Log4j2 could not find a logging implementation.
+        //   Please add log4j-core to the classpath. Using SimpleLogger to log to the console...
+        System.setProperty("org.jboss.logging.provider", "slf4j");
+
         final Path yamlConfigFile = YamlUtil.getYamlFileFromArgs(args);
         new App(yamlConfigFile).run(args);
     }
@@ -144,6 +151,7 @@ public class App extends Application<Config> {
 
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
+
         // Dropwizard 2.x no longer fails on unknown properties by default but we want it to.
         bootstrap.getObjectMapper().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
@@ -220,8 +228,8 @@ public class App extends Application<Config> {
         // TODO need to establish if there is a performance hit for using the JUL to SLF bridge
         //   see http://www.slf4j.org/legacy.html#jul-to-slf4j
         environment.jersey().register(
-                new LoggingFeature(
-                        java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
+                new DefaultLoggingFilter(
+                        java.util.logging.Logger.getLogger(DefaultLoggingFilter.ENTITY_LOGGER_PROPERTY),
                         Level.INFO,
                         LoggingFeature.Verbosity.PAYLOAD_ANY,
                         LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));

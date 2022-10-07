@@ -5,6 +5,7 @@ import stroom.config.app.AppConfigModule;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
 import stroom.config.global.impl.ConfigMapper;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -48,7 +49,9 @@ public class AppConfigTestModule extends AppConfigModule {
 
         ConfigHolderImpl() {
             try {
-                final Path dir = Files.createTempDirectory("stroom");
+                final String gradleWorker = DbTestUtil.getGradleWorker();
+                final String prefix = "stroom_" + gradleWorker + "_";
+                final Path dir = Files.createTempDirectory(prefix);
                 this.path = dir.resolve("test.yml");
 
                 this.appConfig = new AppConfig();

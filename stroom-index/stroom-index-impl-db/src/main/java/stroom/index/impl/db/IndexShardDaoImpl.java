@@ -21,19 +21,17 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardFields;
 import stroom.index.impl.IndexStore;
-import stroom.index.impl.IndexVolumeDao;
-import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
-import stroom.index.impl.selection.RoundRobinVolumeSelector;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -48,7 +46,6 @@ import org.jooq.Result;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -67,7 +64,10 @@ import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
+@Singleton // holding all the volume selectors
 class IndexShardDaoImpl implements IndexShardDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardDaoImpl.class);
 
     private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> {
         final IndexShard indexShard = new IndexShard();
@@ -108,33 +108,23 @@ class IndexShardDaoImpl implements IndexShardDao {
                 return record;
             };
 
-    private static final Map<String, Field<?>> FIELD_MAP = new HashMap<>();
-
-    static {
-        FIELD_MAP.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
-        FIELD_MAP.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME);
-    }
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
+            FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID,
+            FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME);
 
     private final IndexDbConnProvider indexDbConnProvider;
-    private final IndexVolumeDao indexVolumeDao;
-    private final IndexVolumeGroupService indexVolumeGroupService;
     private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
-    private final RoundRobinVolumeSelector volumeSelector = new RoundRobinVolumeSelector();
     private final IndexShardValueMapper indexShardValueMapper;
     private final IndexShardExpressionMapper indexShardExpressionMapper;
 
     @Inject
     IndexShardDaoImpl(final IndexDbConnProvider indexDbConnProvider,
-                      final IndexVolumeDao indexVolumeDao,
-                      final IndexVolumeGroupService indexVolumeGroupService,
                       final IndexShardValueMapper indexShardValueMapper,
                       final IndexShardExpressionMapper indexShardExpressionMapper) {
+
         this.indexDbConnProvider = indexDbConnProvider;
-        this.indexVolumeDao = indexVolumeDao;
-        this.indexVolumeGroupService = indexVolumeGroupService;
         this.indexShardValueMapper = indexShardValueMapper;
         this.indexShardExpressionMapper = indexShardExpressionMapper;
-
         genericDao = new GenericDao<>(
                 indexDbConnProvider,
                 INDEX_SHARD,
@@ -267,35 +257,9 @@ class IndexShardDaoImpl implements IndexShardDao {
 
     @Override
     public IndexShard create(final IndexShardKey indexShardKey,
-                             final String volumeGroupName,
+                             final IndexVolume indexVolume,
                              final String ownerNodeName,
                              final String indexVersion) {
-        // TODO : @66 Add some caching here. Maybe do this as part of volume selection.
-        List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
-        if (indexVolumes == null || indexVolumes.size() == 0) {
-            //Could be due to default volume groups not having been created - but this will force as side effect
-            List<String> groupNames = indexVolumeGroupService.getNames();
-            indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
-
-            //Check again.
-            if (indexVolumes == null || indexVolumes.size() == 0) {
-                throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName +
-                        ((groupNames == null || groupNames.size() == 0)
-                                ? " No index groups defined."
-                                :
-                                        " Available index volume groups: " + String.join(", ", groupNames)));
-            }
-        }
-
-        // TODO : @66 Add volume selection based on strategy for using least full etc, like we do for data store.
-        final IndexVolume indexVolume = volumeSelector.select(indexVolumes);
-        if (indexVolume == null) {
-            final String msg = "No shard can be created as no volumes are available for group: " +
-                    volumeGroupName +
-                    " indexUuid: " +
-                    indexShardKey.getIndexUuid();
-            throw new IndexException(msg);
-        }
 
         final IndexShard indexShard = new IndexShard();
         indexShard.setIndexUuid(indexShardKey.getIndexUuid());
