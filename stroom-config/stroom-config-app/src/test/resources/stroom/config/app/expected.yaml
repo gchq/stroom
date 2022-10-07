@@ -128,6 +128,7 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+      findOrphanedMetaBatchSize: 7000
       metaTypeExtensions:
         Detections: "dtxn"
         Error: "err"
