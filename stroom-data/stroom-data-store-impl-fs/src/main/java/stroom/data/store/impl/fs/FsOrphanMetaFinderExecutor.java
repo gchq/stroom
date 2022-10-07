@@ -51,7 +51,7 @@ class FsOrphanMetaFinderExecutor {
             LOGGER.debug(() -> "Orphan meta: " + meta.toString());
             ORPHAN_META_LOGGER.info(String.valueOf(meta.getId()));
         };
-        final FsOrphanMetaFinderProgress progress = new FsOrphanMetaFinderProgress(taskContext);
-        orphanFileFinderProvider.get().scan(orphanConsumer, progress);
+        orphanFileFinderProvider.get()
+                .scan(orphanConsumer, taskContext);
     }
 }

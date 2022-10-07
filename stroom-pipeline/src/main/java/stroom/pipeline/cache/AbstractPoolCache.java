@@ -20,17 +20,19 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
@@ -39,10 +41,12 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInfo {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCache.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractPoolCache.class);
     private static final String PARAM_NAME_LIMIT = "limit";
 
+    // Holds all 1-* pooled items for each K. PoolKey hashed on object instance not content.
     private final ICache<PoolKey<K>, PoolItem<V>> cache;
+    // Provides all the cache keys (PoolKey) for each K
     private final Map<K, LinkedBlockingDeque<PoolKey<K>>> keyMap = new ConcurrentHashMap<>();
 
     public AbstractPoolCache(final CacheManager cacheManager,
@@ -75,6 +79,24 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
         }
     }
 
+    /**
+     * Forces the eviction of all pooled items associated with this key
+     * @param key The key of the entry to evict.
+     */
+    public void invalidate(final K key) {
+        LOGGER.debug("Invalidating key {}", key);
+        // Get all the cache key instances for our key K
+        final LinkedBlockingDeque<PoolKey<K>> poolKeys = keyMap.get(key);
+        if (poolKeys != null && !poolKeys.isEmpty()) {
+            final List<PoolKey<K>> drainedPoolKeys = new ArrayList<>();
+            final int drainCount = poolKeys.drainTo(drainedPoolKeys);
+            LOGGER.debug("Invalidating {} poolKeys for key {}", drainCount, key);
+
+            // Now remove the found cache keys from the cache
+            drainedPoolKeys.forEach(cache::invalidate);
+        }
+    }
+
     protected abstract V internalCreateValue(K key);
 
     protected PoolItem<V> internalBorrowObject(final K key, final boolean usePool) {
@@ -102,7 +124,9 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
             }
 
             // Get an item from the cache using the pool key.
-            return cache.get(poolKey);
+            final PoolItem<V> val = cache.get(poolKey);
+
+            return val;
 
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
@@ -120,18 +144,22 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
             try {
                 final PoolKey<K> poolKey = item.getKey();
 
-                // Make this key available again to other threads.
-                // Get the current deque associated with the key.
-                keyMap.compute(poolKey.getKey(), (k, v) -> {
-                    LinkedBlockingDeque<PoolKey<K>> deque = v;
-                    if (deque == null) {
-                        deque = new LinkedBlockingDeque<>();
-                    }
-                    // Put the returned item onto the deque.
-                    deque.offer(poolKey);
-                    return deque;
-                });
-
+                if (cache.getOptional(poolKey).isEmpty()) {
+                    // Item no longer in the cache so no point returning it to the deque
+                    LOGGER.debug("Returning item {} whose poolKey is not in the cache, dropping it.", item);
+                } else {
+                    // Make this key available again to other threads.
+                    // Get the current deque associated with the key.
+                    keyMap.compute(poolKey.getKey(), (k, v) -> {
+                        LinkedBlockingDeque<PoolKey<K>> deque = v;
+                        if (deque == null) {
+                            deque = new LinkedBlockingDeque<>();
+                        }
+                        // Put the returned item onto the deque.
+                        deque.offer(poolKey);
+                        return deque;
+                    });
+                }
             } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
                 throw new RuntimeException(e.getMessage(), e);
@@ -158,6 +186,17 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
         sb.append(size.get());
 
         return sb.toString();
+    }
+
+    /**
+     * @return The number of keys in the pool cache
+     */
+    public long size() {
+        return cache.size();
+    }
+
+    public Set<K> getKeys() {
+        return new HashSet<>(keyMap.keySet());
     }
 
     abstract Object mapKeyForSystemInfo(final K key);

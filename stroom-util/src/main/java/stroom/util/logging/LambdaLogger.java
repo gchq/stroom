@@ -18,6 +18,7 @@ package stroom.util.logging;
 
 import org.slf4j.Logger;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -237,4 +238,32 @@ public interface LambdaLogger extends Logger {
      * @param work The work to perform.
      */
     void doIfInfoEnabled(final Runnable work);
+
+    /**
+     * If debug is enabled returns the supplied consumer else, returns a no-op consumer.
+     * Useful in the {@link java.util.stream.Stream#peek(Consumer)} method for logging items
+     * in the stream.
+     */
+    default <T> Consumer<T> createIfDebugConsumer(final Consumer<T> debugConsumer) {
+        if (isDebugEnabled()) {
+            return debugConsumer;
+        } else {
+            return val -> {
+            };
+        }
+    }
+
+    /**
+     * If debug is enabled returns the supplied consumer else, returns a no-op consumer.
+     * Useful in the {@link java.util.stream.Stream#peek(Consumer)} method for logging items
+     * in the stream.
+     */
+    default <T> Consumer<T> createIfTraceConsumer(final Consumer<T> debugConsumer) {
+        if (isTraceEnabled()) {
+            return debugConsumer;
+        } else {
+            return val -> {
+            };
+        }
+    }
 }
