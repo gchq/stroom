@@ -19,36 +19,29 @@ package stroom.util.io.capacity;
 import stroom.util.shared.HasCapacity;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.OptionalDouble;
 
-public class MostFreePercentCapacitySelector implements HasCapacitySelector {
+public class MostFreePercentCapacitySelector extends AbstractSelector {
     public static final String NAME = "MostFreePercent";
 
-    private final RoundRobinCapacitySelector roundRobinCapacitySelector = new RoundRobinCapacitySelector();
+    public MostFreePercentCapacitySelector() {
+        super(new RoundRobinCapacitySelector());
+    }
 
     @Override
-    public <T extends HasCapacity> T select(final List<T> list) {
+    public <T extends HasCapacity> T doSelect(final List<T> filteredList) {
 
-        if (list == null || list.isEmpty()) {
-            throw new RuntimeException("No items provided to select from");
-        } else if (list.size() == 1) {
-            return list.get(0);
-        } else {
-            double largestPercentFree = 0;
-            T selected = null;
-            for (final T item : list) {
-                final OptionalDouble optPercentFree = item.getCapacityInfo().getFreeCapacityPercent();
-                if (optPercentFree.isPresent() &&
-                        optPercentFree.getAsDouble() > largestPercentFree) {
-                    largestPercentFree = optPercentFree.getAsDouble();
-                    selected = item;
-                }
+        double largestPercentFree = 0;
+        T selected = null;
+        for (final T item : filteredList) {
+            final OptionalDouble optPercentFree = item.getCapacityInfo().getFreeCapacityPercent();
+            if (optPercentFree.isPresent() &&
+                    optPercentFree.getAsDouble() > largestPercentFree) {
+                largestPercentFree = optPercentFree.getAsDouble();
+                selected = item;
             }
-
-            return Objects.requireNonNullElseGet(selected, () ->
-                    roundRobinCapacitySelector.select(list));
         }
+        return selected;
     }
 
     @Override

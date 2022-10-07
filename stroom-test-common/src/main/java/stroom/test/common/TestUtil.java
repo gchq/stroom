@@ -10,6 +10,7 @@ import stroom.util.logging.LogUtil;
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 
 import java.time.Duration;
@@ -358,9 +359,25 @@ public class TestUtil {
          * {@link TestCase#getExpectedOutput()}.
          */
         @SuppressWarnings("unused")
-        public CasesBuilder<I, O> withTestAction(final Consumer<TestCase<I, O>> test) {
-            Objects.requireNonNull(test);
-            return new CasesBuilder<>(test);
+        public CasesBuilder<I, O> withTestAction(final Consumer<TestCase<I, O>> testAction) {
+            Objects.requireNonNull(testAction);
+            return new CasesBuilder<>(testAction);
+        }
+
+        /**
+         * A pre-canned simple test action that just asserts that the value provided by
+         * testFunction is equal to {@link TestCase#getExpectedOutput()}
+         */
+        public CasesBuilder<I, O> withSimpleEqualityTest(
+                final Function<TestCase<I, O>, O> testFunction) {
+
+            Objects.requireNonNull(testFunction);
+            return new CasesBuilder<>(testCase -> {
+                final O actualOutput = testFunction.apply(testCase);
+                LOGGER.debug("Actual output: '{}'", actualOutput);
+                Assertions.assertThat(actualOutput)
+                        .isEqualTo(testCase.getExpectedOutput());
+            });
         }
     }
 

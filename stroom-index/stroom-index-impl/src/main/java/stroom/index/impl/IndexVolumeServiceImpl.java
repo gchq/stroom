@@ -510,26 +510,35 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         }
 
         indexVolumes = removeIneligibleVolumes(indexVolumes);
-        indexVolumes.sort(Comparator.nullsFirst(Comparator.comparing(IndexVolume::getPath)));
 
-        final HasCapacitySelector volumeSelector = getVolumeSelector(groupName, nodeName);
+        if (!indexVolumes.isEmpty()) {
+            indexVolumes.sort(Comparator.nullsFirst(Comparator.comparing(IndexVolume::getPath)));
 
-        final IndexVolume indexVolume = volumeSelector.select(indexVolumes);
+            final HasCapacitySelector volumeSelector = getVolumeSelector(groupName, nodeName);
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Selected volume {} ({}) out of {} eligible volumes.",
-                    indexVolume.getPath(),
-                    indexVolume.getCapacityInfo(),
-                    indexVolumes.size());
-        }
+            final IndexVolume selectedIndexVolume = volumeSelector.select(indexVolumes);
 
-        if (indexVolume == null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Selected volume {} ({}) out of {} eligible volumes.",
+                        selectedIndexVolume.getPath(),
+                        selectedIndexVolume.getCapacityInfo(),
+                        indexVolumes.size());
+            }
+            if (selectedIndexVolume == null) {
+                throw new IndexException(
+                        LogUtil.message("Selector {} returned null for group {}, node {} and volumes [{}]. " +
+                                        "Selectors should return something for a non-empty list.",
+                                volumeSelector.getClass().getSimpleName(),
+                                groupName,
+                                nodeName,
+                                indexVolumes));
+            }
+            return selectedIndexVolume;
+        } else {
             throw new IndexException(
                     "Unable to find any non-full index volumes for index volume group '"
                             + groupName + "' for node " + nodeName);
         }
-
-        return indexVolume;
     }
 
     private static List<IndexVolume> removeIneligibleVolumes(final List<IndexVolume> list) {
