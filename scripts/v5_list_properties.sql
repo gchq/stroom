@@ -1,4 +1,5 @@
--- To be run when migrating from v5 to v7
+-- To be run when before migrating from v5 to v7
+-- See https://gchq.github.io/stroom-docs/latest/docs/install-guide/upgrades/v5-to-v7/
 -- 
 -- Run with the mysql --table arg to get formatted output
 -- e.g.

@@ -8,17 +8,19 @@ import java.util.stream.Collectors;
 
 class TestRoundRobinIgnoreLeastFreePercentCapacitySelector extends AbstractHasCapacitySelectorTest {
 
+    @Override
+    HasCapacitySelector getSelector() {
+        return new RoundRobinIgnoreLeastFreePercentCapacitySelector();
+    }
+
     @Test
     void testMultiple() {
-        testMultipleTimes(
-                new RoundRobinIgnoreLeastFreePercentCapacitySelector(),
-                PATH_1, PATH_2, PATH_3, PATH_5);
+        testMultipleTimes(PATH_1, PATH_2, PATH_3, PATH_5);
     }
 
     @Test
     void testLooping() {
-        final RoundRobinIgnoreLeastFreePercentCapacitySelector selector =
-                new RoundRobinIgnoreLeastFreePercentCapacitySelector();
+        final HasCapacitySelector selector = getSelector();
         NoddyVolume noddyVolume;
 
         final List<NoddyVolume> validVolumes = VOLUME_LIST.stream()

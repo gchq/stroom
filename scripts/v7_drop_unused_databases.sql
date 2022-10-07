@@ -2,6 +2,7 @@
 -- in v7. MUST be run as root, or with drop database
 -- privileges. MUST only be run after the auth database
 -- has been backed up and copied into the stroom database.
+-- See https://gchq.github.io/stroom-docs/latest/docs/install-guide/upgrades/v6-to-v7/
 
 -- Run it like 
 -- docker exec -i stroom-all-dbs mysql --force -u"root" -p"my-secret-pw" < v7_drop_unused_databases.sql > v7_drop_unused_databases.out 2>&1
