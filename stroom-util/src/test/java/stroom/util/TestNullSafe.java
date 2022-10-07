@@ -507,17 +507,17 @@ class TestNullSafe {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(inputType)
                 .withOutputType(Long.class)
-                .withTestAction(testCase -> {
-                    doConsumeTest(
-                            longConsumer -> {
-                                NullSafe.consume(
-                                        testCase.getInput()._1,
-                                        testCase.getInput()._2,
-                                        testCase.getInput()._3,
-                                        longConsumer);
-                            },
-                            testCase.getExpectedOutput());
+                .withTestFunction(testCase -> {
+                    final AtomicLong val = new AtomicLong(-1);
+                    NullSafe.consume(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            testCase.getInput()._3,
+                            val::set);
+                    // Return the potentially touched by the consumer
+                    return val.get();
                 })
+                .withSimpleEqualityAssertion()
                 .addCase("All non null",
                         Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getLevel),
                         2L)
@@ -542,19 +542,18 @@ class TestNullSafe {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(inputType)
                 .withOutputType(Long.class)
-                .withTestAction(testCase -> {
+                .withTestFunction(testCase -> {
                     final AtomicLong val = new AtomicLong(-1);
-                    final Consumer<Long> consumer = val::set;
                     NullSafe.consume(
                             testCase.getInput()._1,
                             testCase.getInput()._2,
                             testCase.getInput()._3,
                             testCase.getInput()._4,
-                            consumer);
-
-                    Assertions.assertThat(val)
-                            .hasValue(testCase.getExpectedOutput());
+                            val::set);
+                    // Return the potentially touched by the consumer
+                    return val.get();
                 })
+                .withSimpleEqualityAssertion()
                 .addCase("All non null",
                         Tuple.of(
                                 nonNullLevel1,
@@ -586,7 +585,6 @@ class TestNullSafe {
                 .build();
     }
 
-
     private void doConsumeTest(final Consumer<Consumer<Long>> action, final long expectedValue) {
         final AtomicLong val = new AtomicLong(-1);
         final Consumer<Long> consumer = val::set;
@@ -596,7 +594,6 @@ class TestNullSafe {
         Assertions.assertThat(val)
                 .hasValue(expectedValue);
     }
-
 
     @Test
     @Disabled

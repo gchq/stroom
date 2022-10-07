@@ -172,9 +172,9 @@ class TestHexDumpUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Long.class)
                 .withOutputType(Location.class)
-                .withTestAction(testCase ->
-                        Assertions.assertThat(HexDumpUtil.calculateLocation(testCase.getInput()))
-                                .isEqualTo(testCase.getExpectedOutput()))
+                .withTestFunction(testCase ->
+                        HexDumpUtil.calculateLocation(testCase.getInput()))
+                .withSimpleEqualityAssertion()
                 // First byte on first line
                 .addCase(0L, DefaultLocation.of(1, 13))
                 // Fifth byte on first line (i.e. 2nd block)
@@ -215,15 +215,15 @@ class TestHexDumpUtil {
                 .withInputTypes(Long.class, Long.class)
                 .withWrappedOutputType(new TypeLiteral<List<TextRange>>() {
                 })
-                .withTestAction(testCase -> {
+                .withTestFunction(testCase -> {
                     final Long byteOffsetFrom = testCase.getInput()._1;
                     final Long byteOffsetTo = testCase.getInput()._2;
-                    final List<TextRange> expectedHighlights = testCase.getExpectedOutput();
-                    final List<TextRange> highlights = HexDumpUtil.calculateHighlights(byteOffsetFrom, byteOffsetTo);
-
+                    return HexDumpUtil.calculateHighlights(byteOffsetFrom, byteOffsetTo);
+                })
+                .withAssertions(testOutcome -> {
                     // Order of highlights is not important
-                    Assertions.assertThat(highlights)
-                            .containsExactlyInAnyOrderElementsOf(expectedHighlights);
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .containsExactlyInAnyOrderElementsOf(testOutcome.getExpectedOutput());
                 })
                 .addCase(
                         Tuple.of(0L, 4L),

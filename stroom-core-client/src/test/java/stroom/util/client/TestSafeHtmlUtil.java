@@ -20,7 +20,24 @@ class TestSafeHtmlUtil {
     Stream<DynamicTest> testToParagraphs() {
         return TestUtil.buildDynamicTestStream()
                 .withInputAndOutputType(String.class)
-                .withTestAction(this::doParaTest)
+                .withTestFunction(testCase ->
+                        SafeHtmlUtil.toParagraphs(testCase.getInput()).asString())
+                .withAssertions(testOutcome -> {
+                    LOGGER.info("input [{}], output [{}], expectedOutput [{}]",
+                            (testOutcome.getInput() != null
+                                    ? testOutcome.getInput().replace("\n", "↵")
+                                    : null),
+                            testOutcome.getActualOutput(),
+                            testOutcome.getExpectedOutput());
+
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isEqualTo(testOutcome.getExpectedOutput());
+
+                    if (testOutcome.getExpectedOutput() != null) {
+                        Assertions.assertThat(testOutcome.getActualOutput())
+                                .doesNotContain("\n");
+                    }
+                })
                 .addCase("hello\nworld", "<p>hello</p><p>world</p>")
                 .addCase("\nhello\nworld\n", "<p>hello</p><p>world</p>")
                 .addCase("hello\n", "<p>hello</p>")
@@ -35,7 +52,24 @@ class TestSafeHtmlUtil {
     Stream<DynamicTest> testWithLineBreaks() {
         return TestUtil.buildDynamicTestStream()
                 .withInputAndOutputType(String.class)
-                .withTestAction(this::doLineBreakTest)
+                .withTestFunction(testCase ->
+                        SafeHtmlUtil.withLineBreaks(testCase.getInput()).asString())
+                .withAssertions(testOutcome -> {
+                    LOGGER.info("input [{}], output [{}], expectedOutput [{}]",
+                            (testOutcome.getInput() != null
+                                    ? testOutcome.getInput().replace("\n", "↵")
+                                    : null),
+                            testOutcome.getActualOutput(),
+                            testOutcome.getExpectedOutput());
+
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isEqualTo(testOutcome.getExpectedOutput());
+
+                    if (testOutcome.getExpectedOutput() != null) {
+                        Assertions.assertThat(testOutcome.getActualOutput())
+                                .doesNotContain("\n");
+                    }
+                })
                 .addCase("hello\nworld", "hello<br>world")
                 .addCase("\nhello\nworld\n", "hello<br>world")
                 .addCase("hello\n", "hello")
@@ -51,23 +85,6 @@ class TestSafeHtmlUtil {
         final String expectedOutput = testCase.getExpectedOutput();
         final SafeHtml output = SafeHtmlUtil.toParagraphs(input);
 
-        LOGGER.info("input [{}], output [{}], expectedOutput [{}]",
-                (input != null
-                        ? input.replace("\n", "↵")
-                        : null),
-                output,
-                expectedOutput);
-
-        if (expectedOutput == null) {
-            Assertions.assertThat(output)
-                    .isNull();
-        } else {
-            Assertions.assertThat(output.asString())
-                    .isEqualTo(expectedOutput);
-
-            Assertions.assertThat(output.asString())
-                    .doesNotContain("\n");
-        }
     }
 
     private void doLineBreakTest(final TestCase<String, String> testCase) {
@@ -75,22 +92,5 @@ class TestSafeHtmlUtil {
         final String expectedOutput = testCase.getExpectedOutput();
         final SafeHtml output = SafeHtmlUtil.withLineBreaks(input);
 
-        LOGGER.info("input [{}], output [{}], expectedOutput [{}]",
-                (input != null
-                        ? input.replace("\n", "↵")
-                        : null),
-                output,
-                expectedOutput);
-
-        if (expectedOutput == null) {
-            Assertions.assertThat(output)
-                    .isNull();
-        } else {
-            Assertions.assertThat(output.asString())
-                    .isEqualTo(expectedOutput);
-
-            Assertions.assertThat(output.asString())
-                    .doesNotContain("\n");
-        }
     }
 }

@@ -47,8 +47,9 @@ class TestModelStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Long.class)
                 .withOutputType(String.class)
-                .withSimpleEqualityTest(testCase ->
+                .withTestFunction(testCase ->
                         ModelStringUtil.formatCsv(testCase.getInput()))
+                .withSimpleEqualityAssertion()
                 .addCase(null, "")
                 .addCase(1L, "1")
                 .addCase(123L, "123")
@@ -61,9 +62,10 @@ class TestModelStringUtil {
     @TestFactory
     Stream<DynamicTest> testCsv_double() {
         return TestUtil.buildDynamicTestStream()
-                .withWrappedInputType(new TypeLiteral<Tuple2<Double, Integer>>(){})
+                .withWrappedInputType(new TypeLiteral<Tuple2<Double, Integer>>() {
+                })
                 .withOutputType(String.class)
-                .withSimpleEqualityTest(testCase -> {
+                .withTestFunction(testCase -> {
                     if (testCase.getInput()._1 == null) {
                         return ModelStringUtil.formatCsv(
                                 null,
@@ -74,6 +76,7 @@ class TestModelStringUtil {
                                 testCase.getInput()._2);
                     }
                 })
+                .withSimpleEqualityAssertion()
                 .addCase(Tuple.of(null, 1), "")
                 .addCase(Tuple.of(1D, 0), "1")
                 .addCase(Tuple.of(1D, 1), "1.0")
@@ -92,9 +95,10 @@ class TestModelStringUtil {
     @TestFactory
     Stream<DynamicTest> testCsv_double_withStripTrailing() {
         return TestUtil.buildDynamicTestStream()
-                .withWrappedInputType(new TypeLiteral<Tuple2<Double, Integer>>(){})
+                .withWrappedInputType(new TypeLiteral<Tuple2<Double, Integer>>() {
+                })
                 .withOutputType(String.class)
-                .withSimpleEqualityTest(testCase -> {
+                .withTestFunction(testCase -> {
                     if (testCase.getInput()._1 == null) {
                         return ModelStringUtil.formatCsv(
                                 null,
@@ -107,6 +111,7 @@ class TestModelStringUtil {
                                 true);
                     }
                 })
+                .withSimpleEqualityAssertion()
                 .addCase(Tuple.of(null, 1), "")
                 .addCase(Tuple.of(1D, 0), "1")
                 .addCase(Tuple.of(1D, 1), "1")
@@ -127,8 +132,9 @@ class TestModelStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Long.class)
                 .withOutputType(String.class)
-                .withSimpleEqualityTest(testCase ->
+                .withTestFunction(testCase ->
                         ModelStringUtil.formatDurationString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
                 .addCase(null, "")
                 .addCase(-10L, "-10.0ms")
                 .addCase(0L, "0.0ms")
@@ -147,8 +153,9 @@ class TestModelStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Long.class)
                 .withOutputType(String.class)
-                .withSimpleEqualityTest(testCase ->
+                .withTestFunction(testCase ->
                         ModelStringUtil.formatDurationString(testCase.getInput(), true))
+                .withSimpleEqualityAssertion()
                 .addCase(null, "")
                 .addCase(-10L, "-10ms")
                 .addCase(0L, "0ms")
@@ -167,8 +174,9 @@ class TestModelStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Long.class)
                 .withOutputType(String.class)
-                .withSimpleEqualityTest(testCase ->
+                .withTestFunction(testCase ->
                         ModelStringUtil.formatMetricByteSizeString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
                 .addCase(1L, "1.0B")
                 .addCase(999L, "999B")
                 .addCase(1000L, "1.0K")
@@ -186,8 +194,9 @@ class TestModelStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Long.class)
                 .withOutputType(String.class)
-                .withSimpleEqualityTest(testCase ->
+                .withTestFunction(testCase ->
                         ModelStringUtil.formatIECByteSizeString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
                 .addCase(1L, "1.0B")
                 .addCase(1L, "1.0B")
                 .addCase(999L, "999B")
@@ -204,8 +213,9 @@ class TestModelStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
                 .withOutputType(Long.class)
-                .withSimpleEqualityTest(testCase ->
+                .withTestFunction(testCase ->
                         ModelStringUtil.parseNumberString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
                 .addCase("", null)
                 .addCase(" ", null)
                 .addCase("1", 1L)
@@ -227,18 +237,20 @@ class TestModelStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
                 .withOutputType(Long.class)
-                .withTestAction(testCase -> {
-                    final Long output = ModelStringUtil.parseMetricByteSizeString(testCase.getInput());
-                    Assertions.assertThat(output)
-                            .isEqualTo(testCase.getExpectedOutput());
+                .withTestFunction(testCase ->
+                        ModelStringUtil.parseMetricByteSizeString(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isEqualTo(testOutcome.getExpectedOutput());
                     // Now reverse the conversion then reverse the output of that to ensure we
                     // keep getting the same numeric value. There are multiple string inputs for
                     // a single numeric value (e.g. 'xb', 'xbytes', etx.) so can't compare the two
                     // string values.
-                    final String input2 = ModelStringUtil.formatMetricByteSizeString(output);
+                    final String input2 = ModelStringUtil.formatMetricByteSizeString(testOutcome.getActualOutput());
                     final Long output2 = ModelStringUtil.parseMetricByteSizeString(input2);
+
                     Assertions.assertThat(output2)
-                            .isEqualTo(output);
+                            .isEqualTo(testOutcome.getActualOutput());
                 })
                 .addCase("", null)
                 .addCase(" ", null)
@@ -257,18 +269,19 @@ class TestModelStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
                 .withOutputType(Long.class)
-                .withTestAction(testCase -> {
-                    final Long output = ModelStringUtil.parseIECByteSizeString(testCase.getInput());
-                    Assertions.assertThat(output)
-                            .isEqualTo(testCase.getExpectedOutput());
+                .withTestFunction(testCase ->
+                        ModelStringUtil.parseIECByteSizeString(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isEqualTo(testOutcome.getExpectedOutput());
                     // Now reverse the conversion then reverse the output of that to ensure we
                     // keep getting the same numeric value. There are multiple string inputs for
                     // a single numeric value (e.g. 'xb', 'xbytes', etx.) so can't compare the two
                     // string values.
-                    final String input2 = ModelStringUtil.formatIECByteSizeString(output);
+                    final String input2 = ModelStringUtil.formatIECByteSizeString(testOutcome.getActualOutput());
                     final Long output2 = ModelStringUtil.parseIECByteSizeString(input2);
                     Assertions.assertThat(output2)
-                            .isEqualTo(output);
+                            .isEqualTo(testOutcome.getActualOutput());
                 })
                 .addCase("", null)
                 .addCase(" ", null)
@@ -287,16 +300,17 @@ class TestModelStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
                 .withOutputType(Long.class)
-                .withTestAction(testCase -> {
-                    final Long output = ModelStringUtil.parseDurationString(testCase.getInput());
-                    Assertions.assertThat(output)
-                            .isEqualTo(testCase.getExpectedOutput());
+                .withTestFunction(testCase ->
+                        ModelStringUtil.parseDurationString(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isEqualTo(testOutcome.getExpectedOutput());
                     // Now reverse the conversion then reverse the output of that to ensure we
                     // keep getting the same numeric value.
-                    final String input2 = ModelStringUtil.formatDurationString(output);
+                    final String input2 = ModelStringUtil.formatDurationString(testOutcome.getActualOutput());
                     final Long output2 = ModelStringUtil.parseDurationString(input2);
-                    Assertions.assertThat(output2)
-                            .isEqualTo(output);
+                    assertThat(output2)
+                            .isEqualTo(testOutcome.getActualOutput());
                 })
                 .addCase("1", 1L)
                 .addCase("9", 9L)
@@ -332,8 +346,9 @@ class TestModelStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
                 .withOutputType(Long.class)
-                .withSimpleEqualityTest(testCase ->
+                .withTestFunction(testCase ->
                         ModelStringUtil.parseNumberString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
                 .addCase("''", null)
                 .addCase("\"", null)
                 .addCase("'1", 1L)
@@ -346,8 +361,9 @@ class TestModelStringUtil {
     Stream<DynamicTest> testToCamelCase() {
         return TestUtil.buildDynamicTestStream()
                 .withInputAndOutputType(String.class)
-                .withSimpleEqualityTest(testCase ->
+                .withTestFunction(testCase ->
                         ModelStringUtil.toCamelCase(testCase.getInput()))
+                .withSimpleEqualityAssertion()
                 .addCase("XMLSchema", "xmlSchema")
                 .addCase("Test", "test")
                 .addCase("NewClassType", "newClassType")
@@ -360,8 +376,9 @@ class TestModelStringUtil {
     Stream<DynamicTest> testToDisplayValue() {
         return TestUtil.buildDynamicTestStream()
                 .withInputAndOutputType(String.class)
-                .withSimpleEqualityTest(testCase ->
+                .withTestFunction(testCase ->
                         ModelStringUtil.toDisplayValue(testCase.getInput()))
+                .withSimpleEqualityAssertion()
                 .addCase("XMLSchema", "XML Schema")
                 .addCase("Test", "Test")
                 .addCase("NewClassType", "New Class Type")
