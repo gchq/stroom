@@ -148,10 +148,17 @@ public final class ModelStringUtil {
         return formatNumberString(streamSize, IEC_BYTE_SIZE_DIVIDER, stripTrailingZeros);
     }
 
+    /**
+     * Formats a duration in millis to human-readable form, e.g. 999ms, 1.0s, 10m, 20h
+     */
     public static String formatDurationString(final Long ms) {
         return formatDurationString(ms, false);
     }
 
+    /**
+     * Formats a duration in millis to human-readable form, e.g. 999ms, 1.0s, 10m, 20h
+     * @param stripTrailingZeros If true, any trailing zeros in the decimal part are ommitted.
+     */
     public static String formatDurationString(final Long ms, final boolean stripTrailingZeros) {
         if (ms == null) {
             return "";
@@ -197,22 +204,84 @@ public final class ModelStringUtil {
         return bigDecimal.toPlainString() + suffix;
     }
 
+    /**
+     * Parses human-readable numbers that use SI unit prefixes into a {@link Long}.
+     * e.g. '1.1k' => 1100, '1M' => 1_000_000. The case of the unit prefixes is ignored.
+     * Valid unit prefixes are 'k', 'M', 'G', 'T', 'P'.
+     * If there is no unit prefix then the number is converted from the string as is.
+     * @return The number or null for a null/empty input.
+     * @throws NumberFormatException If it can't be parsed.
+     */
     public static Long parseNumberString(final String str) throws NumberFormatException {
         return parseNumberString(str, SIZE_DIVIDER);
     }
 
+    /**
+     * Parses human-readable byte counts that use metric unit prefixes into a {@link Long}.
+     * e.g. '1.1kB' => 1100, '1MB' => 1_000_000. The case of the unit prefixes is ignored.
+     * Valid unit prefixes (case-insensitive) are:
+     * <pre>{@code "B" "bytes"}</pre>
+     * <pre>{@code "k" "kB"}</pre>
+     * <pre>{@code "M" "MB"}</pre>
+     * <pre>{@code "G" "GB"}</pre>
+     * <pre>{@code "T" "TB"}</pre>
+     * <pre>{@code "P" "PB"}</pre>
+     * If there is no unit prefix then the number is assumed to be in bytes and is
+     * converted from the string as is.
+     * @return The number or null for a null/empty input.
+     * @throws NumberFormatException If it can't be parsed.
+     */
     public static Long parseMetricByteSizeString(final String str) throws NumberFormatException {
         return parseNumberString(str, METRIC_BYTE_SIZE_DIVIDER);
     }
 
+    /**
+     * Parses human-readable byte counts that use IEC binary unit prefixes into a {@link Long}.
+     * e.g. '1kiB' => 1024, '1MB' => 1_048_576. The case of the unit prefixes is ignored.
+     * Valid unit prefixes (case-insensitive) are:
+     * <pre>{@code "B" "bytes"}</pre>
+     * <pre>{@code "k" "kB"}</pre>
+     * <pre>{@code "M" "MB"}</pre>
+     * <pre>{@code "G" "GB"}</pre>
+     * <pre>{@code "T" "TB"}</pre>
+     * <pre>{@code "P" "PB"}</pre>
+     * If there is no unit prefix then the number is assumed to be in bytes and is
+     * converted from the string as is.
+     * @return The number or null for a null/empty input.
+     * @throws NumberFormatException If it can't be parsed.
+     */
     public static Long parseIECByteSizeString(final String str) throws NumberFormatException {
         return parseNumberString(str, IEC_BYTE_SIZE_DIVIDER);
     }
 
+    /**
+     * Parses human-readable time durations that use time units into milliseconds.
+     * Only supports integer/long values.
+     * e.g. '10s' => 10_000, '10' => 10. The case of the unit prefixes is ignored.
+     * Valid unit prefixes (case-insensitive) are:
+     * <pre>{@code "ms"}</pre>
+     * <pre>{@code "s"}</pre>
+     * <pre>{@code "m"}</pre>
+     * <pre>{@code "h"}</pre>
+     * <pre>{@code "d"}</pre>
+     * If there is no unit prefix then the number is assumed to be in millis and is
+     * converted from the string as is.
+     * @return The number or null for a null/empty input.
+     * @throws NumberFormatException If it can't be parsed.
+     */
     public static Long parseDurationString(final String str) throws NumberFormatException {
         return parseNumberString(str, TIME_SIZE_DIVIDER);
     }
 
+    /**
+     * Parses human-readable numbers that use SI unit prefixes into a {@link Integer}.
+     * e.g. '1.1k' => 1100, '1M' => 1_000_000. The case of the unit prefixes is ignored.
+     * Valid unit prefixes are 'k', 'M', 'G', 'T', 'P'.
+     * If there is no unit prefix then the number is converted from the string as is.
+     * @return The number or null for a null/empty input.
+     * @throws NumberFormatException If it can't be parsed or the number is too large
+     * for an {@link Integer}
+     */
     public static Integer parseNumberStringAsInt(final String str) throws NumberFormatException {
         final Long num = parseNumberString(str, SIZE_DIVIDER);
         if (num == null) {
@@ -229,6 +298,9 @@ public final class ModelStringUtil {
         return num.intValue();
     }
 
+    /**
+     * @return The display value of {@code hasDisplayValue}
+     */
     public static String format(final HasDisplayValue hasDisplayValue) {
         if (hasDisplayValue == null) {
             return "";
@@ -291,32 +363,69 @@ public final class ModelStringUtil {
 
     }
 
+    /**
+     * Formats a number as a long with thousands delimiters, i.e. #,###,###
+     * @return The formatted number or an empty string if null.
+     */
     public static String formatCsv(final Number number) {
         if (number == null) {
             return "";
         }
         return formatCsv(number.longValue());
-
     }
 
+    /**
+     * Formats a long with thousands delimiters, i.e. #,###,###
+     * @return The formatted number or an empty string if null.
+     */
     public static String formatCsv(final Long number) {
         if (number == null) {
             return "";
         }
         final String s = String.valueOf(number);
-        final StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < s.length(); i++) {
-            if ((s.length() - i) % 3 == 0) {
-                if (sb.length() > 0) {
-                    sb.append(",");
-                }
-            }
-            sb.append(s.charAt(i));
-        }
-        return sb.toString();
+        return addThousandsSeparators(s);
     }
 
+    /**
+     * Formats a double with thousands delimiters and a fixed
+     * number of decimal places, i.e. {@code #,###,###.##}.
+     * @return The formatted number or an empty string if null.
+     */
+    public static String formatCsv(final Double number, final int decimalPlaces) {
+        return formatCsv(number, decimalPlaces, false);
+    }
+
+    /**
+     * Formats a double with thousands delimiters and a maximum
+     * number of decimal places, i.e. {@code #,###,###.##}.
+     * If {@code stripTrailingZeros} is true all trailing zeros in the decimal
+     * part will be omitted.
+     * @return The formatted number or an empty string if null.
+     */
+    public static String formatCsv(final Double number,
+                                   final int decimalPlaces,
+                                   final boolean stripTrailingZeros) {
+        if (decimalPlaces < 0) {
+            throw new IllegalArgumentException("decimalPlaces must be > 0");
+        }
+        if (number == null) {
+            return "";
+        }
+        // GWT so no DecimalFormat :-(
+        BigDecimal bigDecimal = new BigDecimal(number)
+                .setScale(decimalPlaces, RoundingMode.HALF_UP);
+
+        if (stripTrailingZeros) {
+            bigDecimal = bigDecimal.stripTrailingZeros();
+        }
+
+        final String s = bigDecimal.toPlainString();
+        return addThousandsSeparators(s);
+    }
+
+    /**
+     * Formats the string as lowerCamelCase.
+     */
     public static String toCamelCase(final String string) {
         final char[] chars = string.toCharArray();
         for (int i = 0; i < chars.length; i++) {
@@ -338,6 +447,10 @@ public final class ModelStringUtil {
         return new String(chars);
     }
 
+    /**
+     * Separates the parts in lowerCamelCase or UpperCamelCase with spaces,
+     * e.g. 'lower Camel Case' and 'Upper Camel Case'.
+     */
     public static String toDisplayValue(final String string) {
         if (string == null) {
             return "null";
@@ -372,6 +485,33 @@ public final class ModelStringUtil {
             }
             return ((Integer) o1.length()).compareTo(o2.length());
         };
+    }
+
+    private static String addThousandsSeparators(final String number) {
+        String integerPart;
+        final String decimalPart;
+
+        if (number.contains(".")) {
+            final String[] parts = number.split("\\.");
+            integerPart = parts[0];
+            decimalPart = "." + parts[1];
+        } else {
+            integerPart = number;
+            decimalPart = "";
+        }
+        final StringBuilder sb = new StringBuilder();
+
+        // GWT so no NumberFormat :-(
+        for (int i = 0; i < integerPart.length(); i++) {
+            if ((integerPart.length() - i) % 3 == 0) {
+                if (sb.length() > 0) {
+                    sb.append(",");
+                }
+            }
+            sb.append(integerPart.charAt(i));
+        }
+        sb.append(decimalPart);
+        return sb.toString();
     }
 
     private static class Divider {

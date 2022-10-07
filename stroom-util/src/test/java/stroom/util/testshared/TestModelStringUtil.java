@@ -22,6 +22,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -50,6 +52,66 @@ class TestModelStringUtil {
                 .addCase(1234L, "1,234")
                 .addCase(123123L, "123,123")
                 .addCase(1123123L, "1,123,123")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCsv_double() {
+        return TestUtil.buildDynamicTestStream(Tuple2.class, String.class)
+                .withSimpleEqualityTest(testCase -> {
+                    if (testCase.getInput()._1 == null) {
+                        return ModelStringUtil.formatCsv(
+                                null,
+                                (int) testCase.getInput()._2);
+                    } else {
+                        return ModelStringUtil.formatCsv(
+                                (double) testCase.getInput()._1,
+                                (int) testCase.getInput()._2);
+                    }
+                })
+                .addCase(Tuple.of(null, 1), "")
+                .addCase(Tuple.of(1D,0), "1")
+                .addCase(Tuple.of(1D,1), "1.0")
+                .addCase(Tuple.of(1D,2), "1.00")
+                .addCase(Tuple.of(1.23D,1), "1.2")
+                .addCase(Tuple.of(1.29D,1), "1.3")
+                .addCase(Tuple.of(1.23D,2), "1.23")
+                .addCase(Tuple.of(1.23D,4), "1.2300")
+                .addCase(Tuple.of(1234D,0), "1,234")
+                .addCase(Tuple.of(1234D,1), "1,234.0")
+                .addCase(Tuple.of(123123.123D,3), "123,123.123")
+                .addCase(Tuple.of(1123123.999D,0), "1,123,124")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCsv_double_withStripTrailing() {
+        return TestUtil.buildDynamicTestStream(Tuple2.class, String.class)
+                .withSimpleEqualityTest(testCase -> {
+                    if (testCase.getInput()._1 == null) {
+                        return ModelStringUtil.formatCsv(
+                                null,
+                                (int) testCase.getInput()._2,
+                                true);
+                    } else {
+                        return ModelStringUtil.formatCsv(
+                                (double) testCase.getInput()._1,
+                                (int) testCase.getInput()._2,
+                                true);
+                    }
+                })
+                .addCase(Tuple.of(null, 1), "")
+                .addCase(Tuple.of(1D,0), "1")
+                .addCase(Tuple.of(1D,1), "1")
+                .addCase(Tuple.of(1D,2), "1")
+                .addCase(Tuple.of(1.23D,1), "1.2")
+                .addCase(Tuple.of(1.29D,1), "1.3")
+                .addCase(Tuple.of(1.23D,2), "1.23")
+                .addCase(Tuple.of(1.23D,4), "1.23")
+                .addCase(Tuple.of(1234D,0), "1,234")
+                .addCase(Tuple.of(1234D,1), "1,234")
+                .addCase(Tuple.of(123123.123D,3), "123,123.123")
+                .addCase(Tuple.of(1123123.999D,0), "1,123,124")
                 .build();
     }
 
@@ -276,6 +338,7 @@ class TestModelStringUtil {
                 .addCase("XMLSchema", "XML Schema")
                 .addCase("Test", "Test")
                 .addCase("NewClassType", "New Class Type")
+                .addCase("newClassType", "new Class Type")
                 .addCase("temp", "temp")
                 .build();
     }
