@@ -150,7 +150,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.PROCESSOR_TASK_PROCESSOR_TASK_META_ID_IDX, Indexes.PROCESSOR_TASK_PROCESSOR_TASK_STATUS_IDX);
+        return Arrays.asList(Indexes.PROCESSOR_TASK_PROCESSOR_TASK_META_ID_IDX, Indexes.PROCESSOR_TASK_PROCESSOR_TASK_STATUS_CREATE_TIME_MS_IDX);
     }
 
     @Override

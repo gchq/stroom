@@ -27,13 +27,26 @@ public class FsFileFinder {
     Optional<Path> findRootStreamFile(final Meta meta) {
         final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
         if (dataVolume != null) {
-            final Path volumePath = Paths.get(dataVolume.getVolumePath());
-            final Path rootFile = fileSystemStreamPathHelper.getRootPath(volumePath, meta, meta.getTypeName());
+            return findRootStreamFile(meta, dataVolume.getVolumePath());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    Optional<Path> findRootStreamFile(final Meta meta, final String volumePath) {
+        if (volumePath != null) {
+            final Path rootFile = fileSystemStreamPathHelper.getRootPath(
+                    Paths.get(volumePath),
+                    meta,
+                    meta.getTypeName());
             if (Files.isRegularFile(rootFile)) {
                 return Optional.of(rootFile);
+            } else {
+                return Optional.empty();
             }
+        } else {
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     List<Path> findAllStreamFile(final Meta meta) {
