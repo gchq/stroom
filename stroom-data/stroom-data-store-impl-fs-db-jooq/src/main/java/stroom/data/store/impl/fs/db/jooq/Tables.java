@@ -6,6 +6,7 @@ package stroom.data.store.impl.fs.db.jooq;
 
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
 import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
@@ -26,6 +27,11 @@ public class Tables {
      * The table <code>stroom.fs_meta_volume</code>.
      */
     public static final FsMetaVolume FS_META_VOLUME = FsMetaVolume.FS_META_VOLUME;
+
+    /**
+     * The table <code>stroom.fs_orphaned_meta_tracker</code>.
+     */
+    public static final FsOrphanedMetaTracker FS_ORPHANED_META_TRACKER = FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER;
 
     /**
      * The table <code>stroom.fs_type_path</code>.

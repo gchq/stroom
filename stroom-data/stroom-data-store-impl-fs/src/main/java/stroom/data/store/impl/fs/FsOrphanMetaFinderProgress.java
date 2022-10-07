@@ -24,24 +24,37 @@ class FsOrphanMetaFinderProgress {
 
     private final TaskContext taskContext;
     private final AtomicLong minId = new AtomicLong();
-    private final AtomicLong maxId = new AtomicLong(0);
+    private final long maxId;
     private final AtomicLong id = new AtomicLong();
     private final AtomicLong orphanCount = new AtomicLong(0);
+    private final int batchSize;
 
-    public FsOrphanMetaFinderProgress(final TaskContext taskContext) {
+    public FsOrphanMetaFinderProgress(final TaskContext taskContext,
+                                      final long maxId,
+                                      final int batchSize) {
         this.taskContext = taskContext;
+        this.maxId = maxId;
+        this.batchSize = batchSize;
     }
 
     void setMinId(final long minId) {
         this.minId.set(minId);
     }
 
-    void setMaxId(final long maxId) {
-        this.maxId.set(maxId);
+    public long getId() {
+        return id.get();
     }
 
     void setId(final long id) {
         this.id.set(id);
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public long getMaxId() {
+        return maxId;
     }
 
     void foundOrphan() {
@@ -51,12 +64,12 @@ class FsOrphanMetaFinderProgress {
     void log() {
         taskContext.info(() -> "Checking meta id " +
                 id.get() +
-                " batch " +
+                ", batch (" +
                 minId.get() +
-                " to " +
-                maxId.get() +
-                " found " +
+                " => " +
+                maxId +
+                "), found " +
                 orphanCount.get() +
-                " orphans");
+                " orphans (batch size " + batchSize + ")");
     }
 }

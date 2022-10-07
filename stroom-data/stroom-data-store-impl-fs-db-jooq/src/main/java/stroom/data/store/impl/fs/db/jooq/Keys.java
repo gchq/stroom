@@ -12,11 +12,13 @@ import org.jooq.impl.Internal;
 
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
 import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsFeedPathRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsMetaVolumeRecord;
+import stroom.data.store.impl.fs.db.jooq.tables.records.FsOrphanedMetaTrackerRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsTypePathRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeStateRecord;
@@ -36,6 +38,7 @@ public class Keys {
     public static final UniqueKey<FsFeedPathRecord> KEY_FS_FEED_PATH_NAME = Internal.createUniqueKey(FsFeedPath.FS_FEED_PATH, DSL.name("KEY_fs_feed_path_name"), new TableField[] { FsFeedPath.FS_FEED_PATH.NAME }, true);
     public static final UniqueKey<FsFeedPathRecord> KEY_FS_FEED_PATH_PRIMARY = Internal.createUniqueKey(FsFeedPath.FS_FEED_PATH, DSL.name("KEY_fs_feed_path_PRIMARY"), new TableField[] { FsFeedPath.FS_FEED_PATH.ID }, true);
     public static final UniqueKey<FsMetaVolumeRecord> KEY_FS_META_VOLUME_PRIMARY = Internal.createUniqueKey(FsMetaVolume.FS_META_VOLUME, DSL.name("KEY_fs_meta_volume_PRIMARY"), new TableField[] { FsMetaVolume.FS_META_VOLUME.META_ID, FsMetaVolume.FS_META_VOLUME.FS_VOLUME_ID }, true);
+    public static final UniqueKey<FsOrphanedMetaTrackerRecord> KEY_FS_ORPHANED_META_TRACKER_PRIMARY = Internal.createUniqueKey(FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER, DSL.name("KEY_fs_orphaned_meta_tracker_PRIMARY"), new TableField[] { FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER.ID }, true);
     public static final UniqueKey<FsTypePathRecord> KEY_FS_TYPE_PATH_NAME = Internal.createUniqueKey(FsTypePath.FS_TYPE_PATH, DSL.name("KEY_fs_type_path_name"), new TableField[] { FsTypePath.FS_TYPE_PATH.NAME }, true);
     public static final UniqueKey<FsTypePathRecord> KEY_FS_TYPE_PATH_PRIMARY = Internal.createUniqueKey(FsTypePath.FS_TYPE_PATH, DSL.name("KEY_fs_type_path_PRIMARY"), new TableField[] { FsTypePath.FS_TYPE_PATH.ID }, true);
     public static final UniqueKey<FsVolumeRecord> KEY_FS_VOLUME_PATH = Internal.createUniqueKey(FsVolume.FS_VOLUME, DSL.name("KEY_fs_volume_path"), new TableField[] { FsVolume.FS_VOLUME.PATH }, true);
