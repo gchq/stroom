@@ -75,11 +75,11 @@ import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
-import stroom.util.shared.TextRange;
+import stroom.util.shared.string.HexDump;
+import stroom.util.shared.string.HexDumpLine;
 import stroom.util.string.HexDumpUtil;
 
 import org.apache.commons.io.ByteOrderMark;
-import org.apache.commons.io.input.CountingInputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedOutputStream;
@@ -97,6 +97,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Provider;
 import javax.xml.transform.TransformerException;
 
@@ -116,6 +117,10 @@ public class DataFetcher {
      */
     private static final int STREAM_BUFFER_SIZE = 1024 * 100;
     private static final DisplayMode DEFAULT_DISPLAY_MODE = DisplayMode.TEXT;
+    // Always use ascii for the right hand decoded col as we are decoding single bytes at a time.
+    // If we used the charset of the feed and the feed is say utf16 (which is all multi-byte) then
+    // you will never see anything in the
+    private static final Charset HEX_DUMP_CHARSET = StandardCharsets.US_ASCII;
 
     private final Long partsToReturn = 1L;
     private final Long segmentsToReturn = 1L;
@@ -295,11 +300,12 @@ public class DataFetcher {
 
                             // If this is an error stream and the UI is requesting markers then
                             // create a list of markers.
+                            final AbstractFetchDataResult result;
                             if (StreamTypeNames.ERROR.equals(streamTypeName)
                                     && (fetchDataRequest.getDisplayMode() == null
                                     || DisplayMode.MARKER.equals(fetchDataRequest.getDisplayMode()))) {
 
-                                return createErrorMarkerResult(
+                                result = createErrorMarkerResult(
                                         feedName,
                                         streamTypeName,
                                         segmentInputStream,
@@ -313,7 +319,7 @@ public class DataFetcher {
                                 LOGGER.error(msg);
                                 throw new RuntimeException(msg);
                             } else {
-                                return createDataResult(
+                                result = createDataResult(
                                         feedName,
                                         streamTypeName,
                                         segmentInputStream,
@@ -323,6 +329,7 @@ public class DataFetcher {
                                         fetchDataRequest,
                                         taskContext);
                             }
+                            return result;
                         }
                     }
                 } catch (final IOException | RuntimeException e) {
@@ -458,7 +465,6 @@ public class DataFetcher {
                                              final InputStreamProvider inputStreamProvider,
                                              final FetchDataRequest fetchDataRequest,
                                              final TaskContext taskContext) throws IOException {
-        final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
         // Read the input stream into a string.
         // If the input stream has multiple segments then we are going to
         // read it in segment mode.
@@ -481,19 +487,36 @@ public class DataFetcher {
         final RawResult rawResult;
         final DisplayMode displayMode = getDisplayModeOrDefault(fetchDataRequest);
 
+        final boolean hasPipeline = fetchDataRequest.getPipeline() != null;
+        final SourceLocation sourceLocation;
+        if (fetchDataRequest.getSourceLocation().getOptDataRange().isPresent()) {
+            sourceLocation = fetchDataRequest.getSourceLocation();
+        } else {
+            // If no range supplied then use a default one.
+            // If there is a pipeline then we need to get all the data then limit the output of that.
+            final DataRange newDataRange = hasPipeline
+                    ? DataRange.fromCharOffset(0)
+                    : DataRange.fromCharOffset(0, sourceConfig.getMaxCharactersPerFetch());
+            sourceLocation = fetchDataRequest.getSourceLocation().copy()
+                    .withDataRange(newDataRange)
+                    .build();
+        }
+
         if (DataType.SEGMENTED.equals(dataType)) {
             rawResult = getSegmentedData(
-                    fetchDataRequest,
+                    sourceLocation,
                     segmentInputStream,
                     encoding,
-                    displayMode);
+                    displayMode,
+                    !hasPipeline);
         } else {
             // Non-segmented data
             rawResult = getNonSegmentedData(
-                    fetchDataRequest,
+                    sourceLocation,
                     segmentInputStream,
                     encoding,
-                    displayMode);
+                    displayMode,
+                    !hasPipeline);
         }
 
         // Useful for testing the displaying of errors in the UI
@@ -504,9 +527,12 @@ public class DataFetcher {
 //                    "commodo consequat.");
 //        }
 
-        // We are viewing the data with the BOM removed, so remove the size of the BOM from the
-        // total bytes else the progress bar is messed up
-        rawResult.setTotalBytes(segmentInputStream.size() - rawResult.byteOrderMarkLength);
+        // BOM not removed in hex mode (so we can see it)
+        if (!DisplayMode.HEX.equals(displayMode)) {
+            // We are viewing the data with the BOM removed, so remove the size of the BOM from the
+            // total bytes else the progress bar is messed up
+            rawResult.setTotalBytes(segmentInputStream.size() - rawResult.byteOrderMarkLength);
+        }
         if (rawResult.getTotalCharacterCount() == null) {
             rawResult.setTotalCharacterCount(estimateCharCount(segmentInputStream.size(), charset));
         }
@@ -584,10 +610,11 @@ public class DataFetcher {
                 charset.newDecoder().averageCharsPerByte() * totalBytes));
     }
 
-    private RawResult getSegmentedData(final FetchDataRequest fetchDataRequest,
+    private RawResult getSegmentedData(final SourceLocation sourceLocation,
                                        final SegmentInputStream segmentInputStream,
                                        final String encoding,
-                                       final DisplayMode displayMode) throws IOException {
+                                       final DisplayMode displayMode,
+                                       final boolean limitChars) throws IOException {
 //        // Get the appropriate encoding for the stream type.
 //        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
@@ -601,7 +628,7 @@ public class DataFetcher {
 //        pageTotalIsExact = true;
 
         // Make sure we can't exceed the page total.
-        recordIndex = fetchDataRequest.getSourceLocation().getRecordIndex();
+        recordIndex = sourceLocation.getRecordIndex();
         if (recordIndex >= pageTotal) {
             recordIndex = pageTotal - 1;
         }
@@ -619,15 +646,17 @@ public class DataFetcher {
 //        return StreamUtil.streamToString(segmentInputStream, Charset.forName(encoding));
         final RawResult rawResult = switch (displayMode) {
             case TEXT -> extractDataRange(
-                    fetchDataRequest,
+                    sourceLocation,
                     segmentInputStream,
                     encoding,
-                    segmentInputStream.size());
+                    segmentInputStream.size(),
+                    limitChars);
             case HEX -> extractDataRangeAsHex(
-                    fetchDataRequest.getSourceLocation(),
+                    sourceLocation,
                     segmentInputStream,
                     encoding,
-                    segmentInputStream.size());
+                    segmentInputStream.size(),
+                    DataType.SEGMENTED);
             default -> throw new IllegalArgumentException("Unexpected display mode " + displayMode);
         };
 
@@ -637,23 +666,25 @@ public class DataFetcher {
         return rawResult;
     }
 
-    private RawResult getNonSegmentedData(final FetchDataRequest fetchDataRequest,
+    private RawResult getNonSegmentedData(final SourceLocation sourceLocation,
                                           final SegmentInputStream segmentInputStream,
                                           final String encoding,
-                                          final DisplayMode displayMode) throws IOException {
+                                          final DisplayMode displayMode,
+                                          final boolean limitChars) throws IOException {
 
-        final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
         final RawResult rawResult = switch (displayMode) {
             case TEXT -> extractDataRange(
-                    fetchDataRequest,
+                    sourceLocation,
                     segmentInputStream,
                     encoding,
-                    segmentInputStream.size());
+                    segmentInputStream.size(),
+                    limitChars);
             case HEX -> extractDataRangeAsHex(
                     sourceLocation,
                     segmentInputStream,
                     encoding,
-                    segmentInputStream.size());
+                    segmentInputStream.size(),
+                    DataType.NON_SEGMENTED);
             default -> throw new IllegalArgumentException("Unexpected display mode " + displayMode);
         };
 
@@ -663,285 +694,318 @@ public class DataFetcher {
         return rawResult;
     }
 
+    private HexDump getHexDump(final InputStream inputStream,
+                               final DataRange dataRange,
+                               final String encoding,
+                               final long streamSizeBytes) throws IOException {
+        final HexDump hexDump;
+        if (dataRange.hasBoundedStart()) {
+            // The byte offset is our preferred method of setting the range
+            // as it will tally exactly with the TEXT view.
+            if (dataRange.getOptByteOffsetFrom().isPresent()) {
+                hexDump = HexDumpUtil.hexDump(
+                        inputStream,
+                        HEX_DUMP_CHARSET,
+                        dataRange.getByteOffsetFrom(),
+                        sourceConfig.getMaxHexDumpLines());
+            } else if (dataRange.getOptCharOffsetFrom().isPresent()) {
+                // This is a bit of an approximate location as we don't know how the chars map to the bytes.
+                final Charset charset = Charset.forName(encoding);
+                final Long estimatedCharCount = estimateCharCount(streamSizeBytes, charset).getCount();
+                final double relativeStartPos = dataRange.getCharOffsetFrom() / ((double) estimatedCharCount);
+                final long estimatedStartByteOffset = (long) (relativeStartPos * streamSizeBytes);
+
+                LOGGER.debug(() -> LogUtil.message("streamSizeBytes: {}, charOffsetFrom: {}, " +
+                                "estimatedCharCount: {}, relativeStartPos: {}, estimatedStartByteOffset: {}",
+                        streamSizeBytes,
+                        dataRange.getCharOffsetFrom(),
+                        estimatedCharCount,
+                        relativeStartPos,
+                        estimatedStartByteOffset)
+                );
+
+                hexDump = HexDumpUtil.hexDump(
+                        inputStream,
+                        HEX_DUMP_CHARSET,
+                        estimatedStartByteOffset,
+                        sourceConfig.getMaxHexDumpLines());
+            } else if (dataRange.getOptLocationFrom().isPresent()) {
+                LOGGER.warn("Setting hex dump location by line no is not yet supported");
+                hexDump = HexDumpUtil.hexDump(
+                        inputStream,
+                        HEX_DUMP_CHARSET,
+                        sourceConfig.getMaxHexDumpLines());
+            } else {
+                hexDump = HexDumpUtil.hexDump(
+                        inputStream,
+                        HEX_DUMP_CHARSET,
+                        sourceConfig.getMaxHexDumpLines());
+            }
+        } else {
+            hexDump = HexDumpUtil.hexDump(
+                    inputStream,
+                    HEX_DUMP_CHARSET,
+                    sourceConfig.getMaxHexDumpLines());
+        }
+        return hexDump;
+    }
+
+    private List<DataRange> calculateHexDumpHighlights(final DataRange requestedHighlight) {
+        if (requestedHighlight == null) {
+            return null;
+        } else {
+            if (requestedHighlight.getOptByteOffsetFrom().isPresent()
+                    && requestedHighlight.getOptByteOffsetTo().isPresent()) {
+
+                return HexDumpUtil.calculateHighlights(
+                                requestedHighlight.getOptByteOffsetFrom().get(),
+                                requestedHighlight.getOptByteOffsetTo().get())
+                        .stream()
+                        .map(textRange -> DataRange.builder()
+                                .fromLocation(textRange.getFrom())
+                                .toLocation(textRange.getTo())
+                                .build())
+                        .collect(Collectors.toList());
+            } else {
+                // Don't have a byte range to work with so can't do anything
+                return List.of(requestedHighlight);
+            }
+        }
+    }
+
     private RawResult extractDataRangeAsHex(final SourceLocation sourceLocation,
                                             final InputStream inputStream,
                                             final String encoding,
-                                            final long streamSizeBytes) throws IOException {
+                                            final long streamSizeBytes,
+                                            final DataType dataType) throws IOException {
 
-        final CountingInputStream countingInputStream = new CountingInputStream(inputStream);
-        // Always use ascii for the right hand decoded col as we are decoding single bytes at a time.
-        // If we used the charset of the feed and the feed is say utf16 (which is all multi-byte) then
-        // you will never see anything in the
-        final String hexDump = HexDumpUtil.hexDump(
-                countingInputStream,
-                StandardCharsets.US_ASCII,
-                sourceConfig.getMaxHexDumpLines());
+        final DataRange dataRange = sourceLocation.getOptDataRange()
+                .orElseGet(() -> DataRange.fromCharOffset(0));
 
-        final long len = hexDump.length();
-        final long bytesRead = countingInputStream.getByteCount();
+        final HexDump hexDump = getHexDump(inputStream, dataRange, encoding, streamSizeBytes);
 
-        final SourceLocation.Builder sourceLocationBuilder = SourceLocation.builder(sourceLocation.getMetaId())
-                .withPartIndex(sourceLocation.getPartIndex())
-                .withChildStreamType(sourceLocation.getOptChildType()
-                        .orElse(null))
-                .withHighlight(sourceLocation.getHighlight()) // pass the requested highlight back
-                .withDataRange(DataRange.builder()
-                        .fromCharOffset(0L)
-                        .toCharOffset(len - 1)
-                        .toByteOffset(bytesRead - 1)
-                        .build());
+        if (!hexDump.isEmpty()) {
+            // Dump is not empty at this point so Optional::get is ok
+            final HexDumpLine firstLine = hexDump.getFirstLine().get();
+            final HexDumpLine lastLine = hexDump.getLastLine().get();
+            // This is the char offset of the hex dump not the actual data
+            // so calculate it from the number of hex dump chars on each line.
+            final long fromCharOffset = Math.max(
+                    0,
+                    ((long) (firstLine.getLineNo() - 1) * HexDump.MAX_CHARS_PER_DUMP_LINE)); // -1 for count => offset
+            final long toCharOffset = fromCharOffset + hexDump.getDumpCharCount() - 1; //-1 for count => offset
 
-        final RawResult rawResult = new RawResult(
-                sourceLocationBuilder.build(),
-                hexDump,
-                0,
-                DisplayMode.HEX);
-        if (bytesRead == streamSizeBytes) {
-            rawResult.setTotalCharacterCount(Count.exactly(len));
+            final DataRange requestedHighlight = sourceLocation.getHighlights() != null
+                    && !sourceLocation.getHighlights().isEmpty()
+                    ? sourceLocation.getHighlights().get(0)
+                    : null;
+            final List<DataRange> actualHighlights = calculateHexDumpHighlights(requestedHighlight);
+
+            final SourceLocation.Builder sourceLocationBuilder = SourceLocation.builder(sourceLocation.getMetaId())
+                    .withPartIndex(sourceLocation.getPartIndex())
+                    .withChildStreamType(sourceLocation.getOptChildType()
+                            .orElse(null))
+                    .withHighlight(actualHighlights) // pass the modified highlight back
+                    .withDataRange(DataRange.builder()
+                            .fromCharOffset(fromCharOffset)
+                            .toCharOffset(toCharOffset)
+                            .fromByteOffset(hexDump.getByteOffsetRange().getFrom())
+                            .toByteOffset(hexDump.getByteOffsetRange().getTo() - 1) // ex to inc
+                            .fromLocation(DefaultLocation.of(firstLine.getLineNo(), 1))
+                            .toLocation(DefaultLocation.of(lastLine.getLineNo(), lastLine.getDumpLineCharCount()))
+                            .withLength(hexDump.getDumpCharCount())
+                            .build());
+
+            final RawResult rawResult = new RawResult(
+                    sourceLocationBuilder.build(),
+                    hexDump.getHexDumpAsStr(),
+                    0,
+                    DisplayMode.HEX);
+
+            rawResult.setTotalCharacterCount(Count.exactly(hexDump.getDumpCharCount()));
+            final long totalBytes = DataType.SEGMENTED.equals(dataType)
+                    ? hexDump.getDumpByteCount()
+                    : streamSizeBytes;
+            rawResult.setTotalBytes(totalBytes);
+            return rawResult;
         } else {
-            // Extrapolate the total char count using the chars we have and the proportion
-            // of all bytes we consumed to get there
-            final long approxCharCount = (streamSizeBytes / bytesRead) * len;
-            rawResult.setTotalCharacterCount(Count.approximately(approxCharCount));
+            return new RawResult(
+                    null,
+                    "## No Data ##",
+                    0,
+                    DisplayMode.HEX);
         }
-        return rawResult;
     }
 
-    private RawResult extractDataRange(final FetchDataRequest fetchDataRequest,
+
+    private RawResult extractDataRange(final SourceLocation sourceLocation,
                                        final InputStream inputStream,
                                        final String encoding,
-                                       final long streamSizeBytes) throws IOException {
-        final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
+                                       final long streamSizeBytes,
+                                       final boolean limitChars) throws IOException {
         // We could have:
         // One potentially VERY long line, too big to display
         // Lots of small lines
         // Multiple long lines that are too big to display
-        StringBuilder strBuilderRange = new StringBuilder();
-        final StringBuilder strBuilderLineSoFar = new StringBuilder();
-
-        // Trackers for what we have so far and where we are
-        long currByteOffset = 0; // zero based
-        int currLineNo = 1; // one based
-        int currColNo = 1; // one based
-        long currCharOffset = 0; //zero based
-
-        int lastLineNo = -1; // one based
-        int lastColNo = -1; // one based
-        long startCharOffset = -1;
-        int startLineNo = -1;
-        int startColNo = -1;
-        long charsInRangeCount = 0;
-
-        long startOfCurrLineCharOffset = 0;
-        long startByteOffset = -1;
-
-        Optional<DecodedChar> optDecodeChar = Optional.empty();
-        Optional<DecodedChar> optLastDecodeChar = Optional.empty();
-        boolean isFirstChar = true;
-        int extraCharCount = 0;
-
-        boolean foundRange = false;
-        boolean isMultiLine = false;
-        Count<Long> totalCharCount = Count.of(0L, false);
-
-        final boolean hasPipeline = fetchDataRequest.getPipeline() != null;
-        // If no range supplied then use a default one.
-        // If there is a pipeline then we need to get all the data then limit the output of that.
-        final DataRange dataRange = fetchDataRequest.getSourceLocation().getOptDataRange()
-                .orElseGet(() -> hasPipeline
-                        ? DataRange.fromCharOffset(0)
-                        : DataRange.fromCharOffset(0, sourceConfig.getMaxCharactersPerFetch()));
-
+        final StringBuilder strBuilderRange = new StringBuilder();
         final CharReader charReader = new CharReader(inputStream, false, encoding);
+        final DataRange dataRange = sourceLocation.getDataRange();
 
         final NonSegmentedIncludeCharPredicate inclusiveFromPredicate = buildInclusiveFromPredicate(
-                dataRange);
+                dataRange, true);
         final NonSegmentedIncludeCharPredicate exclusiveToPredicate = buildExclusiveToPredicate(
-                dataRange, !hasPipeline);
+                dataRange, limitChars);
+
+        // Currently, only support a single highlight for text data
+        final DataRange highlight = sourceLocation.getFirstHighlight();
+        // A previous call may have already decorated the highlight byte offsets.
+        final boolean isHighlightDecorationRequired = highlight != null
+                && highlight.getOptByteOffsetFrom().isEmpty()
+                && highlight.getOptByteOffsetTo().isEmpty();
+
+        final NonSegmentedIncludeCharPredicate highlightInclusiveFromPredicate = buildInclusiveFromPredicate(
+                highlight, false);
+        final NonSegmentedIncludeCharPredicate highlightExclusiveToPredicate = buildExclusiveToPredicate(
+                highlight, false);
 
         // Ideally we would jump to the requested offset, but if we do, we can't
         // track the line/colcharOffset info for the requested range, i.e.
         // to show the right line numbers in the editor. Thus we need
         // to advance through char by char
 
+        final ExtractionTracker tracker = new ExtractionTracker(charReader);
         while (true) {
-            optLastDecodeChar = optDecodeChar;
-            optDecodeChar = charReader.read();
-            if (optDecodeChar.isEmpty()) {
-                // Reached the end of the stream
-                totalCharCount = Count.exactly(currCharOffset + 1); // zero based offset to count
+            // Read the next char if there is one
+            if (!tracker.readChar()) {
                 break;
             }
+            final DecodedChar decodedChar = tracker.optDecodeChar.get();
 
-            final DecodedChar decodedChar = optDecodeChar.get();
+            if (isHighlightDecorationRequired) {
+                // As we read the data mark the start/end of the highlight so we can establish the highlight
+                // in terms of byte offsets rather than line/col, which allows us to highlight hex dumps.
+                if (tracker.highlightStartByteOffsetInc > -1 || highlightInclusiveFromPredicate.test(tracker)) {
+                    // Inside the highlighted section
+                    if (tracker.highlightStartByteOffsetInc == -1) {
+                        tracker.markHighlightStart();
+                    }
+                    if (tracker.highlightEndByteOffsetExc == -1 && highlightExclusiveToPredicate.test(tracker)) {
+                        // Just past the end of highlight section
+                        tracker.markHighlightEnd();
+                    }
+                }
+            }
 
-            if (inclusiveFromPredicate.test(currLineNo, currColNo, currCharOffset, currByteOffset, charsInRangeCount)) {
+            if (inclusiveFromPredicate.test(tracker)) {
 
                 // On or after the first requested char
-                foundRange = true;
+                tracker.foundRange = true;
 
 //                LOGGER.info("{}:{} {}",
 //                        currLineNo,
 //                        currColNo,
 //                        decodedChar.isLineBreak() ? "\\n" : decodedChar.getAsString());
 
-                boolean isCharAfterRequestedRange = exclusiveToPredicate.test(
-                        currLineNo, currColNo, currCharOffset, currByteOffset, charsInRangeCount);
+                boolean isCharAfterRequestedRange = exclusiveToPredicate.test(tracker);
 
                 if (isCharAfterRequestedRange) {
-                    extraCharCount++;
+                    tracker.extraCharCount++;
                 }
 
                 // For multi-line data continue past the desired range a bit (up to a limit) to try to complete the line
                 // to make it look better in the UI.
                 if (isCharAfterRequestedRange
-                        && hasReachedLimitOfLineContinuation(decodedChar, currColNo, extraCharCount, isMultiLine)) {
+                        && tracker.hasReachedLimitOfLineContinuation(sourceConfig)) {
                     // This is the char after our requested range
                     // or requested range continued to the end of the line
                     // or we have blown the max chars limit
                     if (decodedChar.isLineBreak()) {
                         // need to ensure we count the line break in our offset position.
-                        currCharOffset += decodedChar.getCharCount();
+                        tracker.currCharOffset += decodedChar.getCharCount();
                     }
                     break;
                 } else {
                     // Inside the requested range (or continuing past it a bit to the end of the line)
-                    charsInRangeCount += decodedChar.getCharCount();
-                    // Record the start position for the requested range
-                    if (startCharOffset == -1) {
-                        startCharOffset = currCharOffset;
-                        startLineNo = currLineNo;
-                        startColNo = currColNo;
-                        startByteOffset = charReader.getLastByteOffsetRead()
-                                .orElseThrow(() -> new RuntimeException("Should have a byte offset at this point"));
-                    }
+                    tracker.markInsideRange();
                     strBuilderRange.append(decodedChar.getAsString());
-
-                    // Need the prev location so when we test the first char after the range
-                    // we can get the last one in the range
-                    lastLineNo = currLineNo;
-                    lastColNo = currColNo;
                 }
             } else {
                 // Hold the chars for the line so far up to the requested range so we can
                 // tack it on when we find our range
-                strBuilderLineSoFar.append(decodedChar.getAsString());
+                tracker.appendCharToCurrentLine();
             }
 
-            // Now advance the counters/trackers for the next char
-            currCharOffset += decodedChar.getCharCount();
-            currByteOffset += decodedChar.getByteCount();
-
-            if (isFirstChar) {
-                isFirstChar = false;
-            } else if (decodedChar.isLineBreak()) {
-                currLineNo++;
-                currColNo = 1;
-
-                if (!isMultiLine && currLineNo > 1) {
-                    // Multi line data so we want to keep adding chars all the way to the end
-                    // of the line so we don't get part lines in the UI.
-                    isMultiLine = true;
-                }
-                if (!foundRange) {
-                    // Not found our requested range yet so reset the current line so far
-                    // to the offset of the next char
-                    startOfCurrLineCharOffset = currCharOffset;
-                    strBuilderLineSoFar.setLength(0);
-                }
-            } else {
-                // This is a debatable one. Is a simple smiley emoji one col or two?
-                // Java will say the string has length 2
-                currColNo += decodedChar.getCharCount();
-            }
+            tracker.prepareForNextRead();
         }
-
 
         final StringBuilder strBuilderResultRange = new StringBuilder();
 
-
-//        if (isMultiLine && startLineNo != 1) {
-//            // TODO @AT See TODO next to TRUNCATED_TEXT declaration
-////            strBuilderResultRange.append(TRUNCATED_TEXT + "\n");
-////            startLineNo--;
-//        } else if (!isMultiLine && startCharOffset != 0) {
-//            strBuilderResultRange.append(TRUNCATED_TEXT);
-//        }
-
-        if (isMultiLine && strBuilderRange.length() > 0 && strBuilderRange.charAt(0) != '\n') {
-            startCharOffset = startOfCurrLineCharOffset;
-            startColNo = 1;
-            // Tack on the beginning of the line up to the range
-            strBuilderResultRange
-                    .append(strBuilderLineSoFar)
-                    .append(strBuilderRange);
+        if (tracker.isMultiLine && strBuilderRange.length() > 0 && strBuilderRange.charAt(0) != '\n') {
+            tracker.startCharOffset = tracker.startOfCurrLineCharOffset;
+            tracker.startColNo = 1;
+            // Tack on the beginning of the line, up to the range
+            tracker.addCurrentLine(strBuilderResultRange);
+            strBuilderResultRange.append(strBuilderRange);
         } else {
             strBuilderResultRange.append(strBuilderRange);
         }
 
-//        if (isMultiLine && !isTotalPageableItemsExact) {
-//            if (currChar == '\n') {
-//                strBuilderResultRange.append(TRUNCATED_TEXT);
-//            } else {
-//                // TODO @AT See TODO next to TRUNCATED_TEXT declaration
-////                strBuilderResultRange.append("\n" + TRUNCATED_TEXT);
-//            }
-//        } else if (!isMultiLine && !isTotalPageableItemsExact) {
-//            strBuilderResultRange.append(TRUNCATED_TEXT);
-//        }
+        final Location locationTo = tracker.getLocationTo();
 
-
-        if (optDecodeChar.isPresent() && optDecodeChar.filter(DecodedChar::isLineBreak).isPresent()) {
-            currCharOffset = currCharOffset - 1; // undo the last ++ op
-        }
-
-        // If last char in range was a line break then we need to use currLineNo which includes the new line
-        final Location locationTo = optLastDecodeChar.filter(DecodedChar::isLineBreak).isPresent()
-                ? DefaultLocation.of(currLineNo, currColNo)
-                : DefaultLocation.of(lastLineNo, lastColNo);
-
-        if (!totalCharCount.isExact() && charReader.getLastCharOffsetRead().isPresent()) {
+        if (!tracker.totalCharCount.isExact() && charReader.getLastCharOffsetRead().isPresent()) {
             // Estimate the total char count based on the ratio of chars to bytes seen so far.
             // The estimate will improve as we fetch further into the stream.
             final double avgCharsPerByte = charReader.getLastCharOffsetRead().get()
                     / (double) charReader.getLastByteOffsetRead().get();
 
-            totalCharCount = Count.approximately((long) (avgCharsPerByte * streamSizeBytes));
+            tracker.totalCharCount = Count.approximately((long) (avgCharsPerByte * streamSizeBytes));
         }
 
         // The range returned may differ to that requested if we have continued to the end of the line
         final DataRange actualDataRange;
         final String charData;
-        final TextRange highlight;
+        DataRange actualHighlight;
         // At this point currByteOffset is the offset of the first byte of the char outside our range
         // so subtract one to get the offset of the last byte (may be mult-byte) of the last 'char'
         // in our range
-        final long byteOffsetToInc = currByteOffset > 0
-                ? currByteOffset - 1
-                : currByteOffset;
-        if (foundRange) {
+        final long byteOffsetToInc = tracker.currByteOffset > 0
+                ? tracker.currByteOffset - 1
+                : tracker.currByteOffset;
+        if (tracker.foundRange) {
             charData = strBuilderResultRange.toString();
             actualDataRange = DataRange.builder()
-                    .fromCharOffset(startCharOffset)
-                    .fromByteOffset(startByteOffset)
-                    .fromLocation(DefaultLocation.of(startLineNo, startColNo))
+                    .fromCharOffset(tracker.startCharOffset)
+                    .fromByteOffset(tracker.startByteOffset)
+                    .fromLocation(DefaultLocation.of(tracker.startLineNo, tracker.startColNo))
                     .toLocation(locationTo)
-                    .toCharOffset(currCharOffset)
+                    .toCharOffset(tracker.currCharOffset)
                     .toByteOffset(byteOffsetToInc)
 //                    .toByteOffset(charReader.getLastByteOffsetRead()
 //                            .orElseThrow())
                     .withLength((long) charData.length())
                     .build();
-            highlight = sourceLocation.getHighlight();
+            actualHighlight = highlight;
         } else if (strBuilderResultRange.length() == 0) {
             actualDataRange = null;
             charData = "## No Data ##";
-            highlight = null;
+            actualHighlight = null;
         } else {
             actualDataRange = null;
             charData = "## Error: Requested range not found ##";
-            highlight = null;
+            actualHighlight = null;
         }
+
+        // Decorate the input highlight with byte offsets in case future calls are in hex mode
+        // which can only work in byte terms.
+        actualHighlight = isHighlightDecorationRequired && tracker.foundHighlight
+                ? NullSafe.get(highlight, highlight2 ->
+                highlight2.copy()
+                        .fromByteOffset(tracker.highlightStartByteOffsetInc)
+                        .toByteOffset(tracker.highlightEndByteOffsetExc - 1)
+                        .build())
+                : highlight;
+
+        LOGGER.info("highlight: {}", actualHighlight);
 
         // Define the range that we are actually returning, which may be bigger or smaller than requested
         // e.g. if we have continued to the end of the line or we have hit a char limit
@@ -949,7 +1013,7 @@ public class DataFetcher {
                 .withPartIndex(sourceLocation.getPartIndex())
                 .withChildStreamType(sourceLocation.getOptChildType()
                         .orElse(null))
-                .withHighlight(highlight) // pass the requested highlight back
+                .withHighlight(actualHighlight) // pass the requested highlight back
                 .withDataRange(actualDataRange);
 
         if (recordIndex != null) {
@@ -971,52 +1035,41 @@ public class DataFetcher {
                 charData,
                 byteOrderMarkLength,
                 DisplayMode.TEXT);
-        rawResult.setTotalCharacterCount(totalCharCount);
+        rawResult.setTotalCharacterCount(tracker.totalCharCount);
         return rawResult;
-    }
-
-    private boolean hasReachedLimitOfLineContinuation(final DecodedChar decodedChar,
-                                                      final int currColNo,
-                                                      final int extraCharCount,
-                                                      final boolean isMultiLine) {
-        // Don't continue to use chars beyond the range if
-        //   it is single line data
-        //   we have hit our line continuation limit
-        //   we are on a line break, i.e our inc. range ended just before or sometime before the end of line
-        //   we are on the first char of a line, i.e. our inc. range ended on a line break so this is first char
-        //     after that
-        return !isMultiLine
-                || (extraCharCount > sourceConfig.getMaxCharactersToCompleteLine()
-                || decodedChar.isLineBreak()
-                || currColNo == 1);
     }
 
     /**
      * @return True if we are after or on the first char of our range.
      */
-    private NonSegmentedIncludeCharPredicate buildInclusiveFromPredicate(final DataRange dataRange) {
+    private NonSegmentedIncludeCharPredicate buildInclusiveFromPredicate(final DataRange dataRange,
+                                                                         final boolean nullRangeResult) {
         // FROM (inclusive)
         final NonSegmentedIncludeCharPredicate inclusiveFromPredicate;
-        if (dataRange == null || !dataRange.hasBoundedStart()) {
+        if (dataRange == null) {
+            LOGGER.debug("null dataRange, predicate returns {}", nullRangeResult);
+            inclusiveFromPredicate = tracker -> nullRangeResult;
+        } else if (!dataRange.hasBoundedStart()) {
             // No start bound
             LOGGER.debug("Unbounded from predicate");
-            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) -> true;
+            inclusiveFromPredicate = tracker -> true;
         } else if (dataRange.getOptByteOffsetFrom().isPresent()) {
             final long startByteOffset = dataRange.getOptByteOffsetFrom().get();
             LOGGER.debug("Byte offset (inc.) from predicate [{}]", startByteOffset);
-            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
-                    currByteOffset >= startByteOffset;
+            inclusiveFromPredicate = tracker ->
+                    tracker.currByteOffset >= startByteOffset;
         } else if (dataRange.getOptCharOffsetFrom().isPresent()) {
             final long startCharOffset = dataRange.getOptCharOffsetFrom().get();
             LOGGER.debug("Char offset (inc.) from predicate [{}]", startCharOffset);
-            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
-                    currCharOffset >= startCharOffset;
+            inclusiveFromPredicate = tracker ->
+                    tracker.currCharOffset >= startCharOffset;
         } else if (dataRange.getOptLocationFrom().isPresent()) {
             final int lineNoFrom = dataRange.getOptLocationFrom().get().getLineNo();
             final int colNoFrom = dataRange.getOptLocationFrom().get().getColNo();
             LOGGER.debug("Line/col (inc.) from predicate [{}, {}]", lineNoFrom, colNoFrom);
-            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
-                    currLineNo > lineNoFrom || (currLineNo == lineNoFrom && currColNo >= colNoFrom);
+            inclusiveFromPredicate = tracker ->
+                    tracker.currLineNo > lineNoFrom
+                            || (tracker.currLineNo == lineNoFrom && tracker.currColNo >= colNoFrom);
         } else {
             throw new RuntimeException("No start point specified");
         }
@@ -1038,31 +1091,31 @@ public class DataFetcher {
         if (dataRange == null || !dataRange.hasBoundedEnd()) {
             // No end bound
             LOGGER.debug("Unbounded to predicate");
-            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
-                    charCount >= maxChars;
+            exclusiveToPredicate = tracker ->
+                    tracker.charsInRangeCount >= maxChars;
         } else if (dataRange.getOptLength().isPresent()) {
             final long dataLength = dataRange.getOptLength().get();
             LOGGER.debug("Length (inc.) to predicate [{}]", dataLength);
-            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
-                    charCount > dataLength || charCount >= maxChars;
+            exclusiveToPredicate = tracker ->
+                    tracker.charsInRangeCount > dataLength || tracker.charsInRangeCount >= maxChars;
         } else if (dataRange.getOptByteOffsetTo().isPresent()) {
             final long byteOffsetTo = dataRange.getOptByteOffsetTo().get();
             LOGGER.debug("Byte offset (inc.) to predicate [{}]", byteOffsetTo);
-            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
-                    currByteOffset > byteOffsetTo || charCount >= maxChars;
+            exclusiveToPredicate = tracker ->
+                    tracker.currByteOffset > byteOffsetTo || tracker.charsInRangeCount >= maxChars;
         } else if (dataRange.getOptCharOffsetTo().isPresent()) {
             final long charOffsetTo = dataRange.getOptCharOffsetTo().get();
             LOGGER.debug("Char offset (inc.) to predicate [{}]", charOffsetTo);
-            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
-                    currCharOffset > charOffsetTo || charCount >= maxChars;
+            exclusiveToPredicate = tracker ->
+                    tracker.currCharOffset > charOffsetTo || tracker.charsInRangeCount >= maxChars;
         } else if (dataRange.getOptLocationTo().isPresent()) {
             final int lineNoTo = dataRange.getOptLocationTo().get().getLineNo();
             final int colNoTo = dataRange.getOptLocationTo().get().getColNo();
             LOGGER.debug("Line/col (inc.) to predicate [{}, {}]", lineNoTo, colNoTo);
-            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
-                    currLineNo > lineNoTo
-                            || (currLineNo == lineNoTo && currColNo > colNoTo)
-                            || charCount >= maxChars;
+            exclusiveToPredicate = tracker ->
+                    tracker.currLineNo > lineNoTo
+                            || (tracker.currLineNo == lineNoTo && tracker.currColNo > colNoTo)
+                            || tracker.charsInRangeCount >= maxChars;
         } else {
             throw new RuntimeException("No start point specified");
         }
@@ -1189,14 +1242,185 @@ public class DataFetcher {
         return inputStreamProvider.getChildTypes();
     }
 
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
     private interface NonSegmentedIncludeCharPredicate {
 
-        boolean test(final long currLineNo,
-                     final long currColNo,
-                     final long currCharOffset,
-                     final long currByteOffset,
-                     final long charCount);
+        boolean test(final ExtractionTracker tracker);
     }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    /**
+     * Holds state for the extracting all/some data from a non-segmented inputStream
+     */
+    private static class ExtractionTracker {
+
+        final CharReader charReader;
+        // Trackers for what we have so far and where we are
+        long currByteOffset = 0; // zero based
+        int currLineNo = 1; // one based
+        int currColNo = 1; // one based
+        long currCharOffset = 0; //zero based
+
+        int lastLineNo = -1; // one based
+        int lastColNo = -1; // one based
+        long startCharOffset = -1;
+        int startLineNo = -1;
+        int startColNo = -1;
+        long charsInRangeCount = 0;
+
+        long startOfCurrLineCharOffset = 0;
+        long startByteOffset = -1;
+
+        Optional<DecodedChar> optDecodeChar = Optional.empty();
+        Optional<DecodedChar> optLastDecodeChar = Optional.empty();
+        boolean isFirstChar = true;
+        int extraCharCount = 0;
+
+        boolean foundRange = false;
+        boolean foundHighlight = false;
+        boolean isMultiLine = false;
+        Count<Long> totalCharCount = Count.of(0L, false);
+
+        long highlightStartByteOffsetInc = -1;
+        long highlightEndByteOffsetExc = -1;
+
+        final StringBuilder strBuilderLineSoFar = new StringBuilder();
+
+        public ExtractionTracker(final CharReader charReader) {
+            this.charReader = charReader;
+        }
+
+        /**
+         * @return True if a decoded char was read.
+         */
+        private boolean readChar() throws IOException {
+            optLastDecodeChar = optDecodeChar;
+            optDecodeChar = charReader.read();
+            if (optDecodeChar.isEmpty()) {
+                // Reached the end of the stream
+                totalCharCount = Count.exactly(currCharOffset + 1); // zero based offset to count
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        private void markHighlightStart() {
+            highlightStartByteOffsetInc = currByteOffset;
+            foundHighlight = true;
+        }
+
+        private void markHighlightEnd() {
+            highlightEndByteOffsetExc = currByteOffset;
+        }
+
+        private void appendCharToCurrentLine() {
+            optDecodeChar.ifPresent(decodedChar ->
+                    strBuilderLineSoFar.append(decodedChar.getAsString()));
+        }
+
+        private void clearCurrentLine() {
+            strBuilderLineSoFar.setLength(0);
+        }
+
+        private void addCurrentLine(final StringBuilder stringBuilder) {
+            stringBuilder.append(strBuilderLineSoFar);
+        }
+
+        private boolean isCurrCharALineBreak() {
+            return optDecodeChar.filter(DecodedChar::isLineBreak).isPresent();
+        }
+
+        private Location getLocationTo() {
+            if (isCurrCharALineBreak()) {
+                currCharOffset = currCharOffset - 1; // undo the last ++ op
+            }
+
+            final boolean lastCharIsLineBreak = optLastDecodeChar.filter(DecodedChar::isLineBreak).isPresent();
+
+            // If last char in range was a line break then we need to use currLineNo which includes the new line
+            return lastCharIsLineBreak
+                    ? DefaultLocation.of(currLineNo, currColNo)
+                    : DefaultLocation.of(lastLineNo, lastColNo);
+        }
+
+        private boolean hasReachedLimitOfLineContinuation(final SourceConfig sourceConfig) {
+            // Don't continue to use chars beyond the range if
+            //   it is single line data
+            //   we have hit our line continuation limit
+            //   we are on a line break, i.e our inc. range ended just before or sometime before the end of line
+            //   we are on the first char of a line, i.e. our inc. range ended on a line break so this is first char
+            //     after that
+            return !isMultiLine
+                    || (extraCharCount > sourceConfig.getMaxCharactersToCompleteLine()
+                    || isCurrCharALineBreak()
+                    || currColNo == 1);
+        }
+
+        /**
+         * Called for each decoded char found in the range (or just after it with line continuation)
+         */
+        private void markInsideRange() {
+            optDecodeChar.ifPresent(decodedChar -> {
+                // Inside the requested range (or continuing past it a bit to the end of the line)
+                charsInRangeCount += decodedChar.getCharCount();
+                // Record the start position for the requested range
+                if (startCharOffset == -1) {
+                    startCharOffset = currCharOffset;
+                    startLineNo = currLineNo;
+                    startColNo = currColNo;
+                    startByteOffset = charReader.getLastByteOffsetRead()
+                            .orElseThrow(() -> new RuntimeException("Should have a byte offset at this point"));
+                }
+
+                // Need the prev location so when we test the first char after the range
+                // we can get the last one in the range
+                lastLineNo = currLineNo;
+                lastColNo = currColNo;
+            });
+        }
+
+        private void prepareForNextRead() {
+            optDecodeChar.ifPresent(decodedChar -> {
+                // Now advance the counters/trackers for the next char
+                currCharOffset += decodedChar.getCharCount();
+                currByteOffset += decodedChar.getByteCount();
+
+                if (isFirstChar) {
+                    isFirstChar = false;
+                } else if (decodedChar.isLineBreak()) {
+                    currLineNo++;
+                    currColNo = 1;
+
+                    if (!isMultiLine && currLineNo > 1) {
+                        // Multi line data so we want to keep adding chars all the way to the end
+                        // of the line so we don't get part lines in the UI.
+                        isMultiLine = true;
+                    }
+                    if (!foundRange) {
+                        // Not found our requested range yet so reset the current line so far
+                        // to the offset of the next char
+                        startOfCurrLineCharOffset = currCharOffset;
+                        clearCurrentLine();
+                    }
+                } else {
+                    // This is a debatable one. Is a simple smiley emoji one col or two?
+                    // Java will say the string has length 2
+                    currColNo += decodedChar.getCharCount();
+                }
+            });
+        }
+    }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     private static class RawResult {
 
@@ -1271,5 +1495,4 @@ public class DataFetcher {
             return displayMode;
         }
     }
-
 }
