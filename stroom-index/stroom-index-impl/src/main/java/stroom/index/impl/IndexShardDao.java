@@ -6,6 +6,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexVolume;
 import stroom.util.shared.ResultPage;
 
 import java.util.Optional;
@@ -36,12 +37,15 @@ public interface IndexShardDao {
      * Create a new Index Shard
      *
      * @param key             The Index Shard details
-     * @param volumeGroupName The volume to use
+     * @param indexVolume The {@link IndexVolume} to use
      * @param ownerNodeName   The node that will own the shard
      * @param indexVersion    The version of the index in use
      * @return The newly created Index Shard
      */
-    IndexShard create(IndexShardKey key, String volumeGroupName, String ownerNodeName, String indexVersion);
+    IndexShard create(final IndexShardKey key,
+                      final IndexVolume indexVolume,
+                      final String ownerNodeName,
+                      final String indexVersion);
 
     /**
      * Delete a specific shard, by it's ID

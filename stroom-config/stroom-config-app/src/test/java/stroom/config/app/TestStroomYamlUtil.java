@@ -133,10 +133,14 @@ class TestStroomYamlUtil {
 
 
     private static AppConfig loadYamlFile(final String filename) throws FileNotFoundException {
+        LOGGER.info("1");
         Path path = getStroomAppFile(filename);
+        LOGGER.info("2");
 
         try {
-            return StroomYamlUtil.readAppConfig(path);
+            final AppConfig appConfig = StroomYamlUtil.readAppConfig(path);
+            LOGGER.info("3");
+            return appConfig;
         } catch (final Exception e) {
             throw new RuntimeException("Error parsing " + path.toAbsolutePath().normalize(), e);
         }

@@ -18,7 +18,7 @@
 package stroom.search.solr;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -31,6 +31,7 @@ import java.util.IdentityHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -39,12 +40,17 @@ public class SolrIndexClientCacheImpl implements SolrIndexClientCache, Clearable
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexClientCacheImpl.class);
     private static final String CACHE_NAME = "Solr Client Cache";
 
-    private final ICache<SolrConnectionConfig, SolrClient> cache;
+    private final LoadingStroomCache<SolrConnectionConfig, SolrClient> cache;
     private final IdentityHashMap<SolrClient, State> useMap = new IdentityHashMap<>();
 
     @Inject
-    SolrIndexClientCacheImpl(final CacheManager cacheManager, final SolrConfig solrConfig) {
-        cache = cacheManager.create(CACHE_NAME, solrConfig::getIndexClientCache, this::create, this::destroy);
+    SolrIndexClientCacheImpl(final CacheManager cacheManager,
+                             final Provider<SolrConfig> solrConfigProvider) {
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> solrConfigProvider.get().getIndexClientCache(),
+                this::create,
+                this::destroy);
     }
 
     private SolrClient create(SolrConnectionConfig solrConnectionConfig) {

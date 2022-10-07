@@ -5,9 +5,12 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="debug" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
+    <logger name="stroom" level="info" />
+<!--    <logger name="stroom.cache.impl.AbstractStroomCache" level="trace" />-->
+<!--    <logger name="stroom" level="debug" additivity="false">-->
+<!--        <appender-ref ref="STDOUT" />-->
+<!--    </logger>-->
+
 
     <root level="trace">
         <appender-ref ref="STDOUT" />

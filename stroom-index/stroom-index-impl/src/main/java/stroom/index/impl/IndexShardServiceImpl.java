@@ -26,6 +26,7 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexVolume;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -53,14 +54,17 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     private final SecurityContext securityContext;
     private final IndexStructureCache indexStructureCache;
     private final IndexShardDao indexShardDao;
+    private final IndexVolumeService indexVolumeService;
 
     @Inject
     IndexShardServiceImpl(final SecurityContext securityContext,
                           final IndexStructureCache indexStructureCache,
-                          final IndexShardDao indexShardDao) {
+                          final IndexShardDao indexShardDao,
+                          final IndexVolumeService indexVolumeService) {
         this.securityContext = securityContext;
         this.indexStructureCache = indexStructureCache;
         this.indexShardDao = indexShardDao;
+        this.indexVolumeService = indexVolumeService;
     }
 
     @Override
@@ -81,9 +85,12 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
                     new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
             final IndexDoc index = indexStructure.getIndex();
 
+
+            final IndexVolume indexVolume = indexVolumeService.selectVolume(index.getVolumeGroupName(), ownerNodeName);
+
             return indexShardDao.create(
                     indexShardKey,
-                    index.getVolumeGroupName(),
+                    indexVolume,
                     ownerNodeName,
                     LuceneVersionUtil.getCurrentVersion());
         });

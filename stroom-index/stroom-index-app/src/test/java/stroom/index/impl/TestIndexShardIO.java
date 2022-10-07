@@ -25,11 +25,15 @@ import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.search.impl.shard.IndexShardSearcher;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.SearcherManager;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -58,6 +62,8 @@ class TestIndexShardIO {
         INDEX_CONFIG = new IndexStructure(index, INDEX_FIELDS, new IndexFieldsMap(INDEX_FIELDS));
     }
 
+    private PathCreator pathCreator;
+
     public static void main(final String[] args) {
         for (final Object s : System.getProperties().keySet()) {
             System.out.println(s + "=" + System.getProperty((String) s));
@@ -71,6 +77,13 @@ class TestIndexShardIO {
         d.add(FieldFactory.create(IndexField.createIdField("Id2"), id));
 
         return d;
+    }
+
+    @BeforeEach
+    void setUp(@TempDir final Path tempDir) {
+        pathCreator = new SimplePathCreator(
+                () -> tempDir.resolve("home"),
+                () -> tempDir);
     }
 
     @Test
@@ -91,12 +104,12 @@ class TestIndexShardIO {
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
 
         // Clean up from previous tests.
-        final Path dir = IndexShardUtil.getIndexPath(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
         FileUtil.deleteDir(dir);
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new IndexShardWriterImpl(
-                    null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1);
+                    null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1, pathCreator);
             writer.flush();
             writer.addDocument(buildDocument(i));
             writer.flush();
@@ -123,17 +136,17 @@ class TestIndexShardIO {
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
 
         // Clean up from previous tests.
-        final Path dir = IndexShardUtil.getIndexPath(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
         FileUtil.deleteDir(dir);
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new IndexShardWriterImpl(
-                    null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1);
+                    null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1, pathCreator);
             writer.addDocument(buildDocument(i));
             writer.close();
             assertThat(writer.getDocumentCount()).isEqualTo(i);
 
-            final IndexShardSearcher indexShardSearcher = new IndexShardSearcher(idx1);
+            final IndexShardSearcher indexShardSearcher = new IndexShardSearcher(idx1, pathCreator);
             final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
             final IndexSearcher searcher = searcherManager.acquire();
             try {
@@ -303,11 +316,11 @@ class TestIndexShardIO {
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
 
         // Clean up from previous tests.
-        final Path dir = IndexShardUtil.getIndexPath(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
         FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(
-                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1);
+                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1, pathCreator);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -336,11 +349,11 @@ class TestIndexShardIO {
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
 
         // Clean up from previous tests.
-        final Path dir = IndexShardUtil.getIndexPath(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
         FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(
-                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1);
+                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1, pathCreator);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -370,7 +383,7 @@ class TestIndexShardIO {
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(
-                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1);
+                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1, pathCreator);
 
         Long lastSize = null;
 

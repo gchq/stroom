@@ -144,6 +144,7 @@ class TestMySQLCharacterSets {
         }
     }
 
+    @SuppressWarnings("checkstyle:AvoidEscapedUnicodeCharacters")
     @Test
     void testDelimiter() throws SQLException {
         final String testString = "a\u00acb\u00acc\u00acd"; // Unicode embedded test string.

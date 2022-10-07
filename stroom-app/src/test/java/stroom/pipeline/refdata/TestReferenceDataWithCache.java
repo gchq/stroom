@@ -121,7 +121,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         null,
                         null,
                         null,
-                        new ReferenceDataConfig()) {
+                        ReferenceDataConfig::new) {
                     @Override
                     public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -241,7 +241,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         null,
                         null,
                         null,
-                        new ReferenceDataConfig()) {
+                        ReferenceDataConfig::new) {
                     @Override
                     public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;

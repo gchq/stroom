@@ -134,6 +134,12 @@ public class App extends Application<Config> {
     }
 
     public static void main(final String[] args) throws Exception {
+        // hibernate-validator seems to use jboss-logging which spits the following ERROR
+        // out to the console if this prop is not set:
+        //   ERROR StatusLogger Log4j2 could not find a logging implementation.
+        //   Please add log4j-core to the classpath. Using SimpleLogger to log to the console...
+        System.setProperty("org.jboss.logging.provider", "slf4j");
+
         final Path yamlConfigFile = YamlUtil.getYamlFileFromArgs(args);
         new App(yamlConfigFile).run(args);
     }
@@ -145,6 +151,7 @@ public class App extends Application<Config> {
 
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
+
         // Dropwizard 2.x no longer fails on unknown properties by default but we want it to.
         bootstrap.getObjectMapper().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 

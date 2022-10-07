@@ -144,11 +144,13 @@ class EntityEventHandler {
         if (!initialised) {
             try {
                 for (final Handler handler : entityEventHandlerProvider.get()) {
-                    final stroom.util.entityevent.EntityEventHandler annotation = handler.getClass()
-                            .getAnnotation(stroom.util.entityevent.EntityEventHandler.class);
-                    if (annotation != null) {
-                        final String type = annotation.type();
-                        addHandler(handler, type, annotation.action());
+                    final stroom.util.entityevent.EntityEventHandler[] annotations = handler.getClass()
+                            .getAnnotationsByType(stroom.util.entityevent.EntityEventHandler.class);
+                    if (annotations.length > 0) {
+                        for (final stroom.util.entityevent.EntityEventHandler annotation : annotations) {
+                            final String type = annotation.type();
+                            addHandler(handler, type, annotation.action());
+                        }
                     } else {
                         LOGGER.error("Annotation not found");
                     }

@@ -18,7 +18,7 @@
 package stroom.index.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
@@ -28,6 +28,7 @@ import stroom.util.shared.Clearable;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -36,14 +37,17 @@ public class IndexStructureCacheImpl implements IndexStructureCache, Clearable {
     private static final String CACHE_NAME = "Index Config Cache";
 
     private final IndexStore indexStore;
-    private final ICache<DocRef, IndexStructure> cache;
+    private final LoadingStroomCache<DocRef, IndexStructure> cache;
 
     @Inject
     IndexStructureCacheImpl(final CacheManager cacheManager,
                             final IndexStore indexStore,
-                            final IndexConfig indexConfig) {
+                            final Provider<IndexConfig> indexConfigProvider) {
         this.indexStore = indexStore;
-        cache = cacheManager.create(CACHE_NAME, indexConfig::getIndexStructureCache, this::create);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> indexConfigProvider.get().getIndexStructureCache(),
+                this::create);
     }
 
     private IndexStructure create(final DocRef docRef) {

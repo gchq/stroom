@@ -22,13 +22,13 @@ public class GenerateExpectedYaml {
 
     private static final String APP_CONFIG = "appConfig";
 
-    private static final String HEADER = "" +
-            "# This file is generated based on all the default configuration values that are built into stroom.\n" +
-            "# It serves as an example of the structure of the full configuration tree.\n" +
-            "# If any configuration item is not explicitly set then these defaults will be used instead.\n" +
-            "# Some configuration items are expected to set,\n" +
-            "# e.g. appConfig.commonDbDetails.connection.jdbcDriverUrl,\n" +
-            "# but most can be left with their default values.";
+    private static final String HEADER = """
+            # This file is generated based on all the default configuration values that are built into stroom.
+            # It serves as an example of the structure of the full configuration tree.
+            # If any configuration item is not explicitly set then these defaults will be used instead.
+            # Some configuration items are expected to set,
+            # e.g. appConfig.commonDbDetails.connection.jdbcDriverUrl,
+            # but most can be left with their default values.""";
 
     /**
      * Builds a fresh config object tree with all the hard coded default values

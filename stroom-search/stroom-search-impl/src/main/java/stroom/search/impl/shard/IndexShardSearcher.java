@@ -22,6 +22,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.search.impl.SearchException;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
@@ -49,11 +50,13 @@ public class IndexShardSearcher {
     private final IndexWriter indexWriter;
     private final SearcherManager searcherManager;
 
-    public IndexShardSearcher(final IndexShard indexShard) {
-        this(indexShard, null);
+    public IndexShardSearcher(final IndexShard indexShard, final PathCreator pathCreator) {
+        this(indexShard, null, pathCreator);
     }
 
-    public IndexShardSearcher(final IndexShard indexShard, final IndexWriter indexWriter) {
+    public IndexShardSearcher(final IndexShard indexShard,
+                              final IndexWriter indexWriter,
+                              final PathCreator pathCreator) {
         this.indexShard = indexShard;
         this.indexWriter = indexWriter;
 
@@ -76,7 +79,7 @@ public class IndexShardSearcher {
             // If we failed to open a reader with an existing writer then just try
             // and use the index shard directory.
             if (searcherManager == null) {
-                final Path dir = IndexShardUtil.getIndexPath(indexShard);
+                final Path dir = IndexShardUtil.getIndexPath(indexShard, pathCreator);
                 LOGGER.debug("No provided writer so opening a new searcher at {}", dir);
 
                 if (!Files.isDirectory(dir)) {
