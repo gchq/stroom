@@ -75,7 +75,7 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                         .build())
                 .build();
 
-        final ResourceGeneration resourceGeneration = stroomEventLoggingServiceProvider.get()
+        return stroomEventLoggingServiceProvider.get()
                 .loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "download"))
                 .withDescription("Downloading stream data")
@@ -88,8 +88,6 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                     }
                 })
                 .getResultAndLog();
-
-        return resourceGeneration;
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)

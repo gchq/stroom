@@ -9,6 +9,10 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -27,9 +31,14 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
+@EntityEventHandler(type = IndexVolumeServiceImpl.ENTITY_TYPE, action = {
+        EntityAction.UPDATE,
+        EntityAction.CREATE,
+        EntityAction.DELETE})
 public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeGroupServiceImpl.class);
+
     private final IndexVolumeGroupDao indexVolumeGroupDao;
     private final IndexVolumeDao indexVolumeDao;
     private final SecurityContext securityContext;
@@ -37,6 +46,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final PathCreator pathCreator;
     private final NodeInfo nodeInfo;
+    private final Provider<EntityEventBus> entityEventBusProvider;
 
     private volatile boolean createdDefaultVolumes;
     private volatile boolean creatingDefaultVolumes;
@@ -48,7 +58,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                        final Provider<VolumeConfig> volumeConfigProvider,
                                        final ProcessingUserIdentityProvider processingUserIdentityProvider,
                                        final PathCreator pathCreator,
-                                       final NodeInfo nodeInfo) {
+                                       final NodeInfo nodeInfo,
+                                       final Provider<EntityEventBus> entityEventBusProvider) {
         this.indexVolumeGroupDao = indexVolumeGroupDao;
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
@@ -56,6 +67,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.pathCreator = pathCreator;
         this.nodeInfo = nodeInfo;
+        this.entityEventBusProvider = entityEventBusProvider;
+        ensureDefaultVolumes();
     }
 
     @Override
@@ -76,8 +89,10 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setName(name);
         AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
+        fireChange(EntityAction.CREATE);
+        return result;
     }
 
     @Override
@@ -87,16 +102,20 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         var newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
         indexVolumeGroup.setName(newName);
         AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
+        fireChange(EntityAction.CREATE);
+        return result;
     }
 
     @Override
     public IndexVolumeGroup update(final IndexVolumeGroup indexVolumeGroup) {
         ensureDefaultVolumes();
         AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.update(indexVolumeGroup));
+        fireChange(EntityAction.UPDATE);
+        return result;
     }
 
     @Override
@@ -125,9 +144,10 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                             indexVolumeDao.delete(indexVolume.getId()));
                     indexVolumeGroupDao.delete(id);
                 });
+        fireChange(EntityAction.DELETE);
     }
 
-    private void ensureDefaultVolumes() {
+    public void ensureDefaultVolumes() {
         if (!createdDefaultVolumes) {
             createDefaultVolumes();
         }
@@ -225,6 +245,19 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
                     " Please manually set limit for index volume.", FileUtil.getCanonicalPath(Path.of(path))));
             return OptionalLong.empty();
+        }
+    }
+
+    private void fireChange(final EntityAction action) {
+        if (entityEventBusProvider != null) {
+            try {
+                final EntityEventBus entityEventBus = entityEventBusProvider.get();
+                if (entityEventBus != null) {
+                    entityEventBus.fire(new EntityEvent(EVENT_DOCREF, action));
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
         }
     }
 }

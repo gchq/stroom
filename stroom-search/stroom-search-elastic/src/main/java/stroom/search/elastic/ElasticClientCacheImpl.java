@@ -18,7 +18,7 @@
 package stroom.search.elastic;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -31,6 +31,7 @@ import java.util.IdentityHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -38,15 +39,20 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticClientCacheImpl.class);
     private static final String CACHE_NAME = "Elastic Client Cache";
 
-    private final ICache<ElasticConnectionConfig, RestHighLevelClient> cache;
+    private final LoadingStroomCache<ElasticConnectionConfig, RestHighLevelClient> cache;
     private final IdentityHashMap<RestHighLevelClient, State> useMap = new IdentityHashMap<>();
 
     private final ElasticConfig elasticConfig;
 
     @Inject
-    ElasticClientCacheImpl(final CacheManager cacheManager, final ElasticConfig elasticConfig) {
-        this.elasticConfig = elasticConfig;
-        this.cache = cacheManager.create(CACHE_NAME, elasticConfig::getIndexClientCache, this::create, this::destroy);
+    ElasticClientCacheImpl(final CacheManager cacheManager,
+                           final Provider<ElasticConfig> elasticConfigProvider) {
+        this.elasticConfig = elasticConfigProvider.get();
+        this.cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> elasticConfigProvider.get().getIndexClientCache(),
+                this::create,
+                this::destroy);
     }
 
     private RestHighLevelClient create(ElasticConnectionConfig elasticConnectionConfig) {

@@ -36,7 +36,7 @@ class TestDbClusterLock {
         final ClusterLockDbConnProvider clusterLockDbConnProvider = DbTestUtil.getTestDbDatasource(
                 new ClusterLockDbModule(), new ClusterLockConfig.ClusterLockDbConfig());
 
-        final DbClusterLock dbClusterLock = new DbClusterLock(clusterLockDbConnProvider);
+        final DbClusterLock dbClusterLock = new DbClusterLock(clusterLockDbConnProvider, ClusterLockConfig::new);
         final DbClusterLockThreads dbClusterLockThreads = new DbClusterLockThreads(dbClusterLock);
 
         final CountDownLatch countDownLatch = new CountDownLatch(2);

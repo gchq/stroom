@@ -162,6 +162,15 @@ public class NullSafe {
         return Objects.requireNonNullElse(get(value, getter), other);
     }
 
+    public static <T1> String toStringOrElse(final T1 value,
+                                             final String other) {
+        if (value == null) {
+            return other;
+        } else {
+            return convertToString(value, other);
+        }
+    }
+
     /**
      * Apply getter to value if value is non-null. If value or the result of
      * applying getter to value is null, return the value supplied by otherSupplier.

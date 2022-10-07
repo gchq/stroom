@@ -61,12 +61,15 @@ public class StroomYamlUtil {
      */
     public static Config readConfig(final Path configFile) throws IOException {
 
+        LOGGER.info("20");
         final ConfigurationSourceProvider configurationSourceProvider = createConfigurationSourceProvider(
                 new FileConfigurationSourceProvider(), false);
 
+        LOGGER.info("21");
         final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
                 new DefaultConfigurationFactoryFactory<>();
 
+        LOGGER.info("22");
         final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
                 .create(
                         Config.class,
@@ -76,6 +79,7 @@ public class StroomYamlUtil {
 
         Config config = null;
         try {
+            LOGGER.info("23");
             config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
         } catch (ConfigurationException e) {
             throw new RuntimeException(LogUtil.message("Error parsing configuration from file {}",

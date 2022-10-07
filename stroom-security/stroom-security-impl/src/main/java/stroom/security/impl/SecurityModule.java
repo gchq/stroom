@@ -65,6 +65,7 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserCache.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(UserCache.class)
                 .addBinding(UserGroupsCache.class)
                 .addBinding(UserAppPermissionsCache.class);
 

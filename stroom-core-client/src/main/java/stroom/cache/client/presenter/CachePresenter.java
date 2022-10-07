@@ -51,7 +51,9 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
 
         registerHandler(
                 cacheListPresenter.getSelectionModel().addSelectionHandler(event -> {
-                    final String cacheName = cacheListPresenter.getSelectionModel().getSelected();
+                    final String cacheName = cacheListPresenter.getSelectionModel()
+                            .getSelected()
+                            .getCacheName();
                     cacheNodeListPresenter.read(cacheName);
                 }));
         // When a cache is cleared/evicted refresh the node list presenter

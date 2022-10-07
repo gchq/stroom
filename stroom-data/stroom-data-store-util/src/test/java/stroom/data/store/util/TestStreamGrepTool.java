@@ -81,16 +81,19 @@ class TestStreamGrepTool {
                 });
         injector.injectMembers(this);
 
-        // Clear any lingering volumes or data.
         homeDirProvider.setHomeDir(tempDir);
         tempDirProvider.setTempDir(tempDir);
-        fsVolumeService.clear();
 
         Mockito.when(toolInjector.getInjector())
                 .thenReturn(injector);
 
         // Clear the current DB.
         DbTestUtil.clear();
+
+        // Clear any lingering volumes or data. Need to do this after the db clear
+        // to ensure the local vol list gets reset
+        fsVolumeService.clear();
+        fsVolumeService.ensureDefaultVolumes();
     }
 
     private FsVolumeConfig getVolumeConfig() {

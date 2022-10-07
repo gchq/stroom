@@ -20,6 +20,99 @@ public class SafeHtmlUtil {
     }
 
     /**
+     * Replaces \n with &lt;br&gt;
+     * Any reserved chars in string will be escaped.
+     * Will always return a {@link SafeHtml} object.
+     */
+    public static SafeHtml withLineBreaks(final String string) {
+        if (string == null) {
+            return SafeHtmlUtils.fromString("");
+        } else {
+            String str = string;
+            if (str.startsWith("\n")) {
+                str = str.substring(1);
+            }
+            if (str.endsWith("\n")) {
+                str = str.substring(0, str.length() - 1);
+            }
+            // One ...<br> tag at the end of each line
+            final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+            int lineBreakIdx;
+            int lineNo = 1;
+            while (!str.isEmpty()) {
+                lineBreakIdx = str.indexOf("\n");
+                final String line;
+                if (lineBreakIdx == -1) {
+                    line = str;
+                    str = "";
+                } else {
+                    line = str.substring(0, lineBreakIdx);
+                    if (str.length() > lineBreakIdx + 1) {
+                        // Remove the line just appended
+                        str = str.substring(lineBreakIdx + 1);
+                    } else {
+                        str = "";
+                    }
+                }
+
+                if (!line.isEmpty()) {
+                    if (lineNo++ != 1) {
+                        builder.appendHtmlConstant("<br>");
+                    }
+                    builder.appendEscaped(line);
+                }
+            }
+            return builder.toSafeHtml();
+        }
+    }
+
+    /**
+     * One html paragraph block for each line where a line is delimited by \n.
+     * Any reserved chars in string will be escaped.
+     * Will always return a {@link SafeHtml} object.
+     */
+    public static SafeHtml toParagraphs(final String string) {
+        if (string == null) {
+            return SafeHtmlUtils.fromString("");
+        } else {
+            String str = string;
+            if (str.startsWith("\n")) {
+                str = str.substring(1);
+            }
+            if (str.endsWith("\n")) {
+                str = str.substring(0, str.length() - 1);
+            }
+            // One <p>...</p> block for each line
+            final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+            int lineBreakIdx;
+            while (!str.isEmpty()) {
+                lineBreakIdx = str.indexOf("\n");
+                final String line;
+                if (lineBreakIdx == -1) {
+                    line = str;
+                    str = "";
+                } else {
+                    line = str.substring(0, lineBreakIdx);
+                    if (str.length() > lineBreakIdx + 1) {
+                        // Remove the line just appended
+                        str = str.substring(lineBreakIdx + 1);
+                    } else {
+                        str = "";
+                    }
+                }
+
+                if (!line.isEmpty()) {
+                    builder
+                            .appendHtmlConstant("<p>")
+                            .appendEscaped(line)
+                            .appendHtmlConstant("</p>");
+                }
+            }
+            return builder.toSafeHtml();
+        }
+    }
+
+    /**
      * @return Text coloured grey if enabled is false
      */
     public static SafeHtml getSafeHtml(final String string, final boolean enabled) {

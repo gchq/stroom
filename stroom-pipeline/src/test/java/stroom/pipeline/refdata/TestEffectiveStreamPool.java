@@ -83,7 +83,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
                     metaService,
                     new EffectiveStreamInternPool(),
                     new MockSecurityContext(),
-                    new ReferenceDataConfig());
+                    ReferenceDataConfig::new);
 
             assertThat(effectiveStreamPool.size()).as("No pooled times yet").isEqualTo(0);
             assertThat(findEffectiveStreamSourceCount).as("No calls to the database yet").isEqualTo(0);
@@ -141,7 +141,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
                     mockStore,
                     new EffectiveStreamInternPool(),
                     new MockSecurityContext(),
-                    referenceDataConfig);
+                    () -> referenceDataConfig);
 
             assertThat(effectiveStreamCache.size()).as("No pooled times yet").isEqualTo(0);
             assertThat(mockStore.getCallCount()).as("No calls to the database yet").isEqualTo(0);

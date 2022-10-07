@@ -17,18 +17,18 @@
 package stroom.index.impl;
 
 
-import stroom.index.impl.selection.MostFreePercentVolumeSelector;
-import stroom.index.impl.selection.MostFreeVolumeSelector;
-import stroom.index.impl.selection.RandomVolumeSelector;
-import stroom.index.impl.selection.RoundRobinIgnoreLeastFreePercentVolumeSelector;
-import stroom.index.impl.selection.RoundRobinIgnoreLeastFreeVolumeSelector;
-import stroom.index.impl.selection.RoundRobinVolumeSelector;
-import stroom.index.impl.selection.VolumeSelector;
-import stroom.index.impl.selection.WeightedFreePercentRandomVolumeSelector;
-import stroom.index.impl.selection.WeightedFreeRandomVolumeSelector;
 import stroom.index.shared.IndexVolume;
 import stroom.node.shared.Node;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.capacity.HasCapacitySelector;
+import stroom.util.io.capacity.MostFreeCapacitySelector;
+import stroom.util.io.capacity.MostFreePercentCapacitySelector;
+import stroom.util.io.capacity.RandomCapacitySelector;
+import stroom.util.io.capacity.RoundRobinCapacitySelector;
+import stroom.util.io.capacity.RoundRobinIgnoreLeastFreeCapacitySelector;
+import stroom.util.io.capacity.RoundRobinIgnoreLeastFreePercentCapacitySelector;
+import stroom.util.io.capacity.WeightedFreePercentRandomCapacitySelector;
+import stroom.util.io.capacity.WeightedFreeRandomCapacitySelector;
 
 import org.junit.jupiter.api.Test;
 
@@ -38,62 +38,110 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestVolumeSelector extends StroomUnitTest {
 
-    @Test
-    void testMostFree() {
-        test(new MostFreeVolumeSelector());
-    }
-
-    @Test
-    void testMostFreePercent() {
-        test(new MostFreePercentVolumeSelector());
-    }
-
-    @Test
-    void testRandom() {
-        test(new RandomVolumeSelector());
-    }
-
-    @Test
-    void testWeightedFreeRandom() {
-        test(new WeightedFreeRandomVolumeSelector());
-    }
-
-    @Test
-    void testWeightedFreePercentRandom() {
-        test(new WeightedFreePercentRandomVolumeSelector());
-    }
-
-    @Test
-    void testRoundRobin() {
-        test(new RoundRobinVolumeSelector());
-    }
-
-    @Test
-    void testRoundRobinIgnoreLeastFree() {
-        test(new RoundRobinIgnoreLeastFreeVolumeSelector());
-    }
-
-    @Test
-    void testRoundRobinIgnoreLeastFreePercent() {
-        test(new RoundRobinIgnoreLeastFreePercentVolumeSelector());
-    }
-
-    private void test(final VolumeSelector volumeSelector) {
-        final List<IndexVolume> volumes = createVolumeList();
-        for (int i = 0; i < 100; i++) {
-            assertThat(volumeSelector.select(volumes)).isNotNull();
-        }
-    }
+    private static final String PATH_1 = "path1";
+    private static final String PATH_2 = "path2";
+    private static final String PATH_3 = "path3";
+    private static final String PATH_4 = "path4";
+    private static final String PATH_5 = "path5";
 
     private List<IndexVolume> createVolumeList() {
         final Node node1 = Node.create("node1");
         final Node node2 = Node.create("node2");
 
+        // 4k free, 80% free
         final IndexVolume v1 = IndexVolume.builder()
-                .nodeName(node1.getName()).path("path1").bytesUsed(1000L).bytesTotal(10000L).build();
+                .nodeName(node1.getName())
+                .path(PATH_1)
+                .bytesUsed(1_000L)
+                .bytesFree(4_000L)
+                .bytesTotal(5_000L)
+                .build();
+        // 4k free, 40% free
         final IndexVolume v2 = IndexVolume.builder()
-                .nodeName(node2.getName()).path("path2").bytesUsed(5000L).bytesTotal(10000L).build();
+                .nodeName(node2.getName())
+                .path(PATH_2)
+                .bytesUsed(6_000L)
+                .bytesFree(4_000L)
+                .bytesTotal(10_000L)
+                .build();
+        // 2k free, 20% free
+        final IndexVolume v3 = IndexVolume.builder()
+                .nodeName(node2.getName())
+                .path(PATH_3)
+                .bytesUsed(8_000L)
+                .bytesFree(2_000L)
+                .bytesTotal(10_000L)
+                .build();
+        // 0k free, 0% free
+        final IndexVolume v4 = IndexVolume.builder()
+                .nodeName(node2.getName())
+                .path(PATH_4)
+                .bytesUsed(10_000L)
+                .bytesFree(0L)
+                .bytesTotal(10_000L)
+                .build();
+        // 1k free, 10% free
+        final IndexVolume v5 = IndexVolume.builder()
+                .nodeName(node2.getName())
+                .path(PATH_5)
+                .bytesUsed(9_000L)
+                .bytesFree(1_000L)
+                .bytesTotal(100_000L)
+                .bytesLimit(10_000L)
+                .build();
 
-        return List.of(v1, v2);
+        return List.of(v1, v2, v3, v4, v5);
+    }
+
+    @Test
+    void testMostFree() {
+        test(new MostFreeCapacitySelector(), PATH_1, PATH_2);
+    }
+
+    @Test
+    void testMostFreePercent() {
+        test(new MostFreePercentCapacitySelector(), PATH_1);
+    }
+
+    @Test
+    void testRandom() {
+        test(new RandomCapacitySelector());
+    }
+
+    @Test
+    void testWeightedFreeRandom() {
+        test(new WeightedFreeRandomCapacitySelector());
+    }
+
+    @Test
+    void testWeightedFreePercentRandom() {
+        test(new WeightedFreePercentRandomCapacitySelector());
+    }
+
+    @Test
+    void testRoundRobin() {
+        test(new RoundRobinCapacitySelector());
+    }
+
+    @Test
+    void testRoundRobinIgnoreLeastFree() {
+        test(new RoundRobinIgnoreLeastFreeCapacitySelector(), PATH_1, PATH_2, PATH_3, PATH_5);
+    }
+
+    @Test
+    void testRoundRobinIgnoreLeastFreePercent() {
+        test(new RoundRobinIgnoreLeastFreePercentCapacitySelector(), PATH_1, PATH_2, PATH_3, PATH_5);
+    }
+
+    private void test(final HasCapacitySelector volumeSelector, final String... validExpectedVolPaths) {
+        final List<IndexVolume> volumes = createVolumeList();
+        for (int i = 0; i < 100; i++) {
+            final IndexVolume selectedVolume = volumeSelector.select(volumes);
+            assertThat(selectedVolume).isNotNull();
+            if (validExpectedVolPaths != null && validExpectedVolPaths.length > 0) {
+                assertThat(selectedVolume.getPath())
+                        .isIn((Object[]) validExpectedVolPaths);
+            }
+        }
     }
 }

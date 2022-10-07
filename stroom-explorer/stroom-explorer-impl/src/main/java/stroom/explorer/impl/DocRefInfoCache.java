@@ -17,7 +17,7 @@
 package stroom.explorer.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -41,30 +42,33 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocRefInfoCache.class);
     private static final String CACHE_NAME = "Doc Ref Info Cache";
 
-    private final ICache<DocRef, Optional<DocRefInfo>> cache;
+    private final LoadingStroomCache<DocRef, Optional<DocRefInfo>> cache;
 
     @Inject
     DocRefInfoCache(final CacheManager cacheManager,
                     final ExplorerActionHandlers explorerActionHandlers,
-                    final ExplorerConfig explorerConfig,
+                    final Provider<ExplorerConfig> explorerConfigProvider,
                     final SecurityContext securityContext) {
-        cache = cacheManager.create(CACHE_NAME, explorerConfig::getDocRefInfoCache, docRef -> {
-            DocRefInfo docRefInfo = null;
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> explorerConfigProvider.get().getDocRefInfoCache(),
+                docRef -> {
+                    DocRefInfo docRefInfo = null;
 
-            try {
-                docRefInfo = securityContext.asProcessingUserResult(() -> {
-                    final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
-                    if (handler == null) {
-                        return null;
+                    try {
+                        docRefInfo = securityContext.asProcessingUserResult(() -> {
+                            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
+                            if (handler == null) {
+                                return null;
+                            }
+                            return handler.info(docRef.getUuid());
+                        });
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e.getMessage(), e);
                     }
-                    return handler.info(docRef.getUuid());
-                });
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e.getMessage(), e);
-            }
 
-            return Optional.ofNullable(docRefInfo);
-        });
+                    return Optional.ofNullable(docRefInfo);
+                });
     }
 
     Optional<DocRefInfo> get(final DocRef docRef) {
@@ -78,7 +82,6 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
     @Override
     public void onChange(final EntityEvent event) {
-        final DocRef docRef = event.getDocRef();
-        cache.invalidate(docRef);
+        cache.invalidate(event.getDocRef());
     }
 }

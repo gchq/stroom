@@ -16,7 +16,6 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.util.io.FileUtil;
 import stroom.util.io.FileUtilException;
 
@@ -79,12 +78,12 @@ final class FileSystemUtil {
     /**
      * Create a root path.
      */
-    static Path createFileTypeRoot(final FsVolume volume) {
+    static Path createFileTypeRoot(final String volumePath) {
         //        if (streamType != null) {
 //            builder.append(SEPERATOR_CHAR);
 //            builder.append(streamType.toString());
 //        }
-        final String path = volume.getPath() +
+        final String path = volumePath +
                 SEPERATOR_CHAR +
                 STORE_NAME;
         return Paths.get(path);

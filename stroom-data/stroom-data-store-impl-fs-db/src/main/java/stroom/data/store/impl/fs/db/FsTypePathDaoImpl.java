@@ -1,7 +1,7 @@
 package stroom.data.store.impl.fs.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.data.store.impl.fs.FsTypePathDao;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.db.util.JooqUtil;
@@ -11,6 +11,7 @@ import stroom.util.logging.LogUtil;
 
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsTypePath.FS_TYPE_PATH;
@@ -27,16 +28,17 @@ class FsTypePathDaoImpl implements FsTypePathDao {
 
     private static final String NAME_TO_PATH_CACHE_NAME = "Name To Path Cache";
 
-    private final ICache<String, String> nameToPathCache;
+    private final LoadingStroomCache<String, String> nameToPathCache;
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject
     FsTypePathDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider,
                       final CacheManager cacheManager,
-                      final FsVolumeConfig fsVolumeConfig) {
+                      final Provider<FsVolumeConfig> fsVolumeConfigProvider) {
         this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
-        nameToPathCache = cacheManager.create(NAME_TO_PATH_CACHE_NAME,
-                fsVolumeConfig::getTypePathCache,
+        nameToPathCache = cacheManager.createLoadingCache(
+                NAME_TO_PATH_CACHE_NAME,
+                () -> fsVolumeConfigProvider.get().getTypePathCache(),
                 this::loadPath);
     }
 
