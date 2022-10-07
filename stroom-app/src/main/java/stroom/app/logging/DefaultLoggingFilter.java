@@ -1,6 +1,6 @@
 package stroom.app.logging;
 
-import stroom.util.logging.NoResponseLogging;
+import stroom.util.logging.NoResponseBodyLogging;
 
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.message.MessageUtils;
@@ -37,7 +37,7 @@ import javax.ws.rs.ext.WriterInterceptorContext;
  * contents, regardless of MIME type.
  * <p>
  * For endpoints returning sensitive or binary data, it doesn't make sense to log this information, so in such cases,
- * the API method should be annotated with `@NoResponseLogging`.
+ * the API method should be annotated with `@NoResponseBodyLogging`.
  */
 public class DefaultLoggingFilter extends LoggingFeature implements ContainerRequestFilter, ContainerResponseFilter,
         ClientRequestFilter, ClientResponseFilter, WriterInterceptor {
@@ -84,10 +84,10 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
         sb.append(String.format("< %d\n", responseContext.getStatus()));
         printHeaders(sb, responseContext.getStringHeaders(), "< ");
 
-        // If the API method has the `@NoResponseLogging` annotation, do not log the response body
+        // If the API method has the `@NoResponseBodyLogging` annotation, do not log the response body
         final boolean logResponseBody = Arrays
                 .stream(responseContext.getEntityAnnotations())
-                .noneMatch(annotation -> annotation instanceof NoResponseLogging);
+                .noneMatch(annotation -> annotation instanceof NoResponseBodyLogging);
         if (responseContext.hasEntity() && logResponseBody) {
             final OutputStream outputStream = new LoggingStream(sb, responseContext.getEntityStream());
             responseContext.setEntityStream(outputStream);

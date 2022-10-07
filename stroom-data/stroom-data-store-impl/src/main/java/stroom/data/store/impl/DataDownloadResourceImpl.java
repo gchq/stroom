@@ -9,7 +9,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.resource.api.ResourceStore;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.NoResponseLogging;
+import stroom.util.logging.NoResponseBodyLogging;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -44,7 +44,7 @@ public class DataDownloadResourceImpl implements DataDownloadResource {
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
-    @NoResponseLogging
+    @NoResponseBodyLogging
     @Override
     public Response downloadZip(final FindMetaCriteria criteria) {
 
