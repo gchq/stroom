@@ -24,54 +24,47 @@ import java.util.Collections;
 import java.util.List;
 import java.util.OptionalLong;
 
-public class RoundRobinIgnoreLeastFreeCapacitySelector implements HasCapacitySelector {
+public class RoundRobinIgnoreLeastFreeCapacitySelector extends AbstractSelector {
+
     public static final String NAME = "RoundRobinIgnoreLeastFree";
 
-    private final RoundRobinCapacitySelector roundRobinCapacitySelector = new RoundRobinCapacitySelector();
+    public RoundRobinIgnoreLeastFreeCapacitySelector() {
+        super(new RoundRobinCapacitySelector());
+    }
 
     @Override
-    public <T extends HasCapacity> T select(final List<T> list) {
+    public <T extends HasCapacity> T doSelect(final List<T> filteredList) {
+        // super will use fallback selector to pick from the filtered list
+        return null;
+    }
 
-        if (list == null || list.isEmpty()) {
-            throw new RuntimeException("No items provided to select from");
-        } else if (list.size() == 1) {
-            return list.get(0);
-        } else {
-            long lowestFreeCapacity = Long.MAX_VALUE;
-            List<Integer> lowestFreeCapacityIdxs = Collections.emptyList();
-            for (int i = 0; i < list.size(); i++) {
-                final OptionalLong optFreeCapacity = list.get(i).getCapacityInfo().getFreeCapacityBytes();
-                if (optFreeCapacity.isPresent()) {
-                    long freeCapacity = optFreeCapacity.getAsLong();
-                    if (freeCapacity < lowestFreeCapacity) {
-                        lowestFreeCapacity = freeCapacity;
-                        lowestFreeCapacityIdxs = List.of(i);
-                    } else if (freeCapacity == lowestFreeCapacity) {
-                        // May have more than one item that all share the lowest free space
-                        final List<Integer> newList = new ArrayList<>(lowestFreeCapacityIdxs.size() + 1);
-                        newList.addAll(lowestFreeCapacityIdxs);
-                        newList.add(i);
-                        lowestFreeCapacityIdxs = newList;
-                    }
+    @Override
+    <T extends HasCapacity> List<T> createFilteredList(final List<T> list) {
+        long lowestFreeCapacity = Long.MAX_VALUE;
+        List<Integer> lowestFreeCapacityIdxs = Collections.emptyList();
+        for (int i = 0; i < list.size(); i++) {
+            final OptionalLong optFreeCapacity = list.get(i).getCapacityInfo().getFreeCapacityBytes();
+            if (optFreeCapacity.isPresent()) {
+                long freeCapacity = optFreeCapacity.getAsLong();
+                if (freeCapacity < lowestFreeCapacity) {
+                    lowestFreeCapacity = freeCapacity;
+                    lowestFreeCapacityIdxs = List.of(i);
+                } else if (freeCapacity == lowestFreeCapacity) {
+                    // May have more than one item that all share the lowest free space
+                    final List<Integer> newList = new ArrayList<>(lowestFreeCapacityIdxs.size() + 1);
+                    newList.addAll(lowestFreeCapacityIdxs);
+                    newList.add(i);
+                    lowestFreeCapacityIdxs = newList;
                 }
             }
-
-            // Now remove the items with the lowest free capacity by idx
-            final List<T> filteredList = new ArrayList<>(list);
-            for (final Integer idx : lowestFreeCapacityIdxs) {
-                filteredList.remove((int) idx);
-            }
-
-            if (filteredList.isEmpty()) {
-                // No items after filter, so we are just going to have to use one of the ones
-                // we filtered out.
-                return roundRobinCapacitySelector.select(list);
-            } else if (filteredList.size() == 1) {
-                return filteredList.get(0);
-            } else {
-                return roundRobinCapacitySelector.select(filteredList);
-            }
         }
+
+        // Now remove the items with the lowest free capacity by idx
+        final List<T> filteredList = new ArrayList<>(list);
+        for (final Integer idx : lowestFreeCapacityIdxs) {
+            filteredList.remove((int) idx);
+        }
+        return filteredList;
     }
 
     @Override

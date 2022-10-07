@@ -7,6 +7,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 
 import java.time.Duration;
@@ -204,9 +205,29 @@ public class TestUtil {
                                           final Class<O> outputType) {
         }
 
+        /**
+         * Runs <pre>test</pre> for each {@link TestCase}. Caller is responsible for performing
+         * all test assertions they need in <pre>test</pre>.
+         */
         public CasesDynamicTestBuilder<I, O> withTest(final Consumer<TestCase<I, O>> test) {
             Objects.requireNonNull(test);
             return new CasesDynamicTestBuilder<>(this, test);
+        }
+
+        /**
+         * Asserts that the value provided by outputValueFunction is equal to
+         * {@link TestCase#getExpectedOutput()}
+         */
+        public CasesDynamicTestBuilder<I, O> withSimpleEqualityTest(
+                final Function<TestCase<I, O>, O> outputValueFunction) {
+
+            Objects.requireNonNull(outputValueFunction);
+            return new CasesDynamicTestBuilder<>(this, testCase -> {
+                final O actualOutput = outputValueFunction.apply(testCase);
+                LOGGER.debug("Actual output: '{}'", actualOutput);
+                Assertions.assertThat(actualOutput)
+                        .isEqualTo(testCase.getExpectedOutput());
+            });
         }
     }
 

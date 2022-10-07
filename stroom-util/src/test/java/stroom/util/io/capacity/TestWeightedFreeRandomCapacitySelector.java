@@ -4,8 +4,13 @@ import org.junit.jupiter.api.Test;
 
 class TestWeightedFreeRandomCapacitySelector extends AbstractHasCapacitySelectorTest {
 
+    @Override
+    HasCapacitySelector getSelector() {
+        return new WeightedFreeRandomCapacitySelector();
+    }
+
     @Test
     void test() {
-        testMultipleTimes(new WeightedFreeRandomCapacitySelector(), ALL_PATHS);
+        testMultipleTimes(ALL_PATHS);
     }
 }

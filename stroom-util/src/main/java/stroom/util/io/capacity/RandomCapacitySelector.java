@@ -21,21 +21,18 @@ import stroom.util.shared.HasCapacity;
 
 import java.util.List;
 
-public class RandomCapacitySelector implements HasCapacitySelector {
+public class RandomCapacitySelector extends AbstractSelector {
     public static final String NAME = "Random";
 
-    @Override
-    public <T extends HasCapacity> T select(final List<T> list) {
-        if (list == null || list.isEmpty()) {
-            throw new RuntimeException("No items provided to select from");
-        } else if (list.size() == 1) {
-            return list.get(0);
-        } else {
-            final double random = Math.random();
-            final int index = (int) (random * list.size());
+    public RandomCapacitySelector() {
+        super(null);
+    }
 
-            return list.get(index);
-        }
+    @Override
+    public <T extends HasCapacity> T doSelect(final List<T> filteredList) {
+        final double random = Math.random();
+        final int index = (int) (random * filteredList.size());
+        return filteredList.get(index);
     }
 
     @Override

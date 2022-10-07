@@ -23,55 +23,47 @@ import java.util.Collections;
 import java.util.List;
 import java.util.OptionalDouble;
 
-public class RoundRobinIgnoreLeastFreePercentCapacitySelector implements HasCapacitySelector {
+public class RoundRobinIgnoreLeastFreePercentCapacitySelector extends AbstractSelector {
 
     public static final String NAME = "RoundRobinIgnoreLeastFreePercent";
 
-    private final RoundRobinCapacitySelector roundRobinCapacitySelector = new RoundRobinCapacitySelector();
+    public RoundRobinIgnoreLeastFreePercentCapacitySelector() {
+        super(new RoundRobinCapacitySelector());
+    }
 
     @Override
-    public <T extends HasCapacity> T select(final List<T> list) {
+    public <T extends HasCapacity> T doSelect(final List<T> filteredList) {
+        // super will use fallback selector to pick from the filtered list
+        return null;
+    }
 
-        if (list == null || list.isEmpty()) {
-            throw new RuntimeException("No items provided to select from");
-        } else if (list.size() == 1) {
-            return list.get(0);
-        } else {
-            double lowestFreePercent = Long.MAX_VALUE;
-            List<Integer> lowestFreePercentIdxs = Collections.emptyList();
-            for (int i = 0; i < list.size(); i++) {
-                final OptionalDouble optFreePercent = list.get(i).getCapacityInfo().getFreeCapacityPercent();
-                if (optFreePercent.isPresent()) {
-                    double freePercent = optFreePercent.getAsDouble();
-                    if (freePercent < lowestFreePercent) {
-                        lowestFreePercent = freePercent;
-                        lowestFreePercentIdxs = List.of(i);
-                    } else if (freePercent == lowestFreePercent) {
-                        // May have more than one item that all share the lowest free space
-                        final List<Integer> newList = new ArrayList<>(lowestFreePercentIdxs.size() + 1);
-                        newList.addAll(lowestFreePercentIdxs);
-                        newList.add(i);
-                        lowestFreePercentIdxs = newList;
-                    }
+    @Override
+    <T extends HasCapacity> List<T> createFilteredList(final List<T> list) {
+        double lowestFreePercent = Long.MAX_VALUE;
+        List<Integer> lowestFreePercentIdxs = Collections.emptyList();
+        for (int i = 0; i < list.size(); i++) {
+            final OptionalDouble optFreePercent = list.get(i).getCapacityInfo().getFreeCapacityPercent();
+            if (optFreePercent.isPresent()) {
+                double freePercent = optFreePercent.getAsDouble();
+                if (freePercent < lowestFreePercent) {
+                    lowestFreePercent = freePercent;
+                    lowestFreePercentIdxs = List.of(i);
+                } else if (freePercent == lowestFreePercent) {
+                    // May have more than one item that all share the lowest free space
+                    final List<Integer> newList = new ArrayList<>(lowestFreePercentIdxs.size() + 1);
+                    newList.addAll(lowestFreePercentIdxs);
+                    newList.add(i);
+                    lowestFreePercentIdxs = newList;
                 }
             }
-
-            // Now remove the items with the lowest free capacity by idx
-            final List<T> filteredList = new ArrayList<>(list);
-            for (final Integer idx : lowestFreePercentIdxs) {
-                filteredList.remove((int) idx);
-            }
-
-            if (filteredList.isEmpty()) {
-                // No items after filter, so we are just going to have to use one of the ones
-                // we filtered out.
-                return roundRobinCapacitySelector.select(list);
-            } else if (filteredList.size() == 1) {
-                return filteredList.get(0);
-            } else {
-                return roundRobinCapacitySelector.select(filteredList);
-            }
         }
+
+        // Now remove the items with the lowest free capacity by idx
+        final List<T> filteredList = new ArrayList<>(list);
+        for (final Integer idx : lowestFreePercentIdxs) {
+            filteredList.remove((int) idx);
+        }
+        return filteredList;
     }
 
     @Override

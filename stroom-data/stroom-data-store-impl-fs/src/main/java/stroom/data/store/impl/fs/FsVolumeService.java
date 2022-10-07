@@ -241,7 +241,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         LOGGER.trace("allVolumeList {}", allVolumeList);
         final List<FsVolume> freeVolumes = FsVolumeListUtil.removeFullVolumes(allVolumeList);
         LOGGER.trace("freeVolumes {}", freeVolumes);
-        Set<FsVolume> set = Collections.emptySet();
+        final Set<FsVolume> set;
 
         final List<FsVolume> filteredVolumeList = getFilteredVolumeList(freeVolumes, streamStatus);
         if (filteredVolumeList.size() > 0) {
@@ -250,7 +250,19 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     selectedVolume.getPath(),
                     selectedVolume.getCapacityInfo(),
                     filteredVolumeList.size()));
-            set = Collections.singleton(selectedVolume);
+            if (selectedVolume == null) {
+                LOGGER.warn("Selector {} returned null, this should not happen. " +
+                                "all vols: {}, non-full vols: {}, non-full {} vols: 0",
+                        volumeSelector.getClass().getSimpleName(),
+                        allVolumeList.size(),
+                        freeVolumes.size(),
+                        streamStatus);
+                set = Collections.emptySet();
+            } else {
+                set = Collections.singleton(selectedVolume);
+            }
+        } else {
+            set = Collections.emptySet();
         }
 
         if (set.isEmpty()) {
@@ -624,36 +636,6 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         final FsVolume fileVolume = new FsVolume();
         fileVolume.setPath(FileUtil.getCanonicalPath(path));
         create(fileVolume);
-
-//        String pathStr = FileUtil.getCanonicalPath(path);
-//        try {
-//            Files.createDirectories(path);
-//            LOGGER.info("Creating volume in {}",
-//                    pathStr);
-//            final FileVolumeState fileVolumeState = fileSystemVolumeStateDao.create();
-//            final FileVolume fileVolume = new FileVolume();
-//            fileVolume.setStatus(FileVolume.VolumeUseStatus.ACTIVE);
-//            fileVolume.setPath(pathStr);
-//            fileVolume.setVolumeState(fileVolumeState);
-//            set an arbitrary default limit size of 250MB on each volume to prevent the
-//            filesystem from running out of space, assuming they have 500MB free of course.
-//            getDefaultVolumeLimit(path).ifPresent(fileVolume::setByteLimit);
-//
-//            create(fileVolume);
-//
-//
-//            final FileVolume result = contextResultWithOptimisticLocking(connectionProvider, (context) -> {
-//                AuditUtil.stamp(securityContext.getUserId(), fileVolume);
-//                FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
-//                record.set(FS_VOLUME.STATUS, fileVolume.getStatus().getPrimitiveValue());
-//                record.set(FS_VOLUME.FK_FS_VOLUME_STATE_ID, fileVolumeState.getId());
-//                record.store();
-//                return record.into(FileVolume.class);
-//            });
-//            result.setVolumeState(fileVolume.getVolumeState());
-//        } catch (IOException e) {
-//            LOGGER.error("Unable to create volume due to an error creating directory {}", pathStr, e);
-//        }
     }
 
     private OptionalLong getDefaultVolumeLimit(final Path path) {
@@ -834,5 +816,4 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             return createTime;
         }
     }
-
 }

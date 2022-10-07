@@ -14,8 +14,8 @@ import java.util.OptionalLong;
  */
 public interface HasCapacityInfo {
 
-    long DEFAULT_HEADROOM_BYTES = 10L * 1024L * 1024L * 1024L; // 10Gb
-    double DEFAULT_MAX_USED_FRACTION = 0.99D; // 99%
+    long DEFAULT_HEADROOM_BYTES = 1024L * 1024L * 1024L * 10L; // 10Gib
+    double DEFAULT_HEADROOM_FRACTION = 0.01D; // i.e allow up to 99% used.
 
     HasCapacityInfo UNKNOWN = new HasCapacityInfo() {
         @Override
@@ -155,36 +155,34 @@ public interface HasCapacityInfo {
         // If we haven't established how many bytes are used on a volume then
         // assume it is not full (could be dangerous but worst case we will get
         // an IO error).
-        if (!hasValidState()) {
-            // We don't know so assume not full until we do know.
+        if (hasValidState()) {
+            @SuppressWarnings("OptionalGetWithoutIsPresent") // Asserted by hasValidState check above
+            final long usedBytes = getCapacityUsedBytes().getAsLong();
+            @SuppressWarnings("OptionalGetWithoutIsPresent") // Asserted by hasValidState check above
+            final long totalBytes = getTotalCapacityBytes().getAsLong();
+
+            // If a byte limit has been set then ensure it is less than the total
+            // number of bytes on the volume and if it is return whether the number
+            // of bytes used are greater than this limit.
+            if (getCapacityLimitBytes().isPresent()) {
+                final long limitBytes = getCapacityLimitBytes().getAsLong();
+                final long effectiveUserLimit = Math.min(totalBytes, limitBytes);
+                return usedBytes >= effectiveUserLimit;
+            } else {
+                // No byte limit has been set by the user so establish the maximum size
+                // that we will allow.
+                // Choose the higher limit of either the total storage minus 10Gb or 99%
+                // of total storage.
+                final long totalMinusFixedHeadroom = totalBytes - DEFAULT_HEADROOM_BYTES;
+                final long scaledTotal = (long) (totalBytes - (totalBytes * DEFAULT_HEADROOM_FRACTION));
+                final long effectiveLimit = Math.max(totalMinusFixedHeadroom, scaledTotal);
+
+                return usedBytes >= effectiveLimit;
+            }
+        } else {
+            // We don't know the capacity state so assume not full until we do know.
             return false;
         }
-
-        @SuppressWarnings("OptionalGetWithoutIsPresent") // Asserted by hasValidState check above
-        final long usedBytes = getCapacityUsedBytes().getAsLong();
-        @SuppressWarnings("OptionalGetWithoutIsPresent") // Asserted by hasValidState check above
-        final long totalBytes = getTotalCapacityBytes().getAsLong();
-
-        // If a byte limit has been set then ensure it is less than the total
-        // number of bytes on the volume and if it is return whether the number
-        // of bytes used are greater than this limit.
-        if (getCapacityLimitBytes().isPresent()) {
-            final long limitBytes = getCapacityLimitBytes().getAsLong();
-
-            if (limitBytes < totalBytes) {
-                return usedBytes >= limitBytes;
-            }
-        }
-
-        // No byte limit has been set by the user so establish the maximum size
-        // that we will allow.
-        // Choose the higher limit of either the total storage minus 10Gb or 99%
-        // of total storage.
-        final long totalMinusFixedHeadroom = totalBytes - DEFAULT_HEADROOM_BYTES;
-        final long scaledTotal = (long) (totalBytes * DEFAULT_MAX_USED_FRACTION);
-        final long maxUsed = Math.max(totalMinusFixedHeadroom, scaledTotal);
-
-        return usedBytes >= maxUsed;
     }
 
     default String asString() {

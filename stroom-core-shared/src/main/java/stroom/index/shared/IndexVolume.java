@@ -265,8 +265,15 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
     }
 
     @JsonIgnore
+    @Override
     public HasCapacityInfo getCapacityInfo() {
         return capacityInfo;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getIdentifier() {
+        return nodeName + ":" + path;
     }
 
     @Override

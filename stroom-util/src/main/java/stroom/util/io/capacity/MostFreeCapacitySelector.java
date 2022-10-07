@@ -17,39 +17,36 @@
 package stroom.util.io.capacity;
 
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasCapacity;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.OptionalLong;
 
-public class MostFreeCapacitySelector implements HasCapacitySelector {
+public class MostFreeCapacitySelector extends AbstractSelector {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MostFreeCapacitySelector.class);
     public static final String NAME = "MostFree";
 
-    private final RoundRobinCapacitySelector roundRobinCapacitySelector = new RoundRobinCapacitySelector();
+    public MostFreeCapacitySelector() {
+        super(new RoundRobinCapacitySelector());
+    }
 
     @Override
-    public <T extends HasCapacity> T select(final List<T> list) {
+    public <T extends HasCapacity> T doSelect(final List<T> filteredList) {
 
-        if (list == null || list.isEmpty()) {
-            throw new RuntimeException("No items provided to select from");
-        } else if (list.size() == 1) {
-            return list.get(0);
-        } else {
-            long largestBytesFree = 0;
-            T selected = null;
-            for (final T item : list) {
-                final OptionalLong optBytesFree = item.getCapacityInfo().getFreeCapacityBytes();
-                if (optBytesFree.isPresent() &&
-                        optBytesFree.getAsLong() > largestBytesFree) {
-                    largestBytesFree = optBytesFree.getAsLong();
-                    selected = item;
-                }
+        long largestBytesFree = 0;
+        T selected = null;
+        for (final T item : filteredList) {
+            final OptionalLong optBytesFree = item.getCapacityInfo().getFreeCapacityBytes();
+            if (optBytesFree.isPresent() &&
+                    optBytesFree.getAsLong() > largestBytesFree) {
+                largestBytesFree = optBytesFree.getAsLong();
+                selected = item;
             }
-
-            return Objects.requireNonNullElseGet(selected, () ->
-                    roundRobinCapacitySelector.select(list));
         }
+        return selected;
     }
 
     @Override

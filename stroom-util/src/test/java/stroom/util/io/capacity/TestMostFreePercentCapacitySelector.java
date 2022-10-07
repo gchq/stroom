@@ -4,8 +4,13 @@ import org.junit.jupiter.api.Test;
 
 class TestMostFreePercentCapacitySelector extends AbstractHasCapacitySelectorTest {
 
+    @Override
+    HasCapacitySelector getSelector() {
+        return new MostFreePercentCapacitySelector();
+    }
+
     @Test
     void test() {
-        testMultipleTimes(new MostFreePercentCapacitySelector(), PATH_1);
+        testMultipleTimes(PATH_1);
     }
 }
