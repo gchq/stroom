@@ -13,6 +13,7 @@ import stroom.util.logging.NoResponseBodyLogging;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
+import event.logging.ComplexLoggedOutcome;
 import event.logging.ExportEventAction;
 import event.logging.File;
 import event.logging.MultiObject;
@@ -48,30 +49,30 @@ public class DataDownloadResourceImpl implements DataDownloadResource {
     @Override
     public Response downloadZip(final FindMetaCriteria criteria) {
 
-        final ResourceGeneration resourceGeneration = dataServiceProvider.get().download(criteria);
-        final ResourceStore resourceStore = resourceStoreProvider.get();
-        final ResourceKey resourceKey = resourceGeneration.getResourceKey();
-        final Path tempFile = resourceStore.getTempFile(resourceKey);
+        return stroomEventLoggingServiceProvider.get()
+                .loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "downloadZip"))
+                .withDescription("Downloading stream data as zip")
+                .withDefaultEventAction(ExportEventAction.builder().build())
+                .withComplexLoggedResult(eventAction -> {
+                    try {
+                        final ResourceGeneration resourceGeneration = dataServiceProvider.get().download(criteria);
+                        final ResourceStore resourceStore = resourceStoreProvider.get();
+                        final ResourceKey resourceKey = resourceGeneration.getResourceKey();
+                        final Path tempFile = resourceStore.getTempFile(resourceKey);
 
-        try {
-            final ExportEventAction exportEventAction = ExportEventAction.builder()
-                    .withSource(MultiObject.builder()
-                            .addCriteria(stroomEventLoggingServiceProvider.get().convertExpressionCriteria(
-                                    "Meta",
-                                    criteria))
-                            .addFile(File.builder()
-                                    .withName(tempFile.getFileName().toString())
-                                    .withSize(BigInteger.valueOf(Files.size(tempFile)))
-                                    .build())
-                            .build())
-                    .build();
+                        final ExportEventAction exportEventAction = eventAction.newCopyBuilder()
+                                .withSource(MultiObject.builder()
+                                        .addCriteria(stroomEventLoggingServiceProvider.get().convertExpressionCriteria(
+                                                "Meta",
+                                                criteria))
+                                        .addFile(File.builder()
+                                                .withName(tempFile.getFileName().toString())
+                                                .withSize(BigInteger.valueOf(Files.size(tempFile)))
+                                                .build())
+                                        .build())
+                                .build();
 
-            return stroomEventLoggingServiceProvider.get()
-                    .loggedWorkBuilder()
-                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "downloadZip"))
-                    .withDescription("Downloading stream data as zip")
-                    .withDefaultEventAction(exportEventAction)
-                    .withSimpleLoggedResult(() -> {
                         // Stream the downloaded content to the client as ZIP data
                         final StreamingOutput streamingOutput = output -> {
                             try (final InputStream is = Files.newInputStream(tempFile)) {
@@ -81,15 +82,17 @@ public class DataDownloadResourceImpl implements DataDownloadResource {
                             }
                         };
 
-                        return Response
+                        final Response response = Response
                                 .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
                                 .header("Content-Disposition", "attachment; filename=\"" +
                                         tempFile.getFileName().toString() + "\"")
                                 .build();
-                    })
-                    .getResultAndLog();
-        } catch (IOException e) {
-            throw EntityServiceExceptionUtil.create(e);
-        }
+
+                        return ComplexLoggedOutcome.success(response, exportEventAction);
+                    } catch (IOException e) {
+                        throw EntityServiceExceptionUtil.create(e);
+                    }
+                })
+                .getResultAndLog();
     }
 }
