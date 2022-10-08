@@ -62,7 +62,7 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
     @Override
     public void filter(final ContainerRequestContext requestContext) throws IOException {
         final StringBuilder sb = new StringBuilder();
-        sb.append(String.format("> %s %s\n", requestContext.getMethod(),
+        sb.append(String.format("%s %s\n", requestContext.getMethod(),
                 requestContext.getUriInfo().getAbsolutePath()));
         printHeaders(sb, requestContext.getHeaders(), "> ");
         if (requestContext.hasEntity()) {
@@ -81,7 +81,7 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
     public void filter(final ContainerRequestContext requestContext, final ContainerResponseContext responseContext)
             throws IOException {
         final StringBuilder sb = new StringBuilder();
-        sb.append(String.format("< %d\n", responseContext.getStatus()));
+        sb.append(String.format("%d\n", responseContext.getStatus()));
         printHeaders(sb, responseContext.getStringHeaders(), "< ");
 
         // If the API method has the `@NoResponseBodyLogging` annotation, do not log the response body
@@ -148,7 +148,11 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
                               final String linePrefix) {
         for (final Entry<String, List<String>> header : headerMap.entrySet()) {
             sb.append(String.format("%s%s: ", linePrefix, header.getKey()));
-            sb.append(String.join(",", header.getValue()));
+            if (header.getKey().equals("Authorization")) {
+                sb.append("<redacted>");
+            } else {
+                sb.append(String.join(",", header.getValue()));
+            }
             sb.append("\n");
         }
     }
