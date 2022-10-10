@@ -280,7 +280,13 @@ export interface BulkActionResult {
   message?: string;
 }
 
+export interface CacheIdentity {
+  basePropertyPath?: PropertyPath;
+  cacheName?: string;
+}
+
 export interface CacheInfo {
+  basePropertyPath?: PropertyPath;
   map?: Record<string, string>;
   name?: string;
   nodeName?: string;
@@ -295,7 +301,7 @@ export interface CacheInfoResponse {
 export interface CacheNamesResponse {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: string[];
+  values?: CacheIdentity[];
 }
 
 export interface ChangeDocumentPermissionsRequest {
@@ -3477,6 +3483,11 @@ export interface ValidateSessionResponse {
   valid?: boolean;
 }
 
+export interface ValidationResult {
+  message?: string;
+  severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
+}
+
 export type VisComponentSettings = ComponentSettings & {
   json?: string;
   tableId?: string;
@@ -5831,6 +5842,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Filesystem Volumes
+     * @name ValidateFsVolume
+     * @summary Validates a volume
+     * @request POST:/fsVolume/v1/validate
+     * @secure
+     */
+    validateFsVolume: (data: FsVolume, params: RequestParams = {}) =>
+      this.request<any, ValidationResult>({
+        path: `/fsVolume/v1/validate`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Filesystem Volumes
      * @name DeleteFsVolume
      * @summary Delete a volume
      * @request DELETE:/fsVolume/v1/{id}
@@ -6020,15 +6050,34 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Index Volumes
      * @name RescanIndexVolumes
      * @summary Rescans index volumes
-     * @request DELETE:/index/volume/v2/rescan
+     * @request GET:/index/volume/v2/rescan
      * @secure
      */
     rescanIndexVolumes: (query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/index/volume/v2/rescan`,
-        method: "DELETE",
+        method: "GET",
         query: query,
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Index Volumes
+     * @name ValidateIndexVolume
+     * @summary Validates an index volume
+     * @request POST:/index/volume/v2/validate
+     * @secure
+     */
+    validateIndexVolume: (data: IndexVolume, params: RequestParams = {}) =>
+      this.request<any, ValidationResult>({
+        path: `/index/volume/v2/validate`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
 
@@ -6101,6 +6150,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Index Volume Groups
+     * @name FetchIndexVolumeGroupByName
+     * @summary Gets an index volume group by name
+     * @request GET:/index/volumeGroup/v2/fetchByName/{name}
+     * @secure
+     */
+    fetchIndexVolumeGroupByName: (name: string, params: RequestParams = {}) =>
+      this.request<any, IndexVolumeGroup>({
+        path: `/index/volumeGroup/v2/fetchByName/${name}`,
+        method: "GET",
+        secure: true,
         ...params,
       }),
 

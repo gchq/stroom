@@ -76,8 +76,8 @@ public class FailureDestinationsImpl implements FailureDestinations {
                 try {
                     Files.createDirectories(path);
                 } catch (final IOException e) {
-                    LOGGER.error("Failed to create directory to store failed forward data: " + FileUtil.getCanonicalPath(
-                            path));
+                    LOGGER.error("Failed to create directory to store failed forward data: " +
+                            FileUtil.getCanonicalPath(path));
                     throw new UncheckedIOException(e);
                 }
                 final ForwardFileConfig forwardFileConfig = new ForwardFileConfig(true,

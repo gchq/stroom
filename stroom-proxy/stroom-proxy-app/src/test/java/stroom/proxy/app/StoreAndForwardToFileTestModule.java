@@ -1,6 +1,8 @@
 package stroom.proxy.app;
 
+import stroom.proxy.app.forwarder.FailureDestinationsImpl;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
+import stroom.proxy.repo.FailureDestinations;
 import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.Sender;
 import stroom.proxy.repo.SenderImpl;
@@ -19,5 +21,6 @@ public class StoreAndForwardToFileTestModule extends AbstractStoreAndForwardTest
         super.configure();
         bind(Sender.class).to(SenderImpl.class);
         bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
+        bind(FailureDestinations.class).to(FailureDestinationsImpl.class);
     }
 }

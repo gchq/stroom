@@ -49,7 +49,8 @@ public class ForwardRetryConfig extends AbstractConfig implements IsProxyConfig 
         return maxRetryDelay;
     }
 
-    @JsonPropertyDescription("The maximum number of retries to attempt before sending to the failed forward data directory.")
+    @JsonPropertyDescription("The maximum number of retries to attempt before sending to the failed forward data " +
+            "directory.")
     @JsonProperty
     public int getMaxTries() {
         return maxTries;
