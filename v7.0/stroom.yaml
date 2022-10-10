@@ -10212,8 +10212,10 @@ components:
           type: string
         dataRange:
           $ref: '#/components/schemas/DataRange'
-        highlight:
-          $ref: '#/components/schemas/TextRange'
+        highlights:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataRange'
         metaId:
           type: integer
           format: int64
@@ -10223,8 +10225,6 @@ components:
         recordIndex:
           type: integer
           format: int64
-        truncateToWholeLines:
-          type: boolean
     SplashConfig:
       type: object
       properties:
@@ -10818,13 +10818,6 @@ components:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractField'
-    TextRange:
-      type: object
-      properties:
-        from:
-          $ref: '#/components/schemas/Location'
-        to:
-          $ref: '#/components/schemas/Location'
     ThemeConfig:
       type: object
       properties:
