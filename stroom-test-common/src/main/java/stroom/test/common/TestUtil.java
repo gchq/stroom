@@ -28,8 +28,13 @@ public class TestUtil {
     }
 
     /**
-     * A builder for creating a Junit5 {@link DynamicTest} {@link Stream}.
+     * A builder for creating a Junit5 {@link DynamicTest} {@link Stream} for use with the
+     * {@link org.junit.jupiter.api.TestFactory} annotation.
+     * Simplifies the testing of multiple inputs to the same test method.
      * See TestTestUtil for examples of how to use this builder.
+     * NOTE: @{@link org.junit.jupiter.api.BeforeEach} and @{@link org.junit.jupiter.api.AfterEach}
+     * are only called at the {@link org.junit.jupiter.api.TestFactory} level, NOT for each
+     * {@link DynamicTest}.
      */
     public static InitialBuilder buildDynamicTestStream() {
         return new InitialBuilder();

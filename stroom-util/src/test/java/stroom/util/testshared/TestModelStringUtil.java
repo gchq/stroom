@@ -312,18 +312,27 @@ class TestModelStringUtil {
                     assertThat(output2)
                             .isEqualTo(testOutcome.getActualOutput());
                 })
+                .addCase(null, null)
+                .addCase("", null)
+                .addCase("   ", null)
                 .addCase("1", 1L)
                 .addCase("9", 9L)
                 .addCase("10", 10L)
+                .addCase("1000", 1_000L)
                 .addCase("1ms", 1L)
+                .addCase("1MS", 1L)
                 .addCase("1 ms", 1L)
                 .addCase("1s", Duration.ofSeconds(1).toMillis())
+                .addCase("1S", Duration.ofSeconds(1).toMillis())
                 .addCase("1 s", Duration.ofSeconds(1).toMillis())
                 .addCase("1m", Duration.ofMinutes(1).toMillis())
+                .addCase("1M", Duration.ofMinutes(1).toMillis())
                 .addCase("1 m", Duration.ofMinutes(1).toMillis())
                 .addCase("1h", Duration.ofHours(1).toMillis())
+                .addCase("1H", Duration.ofHours(1).toMillis())
                 .addCase("1 h", Duration.ofHours(1).toMillis())
                 .addCase("1d", Duration.ofDays(1).toMillis())
+                .addCase("1D", Duration.ofDays(1).toMillis())
                 .addCase("1 d", Duration.ofDays(1).toMillis())
                 .build();
     }
@@ -408,62 +417,5 @@ class TestModelStringUtil {
         t2.add("zz");
 
         assertThat(t1).isEqualTo(t2);
-
-    }
-
-    @Test
-    void testTimeSizeDividerNull() {
-        doTest("", null);
-    }
-
-    @Test
-    void testTimeSizeDivider1() {
-        doTest("1", 1L);
-    }
-
-    @Test
-    void testTimeSizeDivider1000() {
-        doTest("1000", 1000L);
-    }
-
-    @Test
-    void testTimeSizeDivider1Ms() {
-        doTest("1MS", 1L);
-    }
-
-    @Test
-    void testTimeSizeDivider1ms() {
-        doTest("1 ms", 1L);
-    }
-
-    @Test
-    void testTimeSizeDivider1s() {
-        doTest("1 s", 1000L);
-    }
-
-    @Test
-    void testTimeSizeDivider1m() {
-        doTest("1 m", 60 * 1000L);
-    }
-
-    @Test
-    void testTimeSizeDivider1h() {
-        doTest("1 h", 60 * 60 * 1000L);
-    }
-
-    @Test
-    void testTimeSizeDivider1d() {
-        doTest("1 d", 24 * 60 * 60 * 1000L);
-    }
-
-    private Long doTest(String input, Long expected) {
-        Long output = ModelStringUtil.parseDurationString(input);
-
-        assertThat(output).isEqualTo(expected);
-
-        System.out.println(input + " = " + output);
-
-        return output;
-
     }
 }
