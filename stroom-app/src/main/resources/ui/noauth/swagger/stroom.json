@@ -2109,6 +2109,36 @@
         "tags" : [ "Data" ]
       }
     },
+    "/data/v1/downloadZip" : {
+      "post" : {
+        "operationId" : "downloadZip",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindMetaCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Returns Stroom content data as a zip file"
+          }
+        },
+        "summary" : "Retrieve the content matching the provided criteria as a zip file",
+        "tags" : [ "Data" ]
+      }
+    },
     "/data/v1/fetch" : {
       "post" : {
         "operationId" : "fetchData",
