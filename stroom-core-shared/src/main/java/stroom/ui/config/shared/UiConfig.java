@@ -124,7 +124,7 @@ public class UiConfig extends AbstractConfig {
 
     @JsonProperty
     @JsonPropertyDescription("The time interval in milliseconds that a keep alive message will be sent over the " +
-            "web socket. A value of <= 0 means a keep alive message will not be sent. Setting the value to > 60000 " +
+            "web socket. A value of <= 0 means a keep alive message will not be sent. Setting the value to < 60000 " +
             "will have limited effect as some browsers will throttle timers to a max frequency of 1/min.")
     private final int applicationInstanceKeepAliveIntervalMs;
 
