@@ -12,6 +12,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.4] - 2022-10-10
+
+* Issue **#3056** : Make `View As Hex` editor option available in the Source view (but not when stepping). Change hex dump to use uppercase hex values.
+
+* Issue **#3063** : Fix the conversion of bytes to values like `1.9K` to not always round down.
+
+* Add trace logging to volume selectors.
+
+
 ## [v7.0.3] - 2022-09-28
 
 * Issue **#3002** : Fix bootstrap process for deployment of a new version.
@@ -4608,7 +4617,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.4...HEAD
+[v7.0.4]: https://github.com/gchq/stroom/compare/v7.0.3...v7.0.4
 [v7.0.3]: https://github.com/gchq/stroom/compare/v7.0.2...v7.0.3
 [v7.0.2]: https://github.com/gchq/stroom/compare/v7.0.1...v7.0.2
 [v7.0.1]: https://github.com/gchq/stroom/compare/v7.0.0...v7.0.1
