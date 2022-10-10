@@ -7,6 +7,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import org.assertj.core.api.Assertions;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class DynamicTestBuilder {
@@ -403,27 +405,33 @@ class DynamicTestBuilder {
             return NullSafe.getOrElseGet(
                     testCase,
                     TestCase::getName,
-                    () -> valueToStr(testCase.getInput()));
+                    () -> "Input: " + valueToStr(testCase.getInput()));
         }
 
         private String valueToStr(final Object value) {
             final StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("Input: ");
 
             if (value == null) {
                 stringBuilder.append("null");
-            } else if (value instanceof Number) {
-                // Use thousand separators
-                if (value instanceof Double) {
-                    stringBuilder.append(ModelStringUtil.formatCsv(
-                                    (Double) value, 2, true))
-                            .append("D");
-                } else {
-                    stringBuilder.append(ModelStringUtil.formatCsv((Long) value));
-                }
-                if (value instanceof Long) {
-                    stringBuilder.append("L");
-                }
+            } else if (value instanceof Double) {
+                stringBuilder.append(ModelStringUtil.formatCsv(
+                                (Double) value, 5, true))
+                        .append("D");
+            } else if (value instanceof Integer) {
+                stringBuilder.append(ModelStringUtil.formatCsv(((Integer) value).longValue()));
+            } else if (value instanceof Long) {
+                stringBuilder.append(ModelStringUtil.formatCsv((Long) value))
+                        .append("L");
+            } else if (value instanceof Tuple) {
+                final Tuple tuple = (Tuple) value;
+                final String tupleStr = tuple.toSeq()
+                        .toStream()
+                        .map(this::valueToStr)
+                        .collect(Collectors.joining(", "));
+
+                stringBuilder.append("(")
+                        .append(tupleStr)
+                        .append(")");
             } else {
                 final String valStr = value.toString();
                 stringBuilder.append("'")
@@ -447,7 +455,8 @@ class DynamicTestBuilder {
                             if (LOGGER.isDebugEnabled()) {
                                 if (testCase.isExpectedToThrow()) {
                                     LOGGER.debug(() -> LogUtil.message("Input: '{}', expected to throw: '{}'",
-                                            testCase.getInput(), testCase.getExpectedThrowableType().getSimpleName()));
+                                            testCase.getInput(),
+                                            testCase.getExpectedThrowableType().getSimpleName()));
                                 } else {
                                     LOGGER.debug(() -> LogUtil.message("Input: '{}', expectedOutput: '{}'",
                                             testCase.getInput(), testCase.getExpectedOutput()));
