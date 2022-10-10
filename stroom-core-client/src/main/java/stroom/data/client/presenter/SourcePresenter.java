@@ -25,8 +25,10 @@ import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.HasCharacterData;
+import stroom.util.shared.HasCharacterData.NavigationMode;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
+import stroom.util.shared.string.HexDump;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.progress.client.presenter.Progress;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
@@ -40,7 +42,9 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
@@ -55,21 +59,21 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private final ProgressPresenter progressPresenter;
     private final TextPresenter textPresenter;
     private final CharacterNavigatorPresenter characterNavigatorPresenter;
-    //    private final Provider<SourceLocationPresenter> sourceLocationPresenterProvider;
     private final UiConfigCache uiConfigCache;
     private final RestFactory restFactory;
     private final ClientSecurityContext clientSecurityContext;
-    private final DataNavigatorData dataNavigatorData;
+    private HasCharacterData dataNavigatorData;
 
     private SourceLocation requestedSourceLocation = null;
     private SourceLocation receivedSourceLocation = null;
     private FetchDataResult lastResult = null;
-    private TextRange currentHighlight = null;
-    private final int highlightDelta = 0;
+    // Need to hold the highlight for text and hex as the same highlighted section in byte terms
+    // will have different line/col start/end points depending on whether it is rendered as text
+    // or a hex dump.
+    private DataRange currentTextHighlight = null;
     private ClassificationUiHandlers classificationUiHandlers;
     private boolean isSteppingSource = false;
     private Count<Long> exactCharCount = null;
-
 
     @Inject
     public SourcePresenter(final EventBus eventBus,
@@ -87,7 +91,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
         this.clientSecurityContext = clientSecurityContext;
-        this.dataNavigatorData = new DataNavigatorData();
 
         setEditorOptions();
 
@@ -98,14 +101,49 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         textPresenter.setUiHandlers(this);
 
-        characterNavigatorPresenter.setDisplay(dataNavigatorData);
+        setDataNavigator(textPresenter.getViewAsHexOption().isOnAndAvailable());
+
+        textPresenter.getViewAsHexOption().setChangeHandler(this::onHexModeChange);
+    }
+
+    private void onHexModeChange(final boolean isHexModeOn) {
+        setDataNavigator(isHexModeOn);
+        SourceLocation sourceLocation = lastResult != null && lastResult.getSourceLocation() != null
+                ? lastResult.getSourceLocation()
+                : requestedSourceLocation;
+
+        // We always need to request with the text mode highlight as the hex view produces multiple highlights
+        // to cover the various parts of the hex dump.
+        sourceLocation = sourceLocation.copy()
+                .withHighlight(currentTextHighlight)
+                .build();
+
+        // Can either take the user to the same location they are currently at, regardless of highlight
+        setSourceLocation(sourceLocation);
+        // or always take them to the approx location of the highlight
+//        setSourceLocationUsingHighlight(sourceLocation);
+    }
+
+    /**
+     * Set how data navigation is managed.
+     */
+    private void setDataNavigator(final boolean isViewAsHex) {
+        // Only want to change the navigator if we don't already have the right one
+        if (isViewAsHex
+                && (dataNavigatorData == null || !NavigationMode.BYTES.equals(dataNavigatorData.getNavigationMode()))) {
+            dataNavigatorData = new HexDumpNavigatorData();
+            characterNavigatorPresenter.setDisplay(dataNavigatorData);
+        } else if (!isViewAsHex
+                && (dataNavigatorData == null || !NavigationMode.CHARS.equals(dataNavigatorData.getNavigationMode()))) {
+            dataNavigatorData = new DataNavigatorData();
+            characterNavigatorPresenter.setDisplay(dataNavigatorData);
+        }
     }
 
     private void setupProgressBar(final SourceView view,
                                   final ProgressPresenter progressPresenter) {
         view.setProgressView(progressPresenter.getView());
         progressPresenter.setVisible(false);
-
     }
 
     private void setEditorOptions() {
@@ -120,7 +158,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         textPresenter.getBasicAutoCompletionOption().setUnavailable();
         textPresenter.getFormatAction().setUnavailable();
-        textPresenter.getViewAsHexOption().setUnavailable();
+        // Allowing hex view while stepping is fiddly so not doing it for now
+        textPresenter.getViewAsHexOption().setAvailable(!isSteppingSource);
     }
 
     private void updateStepControlVisibility() {
@@ -154,7 +193,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             requestedSourceLocation = sourceLocation;
 
             doWithConfig(sourceConfig -> {
-                fetchSource(sourceLocation, sourceConfig);
+                fetchSource(sourceLocation);
             });
         }
     }
@@ -164,14 +203,15 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
      * is towards the end of the data then it will set the range to enclose the highlight.
      */
     public void setSourceLocationUsingHighlight(final SourceLocation sourceLocation) {
-        currentHighlight = sourceLocation.getHighlight();
-//        if (sourceLocation.getHighlight() == null || receivedSourceLocation == null) {
-        if (sourceLocation.getHighlight() == null) {
+        // Don't need to set currentHexHighlight as hex mode will always be off at this point
+        currentTextHighlight = sourceLocation.getFirstHighlight();
+
+        final DataRange highlight = sourceLocation.getFirstHighlight();
+        if (highlight == null) {
             // no highlight so just get the requested data.
             setSourceLocation(sourceLocation);
         } else {
             updateStepControlVisibility();
-            final TextRange highlight = sourceLocation.getHighlight();
             if (receivedSourceLocation != null && isCurrentSourceSuitable(sourceLocation)) {
                 // The requested highlight is inside the currently held data so just update
                 // the highlight in the editor
@@ -182,16 +222,22 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         .withHighlight(highlight)
                         .build();
 
-//                currentHighlight = highlight;
-                updateEditorHighlights();
+                updateEditorHighlights(Collections.singletonList(currentTextHighlight));
             } else {
                 // Highlight is outside the currently held data so we need to fetch data
                 // that contains the highlight.
                 doWithConfig(sourceConfig -> {
-                    final Location newSourceStart = buildNewSourceLocationFromHighlight(
-                            sourceLocation, highlight, sourceConfig);
+                    final DataRange newDataRange;
+                    if (textPresenter.getViewAsHexOption().isOnAndAvailable()) {
+                        newDataRange = buildNewSourceLocationFromHighlightForHexDump(
+                                sourceLocation, highlight, sourceConfig);
+                    } else {
+                        final Location newSourceStart = buildNewSourceLocationFromHighlight(
+                                sourceLocation, highlight, sourceConfig);
+                        newDataRange = DataRange.fromLocation(newSourceStart);
+                    }
                     final SourceLocation newSourceLocation = sourceLocation.copy()
-                            .withDataRange(DataRange.fromLocation(newSourceStart))
+                            .withDataRange(newDataRange)
                             .build();
 
                     // Now fetch the required range
@@ -201,11 +247,28 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         }
     }
 
+    private DataRange buildNewSourceLocationFromHighlightForHexDump(final SourceLocation sourceLocation,
+                                                                    final DataRange highlight,
+                                                                    final SourceConfig sourceConfig) {
+        // Don't have to worry about highlights during stepping as hex is not available
+        long newByteOffsetFrom = highlight.getOptByteOffsetFrom().map(
+                        byteOffsetFrom -> Math.max(
+                                0,
+                                byteOffsetFrom -
+                                        (HIGHLIGHT_CONTEXT_LINES_BEFORE * HexDump.MAX_BYTES_PER_LINE)))
+                .orElse(0L);
+
+//        GWT.log("old hl byteOffset: " + highlight.getOptByteOffsetFrom().get()
+//                + " newByteOffset: " + newByteOffsetFrom);
+
+        return DataRange.fromByteOffset(newByteOffsetFrom);
+    }
+
     private Location buildNewSourceLocationFromHighlight(final SourceLocation sourceLocation,
-                                                         final TextRange highlight,
+                                                         final DataRange highlight,
                                                          final SourceConfig sourceConfig) {
         final Location newSourceStart;
-        final Location highlightStart = highlight.getFrom();
+        final Location highlightStart = highlight.getLocationFrom();
 
         // If we are stepping backwards then this highlight will be before the last one we
         // requested. If we don't have previous data then treat it like stepping forward.
@@ -220,7 +283,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         if (optCurrLineCount
                 .filter(i -> i == 1)
                 .isPresent()
-                && highlight.isOnOneLine()
+                && highlight.getAsTextRange().filter(TextRange::isOnOneLine).isPresent()
                 && highlightStart.getColNo() > HIGHLIGHT_CONTEXT_CHARS_BEFORE) {
 
             // single line data and highlight
@@ -229,7 +292,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                     && receivedSourceLocation.getDataRange() != null
                     && receivedSourceLocation.getDataRange().getOptLength().isPresent()) {
                 // try and show just under a fetch's worth of data before
-                final int highlightLen = highlight.getTo().getColNo() - highlight.getFrom().getColNo() + 1;
+                final int highlightLen = highlight.getLocationTo().getColNo()
+                        - highlight.getLocationFrom().getColNo()
+                        + 1;
                 newColNo = (int) (highlightStart.getColNo()
                         - sourceConfig.getMaxCharactersPerFetch()
                         + highlightLen
@@ -267,22 +332,34 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private boolean isHighlightMovingBackwards(final SourceLocation newSourceLocation,
                                                final SourceLocation oldSourceLocation) {
         if (newSourceLocation != null
-                && newSourceLocation.getHighlight() != null
+                && newSourceLocation.getFirstHighlight() != null
                 && oldSourceLocation != null
-                && oldSourceLocation.getHighlight() != null) {
-            return newSourceLocation.getHighlight().isBefore(oldSourceLocation.getHighlight());
+                && oldSourceLocation.getFirstHighlight() != null) {
+            return newSourceLocation.getFirstHighlight().isBefore(oldSourceLocation.getFirstHighlight());
         } else {
             return false;
         }
     }
 
+    private boolean hasDisplayModeDifferentToLastRequest() {
+        // See if the hex mode differs from what we got back last time
+        return lastResult != null
+                && (
+                (FetchDataRequest.DisplayMode.HEX.equals(lastResult.getDisplayMode())
+                        && !textPresenter.getViewAsHexOption().isOnAndAvailable()
+                ) || (FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
+                        && textPresenter.getViewAsHexOption().isOnAndAvailable()));
+    }
+
     private boolean isCurrentSourceSuitable(final SourceLocation sourceLocation) {
         final boolean result;
-        if (receivedSourceLocation == null || receivedSourceLocation.getDataRange() == null) {
+        if (receivedSourceLocation == null
+                || receivedSourceLocation.getDataRange() == null
+                || hasDisplayModeDifferentToLastRequest()) {
             result = false;
         } else {
             result = receivedSourceLocation.isSameSource(sourceLocation)
-                    && sourceLocation.getHighlight().isInsideRange(
+                    && sourceLocation.getFirstHighlight().isInsideRange(
                     receivedSourceLocation.getDataRange().getLocationFrom(),
                     receivedSourceLocation.getDataRange().getLocationTo());
 
@@ -308,6 +385,10 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
     public void setSteppingSource(final boolean isSteppingSource) {
         this.isSteppingSource = isSteppingSource;
+        // Allowing hex view while stepping is fiddly so not doing it for now. The hex view has totally
+        // different line/col for the same source byte, so position and highlights need to be translated
+        // into hex dump terms.
+        textPresenter.getViewAsHexOption().setAvailable(!isSteppingSource);
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {
@@ -320,16 +401,15 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         null));
     }
 
-    private void fetchSource(final SourceLocation sourceLocation,
-                             final SourceConfig sourceConfig) {
+    private void fetchSource(final SourceLocation sourceLocation) {
 
-        final SourceLocation.Builder builder = SourceLocation.builder(sourceLocation.getMetaId())
-                .withPartIndex(sourceLocation.getPartIndex())
-                .withRecordIndex(sourceLocation.getRecordIndex())
-                .withDataRange(sourceLocation.getDataRange())
-                .withHighlight(sourceLocation.getHighlight())
-                .withChildStreamType(sourceLocation.getChildType());
-        final FetchDataRequest request = new FetchDataRequest(builder.build());
+        final FetchDataRequest request = new FetchDataRequest(sourceLocation);
+
+        if (textPresenter.getViewAsHexOption().isOnAndAvailable()) {
+            request.setDisplayMode(FetchDataRequest.DisplayMode.HEX);
+        } else {
+            request.setDisplayMode(FetchDataRequest.DisplayMode.TEXT);
+        }
 
         final Rest<AbstractFetchDataResult> rest = restFactory.create();
 
@@ -360,12 +440,12 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 }
             } else {
                 exactCharCount = null;
-                currentHighlight = null;
+                currentTextHighlight = null;
             }
-            // hold this separately as we may change the highlight without fetching new data
-            currentHighlight = receivedSourceLocation != null
-                    ? receivedSourceLocation.getHighlight()
-                    : null;
+
+            if (!textPresenter.getViewAsHexOption().isOnAndAvailable()) {
+                recordDecoratedHighlight(receivedSourceLocation);
+            }
 
             lastResult = fetchDataResult;
             setTitle(lastResult);
@@ -379,6 +459,40 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                     SourcePresenter.this,
                     "Unexpected type " + result.getClass().getName(),
                     null);
+        }
+    }
+
+    private void recordDecoratedHighlight(final SourceLocation sourceLocation) {
+        final DataRange receivedHighlight = sourceLocation != null
+                ? sourceLocation.getFirstHighlight()
+                : null;
+
+        // When a request is first sent for TEXT data with a highlight, the highlight will
+        // get decorated with the byte offsets of that highlight. Subsequent requests may have
+        // the same highlight but the server may be unable to decorate it if it doesn't encounter the highlight.
+        // Therefore, we mustn't overwrite the byte offsets we hold locally unless the line/col locations
+        // have changed.
+        if (currentTextHighlight == null
+                || !currentTextHighlight.getOptByteOffsetFrom().isPresent()
+                || !currentTextHighlight.getOptByteOffsetTo().isPresent()
+                || !areSameLocations(currentTextHighlight, receivedHighlight)) {
+            currentTextHighlight = receivedHighlight;
+        }
+    }
+
+    /**
+     * Compare the {@link DataRange}s using on the from/to {@link Location};
+     */
+    private boolean areSameLocations(final DataRange highlight1, final DataRange highlight2) {
+        if (highlight1 == null && highlight2 == null) {
+            return true;
+        } else if (highlight1 != null && highlight2 == null) {
+            return false;
+        } else if (highlight1 == null) {
+            return false;
+        } else {
+            return Objects.equals(highlight1.getLocationFrom(), highlight2.getLocationFrom())
+                    && Objects.equals(highlight1.getLocationTo(), highlight2.getLocationTo());
         }
     }
 
@@ -440,16 +554,14 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             showErrors(lastResult);
         } else {
             textPresenter.setText(lastResult.getData());
-            int firstLineNo = receivedSourceLocation.getOptDataRange()
+            final int firstLineNo = receivedSourceLocation.getOptDataRange()
                     .flatMap(DataRange::getOptLocationFrom)
                     .map(Location::getLineNo)
                     .orElse(1);
 
             textPresenter.setFirstLineNumber(firstLineNo);
-
             setEditorMode(lastResult);
-
-            updateEditorHighlights();
+            updateEditorHighlights(lastResult.getSourceLocation().getHighlights());
         }
     }
 
@@ -466,8 +578,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         textPresenter.setErrorText(title, errorText);
     }
 
-    private void updateEditorHighlights() {
-        if (currentHighlight != null) {
+    private void updateEditorHighlights(final List<DataRange> highlights) {
+        if (highlights != null) {
             final BooleanSupplier isSingleLineData = () -> receivedSourceLocation.getOptDataRange()
                     .flatMap(DataRange::getLineCount)
                     .filter(lineCount -> lineCount == 1)
@@ -482,34 +594,30 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             // data they will differ if the editor is not displaying from offset one.
             // It is only an issue for single line data because for multi-line we adjust the editor's
             // starting line no to suit the data.
-            TextRange editorHighlight = currentHighlight;
+            final List<TextRange> textRanges = new ArrayList<>();
+            for (final DataRange highlight : highlights) {
+                TextRange editorHighlight = highlight.getAsTextRange().orElse(null);
 
-            if (isSingleLineData.getAsBoolean() && isNonZeroCharOffset.getAsBoolean()) {
-                final long startOffset = receivedSourceLocation.getDataRange().getCharOffsetFrom();
+                if (isSingleLineData.getAsBoolean() && isNonZeroCharOffset.getAsBoolean()) {
+                    final long startOffset = receivedSourceLocation.getDataRange().getCharOffsetFrom();
 
-                if (startOffset != 1) {
-                    final int highlightDelta = (int) (currentHighlight.getFrom().getColNo() - startOffset);
-                    editorHighlight = currentHighlight.withNewStartPosition(
-                            DefaultLocation.of(1, highlightDelta));
+                    if (startOffset != 1) {
+                        final int highlightDelta = (int) (highlight.getLocationFrom().getColNo() - startOffset);
+                        editorHighlight = highlight.getAsTextRange()
+                                .map(textRange ->
+                                        textRange.withNewStartPosition(DefaultLocation.of(1, highlightDelta)))
+                                .orElse(null);
+                    }
                 }
+                textRanges.add(editorHighlight);
             }
-            textPresenter.setHighlights(Collections.singletonList(editorHighlight));
+            textPresenter.setHighlights(textRanges);
         } else {
             textPresenter.setHighlights(null);
         }
     }
 
     private void updateNavigator(final AbstractFetchDataResult result) {
-        if (DataType.SEGMENTED.equals(lastResult.getDataType())) {
-            dataNavigatorData.segmentsCount = result.getTotalItemCount();
-        } else {
-            dataNavigatorData.partsCount = result.getTotalItemCount();
-        }
-
-//        DataRange dataRange = Optional.ofNullable(result.getSourceLocation())
-//                .map(SourceLocation::getDataRange)
-//                .orElse(null);
-//
         characterNavigatorPresenter.refreshNavigator();
     }
 
@@ -527,7 +635,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private void setEditorMode(final FetchDataResult fetchDataResult) {
         final AceEditorMode mode;
 
-        if (fetchDataResult.getSourceLocation() != null
+        if (FetchDataRequest.DisplayMode.HEX.equals(fetchDataResult.getDisplayMode())) {
+            mode = AceEditorMode.STROOM_HEX_DUMP;
+        } else if (fetchDataResult.getSourceLocation() != null
                 && StreamTypeNames.META.equals(fetchDataResult.getSourceLocation().getChildType())) {
             mode = AceEditorMode.PROPERTIES;
         } else { // We have no way of knowing what type the data is (could be csv, json, xml) so assume XML
@@ -591,14 +701,19 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     // ===================================================================
 
 
+    /**
+     * Used for navigating standard char based data using char offsets.
+     */
     private class DataNavigatorData implements HasCharacterData {
-
-        private Count<Long> partsCount = Count.of(0L, false);
-        private Count<Long> segmentsCount = Count.of(0L, false);
 
         @Override
         public boolean areNavigationControlsVisible() {
             return !isSteppingSource;
+        }
+
+        @Override
+        public NavigationMode getNavigationMode() {
+            return NavigationMode.CHARS;
         }
 
         @Override
@@ -611,13 +726,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         @Override
         public void setDataRange(final DataRange dataRange) {
-//            doWithConfig(sourceConfig -> {
             final SourceLocation newSourceLocation = requestedSourceLocation.copy()
                     .withDataRange(dataRange)
                     .build();
 
             setSourceLocation(newSourceLocation);
-//            });
         }
 
         @Override
@@ -627,7 +740,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         @Override
         public Count<Long> getTotalChars() {
-
             if (lastResult != null && lastResult.getTotalCharacterCount() != null) {
                 return lastResult.getTotalCharacterCount();
             } else {
@@ -661,15 +773,75 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         public void advanceCharactersBackwards() {
             doWithConfig(sourceConfig -> {
                 final long maxChars = sourceConfig.getMaxCharactersPerFetch();
-                setDataRange(DataRange.fromCharOffset(
-                        receivedSourceLocation.getDataRange().getCharOffsetFrom() - maxChars,
-                        maxChars));
+                final long newCharOffset = Math.max(0,
+                        receivedSourceLocation.getDataRange().getCharOffsetFrom() - maxChars - 1);
+                setDataRange(DataRange.fromCharOffset(newCharOffset, maxChars));
             });
         }
 
         @Override
         public void refresh() {
             setSourceLocation(requestedSourceLocation, true);
+        }
+    }
+
+
+    // ===================================================================
+
+
+    /**
+     * Used for navigating HexDump data which has to navigate using byte offsets,
+     * not char offsets.
+     */
+    private class HexDumpNavigatorData extends DataNavigatorData {
+
+        @Override
+        public NavigationMode getNavigationMode() {
+            return NavigationMode.BYTES;
+        }
+
+        @Override
+        public DataRange getDataRange() {
+            return Optional.ofNullable(lastResult)
+                    .map(AbstractFetchDataResult::getSourceLocation)
+                    .flatMap(SourceLocation::getOptDataRange)
+                    .orElse(DataRange.fromByteOffset(0));
+        }
+
+        @Override
+        public void setDataRange(final DataRange dataRange) {
+            final SourceLocation newSourceLocation = requestedSourceLocation.copy()
+                    .withDataRange(dataRange)
+                    .build();
+            setSourceLocation(newSourceLocation);
+        }
+
+        @Override
+        public boolean isSegmented() {
+            return DataType.SEGMENTED.equals(lastResult.getDataType());
+        }
+
+        @Override
+        public void showHeadCharacters() {
+            setDataRange(DataRange.fromByteOffset(0));
+        }
+
+        @Override
+        public void advanceCharactersForward() {
+            final long newByteOffset = Math.max(0, receivedSourceLocation.getDataRange().getByteOffsetTo() + 1);
+            setDataRange(DataRange.fromByteOffset(newByteOffset));
+        }
+
+        @Override
+        public void advanceCharactersBackwards() {
+            doWithConfig(sourceConfig -> {
+                final long maxLines = sourceConfig.getMaxHexDumpLines();
+                final long maxBytesPerFetch = HexDump.MAX_BYTES_PER_LINE * maxLines;
+                final long newByteOffsetFrom = Math.max(
+                        0,
+                        receivedSourceLocation.getDataRange().getByteOffsetFrom() - maxBytesPerFetch);
+                setDataRange(DataRange.fromByteOffset(newByteOffsetFrom));
+            });
         }
     }
 
