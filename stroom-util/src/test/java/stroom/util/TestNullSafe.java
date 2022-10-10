@@ -1,12 +1,19 @@
 package stroom.util;
 
+import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
+import io.vavr.Tuple3;
+import io.vavr.Tuple4;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +24,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 class TestNullSafe {
 
@@ -487,18 +496,93 @@ class TestNullSafe {
                 -1L);
     }
 
-    @Test
-    void testConsume3() {
-        doConsumeTest(consumer ->
-                        NullSafe.consume(nonNullLevel1, Level1::getNonNullLevel2, Level2::getLevel, consumer),
-                2L);
+    @TestFactory
+    Stream<DynamicTest> testConsume3() {
+        final var inputType = new TypeLiteral<Tuple3<
+                Level1,
+                Function<Level1, Level2>,
+                Function<Level2, Long>>>() {
+        };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(inputType)
+                .withOutputType(Long.class)
+                .withTestFunction(testCase -> {
+                    final AtomicLong val = new AtomicLong(-1);
+                    NullSafe.consume(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            testCase.getInput()._3,
+                            val::set);
+                    // Return the potentially touched by the consumer
+                    return val.get();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase("All non null",
+                        Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getLevel),
+                        2L)
+                .addCase("Level 1 null",
+                        Tuple.of(nullLevel1, Level1::getNonNullLevel2, Level2::getLevel),
+                        -1L)
+                .addCase("Level 2 null",
+                        Tuple.of(nonNullLevel1, Level1::getNullLevel2, Level2::getLevel),
+                        -1L)
+                .build();
     }
 
-    @Test
-    void testConsume3_null() {
-        doConsumeTest(consumer ->
-                        NullSafe.consume(nonNullLevel1, Level1::getNullLevel2, Level2::getLevel, consumer),
-                -1L);
+    @TestFactory
+    Stream<DynamicTest> testConsume4() {
+        final var inputType = new TypeLiteral<Tuple4<
+                Level1,
+                Function<Level1, Level2>,
+                Function<Level2, Level3>,
+                Function<Level3, Long>>>() {
+        };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(inputType)
+                .withOutputType(Long.class)
+                .withTestFunction(testCase -> {
+                    final AtomicLong val = new AtomicLong(-1);
+                    NullSafe.consume(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            testCase.getInput()._3,
+                            testCase.getInput()._4,
+                            val::set);
+                    // Return the potentially touched by the consumer
+                    return val.get();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase("All non null",
+                        Tuple.of(
+                                nonNullLevel1,
+                                Level1::getNonNullLevel2,
+                                Level2::getNonNullLevel3,
+                                Level3::getLevel),
+                        3L)
+                .addCase("Level 1 null",
+                        Tuple.of(
+                                nullLevel1,
+                                Level1::getNonNullLevel2,
+                                Level2::getNonNullLevel3,
+                                Level3::getLevel),
+                        -1L)
+                .addCase("Level 2 null",
+                        Tuple.of(
+                                nonNullLevel1,
+                                Level1::getNullLevel2,
+                                Level2::getNonNullLevel3,
+                                Level3::getLevel),
+                        -1L)
+                .addCase("Level 3 null",
+                        Tuple.of(
+                                nonNullLevel1,
+                                Level1::getNonNullLevel2,
+                                Level2::getNullLevel3,
+                                Level3::getLevel),
+                        -1L)
+                .build();
     }
 
     private void doConsumeTest(final Consumer<Consumer<Long>> action, final long expectedValue) {
@@ -510,7 +594,6 @@ class TestNullSafe {
         Assertions.assertThat(val)
                 .hasValue(expectedValue);
     }
-
 
     @Test
     @Disabled
