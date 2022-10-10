@@ -4,6 +4,7 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple2;
@@ -402,18 +403,34 @@ class DynamicTestBuilder {
             return NullSafe.getOrElseGet(
                     testCase,
                     TestCase::getName,
-                    () -> {
-                        String inputStr = NullSafe.toStringOrElse(
-                                testCase,
-                                TestCase::getInput,
-                                "<NULL>");
+                    () -> valueToStr(testCase.getInput()));
+        }
 
-                        if (inputStr.isEmpty()) {
-                            inputStr = "<EMPTY STRING>";
-                        }
+        private String valueToStr(final Object value) {
+            final StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("Input: ");
 
-                        return "Input: '" + inputStr + "'";
-                    });
+            if (value == null) {
+                stringBuilder.append("null");
+            } else if (value instanceof Number) {
+                // Use thousand separators
+                if (value instanceof Double) {
+                    stringBuilder.append(ModelStringUtil.formatCsv(
+                                    (Double) value, 2, true))
+                            .append("D");
+                } else {
+                    stringBuilder.append(ModelStringUtil.formatCsv((Long) value));
+                }
+                if (value instanceof Long) {
+                    stringBuilder.append("L");
+                }
+            } else {
+                final String valStr = value.toString();
+                stringBuilder.append("'")
+                        .append(valStr)
+                        .append("'");
+            }
+            return stringBuilder.toString();
         }
 
         private Stream<DynamicTest> createDynamicTestStream() {
