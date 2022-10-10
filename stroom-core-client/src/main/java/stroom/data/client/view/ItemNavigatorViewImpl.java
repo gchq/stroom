@@ -151,6 +151,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
 
             nextPageBtn.setEnabled(!display.isLastPage());
             lastPageBtn.setEnabled(!display.isLastPage());
+            refreshBtn.setEnabled(true);
 
             updateButtonTitles();
 

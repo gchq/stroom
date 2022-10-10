@@ -6,6 +6,8 @@ public interface HasCharacterData {
 
     boolean areNavigationControlsVisible();
 
+    NavigationMode getNavigationMode();
+
     DataRange getDataRange();
 
     /**
@@ -81,17 +83,18 @@ public interface HasCharacterData {
     Optional<Long> getTotalBytes();
 
     /**
-     * Called when the user clicks the |< button
+     * Called when the user clicks the |<< button. I.e. Show the head
+     * of the file.
      */
     void showHeadCharacters();
 
     /**
-     * Called when the user clicks the > button
+     * Called when the user clicks the >| button
      */
     void advanceCharactersForward();
 
     /**
-     * Called when the user clicks the < button
+     * Called when the user clicks the |< button
      */
     void advanceCharactersBackwards();
 
@@ -106,4 +109,9 @@ public interface HasCharacterData {
      * @param dataRange The new data range
      */
     void setDataRange(final DataRange dataRange);
+
+    enum NavigationMode {
+        CHARS,
+        BYTES;
+    }
 }

@@ -3,12 +3,16 @@ package stroom.util.io.capacity;
 import stroom.util.shared.HasCapacity;
 import stroom.util.shared.HasCapacityInfo;
 
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.OptionalLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AbstractHasCapacitySelectorTest {
+public abstract class AbstractHasCapacitySelectorTest {
 
     protected static final String PATH_1 = "path1";
     protected static final String PATH_2 = "path2";
@@ -24,22 +28,44 @@ public class AbstractHasCapacitySelectorTest {
             PATH_5};
 
     protected static List<NoddyVolume> VOLUME_LIST = List.of(
-        // 4k free, 80% free
-        new NoddyVolume(PATH_1, 1_000, 5_000),
-        // 4k free, 40% free
-        new NoddyVolume(PATH_2, 6_000, 10_000),
-        // 2k free, 20% free
-        new NoddyVolume(PATH_3, 8_000, 10_000),
-        // 0k free, 0% free
-        new NoddyVolume(PATH_4, 10_000, 10_000),
-        // 1k free, 10% free
-        new NoddyVolume(PATH_5, 9_000L, 10_000L, 100_000L));
+            // 4k free, 80% free
+            new NoddyVolume(PATH_1, 1_000, 5_000),
+            // 4k free, 40% free
+            new NoddyVolume(PATH_2, 6_000, 10_000),
+            // 2k free, 20% free
+            new NoddyVolume(PATH_3, 8_000, 10_000),
+            // 0k free, 0% free
+            new NoddyVolume(PATH_4, 10_000, 10_000),
+            // 1k free, 10% free
+            new NoddyVolume(PATH_5, 9_000L, 10_000L, 100_000L));
 
-    protected void testMultipleTimes(final HasCapacitySelector volumeSelector,
-                                     final String... validExpectedVolPaths) {
+    abstract HasCapacitySelector getSelector();
+
+    @Test
+    void testNullList() {
+        final HasCapacitySelector selector = getSelector();
+        Assertions
+                .assertThatThrownBy(() -> {
+                    selector.select(null);
+                })
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void testEmptyList() {
+        final HasCapacitySelector selector = getSelector();
+        Assertions
+                .assertThatThrownBy(() -> {
+                    selector.select(Collections.emptyList());
+                })
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    protected void testMultipleTimes(final String... validExpectedVolPaths) {
+        final HasCapacitySelector selector = getSelector();
         final List<NoddyVolume> volumes = VOLUME_LIST;
         for (int i = 0; i < 100; i++) {
-            final NoddyVolume selectedVolume = volumeSelector.select(volumes);
+            final NoddyVolume selectedVolume = selector.select(volumes);
             assertThat(selectedVolume).isNotNull();
             if (validExpectedVolPaths != null && validExpectedVolPaths.length > 0) {
                 assertThat(selectedVolume.getPath())
@@ -112,6 +138,11 @@ public class AbstractHasCapacitySelectorTest {
                             : OptionalLong.empty();
                 }
             };
+        }
+
+        @Override
+        public String getIdentifier() {
+            return path;
         }
     }
 }

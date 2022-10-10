@@ -1,28 +1,73 @@
 package stroom.test.common;
 
+import io.vavr.Tuple;
+
 /**
  * Useful class for holding input and expected output values for a test case.
+ *
+ * @param <I> The type of the test case input. If there are multiple inputs then
+ *            {@code I} may be a {@link Tuple} of input values.
+ * @param <O> The type of the test case expected output. If there are multiple outputs then
+ *            {@code O} may be a {@link Tuple} of input values.
  */
-public class TestCase<T1, T2> {
+public class TestCase<I, O> {
 
-    private final T1 input;
-    private final T2 expectedOutput;
+    private final I input;
+    private final O expectedOutput;
+    private final Class<? extends Throwable> expectedThrowableType;
+    private final String name;
 
-    private TestCase(final T1 input, final T2 expectedOutput) {
+    TestCase(final I input,
+             final O expectedOutput,
+             final Class<? extends Throwable> expectedThrowableType,
+             final String name) {
+
         this.input = input;
         this.expectedOutput = expectedOutput;
+        this.expectedThrowableType = expectedThrowableType;
+        this.name = name;
     }
 
-    public static <T1, T2> TestCase<T1, T2> of(final T1 input, final T2 expectedOutput) {
-        return new TestCase<>(input, expectedOutput);
+    public static <I, O> TestCase<I, O> of(final I input,
+                                           final O expectedOutput) {
+        return new TestCase<>(input, expectedOutput, null, null);
     }
 
-    public T1 getInput() {
+    public static <I, O> TestCase<I, O> of(final String name,
+                                           final I input,
+                                           final O expectedOutput) {
+        return new TestCase<>(input, expectedOutput, null, name);
+    }
+
+    public static <I> TestCase<I, ?> throwing(final I input,
+                                              final Class<? extends Throwable> expectedThrowable) {
+        return new TestCase<>(input, null, expectedThrowable, null);
+    }
+
+    public static <I> TestCase<I, ?> throwing(final String name,
+                                              final I input,
+                                              final Class<? extends Throwable> expectedThrowable) {
+        return new TestCase<>(input, null, expectedThrowable, name);
+    }
+
+    public I getInput() {
         return input;
     }
 
-    public T2 getExpectedOutput() {
+    public O getExpectedOutput() {
         return expectedOutput;
+    }
+
+    public Class<? extends Throwable> getExpectedThrowableType() {
+        return expectedThrowableType;
+    }
+
+    public boolean isExpectedToThrow() {
+        return expectedThrowableType != null;
+    }
+
+    public String getName() {
+        return name;
     }
 
     @Override
@@ -30,6 +75,7 @@ public class TestCase<T1, T2> {
         return "TestCase{" +
                 "input=" + input +
                 ", expectedOutput=" + expectedOutput +
+                ", name='" + name + '\'' +
                 '}';
     }
 }

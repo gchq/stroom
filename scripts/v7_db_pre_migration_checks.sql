@@ -1,4 +1,5 @@
 -- A set of SQL queries to run before migrating from v6 to v7
+-- See https://gchq.github.io/stroom-docs/latest/docs/install-guide/upgrades/v6-to-v7/
 -- 
 -- Run with the mysql --table arg to get formatted output
 -- e.g.

@@ -1,6 +1,6 @@
 package stroom.test.common;
 
-import stroom.util.NullSafe;
+import stroom.test.common.DynamicTestBuilder.InitialBuilder;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.LambdaLogger;
@@ -11,11 +11,8 @@ import org.junit.jupiter.api.DynamicTest;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -27,49 +24,15 @@ public class TestUtil {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestUtil.class);
 
     private TestUtil() {
+        // Static Utils only
     }
 
     /**
-     * Creates dynamic tests bases on the passed testCases.
-     * Uses the toString of {@link TestCase#getInput()} for the test name.
+     * A builder for creating a Junit5 {@link DynamicTest} {@link Stream}.
+     * See TestTestUtil for examples of how to use this builder.
      */
-    public static <T1, T2> Stream<DynamicTest> createDynamicTestStream(
-            final List<TestCase<T1, T2>> testCases,
-            final Consumer<TestCase<T1, T2>> work) {
-        return createDynamicTestStream(
-                testCases,
-                testCase -> {
-                    String name = NullSafe.toStringOrElse(
-                            testCase,
-                            TestCase::getInput,
-                            "<NULL>");
-                    if (name.isEmpty()) {
-                        name = "<EMPTY STRING>";
-                    }
-                    return name;
-                },
-                work);
-    }
-
-    /**
-     * Creates dynamic tests bases on the passed testCases.
-     * Uses the toString of {@link TestCase#getInput()} for the test name.
-     *
-     * @param nameFunction Function to provide a name for the test using the testCase
-     */
-    public static <T1, T2> Stream<DynamicTest> createDynamicTestStream(
-            final List<TestCase<T1, T2>> testCases,
-            final Function<TestCase<T1, T2>, String> nameFunction,
-            final Consumer<TestCase<T1, T2>> work) {
-        Objects.requireNonNull(work);
-        Objects.requireNonNull(testCases);
-
-        return testCases.stream()
-                .map(testCase -> {
-                    final String testName = nameFunction.apply(testCase);
-                    return DynamicTest.dynamicTest(testName, () ->
-                            work.accept(testCase));
-                });
+    public static InitialBuilder buildDynamicTestStream() {
+        return new InitialBuilder();
     }
 
     /**
@@ -156,10 +119,10 @@ public class TestUtil {
      * If timeout is reached before test returns true a {@link RuntimeException} is thrown.
      * A default timeout of 5s is used with a default pollFrequency of 1ms.
      *
-     * @param valueSupplier   Supplier of the value to test. This will be called repeatedly until
-     *                        its return value match requiredValue, or timeout is reached.
-     * @param requiredValue   The value that valueSupplier is required to ultimately return.
-     * @param message         The name of the thing being waited for.
+     * @param valueSupplier Supplier of the value to test. This will be called repeatedly until
+     *                      its return value match requiredValue, or timeout is reached.
+     * @param requiredValue The value that valueSupplier is required to ultimately return.
+     * @param message       The name of the thing being waited for.
      */
     public static <T> void waitForIt(final Supplier<T> valueSupplier,
                                      final T requiredValue,

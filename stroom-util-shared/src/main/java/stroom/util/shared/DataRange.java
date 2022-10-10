@@ -6,8 +6,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 @JsonInclude(Include.NON_NULL)
 public class DataRange {
@@ -197,22 +199,129 @@ public class DataRange {
         return Optional.ofNullable(length);
     }
 
+    /**
+     * Zero based, inclusive
+     */
     public Long getByteOffsetFrom() {
         return byteOffsetFrom;
     }
 
+    /**
+     * Zero based, inclusive
+     */
     @JsonIgnore
     public Optional<Long> getOptByteOffsetFrom() {
         return Optional.ofNullable(byteOffsetFrom);
     }
 
+    /**
+     * Zero based, inclusive
+     */
     public Long getByteOffsetTo() {
         return byteOffsetTo;
     }
 
+    /**
+     * Zero based, inclusive
+     */
     @JsonIgnore
     public Optional<Long> getOptByteOffsetTo() {
         return Optional.ofNullable(byteOffsetTo);
+    }
+
+    @JsonIgnore
+    public Optional<TextRange> getAsTextRange() {
+        if (locationFrom != null && locationTo != null) {
+            return Optional.of(new TextRange(locationFrom, locationTo));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * @return True if all of this range is inside or is identical to
+     * the other range.
+     */
+    public boolean isInsideRange(final DataRange other) {
+        if (other == null) {
+            return false;
+        } else if (locationFrom != null && locationTo != null) {
+            return isInsideRange(other, DataRange::getLocationFrom, DataRange::getLocationTo);
+        } else if (byteOffsetFrom != null && byteOffsetTo != null) {
+            return isInsideRange(other, DataRange::getByteOffsetFrom, DataRange::getByteOffsetTo);
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isInsideRange(final Location from, final Location to) {
+        final boolean result;
+        if (this.locationFrom == null
+                || this.locationTo == null
+                || from == null
+                || to == null) {
+            result = false;
+        } else {
+            result = this.locationFrom.compareTo(from) >= 0
+                    && this.locationTo.compareTo(to) <= 0;
+        }
+        return result;
+    }
+
+    private <T extends Comparable<T>> boolean isInsideRange(final DataRange other,
+                                                            final Function<DataRange, T> fromFunc,
+                                                            final Function<DataRange, T> toFunc) {
+        final boolean result;
+        if (other == null) {
+            result = false;
+        } else {
+            final T thisFrom = fromFunc.apply(this);
+            final T thisTo = toFunc.apply(this);
+            if (thisFrom == null || thisTo == null) {
+                result = false;
+            } else {
+                final T otherFrom = fromFunc.apply(other);
+                final T otherTo = toFunc.apply(other);
+                if (otherFrom == null || otherTo == null) {
+                    result = false;
+                } else {
+                    result = thisFrom.compareTo(otherFrom) >= 0
+                            && thisTo.compareTo(otherTo) <= 0;
+                }
+            }
+        }
+        return result;
+    }
+
+    @JsonIgnore
+    public boolean isOnOneLine() {
+        return locationFrom != null
+                && locationTo != null
+                && locationFrom.getLineNo() == locationTo.getLineNo();
+    }
+
+    public boolean isBefore(final DataRange other) {
+        if (other == null) {
+            return false;
+        } else if (locationFrom != null) {
+            return Comparator.comparing(DataRange::getLocationFrom).compare(this, other) < 0;
+        } else if (byteOffsetFrom != null) {
+            return Comparator.comparing(DataRange::getByteOffsetFrom).compare(this, other) < 0;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isAfter(final DataRange other) {
+        if (other == null) {
+            return false;
+        } else if (locationFrom != null) {
+            return Comparator.comparing(DataRange::getLocationFrom).compare(this, other) > 0;
+        } else if (byteOffsetFrom != null) {
+            return Comparator.comparing(DataRange::getByteOffsetFrom).compare(this, other) > 0;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -327,6 +436,9 @@ public class DataRange {
             return this;
         }
 
+        /**
+         * Zero based, inclusive
+         */
         public Builder fromByteOffset(final Long byteOffsetFrom) {
             this.byteOffsetFrom = byteOffsetFrom;
             return this;
@@ -342,6 +454,9 @@ public class DataRange {
             return this;
         }
 
+        /**
+         * Zero based, inclusive
+         */
         public Builder toByteOffset(final Long byteOffsetTo) {
             this.byteOffsetTo = byteOffsetTo;
             return this;
@@ -356,5 +471,4 @@ public class DataRange {
             return new DataRange(this);
         }
     }
-
 }

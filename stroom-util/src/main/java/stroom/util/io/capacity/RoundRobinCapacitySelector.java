@@ -17,19 +17,28 @@
 package stroom.util.io.capacity;
 
 import stroom.util.concurrent.AtomicLoopedItemSequence;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasCapacity;
 
 import java.util.List;
 
-public class RoundRobinCapacitySelector implements HasCapacitySelector {
+public class RoundRobinCapacitySelector extends AbstractSelector {
     public static final String NAME = "RoundRobin";
 
     private final AtomicLoopedItemSequence atomicLoopedIntegerSequence = AtomicLoopedItemSequence.create();
 
+    public RoundRobinCapacitySelector() {
+        // No fall back needed
+        super(null);
+    }
+
     @Override
-    public <T extends HasCapacity> T select(final List<T> list) {
-        return atomicLoopedIntegerSequence.getNextItem(list)
-                .orElse(null);
+    public <T extends HasCapacity> T doSelect(final List<T> filteredList) {
+        return atomicLoopedIntegerSequence.getNextItem(filteredList)
+                .orElseThrow(() ->
+                        new RuntimeException(LogUtil.message(
+                                "Should never be null for a non-empty list. List size: {}",
+                                filteredList.size())));
     }
 
     @Override

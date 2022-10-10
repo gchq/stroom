@@ -22,6 +22,7 @@ import stroom.app.commands.DbMigrationCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
+import stroom.app.logging.DefaultLoggingFilter;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
@@ -227,8 +228,8 @@ public class App extends Application<Config> {
         // TODO need to establish if there is a performance hit for using the JUL to SLF bridge
         //   see http://www.slf4j.org/legacy.html#jul-to-slf4j
         environment.jersey().register(
-                new LoggingFeature(
-                        java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
+                new DefaultLoggingFilter(
+                        java.util.logging.Logger.getLogger(DefaultLoggingFilter.ENTITY_LOGGER_PROPERTY),
                         Level.INFO,
                         LoggingFeature.Verbosity.PAYLOAD_ANY,
                         LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
