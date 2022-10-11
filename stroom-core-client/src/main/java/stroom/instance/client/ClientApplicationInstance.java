@@ -112,10 +112,14 @@ public class ClientApplicationInstance implements HasHandlers {
                         error("Unable to destroy application instance", throwable.getMessage()))
                 .call(APPLICATION_INSTANCE_RESOURCE)
                 .destroy(new DestroyRequest(applicationInstanceInfo, reason));
-        keepAliveTimer.cancel();
-        keepAliveTimer = null;
-        webSocket.close(reason);
-        webSocket = null;
+        if (keepAliveTimer != null) {
+            keepAliveTimer.cancel();
+            keepAliveTimer = null;
+        }
+        if (webSocket != null) {
+            webSocket.close(reason);
+            webSocket = null;
+        }
     }
 
     private void tryWebSocket() {
@@ -129,7 +133,7 @@ public class ClientApplicationInstance implements HasHandlers {
                 @Override
                 public void onOpen(final OpenEvent event) {
                     // do something on open
-                    Console.log("Opening web socket at " + url);
+                    Console.log("onOpen() called for web socket at " + url);
                     if (!destroy && webSocket != null) {
                         if (applicationInstanceInfo == null) {
                             error("No application instance is registered");
@@ -143,12 +147,14 @@ public class ClientApplicationInstance implements HasHandlers {
                 @Override
                 public void onClose(final CloseEvent event) {
                     // do something on close
-                    Console.log("Closing web socket at " + url);
+                    Console.log("onClose() called for web socket at " + url);
 
                     // reset the flag so we see errors on reconnection
                     shouldShowError = true;
                     webSocket = null;
-                    keepAliveTimer.cancel();
+                    if (keepAliveTimer != null) {
+                        keepAliveTimer.cancel();
+                    }
                     keepAliveTimer = null;
                     // Try to reopen the web socket if closing it was unexpected.
                     if (!destroy) {

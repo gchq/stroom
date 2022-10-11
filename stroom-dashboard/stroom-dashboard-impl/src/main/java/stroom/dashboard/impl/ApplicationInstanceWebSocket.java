@@ -51,6 +51,18 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
 
         // Keep alive forever.
         session.setMaxIdleTimeout(0);
+
+        // You can use this in dev to test handling of unexpected ws closure
+//        // TODO remove!!!!!
+//        CompletableFuture.delayedExecutor(new Random().nextInt(5), TimeUnit.SECONDS)
+//                .execute(() -> {
+//                    try {
+//                        LOGGER.warn("Closing ws session from server side");
+//                        session.close();
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(LogUtil.message("Error closing session"), e);
+//                    }
+//                });
     }
 
     public synchronized void onMessage(final Session session, final String message) {

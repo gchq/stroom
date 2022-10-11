@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,8 +15,11 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 @JsonInclude(Include.NON_NULL)
+@JsonPropertyOrder(alphabetic = true)
 public class WebSocketMessage {
 
+    // We have to delegate to a map rather than just extend HashMap as RestyGWT can't cope
+    // with it. Makes the json a bit meh, but not the end of the world.
     @JsonProperty
     private final Map<String, Object> items;
 
@@ -24,16 +28,23 @@ public class WebSocketMessage {
         this.items = items;
     }
 
+    // Needed for serialisation
     Map<String, Object> getItems() {
         return items;
     }
 
+    /**
+     * Create a {@link WebSocketMessage} containing a single key/value pair.
+     */
     public static WebSocketMessage of(final String k1, final Object v1) {
         final Map<String, Object> map = new HashMap<>();
         map.put(k1, v1);
         return new WebSocketMessage(map);
     }
 
+    /**
+     * Create a {@link WebSocketMessage} containing two key/value pairs.
+     */
     public static WebSocketMessage of(final String k1, final Object v1,
                                       final String k2, final Object v2) {
         final Map<String, Object> map = new HashMap<>();
@@ -42,6 +53,9 @@ public class WebSocketMessage {
         return new WebSocketMessage(map);
     }
 
+    /**
+     * Create a {@link WebSocketMessage} containing three key/value pairs.
+     */
     public static WebSocketMessage of(final String k1, final Object v1,
                                       final String k2, final Object v2,
                                       final String k3, final Object v3) {
@@ -79,6 +93,9 @@ public class WebSocketMessage {
         return items.entrySet();
     }
 
+    /**
+     * Perform action on each item in the {@link WebSocketMessage}
+     */
     public void forEach(final BiConsumer<? super String, ? super Object> action) {
         items.forEach(action);
     }
