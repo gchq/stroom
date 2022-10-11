@@ -23,6 +23,7 @@ import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
@@ -47,7 +48,6 @@ import javax.inject.Singleton;
 class ApplicationInstanceManager implements Clearable, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApplicationInstanceManager.class);
-
     private static final String CACHE_NAME = "Application Instance";
 
     private final SecurityContext securityContext;
@@ -63,12 +63,29 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
                 () -> dashboardConfigProvider.get().getApplicationInstanceCache(),
                 this::destroy);
 
+        // Keep any active queries alive that have not aged off from the cache
         Executors.newScheduledThreadPool(1)
-                .scheduleWithFixedDelay(() -> {
-                    cache.evictExpiredElements();
-                    cache.forEach((uuid, applicationInstance) ->
-                            applicationInstance.keepAlive());
-                }, 10, 10, TimeUnit.SECONDS);
+                .scheduleWithFixedDelay(
+                        () -> keepEntriesAlive(cache),
+                        10,
+                        10,
+                        TimeUnit.SECONDS);
+    }
+
+    public Optional<ApplicationInstance> getOptional(final String uuid) {
+        LOGGER.debug(() -> "Getting application instance: " + uuid);
+        return cache.getOptional(uuid);
+    }
+
+    private void keepEntriesAlive(final StroomCache<String, ApplicationInstance> cache) {
+        LOGGER.debug(() -> LogUtil.message("Evicting expired cache entries, cache size before: {}",
+                cache.size()));
+        cache.evictExpiredElements();
+
+        LOGGER.debug(() ->
+                LogUtil.message("Keeping remaining application instances alive, cache size: {}",
+                        cache.size()));
+        cache.forEach(this::keepAlive);
     }
 
     private ApplicationInstance create(final String uuid) {
@@ -78,13 +95,18 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
         return applicationInstance;
     }
 
-    public Optional<ApplicationInstance> getOptional(final String uuid) {
-        LOGGER.debug(() -> "Getting application instance: " + uuid);
-        return cache.getOptional(uuid);
-    }
 
     private void destroy(final String uuid, final ApplicationInstance value) {
-        LOGGER.debug(() -> "Destroy application instance: " + value);
+        LOGGER.debug(() -> LogUtil.message("Destroying app instance {} for user {} with createTime: {}, " +
+                        "query count: {}",
+                uuid,
+                value.getUserId(),
+                NullSafe.toString(
+                        value,
+                        ApplicationInstance::getCreateTime,
+                        DateUtil::createNormalDateTimeString),
+                NullSafe.get(value, ApplicationInstance::getActiveQueries, ActiveQueries::count)));
+
         securityContext.asProcessingUser(value::destroy);
     }
 
@@ -101,18 +123,39 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
         if (optional.isEmpty()) {
             throw new RuntimeException("Expected application instance not found: " + uuid);
         }
-        LOGGER.debug(() -> "Keep application instance alive: " + optional.get());
+        LOGGER.debug(() -> "Client called keepAlive for application instance: " + optional.get());
+    }
+
+    public void keepAlive(final String uuid,
+                          final ApplicationInstance applicationInstance) {
+        LOGGER.debug(() ->
+                LogUtil.message("KeepAlive called for app instance {} for user {} with createTime: {}, " +
+                                "query count: {}",
+                        uuid,
+                        applicationInstance.getUserId(),
+                        NullSafe.toString(
+                                applicationInstance,
+                                ApplicationInstance::getCreateTime,
+                                DateUtil::createNormalDateTimeString),
+                        NullSafe.get(
+                                applicationInstance,
+                                ApplicationInstance::getActiveQueries,
+                                ActiveQueries::count)));
+
+        applicationInstance.keepAlive();
     }
 
     public boolean remove(final String uuid) {
-        final Optional<ApplicationInstance> optional = cache.getOptional(uuid);
-        if (optional.isEmpty()) {
-            LOGGER.error("Expected application instance not found: " + uuid);
-            return false;
-        }
-        LOGGER.debug(() -> "Remove application instance: " + optional.get());
-        cache.remove(uuid);
-        return true;
+        return cache.getOptional(uuid)
+                .map(applicationInstance -> {
+                    LOGGER.debug(() -> "Remove application instance: " + applicationInstance);
+                    cache.remove(uuid);
+                    return true;
+                })
+                .orElseGet(() -> {
+                    LOGGER.error("Expected application instance not found: " + uuid);
+                    return false;
+                });
     }
 
     @Override

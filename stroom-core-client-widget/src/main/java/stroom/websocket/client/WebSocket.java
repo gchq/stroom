@@ -1,6 +1,15 @@
 package stroom.websocket.client;
 
+import stroom.util.shared.IsWebSocket;
+import stroom.util.shared.WebSocketMessage;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.json.client.JSONValue;
+
 public class WebSocket {
+
+    private static final WebSocketMessageCodec WEB_SOCKET_MESSAGE_CODEC =
+            GWT.create(WebSocketMessageCodec.class);
 
     private static int counter = 1;
 
@@ -31,12 +40,23 @@ public class WebSocket {
         throw new RuntimeException("Unknown ready state: " + readyState);
     }
 
-    public void close() {
+    public void close(final String reason) {
+        try {
+            sendInfoMessage("Explicitly closing web socket. Reason: " + reason);
+        } catch (Exception e) {
+            // Only for information purposes so just swallow any error
+        }
         nativeClose(varName);
     }
 
-    public void send(String msg) {
-        nativeSend(varName, msg);
+    public void send(WebSocketMessage msg) {
+        // Convert the msg object to json
+        final JSONValue jsonValue = WEB_SOCKET_MESSAGE_CODEC.encode(msg);
+        nativeSend(varName, jsonValue.toString());
+    }
+
+    private void sendInfoMessage(String info) {
+        send(WebSocketMessage.of(IsWebSocket.WEB_SOCKET_MSG_KEY_INFO, info));
     }
 
     private static native boolean nativeIsWebsocket() /*-{

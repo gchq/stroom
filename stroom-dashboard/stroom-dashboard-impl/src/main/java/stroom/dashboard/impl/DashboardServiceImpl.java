@@ -65,6 +65,7 @@ import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
@@ -419,24 +420,24 @@ class DashboardServiceImpl implements DashboardService {
 
     private ApplicationInstance getApplicationInstance(final String applicationInstanceUuid) {
         if (applicationInstanceUuid == null) {
-            throw new EntityServiceException("Session expired, please refresh your browser." +
-                    "\n" +
-                    "\n" +
-                    "Null application instance id.");
+            throw new EntityServiceException("""
+                    Session expired, please refresh your browser.
+
+                    Null application instance id.""");
         }
         final Optional<ApplicationInstance> optionalApplicationInstance =
                 applicationInstanceManager.getOptional(applicationInstanceUuid);
         final ApplicationInstance applicationInstance = optionalApplicationInstance.orElseThrow(() ->
-                new EntityServiceException("Session expired, please refresh your browser." +
-                        "\n" +
-                        "\n" +
-                        "Application instance not found for: " +
-                        applicationInstanceUuid));
+                new EntityServiceException(LogUtil.message("""
+                                Session expired, please refresh your browser.
+
+                                Application instance not found for: {}""",
+                        applicationInstanceUuid)));
         if (!securityContext.getUserId().equals(applicationInstance.getUserId())) {
-            throw new EntityServiceException("Session expired, please refresh your browser." +
-                    "\n" +
-                    "\n" +
-                    "Attempt to use application instance for a different user.");
+            throw new EntityServiceException("""
+                    Session expired, please refresh your browser.
+
+                    Attempt to use application instance for a different user.""");
         }
         return applicationInstance;
     }

@@ -1,15 +1,19 @@
 package stroom.dashboard.impl;
 
+import stroom.instance.shared.ApplicationInstanceResource;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.IsWebSocket;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.WebSocketMessage;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import javax.inject.Inject;
@@ -26,6 +30,8 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApplicationInstanceWebSocket.class);
 
     public static final String PATH = ResourcePaths.WEB_SOCKET_ROOT_PATH + "/application-instance";
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final SecurityContext securityContext;
     private final ApplicationInstanceManager applicationInstanceManager;
@@ -50,13 +56,25 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
     public synchronized void onMessage(final Session session, final String message) {
         LOGGER.debug(() -> "Received message on web socket at " + PATH
                 + ", sessionId: " + session.getId()
-                + ", message: [" + message + "]");
-
+                + ", message: '" + message + "'");
         // Ensure a user is logged in.
         checkLogin();
 
-        final String uuid = message;
-        keepAlive(uuid);
+        if (message != null && !message.isEmpty()) {
+            try {
+                // De-ser the web socket msg
+                final WebSocketMessage webSocketMessage = OBJECT_MAPPER.readValue(message, WebSocketMessage.class);
+
+                final String key = ApplicationInstanceResource.WEB_SOCKET_MSG_KEY_UUID;
+                // May just be an informational message
+                getWebSocketMsgValue(webSocketMessage, key, String.class)
+                                .ifPresent(this::keepAlive);
+            } catch (IOException e) {
+                throw new RuntimeException(LogUtil.message(
+                        "Unable to de-serialise web socket message: '{}'. Cause: {}",
+                        message, e.getMessage()), e);
+            }
+        }
     }
 
     private void keepAlive(final String uuid) {

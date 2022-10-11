@@ -5,10 +5,13 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.instance.shared.ApplicationInstanceInfo;
 import stroom.instance.shared.ApplicationInstanceResource;
+import stroom.instance.shared.DestroyRequest;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.Console;
+import stroom.util.shared.IsWebSocket;
+import stroom.util.shared.WebSocketMessage;
 import stroom.websocket.client.CloseEvent;
 import stroom.websocket.client.ErrorEvent;
 import stroom.websocket.client.MessageEvent;
@@ -56,8 +59,10 @@ public class ClientApplicationInstance implements HasHandlers {
 
         // Ensure the app instance is destroyed when the users logout, close
         // the browser tab or close the browser
-        eventBus.addHandler(LogoutEvent.getType(), event -> destroy());
-        addNativeEventListener("unload", event -> destroy());
+        eventBus.addHandler(LogoutEvent.getType(), event ->
+                destroy("Logout"));
+        addNativeEventListener("unload", event ->
+                destroy("Unload"));
     }
 
     public String getInstanceUuid() {
@@ -91,7 +96,7 @@ public class ClientApplicationInstance implements HasHandlers {
                 .register();
     }
 
-    private void destroy() {
+    private void destroy(final String reason) {
         destroy = true;
         final Rest<Boolean> rest = restFactory.create();
         rest
@@ -106,10 +111,10 @@ public class ClientApplicationInstance implements HasHandlers {
                 .onFailure(throwable ->
                         error("Unable to destroy application instance", throwable.getMessage()))
                 .call(APPLICATION_INSTANCE_RESOURCE)
-                .destroy(applicationInstanceInfo);
+                .destroy(new DestroyRequest(applicationInstanceInfo, reason));
         keepAliveTimer.cancel();
         keepAliveTimer = null;
-        webSocket.close();
+        webSocket.close(reason);
         webSocket = null;
     }
 
@@ -118,7 +123,9 @@ public class ClientApplicationInstance implements HasHandlers {
         if (!destroy) {
             final String url = WebSocketUtil.createWebSocketUrl("/application-instance");
             Console.log("Using Web Socket URL: " + url);
+
             webSocket = new WebSocket(url, new WebSocketListener() {
+
                 @Override
                 public void onOpen(final OpenEvent event) {
                     // do something on open
@@ -127,7 +134,7 @@ public class ClientApplicationInstance implements HasHandlers {
                         if (applicationInstanceInfo == null) {
                             error("No application instance is registered");
                         } else {
-                            webSocket.send(applicationInstanceInfo.getUuid());
+                            sendWebSocketMsg(applicationInstanceInfo, "Opening web socket");
                             initiateWebSocketKeepAlive();
                         }
                     }
@@ -179,21 +186,64 @@ public class ClientApplicationInstance implements HasHandlers {
                 .onSuccess(uiConfig -> {
                     final int intervalMs = uiConfig.getApplicationInstanceKeepAliveIntervalMs();
                     if (intervalMs > 0) {
+                        // In case one is still active
+                        if (keepAliveTimer != null) {
+                            keepAliveTimer.cancel();
+                        }
                         // Send a message periodically to keep the web socket open
                         // Worth noting that Chrome will throttle timers on inactive tabs to a max
                         // frequency of 1/min. If low on memory it can also discard inactive tabs.
                         keepAliveTimer = new Timer() {
+
                             @Override
                             public void run() {
                                 GWT.log("Sending timed keep alive message");
                                 if (webSocket != null && applicationInstanceInfo != null) {
-                                    webSocket.send(applicationInstanceInfo.getUuid());
+                                    sendWebSocketMsg(
+                                            applicationInstanceInfo,
+                                            "Timed keep alive (intervalMs " + intervalMs + ")");
                                 }
                             }
                         };
                         keepAliveTimer.scheduleRepeating(intervalMs);
                     }
                 });
+    }
+
+    private void sendWebSocketMsg(final ApplicationInstanceInfo applicationInstanceInfo,
+                                  final String info) {
+        final WebSocketMessage wsMessage = WebSocketMessage.of(
+                ApplicationInstanceResource.WEB_SOCKET_MSG_KEY_UUID,
+                applicationInstanceInfo.getUuid(),
+                ApplicationInstanceResource.WEB_SOCKET_MSG_KEY_USER_ID,
+                applicationInstanceInfo.getUserId(),
+                IsWebSocket.WEB_SOCKET_MSG_KEY_INFO,
+                info);
+
+        sendWebSocketMsg(wsMessage);
+    }
+
+    private void sendWebSocketMsg(final WebSocketMessage wsMessage) {
+        // It is possible closure of the webSocket has cleared out the webSocket variable.
+        // If so, just ignore it and it will get re-initiated.
+        if (webSocket != null) {
+            try {
+                webSocket.send(wsMessage);
+            } catch (Exception e) {
+                // The web socket may be closed for various reasons not under our control
+                // so, we have to allow for the send call to fail
+                Console.log("Error sending keep alive (uuid: "
+                        + (applicationInstanceInfo != null
+                        ? applicationInstanceInfo.getUuid()
+                        : null)
+                        + " user: "
+                        + (applicationInstanceInfo != null
+                        ? applicationInstanceInfo.getUserId()
+                        : null)
+                        + "). Web socket may have closed. Cause: "
+                        + e.getMessage());
+            }
+        }
     }
 
     public void error(final String message) {
