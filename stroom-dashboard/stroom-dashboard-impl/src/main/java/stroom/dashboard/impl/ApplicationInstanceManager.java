@@ -373,15 +373,17 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
 
         @Override
         public String toString() {
+            final String ageAtDeathStr = NullSafe.toStringOrElse(
+                    destroyTime,
+                    destroyTime2 -> Duration.between(createTime, destroyTime2),
+                    "?");
+
             return "AppInstanceDebugInfo{" +
                     "uuid='" + uuid + '\'' +
                     ", userId='" + userId + '\'' +
                     ", createTime=" + createTime +
                     ", destroyTime=" + destroyTime +
-                    ", age at death=" + NullSafe.toStringOrElse(
-                    destroyTime,
-                    destroyTime2 -> Duration.between(createTime, destroyTime),
-                    "?") +
+                    ", age at death=" + ageAtDeathStr +
                     ", lastKeepAliveTime=" + lastKeepAliveTime +
                     '}';
         }
