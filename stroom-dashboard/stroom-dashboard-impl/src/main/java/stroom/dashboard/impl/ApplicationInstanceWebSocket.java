@@ -1,15 +1,19 @@
 package stroom.dashboard.impl;
 
+import stroom.instance.shared.ApplicationInstanceResource;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.IsWebSocket;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.WebSocketMessage;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import javax.inject.Inject;
@@ -27,6 +31,8 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
 
     public static final String PATH = ResourcePaths.WEB_SOCKET_ROOT_PATH + "/application-instance";
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final SecurityContext securityContext;
     private final ApplicationInstanceManager applicationInstanceManager;
 
@@ -39,24 +45,48 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
     }
 
     public void onOpen(final Session session) throws IOException {
-        LOGGER.debug(() -> "Opening web socket at " + PATH
-                + ", sessionId: " + session.getId()
-                + ", maxIdleTimeout: " + session.getMaxIdleTimeout());
+        LOGGER.debug(() ->
+                LogUtil.message("Web socket onOpen() called at {}, sessionId: {}, user: {}, maxIdleTimeout: '{}'",
+                        PATH, session.getId(), securityContext.getUserId(), session.getMaxIdleTimeout()));
 
         // Keep alive forever.
         session.setMaxIdleTimeout(0);
+
+        // You can use this in dev to test handling of unexpected ws closure
+//        CompletableFuture.delayedExecutor(new Random().nextInt(5), TimeUnit.SECONDS)
+//                .execute(() -> {
+//                    try {
+//                        LOGGER.info(LogUtil.inSeparatorLine("Closing ws session from server side"));
+//                        session.close();
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(LogUtil.message("Error closing session"), e);
+//                    }
+//                });
     }
 
     public synchronized void onMessage(final Session session, final String message) {
-        LOGGER.debug(() -> "Received message on web socket at " + PATH
-                + ", sessionId: " + session.getId()
-                + ", message: [" + message + "]");
+        LOGGER.debug(() ->
+                LogUtil.message("Web socket onMessage() called at {}, sessionId: {}, user: {}, message: '{}'",
+                        PATH, session.getId(), securityContext.getUserId(), message));
 
         // Ensure a user is logged in.
         checkLogin();
 
-        final String uuid = message;
-        keepAlive(uuid);
+        if (message != null && !message.isEmpty()) {
+            try {
+                // De-ser the web socket msg
+                final WebSocketMessage webSocketMessage = OBJECT_MAPPER.readValue(message, WebSocketMessage.class);
+
+                final String key = ApplicationInstanceResource.WEB_SOCKET_MSG_KEY_UUID;
+                // May just be an informational message
+                getWebSocketMsgValue(webSocketMessage, key, String.class)
+                                .ifPresent(this::keepAlive);
+            } catch (IOException e) {
+                throw new RuntimeException(LogUtil.message(
+                        "Unable to de-serialise web socket message: '{}'. Cause: {}",
+                        message, e.getMessage()), e);
+            }
+        }
     }
 
     private void keepAlive(final String uuid) {
@@ -64,13 +94,15 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
         applicationInstanceManager.keepAlive(uuid);
     }
 
-    public void onError(final Session session, final Throwable thr) {
-        LOGGER.error(thr.getMessage(), thr);
+    public void onError(final Session session, final Throwable throwable) {
+        LOGGER.error(LogUtil.message("Web socket onError() called at {}, sessionId: {}, user: {}, message: {}",
+                PATH, session.getId(), securityContext.getUserId(), throwable.getMessage()), throwable);
     }
 
-    public synchronized void onClose(final Session session, final CloseReason cr) {
-        LOGGER.debug(() -> "Closing web socket at " + PATH
-                + ", sessionId: " + session.getId());
+    public synchronized void onClose(final Session session, final CloseReason closeReason) {
+        LOGGER.debug(() ->
+                LogUtil.message("Web socket onClose() called at {}, sessionId: {}, user: {}, closeReason: {}",
+                PATH, session.getId(), securityContext.getUserId(), closeReason));
     }
 
     private void checkLogin() {

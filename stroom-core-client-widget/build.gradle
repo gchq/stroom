@@ -12,6 +12,7 @@ dependencies {
         exclude(module: 'gwtp-crawler-service')
     }
     compile libs.javax_inject
+    compile libs.restygwt
 
 
 

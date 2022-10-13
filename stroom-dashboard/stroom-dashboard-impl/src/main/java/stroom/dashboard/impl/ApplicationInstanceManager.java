@@ -23,6 +23,7 @@ import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
@@ -36,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -47,11 +50,13 @@ import javax.inject.Singleton;
 class ApplicationInstanceManager implements Clearable, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApplicationInstanceManager.class);
-
     private static final String CACHE_NAME = "Application Instance";
 
     private final SecurityContext securityContext;
     private final StroomCache<String, ApplicationInstance> cache;
+    // To aid debugging of the destruction of appI
+    private final ConcurrentMap<String, AppInstanceDebugInfo> appInstanceDebugMap = new ConcurrentHashMap<>();
+    private volatile boolean doDebugInfoRecording = false;
 
     @Inject
     ApplicationInstanceManager(final CacheManager cacheManager,
@@ -63,56 +68,203 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
                 () -> dashboardConfigProvider.get().getApplicationInstanceCache(),
                 this::destroy);
 
+        setDoDebugInfoRecordingState();
+
+        // Keep any active queries alive that have not aged off from the cache
         Executors.newScheduledThreadPool(1)
-                .scheduleWithFixedDelay(() -> {
-                    cache.evictExpiredElements();
-                    cache.forEach((uuid, applicationInstance) ->
-                            applicationInstance.keepAlive());
-                }, 10, 10, TimeUnit.SECONDS);
+                .scheduleWithFixedDelay(
+                        () -> keepAllActiveQueriesAlive(cache),
+                        10,
+                        10,
+                        TimeUnit.SECONDS);
+    }
+
+    public Optional<ApplicationInstance> getOptApplicationInstance(final String uuid) {
+        final Optional<ApplicationInstance> optApplicationInstance = cache.getOptional(uuid);
+        optApplicationInstance.ifPresentOrElse(
+                applicationInstance ->
+                        LOGGER.debug(() -> LogUtil.message("Getting application instance: {}",
+                                applicationInstanceToStr(applicationInstance))),
+                () -> {
+                    LOGGER.warn(() -> LogUtil.message(
+                            "Missing application instance for user: {}. Their session may have timed out. " +
+                                    "Enable debug logging for more info.",
+                            securityContext.getUserId()));
+
+                    if (doDebugInfoRecording) {
+                        final AppInstanceDebugInfo debugInfo = appInstanceDebugMap.get(uuid);
+                        dumpRecordedDebugInfo(uuid, debugInfo, "getOptApplicationInstance");
+                    }
+                });
+        return optApplicationInstance;
+    }
+
+    private void dumpRecordedDebugInfo(final String uuid,
+                                       final AppInstanceDebugInfo debugInfo,
+                                       final String message) {
+        if (debugInfo != null) {
+            LOGGER.debug("Debug info - {} - uuid: {}, user: {}, createTime: {} (age: {}), " +
+                            "destroyTime: {}, age at death: {}, lastKeepAlive: {}",
+                    message,
+                    debugInfo.uuid,
+                    debugInfo.userId,
+                    debugInfo.createTime,
+                    NullSafe.toStringOrElse(
+                            debugInfo.createTime,
+                            createTime2 -> Duration.between(createTime2, Instant.now()),
+                            "N/A"),
+                    debugInfo.destroyTime,
+                    NullSafe.toStringOrElse(
+                            debugInfo.destroyTime,
+                            destroyTime2 -> Duration.between(debugInfo.createTime, destroyTime2),
+                            "N/A"),
+                    debugInfo.lastKeepAliveTime);
+        } else {
+            LOGGER.debug("No debug info for application instance {}. Maybe DEBUG wasn't on when " +
+                    "it was destroyed.", uuid);
+        }
+    }
+
+    /**
+     * This gets called periodically, so we can check if DEBUG logging is on and enable/disable
+     * recording of debug info
+     */
+    private boolean setDoDebugInfoRecordingState() {
+        if (LOGGER.isDebugEnabled()) {
+            if (!doDebugInfoRecording) {
+                LOGGER.debug("Enabling debug info recording");
+                doDebugInfoRecording = true;
+            }
+            return true;
+        } else {
+            if (doDebugInfoRecording) {
+                // We were recording, now we are not so clear it out
+                appInstanceDebugMap.clear();
+                LOGGER.debug("Disabling debug info recording");
+                doDebugInfoRecording = false;
+            }
+            return false;
+        }
+    }
+
+    private void keepAllActiveQueriesAlive(final StroomCache<String, ApplicationInstance> cache) {
+        // This method is running every 10s so (ab)use it to set/un-set whether we are recording
+        // the debug info and to clear out stuff previously recorded.
+        final boolean isDebugEnabled = setDoDebugInfoRecordingState();
+
+        // Avoid cost/locks that come with getting the size
+        final long cacheSizeBefore = isDebugEnabled
+                ? cache.size()
+                : -1;
+
+        cache.evictExpiredElements();
+
+        LOGGER.debug(() ->
+                LogUtil.message("Keeping application instances' active queries alive, cache size: " +
+                                "{} (before eviction) {} (after eviction)",
+                        cacheSizeBefore, cache.size()));
+        cache.forEach(this::keepActiveQueriesAlive);
     }
 
     private ApplicationInstance create(final String uuid) {
         final ApplicationInstance applicationInstance =
                 new ApplicationInstance(uuid, securityContext.getUserId(), System.currentTimeMillis());
-        LOGGER.debug(() -> "Create application instance: " + applicationInstance);
+        LOGGER.debug(() -> "Create application instance: " + applicationInstanceToStr(applicationInstance));
         return applicationInstance;
     }
 
-    public Optional<ApplicationInstance> getOptional(final String uuid) {
-        LOGGER.debug(() -> "Getting application instance: " + uuid);
-        return cache.getOptional(uuid);
+
+    private void destroy(final String uuid, final ApplicationInstance applicationInstance) {
+        // This may be due to explicit removal from the cache or eviction due to aging off.
+        // Aging off should only occur if the user's browser dies and wasn't able to send an explicit
+        // remove call before it died.
+        LOGGER.debug(() -> LogUtil.message("Destroying application instance {}",
+                applicationInstanceToStr(applicationInstance)));
+
+        if (doDebugInfoRecording) {
+            // Record the app instance along with the destroy time so we can later check what it was
+            final AppInstanceDebugInfo debugInfo = appInstanceDebugMap.compute(uuid, (uuid2, appInstanceDebugInfo) -> {
+                final Instant destroyTime = Instant.now();
+                return appInstanceDebugInfo == null
+                        ? new AppInstanceDebugInfo(applicationInstance, destroyTime, null)
+                        : appInstanceDebugInfo.withDestroyTime(destroyTime);
+            });
+            dumpRecordedDebugInfo(uuid, debugInfo, "destroy");
+        }
+
+        securityContext.asProcessingUser(applicationInstance::destroy);
     }
 
-    private void destroy(final String uuid, final ApplicationInstance value) {
-        LOGGER.debug(() -> "Destroy application instance: " + value);
-        securityContext.asProcessingUser(value::destroy);
+    private String applicationInstanceToStr(final ApplicationInstance applicationInstance) {
+        if (applicationInstance == null) {
+            return "null";
+        } else {
+            return LogUtil.message("uuid: {}, user: {}, createTime: {} (age: {}), activeQuery count: {}",
+                    applicationInstance.getUuid(),
+                    applicationInstance.getUserId(),
+                    DateUtil.createNormalDateTimeString(applicationInstance.getCreateTime()),
+                    Duration.ofMillis(System.currentTimeMillis() - applicationInstance.getCreateTime()),
+                    applicationInstance.getActiveQueries().count());
+        }
     }
 
     public ApplicationInstance register() {
         final String uuid = UUID.randomUUID().toString();
         // Create and cache a new ApplicationInstance
         final ApplicationInstance applicationInstance = cache.get(uuid, this::create);
-        LOGGER.debug(() -> "Register new application instance: " + applicationInstance);
+        LOGGER.debug(() -> LogUtil.message("Register new application instance: {}",
+                applicationInstanceToStr(applicationInstance)));
         return applicationInstance;
     }
 
+    /**
+     * Touch the cache entry for the supplied {@link ApplicationInstance} uuid to keep it active
+     * in the cache and consequently for the {@link ApplicationInstance} to keep any downstream
+     * interests alive.
+     */
     public void keepAlive(final String uuid) {
-        final Optional<ApplicationInstance> optional = cache.getOptional(uuid);
-        if (optional.isEmpty()) {
+        final Optional<ApplicationInstance> optApplicationInstance = cache.getOptional(uuid);
+        if (doDebugInfoRecording) {
+            dumpRecordedDebugInfo(uuid, appInstanceDebugMap.get(uuid), "keepAlive");
+        }
+        if (optApplicationInstance.isEmpty()) {
             throw new RuntimeException("Expected application instance not found: " + uuid);
         }
-        LOGGER.debug(() -> "Keep application instance alive: " + optional.get());
+        LOGGER.debug(() -> "Client called keepAlive for application instance: "
+                + applicationInstanceToStr(optApplicationInstance.get()));
+    }
+
+    private void keepActiveQueriesAlive(final String uuid,
+                                        final ApplicationInstance applicationInstance) {
+        LOGGER.trace(() ->
+                LogUtil.message("KeepAlive called for application instance {}",
+                        applicationInstanceToStr(applicationInstance)));
+        if (doDebugInfoRecording) {
+            // Record the keep alive time and app instance details for later inspection
+            final AppInstanceDebugInfo debugInfo = appInstanceDebugMap.compute(uuid, (uuid2, appInstanceDebugInfo) -> {
+                final Instant keepAliveTime = Instant.now();
+                return appInstanceDebugInfo == null
+                        ? new AppInstanceDebugInfo(applicationInstance, null, keepAliveTime)
+                        : appInstanceDebugInfo.withKeepAliveTime(Instant.now());
+            });
+            dumpRecordedDebugInfo(uuid, debugInfo, "keepActiveQueriesAlive");
+        }
+
+        applicationInstance.keepAlive();
     }
 
     public boolean remove(final String uuid) {
-        final Optional<ApplicationInstance> optional = cache.getOptional(uuid);
-        if (optional.isEmpty()) {
-            LOGGER.error("Expected application instance not found: " + uuid);
-            return false;
-        }
-        LOGGER.debug(() -> "Remove application instance: " + optional.get());
-        cache.remove(uuid);
-        return true;
+        return cache.getOptional(uuid)
+                .map(applicationInstance -> {
+                    LOGGER.debug(() -> "Explicitly remove application instance from cache: " +
+                            applicationInstanceToStr(applicationInstance));
+                    cache.remove(uuid);
+                    return true;
+                })
+                .orElseGet(() -> {
+                    LOGGER.error("Expected application instance not found, uuid: " + uuid);
+                    return false;
+                });
     }
 
     @Override
@@ -168,5 +320,72 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
             builder.addDetail(userId, detailMaps);
         });
         return builder.build();
+    }
+
+    private static class AppInstanceDebugInfo {
+
+        private final String uuid;
+        private final String userId;
+        private final Instant createTime;
+        private final Instant destroyTime;
+        private final Instant lastKeepAliveTime;
+
+        private AppInstanceDebugInfo(final ApplicationInstance applicationInstance,
+                                     final Instant destroyTime,
+                                     final Instant keepAliveTime) {
+            this(
+                    applicationInstance.getUuid(),
+                    applicationInstance.getUserId(),
+                    Instant.ofEpochMilli(applicationInstance.getCreateTime()),
+                    destroyTime,
+                    keepAliveTime);
+        }
+
+        private AppInstanceDebugInfo(final String uuid,
+                                     final String userId,
+                                     final Instant createTime,
+                                     final Instant destroyTime,
+                                     final Instant lastKeepAliveTime) {
+            this.uuid = uuid;
+            this.userId = userId;
+            this.createTime = createTime;
+            this.destroyTime = destroyTime;
+            this.lastKeepAliveTime = lastKeepAliveTime;
+        }
+
+        public AppInstanceDebugInfo withKeepAliveTime(final Instant keepAliveTime) {
+            return new AppInstanceDebugInfo(
+                    uuid,
+                    userId,
+                    createTime,
+                    destroyTime,
+                    keepAliveTime);
+        }
+
+        public AppInstanceDebugInfo withDestroyTime(final Instant destroyTime) {
+            return new AppInstanceDebugInfo(
+                    uuid,
+                    userId,
+                    createTime,
+                    destroyTime,
+                    lastKeepAliveTime);
+        }
+
+        @Override
+        public String toString() {
+            final String ageAtDeathStr = NullSafe.toStringOrElse(
+                    destroyTime,
+                    destroyTime2 -> Duration.between(createTime, destroyTime2),
+                    "?");
+
+            return "AppInstanceDebugInfo{" +
+                    "uuid='" + uuid + '\'' +
+                    ", userId='" + userId + '\'' +
+                    ", createTime=" + createTime +
+                    ", destroyTime=" + destroyTime +
+                    ", age at death=" + ageAtDeathStr +
+                    ", lastKeepAliveTime=" + lastKeepAliveTime +
+                    '}';
+        }
     }
 }
