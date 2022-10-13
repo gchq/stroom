@@ -71,7 +71,7 @@ class ApplicationInstanceResourceImpl implements ApplicationInstanceResource {
     @AutoLogged(OperationType.UNLOGGED)
     public Boolean destroy(final DestroyRequest destroyRequest) {
         final ApplicationInstanceInfo applicationInstanceInfo = destroyRequest.getApplicationInstanceInfo();
-        LOGGER.trace(() -> LogUtil.message("destroy() - applicationInstanceInfo: {}, reason: {}",
+        LOGGER.debug(() -> LogUtil.message("destroy() - applicationInstanceInfo: {}, reason: {}",
                 applicationInstanceInfo, destroyRequest.getReason()));
         return provider.get().remove(applicationInstanceInfo.getUuid());
     }

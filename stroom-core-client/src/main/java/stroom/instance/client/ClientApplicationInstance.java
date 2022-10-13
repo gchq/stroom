@@ -45,6 +45,7 @@ public class ClientApplicationInstance implements HasHandlers {
     private boolean destroy;
     private boolean showingError;
     private boolean shouldShowError = true;
+    private boolean isOpen;
     private Timer keepAliveTimer = null;
 
     @Inject
@@ -66,18 +67,19 @@ public class ClientApplicationInstance implements HasHandlers {
     }
 
     public String getInstanceUuid() {
-        // If for any reason we don't have a web socket connection then initiate one
+        // If for any reason (it may have been closed) we don't have a web socket
+        // connection then initiate one
         if (webSocket == null) {
             tryWebSocket();
         }
         if (applicationInstanceInfo == null) {
-            error("Null application instance uuid");
+            fireErrorEvent("Null application instance uuid");
             return null;
         }
         return applicationInstanceInfo.getUuid();
     }
 
-    public void register() {
+    private void register() {
         final Rest<ApplicationInstanceInfo> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
@@ -88,7 +90,7 @@ public class ClientApplicationInstance implements HasHandlers {
                     tryWebSocket();
                 })
                 .onFailure(throwable -> {
-                    error("Unable to register application instance", throwable.getMessage());
+                    fireErrorEvent("Unable to register application instance", throwable.getMessage());
                     // We only want to see
                     shouldShowError = false;
                 })
@@ -109,15 +111,13 @@ public class ClientApplicationInstance implements HasHandlers {
                     }
                 })
                 .onFailure(throwable ->
-                        error("Unable to destroy application instance", throwable.getMessage()))
+                        fireErrorEvent("Unable to destroy application instance", throwable.getMessage()))
                 .call(APPLICATION_INSTANCE_RESOURCE)
                 .destroy(new DestroyRequest(applicationInstanceInfo, reason));
-        if (keepAliveTimer != null) {
-            keepAliveTimer.cancel();
-            keepAliveTimer = null;
-        }
+        cancelAndClearKeepAliveTimer();
         if (webSocket != null) {
             webSocket.close(reason);
+            isOpen = false;
             webSocket = null;
         }
     }
@@ -128,45 +128,18 @@ public class ClientApplicationInstance implements HasHandlers {
             final String url = WebSocketUtil.createWebSocketUrl("/application-instance");
             Console.log("Using Web Socket URL: " + url);
 
+            // Any exception here will feed through to the onError callback, so we don't need
+            // a try/catch
+            isOpen = false;
             webSocket = new WebSocket(url, new WebSocketListener() {
-
                 @Override
                 public void onOpen(final OpenEvent event) {
-                    // do something on open
-                    Console.log("onOpen() called for web socket at " + url);
-                    if (!destroy && webSocket != null) {
-                        if (applicationInstanceInfo == null) {
-                            error("No application instance is registered");
-                        } else {
-                            sendWebSocketMsg(applicationInstanceInfo, "Opening web socket");
-                            initiateWebSocketKeepAlive();
-                        }
-                    }
+                    onWebSocketOpen(event, url);
                 }
 
                 @Override
                 public void onClose(final CloseEvent event) {
-                    // do something on close
-                    Console.log("onClose() called for web socket at " + url);
-
-                    // reset the flag so we see errors on reconnection
-                    shouldShowError = true;
-                    webSocket = null;
-                    if (keepAliveTimer != null) {
-                        keepAliveTimer.cancel();
-                    }
-                    keepAliveTimer = null;
-                    // Try to reopen the web socket if closing it was unexpected.
-                    if (!destroy) {
-                        GWT.log("Scheduling timed call to tryWebSocket");
-                        new Timer() {
-                            @Override
-                            public void run() {
-                                GWT.log("Timed call to tryWebSocket");
-                                tryWebSocket();
-                            }
-                        }.schedule(10_000);
-                    }
+                    onWebSocketClose(event, url);
                 }
 
                 @Override
@@ -175,27 +148,76 @@ public class ClientApplicationInstance implements HasHandlers {
 
                 @Override
                 public void onError(final ErrorEvent event) {
-                    Console.log("Error on web socket at " + url);
-                    // Error may be due to the ws connection dying which is semi expected
-                    // so don't always show
-                    if (shouldShowError) {
-                        error("Error on web socket trying to keep application instance alive",
-                                "Error on web socket at " + url + "\n" + event.getReason());
-                    }
+                    onWebSocketError(event, url);
                 }
             });
         }
     }
 
-    public void initiateWebSocketKeepAlive() {
+    private void onWebSocketError(final ErrorEvent event, final String url) {
+        // Error may be due to the ws connection dying which is semi expected
+        // so don't always show
+        if (shouldShowError) {
+            // This method may be called during the opening of the web socket, e.g. if it
+            // can't be opened or if there is some problem using the web socket after it is opened.
+            if (isOpen) {
+                fireErrorEvent("Error on web socket while trying to keep application instance alive",
+                        "Error on web socket at " + url + "\n" + event.getReason());
+            } else {
+                fireErrorEvent("Error opening web socket",
+                        "Error opening web socket at " + url + "\n" + event.getReason());
+            }
+        }
+    }
+
+    private void onWebSocketClose(final CloseEvent event, final String url) {
+        // do something on close
+        isOpen = false;
+
+        // reset the flag so we see errors on reconnection
+        shouldShowError = true;
+        webSocket = null;
+        cancelAndClearKeepAliveTimer();
+        // Try to reopen the web socket if closing it was unexpected.
+        if (!destroy) {
+            GWT.log("Scheduling timed call to tryWebSocket");
+            new Timer() {
+                @Override
+                public void run() {
+                    GWT.log("Timed call to tryWebSocket");
+                    tryWebSocket();
+                }
+            }.schedule(10_000);
+        }
+    }
+
+    private void cancelAndClearKeepAliveTimer() {
+        if (keepAliveTimer != null) {
+            keepAliveTimer.cancel();
+            keepAliveTimer = null;
+        }
+    }
+
+    private void onWebSocketOpen(final OpenEvent event, final String url) {
+        // do something on open
+        isOpen = true;
+        if (!destroy && webSocket != null) {
+            if (applicationInstanceInfo == null) {
+                fireErrorEvent("No application instance is registered");
+            } else {
+                sendWebSocketMsg(applicationInstanceInfo, "Opened web socket");
+                initiateWebSocketKeepAlive();
+            }
+        }
+    }
+
+    private void initiateWebSocketKeepAlive() {
         uiConfigCache.get()
                 .onSuccess(uiConfig -> {
                     final int intervalMs = uiConfig.getApplicationInstanceKeepAliveIntervalMs();
                     if (intervalMs > 0) {
                         // In case one is still active
-                        if (keepAliveTimer != null) {
-                            keepAliveTimer.cancel();
-                        }
+                        cancelAndClearKeepAliveTimer();
                         // Send a message periodically to keep the web socket open
                         // Worth noting that Chrome will throttle timers on inactive tabs to a max
                         // frequency of 1/min. If low on memory it can also discard inactive tabs.
@@ -203,14 +225,15 @@ public class ClientApplicationInstance implements HasHandlers {
 
                             @Override
                             public void run() {
-                                GWT.log("Sending timed keep alive message");
+                                GWT.log("Sending timed keep alive message (interval: " + intervalMs + "ms)");
                                 if (webSocket != null && applicationInstanceInfo != null) {
                                     sendWebSocketMsg(
                                             applicationInstanceInfo,
-                                            "Timed keep alive (intervalMs " + intervalMs + ")");
+                                            "Timed keep alive (interval " + intervalMs + "ms)");
                                 }
                             }
                         };
+                        Console.log("Initiating timed keep alive (interval: " + intervalMs + "ms)");
                         keepAliveTimer.scheduleRepeating(intervalMs);
                     }
                 });
@@ -252,7 +275,7 @@ public class ClientApplicationInstance implements HasHandlers {
         }
     }
 
-    public void error(final String message) {
+    private void fireErrorEvent(final String message) {
         Console.log("Error: " + message);
         if (!showingError) {
             showingError = true;
@@ -262,7 +285,7 @@ public class ClientApplicationInstance implements HasHandlers {
         }
     }
 
-    public void error(final String message, final String detail) {
+    private void fireErrorEvent(final String message, final String detail) {
         Console.log("Error: " + message + "\n" + detail);
         if (!showingError) {
             showingError = true;

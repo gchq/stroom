@@ -426,7 +426,7 @@ class DashboardServiceImpl implements DashboardService {
                     Null application instance id.""");
         }
         final Optional<ApplicationInstance> optionalApplicationInstance =
-                applicationInstanceManager.getOptional(applicationInstanceUuid);
+                applicationInstanceManager.getOptApplicationInstance(applicationInstanceUuid);
         final ApplicationInstance applicationInstance = optionalApplicationInstance.orElseThrow(() ->
                 new EntityServiceException(LogUtil.message("""
                                 Session expired, please refresh your browser.

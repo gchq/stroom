@@ -67,19 +67,19 @@ public class WebSocket {
     private native void nativeOpen(WebSocket ws, WebSocketListener listener, String s, String url) /*-{
         $wnd[s] = new WebSocket(url);
         $wnd[s].onopen = function(e) {
-            console.log('WebSocket open: ', e);
+            console.log('WebSocket onOpen() called: ', e);
             listener.@stroom.websocket.client.WebSocketListener::onOpen(*)(e);
         };
         $wnd[s].onclose = function(e) {
-            console.log('WebSocket close: ', e);
+            console.log('WebSocket onClose() called: ', e);
             listener.@stroom.websocket.client.WebSocketListener::onClose(*)(e);
         };
         $wnd[s].onmessage = function(e) {
-           console.log('WebSocket message: ', e);
+           console.log('WebSocket onMessage() called: ', e);
            listener.@stroom.websocket.client.WebSocketListener::onMessage(*)(e);
         }
         $wnd[s].onerror = function(e) {
-           console.log('WebSocket error: ', e);
+           console.log('WebSocket onError() called: ', e);
            listener.@stroom.websocket.client.WebSocketListener::onError(*)(e);
         };
     }-*/;
