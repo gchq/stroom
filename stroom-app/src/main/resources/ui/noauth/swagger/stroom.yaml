@@ -535,8 +535,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApplicationInstanceInfo'
-        description: applicationInstanceInfo
+              $ref: '#/components/schemas/DestroyRequest'
+        description: destroyRequest
         required: true
       responses:
         default:
@@ -1923,6 +1923,26 @@ paths:
       summary: Rescans volumes
       tags:
       - Filesystem Volumes
+  /fsVolume/v1/validate:
+    post:
+      operationId: validateFsVolume
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FsVolume'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+          description: default response
+      summary: Validates a volume
+      tags:
+      - Filesystem Volumes
   /fsVolume/v1/{id}:
     delete:
       operationId: deleteFsVolume
@@ -2145,7 +2165,7 @@ paths:
       tags:
       - Index Volumes
   /index/volume/v2/rescan:
-    delete:
+    get:
       operationId: rescanIndexVolumes
       parameters:
       - in: query
@@ -2160,6 +2180,26 @@ paths:
                 type: boolean
           description: default response
       summary: Rescans index volumes
+      tags:
+      - Index Volumes
+  /index/volume/v2/validate:
+    post:
+      operationId: validateIndexVolume
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexVolume'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+          description: default response
+      summary: Validates an index volume
       tags:
       - Index Volumes
   /index/volume/v2/{id}:
@@ -2245,6 +2285,25 @@ paths:
                 $ref: '#/components/schemas/IndexVolumeGroup'
           description: default response
       summary: Creates an index volume group
+      tags:
+      - Index Volume Groups
+  /index/volumeGroup/v2/fetchByName/{name}:
+    get:
+      operationId: fetchIndexVolumeGroupByName
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexVolumeGroup'
+          description: default response
+      summary: Gets an index volume group by name
       tags:
       - Index Volume Groups
   /index/volumeGroup/v2/find:
@@ -5969,9 +6028,18 @@ components:
             $ref: '#/components/schemas/DocRef'
         message:
           type: string
+    CacheIdentity:
+      type: object
+      properties:
+        basePropertyPath:
+          $ref: '#/components/schemas/PropertyPath'
+        cacheName:
+          type: string
     CacheInfo:
       type: object
       properties:
+        basePropertyPath:
+          $ref: '#/components/schemas/PropertyPath'
         map:
           type: object
           additionalProperties:
@@ -5997,7 +6065,7 @@ components:
         values:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/CacheIdentity'
     ChangeDocumentPermissionsRequest:
       type: object
       properties:
@@ -6677,6 +6745,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    DestroyRequest:
+      type: object
+      properties:
+        applicationInstanceInfo:
+          $ref: '#/components/schemas/ApplicationInstanceInfo'
+        reason:
+          type: string
     DestroySearchRequest:
       type: object
       properties:
@@ -10144,8 +10219,10 @@ components:
           type: string
         dataRange:
           $ref: '#/components/schemas/DataRange'
-        highlight:
-          $ref: '#/components/schemas/TextRange'
+        highlights:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataRange'
         metaId:
           type: integer
           format: int64
@@ -10155,8 +10232,6 @@ components:
         recordIndex:
           type: integer
           format: int64
-        truncateToWholeLines:
-          type: boolean
     SplashConfig:
       type: object
       properties:
@@ -10750,13 +10825,6 @@ components:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractField'
-    TextRange:
-      type: object
-      properties:
-        from:
-          $ref: '#/components/schemas/Location'
-        to:
-          $ref: '#/components/schemas/Location'
     ThemeConfig:
       type: object
       properties:
@@ -11051,6 +11119,18 @@ components:
           type: string
         valid:
           type: boolean
+    ValidationResult:
+      type: object
+      properties:
+        message:
+          type: string
+        severity:
+          type: string
+          enum:
+          - INFO
+          - WARN
+          - ERROR
+          - FATAL
     VisComponentSettings:
       type: object
       allOf:
