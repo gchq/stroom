@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.5] - 2022-10-13
+
+* Fix typo in description for property `stroom.ui.applicationInstanceKeepAliveIntervalMs`.
+
+* Issue **#3038** : Improve error handling of web socket code to prevent alerts for expected error conditions.
+
+
 ## [v7.0.4] - 2022-10-10
 
 * Issue **#3056** : Make `View As Hex` editor option available in the Source view (but not when stepping). Change hex dump to use uppercase hex values.
@@ -4617,7 +4624,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.5...HEAD
+[v7.0.5]: https://github.com/gchq/stroom/compare/v7.0.4...v7.0.5
 [v7.0.4]: https://github.com/gchq/stroom/compare/v7.0.3...v7.0.4
 [v7.0.3]: https://github.com/gchq/stroom/compare/v7.0.2...v7.0.3
 [v7.0.2]: https://github.com/gchq/stroom/compare/v7.0.1...v7.0.2
