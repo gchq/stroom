@@ -775,11 +775,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ApplicationInstanceInfo"
+                "$ref" : "#/components/schemas/DestroyRequest"
               }
             }
           },
-          "description" : "applicationInstanceInfo",
+          "description" : "destroyRequest",
           "required" : true
         },
         "responses" : {
@@ -9766,6 +9766,17 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
+          }
+        }
+      },
+      "DestroyRequest" : {
+        "type" : "object",
+        "properties" : {
+          "applicationInstanceInfo" : {
+            "$ref" : "#/components/schemas/ApplicationInstanceInfo"
+          },
+          "reason" : {
+            "type" : "string"
           }
         }
       },

@@ -535,8 +535,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApplicationInstanceInfo'
-        description: applicationInstanceInfo
+              $ref: '#/components/schemas/DestroyRequest'
+        description: destroyRequest
         required: true
       responses:
         default:
@@ -6745,6 +6745,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    DestroyRequest:
+      type: object
+      properties:
+        applicationInstanceInfo:
+          $ref: '#/components/schemas/ApplicationInstanceInfo'
+        reason:
+          type: string
     DestroySearchRequest:
       type: object
       properties:
