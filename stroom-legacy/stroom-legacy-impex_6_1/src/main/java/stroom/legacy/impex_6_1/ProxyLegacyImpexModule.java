@@ -5,6 +5,7 @@ import stroom.importexport.api.ImportConverter;
 
 import com.google.inject.AbstractModule;
 
+// TODO: 19/10/2022 Remove as not used
 @Deprecated
 public class ProxyLegacyImpexModule extends AbstractModule {
 

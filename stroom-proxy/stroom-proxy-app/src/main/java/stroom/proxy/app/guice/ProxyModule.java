@@ -3,6 +3,7 @@ package stroom.proxy.app.guice;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
+import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
@@ -15,8 +16,10 @@ import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
+import stroom.importexport.api.ImportConverter;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.legacy.impex_6_1.ProxyLegacyImpexModule;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.proxy.app.BufferFactoryImpl;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
@@ -78,6 +81,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -121,8 +125,6 @@ public class ProxyModule extends AbstractModule {
 
         install(new TaskContextModule());
 
-        // This is needed for the StoreImpls but we only care about Dictionary and ReceiveDataRuleSetService
-        install(new ProxyLegacyImpexModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
         bind(BufferFactory.class).to(BufferFactoryImpl.class);
@@ -138,6 +140,8 @@ public class ProxyModule extends AbstractModule {
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
+        // Proxy doesn't do import so bind a dummy ImportConverter for the StoreImpl(s) to use
+        bind(ImportConverter.class).to(NoOpImportConverter.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
@@ -252,5 +256,17 @@ public class ProxyModule extends AbstractModule {
     EntityEventBus entityEventBus() {
         return event -> {
         };
+    }
+
+    private static class NoOpImportConverter implements ImportConverter {
+
+        @Override
+        public Map<String, byte[]> convert(final DocRef docRef,
+                                           final Map<String, byte[]> dataMap,
+                                           final ImportState importState,
+                                           final ImportMode importMode,
+                                           final String userId) {
+            throw new UnsupportedOperationException("Import is not supported in proxy.");
+        }
     }
 }
