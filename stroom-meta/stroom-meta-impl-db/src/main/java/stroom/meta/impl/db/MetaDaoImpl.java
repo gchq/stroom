@@ -566,7 +566,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                 final boolean rulesUsePipelineField = rulesContainField(
                                         MetaFields.PIPELINE.getName(), activeRules);
                                 if (rulesUsePipelineField) {
-                                    fromClause.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID);
+                                    fromClause.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
                                 }
                                 // Get all meta records that are impacted by a rule and for each determine
                                 // which rule wins and get its rule number, along with feed and type
