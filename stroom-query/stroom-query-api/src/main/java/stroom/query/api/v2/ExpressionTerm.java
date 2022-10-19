@@ -70,6 +70,11 @@ public final class ExpressionTerm extends ExpressionItem {
         // TODO : XML serialisation still requires no-arg constructor and mutable fields
     }
 
+    @Override
+    public boolean containsField(final String field) {
+        return Objects.equals(field, this.field);
+    }
+
     @JsonCreator
     public ExpressionTerm(@JsonProperty("enabled") final Boolean enabled,
                           @JsonProperty("field") final String field,

@@ -39,6 +39,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.util.NullSafe;
 import stroom.util.collections.BatchingIterator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -454,7 +455,10 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 new HashSet<>());
 
         final int updateCount;
-        if (usedValKeys.isEmpty() && !containsPipelineCondition(criteria.getExpression())) {
+        final boolean containsPipelineCondition = NullSafe.test(
+                criteria.getExpression(),
+                expr -> expr.containsField(MetaFields.PIPELINE.getName()));
+        if (usedValKeys.isEmpty() && !containsPipelineCondition) {
             updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
                     context
                             .update(meta)
@@ -484,33 +488,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
         }
         return updateCount;
     }
-
-    private boolean containsPipelineCondition(final ExpressionOperator expr) {
-        if (expr == null || expr.getChildren() == null) {
-            return false;
-        }
-        for (ExpressionItem child : expr.getChildren()) {
-            if (child instanceof ExpressionTerm) {
-                ExpressionTerm term = (ExpressionTerm) child;
-
-                if (MetaFields.PIPELINE.getName().equals(term.getField())) {
-                    return true;
-                }
-            } else if (child instanceof ExpressionOperator) {
-                if (containsPipelineCondition((ExpressionOperator) child)) {
-                    return true;
-                }
-            } else {
-                //Don't know what this is!
-                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() + " " +
-                        "unable to optimise meta query");
-                //Allow search to succeed without optimisation
-                return true;
-            }
-        }
-        return false;
-    }
-
 
     private Condition getFilterCriteriaCondition(final FindDataRetentionImpactCriteria criteria) {
         final Condition filterCondition;
@@ -583,6 +560,14 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
             return JooqUtil.contextResult(metaDbConnProvider,
                             context -> {
+                                var fromClause = meta
+                                        .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                        .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID));
+                                final boolean rulesUsePipelineField = rulesContainField(
+                                        MetaFields.PIPELINE.getName(), activeRules);
+                                if (rulesUsePipelineField) {
+                                    fromClause.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID);
+                                }
                                 // Get all meta records that are impacted by a rule and for each determine
                                 // which rule wins and get its rule number, along with feed and type
                                 // The OR condition is here to try and help the DB use indexes.
@@ -592,9 +577,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                 metaType.NAME.as(typeNameField),
                                                 ruleNoCaseField.as(ruleNoField),
                                                 meta.CREATE_TIME.as(metaCreateTimeField))
-                                        .from(meta)
-                                        .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                        .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                        .from(fromClause)
                                         .where(meta.STATUS.notEqual(statusIdDeleted))
 //                                        .and(ruleNoCaseField.isNotNull()) // only want data that WILL be deleted
                                         .and(DSL.or(orConditions)) // Here to help use indexes
@@ -608,7 +591,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         detailTable);
 
                                 // Now get counts grouped by feed, type and rule
-                                return context
+                                final var query = context
                                         .select(
                                                 detailTable.field(feedNameField),
                                                 detailTable.field(typeNameField),
@@ -623,8 +606,12 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         .groupBy(
                                                 detailTable.field(ruleNoField),
                                                 detailTable.field(feedNameField),
-                                                detailTable.field(typeNameField))
-                                        .fetch();
+                                                detailTable.field(typeNameField));
+
+                                // Dump the query in case we want to run it in a mysql shell.
+                                LOGGER.debug("query:\n{}", query);
+
+                                return query.fetch();
                             })
                     .map(record -> {
                         int ruleNo = record.get(ruleNoField);
@@ -640,6 +627,29 @@ class MetaDaoImpl implements MetaDao, Clearable {
             result = Collections.emptyList();
         }
         return result;
+    }
+
+    /**
+     * @return True if any term in any expression uses field {@code field}.
+     */
+    private boolean ruleActionsContainField(final String field, final List<DataRetentionRuleAction> ruleActions) {
+        return ruleActions.stream()
+                .anyMatch(ruleAction ->
+                        NullSafe.test(
+                                ruleAction.getRule(),
+                                DataRetentionRule::getExpression,
+                                expr -> expr.containsField(field)));
+    }
+
+    /**
+     * @return True if any term in any expression uses field {@code field}.
+     */
+    private boolean rulesContainField(final String field, final List<DataRetentionRule> rules) {
+        return rules.stream()
+                .anyMatch(rule ->
+                        NullSafe.test(
+                                rule.getExpression(),
+                                expr -> expr.containsField(field)));
     }
 
     private List<Condition> getRuleAgeConditions(final List<DataRetentionRule> activeRules,
@@ -692,6 +702,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
+            final boolean rulesUsePipelineField = ruleActionsContainField(
+                    MetaFields.PIPELINE.getName(), ruleActions);
 
             final List<Condition> conditions = new ArrayList<>(baseConditions);
 
@@ -700,7 +712,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
             conditions.add(meta.CREATE_TIME.lessThan(period.getTo().toEpochMilli()));
 
             int lastUpdateCount;
-            AtomicInteger iteration = new AtomicInteger(1);
+            final AtomicInteger iteration = new AtomicInteger(1);
             Duration totalSelectDuration = Duration.ZERO;
             Duration totalUpdateDuration = Duration.ZERO;
             Instant startTime;
@@ -720,7 +732,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 // Get a sub period of period
 
                 startTime = Instant.now();
-                final Optional<TimePeriod> optSubPeriod = getTimeSlice(startTimeInc, batchSize, conditions);
+                final Optional<TimePeriod> optSubPeriod = getTimeSlice(
+                        startTimeInc, batchSize, conditions, rulesUsePipelineField);
+
                 totalSelectDuration = totalSelectDuration.plus(Duration.between(startTime,
                         Instant.now().plusMillis(1)));
 
@@ -728,19 +742,30 @@ class MetaDaoImpl implements MetaDao, Clearable {
                     LOGGER.debug("No time slice found");
                     break;
                 }
-                TimePeriod subPeriod = optSubPeriod.get();
+                final TimePeriod subPeriod = optSubPeriod.get();
                 LOGGER.debug("Iteration {}, using sub-period {}", iteration, subPeriod);
 
                 startTime = Instant.now();
                 lastUpdateCount = LOGGER.logDurationIfDebugEnabled(
-                        () -> JooqUtil.contextResult(metaDbConnProvider, context -> context
-                                .update(meta)
-                                .set(meta.STATUS, statusIdDeleted)
-                                .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
-                                .where(conditions)
-                                .and(meta.CREATE_TIME.greaterOrEqual(subPeriod.getFrom().toEpochMilli()))
-                                .and(meta.CREATE_TIME.lessThan(subPeriod.getTo().toEpochMilli()))
-                                .execute()),
+                        () -> JooqUtil.contextResult(metaDbConnProvider, context -> {
+
+                            final var tableClause = rulesUsePipelineField
+                                    ? meta.straightJoin(metaProcessor)
+                                    .on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                                    : meta;
+
+                            final var query = context
+                                    .update(tableClause)
+                                    .set(meta.STATUS, statusIdDeleted)
+                                    .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
+                                    .where(conditions)
+                                    .and(meta.CREATE_TIME.greaterOrEqual(subPeriod.getFrom().toEpochMilli()))
+                                    .and(meta.CREATE_TIME.lessThan(subPeriod.getTo().toEpochMilli()));
+
+                            LOGGER.debug("query:\n{}", query);
+
+                            return query.execute();
+                        }),
                         cnt -> LogUtil.message(
                                 "Logically deleted {} meta records with approx. limit of {}. Iteration {}",
                                 cnt,
@@ -780,8 +805,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
     private Optional<TimePeriod> getTimeSlice(final Instant startTimeInc,
                                               final int batchSize,
-                                              final List<Condition> conditions) {
-        LOGGER.debug("getTimeSlice({}, {}, {})", startTimeInc, batchSize, conditions);
+                                              final List<Condition> conditions,
+                                              final boolean includesMetaProcessorTbl) {
+        LOGGER.debug("getTimeSlice({}, {}, {}, {})", startTimeInc, batchSize, conditions, includesMetaProcessorTbl);
 
         final String createTimeCol = meta.CREATE_TIME.getName();
         final String minCreateTimeCol = "min_create_time";
@@ -792,9 +818,14 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final Optional<TimePeriod> timePeriod =
                 LOGGER.logDurationIfDebugEnabled(() -> JooqUtil.contextResult(metaDbConnProvider,
                                 context -> {
+                                    final var fromClause = includesMetaProcessorTbl
+                                            ? meta.straightJoin(metaProcessor)
+                                            .on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                                            : meta;
+
                                     final Table<?> orderedFullSet = context
                                             .select(meta.CREATE_TIME)
-                                            .from(meta)
+                                            .from(fromClause)
                                             .where(conditions)
                                             .and(meta.CREATE_TIME.greaterOrEqual(startTimeInc.toEpochMilli()))
                                             .orderBy(meta.CREATE_TIME)
@@ -806,12 +837,15 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                             .limit(batchSize)
                                             .asTable("limitedSet");
 
-                                    return context
+                                    final var query = context
                                             .select(
                                                     DSL.min(limitedSet.field(createTimeCol)).as(minCreateTimeCol),
                                                     DSL.max(limitedSet.field(createTimeCol)).as(maxCreateTimeCol))
-                                            .from(limitedSet)
-                                            .fetchOne();
+                                            .from(limitedSet);
+
+                                    LOGGER.debug("query:\n{}", query);
+
+                                    return query.fetchOne();
                                 })
                         .map(record -> {
                             Object min = record.get(minCreateTimeCol);

@@ -238,6 +238,7 @@ class DynamicTestBuilder {
         public CasesBuilder<I, O> withSimpleEqualityAssertion() {
             final Consumer<TestOutcome<I, O>> wrappedConsumer = wrapTestOutcomeConsumer(testOutcome ->
                     Assertions.assertThat(testOutcome.getActualOutput())
+                            .withFailMessage(testOutcome::buildFailMessage)
                             .isEqualTo(testOutcome.getExpectedOutput()));
             return new CasesBuilder<>(testAction, wrappedConsumer);
         }
@@ -454,12 +455,13 @@ class DynamicTestBuilder {
                         return DynamicTest.dynamicTest(testName, () -> {
                             if (LOGGER.isDebugEnabled()) {
                                 if (testCase.isExpectedToThrow()) {
-                                    LOGGER.debug(() -> LogUtil.message("Input: '{}', expected to throw: '{}'",
-                                            testCase.getInput(),
+                                    LOGGER.debug(() -> LogUtil.message("{}, expected to throw: '{}'",
+                                            TestCase.valueToString("Input", testCase.getInput()),
                                             testCase.getExpectedThrowableType().getSimpleName()));
                                 } else {
-                                    LOGGER.debug(() -> LogUtil.message("Input: '{}', expectedOutput: '{}'",
-                                            testCase.getInput(), testCase.getExpectedOutput()));
+                                    LOGGER.debug(() -> LogUtil.message("{}, expected {}",
+                                            TestCase.valueToString("Input", testCase.getInput()),
+                                            TestCase.valueToString("output", testCase.getExpectedOutput())));
                                 }
                             }
                             O actualOutput = null;

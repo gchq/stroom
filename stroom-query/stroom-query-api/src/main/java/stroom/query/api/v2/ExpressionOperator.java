@@ -78,6 +78,20 @@ public final class ExpressionOperator extends ExpressionItem {
         // TODO : XML serialisation still requires no-arg constructor and mutable fields
     }
 
+    @Override
+    public boolean containsField(final String field) {
+        if (children != null) {
+            for (final ExpressionItem child : children) {
+                final boolean isMatch = child.containsField(field);
+                if (isMatch) {
+                    // Found a match so break out
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @JsonCreator
     public ExpressionOperator(@JsonProperty("enabled") final Boolean enabled,
                               @JsonProperty("op") final Op op,

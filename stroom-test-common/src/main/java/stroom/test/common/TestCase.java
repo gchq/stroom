@@ -1,6 +1,10 @@
 package stroom.test.common;
 
+import stroom.util.logging.LogUtil;
+
 import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import io.vavr.Tuple3;
 
 /**
  * Useful class for holding input and expected output values for a test case.
@@ -68,6 +72,20 @@ public class TestCase<I, O> {
 
     public String getName() {
         return name;
+    }
+
+    public static <T> String valueToString(final String name, final T value) {
+        if (value instanceof Tuple2) {
+            final Tuple2<?, ?> tuple2 = (Tuple2<?, ?>) value;
+            return LogUtil.message("{}1: '{}', {}2: '{}'",
+                    name, tuple2._1, name.toLowerCase(), tuple2._2);
+        } else if (value instanceof Tuple3) {
+            final Tuple3<?, ?, ?> tuple3 = (Tuple3<?, ?, ?>) value;
+            return LogUtil.message("{}1: '{}', {}2: '{}', {}3: '{}'",
+                    name, tuple3._1, name.toLowerCase(), tuple3._2, name.toLowerCase(), tuple3._3);
+        } else {
+            return LogUtil.message("{}: '{}'", name, value);
+        }
     }
 
     @Override
