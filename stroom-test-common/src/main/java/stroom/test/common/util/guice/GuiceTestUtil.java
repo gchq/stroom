@@ -244,7 +244,9 @@ public class GuiceTestUtil {
                     dumpModule(moduleInfo3, stringBuilder, childPad);
                 });
     }
+
     private static void dumpBindInfo(final BindInfo bindInfo, final StringBuilder stringBuilder) {
+
         final ConsoleColour typeColour = Objects.requireNonNullElse(
                 TYPE_TO_COLOUR_MAP.get(bindInfo.bindType),
                 ConsoleColour.NO_COLOUR);
