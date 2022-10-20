@@ -5,7 +5,6 @@ import com.google.inject.multibindings.MapBinder;
 
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class ScheduledJobsBinder {
 
@@ -21,24 +20,19 @@ public class ScheduledJobsBinder {
 
     public ScheduledJobsBinder bindJobTo(final Class<? extends Runnable> jobRunnableClass,
                                          final Consumer<ScheduledJob.Builder> jobScheduleBuilder) {
+        Objects.requireNonNull(jobRunnableClass);
+        Objects.requireNonNull(jobScheduleBuilder);
+
         final ScheduledJob.Builder builder = ScheduledJob.builder();
         jobScheduleBuilder.accept(builder);
         final ScheduledJob scheduledJob = builder.build();
 
-        mapBinder.addBinding(scheduledJob).to(jobRunnableClass);
-        return bindJobTo(jobRunnableClass, () -> scheduledJob);
-    }
-
-    private ScheduledJobsBinder bindJobTo(final Class<? extends Runnable> jobRunnableClass,
-                                         final Supplier<ScheduledJob> scheduledJobSupplier) {
-        final ScheduledJob scheduledJob = Objects.requireNonNull(scheduledJobSupplier.get());
-
-        mapBinder.addBinding(scheduledJob).to(jobRunnableClass);
+        mapBinder.addBinding(scheduledJob)
+                .to(jobRunnableClass);
         return this;
     }
 
     public MapBinder<ScheduledJob, Runnable> build() {
         return mapBinder;
     }
-
 }
