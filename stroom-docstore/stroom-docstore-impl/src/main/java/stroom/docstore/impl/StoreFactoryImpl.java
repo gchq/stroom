@@ -32,6 +32,13 @@ public class StoreFactoryImpl implements StoreFactory {
     public <D extends Doc> Store<D> createStore(final DocumentSerialiser2<D> serialiser,
                                                 final String type,
                                                 final Class<D> clazz) {
-        return new StoreImpl<>(persistence, entityEventBus, importConverter, securityContext, serialiser, type, clazz);
+        return new StoreImpl<>(
+                persistence,
+                entityEventBus,
+                importConverter,
+                securityContext,
+                serialiser,
+                type,
+                clazz);
     }
 }
