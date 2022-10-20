@@ -149,7 +149,7 @@ ext.libs = [
         commons_io                     : "commons-io:commons-io:2.6",
         commons_lang                   : "org.apache.commons:commons-lang3", // version controlled by DW BOM
         commons_pool2                  : "org.apache.commons:commons-pool2:2.6.0",
-        commons_text                   : "org.apache.commons:commons-text:1.4", // 1.4 needed by YamlUtil
+        commons_text                   : "org.apache.commons:commons-text:1.10.0", // Must be >1.9 because of CVE-2922-42889. DW tries to pull in 1.9 but this will override that.
         classgraph                     : "io.github.classgraph:classgraph:4.8.146",
         curator_client                 : "org.apache.curator:curator-client:$versions.curator",
         curator_framework              : "org.apache.curator:curator-framework:$versions.curator",
@@ -356,6 +356,7 @@ subprojects {
             exclude module: 'xercesImpl'
 
             resolutionStrategy {
+
                 // A very hacky way of finding out what version of slf4j is in the dropwizard BOM
                 // TODO make it less hacky
                 if (dropwizardBomSlf4jVersion == null) {
