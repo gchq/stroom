@@ -50,7 +50,6 @@ dependencies {
 
     compile project(':stroom-docref')
 
-    compile libs.commons_text
     compile libs.guice5
     compile libs.jackson_annotations
     compile libs.jackson_databind
