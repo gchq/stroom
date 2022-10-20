@@ -19,14 +19,13 @@ package stroom.legacy.impex_6_1;
 
 import stroom.legacy.model_6_1.AuditedEntity;
 import stroom.legacy.model_6_1.DocumentEntity;
+import stroom.legacy.model_6_1.StreamType;
 import stroom.legacy.model_6_1.XMLMarshallerUtil;
 import stroom.util.shared.EntityServiceException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
@@ -35,9 +34,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 
 @Deprecated
 public class LegacyXmlSerialiser {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LegacyXmlSerialiser.class);
 
     private static final JAXBContext PIPELINEDATA_JAXB_CONTEXT = createJAXBContext(stroom.legacy.model_6_1.PipelineData.class);
@@ -113,12 +115,14 @@ public class LegacyXmlSerialiser {
         try {
             if (AuditedEntity.class.isAssignableFrom(property.getType())) {
                 AuditedEntity entity = (AuditedEntity) object;
-                Object obj = null;
-                if (values != null && values.size() > 0) {
-                    obj = values.iterator().next();
-                }
+                Object obj = (values != null && values.size() > 0)
+                        ? values.iterator().next()
+                        : null;
 
-                if (obj == null) {
+                if (obj instanceof String) {
+                    final String value = (String) obj;
+                    convertAndSetEntity(object, property, value);
+                } else {
                     property.set(entity, null);
                 }
             } else if (Set.class.isAssignableFrom(property.getType())) {
@@ -162,10 +166,32 @@ public class LegacyXmlSerialiser {
         }
     }
 
+    private static void convertAndSetEntity(final Object object,
+                                            final Property property,
+                                            final String value)
+            throws InvocationTargetException, IllegalAccessException {
+
+        if (StreamType.class.isAssignableFrom(property.getType())) {
+            // Special case for streamType as the value in the xml is just the name
+            // but the prop is a StreamType class
+
+            final StreamType streamType;
+            if (value != null) {
+                streamType = new StreamType();
+                streamType.setName(value);
+            } else {
+                streamType = null;
+            }
+            property.set(object, streamType);
+        }
+    }
+
     public static stroom.legacy.model_6_1.PipelineData getPipelineDataFromLegacyXml(final String xml) {
         if (xml != null) {
             try {
-                return XMLMarshallerUtil.unmarshal(PIPELINEDATA_JAXB_CONTEXT, stroom.legacy.model_6_1.PipelineData.class, xml);
+                return XMLMarshallerUtil.unmarshal(PIPELINEDATA_JAXB_CONTEXT,
+                        stroom.legacy.model_6_1.PipelineData.class,
+                        xml);
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal pipeline config", e);
             }
@@ -189,7 +215,9 @@ public class LegacyXmlSerialiser {
     public static stroom.legacy.model_6_1.IndexFields getIndexFieldsFromLegacyXml(final String xml) {
         if (xml != null) {
             try {
-                return stroom.util.xml.XMLMarshallerUtil.unmarshal(INDEXFIELDS_JAXB_CONTEXT, stroom.legacy.model_6_1.IndexFields.class, xml);
+                return stroom.util.xml.XMLMarshallerUtil.unmarshal(INDEXFIELDS_JAXB_CONTEXT,
+                        stroom.legacy.model_6_1.IndexFields.class,
+                        xml);
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal index fields", e);
             }
@@ -201,7 +229,9 @@ public class LegacyXmlSerialiser {
     public static stroom.legacy.model_6_1.DocRefs getDocRefsFromLegacyXml(final String xml) {
         if (xml != null) {
             try {
-                return stroom.util.xml.XMLMarshallerUtil.unmarshal(DOCREFS_JAXB_CONTEXT, stroom.legacy.model_6_1.DocRefs.class, xml);
+                return stroom.util.xml.XMLMarshallerUtil.unmarshal(DOCREFS_JAXB_CONTEXT,
+                        stroom.legacy.model_6_1.DocRefs.class,
+                        xml);
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal docrefs", e);
             }

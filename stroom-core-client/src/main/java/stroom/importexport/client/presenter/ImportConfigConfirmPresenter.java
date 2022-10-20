@@ -51,6 +51,10 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.WhiteSpace;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Widget;
@@ -276,6 +280,25 @@ public class ImportConfigConfirmPresenter extends
 
     }
 
+    private SvgPreset createInfoColSvgPreset(final Severity severity) {
+
+        final String title = "Click to see " + severity.getSummaryValue()
+                .toLowerCase();
+
+        final SvgPreset svgPreset;
+        switch (severity) {
+            case INFO:
+                svgPreset = SvgPresets.INFO;
+                break;
+            case WARNING:
+                svgPreset = SvgPresets.ALERT;
+                break;
+            default:
+                svgPreset = SvgPresets.ERROR;
+        }
+        return svgPreset.title(title);
+    }
+
     protected void addInfoColumn() {
         // Info column.
         final InfoColumn<ImportState> infoColumn = new InfoColumn<ImportState>() {
@@ -283,18 +306,10 @@ public class ImportConfigConfirmPresenter extends
             public SvgPreset getValue(final ImportState object) {
                 if (object.getMessageList().size() > 0 || object.getUpdatedFieldList().size() > 0) {
                     final Severity severity = object.getSeverity();
-                    switch (severity) {
-                        case INFO:
-                            return SvgPresets.INFO;
-                        case WARNING:
-                            return SvgPresets.ALERT;
-                        case ERROR:
-                            return SvgPresets.ERROR;
-                        default:
-                            return SvgPresets.ERROR;
-                    }
+                    return createInfoColSvgPreset(severity);
+                } else {
+                    return null;
                 }
-                return null;
             }
 
             @Override
@@ -308,7 +323,16 @@ public class ImportConfigConfirmPresenter extends
                                 for (final Message msg : action.getMessageList()) {
                                     tableBuilder.addRow(
                                             msg.getSeverity().getDisplayValue(),
-                                            msg.getMessage());
+                                            msg.getMessage(),
+                                            true,
+                                            new SafeStylesBuilder()
+                                                    .whiteSpace(WhiteSpace.PRE)
+                                                    .paddingRight(8, Unit.PX)
+                                                    .toSafeStyles(),
+                                            new SafeStylesBuilder()
+                                                    .whiteSpace(WhiteSpace.NORMAL)
+                                                    .overflow(Overflow.AUTO)
+                                                    .toSafeStyles());
                                 }
                                 return tableBuilder.build();
                             });
@@ -333,7 +357,7 @@ public class ImportConfigConfirmPresenter extends
                         null);
             }
         };
-        dataGridView.addColumn(infoColumn, "<br/>", 18);
+        dataGridView.addColumn(infoColumn, "<br/>", 20);
     }
 
     private void addActionColumn() {
