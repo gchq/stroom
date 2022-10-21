@@ -109,10 +109,10 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
     private static final int FIND_RECORD_LIMIT = 1000000;
 
-    private static final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("m");
-    private static final MetaFeed metaFeed = META_FEED.as("f");
-    private static final MetaType metaType = META_TYPE.as("t");
-    private static final MetaProcessor metaProcessor = META_PROCESSOR.as("p");
+    static final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("m");
+    static final MetaFeed metaFeed = META_FEED.as("f");
+    static final MetaType metaType = META_TYPE.as("t");
+    static final MetaProcessor metaProcessor = META_PROCESSOR.as("p");
 
     private static final stroom.meta.impl.db.jooq.tables.Meta parent = META.as("parent");
     private static final MetaFeed parentFeed = META_FEED.as("parentFeed");
@@ -202,6 +202,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         expressionMapper.map(MetaFields.META_PROCESSOR_TASK_ID, meta.PROCESSOR_TASK_ID, Long::valueOf);
         expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, this::getFeedIds, true);
         expressionMapper.multiMap(MetaFields.TYPE, meta.TYPE_ID, this::getTypeIds);
+//        expressionMapper.multiMap(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
         expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
         expressionMapper.map(MetaFields.STATUS,
                 meta.STATUS,
@@ -270,6 +271,31 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
     private List<Integer> getTypeIds(final String typeName) {
         return getIds(typeName, typeIdCache, metaTypeDao::find);
+    }
+
+    private List<Integer> getPipelineUuids(final String name) {
+        List<Integer> list;
+
+        // = => AND {Pipeline = RAW_STREAMING_FORK-EVENTS}
+        // isdocref => AND {Pipeline is RAW_STREAMING_FORK-EVENTS}
+        // in => AND {Pipeline in RAW_STREAMING_FORK-EVENTS,X}
+        // in folder => AND {Pipeline in folder Test}
+        // in dict => AND {Pipeline in dictionary Imp_exp_test_dictionary}
+
+        // We can't cache wildcard names as we don't know what they will match in the DB.
+////        if (name.contains("*")) {
+////            list = function.apply(name);
+////        } else {
+////            list = map.get(name);
+////            if (list == null || list.size() == 0) {
+////                list = function.apply(name);
+////                if (list != null && list.size() > 0) {
+////                    map.put(name, list);
+////                }
+////            }
+////        }
+//
+        return null;
     }
 
     /**
@@ -458,6 +484,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final boolean containsPipelineCondition = NullSafe.test(
                 criteria.getExpression(),
                 expr -> expr.containsField(MetaFields.PIPELINE.getName()));
+
+        // TODO: 20/10/2022 You can do joins in the update to avoid the sub-select.
+        //  See logicalDelete() above.
         if (usedValKeys.isEmpty() && !containsPipelineCondition) {
             updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
                     context
@@ -563,10 +592,11 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                 var fromClause = meta
                                         .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                                         .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID));
-                                final boolean rulesUsePipelineField = rulesContainField(
-                                        MetaFields.PIPELINE.getName(), activeRules);
-                                if (rulesUsePipelineField) {
-                                    fromClause.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
+                                // If any of the rules have a predicate on the Pipeline field then we need to
+                                // add the join to meta_processor
+                                if (rulesContainField(MetaFields.PIPELINE.getName(), activeRules)) {
+                                    fromClause = fromClause.leftOuterJoin(metaProcessor)
+                                            .on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
                                 }
                                 // Get all meta records that are impacted by a rule and for each determine
                                 // which rule wins and get its rule number, along with feed and type
@@ -749,9 +779,10 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 lastUpdateCount = LOGGER.logDurationIfDebugEnabled(
                         () -> JooqUtil.contextResult(metaDbConnProvider, context -> {
 
+                            // If any of the rules have a predicate on the Pipeline field then we need to
+                            // add the join to meta_processor
                             final var tableClause = rulesUsePipelineField
-                                    ? meta.straightJoin(metaProcessor)
-                                    .on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                                    ? meta.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                                     : meta;
 
                             final var query = context
@@ -762,7 +793,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                     .and(meta.CREATE_TIME.greaterOrEqual(subPeriod.getFrom().toEpochMilli()))
                                     .and(meta.CREATE_TIME.lessThan(subPeriod.getTo().toEpochMilli()));
 
-                            LOGGER.debug("query:\n{}", query);
+                            LOGGER.debug("update:\n{}", query);
 
                             return query.execute();
                         }),
@@ -818,6 +849,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final Optional<TimePeriod> timePeriod =
                 LOGGER.logDurationIfDebugEnabled(() -> JooqUtil.contextResult(metaDbConnProvider,
                                 context -> {
+                                    // If any of the rules have a predicate on the Pipeline field then we need to
+                                    // add the join to meta_processor
                                     final var fromClause = includesMetaProcessorTbl
                                             ? meta.straightJoin(metaProcessor)
                                             .on(meta.PROCESSOR_ID.eq(metaProcessor.ID))

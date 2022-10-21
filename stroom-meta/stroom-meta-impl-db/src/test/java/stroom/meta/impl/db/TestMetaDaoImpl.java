@@ -20,7 +20,12 @@ package stroom.meta.impl.db;
 import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
+import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.RetentionRuleOutcome;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.TimeUnit;
 import stroom.data.shared.StreamTypeNames;
+import stroom.db.util.JooqUtil;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
@@ -34,14 +39,21 @@ import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
+import stroom.test.common.TestUtil;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
+import stroom.util.time.TimePeriod;
 
 import com.google.common.base.Strings;
 import com.google.inject.Guice;
@@ -50,14 +62,24 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static stroom.meta.impl.db.MetaDaoImpl.meta;
+import static stroom.meta.impl.db.MetaDaoImpl.metaFeed;
+import static stroom.meta.impl.db.MetaDaoImpl.metaProcessor;
+import static stroom.meta.impl.db.MetaDaoImpl.metaType;
 
 class TestMetaDaoImpl {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetaDaoImpl.class);
 
     private static final String RAW_STREAM_TYPE_NAME = "RAW_TEST_STREAM_TYPE";
     private static final String PROCESSED_STREAM_TYPE_NAME = "TEST_STREAM_TYPE";
@@ -71,6 +93,7 @@ class TestMetaDaoImpl {
     private static final DocRef TEST3_FEED =
             new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), TEST3_FEED_NAME);
 
+
     @Inject
     private Cleanup cleanup;
     @Inject
@@ -79,6 +102,10 @@ class TestMetaDaoImpl {
     private MetaValueDao metaValueDao;
     @Inject
     private MetaDbConnProvider metaDbConnProvider;
+    private int totalMetaCount = 0;
+    private int test1FeedCount = 0;
+    private int test2FeedCount = 0;
+    private int test3FeedCount = 0;
 
     @BeforeEach
     void setup() {
@@ -95,26 +122,41 @@ class TestMetaDaoImpl {
                         new CacheModule(),
                         new DbTestModule())
                 .injectMembers(this);
+
+        populateDb();
+    }
+
+    private void populateDb() {
         // Delete everything`
+        LOGGER.debug("Running cleanup");
         cleanup.cleanup();
 
+        totalMetaCount = 0;
+        test1FeedCount = 0;
+        test2FeedCount = 0;
+
+        LOGGER.debug("Populating DB");
         // Add some test data.
         for (int i = 0; i < 10; i++) {
             final Meta parent = metaDao.create(createRawProperties(TEST1_FEED_NAME));
-            Meta myMeta = metaDao.create(createProcessedProperties(parent, TEST1_FEED_NAME));
+            final Meta myMeta = metaDao.create(createProcessedProperties(parent, TEST1_FEED_NAME));
 
-            AttributeMap attributeMap = new AttributeMap();
+            final AttributeMap attributeMap = new AttributeMap();
             attributeMap.put(MetaFields.REC_READ.getName(), "" + 100 * i);
             attributeMap.put(MetaFields.REC_WRITE.getName(), "" + 10 * i);
             metaValueDao.addAttributes(myMeta, attributeMap);
+            totalMetaCount += 2; // parent + myMeta
+            test1FeedCount += 2; // parent + myMeta
         }
         for (int i = 0; i < 10; i++) {
             final Meta parent = metaDao.create(createRawProperties(TEST2_FEED_NAME));
-            Meta myMeta = metaDao.create(createProcessedProperties(parent, TEST2_FEED_NAME));
-            AttributeMap attributeMap = new AttributeMap();
+            final Meta myMeta = metaDao.create(createProcessedProperties(parent, TEST2_FEED_NAME));
+            final AttributeMap attributeMap = new AttributeMap();
             attributeMap.put(MetaFields.REC_READ.getName(), "" + 1000 * i);
             attributeMap.put(MetaFields.REC_WRITE.getName(), "" + 100 * i);
             metaValueDao.addAttributes(myMeta, attributeMap);
+            totalMetaCount += 2; // parent + myMeta
+            test2FeedCount += 2; // parent + myMeta
         }
 
         metaValueDao.flush();
@@ -125,13 +167,130 @@ class TestMetaDaoImpl {
                 System.currentTimeMillis());
     }
 
+    private void makeCreateTimesOlder() {
+        final long newCreateTimeMs = Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli();
+        // Make sure all meta records are a day or so old
+        JooqUtil.context(metaDbConnProvider, context -> {
+            context
+                    .update(meta)
+                    .set(meta.CREATE_TIME, newCreateTimeMs)
+                    .execute();
+        });
+    }
+
+
+    @TestFactory
+    Stream<DynamicTest> testLogicalDelete() {
+        final TimePeriod allTimePeriod = TimePeriod.fromEpochTo(Instant.now());
+
+
+        LOGGER.doIfDebugEnabled(this::dumpMetaTableToDebug);
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(ExpressionOperator.class)
+                .withOutputType(Integer.class)
+                .withTestFunction(testCase -> {
+                    final ExpressionOperator expressionOperator = testCase.getInput();
+                    final List<DataRetentionRuleAction> ruleActions = buildRuleActions(expressionOperator);
+                    return metaDao.logicalDelete(ruleActions, allTimePeriod);
+                })
+                .withSimpleEqualityAssertion()
+
+                // Delete all
+                .addCase(ExpressionOperator.builder().build(), totalMetaCount)
+
+                // Delete one feed only
+                .addCase(ExpressionOperator.builder()
+                                .addTerm(createFeedTerm(TEST1_FEED, true))
+                                .build(),
+                        test1FeedCount)
+
+                // Delete one feed that exists and one that doesn't
+                .addCase(ExpressionOperator.builder()
+                                .op(Op.OR)
+                                .addTerm(createFeedTerm(TEST1_FEED, true))
+                                .addTerm(createFeedTerm(TEST3_FEED, true))
+                                .build(),
+                        test1FeedCount)
+
+                // Delete everything that is not feed3, i.e. all rows
+                .addCase(ExpressionOperator.builder()
+                                .op(Op.NOT)
+                                .addTerm(createFeedTerm(TEST3_FEED, true))
+                                .build(),
+                        totalMetaCount)
+
+                // Delete all processed by test1 pipeline
+                .addCase(ExpressionOperator.builder()
+                                .addTerm(createPipelineTerm(getPipelineUuid(TEST1_FEED.getName()), true))
+                                .build(),
+                        test1FeedCount / 2) // not the parent metas
+
+                .withBeforeTestCaseAction(() -> {
+                    populateDb();
+                    makeCreateTimesOlder();
+                })
+                .build();
+    }
+
+    private void dumpMetaTableToDebug() {
+        JooqUtil.context(metaDbConnProvider, context -> {
+            final var metaRows = context
+                    .select(
+                            meta.ID,
+                            meta.CREATE_TIME,
+                            meta.PARENT_ID,
+                            meta.STATUS,
+                            meta.FEED_ID,
+                            metaFeed.NAME,
+                            metaProcessor.PIPELINE_UUID,
+                            metaType.NAME)
+                    .from(meta)
+                    .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                    .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                    .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                    .orderBy(meta.ID)
+                    .stream()
+                    .collect(Collectors.toList());
+
+            LOGGER.debug("meta rows:\n{}",
+                    AsciiTable.builder(metaRows)
+                            .withColumn(Column.of("Id", row -> row.get(meta.ID)))
+                            .withColumn(Column.of("Create Time", row ->
+                                    Instant.ofEpochMilli(row.get(meta.CREATE_TIME))))
+                            .withColumn(Column.of("Create Time ms", row -> row.get(meta.CREATE_TIME)))
+                            .withColumn(Column.of("Parent Id", row -> row.get(meta.PARENT_ID)))
+                            .withColumn(Column.of("Status", row -> row.get(meta.STATUS)))
+                            .withColumn(Column.of("Feed", row ->
+                                    row.get(metaFeed.NAME) + " (" + row.get(meta.FEED_ID) + ")"))
+                            .withColumn(Column.of("Pipe UUID", row -> row.get(metaProcessor.PIPELINE_UUID)))
+                            .withColumn(Column.of("Type Name", row -> row.get(metaType.NAME)))
+                            .build());
+        });
+    }
+
+    private List<DataRetentionRuleAction> buildRuleActions(final ExpressionOperator expressionOperator) {
+        final DataRetentionRuleAction dataRetentionRuleAction = new DataRetentionRuleAction(
+                new DataRetentionRule(
+                        1,
+                        Instant.now().toEpochMilli(),
+                        "My Rule",
+                        true,
+                        expressionOperator,
+                        1,
+                        TimeUnit.MINUTES,
+                        false),
+                RetentionRuleOutcome.DELETE);
+        return List.of(dataRetentionRuleAction);
+    }
+
     @TestFactory
     Stream<DynamicTest> testFind() {
         final AtomicInteger testNo = new AtomicInteger(1);
         return Stream.of(
 
                 // Find all.
-                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder().build(), 40),
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder().build(), totalMetaCount),
 
                 // Find feed 1.
                 makeTest(testNo.getAndIncrement(), MetaExpressionUtil.createFeedExpression(
@@ -142,7 +301,7 @@ class TestMetaDaoImpl {
 
                 // Find both feeds.
                 makeTest(testNo.getAndIncrement(), MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME,
-                        TEST2_FEED_NAME), 40),
+                        TEST2_FEED_NAME), totalMetaCount),
 
                 // Find none.
                 makeTest(testNo.getAndIncrement(), MetaExpressionUtil.createFeedsExpression(), 0),
@@ -180,18 +339,18 @@ class TestMetaDaoImpl {
                         .addTerm(createFeedTerm(TEST1_FEED, false))
                         .addTerm(createFeedTerm(TEST2_FEED, false))
                         .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                        .build(), 40),
+                        .build(), totalMetaCount),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addTerm(createFeedTerm(TEST1_FEED, false))
                         .addTerm(createFeedTerm(TEST2_FEED, false))
-                        .build(), 40),
+                        .build(), totalMetaCount),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addTerm(createFeedTerm(TEST1_FEED, false))
                         .addTerm(createFeedTerm(TEST2_FEED, false))
                         .addTerm(createFeedTerm(TEST3_FEED, false))
-                        .build(), 40),
+                        .build(), totalMetaCount),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addTerm(createFeedTerm(TEST1_FEED, false))
@@ -213,7 +372,7 @@ class TestMetaDaoImpl {
                                         .addTerm(createFeedTerm(TEST2_FEED, true))
                                         .build())
                         .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                        .build(), 40),
+                        .build(), totalMetaCount),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addOperator(
@@ -222,7 +381,7 @@ class TestMetaDaoImpl {
                                         .addTerm(createFeedTerm(TEST1_FEED, true))
                                         .addTerm(createFeedTerm(TEST2_FEED, true))
                                         .build())
-                        .build(), 40),
+                        .build(), totalMetaCount),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addOperator(
@@ -240,7 +399,7 @@ class TestMetaDaoImpl {
                                         .addTerm(createFeedTerm(TEST1_FEED, false))
                                         .addTerm(createFeedTerm(TEST2_FEED, false))
                                         .build())
-                        .build(), 40),
+                        .build(), totalMetaCount),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addOperator(
@@ -250,7 +409,7 @@ class TestMetaDaoImpl {
                                         .addTerm(createFeedTerm(TEST2_FEED, false))
                                         .addTerm(createFeedTerm(TEST3_FEED, false))
                                         .build())
-                        .build(), 40),
+                        .build(), totalMetaCount),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addOperator(
@@ -331,6 +490,19 @@ class TestMetaDaoImpl {
                 .build();
     }
 
+    private ExpressionTerm createPipelineTerm(final String pipelineUuid, boolean enabled) {
+        return ExpressionTerm
+                .builder()
+                .field(MetaFields.PIPELINE.getName())
+                .condition(Condition.IS_DOC_REF)
+                .docRef(DocRef.builder()
+                        .type(PipelineDoc.DOCUMENT_TYPE)
+                        .uuid(pipelineUuid)
+                        .build())
+                .enabled(enabled)
+                .build();
+    }
+
     @Test
     void testExtendedFind() {
         ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
@@ -345,7 +517,7 @@ class TestMetaDaoImpl {
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME,
                 TEST2_FEED_NAME)));
         assertThat(resultPage.size())
-                .isEqualTo(40);
+                .isEqualTo(totalMetaCount);
 
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
         assertThat(resultPage.size())
@@ -446,7 +618,7 @@ class TestMetaDaoImpl {
                 TEST1_FEED_NAME,
                 TEST2_FEED_NAME)));
         assertThat(selectionSummary.getItemCount())
-                .isEqualTo(40);
+                .isEqualTo(totalMetaCount);
 
         selectionSummary = metaDao.getSelectionSummary(
                 new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
@@ -515,9 +687,17 @@ class TestMetaDaoImpl {
                 .parent(parent)
                 .createMs(System.currentTimeMillis())
                 .feedName(feedName)
-                .processorUuid("12345")
-                .pipelineUuid("PIPELINE_UUID")
+                .processorUuid(getProcessorUuid(feedName))
+                .pipelineUuid(getPipelineUuid(feedName))
                 .typeName(typeName)
                 .build();
+    }
+
+    private String getPipelineUuid(final String feedName) {
+        return feedName.toUpperCase() + "_PIPELINE_UUID";
+    }
+
+    private String getProcessorUuid(final String feedName) {
+        return feedName.toUpperCase() + "_PROCESSOR_UUID";
     }
 }
