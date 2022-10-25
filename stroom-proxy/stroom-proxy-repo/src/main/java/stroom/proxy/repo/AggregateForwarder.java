@@ -135,16 +135,17 @@ public class AggregateForwarder {
         progressLog.increment("AggregateForwarder - forwardRetry");
 
         final long retryFrequency = forwardRetryConfig.getRetryFrequency().toMillis();
-        final long updateTime = forwardAggregate.getUpdateTimeMs();
+        final long updateTimeMs = forwardAggregate.getUpdateTimeMs();
 
         // The current item will be the oldest so sleep if it isn't at least as old as the min retry frequency.
-        final long delay = retryFrequency - (System.currentTimeMillis() - updateTime);
+        final long delay = retryFrequency - (System.currentTimeMillis() - updateTimeMs);
         if (delay > 0) {
             // Sleep at least as long as the retry frequency.
             ThreadUtil.sleep(delay);
         }
 
-        final long nextExecution = updateTime +
+        final long lastTryTimeMs = forwardAggregate.getLastTryTimeMs();
+        final long nextExecution = lastTryTimeMs +
                 (retryFrequency *
                         forwardAggregate.getTries() *
                         forwardAggregate.getTries());
@@ -154,7 +155,11 @@ public class AggregateForwarder {
 
         } else {
             // We are not ready to try forwarding this item again yet so put it to the end of the queue.
-            forwardAggregateDao.update(forwardAggregate);
+            final ForwardAggregate updatedForwardAggregate = forwardAggregate
+                    .copy()
+                    .updateTimeMs(System.currentTimeMillis())
+                    .build();
+            forwardAggregateDao.update(updatedForwardAggregate);
         }
     }
 
@@ -212,12 +217,14 @@ public class AggregateForwarder {
         }
 
         // Record that we sent the data or if there was no data to send.
+        final long now = System.currentTimeMillis();
         final ForwardAggregate updatedForwardAggregate = forwardAggregate
                 .copy()
-                .updateTimeMs(System.currentTimeMillis())
+                .updateTimeMs(now)
                 .success(success.get())
                 .error(error.get())
                 .tries(forwardAggregate.getTries() + 1)
+                .lastTryTimeMs(now)
                 .build();
         forwardAggregateDao.update(updatedForwardAggregate);
     }

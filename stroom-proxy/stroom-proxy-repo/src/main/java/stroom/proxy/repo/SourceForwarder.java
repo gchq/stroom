@@ -142,26 +142,31 @@ public class SourceForwarder {
         progressLog.increment("SourceForwarder - forwardRetry");
 
         final long retryFrequency = forwardRetryConfig.getRetryFrequency().toMillis();
-        final long updateTime = forwardSource.getUpdateTimeMs();
+        final long updateTimeMs = forwardSource.getUpdateTimeMs();
 
         // The current item will be the oldest so sleep if it isn't at least as old as the min retry frequency.
-        final long delay = retryFrequency - (System.currentTimeMillis() - updateTime);
+        final long delay = retryFrequency - (System.currentTimeMillis() - updateTimeMs);
         if (delay > 0) {
             // Sleep at least as long as the retry frequency.
             ThreadUtil.sleep(delay);
         }
 
-        final long nextExecution = updateTime +
+        final long lastTryTimeMs = forwardSource.getLastTryTimeMs();
+        final long nextExecution = lastTryTimeMs +
                 (retryFrequency *
-                forwardSource.getTries() *
-                forwardSource.getTries());
+                        forwardSource.getTries() *
+                        forwardSource.getTries());
 
         if (nextExecution < System.currentTimeMillis()) {
             forward(forwardSource);
 
         } else {
             // We are not ready to try forwarding this item again yet so put it to the end of the queue.
-            forwardSourceDao.update(forwardSource);
+            final ForwardSource updatedForwardSource = forwardSource
+                    .copy()
+                    .updateTimeMs(System.currentTimeMillis())
+                    .build();
+            forwardSourceDao.update(updatedForwardSource);
         }
     }
 
@@ -214,14 +219,16 @@ public class SourceForwarder {
         }
 
         // Record that we sent the data or if there was no data to send.
-        final ForwardSource updatedForwardAggregate = forwardSource
+        final long now = System.currentTimeMillis();
+        final ForwardSource updatedForwardSource = forwardSource
                 .copy()
-                .updateTimeMs(System.currentTimeMillis())
+                .updateTimeMs(now)
                 .success(success.get())
                 .error(error.get())
                 .tries(forwardSource.getTries() + 1)
+                .lastTryTimeMs(now)
                 .build();
-        forwardSourceDao.update(updatedForwardAggregate);
+        forwardSourceDao.update(updatedForwardSource);
     }
 
     private String getHostName() {
