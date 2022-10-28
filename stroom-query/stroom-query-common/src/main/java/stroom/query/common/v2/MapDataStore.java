@@ -52,6 +52,7 @@ public class MapDataStore implements DataStore, Data {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapDataStore.class);
 
+    private final Key rootKey;
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
     private final AtomicLong ungroupedItemSequenceNumber = new AtomicLong();
 
@@ -69,7 +70,8 @@ public class MapDataStore implements DataStore, Data {
 
     private volatile boolean hasEnoughData;
 
-    public MapDataStore(final TableSettings tableSettings,
+    public MapDataStore(final Serialisers serialisers,
+                        final TableSettings tableSettings,
                         final FieldIndex fieldIndex,
                         final Map<String, String> paramMap,
                         final Sizes maxResults,
@@ -82,6 +84,7 @@ public class MapDataStore implements DataStore, Data {
         this.maxResults = maxResults;
         this.storeSize = storeSize;
 
+        rootKey = Key.createRoot(serialisers);
         groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
         for (int depth = 0; depth <= compiledDepths.getMaxGroupDepth(); depth++) {
             groupingFunctions[depth] = new GroupingFunction();
@@ -109,7 +112,7 @@ public class MapDataStore implements DataStore, Data {
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
-        Key key = Key.root();
+        Key key = rootKey;
         Key parentKey = key;
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final Generator[] generators = new Generator[compiledFields.length];
@@ -264,7 +267,7 @@ public class MapDataStore implements DataStore, Data {
      */
     @Override
     public Items get() {
-        return get(Key.root());
+        return get(rootKey);
     }
 
     /**
@@ -278,7 +281,7 @@ public class MapDataStore implements DataStore, Data {
         Items result;
 
         if (parentKey == null) {
-            result = childMap.get(Key.root());
+            result = childMap.get(rootKey);
         } else {
             result = childMap.get(parentKey);
         }

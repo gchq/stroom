@@ -9,14 +9,15 @@ import java.util.Set;
 
 public class OpenGroupsConverter {
 
-    static Set<Key> convertSet(final Set<String> openGroups) {
+    static Set<Key> convertSet(final Serialisers serialisers,
+                               final Set<String> openGroups) {
         return Metrics.measure("Converting open groups", () -> {
             Set<Key> keys = Collections.emptySet();
             if (openGroups != null) {
                 keys = new HashSet<>();
                 for (final String encodedGroup : openGroups) {
                     final byte[] bytes = Base64.getDecoder().decode(encodedGroup);
-                    keys.add(new Key(bytes));
+                    keys.add(new Key(serialisers, bytes));
                 }
             }
             return keys;

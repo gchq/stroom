@@ -31,7 +31,7 @@ public class ParamFactory {
                 return ValString.create(StringUtil.unescape(value));
 
             case NUMBER:
-                return ValDouble.create(Double.valueOf(value));
+                return ValDouble.create(Double.parseDouble(value));
 
             case FIELD:
                 final String fieldName = value.substring(2, value.length() - 1);

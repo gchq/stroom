@@ -47,6 +47,7 @@ public class SearchResponseCreator {
 
     private static final Duration FALL_BACK_DEFAULT_TIMEOUT = Duration.ofMinutes(5);
 
+    private final SerialisersFactory serialisersFactory;
     private final String userId;
     private final SizesProvider sizesProvider;
     private final Store store;
@@ -59,9 +60,11 @@ public class SearchResponseCreator {
     /**
      * @param store The underlying store to use for creating the search responses.
      */
-    public SearchResponseCreator(final String userId,
+    public SearchResponseCreator(final SerialisersFactory serialisersFactory,
+                                 final String userId,
                                  final SizesProvider sizesProvider,
                                  final Store store) {
+        this.serialisersFactory = serialisersFactory;
         this.userId = userId;
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
@@ -342,9 +345,13 @@ public class SearchResponseCreator {
             try {
                 if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
                     final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeLocale));
-                    resultCreator = new TableResultCreator(fieldFormatter, sizesProvider.getDefaultMaxResultsSizes());
+                    resultCreator = new TableResultCreator(
+                            serialisersFactory,
+                            fieldFormatter,
+                            sizesProvider.getDefaultMaxResultsSizes());
                 } else {
                     resultCreator = new FlatResultCreator(
+                            serialisersFactory,
                             new MapDataStoreFactory(),
                             queryKey,
                             componentId,
