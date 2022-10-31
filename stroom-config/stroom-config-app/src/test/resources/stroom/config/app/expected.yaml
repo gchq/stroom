@@ -881,7 +881,7 @@ appConfig:
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
-    applicationInstanceKeepAliveIntervalMs: 60000
+    applicationInstanceKeepAliveIntervalMs: 10000
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
     helpSubPathJobs: "/user-guide/jobs/"

@@ -48,18 +48,10 @@ public interface ApplicationInstanceResource extends RestResource, DirectRestSer
     ApplicationInstanceInfo register();
 
     @POST
-    @Path("/keepAlive")
-    @Operation(
-            summary = "Keep an application instance alive",
-            operationId = "applicationInstanceKeepAlive")
-    Boolean keepAlive(@Parameter(description = "applicationInstanceInfo", required = true)
-                            ApplicationInstanceInfo applicationInstanceInfo);
-
-    @POST
     @Path("/remove")
     @Operation(
             summary = "Remove an application instance",
             operationId = "applicationInstanceRemove")
     Boolean destroy(@Parameter(description = "destroyRequest", required = true)
-                            DestroyRequest destroyRequest);
+                    DestroyRequest destroyRequest);
 }

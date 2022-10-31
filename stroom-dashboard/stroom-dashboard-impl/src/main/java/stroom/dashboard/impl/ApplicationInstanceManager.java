@@ -39,8 +39,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -54,9 +52,8 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
 
     private final SecurityContext securityContext;
     private final StroomCache<String, ApplicationInstance> cache;
-    // To aid debugging of the destruction of appI
+    // To aid debugging of the destruction of app
     private final ConcurrentMap<String, AppInstanceDebugInfo> appInstanceDebugMap = new ConcurrentHashMap<>();
-    private volatile boolean doDebugInfoRecording = false;
 
     @Inject
     ApplicationInstanceManager(final CacheManager cacheManager,
@@ -67,16 +64,43 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
                 CACHE_NAME,
                 () -> dashboardConfigProvider.get().getApplicationInstanceCache(),
                 this::destroy);
+    }
 
-        setDoDebugInfoRecordingState();
+    /**
+     * This gets called periodically, so we can check if DEBUG logging is on and enable/disable
+     * recording of debug info
+     */
+    public void evictExpiredElements() {
+        try {
+            if (LOGGER.isDebugEnabled()) {
+                // Avoid cost/locks that come with getting the size
+                final long cacheSizeBefore = cache.size();
+                cache.evictExpiredElements();
 
-        // Keep any active queries alive that have not aged off from the cache
-        Executors.newScheduledThreadPool(1)
-                .scheduleWithFixedDelay(
-                        () -> keepAllActiveQueriesAlive(cache),
-                        10,
-                        10,
-                        TimeUnit.SECONDS);
+                LOGGER.debug(() ->
+                        LogUtil.message("Evicting expired elements, cache size: " +
+                                        "{} (before eviction) {} (after eviction)",
+                                cacheSizeBefore, cache.size()));
+
+                // Now dump cache contents
+                cache.forEach((uuid, applicationInstance) -> {
+                    // Record the keep alive time and app instance details for later inspection
+                    final AppInstanceDebugInfo debugInfo = appInstanceDebugMap
+                            .compute(uuid, (uuid2, appInstanceDebugInfo) -> {
+                                final Instant keepAliveTime = Instant.now();
+                                return appInstanceDebugInfo == null
+                                        ? new AppInstanceDebugInfo(applicationInstance, null, keepAliveTime)
+                                        : appInstanceDebugInfo.withKeepAliveTime(Instant.now());
+                            });
+                    dumpRecordedDebugInfo(uuid, debugInfo, "evictExpiredElements");
+                });
+            } else {
+                cache.evictExpiredElements();
+                appInstanceDebugMap.clear();
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
     }
 
     public Optional<ApplicationInstance> getOptApplicationInstance(final String uuid) {
@@ -91,7 +115,7 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
                                     "Enable debug logging for more info.",
                             securityContext.getUserId()));
 
-                    if (doDebugInfoRecording) {
+                    if (LOGGER.isDebugEnabled()) {
                         final AppInstanceDebugInfo debugInfo = appInstanceDebugMap.get(uuid);
                         dumpRecordedDebugInfo(uuid, debugInfo, "getOptApplicationInstance");
                     }
@@ -125,47 +149,6 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
         }
     }
 
-    /**
-     * This gets called periodically, so we can check if DEBUG logging is on and enable/disable
-     * recording of debug info
-     */
-    private boolean setDoDebugInfoRecordingState() {
-        if (LOGGER.isDebugEnabled()) {
-            if (!doDebugInfoRecording) {
-                LOGGER.debug("Enabling debug info recording");
-                doDebugInfoRecording = true;
-            }
-            return true;
-        } else {
-            if (doDebugInfoRecording) {
-                // We were recording, now we are not so clear it out
-                appInstanceDebugMap.clear();
-                LOGGER.debug("Disabling debug info recording");
-                doDebugInfoRecording = false;
-            }
-            return false;
-        }
-    }
-
-    private void keepAllActiveQueriesAlive(final StroomCache<String, ApplicationInstance> cache) {
-        // This method is running every 10s so (ab)use it to set/un-set whether we are recording
-        // the debug info and to clear out stuff previously recorded.
-        final boolean isDebugEnabled = setDoDebugInfoRecordingState();
-
-        // Avoid cost/locks that come with getting the size
-        final long cacheSizeBefore = isDebugEnabled
-                ? cache.size()
-                : -1;
-
-        cache.evictExpiredElements();
-
-        LOGGER.debug(() ->
-                LogUtil.message("Keeping application instances' active queries alive, cache size: " +
-                                "{} (before eviction) {} (after eviction)",
-                        cacheSizeBefore, cache.size()));
-        cache.forEach(this::keepActiveQueriesAlive);
-    }
-
     private ApplicationInstance create(final String uuid) {
         final ApplicationInstance applicationInstance =
                 new ApplicationInstance(uuid, securityContext.getUserId(), System.currentTimeMillis());
@@ -181,7 +164,7 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
         LOGGER.debug(() -> LogUtil.message("Destroying application instance {}",
                 applicationInstanceToStr(applicationInstance)));
 
-        if (doDebugInfoRecording) {
+        if (LOGGER.isDebugEnabled()) {
             // Record the app instance along with the destroy time so we can later check what it was
             final AppInstanceDebugInfo debugInfo = appInstanceDebugMap.compute(uuid, (uuid2, appInstanceDebugInfo) -> {
                 final Instant destroyTime = Instant.now();
@@ -223,37 +206,22 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
      * interests alive.
      */
     public void keepAlive(final String uuid) {
+        LOGGER.trace(() -> "KeepAlive called for application instance " + uuid);
         final Optional<ApplicationInstance> optApplicationInstance = cache.getOptional(uuid);
-        if (doDebugInfoRecording) {
+        if (LOGGER.isDebugEnabled()) {
             dumpRecordedDebugInfo(uuid, appInstanceDebugMap.get(uuid), "keepAlive");
         }
         if (optApplicationInstance.isEmpty()) {
             throw new RuntimeException("Expected application instance not found: " + uuid);
+        } else {
+            optApplicationInstance.get().keepAlive();
         }
         LOGGER.debug(() -> "Client called keepAlive for application instance: "
                 + applicationInstanceToStr(optApplicationInstance.get()));
     }
 
-    private void keepActiveQueriesAlive(final String uuid,
-                                        final ApplicationInstance applicationInstance) {
-        LOGGER.trace(() ->
-                LogUtil.message("KeepAlive called for application instance {}",
-                        applicationInstanceToStr(applicationInstance)));
-        if (doDebugInfoRecording) {
-            // Record the keep alive time and app instance details for later inspection
-            final AppInstanceDebugInfo debugInfo = appInstanceDebugMap.compute(uuid, (uuid2, appInstanceDebugInfo) -> {
-                final Instant keepAliveTime = Instant.now();
-                return appInstanceDebugInfo == null
-                        ? new AppInstanceDebugInfo(applicationInstance, null, keepAliveTime)
-                        : appInstanceDebugInfo.withKeepAliveTime(Instant.now());
-            });
-            dumpRecordedDebugInfo(uuid, debugInfo, "keepActiveQueriesAlive");
-        }
-
-        applicationInstance.keepAlive();
-    }
-
     public boolean remove(final String uuid) {
+        LOGGER.trace(() -> "Remove called for application instance " + uuid);
         return cache.getOptional(uuid)
                 .map(applicationInstance -> {
                     LOGGER.debug(() -> "Explicitly remove application instance from cache: " +
