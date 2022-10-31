@@ -4,6 +4,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.db.util.DbModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
+import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
@@ -16,8 +17,10 @@ import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
+import stroom.importexport.api.ImportConverter;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.legacy.impex_6_1.LegacyImpexModule;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
@@ -88,6 +91,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -133,7 +137,6 @@ public class ProxyModule extends AbstractModule {
         install(new RemoteFeedModule());
 
         install(new TaskContextModule());
-        install(new LegacyImpexModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
 //        bind(BufferFactory.class).to(BufferFactoryImpl.class);
@@ -153,6 +156,9 @@ public class ProxyModule extends AbstractModule {
 
         bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
         bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
+
+        // Proxy doesn't do import so bind a dummy ImportConverter for the StoreImpl(s) to use
+        bind(ImportConverter.class).to(NoOpImportConverter.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
@@ -264,5 +270,17 @@ public class ProxyModule extends AbstractModule {
     EntityEventBus entityEventBus() {
         return event -> {
         };
+    }
+
+    private static class NoOpImportConverter implements ImportConverter {
+
+        @Override
+        public Map<String, byte[]> convert(final DocRef docRef,
+                                           final Map<String, byte[]> dataMap,
+                                           final ImportState importState,
+                                           final ImportMode importMode,
+                                           final String userId) {
+            throw new UnsupportedOperationException("Import is not supported in proxy.");
+        }
     }
 }

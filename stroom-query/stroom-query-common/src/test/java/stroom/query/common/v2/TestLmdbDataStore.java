@@ -78,7 +78,10 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 tempDirProvider,
                 () -> lmdbLibraryConfig);
 
+        final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
+        final Serialisers serialisers = new SerialisersFactory().create(errorConsumer);
         return new LmdbDataStore(
+                serialisers,
                 lmdbEnvFactory,
                 resultStoreConfig,
                 new QueryKey(UUID.randomUUID().toString()),
@@ -89,7 +92,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 maxResults,
                 false,
                 () -> executorService,
-                new ErrorConsumerImpl());
+                errorConsumer);
     }
 
     @Test
@@ -138,6 +141,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .requestedRange(new OffsetRange(0, 3000))
                 .build();
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                new SerialisersFactory(),
                 fieldFormatter,
                 defaultMaxResultsSizes);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(

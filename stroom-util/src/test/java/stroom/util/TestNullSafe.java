@@ -518,13 +518,13 @@ class TestNullSafe {
                     return val.get();
                 })
                 .withSimpleEqualityAssertion()
-                .addCase("All non null",
+                .addNamedCase("All non null",
                         Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getLevel),
                         2L)
-                .addCase("Level 1 null",
+                .addNamedCase("Level 1 null",
                         Tuple.of(nullLevel1, Level1::getNonNullLevel2, Level2::getLevel),
                         -1L)
-                .addCase("Level 2 null",
+                .addNamedCase("Level 2 null",
                         Tuple.of(nonNullLevel1, Level1::getNullLevel2, Level2::getLevel),
                         -1L)
                 .build();
@@ -554,28 +554,28 @@ class TestNullSafe {
                     return val.get();
                 })
                 .withSimpleEqualityAssertion()
-                .addCase("All non null",
+                .addNamedCase("All non null",
                         Tuple.of(
                                 nonNullLevel1,
                                 Level1::getNonNullLevel2,
                                 Level2::getNonNullLevel3,
                                 Level3::getLevel),
                         3L)
-                .addCase("Level 1 null",
+                .addNamedCase("Level 1 null",
                         Tuple.of(
                                 nullLevel1,
                                 Level1::getNonNullLevel2,
                                 Level2::getNonNullLevel3,
                                 Level3::getLevel),
                         -1L)
-                .addCase("Level 2 null",
+                .addNamedCase("Level 2 null",
                         Tuple.of(
                                 nonNullLevel1,
                                 Level1::getNullLevel2,
                                 Level2::getNonNullLevel3,
                                 Level3::getLevel),
                         -1L)
-                .addCase("Level 3 null",
+                .addNamedCase("Level 3 null",
                         Tuple.of(
                                 nonNullLevel1,
                                 Level1::getNonNullLevel2,

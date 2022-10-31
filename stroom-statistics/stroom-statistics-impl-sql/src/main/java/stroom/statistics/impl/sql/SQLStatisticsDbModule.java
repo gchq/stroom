@@ -19,7 +19,6 @@ package stroom.statistics.impl.sql;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.statistics.impl.sql.SQLStatisticsConfig.SQLStatisticsDbConfig;
-import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
@@ -28,15 +27,6 @@ public class SQLStatisticsDbModule extends AbstractFlyWayDbModule<SQLStatisticsD
     private static final String MODULE = "stroom-statistics";
     private static final String FLYWAY_LOCATIONS = "stroom/statistics/impl/sql/db/migration";
     private static final String FLYWAY_TABLE = "statistics_schema_history";
-
-    @Override
-    protected void configure() {
-        super.configure();
-
-        // MultiBind the connection provider so we can see status for all databases.
-        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
-                .addBinding(SQLStatisticsDbConnProvider.class);
-    }
 
     @Override
     protected String getFlyWayTableName() {

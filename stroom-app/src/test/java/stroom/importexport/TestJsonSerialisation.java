@@ -73,7 +73,7 @@ class TestJsonSerialisation {
 //        try (ScanResult scanResult =
 //                     new ClassGraph()
 //                             .enableAllInfo()             // Scan classes, methods, fields, annotations
-//                             .whitelistPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to
+//                             .acceptPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to
 //                                                                      scan all packages)
 //                             .scan()) {                   // Start the scan
 //            for (ClassInfo routeClassInfo : scanResult.getClassesWithMethodAnnotation(routeAnnotation)) {

@@ -4,8 +4,10 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import org.assertj.core.api.Assertions;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class DynamicTestBuilder {
@@ -187,8 +190,9 @@ class DynamicTestBuilder {
         }
 
         /**
-         * Define the action for the dynamic test lambda, where the action consumes a {@link TestCase}
-         * and uses {@link TestCase#getInput()} to produce some output.
+         * Define the action for the dynamic test lambda, where the action
+         * uses {@link TestCase#getInput()} to produce some output.
+         * Test assertions are added later with {@link AssertionsBuilder#withAssertions(Consumer)}.
          */
         @SuppressWarnings("unused")
         public AssertionsBuilder<I, O> withTestFunction(final Function<TestCase<I, O>, O> testFunction) {
@@ -204,7 +208,6 @@ class DynamicTestBuilder {
     public static class AssertionsBuilder<I, O> {
 
         private final Function<TestCase<I, O>, O> testAction;
-        private final List<TestCase<I, O>> testCases = new ArrayList<>();
 
         private AssertionsBuilder(final Function<TestCase<I, O>, O> testAction) {
             this.testAction = testAction;
@@ -281,7 +284,7 @@ class DynamicTestBuilder {
         private final List<TestCase<I, O>> testCases = new ArrayList<>();
         // Use a default name function but let the user override it
         // TestCase.name takes precedence though.
-        private Function<TestCase<I, O>, String> nameFunction = this::buildTestName;
+        private Function<TestCase<I, O>, String> nameFunction = this::buildTestNameFromInput;
 
         private CasesBuilder(final Function<TestCase<I, O>, O> testAction,
                              final Consumer<TestOutcome<I, O>> testOutcomeConsumer) {
@@ -332,9 +335,9 @@ class DynamicTestBuilder {
          * @param expectedOutput The expected output of the test case.
          */
         @SuppressWarnings("unused")
-        public CasesBuilder<I, O> addCase(final String name,
-                                          final I input,
-                                          final O expectedOutput) {
+        public CasesBuilder<I, O> addNamedCase(final String name,
+                                               final I input,
+                                               final O expectedOutput) {
             addCase(TestCase.of(name, input, expectedOutput));
             return this;
         }
@@ -344,7 +347,7 @@ class DynamicTestBuilder {
          * an exception with type expectedThrowableType. The exception assertion will be done for
          * you and any with*Assertion* steps will not be called.
          *
-         * @param input          The input to the test case.
+         * @param input                 The input to the test case.
          * @param expectedThrowableType The expected class of the exception that will be thrown.
          */
         @SuppressWarnings("unused")
@@ -361,20 +364,26 @@ class DynamicTestBuilder {
          * an exception with type expectedThrowableType. The exception assertion will be done for
          * you and any with*Assertion* steps will not be called.
          *
-         * @param name The name of the test case.
-         * @param input          The input to the test case.
+         * @param name                  The name of the test case.
+         * @param input                 The input to the test case.
          * @param expectedThrowableType The expected class of the exception that will be thrown.
          */
         @SuppressWarnings("unused")
-        public CasesBuilder<I, O> addThrowsCase(final String name,
-                                                final I input,
-                                                final Class<? extends Throwable> expectedThrowableType) {
+        public CasesBuilder<I, O> addNamedThrowsCase(final String name,
+                                                     final I input,
+                                                     final Class<? extends Throwable> expectedThrowableType) {
 
             final TestCase<I, O> testCase = (TestCase<I, O>) TestCase.throwing(name, input, expectedThrowableType);
             addCase(testCase);
             return this;
         }
 
+        /**
+         * Replace the default test case naming function with the supplied {@code nameFunction}
+         * that generates a name from a {@link TestCase}. The default name function basically
+         * does a toString() on {@link TestCase#getInput()}.
+         * A name explicitly set on {@link TestCase} will override any name function.
+         */
         @SuppressWarnings("unused")
         public CasesBuilder<I, O> withNameFunction(final Function<TestCase<I, O>, String> nameFunction) {
             this.nameFunction = Objects.requireNonNull(nameFunction);
@@ -392,22 +401,44 @@ class DynamicTestBuilder {
             return createDynamicTestStream();
         }
 
-        private String buildTestName(final TestCase<I, O> testCase) {
+        private String buildTestNameFromInput(final TestCase<I, O> testCase) {
             return NullSafe.getOrElseGet(
                     testCase,
                     TestCase::getName,
-                    () -> {
-                        String inputStr = NullSafe.toStringOrElse(
-                                testCase,
-                                TestCase::getInput,
-                                "<NULL>");
+                    () -> "Input: " + valueToStr(testCase.getInput()));
+        }
 
-                        if (inputStr.isEmpty()) {
-                            inputStr = "<EMPTY STRING>";
-                        }
+        private String valueToStr(final Object value) {
+            final StringBuilder stringBuilder = new StringBuilder();
 
-                        return "Input: '" + inputStr + "'";
-                    });
+            if (value == null) {
+                stringBuilder.append("null");
+            } else if (value instanceof Double) {
+                stringBuilder.append(ModelStringUtil.formatCsv(
+                                (Double) value, 5, true))
+                        .append("D");
+            } else if (value instanceof Integer) {
+                stringBuilder.append(ModelStringUtil.formatCsv(((Integer) value).longValue()));
+            } else if (value instanceof Long) {
+                stringBuilder.append(ModelStringUtil.formatCsv((Long) value))
+                        .append("L");
+            } else if (value instanceof Tuple) {
+                final Tuple tuple = (Tuple) value;
+                final String tupleStr = tuple.toSeq()
+                        .toStream()
+                        .map(this::valueToStr)
+                        .collect(Collectors.joining(", "));
+
+                stringBuilder.append("(")
+                        .append(tupleStr)
+                        .append(")");
+            } else {
+                final String valStr = value.toString();
+                stringBuilder.append("'")
+                        .append(valStr)
+                        .append("'");
+            }
+            return stringBuilder.toString();
         }
 
         private Stream<DynamicTest> createDynamicTestStream() {
@@ -424,7 +455,8 @@ class DynamicTestBuilder {
                             if (LOGGER.isDebugEnabled()) {
                                 if (testCase.isExpectedToThrow()) {
                                     LOGGER.debug(() -> LogUtil.message("Input: '{}', expected to throw: '{}'",
-                                            testCase.getInput(), testCase.getExpectedThrowableType().getSimpleName()));
+                                            testCase.getInput(),
+                                            testCase.getExpectedThrowableType().getSimpleName()));
                                 } else {
                                     LOGGER.debug(() -> LogUtil.message("Input: '{}', expectedOutput: '{}'",
                                             testCase.getInput(), testCase.getExpectedOutput()));

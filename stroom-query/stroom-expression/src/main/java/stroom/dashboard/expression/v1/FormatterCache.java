@@ -20,7 +20,7 @@ final class FormatterCache {
     private static final int MAX_ENTRIES = 1000;
 
     private static final Map<String, CachedFormatter> FORMATTER_CACHE = Collections.synchronizedMap(
-            new LinkedHashMap<String, CachedFormatter>(
+            new LinkedHashMap<>(
                     MAX_ENTRIES + 1,
                     .75F,
                     true) {
@@ -37,7 +37,7 @@ final class FormatterCache {
             });
 
     private static final Map<String, CachedZoneId> ZONEID_CACHE = Collections.synchronizedMap(
-            new LinkedHashMap<String, CachedZoneId>(
+            new LinkedHashMap<>(
                     MAX_ENTRIES + 1,
                     .75F,
                     true) {

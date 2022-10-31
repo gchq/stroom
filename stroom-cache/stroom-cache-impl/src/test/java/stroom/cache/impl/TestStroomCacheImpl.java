@@ -533,6 +533,84 @@ class TestStroomCacheImpl {
     }
 
     @Test
+    void testEvictExpiredElements_afterAccess_getOptional() {
+        CacheInfo cacheInfo = cache.getCacheInfo();
+        TestUtil.dumpMapToInfo("cacheInfo", cacheInfo.getMap());
+
+        Assertions.assertThat(cacheInfo.getMap().keySet())
+                .doesNotContain(EXPIRE_AFTER_ACCESS);
+
+        cache.evictExpiredElements();
+
+        // Nothing evicted
+        Assertions.assertThat(cache.size())
+                .isEqualTo(ALL_MONTHS_COUNT);
+
+        // Now change the config and rebuild the cache
+        cacheConfig = cacheConfig.copy()
+                .expireAfterAccess(StroomDuration.ofMillis(300))
+                .build();
+
+        cache.rebuild();
+        populateCache();
+
+        cacheInfo = cache.getCacheInfo();
+        TestUtil.dumpMapToInfo("cacheInfo", cacheInfo.getMap());
+
+        Assertions.assertThat(cacheInfo.getMap().keySet())
+                .contains(EXPIRE_AFTER_ACCESS);
+        Assertions.assertThat(cacheInfo.getMap().get(EXPIRE_AFTER_ACCESS))
+                .isEqualTo(cacheConfig.getExpireAfterAccess().toMillis() + "ms");
+
+        cache.evictExpiredElements();
+
+        ThreadUtil.sleepIgnoringInterrupts(100);
+
+        // Nothing evicted yet, too soon
+        Assertions.assertThat(cache.size())
+                .isEqualTo(ALL_MONTHS_COUNT);
+
+        LOGGER.info("{}", cache.keySet()
+                .stream()
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.toList()));
+
+        // Touch an entry so its access time is later than the others and won't be evicted
+        Assertions.assertThat(cache.getOptional(5))
+                .hasValue("May");
+
+        ThreadUtil.sleepIgnoringInterrupts(200);
+
+        cache.evictExpiredElements();
+
+        TestUtil.waitForIt(
+                cache::size,
+                1L,
+                () -> "Cache");
+
+        // everything except the touched entry should be evicted now
+        Assertions.assertThat(cache.size())
+                .isEqualTo(1);
+
+        Assertions.assertThat(cache.getOptional(5))
+                .hasValue("May");
+
+        // Wait for > expiry time
+        ThreadUtil.sleepIgnoringInterrupts(300);
+
+        cache.evictExpiredElements();
+
+        TestUtil.waitForIt(
+                cache::size,
+                0L,
+                () -> "Cache");
+
+        // The remaining entry should now be gone
+        Assertions.assertThat(cache.size())
+                .isZero();
+    }
+
+    @Test
     void testEvictExpiredElements_afterWrite() {
         CacheInfo cacheInfo = cache.getCacheInfo();
         TestUtil.dumpMapToInfo("cacheInfo", cacheInfo.getMap());

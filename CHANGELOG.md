@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#3069** : Fix import of a Feed's Stream Type when the export was made in Stroom v5. Add validation to fail the import if the stream type in the export is not in `stroom.data.meta.metaTypes`. Fix word wrapping on the import error messages tooltip.
+
+* Remove duplicate guice binds.
+
+* Issue **#3078** : Uplift apache commons-text to v1.10.0 to address vulnerability CVE-2922-42889.
+
+* Fix typo in description for property `stroom.ui.applicationInstanceKeepAliveIntervalMs`.
+
+* Issue **#3038** : Improve error handling of web socket code to prevent alerts for expected error conditions.
+
 * Issue **#3056** : Make `View As Hex` editor option available in the Source view (but not when stepping). Change hex dump to use uppercase hex values.
 
 * Issue **#3063** : Fix the conversion of bytes to values like `1.9K` to not always round down.

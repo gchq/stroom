@@ -45,7 +45,7 @@ public class FunctionFactory {
     private static void scanClassPathForFunctions() {
         // Scan the class path to find all the classes with @FunctionDef
         try (ScanResult result = new ClassGraph()
-                .whitelistPackages(Function.class.getPackageName())
+                .acceptPackages(Function.class.getPackageName())
                 .enableAnnotationInfo()
                 .enableClassInfo()
                 .ignoreClassVisibility()
@@ -89,9 +89,9 @@ public class FunctionFactory {
             try {
                 return clazz.getConstructor(String.class).newInstance(functionName);
             } catch (final NoSuchMethodException
-                    | InvocationTargetException
-                    | InstantiationException
-                    | IllegalAccessException e) {
+                           | InvocationTargetException
+                           | InstantiationException
+                           | IllegalAccessException e) {
                 throw new RuntimeException(e.getMessage());
             }
         }

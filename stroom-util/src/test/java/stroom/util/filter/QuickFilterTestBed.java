@@ -35,7 +35,7 @@ public class QuickFilterTestBed {
 
         List<ClassInfo> classInfoList;
         try (ScanResult result = new ClassGraph()
-                .whitelistPackages("stroom")
+                .acceptPackages("stroom")
                 .enableClassInfo()
                 .ignoreClassVisibility()
                 .scan()) {

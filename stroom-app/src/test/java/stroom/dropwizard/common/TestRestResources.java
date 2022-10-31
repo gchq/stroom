@@ -67,7 +67,7 @@ class TestRestResources {
     @SuppressWarnings("unchecked")
     Stream<DynamicTest> buildQualityAssuranceTests() {
         try (ScanResult result = new ClassGraph()
-                .whitelistPackages("stroom")
+                .acceptPackages("stroom")
                 .enableClassInfo()
                 .ignoreClassVisibility()
                 .enableAnnotationInfo()
@@ -97,7 +97,7 @@ class TestRestResources {
     void listMethods() {
 
         try (ScanResult result = new ClassGraph()
-                .whitelistPackages("stroom")
+                .acceptPackages("stroom")
                 .enableClassInfo()
                 .ignoreClassVisibility()
                 .enableAnnotationInfo()
