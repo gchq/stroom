@@ -2,6 +2,7 @@ package stroom.search.impl;
 
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.NodeResultSerialiser;
+import stroom.query.common.v2.Serialisers;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
@@ -20,6 +21,7 @@ class RemoteSearchResultFactory {
 
     private final TaskManager taskManager;
     private final SecurityContext securityContext;
+    private final Serialisers serialisers;
 
     private volatile Coprocessors coprocessors;
     private volatile TaskId taskId;
@@ -28,19 +30,22 @@ class RemoteSearchResultFactory {
     private volatile List<String> initialisationError;
 
     RemoteSearchResultFactory(final TaskManager taskManager,
-                              final SecurityContext securityContext) {
+                              final SecurityContext securityContext,
+                              final Serialisers serialisers) {
         this.taskManager = taskManager;
         this.securityContext = securityContext;
+        this.serialisers = serialisers;
     }
 
     public void write(final OutputStream outputStream) {
-        try (final Output output = new Output(outputStream)) {
+        try (final Output output = serialisers.getOutputFactory().create(outputStream)) {
             if (initialisationError != null) {
                 NodeResultSerialiser.write(output, true, coprocessors, initialisationError);
             } else {
                 try {
                     // Wait to complete.
-                    final boolean complete = coprocessors.getCompletionState().awaitCompletion(1, TimeUnit.SECONDS);
+                    final boolean complete = coprocessors.getCompletionState()
+                            .awaitCompletion(1, TimeUnit.SECONDS);
 
                     // Write completion status.
                     if (!started) {

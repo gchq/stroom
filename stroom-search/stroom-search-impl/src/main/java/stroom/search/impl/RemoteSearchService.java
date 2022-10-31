@@ -3,6 +3,7 @@ package stroom.search.impl;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.Serialisers;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
@@ -36,6 +37,7 @@ public class RemoteSearchService {
     private final Provider<ClusterSearchTaskHandler> clusterSearchTaskHandlerProvider;
     private final CoprocessorsFactory coprocessorsFactory;
     private final SecurityContext securityContext;
+    private final Serialisers serialisers;
 
     private Coprocessors coprocessors;
 
@@ -46,7 +48,8 @@ public class RemoteSearchService {
                                final TaskContextFactory taskContextFactory,
                                final Provider<ClusterSearchTaskHandler> clusterSearchTaskHandlerProvider,
                                final CoprocessorsFactory coprocessorsFactory,
-                               final SecurityContext securityContext) {
+                               final SecurityContext securityContext,
+                               final Serialisers serialisers) {
         this.remoteSearchResults = remoteSearchResults;
         this.taskManager = taskManager;
         this.executorProvider = executorProvider;
@@ -54,12 +57,13 @@ public class RemoteSearchService {
         this.clusterSearchTaskHandlerProvider = clusterSearchTaskHandlerProvider;
         this.coprocessorsFactory = coprocessorsFactory;
         this.securityContext = securityContext;
+        this.serialisers = serialisers;
     }
 
     public Boolean start(final ClusterSearchTask clusterSearchTask) {
         LOGGER.debug(() -> "startSearch " + clusterSearchTask);
         final RemoteSearchResultFactory remoteSearchResultFactory
-                = new RemoteSearchResultFactory(taskManager, securityContext);
+                = new RemoteSearchResultFactory(taskManager, securityContext, serialisers);
         remoteSearchResults.put(clusterSearchTask.getKey().getUuid(), remoteSearchResultFactory);
 
         // Create coprocessors.
