@@ -87,6 +87,7 @@ abstract class AbstractDataStoreTest {
                 .requestedRange(new OffsetRange(0, 3000))
                 .build();
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                new SerialisersFactory(),
                 fieldFormatter,
                 defaultMaxResultsSizes);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
@@ -176,6 +177,7 @@ abstract class AbstractDataStoreTest {
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
             final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                    new SerialisersFactory(),
                     fieldFormatter,
                     defaultMaxResultsSizes);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
@@ -411,6 +413,7 @@ abstract class AbstractDataStoreTest {
 
         // Make sure we only get 2000 results.
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                new SerialisersFactory(),
                 fieldFormatter,
                 defaultMaxResultsSizes);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(data,

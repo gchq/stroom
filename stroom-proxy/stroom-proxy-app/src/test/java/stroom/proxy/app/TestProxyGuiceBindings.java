@@ -46,7 +46,7 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
                 packagePrefix, annotationClass.getCanonicalName());
 
         ScanResult scanResult = new ClassGraph()
-                .whitelistPackages(packagePrefix)
+                .acceptPackages(packagePrefix)
                 .enableClassInfo()
                 .enableMethodInfo()
                 .enableAnnotationInfo()

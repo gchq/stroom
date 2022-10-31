@@ -47,19 +47,22 @@ public class FlatResultCreator implements ResultCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FlatResultCreator.class);
 
+    private final Serialisers serialisers;
     private final FieldFormatter fieldFormatter;
     private final List<Mapper> mappers;
     private final List<Field> fields;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
-    public FlatResultCreator(final DataStoreFactory dataStoreFactory,
+    public FlatResultCreator(final SerialisersFactory serialisersFactory,
+                             final DataStoreFactory dataStoreFactory,
                              final QueryKey queryKey,
                              final String componentId,
                              final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
                              final FieldFormatter fieldFormatter,
                              final Sizes defaultMaxResultsSizes) {
+        this.serialisers = serialisersFactory.create(errorConsumer);
         this.fieldFormatter = fieldFormatter;
 
         // User may have added a vis pane but not defined the vis
@@ -79,6 +82,7 @@ public class FlatResultCreator implements ResultCreator {
                 final Sizes sizes = Sizes.min(Sizes.create(parent.getMaxResults()), defaultMaxResultsSizes);
                 final int maxItems = sizes.size(0);
                 mappers.add(new Mapper(
+                        serialisers,
                         dataStoreFactory,
                         queryKey,
                         componentId,
@@ -175,7 +179,8 @@ public class FlatResultCreator implements ResultCreator {
                     if (items.size() > 0) {
                         final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
                         final OpenGroups openGroups =
-                                OpenGroupsFactory.create(OpenGroupsConverter.convertSet(resultRequest.getOpenGroups()));
+                                OpenGroupsFactory.create(OpenGroupsConverter.convertSet(serialisers,
+                                        resultRequest.getOpenGroups()));
 
                         // Extract the maxResults settings from the last TableSettings object in the chain.
                         // Do not constrain the max results with the default max results as the result size will have
@@ -347,7 +352,8 @@ public class FlatResultCreator implements ResultCreator {
         private final DataStore dataStore;
         private final int maxItems;
 
-        Mapper(final DataStoreFactory dataStoreFactory,
+        Mapper(final Serialisers serialisers,
+               final DataStoreFactory dataStoreFactory,
                final QueryKey queryKey,
                final String componentId,
                final TableSettings parent,
@@ -386,6 +392,7 @@ public class FlatResultCreator implements ResultCreator {
                     : Collections.emptyList();
             final Sizes maxResults = Sizes.create(childMaxResults, Integer.MAX_VALUE);
             dataStore = dataStoreFactory.create(
+                    serialisers,
                     queryKey,
                     componentId,
                     child,

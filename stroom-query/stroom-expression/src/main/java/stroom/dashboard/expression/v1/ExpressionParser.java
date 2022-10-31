@@ -325,6 +325,9 @@ public class ExpressionParser {
                             }
                         } else {
                             final Function function = FunctionFactory.create(token.toString());
+                            if (function == null) {
+                                throw new ParseException("Unknown function '" + token + "'", token.getStart());
+                            }
                             function.setParams(new Param[]{leftParam, rightParam});
                             param = function;
                         }
@@ -364,6 +367,9 @@ public class ExpressionParser {
                         }
 
                         final Function function = FunctionFactory.create(token.toString());
+                        if (function == null) {
+                            throw new ParseException("Unknown function '" + token + "'", token.getStart());
+                        }
                         function.setParams(new Param[]{leftParam, rightParam});
                         return Collections.singletonList(function);
                     }

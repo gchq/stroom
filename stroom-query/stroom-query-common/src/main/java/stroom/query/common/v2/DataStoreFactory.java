@@ -8,7 +8,8 @@ import java.util.Map;
 
 public interface DataStoreFactory {
 
-    DataStore create(QueryKey queryKey,
+    DataStore create(Serialisers serialisers,
+                     QueryKey queryKey,
                      String componentId,
                      TableSettings tableSettings,
                      FieldIndex fieldIndex,

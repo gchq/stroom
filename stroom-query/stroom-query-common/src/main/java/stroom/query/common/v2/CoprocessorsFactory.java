@@ -21,12 +21,15 @@ import javax.inject.Inject;
 
 public class CoprocessorsFactory {
 
+    private final SerialisersFactory serialisersFactory;
     private final SizesProvider sizesProvider;
     private final DataStoreFactory dataStoreFactory;
 
     @Inject
-    public CoprocessorsFactory(final SizesProvider sizesProvider,
+    public CoprocessorsFactory(final SerialisersFactory serialisersFactory,
+                               final SizesProvider sizesProvider,
                                final DataStoreFactory dataStoreFactory) {
+        this.serialisersFactory = serialisersFactory;
         this.sizesProvider = sizesProvider;
         this.dataStoreFactory = dataStoreFactory;
     }
@@ -78,12 +81,15 @@ public class CoprocessorsFactory {
 
         // Create error consumer.
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+        final Serialisers serialisers = serialisersFactory.create(errorConsumer);
 
         final Map<Integer, Coprocessor> coprocessorMap = new HashMap<>();
         final Map<String, TableCoprocessor> componentIdCoprocessorMap = new HashMap<>();
         if (coprocessorSettingsList != null) {
             for (final CoprocessorSettings coprocessorSettings : coprocessorSettingsList) {
-                final Coprocessor coprocessor = create(queryKey,
+                final Coprocessor coprocessor = create(
+                        serialisers,
+                        queryKey,
                         coprocessorSettings,
                         fieldIndex,
                         paramMap,
@@ -129,7 +135,8 @@ public class CoprocessorsFactory {
                 errorConsumer);
     }
 
-    private Coprocessor create(final QueryKey queryKey,
+    private Coprocessor create(final Serialisers serialisers,
+                               final QueryKey queryKey,
                                final CoprocessorSettings settings,
                                final FieldIndex fieldIndex,
                                final Map<String, String> paramMap,
@@ -139,6 +146,7 @@ public class CoprocessorsFactory {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
             final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
             final DataStore dataStore = create(
+                    serialisers,
                     queryKey,
                     String.valueOf(tableCoprocessorSettings.getCoprocessorId()),
                     tableSettings,
@@ -155,7 +163,8 @@ public class CoprocessorsFactory {
         return null;
     }
 
-    private DataStore create(final QueryKey queryKey,
+    private DataStore create(final Serialisers serialisers,
+                             final QueryKey queryKey,
                              final String componentId,
                              final TableSettings tableSettings,
                              final FieldIndex fieldIndex,
@@ -170,6 +179,7 @@ public class CoprocessorsFactory {
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
 
         return dataStoreFactory.create(
+                serialisers,
                 queryKey,
                 componentId,
                 tableSettings,

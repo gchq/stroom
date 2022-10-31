@@ -70,11 +70,10 @@ public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
     private static final long COMMIT_FREQUENCY_MS = 1000;
+    private final Key rootKey;
 
     private final LmdbEnv lmdbEnv;
     private final ResultStoreConfig resultStoreConfig;
-    private final int minValueSize;
-    private final int maxValueSize;
     private final Dbi<ByteBuffer> dbi;
 
     private final CompiledField[] compiledFields;
@@ -101,7 +100,10 @@ public class LmdbDataStore implements DataStore {
     private final LmdbKey rootParentRowKey;
     private final TransferState transferState = new TransferState();
 
-    LmdbDataStore(final LmdbEnvFactory lmdbEnvFactory,
+    private final Serialisers serialisers;
+
+    LmdbDataStore(final Serialisers serialisers,
+                  final LmdbEnvFactory lmdbEnvFactory,
                   final ResultStoreConfig resultStoreConfig,
                   final QueryKey queryKey,
                   final String componentId,
@@ -112,6 +114,7 @@ public class LmdbDataStore implements DataStore {
                   final boolean producePayloads,
                   final Provider<Executor> executorProvider,
                   final ErrorConsumer errorConsumer) {
+        this.serialisers = serialisers;
         this.resultStoreConfig = resultStoreConfig;
         this.maxResults = maxResults;
         this.queryKey = queryKey;
@@ -120,15 +123,15 @@ public class LmdbDataStore implements DataStore {
         this.errorConsumer = errorConsumer;
 
         queue = new LmdbKVQueue(resultStoreConfig.getValueQueueSize());
-        minValueSize = (int) resultStoreConfig.getMinValueSize().getBytes();
-        maxValueSize = (int) resultStoreConfig.getMaxValueSize().getBytes();
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
-        payloadCreator = new LmdbPayloadCreator(queryKey, this, compiledFields, resultStoreConfig);
 
+        payloadCreator = new LmdbPayloadCreator(serialisers, queryKey, this, compiledFields, resultStoreConfig);
+
+        rootKey = Key.createRoot(serialisers);
         rootParentRowKey = new LmdbKey.Builder()
-                .keyBytes(Key.root().getBytes())
+                .keyBytes(rootKey.getBytes())
                 .build();
 
         final String uuid = (queryKey + "_" + componentId + "_" + UUID.randomUUID());
@@ -170,7 +173,7 @@ public class LmdbDataStore implements DataStore {
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
-        Key key = Key.root();
+        Key key = rootKey;
         LmdbKey parentRowKey = rootParentRowKey;
 
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
@@ -250,8 +253,9 @@ public class LmdbDataStore implements DataStore {
                         .group(true)
                         .build();
                 final LmdbValue rowValue = new LmdbValue(
+                        serialisers,
                         keyBytes,
-                        new Generators(compiledFields, generators));
+                        new Generators(serialisers, compiledFields, generators));
                 parentRowKey = rowKey;
                 put(new LmdbKV(rowKey, rowValue));
 
@@ -268,8 +272,9 @@ public class LmdbDataStore implements DataStore {
                         .group(false)
                         .build();
                 final LmdbValue rowValue = new LmdbValue(
+                        serialisers,
                         keyBytes,
-                        new Generators(compiledFields, generators));
+                        new Generators(serialisers, compiledFields, generators));
                 put(new LmdbKV(rowKey, rowValue));
             }
         }
@@ -428,25 +433,26 @@ public class LmdbDataStore implements DataStore {
                     // Get the existing entry for this key.
                     final ByteBuffer existingValueBuffer = dbi.get(batchingWriteTxn.getTxn(), rowKey.getByteBuffer());
 
-                    final int minValSize = Math.max(minValueSize, existingValueBuffer.remaining());
+                    final int minValSize = Math.max(1024, existingValueBuffer.remaining());
                     try (final UnsafeByteBufferOutput output =
-                            new UnsafeByteBufferOutput(minValSize, maxValueSize)) {
+                            serialisers.getOutputFactory().createByteBufferOutput(minValSize)) {
                         boolean merged = false;
 
-                        try (final UnsafeByteBufferInput input = new UnsafeByteBufferInput(existingValueBuffer)) {
+                        try (final UnsafeByteBufferInput input = serialisers.getInputFactory().createByteBufferInput(
+                                existingValueBuffer)) {
                             while (!input.end()) {
-                                final LmdbValue existingRowValue = LmdbValue.read(compiledFields, input);
+                                final LmdbValue existingRowValue = LmdbValue.read(serialisers, compiledFields, input);
 
-                                // If this is the same value the update it and reinsert.
+                                // If this is the same value then update it and reinsert.
                                 if (existingRowValue.getKey().equals(rowValue.getKey())) {
                                     final Generator[] generators = existingRowValue.getGenerators().getGenerators();
                                     final Generator[] newValue = rowValue.getGenerators().getGenerators();
                                     final Generator[] combined = combine(generators, newValue);
 
                                     LOGGER.trace(() -> "Merging combined value to output");
-                                    final LmdbValue combinedValue = new LmdbValue(
+                                    final LmdbValue combinedValue = new LmdbValue(serialisers,
                                             existingRowValue.getKey().getBytes(),
-                                            new Generators(compiledFields, combined));
+                                            new Generators(serialisers, compiledFields, combined));
                                     combinedValue.write(output);
 
                                     // Copy any remaining values.
@@ -567,6 +573,8 @@ public class LmdbDataStore implements DataStore {
             lmdbEnv.doWithReadTxn(readTxn ->
                     Metrics.measure("getData", () ->
                             consumer.accept(new LmdbData(
+                                    serialisers,
+                                    rootKey,
                                     dbi,
                                     readTxn,
                                     compiledFields,
@@ -674,6 +682,8 @@ public class LmdbDataStore implements DataStore {
 
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbData.class);
 
+        private final Serialisers serialisers;
+        private final Key rootKey;
         private final Dbi<ByteBuffer> dbi;
         private final Txn<ByteBuffer> readTxn;
         private final CompiledField[] compiledFields;
@@ -681,12 +691,16 @@ public class LmdbDataStore implements DataStore {
         private final Sizes maxResults;
         private final QueryKey queryKey;
 
-        public LmdbData(final Dbi<ByteBuffer> dbi,
+        public LmdbData(final Serialisers serialisers,
+                        final Key rootKey,
+                        final Dbi<ByteBuffer> dbi,
                         final Txn<ByteBuffer> readTxn,
                         final CompiledField[] compiledFields,
                         final CompiledSorter<Item>[] compiledSorters,
                         final Sizes maxResults,
                         final QueryKey queryKey) {
+            this.serialisers = serialisers;
+            this.rootKey = rootKey;
             this.dbi = dbi;
             this.readTxn = readTxn;
             this.compiledFields = compiledFields;
@@ -703,7 +717,7 @@ public class LmdbDataStore implements DataStore {
         @Override
         public Items get() {
             LOGGER.trace(() -> "get() called");
-            return get(Key.root());
+            return get(rootKey);
         }
 
         /**
@@ -770,9 +784,10 @@ public class LmdbDataStore implements DataStore {
 
                     if (match) {
                         final ByteBuffer valueBuffer = keyVal.val();
-                        try (final UnsafeByteBufferInput input = new UnsafeByteBufferInput(valueBuffer)) {
+                        try (final UnsafeByteBufferInput input =
+                                serialisers.getInputFactory().createByteBufferInput(valueBuffer)) {
                             while (!input.end() && inRange) {
-                                final LmdbValue rowValue = LmdbValue.read(compiledFields, input);
+                                final LmdbValue rowValue = LmdbValue.read(serialisers, compiledFields, input);
                                 final Key key = rowValue.getKey();
                                 if (key.getParent().equals(parentKey)) {
                                     final Generator[] generators = rowValue.getGenerators().getGenerators();

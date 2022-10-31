@@ -161,7 +161,11 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
             if (!value.type().isValue()) {
                 return value;
             }
-            return ValDouble.create(value.toDouble() / childGenerators.length);
+            final Double val = value.toDouble();
+            if (val == null) {
+                return value;
+            }
+            return ValDouble.create(val / childGenerators.length);
         }
     }
 }
