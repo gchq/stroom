@@ -95,7 +95,6 @@ public class ClientApplicationInstance implements HasHandlers {
                                         keepAliveTimer = new Timer() {
                                             @Override
                                             public void run() {
-                                                keepAliveRest();
                                                 keepAliveWebsocket(intervalMs);
                                             }
                                         };
@@ -193,29 +192,6 @@ public class ClientApplicationInstance implements HasHandlers {
                 IsWebSocket.WEB_SOCKET_MSG_KEY_INFO,
                 info);
         return wsMessage;
-    }
-
-    private void keepAliveRest() {
-        try {
-            if (!destroy) {
-                final Rest<Boolean> rest = restFactory.create();
-                rest
-                        .onSuccess(result -> {
-                            if (result) {
-                                Console.log("Keep alive REST endpoint OK");
-                            } else {
-                                Console.log("Keep alive REST endpoint failed");
-                            }
-                        })
-                        .onFailure(throwable -> {
-                            Console.log("Keep alive REST endpoint failed: " + throwable.getMessage());
-                        })
-                        .call(APPLICATION_INSTANCE_RESOURCE)
-                        .keepAlive(applicationInstanceInfo);
-            }
-        } catch (final Exception e) {
-            Console.log(e.getMessage(), e);
-        }
     }
 
     private void keepAliveWebsocket(final int intervalMs) {

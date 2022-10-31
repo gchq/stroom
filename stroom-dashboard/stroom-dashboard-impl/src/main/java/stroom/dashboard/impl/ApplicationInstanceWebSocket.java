@@ -114,7 +114,10 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
                 final String key = ApplicationInstanceResource.WEB_SOCKET_MSG_KEY_UUID;
                 // May just be an informational message
                 getWebSocketMsgValue(webSocketMessage, key, String.class)
-                        .ifPresent(msg -> activeSessions.put(session, Optional.of(msg)));
+                        .ifPresent(uuid -> {
+                            activeSessions.put(session, Optional.of(uuid));
+                            applicationInstanceManager.keepAlive(uuid);
+                        });
             } catch (IOException e) {
                 throw new RuntimeException(LogUtil.message(
                         "Unable to de-serialise web socket message: '{}'. Cause: {}",
