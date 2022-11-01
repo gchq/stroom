@@ -139,6 +139,12 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
         return field.in(Collections.emptyList());
     }
 
+    /**
+     * Get an identifier for the passed docRef. term is only used for logging.
+     * docRef may be the same as term.getDocRef() or a descendant of it, as in 'in folder'.
+     * @return The name of the doc or its uuid depending on how the {@link TermHandler} is
+     * configured.
+     */
     private String getDocValue(final ExpressionTerm term, final DocRef docRef) {
         if (useName) {
             if (docRefInfoService != null) {
@@ -152,8 +158,9 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 return resolvedName.get();
             }
             return docRef.getName();
+        } else {
+            return docRef.getUuid();
         }
-        return term.getDocRef().getUuid();
     }
 
     private Condition eq(final ExpressionTerm term) {
@@ -185,6 +192,10 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
         if (lines != null) {
             final List<T> values = new ArrayList<>();
             for (final String line : lines) {
+                // TODO: 01/11/2022 This may hit the DB for each line, so we may want to consider a
+                //  MultiConverter that accepts a varargs input so the impl can convert multiple inputs
+                //  at once. Would also require changes to HasFindDocRefsByName to accept multiple name
+                //  filters at once.
                 final List<T> list = converter.apply(line);
                 values.addAll(list);
             }
@@ -204,6 +215,10 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     final Set<T> set = new HashSet<>();
                     for (final DocRef descendant : descendants) {
                         final String value = getDocValue(term, descendant);
+                        // TODO: 01/11/2022 This may hit the DB for each line, so we may want to consider a
+                        //  MultiConverter that accepts a varargs input so the impl can convert multiple inputs
+                        //  at once. Would also require changes to HasFindDocRefsByName to accept multiple name
+                        //  filters at once.
                         final List<T> list = converter.apply(value);
                         set.addAll(list);
                     }

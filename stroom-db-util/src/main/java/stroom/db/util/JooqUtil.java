@@ -10,6 +10,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.Selection;
 import stroom.util.shared.StringCriteria;
+import stroom.util.string.PatternUtil;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
@@ -622,6 +623,38 @@ public final class JooqUtil {
                                             final Date date2) {
         return DSL.field("period_diff(extract(year_month from {0}), extract(year_month from {1}))",
                 SQLDataType.INTEGER, date1, date2);
+    }
+
+    /**
+     * If filter is wild carded (i.e. contains a '*') then it returns 'field.like(x)' where x has
+     * '*' characters replaced by '%' and SQL wild cards '%' and '_' are escaped.
+     * If filter is not wild carded it returns 'field.eq(filter)'
+     */
+    public static Condition createWildCardedCondition(final Field<String> field, final String filter) {
+        return createWildCardedCondition(field, filter, true);
+    }
+
+    /**
+     * If allowWildCards is true and filter is wild carded (i.e. contains a '*') then it
+     * returns 'field.like(x)' where x has
+     * '*' characters replaced by '%' and SQL wild cards '%' and '_' are escaped.
+     * If filter is not wild carded it returns 'field.eq(filter)'
+     */
+    public static Condition createWildCardedCondition(final Field<String> field,
+                                                      final String filter,
+                                                      final boolean allowWildCards) {
+        if (filter != null) {
+            if (allowWildCards && filter.contains(PatternUtil.STROOM_WILD_CARD_CHAR)) {
+                final String likeStr = PatternUtil.createSqlLikeStringFromWildCardFilter(filter);
+                LOGGER.debug("field.like({})", likeStr);
+                return field.like(likeStr);
+            }
+            LOGGER.debug("field.eq({})", filter);
+            return field.eq(filter);
+        } else {
+            LOGGER.debug("field.isNull()");
+            return field.isNull();
+        }
     }
 
     /**

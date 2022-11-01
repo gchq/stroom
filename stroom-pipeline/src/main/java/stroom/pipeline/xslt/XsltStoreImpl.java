@@ -174,8 +174,8 @@ class XsltStoreImpl implements XsltStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public List<DocRef> findByName(final String name) {
-        return store.findByName(name);
+    public List<DocRef> findByName(final String name, final boolean allowWildCards) {
+        return store.findByName(name, allowWildCards);
     }
 
     @Override

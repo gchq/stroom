@@ -60,4 +60,46 @@ class TestExpressionOperator {
 
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testContainsField_multiple() {
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class, ExpressionOperator.class)
+                .withOutputType(Boolean.class)
+                .withTestFunction(testCase -> {
+                    final var field1 = testCase.getInput()._1;
+                    final var field2 = testCase.getInput()._2;
+                    final var expressionItem = testCase.getInput()._3;
+                    return expressionItem.containsField(field1, field2);
+                })
+                .withSimpleEqualityAssertion()
+
+                .addCase(Tuple.of("apple", "pear", ExpressionOperator.builder()
+                        .op(Op.NOT)
+                        .build()), false)
+
+                .addCase(Tuple.of("apple", "pear", ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder()
+                                .field("foo")
+                                .condition(Condition.EQUALS)
+                                .value("123")
+                                .build())
+                        .build()), false)
+
+                .addCase(Tuple.of("apple", "pear", ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder().field("apple").build())
+                        .build()), true)
+
+                .addCase(Tuple.of("apple", "pear", ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder().field("pear").build())
+                        .build()), true)
+
+                .addCase(Tuple.of("apple", "pear", ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder().field("apple").build())
+                        .addTerm(ExpressionTerm.builder().field("pear").build())
+                        .build()), true)
+
+                .build();
+    }
 }

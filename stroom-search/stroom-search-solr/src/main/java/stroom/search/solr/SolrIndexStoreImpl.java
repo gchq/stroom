@@ -424,4 +424,9 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     public List<DocRef> list() {
         return store.list();
     }
+
+    @Override
+    public List<DocRef> findByName(final String name, final boolean allowWildCards) {
+        return store.findByName(name, allowWildCards);
+    }
 }

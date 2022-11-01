@@ -79,11 +79,10 @@ public final class ExpressionOperator extends ExpressionItem {
     }
 
     @Override
-    public boolean containsField(final String field) {
+    public boolean containsField(final String... fields) {
         if (children != null) {
             for (final ExpressionItem child : children) {
-                final boolean isMatch = child.containsField(field);
-                if (isMatch) {
+                if (child.containsField(fields)) {
                     // Found a match so break out
                     return true;
                 }

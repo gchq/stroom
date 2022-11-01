@@ -87,6 +87,16 @@ public abstract class AbstractField implements Serializable, HasDisplayValue {
     }
 
     @JsonIgnore
+    public boolean supportsCondition(final Condition condition) {
+        Objects.requireNonNull(condition);
+        if (conditions == null) {
+            return false;
+        } else {
+            return conditions.contains(condition);
+        }
+    }
+
+    @JsonIgnore
     public boolean isNumeric() {
         return false;
     }

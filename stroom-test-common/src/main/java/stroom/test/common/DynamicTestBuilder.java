@@ -491,12 +491,12 @@ class DynamicTestBuilder {
 
                             if (LOGGER.isDebugEnabled()) {
                                 if (testCase.isExpectedToThrow()) {
-                                    LOGGER.debug(() -> LogUtil.message("{}, expected to throw: '{}'",
-                                            TestCase.valueToString("Input", testCase.getInput()),
+                                    LOGGER.debug(() -> LogUtil.message("Running test case - {}, expected to throw: '{}'",
+                                            TestCase.valueToString("input", testCase.getInput()),
                                             testCase.getExpectedThrowableType().getSimpleName()));
                                 } else {
-                                    LOGGER.debug(() -> LogUtil.message("{}, expected {}",
-                                            TestCase.valueToString("Input", testCase.getInput()),
+                                    LOGGER.debug(() -> LogUtil.message("Running test case - {}, expected {}",
+                                            TestCase.valueToString("input", testCase.getInput()),
                                             TestCase.valueToString("output", testCase.getExpectedOutput())));
                                 }
                             }

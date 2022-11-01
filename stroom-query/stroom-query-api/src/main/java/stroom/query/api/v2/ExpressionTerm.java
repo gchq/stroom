@@ -71,8 +71,13 @@ public final class ExpressionTerm extends ExpressionItem {
     }
 
     @Override
-    public boolean containsField(final String field) {
-        return Objects.equals(field, this.field);
+    public boolean containsField(final String... fields) {
+        for (final String field : fields) {
+            if (Objects.equals(field, this.field)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @JsonCreator

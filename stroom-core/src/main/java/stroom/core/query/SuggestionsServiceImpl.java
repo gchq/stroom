@@ -48,6 +48,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
     private final Map<String, Function<String, List<String>>> fieldNameToFunctionMap = Map.of(
             MetaFields.FEED.getName(), this::createFeedList,
             MetaFields.PIPELINE.getName(), this::createPipelineList,
+            MetaFields.PIPELINE_NAME.getName(), this::createPipelineList,
             MetaFields.TYPE.getName(), this::createStreamTypeList,
             MetaFields.STATUS.getName(), this::createStatusList);
 

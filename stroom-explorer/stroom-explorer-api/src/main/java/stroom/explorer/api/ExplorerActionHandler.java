@@ -20,6 +20,7 @@ package stroom.explorer.api;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.util.shared.HasDependencies;
+import stroom.docref.HasFindDocRefsByName;
 
 import java.util.Set;
 
@@ -27,7 +28,8 @@ import java.util.Set;
  * This interface is intended to be used by the explorer for document store operations that need not know much about the
  * documents that are stored just how to create, copy, move and delete them.
  */
-public interface ExplorerActionHandler extends HasDocumentType, HasDependencies {
+public interface ExplorerActionHandler
+        extends HasDocumentType, HasDependencies, HasFindDocRefsByName {
 
     /**
      * Called to create a new item in this document store.

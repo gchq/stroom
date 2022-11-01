@@ -34,6 +34,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -48,6 +49,7 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
+import stroom.util.string.PatternUtil;
 import stroom.util.time.TimePeriod;
 
 import io.vavr.Tuple;
@@ -160,8 +162,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private final MetaExpressionMapper metaExpressionMapper;
     private final ValueMapper valueMapper;
 
-    private final Map<String, List<Integer>> feedIdCache = new ConcurrentHashMap<>();
-    private final Map<String, List<Integer>> typeIdCache = new ConcurrentHashMap<>();
+    private final Map<String, List<Integer>> feedNameToIdsMap = new ConcurrentHashMap<>();
+    private final Map<String, List<Integer>> typeNameToIdsMap = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> pipelineNameToUuidsMap = new ConcurrentHashMap<>();
 
     @Inject
     MetaDaoImpl(final MetaDbConnProvider metaDbConnProvider,
@@ -202,8 +205,11 @@ class MetaDaoImpl implements MetaDao, Clearable {
         expressionMapper.map(MetaFields.META_PROCESSOR_TASK_ID, meta.PROCESSOR_TASK_ID, Long::valueOf);
         expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, this::getFeedIds, true);
         expressionMapper.multiMap(MetaFields.TYPE, meta.TYPE_ID, this::getTypeIds);
-//        expressionMapper.multiMap(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
-        expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
+        // Get a uuid for the selected pipe doc
+        expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value, false);
+        // Get 0-many uuids for a pipe name (partial/wild-carded)
+        expressionMapper.multiMap(
+                MetaFields.PIPELINE_NAME, metaProcessor.PIPELINE_UUID, this::getPipelineUuidsByName, true);
         expressionMapper.map(MetaFields.STATUS,
                 meta.STATUS,
                 value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
@@ -223,9 +229,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 value -> getDate(MetaFields.PARENT_CREATE_TIME, value));
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
-
         valueMapper = new ValueMapper();
-
         valueMapper.map(MetaFields.ID, meta.ID, ValLong::create);
         valueMapper.map(MetaFields.FEED, metaFeed.NAME, ValString::create);
         valueMapper.map(MetaFields.TYPE, metaType.NAME, ValString::create);
@@ -266,36 +270,20 @@ class MetaDaoImpl implements MetaDao, Clearable {
     }
 
     private List<Integer> getFeedIds(final String feedName) {
-        return getIds(feedName, feedIdCache, feedDao::find);
+        return getIds(feedName, feedNameToIdsMap, feedDao::find);
     }
 
     private List<Integer> getTypeIds(final String typeName) {
-        return getIds(typeName, typeIdCache, metaTypeDao::find);
+        return getIds(typeName, typeNameToIdsMap, metaTypeDao::find);
     }
 
-    private List<Integer> getPipelineUuids(final String name) {
-        List<Integer> list;
-
-        // = => AND {Pipeline = RAW_STREAMING_FORK-EVENTS}
-        // isdocref => AND {Pipeline is RAW_STREAMING_FORK-EVENTS}
-        // in => AND {Pipeline in RAW_STREAMING_FORK-EVENTS,X}
-        // in folder => AND {Pipeline in folder Test}
-        // in dict => AND {Pipeline in dictionary Imp_exp_test_dictionary}
-
-        // We can't cache wildcard names as we don't know what they will match in the DB.
-////        if (name.contains("*")) {
-////            list = function.apply(name);
-////        } else {
-////            list = map.get(name);
-////            if (list == null || list.size() == 0) {
-////                list = function.apply(name);
-////                if (list != null && list.size() > 0) {
-////                    map.put(name, list);
-////                }
-////            }
-////        }
-//
-        return null;
+    private List<String> getPipelineUuidsByName(final String pipelineName) {
+        // Can't cache this in a simple map due to pipes being renamed, but
+        // docRefInfoService should cache most of this anyway.
+        return docRefInfoService.findByName(PipelineDoc.DOCUMENT_TYPE, pipelineName, true)
+                        .stream()
+                        .map(DocRef::getUuid)
+                        .collect(Collectors.toList());
     }
 
     /**
@@ -306,24 +294,28 @@ class MetaDaoImpl implements MetaDao, Clearable {
      * THIS MIGHT LEAD TO A FEW DUPLICATE ATTEMPTS TO FIND THE SAME ID LIST BUT THAT IS PREFERRED TO SYNCHRONIZING ON
      * THE MAP KEY DURING DB QUERY.
      */
-    private List<Integer> getIds(final String name,
-                                 final Map<String, List<Integer>> map,
-                                 final Function<String, List<Integer>> function) {
-        List<Integer> list;
+    private <T> List<T> getIds(final String name,
+                               final Map<String, List<T>> map,
+                               final Function<String, List<T>> function) {
+        final List<T> list;
 
         // We can't cache wildcard names as we don't know what they will match in the DB.
-        if (name.contains("*")) {
+        if (PatternUtil.containsWildCards(name)) {
             list = function.apply(name);
         } else {
-            list = map.get(name);
-            if (list == null || list.size() == 0) {
+            final List<T> mapResult = map.get(name);
+            if (NullSafe.hasItems(mapResult)) {
+                list = mapResult;
+            } else {
                 list = function.apply(name);
-                if (list != null && list.size() > 0) {
+                if (NullSafe.hasItems(list)) {
                     map.put(name, list);
                 }
             }
         }
 
+        LOGGER.trace(() -> LogUtil.message("Mapped name {} to {} IDs {}",
+                name, list.size(), list));
         return list;
     }
 
@@ -483,7 +475,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final int updateCount;
         final boolean containsPipelineCondition = NullSafe.test(
                 criteria.getExpression(),
-                expr -> expr.containsField(MetaFields.PIPELINE.getName()));
+                expr ->
+                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
 
         // TODO: 20/10/2022 You can do joins in the update to avoid the sub-select.
         //  See logicalDelete() above.
@@ -587,6 +580,14 @@ class MetaDaoImpl implements MetaDao, Clearable {
             final Field<String> typeNameField = DSL.field("type_name", String.class);
             final Field<Long> metaCreateTimeField = DSL.field("meta_create_time_ms", Long.class);
 
+            activeRules.forEach(rule ->
+                    validateExpressionTerms(rule.getExpression()));
+
+            final boolean requiresMetaProcessorTable = rulesContainField(
+                    activeRules,
+                    MetaFields.PIPELINE.getName(),
+                    MetaFields.PIPELINE_NAME.getName());
+
             return JooqUtil.contextResult(metaDbConnProvider,
                             context -> {
                                 var fromClause = meta
@@ -594,7 +595,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID));
                                 // If any of the rules have a predicate on the Pipeline field then we need to
                                 // add the join to meta_processor
-                                if (rulesContainField(MetaFields.PIPELINE.getName(), activeRules)) {
+                                if (requiresMetaProcessorTable) {
                                     fromClause = fromClause.leftOuterJoin(metaProcessor)
                                             .on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
                                 }
@@ -662,7 +663,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
     /**
      * @return True if any term in any expression uses field {@code field}.
      */
-    private boolean ruleActionsContainField(final String field, final List<DataRetentionRuleAction> ruleActions) {
+    private boolean ruleActionsContainField(final String field,
+                                            final List<DataRetentionRuleAction> ruleActions) {
         return ruleActions.stream()
                 .anyMatch(ruleAction ->
                         NullSafe.test(
@@ -672,14 +674,14 @@ class MetaDaoImpl implements MetaDao, Clearable {
     }
 
     /**
-     * @return True if any term in any expression uses field {@code field}.
+     * @return True if any term in any rule expression uses at least one of {@code fields}.
      */
-    private boolean rulesContainField(final String field, final List<DataRetentionRule> rules) {
+    private boolean rulesContainField(final List<DataRetentionRule> rules, final String... fields) {
         return rules.stream()
                 .anyMatch(rule ->
                         NullSafe.test(
                                 rule.getExpression(),
-                                expr -> expr.containsField(field)));
+                                expr -> expr.containsField(fields)));
     }
 
     private List<Condition> getRuleAgeConditions(final List<DataRetentionRule> activeRules,
@@ -732,8 +734,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
-            final boolean rulesUsePipelineField = ruleActionsContainField(
-                    MetaFields.PIPELINE.getName(), ruleActions);
+            final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getName(), ruleActions)
+                    || ruleActionsContainField(MetaFields.PIPELINE_NAME.getName(), ruleActions);
 
             final List<Condition> conditions = new ArrayList<>(baseConditions);
 
@@ -1164,6 +1166,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
     @Override
     public ResultPage<Meta> find(final FindMetaCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
+
+        validateExpressionTerms(criteria.getExpression());
+
         final Collection<Condition> conditions = createCondition(criteria);
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final int offset = JooqUtil.getOffset(pageRequest);
@@ -1448,8 +1453,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
     @Override
     public void clear() {
-        feedIdCache.clear();
-        typeIdCache.clear();
+        feedNameToIdsMap.clear();
+        typeNameToIdsMap.clear();
     }
 
     private Collection<Condition> createCondition(final FindMetaCriteria criteria) {
@@ -1520,5 +1525,36 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                     .fetch();
                         })
                 .map(Record1::value1);
+    }
+
+    public boolean validateExpressionTerms(final ExpressionItem expressionItem) {
+        // TODO: 31/10/2022 Ideally this would be done in CommonExpressionMapper but we
+        //  seem to have a load of expressions using unsupported conditions so would get
+        //  exceptions all over the place.
+
+        if (expressionItem == null) {
+            return true;
+        } else {
+            final Map<String, AbstractField> fieldMap = MetaFields.getAllFieldMap();
+
+            return ExpressionUtil.validateExpressionTerms(expressionItem, term -> {
+                final AbstractField field = fieldMap.get(term.getField());
+                if (field == null) {
+                    throw new RuntimeException(LogUtil.message("Unknown field {} in term {}, in expression {}",
+                            term.getField(), term, expressionItem));
+                } else {
+                    final boolean isValid = field.supportsCondition(term.getCondition());
+                    if (!isValid) {
+                        throw new RuntimeException(LogUtil.message("Condition '{}' is not supported by field '{}' " +
+                                "of type {}. Term: {}",
+                                term.getCondition(),
+                                term.getField(),
+                                field.getType(), term));
+                    } else {
+                        return true;
+                    }
+                }
+            });
+        }
     }
 }

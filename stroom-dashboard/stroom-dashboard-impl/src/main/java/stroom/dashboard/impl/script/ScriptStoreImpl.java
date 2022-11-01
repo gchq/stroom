@@ -27,7 +27,6 @@ import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
@@ -197,6 +196,11 @@ class ScriptStoreImpl implements ScriptStore {
     @Override
     public List<DocRef> list() {
         return store.list();
+    }
+
+    @Override
+    public List<DocRef> findByName(final String name, final boolean allowWildCards) {
+        return store.findByName(name, allowWildCards);
     }
 
     @Override

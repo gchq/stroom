@@ -178,7 +178,6 @@ class TestMetaDaoImpl {
         });
     }
 
-
     @TestFactory
     Stream<DynamicTest> testLogicalDelete() {
         final TimePeriod allTimePeriod = TimePeriod.fromEpochTo(Instant.now());

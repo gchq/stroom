@@ -58,8 +58,9 @@ class TestModule extends AbstractModule {
     @Provides
     WordListProvider wordListProvider() {
         return new WordListProvider() {
+
             @Override
-            public List<DocRef> findByName(final String dictionaryName) {
+            public List<DocRef> findByName(final String name, final boolean allowWildCards) {
                 return Collections.emptyList();
             }
 

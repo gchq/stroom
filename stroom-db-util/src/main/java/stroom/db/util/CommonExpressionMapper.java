@@ -7,6 +7,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -26,6 +28,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CommonExpressionMapper.class);
 
     private final Map<String, Function<ExpressionTerm, Condition>> termHandlers = new HashMap<>();
+    private final Map<String, AbstractField> fieldMap = new HashMap<>();
     private final Set<String> ignoredFields = new HashSet<>();
     private final Function<ExpressionItem, Condition> delegateItemHandler;
 
@@ -39,7 +42,9 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
     public void addHandler(final AbstractField dataSourceField,
                            final Function<ExpressionTerm, Condition> handler) {
-        termHandlers.put(dataSourceField.getName(), handler);
+        final String fieldName = dataSourceField.getName();
+        termHandlers.put(fieldName, handler);
+        fieldMap.put(fieldName, dataSourceField);
     }
 
     public void ignoreField(final AbstractField dataSourceField) {
@@ -67,15 +72,27 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
         if (item != null && item.enabled()) {
             if (item instanceof ExpressionTerm) {
                 final ExpressionTerm term = (ExpressionTerm) item;
-                if (term.getField() == null) {
+                final String fieldName = term.getField();
+                if (fieldName == null) {
                     throw new NullPointerException("Term has a null field '" + term + "'");
                 }
                 if (term.getCondition() == null) {
                     throw new NullPointerException("Term has a null condition '" + term + "'");
                 }
 
-                final Function<ExpressionTerm, Condition> termHandler = termHandlers.get(term.getField());
+                final Function<ExpressionTerm, Condition> termHandler = termHandlers.get(fieldName);
                 if (termHandler != null) {
+                    final AbstractField abstractField = fieldMap.get(fieldName);
+                    Objects.requireNonNull(abstractField, () -> LogUtil.message(
+                            "abstractField should not be null if we have a termHandler. term: {}", term));
+
+                    // Fields are defined with a list of supported conditions but the code seems to be using
+                    // un-supported conditions.
+                    if (!abstractField.supportsCondition(term.getCondition())) {
+                        LOGGER.debug("Condition '{}' is not supported by field '{}' " +
+                                "of type {}. Term: {}", term.getCondition(), fieldName, abstractField.getType(), term);
+                    }
+
                     result = Optional.of(termHandler.apply(term));
                 } else if (delegateItemHandler != null) {
                     result = Optional.of(delegateItemHandler.apply(term));

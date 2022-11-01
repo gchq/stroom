@@ -652,13 +652,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public List<DocRef> findByName(final String name) {
-        if (name == null) {
-            return Collections.emptyList();
-        }
-        return list()
+    public List<DocRef> findByName(final String name, final boolean allowWildCards) {
+        return persistence.find(type, name, allowWildCards)
                 .stream()
-                .filter(docRef -> name.equals(docRef.getName()))
+                .filter(this::canRead)
                 .collect(Collectors.toList());
     }
 

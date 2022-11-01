@@ -7,8 +7,11 @@ import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -36,7 +39,20 @@ public class MetaFields {
 
     // Non grouped fields
     public static final DocRefField FEED = new DocRefField("Feed", "Feed");
-    public static final DocRefField PIPELINE = new DocRefField("Pipeline", "Pipeline");
+    public static final DocRefField PIPELINE = new DocRefField(
+            PipelineDoc.DOCUMENT_TYPE,
+            "Pipeline",
+            true,
+            Arrays.asList(Condition.IS_DOC_REF,
+                    Condition.IN_FOLDER));
+    public static final DocRefField PIPELINE_NAME = new DocRefField(
+            PipelineDoc.DOCUMENT_TYPE,
+            "Pipeline Name",
+            true,
+            Arrays.asList(Condition.CONTAINS,
+                    Condition.EQUALS,
+                    Condition.IN,
+                    Condition.IN_DICTIONARY));
     public static final TextField STATUS = new TextField("Status");
     public static final TextField TYPE = new TextField("Type");
 
@@ -73,6 +89,7 @@ public class MetaFields {
         // Non grouped fields
         FIELDS.add(FEED);
         FIELDS.add(PIPELINE);
+        FIELDS.add(PIPELINE_NAME);
         FIELDS.add(STATUS);
         FIELDS.add(TYPE);
 

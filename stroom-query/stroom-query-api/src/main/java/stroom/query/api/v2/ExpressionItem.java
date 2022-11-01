@@ -76,9 +76,9 @@ public abstract class ExpressionItem implements Serializable {
 
     /**
      * @return True if any of the terms in the expression item involve
-     * the supplied field.
+     * at least one of the supplied fields.
      */
-    public abstract boolean containsField(final String field);
+    public abstract boolean containsField(final String... fields);
 
     @Override
     public boolean equals(final Object o) {
