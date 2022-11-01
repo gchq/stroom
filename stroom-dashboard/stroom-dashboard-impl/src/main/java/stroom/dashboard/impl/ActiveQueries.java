@@ -43,4 +43,11 @@ public class ActiveQueries {
     public List<ActiveQuery> asList() {
         return new ArrayList<>(activeQueries.values());
     }
+
+    @Override
+    public String toString() {
+        return "ActiveQueries{" +
+                "activeQueries count=" + count() +
+                '}';
+    }
 }

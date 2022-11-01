@@ -961,36 +961,6 @@
         "tags" : [ "Api Keys" ]
       }
     },
-    "/application-instance/v1/keepAlive" : {
-      "post" : {
-        "operationId" : "applicationInstanceKeepAlive",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ApplicationInstanceInfo"
-              }
-            }
-          },
-          "description" : "applicationInstanceInfo",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Keep an application instance alive",
-        "tags" : [ "Application" ]
-      }
-    },
     "/application-instance/v1/register" : {
       "get" : {
         "operationId" : "applicationInstanceRegister",
@@ -1017,11 +987,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ApplicationInstanceInfo"
+                "$ref" : "#/components/schemas/DestroyRequest"
               }
             }
           },
-          "description" : "applicationInstanceInfo",
+          "description" : "destroyRequest",
           "required" : true
         },
         "responses" : {
@@ -10297,6 +10267,17 @@
           }
         }
       },
+      "DestroyRequest" : {
+        "type" : "object",
+        "properties" : {
+          "applicationInstanceInfo" : {
+            "$ref" : "#/components/schemas/ApplicationInstanceInfo"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        }
+      },
       "DestroySearchRequest" : {
         "type" : "object",
         "properties" : {
@@ -15116,8 +15097,11 @@
           "dataRange" : {
             "$ref" : "#/components/schemas/DataRange"
           },
-          "highlight" : {
-            "$ref" : "#/components/schemas/TextRange"
+          "highlights" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DataRange"
+            }
           },
           "metaId" : {
             "type" : "integer",
@@ -15130,9 +15114,6 @@
           "recordIndex" : {
             "type" : "integer",
             "format" : "int64"
-          },
-          "truncateToWholeLines" : {
-            "type" : "boolean"
           }
         }
       },
@@ -15923,17 +15904,6 @@
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractField"
         } ]
-      },
-      "TextRange" : {
-        "type" : "object",
-        "properties" : {
-          "from" : {
-            "$ref" : "#/components/schemas/Location"
-          },
-          "to" : {
-            "$ref" : "#/components/schemas/Location"
-          }
-        }
       },
       "ThemeConfig" : {
         "type" : "object",

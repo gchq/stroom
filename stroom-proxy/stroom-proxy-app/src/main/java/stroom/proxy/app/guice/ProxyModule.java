@@ -16,8 +16,8 @@ import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
+import stroom.importexport.api.ImportConverter;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
@@ -135,7 +135,6 @@ public class ProxyModule extends AbstractModule {
         install(new RemoteFeedModule());
 
         install(new TaskContextModule());
-        install(new LegacyImpexModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
 //        bind(BufferFactory.class).to(BufferFactoryImpl.class);
@@ -156,6 +155,9 @@ public class ProxyModule extends AbstractModule {
 
         bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
         bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
+
+        // Proxy doesn't do import so bind a dummy ImportConverter for the StoreImpl(s) to use
+        bind(ImportConverter.class).to(NoOpImportConverter.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)

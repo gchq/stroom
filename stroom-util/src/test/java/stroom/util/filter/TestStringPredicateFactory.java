@@ -369,7 +369,7 @@ class TestStringPredicateFactory {
 //
 //        List<String> classNames;
 //        try (ScanResult result = new ClassGraph()
-//                .whitelistPackages("stroom")
+//                .acceptPackages("stroom")
 //                .enableClassInfo()
 //                .ignoreClassVisibility()
 //                .scan()) {

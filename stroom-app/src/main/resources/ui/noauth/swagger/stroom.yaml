@@ -666,26 +666,6 @@ paths:
       summary: Enable or disable the state of an API key.
       tags:
       - Api Keys
-  /application-instance/v1/keepAlive:
-    post:
-      operationId: applicationInstanceKeepAlive
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplicationInstanceInfo'
-        description: applicationInstanceInfo
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Keep an application instance alive
-      tags:
-      - Application
   /application-instance/v1/register:
     get:
       operationId: applicationInstanceRegister
@@ -706,8 +686,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApplicationInstanceInfo'
-        description: applicationInstanceInfo
+              $ref: '#/components/schemas/DestroyRequest'
+        description: destroyRequest
         required: true
       responses:
         default:
@@ -7112,6 +7092,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    DestroyRequest:
+      type: object
+      properties:
+        applicationInstanceInfo:
+          $ref: '#/components/schemas/ApplicationInstanceInfo'
+        reason:
+          type: string
     DestroySearchRequest:
       type: object
       properties:
@@ -10731,8 +10718,10 @@ components:
           type: string
         dataRange:
           $ref: '#/components/schemas/DataRange'
-        highlight:
-          $ref: '#/components/schemas/TextRange'
+        highlights:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataRange'
         metaId:
           type: integer
           format: int64
@@ -10742,8 +10731,6 @@ components:
         recordIndex:
           type: integer
           format: int64
-        truncateToWholeLines:
-          type: boolean
     SplashConfig:
       type: object
       properties:
@@ -11337,13 +11324,6 @@ components:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractField'
-    TextRange:
-      type: object
-      properties:
-        from:
-          $ref: '#/components/schemas/Location'
-        to:
-          $ref: '#/components/schemas/Location'
     ThemeConfig:
       type: object
       properties:

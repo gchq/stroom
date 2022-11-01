@@ -87,6 +87,7 @@ class TestSearchResponseCreator {
 
     private SearchResponseCreator createSearchResponseCreator() {
         return new SearchResponseCreator(
+                new SerialisersFactory(),
                 "test_user_id",
                 sizesProvider,
                 mockStore);
@@ -290,7 +291,8 @@ class TestSearchResponseCreator {
         generators[0] = new StaticValueFunction(ValString.create("A")).createGenerator();
         generators[1] = new StaticValueFunction(ValString.create("B")).createGenerator();
         generators[2] = new StaticValueFunction(ValString.create("C")).createGenerator();
-        items.add(Key.root(), generators);
+        final Key rootKey = Key.createRoot(new SerialisersFactory().create(new ErrorConsumerImpl()));
+        items.add(rootKey, generators);
 
         final CompletionState completionState = new CompletionStateImpl();
 

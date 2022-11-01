@@ -122,7 +122,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("The time interval in milliseconds that a keep alive message will be sent over the " +
-            "web socket. A value of <= 0 means a keep alive message will not be sent. Setting the value to > 60000 " +
+            "web socket. A value of <= 0 means a keep alive message will not be sent. Setting the value to < 60000 " +
             "will have limited effect as some browsers will throttle timers to a max frequency of 1/min.")
     private final int applicationInstanceKeepAliveIntervalMs;
 
@@ -146,9 +146,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         activity = new ActivityConfig();
         source = new SourceConfig();
         requireReactWrapper = true;
-        // No point making this any less than 60s as chrome will throttle timers on inactive tabs
-        // to a max frequency of 1/min.
-        applicationInstanceKeepAliveIntervalMs = 60_000;
+        applicationInstanceKeepAliveIntervalMs = 10_000;
     }
 
     @JsonCreator

@@ -151,7 +151,7 @@ ext.libs = [
         commons_io                     : "commons-io:commons-io:2.11.0",
         commons_lang                   : "org.apache.commons:commons-lang3", // version controlled by dropwizard-dependencies
         commons_pool2                  : "org.apache.commons:commons-pool2:2.10.0",
-        commons_text                   : "org.apache.commons:commons-text", // version controlled by dropwizard-dependencies
+        commons_text                   : "org.apache.commons:commons-text:1.10.0", // Must be >1.9 because of CVE-2922-42889. DW tries to pull in 1.9 but this will override that.
         classgraph                     : "io.github.classgraph:classgraph:4.8.146",
         curator_client                 : "org.apache.curator:curator-client:$versions.curator",
         curator_framework              : "org.apache.curator:curator-framework:$versions.curator",

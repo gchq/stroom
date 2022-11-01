@@ -740,6 +740,11 @@ export interface DependencyCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
+export interface DestroyRequest {
+  applicationInstanceInfo?: ApplicationInstanceInfo;
+  reason?: string;
+}
+
 export interface DestroySearchRequest {
   applicationInstanceUuid?: string;
   componentId?: string;
@@ -3020,7 +3025,7 @@ export interface SourceConfig {
 export interface SourceLocation {
   childType?: string;
   dataRange?: DataRange;
-  highlight?: TextRange;
+  highlights?: DataRange[];
 
   /** @format int64 */
   metaId?: number;
@@ -3030,7 +3035,6 @@ export interface SourceLocation {
 
   /** @format int64 */
   recordIndex?: number;
-  truncateToWholeLines?: boolean;
 }
 
 export interface SplashConfig {
@@ -3322,11 +3326,6 @@ export interface TextConverterDoc {
 }
 
 export type TextField = AbstractField;
-
-export interface TextRange {
-  from?: Location;
-  to?: Location;
-}
 
 export interface ThemeConfig {
   backgroundAttachment?: string;
@@ -4392,25 +4391,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Application
-     * @name ApplicationInstanceKeepAlive
-     * @summary Keep an application instance alive
-     * @request POST:/application-instance/v1/keepAlive
-     * @secure
-     */
-    applicationInstanceKeepAlive: (data: ApplicationInstanceInfo, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/application-instance/v1/keepAlive`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Application
      * @name ApplicationInstanceRegister
      * @summary Register a new application instance
      * @request GET:/application-instance/v1/register
@@ -4433,7 +4413,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/application-instance/v1/remove
      * @secure
      */
-    applicationInstanceRemove: (data: ApplicationInstanceInfo, params: RequestParams = {}) =>
+    applicationInstanceRemove: (data: DestroyRequest, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/application-instance/v1/remove`,
         method: "POST",

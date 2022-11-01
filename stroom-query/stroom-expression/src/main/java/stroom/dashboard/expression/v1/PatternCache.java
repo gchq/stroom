@@ -17,7 +17,7 @@ final class PatternCache {
     private static final int MAX_ENTRIES = 1000;
 
     private static final Map<String, CachedPattern> MAP = Collections.synchronizedMap(
-            new LinkedHashMap<String, CachedPattern>(
+            new LinkedHashMap<>(
                     MAX_ENTRIES + 1,
                     .75F,
                     true) {

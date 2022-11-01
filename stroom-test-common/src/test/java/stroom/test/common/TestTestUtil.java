@@ -1,8 +1,13 @@
 package stroom.test.common;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -17,6 +22,13 @@ import java.util.stream.Stream;
 
 class TestTestUtil {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestTestUtil.class);
+
+    @BeforeEach
+    void setUp() {
+        LOGGER.info("beforeEach called");
+    }
+
     @TestFactory
     Stream<DynamicTest> testBuildDynamicTestStream_sameInputAsOutput() {
         return TestUtil.buildDynamicTestStream()
@@ -25,7 +37,7 @@ class TestTestUtil {
                         testCase.getInput().toUpperCase())
                 .withSimpleEqualityAssertion()
                 .addCase("a", "A")
-                .addCase("z", "Z")
+                .addNamedCase("Zed", "z", "Z")
                 .build();
     }
 
@@ -38,7 +50,23 @@ class TestTestUtil {
                         Month.of(testCase.getInput()).getDisplayName(TextStyle.FULL, Locale.ENGLISH))
                 .withSimpleEqualityAssertion()
                 .addCase(1, "January")
-                .addCase(12, "December")
+                .addNamedCase("December case", 12, "December")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testBuildDynamicTestStream_nameFunction() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Integer.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        Month.of(testCase.getInput()).getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+                .withSimpleEqualityAssertion()
+                .addCase(1, "January")
+                .addNamedCase("Explicit case name", 12, "December")
+                .withNameFunction(testCase ->
+                        LogUtil.message("Name func name: '{}' => '{}'",
+                                testCase.getInput(), testCase.getExpectedOutput()))
                 .build();
     }
 
