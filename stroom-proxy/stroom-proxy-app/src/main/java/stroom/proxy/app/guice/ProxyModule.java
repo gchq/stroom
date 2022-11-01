@@ -4,7 +4,6 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.db.util.DbModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
-import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
@@ -19,8 +18,6 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.importexport.api.ImportConverter;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
@@ -91,7 +88,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -270,17 +266,5 @@ public class ProxyModule extends AbstractModule {
     EntityEventBus entityEventBus() {
         return event -> {
         };
-    }
-
-    private static class NoOpImportConverter implements ImportConverter {
-
-        @Override
-        public Map<String, byte[]> convert(final DocRef docRef,
-                                           final Map<String, byte[]> dataMap,
-                                           final ImportState importState,
-                                           final ImportMode importMode,
-                                           final String userId) {
-            throw new UnsupportedOperationException("Import is not supported in proxy.");
-        }
     }
 }

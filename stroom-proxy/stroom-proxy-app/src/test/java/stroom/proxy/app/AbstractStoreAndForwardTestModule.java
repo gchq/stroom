@@ -11,7 +11,8 @@ import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
-import stroom.legacy.impex_6_1.LegacyImpexModule;
+import stroom.importexport.api.ImportConverter;
+import stroom.proxy.app.guice.NoOpImportConverter;
 import stroom.proxy.app.guice.ProxyConfigModule;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
@@ -75,7 +76,6 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
         install(new RemoteFeedModule());
 
         install(new TaskContextModule());
-        install(new LegacyImpexModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
@@ -92,6 +92,9 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
         bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
         bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
         bind(ProgressLog.class).to(ProgressLogImpl.class);
+
+        // Proxy doesn't do import so bind a dummy ImportConverter for the StoreImpl(s) to use
+        bind(ImportConverter.class).to(NoOpImportConverter.class);
     }
 
     @Provides
