@@ -26,7 +26,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
         expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
-                new ConverterAdapter<>(converter)));
+                MultiConverter.wrapConverter(converter)));
     }
 
     public <T> void map(final AbstractField dataSourceField,
@@ -35,7 +35,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
         expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
-                new ConverterAdapter<>(converter),
+                MultiConverter.wrapConverter(converter),
                 useName));
     }
 
@@ -68,31 +68,31 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
         return expressionMapper.apply(expressionItem);
     }
 
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
     public interface Converter<T> {
 
         T apply(String value);
     }
 
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
     public interface MultiConverter<T> {
 
         List<T> apply(String value);
-    }
 
-    private static class ConverterAdapter<T> implements MultiConverter<T> {
-
-        private final Converter<T> converter;
-
-        ConverterAdapter(final Converter<T> converter) {
-            this.converter = converter;
-        }
-
-        @Override
-        public List<T> apply(final String value) {
-            final T t = converter.apply(value);
-            if (t != null) {
-                return List.of(t);
-            }
-            return Collections.emptyList();
+        static <T> MultiConverter<T> wrapConverter(final Converter<T> converter) {
+            return value -> {
+                final T t = converter.apply(value);
+                if (t != null) {
+                    return List.of(t);
+                }
+                return Collections.emptyList();
+            };
         }
     }
 }

@@ -77,7 +77,7 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
      */
     default List<DocRef> findByName(String name) {
         return findByName(name, false);
-    };
+    }
 
     /**
      * Find by case-sensitive match on the name.
