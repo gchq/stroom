@@ -6,6 +6,7 @@ import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FileScannerConfig;
+import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
@@ -13,7 +14,6 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
-import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -53,7 +53,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final FeedStatusConfig feedStatusConfig;
     private final RestClientConfig restClientConfig;
     private final ThreadConfig threadConfig;
-    private final StroomDuration retryFrequency;
+    private final ForwardRetryConfig forwardRetry;
 
     public ProxyConfig() {
         useDefaultOpenIdCredentials = DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS;
@@ -74,7 +74,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         feedStatusConfig = new FeedStatusConfig();
         restClientConfig = new RestClientConfig();
         threadConfig = new ThreadConfig();
-        retryFrequency = StroomDuration.ofMinutes(1);
+        forwardRetry = new ForwardRetryConfig();
     }
 
     @JsonCreator
@@ -96,7 +96,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty("feedStatus") final FeedStatusConfig feedStatusConfig,
             @JsonProperty("restClient") final RestClientConfig restClientConfig,
             @JsonProperty("threads") final ThreadConfig threadConfig,
-            @JsonProperty("retryFrequency") final StroomDuration retryFrequency) {
+            @JsonProperty("forwardRetry") final ForwardRetryConfig forwardRetry) {
 
         this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
@@ -115,7 +115,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.feedStatusConfig = feedStatusConfig;
         this.restClientConfig = restClientConfig;
         this.threadConfig = threadConfig;
-        this.retryFrequency = retryFrequency;
+        this.forwardRetry = forwardRetry;
     }
 
     @AssertTrue(
@@ -214,10 +214,10 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return threadConfig;
     }
 
-    @JsonPropertyDescription("How often do we want to retry forwarding data that fails to forward?")
+    @JsonPropertyDescription("forwardRetry")
     @JsonProperty
-    public StroomDuration getRetryFrequency() {
-        return retryFrequency;
+    public ForwardRetryConfig getForwardRetry() {
+        return forwardRetry;
     }
 
     public static Builder builder() {
@@ -244,7 +244,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
         private RestClientConfig restClientConfig = new RestClientConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
-        private StroomDuration retryFrequency = StroomDuration.ofMinutes(1);
+        private ForwardRetryConfig forwardRetry = new ForwardRetryConfig();
 
         private Builder() {
 
@@ -335,8 +335,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
-        public Builder retryFrequency(final StroomDuration retryFrequency) {
-            this.retryFrequency = retryFrequency;
+        public Builder forwardRetry(final ForwardRetryConfig forwardRetry) {
+            this.forwardRetry = forwardRetry;
             return this;
         }
 
@@ -359,7 +359,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     feedStatusConfig,
                     restClientConfig,
                     threadConfig,
-                    retryFrequency);
+                    forwardRetry);
         }
     }
 }

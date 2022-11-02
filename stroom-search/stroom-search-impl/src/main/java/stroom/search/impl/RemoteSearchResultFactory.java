@@ -34,7 +34,7 @@ class RemoteSearchResultFactory {
     }
 
     public void write(final OutputStream outputStream) {
-        try (final Output output = new Output(outputStream)) {
+        try (final Output output = new Output(outputStream, -1)) {
             if (initialisationError != null) {
                 NodeResultSerialiser.write(output, true, coprocessors, initialisationError);
             } else {

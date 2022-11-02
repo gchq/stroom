@@ -2,7 +2,6 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.Generator;
-import stroom.util.io.ByteSizeUnit;
 import stroom.util.logging.Metrics;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -13,19 +12,23 @@ import java.util.stream.Collectors;
 
 public class Generators {
 
-    private static final int MIN_VALUE_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(1);
-    private static final int MAX_VALUE_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
-
+    private final Serialisers serialisers;
     private final CompiledField[] fields;
     private byte[] bytes;
     private Generator[] generators;
 
-    public Generators(final CompiledField[] fields, final Generator[] generators) {
+    public Generators(final Serialisers serialisers,
+                      final CompiledField[] fields,
+                      final Generator[] generators) {
+        this.serialisers = serialisers;
         this.fields = fields;
         this.generators = generators;
     }
 
-    public Generators(final CompiledField[] fields, final byte[] bytes) {
+    public Generators(final Serialisers serialisers,
+                      final CompiledField[] fields,
+                      final byte[] bytes) {
+        this.serialisers = serialisers;
         this.fields = fields;
         this.bytes = bytes;
     }
@@ -33,7 +36,7 @@ public class Generators {
     byte[] getBytes() {
         if (bytes == null) {
             Metrics.measure("Item toBytes", () -> {
-                try (final Output output = new Output(MIN_VALUE_SIZE, MAX_VALUE_SIZE)) {
+                try (final Output output = serialisers.getOutputFactory().createValueOutput()) {
                     if (generators.length > Byte.MAX_VALUE) {
                         throw new RuntimeException("You can only write a maximum of " + 255 + " values");
                     }
@@ -56,7 +59,7 @@ public class Generators {
     Generator[] getGenerators() {
         if (generators == null) {
             Metrics.measure("Item readGenerators bytes", () -> {
-                try (final Input input = new Input(bytes)) {
+                try (final Input input = serialisers.getInputFactory().create(bytes)) {
                     final Generator[] generators = new Generator[fields.length];
                     int pos = 0;
                     for (final CompiledField compiledField : fields) {

@@ -280,7 +280,13 @@ export interface BulkActionResult {
   message?: string;
 }
 
+export interface CacheIdentity {
+  basePropertyPath?: PropertyPath;
+  cacheName?: string;
+}
+
 export interface CacheInfo {
+  basePropertyPath?: PropertyPath;
   map?: Record<string, string>;
   name?: string;
   nodeName?: string;
@@ -295,7 +301,7 @@ export interface CacheInfoResponse {
 export interface CacheNamesResponse {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: string[];
+  values?: CacheIdentity[];
 }
 
 export interface ChangeDocumentPermissionsRequest {
@@ -732,6 +738,11 @@ export interface DependencyCriteria {
   partialName?: string;
   sort?: string;
   sortList?: CriteriaFieldSort[];
+}
+
+export interface DestroyRequest {
+  applicationInstanceInfo?: ApplicationInstanceInfo;
+  reason?: string;
 }
 
 export interface DestroySearchRequest {
@@ -3014,7 +3025,7 @@ export interface SourceConfig {
 export interface SourceLocation {
   childType?: string;
   dataRange?: DataRange;
-  highlight?: TextRange;
+  highlights?: DataRange[];
 
   /** @format int64 */
   metaId?: number;
@@ -3024,7 +3035,6 @@ export interface SourceLocation {
 
   /** @format int64 */
   recordIndex?: number;
-  truncateToWholeLines?: boolean;
 }
 
 export interface SplashConfig {
@@ -3317,11 +3327,6 @@ export interface TextConverterDoc {
 
 export type TextField = AbstractField;
 
-export interface TextRange {
-  from?: Location;
-  to?: Location;
-}
-
 export interface ThemeConfig {
   backgroundAttachment?: string;
   backgroundColour?: string;
@@ -3475,6 +3480,11 @@ export interface ValidateSessionResponse {
   redirectUri?: string;
   userId?: string;
   valid?: boolean;
+}
+
+export interface ValidationResult {
+  message?: string;
+  severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
 }
 
 export type VisComponentSettings = ComponentSettings & {
@@ -4381,25 +4391,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Application
-     * @name ApplicationInstanceKeepAlive
-     * @summary Keep an application instance alive
-     * @request POST:/application-instance/v1/keepAlive
-     * @secure
-     */
-    applicationInstanceKeepAlive: (data: ApplicationInstanceInfo, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/application-instance/v1/keepAlive`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Application
      * @name ApplicationInstanceRegister
      * @summary Register a new application instance
      * @request GET:/application-instance/v1/register
@@ -4422,7 +4413,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/application-instance/v1/remove
      * @secure
      */
-    applicationInstanceRemove: (data: ApplicationInstanceInfo, params: RequestParams = {}) =>
+    applicationInstanceRemove: (data: DestroyRequest, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/application-instance/v1/remove`,
         method: "POST",
@@ -5850,6 +5841,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Filesystem Volumes
+     * @name ValidateFsVolume
+     * @summary Validates a volume
+     * @request POST:/fsVolume/v1/validate
+     * @secure
+     */
+    validateFsVolume: (data: FsVolume, params: RequestParams = {}) =>
+      this.request<any, ValidationResult>({
+        path: `/fsVolume/v1/validate`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Filesystem Volumes
      * @name DeleteFsVolume
      * @summary Delete a volume
      * @request DELETE:/fsVolume/v1/{id}
@@ -6039,15 +6049,34 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Index Volumes
      * @name RescanIndexVolumes
      * @summary Rescans index volumes
-     * @request DELETE:/index/volume/v2/rescan
+     * @request GET:/index/volume/v2/rescan
      * @secure
      */
     rescanIndexVolumes: (query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/index/volume/v2/rescan`,
-        method: "DELETE",
+        method: "GET",
         query: query,
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Index Volumes
+     * @name ValidateIndexVolume
+     * @summary Validates an index volume
+     * @request POST:/index/volume/v2/validate
+     * @secure
+     */
+    validateIndexVolume: (data: IndexVolume, params: RequestParams = {}) =>
+      this.request<any, ValidationResult>({
+        path: `/index/volume/v2/validate`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
 
@@ -6120,6 +6149,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Index Volume Groups
+     * @name FetchIndexVolumeGroupByName
+     * @summary Gets an index volume group by name
+     * @request GET:/index/volumeGroup/v2/fetchByName/{name}
+     * @secure
+     */
+    fetchIndexVolumeGroupByName: (name: string, params: RequestParams = {}) =>
+      this.request<any, IndexVolumeGroup>({
+        path: `/index/volumeGroup/v2/fetchByName/${name}`,
+        method: "GET",
+        secure: true,
         ...params,
       }),
 

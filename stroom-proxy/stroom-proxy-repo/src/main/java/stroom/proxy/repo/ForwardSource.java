@@ -9,6 +9,7 @@ public class ForwardSource {
     private final boolean success;
     private final String error;
     private final long tries;
+    private final long lastTryTimeMs;
 
     public ForwardSource(final long id,
                          final long updateTimeMs,
@@ -16,7 +17,8 @@ public class ForwardSource {
                          final ForwardDest forwardDest,
                          final boolean success,
                          final String error,
-                         final long tries) {
+                         final long tries,
+                         final long lastTryTimeMs) {
         this.id = id;
         this.updateTimeMs = updateTimeMs;
         this.source = source;
@@ -24,6 +26,7 @@ public class ForwardSource {
         this.success = success;
         this.error = error;
         this.tries = tries;
+        this.lastTryTimeMs = lastTryTimeMs;
     }
 
     public long getId() {
@@ -54,6 +57,10 @@ public class ForwardSource {
         return tries;
     }
 
+    public long getLastTryTimeMs() {
+        return lastTryTimeMs;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -71,6 +78,7 @@ public class ForwardSource {
         private boolean success;
         private String error;
         private long tries;
+        private long lastTryTimeMs;
 
         public Builder() {
         }
@@ -83,6 +91,7 @@ public class ForwardSource {
             this.success = forwardSource.success;
             this.error = forwardSource.error;
             this.tries = forwardSource.tries;
+            this.lastTryTimeMs = forwardSource.lastTryTimeMs;
         }
 
         public Builder id(final long id) {
@@ -120,8 +129,13 @@ public class ForwardSource {
             return this;
         }
 
+        public Builder lastTryTimeMs(final long lastTryTimeMs) {
+            this.lastTryTimeMs = lastTryTimeMs;
+            return this;
+        }
+
         public ForwardSource build() {
-            return new ForwardSource(id, updateTimeMs, source, forwarddest, success, error, tries);
+            return new ForwardSource(id, updateTimeMs, source, forwarddest, success, error, tries, lastTryTimeMs);
         }
     }
 }

@@ -35,7 +35,7 @@ class TestFunctionFactory {
 
         // Scan the class path to find all the classes with @FunctionDef
         try (ScanResult result = new ClassGraph()
-                .whitelistPackages(Function.class.getPackageName())
+                .acceptPackages(Function.class.getPackageName())
                 .enableClassInfo()
                 .ignoreClassVisibility()
                 .enableAnnotationInfo()

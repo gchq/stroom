@@ -46,6 +46,11 @@ public class TextRange implements Comparable<TextRange> {
         this.to = to;
     }
 
+    public static TextRange of(final Location from,
+                               final Location to) {
+        return new TextRange(from, to);
+    }
+
     /**
      * @return Inclusive from location
      */

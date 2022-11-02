@@ -7,8 +7,8 @@ import java.nio.ByteBuffer;
 
 public class PayloadOutput extends Output {
 
-    public PayloadOutput(final int bufferSize, final int maxBufferSize) {
-        super(bufferSize, maxBufferSize);
+    public PayloadOutput(final int bufferSize) {
+        super(bufferSize, -1);
     }
 
     public void writeByteBuffer(final ByteBuffer byteBuffer) throws KryoException {

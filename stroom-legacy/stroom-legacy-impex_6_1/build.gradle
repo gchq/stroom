@@ -11,6 +11,7 @@ dependencies {
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-legacy:stroom-legacy-model_6_1')
+    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-statistics:stroom-statistics-impl-hbase')

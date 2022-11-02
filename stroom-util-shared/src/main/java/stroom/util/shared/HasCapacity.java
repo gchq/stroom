@@ -9,4 +9,6 @@ public interface HasCapacity {
     default HasCapacityInfo getCapacityInfo() {
         return HasCapacityInfo.UNKNOWN;
     }
+
+    public String getIdentifier();
 }

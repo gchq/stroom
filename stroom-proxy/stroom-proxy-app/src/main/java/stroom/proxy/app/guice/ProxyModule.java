@@ -16,8 +16,8 @@ import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
+import stroom.importexport.api.ImportConverter;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
@@ -27,6 +27,7 @@ import stroom.proxy.app.RequestAuthenticatorImpl;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.RestClientConfigConverter;
 import stroom.proxy.app.event.EventResourceImpl;
+import stroom.proxy.app.forwarder.FailureDestinationsImpl;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyRequestHandler;
@@ -36,6 +37,7 @@ import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
 import stroom.proxy.repo.ErrorReceiver;
 import stroom.proxy.repo.ErrorReceiverImpl;
+import stroom.proxy.repo.FailureDestinations;
 import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProgressLog;
 import stroom.proxy.repo.ProgressLogImpl;
@@ -133,7 +135,6 @@ public class ProxyModule extends AbstractModule {
         install(new RemoteFeedModule());
 
         install(new TaskContextModule());
-        install(new LegacyImpexModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
 //        bind(BufferFactory.class).to(BufferFactoryImpl.class);
@@ -148,11 +149,15 @@ public class ProxyModule extends AbstractModule {
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
+        bind(FailureDestinations.class).to(FailureDestinationsImpl.class);
         bind(Sender.class).to(SenderImpl.class);
         bind(ProgressLog.class).to(ProgressLogImpl.class);
 
         bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
         bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
+
+        // Proxy doesn't do import so bind a dummy ImportConverter for the StoreImpl(s) to use
+        bind(ImportConverter.class).to(NoOpImportConverter.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)

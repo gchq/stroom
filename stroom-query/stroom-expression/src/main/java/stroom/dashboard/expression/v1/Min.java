@@ -51,10 +51,7 @@ class Min extends AbstractAggregateFunction {
 
         @Override
         protected double op(final double cur, final double val) {
-            if (val < cur) {
-                return val;
-            }
-            return cur;
+            return Math.min(val, cur);
         }
     }
 }

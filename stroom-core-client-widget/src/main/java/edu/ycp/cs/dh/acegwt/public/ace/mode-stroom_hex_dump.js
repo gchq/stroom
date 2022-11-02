@@ -15,18 +15,18 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var StroomHexDumpHighlightRules = function() {
 
     // e.g.
-    // 0000000480 f6 f6 0f 19  46 8b 2b 2a  62 dc 92 47  cf f9 d1 8a  cd da d3 11  91 0a 7c 68  91 32 e1 a4  c2 24 d8 9f  ����F�+*b��G���������↲|h�2���$��
+    // 0000000480 F6 F6 0F 19  46 8B 2B 2A  62 DC 92 47  CF F9 D1 8A  CD DA D3 11  91 0A 7C 68  91 32 E1 A4  C2 24 D8 9F  ����F�+*B��G���������↲|H�2���$��
     this.$rules = {
         "start" : [
             {
                 // 0000000480
                 token : "string",
-                regex : /^[0-9a-f]+/
+                regex : /^[0-9A-F]+/
             },
             {
-                //  f6 f6 0f 19  46 8b 2b 2a  62 dc 92 47  cf f9 d1 8a  cd da d3 11  91 0a 7c 68  91 32 e1 a4  c2 24 d8 9f
+                //  F6 F6 0F 19  46 8B 2B 2A  62 DC 92 47  CF F9 D1 8A  CD DA D3 11  91 0A 7C 68  91 32 E1 A4  C2 24 D8 9F
                 token : "text",
-                regex : /(?<=[0-9a-f]+)[ 0-9a-f]{106}/
+                regex : /(?<=[0-9A-F]+)[ 0-9A-F]{106}/
             },
             {
                 // ����F�+*b��G���������↲|h�2���$��

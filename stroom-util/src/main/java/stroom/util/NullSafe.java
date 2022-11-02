@@ -567,6 +567,30 @@ public class NullSafe {
         }
     }
 
+    /**
+     * If value is non-null apply getter1 to it.
+     * If the result of that is non-null apply getter2 to the result.
+     * If the result of that is non-null consume the result.
+     */
+    public static <T1, T2, T3, T4> void consume(final T1 value,
+                                                final Function<T1, T2> getter1,
+                                                final Function<T2, T3> getter2,
+                                                final Function<T3, T4> getter3,
+                                                final Consumer<T4> consumer) {
+        if (value != null && consumer != null) {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 != null) {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 != null) {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 != null) {
+                        consumer.accept(value4);
+                    }
+                }
+            }
+        }
+    }
+
     public static <T1, T2, T3, T4> String toStringOrElse(final T1 value,
                                                          final Function<T1, T2> getter1,
                                                          final Function<T2, T3> getter2,

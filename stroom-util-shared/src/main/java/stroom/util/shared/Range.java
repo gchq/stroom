@@ -160,17 +160,23 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
                 : other;
     }
 
+    /**
+     * Exclusive
+     */
     public T getTo() {
         return to;
     }
 
+    /**
+     * Exclusive
+     */
     protected void setTo(final T to) {
         this.to = to;
     }
 
     /**
      * @param other value to return if to is null
-     * @return The to value or if that is null, the supplied other value
+     * @return The to value (exclusive) or if that is null, the supplied other value
      */
     public T getToOrElse(final T other) {
         return to != null

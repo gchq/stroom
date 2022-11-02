@@ -126,6 +126,7 @@ public class ForwardAggregateDao implements Flushable {
                                 FORWARD_AGGREGATE.SUCCESS,
                                 FORWARD_AGGREGATE.ERROR,
                                 FORWARD_AGGREGATE.TRIES,
+                                FORWARD_AGGREGATE.LAST_TRY_TIME_MS,
                                 positionField)
                         .from(FORWARD_AGGREGATE)
                         .join(FORWARD_DEST).on(FORWARD_DEST.ID.eq(FORWARD_AGGREGATE.FK_FORWARD_DEST_ID))
@@ -149,7 +150,8 @@ public class ForwardAggregateDao implements Flushable {
                             forwardDest,
                             r.get(FORWARD_AGGREGATE.SUCCESS),
                             r.get(FORWARD_AGGREGATE.ERROR),
-                            r.get(FORWARD_AGGREGATE.TRIES));
+                            r.get(FORWARD_AGGREGATE.TRIES),
+                            r.get(FORWARD_AGGREGATE.LAST_TRY_TIME_MS));
                     readQueue.add(forwardAggregate);
                 });
         return pos.get();
@@ -392,6 +394,7 @@ public class ForwardAggregateDao implements Flushable {
                 .set(FORWARD_AGGREGATE.ERROR, forwardAggregate.getError())
                 .setNull(FORWARD_AGGREGATE.NEW_POSITION)
                 .set(FORWARD_AGGREGATE.TRIES, forwardAggregate.getTries())
+                .set(FORWARD_AGGREGATE.LAST_TRY_TIME_MS, forwardAggregate.getLastTryTimeMs())
                 .set(FORWARD_AGGREGATE.RETRY_POSITION, retryPosition)
                 .where(FORWARD_AGGREGATE.ID.eq(forwardAggregate.getId()))
                 .execute();

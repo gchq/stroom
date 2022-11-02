@@ -20,9 +20,10 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.instance.shared.ApplicationInstanceInfo;
 import stroom.instance.shared.ApplicationInstanceResource;
-import stroom.util.concurrent.ThreadUtil;
+import stroom.instance.shared.DestroyRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -52,23 +53,10 @@ class ApplicationInstanceResourceImpl implements ApplicationInstanceResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public Boolean keepAlive(final ApplicationInstanceInfo applicationInstanceInfo) {
-        LOGGER.trace(() -> "keepAlive() - " + applicationInstanceInfo);
-        try {
-            provider.get().keepAlive(applicationInstanceInfo.getUuid());
-            ThreadUtil.sleep(1000);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    @AutoLogged(OperationType.UNLOGGED)
-    public Boolean destroy(final ApplicationInstanceInfo applicationInstanceInfo) {
-        LOGGER.trace(() -> "remove() - " + applicationInstanceInfo);
+    public Boolean destroy(final DestroyRequest destroyRequest) {
+        final ApplicationInstanceInfo applicationInstanceInfo = destroyRequest.getApplicationInstanceInfo();
+        LOGGER.debug(() -> LogUtil.message("destroy() - applicationInstanceInfo: {}, reason: {}",
+                applicationInstanceInfo, destroyRequest.getReason()));
         return provider.get().remove(applicationInstanceInfo.getUuid());
     }
 }

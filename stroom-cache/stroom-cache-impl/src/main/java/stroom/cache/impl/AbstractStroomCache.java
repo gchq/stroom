@@ -71,8 +71,14 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         this.cacheConfigSupplier = cacheConfigSupplier;
     }
 
+    /**
+     * Subclasses should implement this method to add to the cacheBuilder as required
+     * and return a cache built from cacheBuilder. The builder already has a
+     * removalNotificationConsumer if applicable and recordStats has been set.
+     */
     abstract Cache<K, V> createCacheFromBuilder(final Caffeine<K, V> cacheBuilder);
 
+    @Override
     public void rebuild() {
         LOGGER.trace(() -> buildMessage("rebuild"));
 
@@ -101,24 +107,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                     newCacheBuilder::expireAfterWrite);
 
             if (removalNotificationConsumer != null) {
-                final RemovalListener<K, V> removalListener = (key, value, cause) -> {
-                    final Supplier<String> messageSupplier = () -> "Removal notification for cache '" +
-                            name +
-                            "' (key=" +
-                            key +
-                            ", value=" +
-                            value +
-                            ", cause=" +
-                            cause + ")";
-
-                    if (cause == RemovalCause.SIZE) {
-                        LOGGER.warn(() -> "Cache reached size limit '" + name + "'");
-                        LOGGER.debug(messageSupplier);
-                    } else {
-                        LOGGER.trace(messageSupplier);
-                    }
-                    removalNotificationConsumer.accept(key, value);
-                };
+                final RemovalListener<K, V> removalListener = createRemovalListener();
                 newCacheBuilder.removalListener(removalListener);
             }
 
@@ -130,6 +119,29 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
             // Now create and set the cache
             this.cache =  newCache;
         });
+    }
+
+    private RemovalListener<K, V> createRemovalListener() {
+        // Wrap the supplied removalNotificationConsumer with a RemovalListener that
+        // logs the reason for the removal
+        return (key, value, cause) -> {
+            final Supplier<String> messageSupplier = () -> "Removal notification for cache '" +
+                    name +
+                    "' (key=" +
+                    key +
+                    ", value=" +
+                    value +
+                    ", cause=" +
+                    cause + ")";
+
+            if (cause == RemovalCause.SIZE) {
+                LOGGER.warn(() -> "Cache reached size limit '" + name + "'");
+                LOGGER.debug(messageSupplier);
+            } else {
+                LOGGER.trace(messageSupplier);
+            }
+            removalNotificationConsumer.accept(key, value);
+        };
     }
 
     @Override

@@ -37,6 +37,9 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ApplicationInstanceResource extends RestResource, DirectRestService {
 
+    String WEB_SOCKET_MSG_KEY_UUID = "uuid";
+    String WEB_SOCKET_MSG_KEY_USER_ID = "user";
+
     @GET
     @Path("/register")
     @Operation(
@@ -45,18 +48,10 @@ public interface ApplicationInstanceResource extends RestResource, DirectRestSer
     ApplicationInstanceInfo register();
 
     @POST
-    @Path("/keepAlive")
-    @Operation(
-            summary = "Keep an application instance alive",
-            operationId = "applicationInstanceKeepAlive")
-    Boolean keepAlive(@Parameter(description = "applicationInstanceInfo", required = true)
-                            ApplicationInstanceInfo applicationInstanceInfo);
-
-    @POST
     @Path("/remove")
     @Operation(
             summary = "Remove an application instance",
             operationId = "applicationInstanceRemove")
-    Boolean destroy(@Parameter(description = "applicationInstanceInfo", required = true)
-                            ApplicationInstanceInfo applicationInstanceInfo);
+    Boolean destroy(@Parameter(description = "destroyRequest", required = true)
+                    DestroyRequest destroyRequest);
 }

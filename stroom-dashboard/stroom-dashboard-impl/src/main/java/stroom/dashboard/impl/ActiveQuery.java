@@ -59,6 +59,7 @@ class ActiveQuery {
     }
 
     public boolean destroy() {
+        LOGGER.debug("Destroying activeQuery with queryKey: {}", queryKey);
         return dataSourceProvider.destroy(queryKey);
     }
 
