@@ -524,7 +524,7 @@ appConfig:
   publicUri:
     hostname: null
     pathPrefix: null
-    port: 443
+    port: null
     scheme: "https"
   queryHistory:
     daysRetention: 365
@@ -949,7 +949,7 @@ appConfig:
   uiUri:
     hostname: null
     pathPrefix: null
-    port: 443
+    port: null
     scheme: "https"
   volumes:
     createDefaultIndexVolumesOnStart: true

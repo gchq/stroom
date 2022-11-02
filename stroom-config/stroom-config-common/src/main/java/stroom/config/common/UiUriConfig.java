@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 public class UiUriConfig extends UriConfig {
 
     public UiUriConfig() {
-        super("https", null, 443, null);
+        super("https", null, null, null);
     }
 
     @SuppressWarnings("unused")
