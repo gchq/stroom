@@ -1427,26 +1427,6 @@ paths:
       summary: Download matching data
       tags:
       - Data
-  /data/v1/downloadZip:
-    post:
-      operationId: downloadZip
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FindMetaCriteria'
-        description: criteria
-        required: true
-      responses:
-        default:
-          content:
-            application/octet-stream:
-              schema:
-                type: object
-          description: Returns Stroom content data as a zip file
-      summary: Retrieve the content matching the provided criteria as a zip file
-      tags:
-      - Data
   /data/v1/fetch:
     post:
       operationId: fetchData
@@ -1538,6 +1518,22 @@ paths:
       summary: List child types for a stream
       tags:
       - Data
+  /dataDownload/v1/downloadZip:
+    post:
+      operationId: downloadZip
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindMetaCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          description: Returns Stroom content data as a zip file
+      summary: Retrieve content matching the provided criteria as a zip file
+      tags:
+      - Data Download
   /dataRetentionRules/v1:
     get:
       operationId: fetchDataRetentionRules

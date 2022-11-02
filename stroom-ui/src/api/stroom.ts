@@ -5095,25 +5095,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data
-     * @name DownloadZip
-     * @summary Retrieve the content matching the provided criteria as a zip file
-     * @request POST:/data/v1/downloadZip
-     * @secure
-     */
-    downloadZip: (data: FindMetaCriteria, params: RequestParams = {}) =>
-      this.request<any, object>({
-        path: `/data/v1/downloadZip`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Data
      * @name FetchData
      * @summary Fetch matching data
      * @request POST:/data/v1/fetch
@@ -5179,6 +5160,26 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/data/v1/${id}/parts/${partNo}/child-types`,
         method: "GET",
         secure: true,
+        ...params,
+      }),
+  };
+  dataDownload = {
+    /**
+     * No description
+     *
+     * @tags Data Download
+     * @name DownloadZip
+     * @summary Retrieve content matching the provided criteria as a zip file
+     * @request POST:/dataDownload/v1/downloadZip
+     * @secure
+     */
+    downloadZip: (data: FindMetaCriteria, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/dataDownload/v1/downloadZip`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
   };
