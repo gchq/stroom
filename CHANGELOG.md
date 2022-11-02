@@ -5,11 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+
 ## [Unreleased]
 
 ~~~
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
+
+
+## [v7.2-alpha.4] - 2022-11-02
+
+* Issue **#3035** : Add API method to download matching stream store data as a ZIP.
+
+* Issue **#3065** : Add feature to write failed forward data to a dir after several retry attempts.
+
+* Issue **#3059** : Add custom logging feature that provides support for API endpoints to prevent logging the contents
+
+* Issue **#3073** : Add string truncation and value length protection for search result fields.
+
+* Issue **#3038** : Fix intermittent websocket alert.
+
+* Issue **#3087** : Stop URI generation adding port 443 unnecessarily.
 
 * Issue **#3069** : Fix import of a Feed's Stream Type when the export was made in Stroom v5. Add validation to fail the
   import if the stream type in the export is not in `stroom.data.meta.metaTypes`. Fix word wrapping on the import error
@@ -112,13 +128,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#2997** : Stop other nodes booting if migration fails on the first node.
 
+
 ## [v7.1-beta.14] - 2022-07-20
 
 * Issue **#2998** : Add feature to receive individual accounting events.
 
+
 ## [v7.2-alpha.3] - 2022-07-20
 
 * Issue **#2998** : Add feature to receive individual accounting events.
+
 
 ## [v7.1-beta.13] - 2022-07-19
 
@@ -142,6 +161,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#2984** : Change the purge of partial ref loads to happen as part of the purge job and not on boot.
 
 * Issue **#2977** : Fix to destroy stale searches.
+
 
 ## [v7.1-beta.12] - 2022-07-05
 
@@ -306,6 +326,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Add missing Singlton annotation to ProxyConfigProvider.
 
+
 ## [v7.1-beta.11] - 2022-04-01
 
 * Issue **#2749** : Improve support for and fields when searching an Elasticsearch index.
@@ -320,6 +341,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#2817** : Change data retention impact summary to show the counts of records that would be deleted now rather
   than at some point in the future.
+
 
 ## [v7.1-beta.10] - 2022-03-18
 
@@ -435,15 +457,18 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#2520** : Add token authentication to data feed API.
 
+
 ## [v7.2-alpha.2] - 2022-01-31
 
 * Issue **#2730** : Fix folder presenter Processors tab always being empty.
 
 * Issue **#2118** : Rework UI.
 
+
 ## [v7.2-alpha.1] - 2022-01-31
 
 * Issue **#2118** : Rework UI.
+
 
 ## [v7.1-beta.9] - 2022-01-20
 
@@ -453,9 +478,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#2708** : Keep search results fresh by constantly pinging result caches for all active searches.
 
+
 ## [v7.1-beta.8] - 2022-01-17
 
 * Issue **#2715** : Fix invalid rest return type.
+
 
 ## [v7.1-beta.7] - 2022-01-14
 
@@ -851,11 +878,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#2392** : Fix for token type to only allow `api`.
 
+
 ## [v7.1-beta.6] - 2021-09-01
 
 * Issue **#2277** : Add processing filter clone function.
 
 * Issue **#2390** : Fix NPE thrown during proxy aggregation.
+
 
 ## [v7.1-beta.5] - 2021-08-31
 
@@ -893,6 +922,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#2369** : Fix error when searching meta store from a dashboard with a meta key in the query.
 
 * Change explorer root node creation to happen under cluster lock.
+
 
 ## [v7.1-beta.4] - 2021-08-23
 
@@ -1103,6 +1133,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#2205** : Improved migration to prevent null DB values being lost.
 
+
 ## [v7.1-beta.3] - 2021-04-30
 
 * Rules from dashboards early capability demonstrator / prototype capability.
@@ -1110,6 +1141,7 @@ Improve error handling during reference data initialisation.
 * Issue **#2172** : Further improvements to search payload transfer and search completion.
 
 * Issue **#2193** : Enable autologger to work for delete with criteria operations.
+
 
 ## [v7.1-beta.2] - 2021-04-28
 
@@ -1177,6 +1209,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
 
+
 ## [v7.1-beta.1] - 2021-04-13
 
 * Ported Elasticsearch integration from v6, for compatibility with v7.
@@ -1185,19 +1218,23 @@ Improve error handling during reference data initialisation.
 
 * Issue **#759** : Add GZIP support for `FileAppender` and `RollingFileAppender`.
 
+
 ## [v7.0-beta.104] - 2021-04-13
 
 * Switched from `node-sass` to `sass`.
 
 * Fix `node` and `swagger-typescript-api` versions.
 
+
 ## [v7.0-beta.103] - 2021-04-13
 
 * Rebuild.
 
+
 ## [v7.0-beta.102] - 2021-04-09
 
 * Issue **#2174** : The expression to DB condition converter is now more tolerant of missing value mappings.
+
 
 ## [v7.0-beta.101] - 2021-04-08
 
@@ -1214,11 +1251,13 @@ Improve error handling during reference data initialisation.
 * Issue **#2025** : Event logging now attempts to use the `X-FORWARDED-FOR` request header to identify the originating
   client IP.
 
+
 ## [v7.0-beta.100] - 2021-04-02
 
 * Issue **#1598** : Audit logging uplifted throughout codebase.
 
 * Issue **#1613** : Added event logging to UserResourceImpl.
+
 
 ## [v7.0-beta.99] - 2021-04-01
 
@@ -1238,6 +1277,7 @@ Improve error handling during reference data initialisation.
 * Issue **#2142**: Changed certificate authentication to ensure that if a certificate is presented then the DN from the
   cert will be used and no other header attribute.
 
+
 ## [v7.0-beta.98] - 2021-03-30
 
 * Issue **#2138** : Fixed error thrown when updating a property due to the property being updated twice as a result of
@@ -1249,6 +1289,7 @@ Improve error handling during reference data initialisation.
 * Issue **#2152** : Session list now only shows user authenticated sessions.
 
 * Issue **#2149** : Fixed index volume and index shard migration.
+
 
 ## [v7.0-beta.97] - 2021-03-26
 
@@ -1271,6 +1312,7 @@ Improve error handling during reference data initialisation.
 * Issue **#2107** : Fixed issue where the processor filter UI was saying that no filter had been applied to feeds
   because the UI wasn't checking feed filtering by docref.
 
+
 ## [v7.0-beta.96] - 2021-03-23
 
 * Issue **#2099** : Fix stepping source pane for segmented (cooked) data.
@@ -1279,9 +1321,11 @@ Improve error handling during reference data initialisation.
 
 * Provide audit log record for permission changes to explorer items (documents)
 
+
 ## [v7.0-beta.95] - 2021-03-18
 
 * Issue **#2105** : Fixed migration of annotations DB.
+
 
 ## [v7.0-beta.94] - 2021-03-17
 
@@ -1296,6 +1340,7 @@ Improve error handling during reference data initialisation.
 
 * Add null protection to `login_count` and `login_failures` in `users` to `account` table migration.
 
+
 ## [v7.0-beta.93] - 2021-03-16
 
 * Issue **#2088** : Fixed retrieval of stored search results when not using extraction.
@@ -1303,6 +1348,7 @@ Improve error handling during reference data initialisation.
 * Issue **#2088** : Fixed NullPointerException caused when stepping.
 
 * Issue **#2084** : Fix Bad Request message and lockup after cancelling content import.
+
 
 ## [v7.0-beta.92] - 2021-03-15
 
@@ -1313,11 +1359,13 @@ Improve error handling during reference data initialisation.
 * Issue **#2094** : Corrected DB table creation to state the charset as `utf8mb4` and not `utf8` which is ambiguous in
   MySQL.
 
+
 ## [v7.0-beta.91] - 2021-03-14
 
 * Refactor auth/identity DB migration scripts.
 
 * Add pre migration SQL scripts.
+
 
 ## [v7.0-beta.90] - 2021-03-12
 
@@ -1351,23 +1399,28 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1866** : Change zip distribution shell scripts to execute from anywhere.
 
+
 ## [v7.0-beta.89] - 2021-02-26
 
 * Change stroom/proxy docker image base to `adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine`
 
 * Add authentication config to swagger spec.
 
+
 ## [v7.0-beta.88] - 2021-02-26
 
 * Fix travis release artefacts.
+
 
 ## [v7.0-beta.87] - 2021-02-25
 
 * No changes
 
+
 ## [v7.0-beta.86] - 2021-02-25
 
 * Fix travis release artefacts.
+
 
 ## [v7.0-beta.85] - 2021-02-24
 
@@ -1379,9 +1432,11 @@ Improve error handling during reference data initialisation.
 
 * Issue **#2028** : Don't autolog standard object fields by default
 
+
 ## [v7.0-beta.84] - 2021-02-24
 
 * No changes, adding more release artefacts in Travis build.
+
 
 ## [v7.0-beta.83] - 2021-02-23
 
@@ -1395,11 +1450,13 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1742** : Ensure that an <Object> is always logged to guarantee schema compliance.
 
+
 ## [v7.0-beta.82] - 2021-02-18
 
 * Issue **#2049** : Updated Swagger and moved to the OpenAPI 3.0 Specification.
 
 * Issue **#2049** : Fixed some issues with the resource API that were preventing visualisations from loading.
+
 
 ## [v7.0-beta.81] - 2021-02-16
 
@@ -1448,6 +1505,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#2020** : Prevent autologger redacting boolean properties
 
+
 ## [v7.0-beta.80] - 2021-01-28
 
 * Issue **#2018** : Fixed intermittent search issue that was sometimes causing search to complete too early without
@@ -1467,6 +1525,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1946** : Removed unnecessary index shard state change error.
 
+
 ## [v7.0-beta.79] - 2021-01-26
 
 * Issue **#2006** : Use UTC timezone when comparing date in repository folder name.
@@ -1485,6 +1544,7 @@ Improve error handling during reference data initialisation.
 
 * Fix NPE in StroomEventLoggingUtil.
 
+
 ## [v7.0-beta.78] - 2021-01-14
 
 * Issue **#2000** : `RemoteSearchResultFactory.destroy()` is now performed as the processing user.
@@ -1499,6 +1559,7 @@ Improve error handling during reference data initialisation.
 * Issue **#1997** : Fix missing _Format_ option on XSLT and TextConverter editors.
 
 * Improved security for handling entity events.
+
 
 ## [v7.0-beta.77] - 2021-01-12
 
@@ -1521,9 +1582,11 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1986** : Fix missing gutter warning/error icons in the stepper code editor.
 
+
 ## [v7.0-beta.76] - 2021-01-07
 
 * No changes.
+
 
 ## [v7.0-beta.75] - 2021-01-06
 
@@ -1531,13 +1594,16 @@ Improve error handling during reference data initialisation.
 
 * Change event logging to use new fluent API.
 
+
 ## [v7.0-beta.74] - 2020-12-15
 
 * No changes.
 
+
 ## [v7.0-beta.73] - 2020-12-15
 
 * Change github tokens in travis build.
+
 
 ## [v7.0-beta.72] - 2020-12-15
 
@@ -1591,6 +1657,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1954** : Change code that sets ReceivedPath to try getting a value from DOCKER_HOST_(HOSTNAME|IP) env vars
   first.
+
 
 ## [v7.0-beta.71] - 2020-12-02
 
@@ -1647,6 +1714,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1949** : Fixed bug in download for streams from multiple feeds.
 
+
 ## [v7.0-beta.70] - 2020-11-16
 
 * Issue **#1947** : Fixed NPE thrown when trying to unassign processing tasks by setting the assigned node to null.
@@ -1661,6 +1729,7 @@ Improve error handling during reference data initialisation.
 * Add REST endpoint for purging reference data.
 
 * Issue **#1938** : Fix missing ref loading errors/warnings, improve warning messages.
+
 
 ## [v7.0-beta.69] - 2020-11-10
 
@@ -1717,6 +1786,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1907** : Fixed NPE.
 
+
 ## [v7.0-beta.68] - 2020-10-22
 
 * Issue **#1733** : Support xsl:output options for XML output from pipeline (XMLWriter)
@@ -1726,6 +1796,7 @@ Improve error handling during reference data initialisation.
 * Issue **#1848** : Fix NPE when importing certain processor filters.
 
 * Issue **#1894** : Improvements to search performance and fix for hanging searches.
+
 
 ## [v7.0-beta.67] - 2020-10-15
 
@@ -1780,33 +1851,41 @@ Improve error handling during reference data initialisation.
 
 * Change key widths used in ref data store. Existing stores will need to be deleted and re-generated.
 
+
 ## [v7.0-beta.66] - 2020-09-24
 
 * Added code to authenticate against AWS ALB.
+
 
 ## [v7.0-beta.65] - 2020-09-24
 
 * Added code to authenticate against AWS ALB.
 
+
 ## [v7.0-beta.64] - 2020-09-24
 
 * Added code to authenticate against AWS ALB.
+
 
 ## [v7.0-beta.63] - 2020-09-22
 
 * Added code to authenticate against AWS ALB.
 
+
 ## [v7.0-beta.62] - 2020-09-22
 
 * Added code to authenticate against AWS ALB.
+
 
 ## [v7.0-beta.61] - 2020-09-22
 
 * Added code to authenticate against AWS ALB.
 
+
 ## [v7.0-beta.60] - 2020-09-22
 
 * Added code to authenticate against AWS ALB.
+
 
 ## [v7.0-beta.59] - 2020-09-22
 
@@ -1814,13 +1893,16 @@ Improve error handling during reference data initialisation.
 
 * Changed default behaviour of `useDefaultOpenIdCredentials`.
 
+
 ## [v7.0-beta.58] - 2020-09-22
 
 * Added code to authenticate against AWS ALB.
 
+
 ## [v7.0-beta.57] - 2020-09-18
 
 * Failed build.
+
 
 ## [v7.0-beta.56] - 2020-09-18
 
@@ -1828,13 +1910,16 @@ Improve error handling during reference data initialisation.
 
 * Remove requirement for Reference stream type in ref data API lookup requests.
 
+
 ## [v7.0-beta.55] - 2020-09-15
 
 * Fix names in travis release plugin.
 
+
 ## [v7.0-beta.54] - 2020-09-15
 
 * Rename release artefact `stroom-proxy-config.X.yml` to `stroom-proxy-app-config.X.yml`.
+
 
 ## [v7.0-beta.53] - 2020-09-15
 
@@ -1857,12 +1942,14 @@ Improve error handling during reference data initialisation.
 
 * Change logFormat to include time in `prod.yml` and `config.yml`.
 
+
 ## [v7.0-beta.52] - 2020-09-10
 
 * Issue **#1850** : Add new command line commands `create_account`, `reset_password` and `manage_users` to enable the
   creation of accounts to bootstrap the application.
 
 * Change `admin` to `stroomAdmin` in distribution shell scripts.
+
 
 ## [v7.0-beta.51] - 2020-09-09
 
@@ -1890,6 +1977,7 @@ Improve error handling during reference data initialisation.
 * Change extraction location of bundled LMDB binary to be the same as the store files.
 
 * Change default value for `pipeline.referenceData.maxPutsBeforeCommit` to 0 (i.e. don't commit mid-load).
+
 
 ## [v7.0-beta.50] - 2020-09-07
 
@@ -1928,13 +2016,16 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1832** : Fix inability to add users/groups in the Document Permissions screen.
 
+
 ## [v7.0-beta.49] - 2020-09-02
 
 * Fix accidental commit of broken code.
 
+
 ## [v7.0-beta.48] - 2020-09-02
 
 * Fix duplicate call to bintray upload in travis script.
+
 
 ## [v7.0-beta.47] - 2020-09-02
 
@@ -1975,6 +2066,7 @@ Improve error handling during reference data initialisation.
 * Issue **#1665** : Recognised meta types can now be specified in config and drop downs now allow selection in the
   pipeline editor.
 
+
 ## [v7.0-beta.46] - 2020-08-23
 
 * Issue **#1702** : Fix namespace handling in XML reference data values.
@@ -1992,6 +2084,7 @@ Improve error handling during reference data initialisation.
 
 * Fix _No appender for stroom.docref.DocRef_ ERRORs in the log.
 
+
 ## [v7.0-beta.45] - 2020-08-14
 
 * Issue **#1793** : Fixed Solr search query creation.
@@ -2002,13 +2095,16 @@ Improve error handling during reference data initialisation.
 
 * Revert back to full build.
 
+
 ## [v7.0-beta.44] - 2020-08-14
 
 * Reverted deploy changes until travis dpl v2 is stable.
 
+
 ## [v7.0-beta.43] - 2020-08-14
 
 * Fixing release artefacts.
+
 
 ## [v7.0-beta.42] - 2020-08-13
 
@@ -2019,6 +2115,7 @@ Improve error handling during reference data initialisation.
   error) stream and deletes other outputs.
 
 * Issue **#1749** : Removed old benchmark job.
+
 
 ## [v7.0-beta.41] - 2020-08-12
 
@@ -2118,6 +2215,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1725** : Fix Data Splitter onlyMatch using zero based instead of one based numbers.
 
+
 ## [v7.0-beta.39] - 2020-07-06
 
 * Issue **#1716** : Prevent export of processor filters that are reprocess or deleted.
@@ -2133,6 +2231,7 @@ Improve error handling during reference data initialisation.
 * Issue **#1668** : Fixed incorrect parameter count for XSLT `meta` function.
 
 * Issue **#1619** : Fix delete stream summary.
+
 
 ## [v7.0-beta.38] - 2020-06-25
 
@@ -2176,6 +2275,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1277** : Fix Enable/Disable toggle button on Rule Set screen.
 
+
 ## [v7.0-beta.37] - 2020-06-15
 
 * Add _Impact Summary_ tab to _Data Retention_ to show breakdown of counts of streams to be deleted.
@@ -2192,6 +2292,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1280** : Fix creation of default index volumes.
 
+
 ## [v7.0-beta.36] - 2020-06-02
 
 * Issue **#1621** : Fix NPE in proxy content syncing.
@@ -2207,6 +2308,7 @@ Improve error handling during reference data initialisation.
 * Add regex filtering with `/` prefix to fuzzy matching.
 
 * Change word boundary matching to require a `?` prefix.
+
 
 ## [v7.0-beta.35] - 2020-05-28
 
@@ -2229,6 +2331,7 @@ Improve error handling during reference data initialisation.
 * Add default data retention rule to the UI screen to make it clear what happens by default.
 
 * Add fuzzy match filter to explorer tree.
+
 
 ## [v7.0-beta.34] - 2020-05-26
 
@@ -2263,6 +2366,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1593** : NPE copying empty expressions
 
+
 ## [v7.0-beta.33] - 2020-05-22
 
 * Issue **#1588** : Fix processor filter import.
@@ -2270,6 +2374,7 @@ Improve error handling during reference data initialisation.
 * Issue **#1566** : Fixed UI data restore behaviour.
 
 * Make public port configurable
+
 
 ## [v7.0-beta.32] - 2020-05-19
 
@@ -2302,6 +2407,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1141** : Make SQL stats aggregation delete unused stat keys at the end.
 
+
 ## [v7.0-beta.31] - 2020-05-12
 
 * Issue **#1546** : Fixed opening and editing of data retention rules.
@@ -2321,6 +2427,7 @@ Improve error handling during reference data initialisation.
   now also shows processor filters.
 
 * Issue **#1545** : Add property `enableDistributedJobsOnBootstrap` to enable/disable processing on first boot.
+
 
 ## [v7.0-beta.30] - 2020-05-06
 
@@ -2347,6 +2454,7 @@ Improve error handling during reference data initialisation.
 * Remove healthchecks from rest resources and servlets that never give an unhealthy result.
 
 * Add error info to AppConfigMonitor health check.
+
 
 ## [v7.0-beta.29] - 2020-05-04
 
@@ -2378,6 +2486,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1479** : Unable to set index volume limits.
 
+
 ## [v7.0-beta.28] - 2020-04-29
 
 * Issue **#1489** : Reprocess streams feature failing.
@@ -2392,6 +2501,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1433** : StandardKafkaProducer failed when writing XML kafka payloads.
 
+
 ## [v7.0-beta.27] - 2020-04-27
 
 * Issue **#1417** : Allow processor filters to be exported with Pipelines.
@@ -2404,13 +2514,16 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1448** : The internal processing user now has a JWT and passes it when making calls to other nodes.
 
+
 ## [v7.0-beta.26] - 2020-04-22
 
 * Fix gradle build for versioned builds
 
+
 ## [v7.0-beta.25] - 2020-04-22
 
 * Assorted fixes to the new React UI pages.
+
 
 ## [v7.0-beta.24] - 2020-04-21
 
@@ -2445,6 +2558,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1427** : Change remote call to auth service to a local call.
 
+
 ## [v7.0-beta.23] - 2020-03-24
 
 * Rename all legacy DB tables to `OLD_`.
@@ -2452,6 +2566,7 @@ Improve error handling during reference data initialisation.
 * Issue **#1394** : Fix duplicate tables appearing in Monitoring -> Database Tables.
 
 * Add NodeEndpointConfiguration. Change `node` table to hold the base endpoint.
+
 
 ## [v7.0-beta.22] - 2020-03-10
 
@@ -2486,19 +2601,23 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1361** : Changed the way headers are parsed for the HttpCall XSLT function.
 
+
 ## [v7.0-beta.21] - 2020-02-24
 
 * Add null checks to DB migration.
 
 * Add deletion of constraint `IDX_SHARD_FK_IDX_ID` to migration script.
 
+
 ## [v7.0-beta.20] - 2020-02-13
 
 * Fix bug in `processor_task` migration script.
 
+
 ## [v7.0-beta.19] - 2020-02-10
 
 * Fix bugs in DB migration scripts.
+
 
 ## [v7.0-beta.18] - 2020-02-05
 
@@ -2507,6 +2626,7 @@ Improve error handling during reference data initialisation.
 * Fix issues with migrating null audit columns.
 
 * Improve output of TestYamlUtil.
+
 
 ## [v7.0-beta.17] - 2020-01-29
 
@@ -2529,6 +2649,7 @@ Improve error handling during reference data initialisation.
 
 * Stop MySQL outputing Note level warnings during migration about things that don't exist when we expect them not to.
 
+
 ## [v7.0-beta.13] - 2019-12-24
 
 * Add `migrate` command line argument to run just the DB migrations.
@@ -2543,13 +2664,16 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1311** : Improved source location tracking.
 
+
 ## [v7.0-beta.12] - 2019-12-04
 
 * Change local.yml.sh to also look for ip in /sbin
 
+
 ## [v7.0-beta.11] - 2019-12-04
 
 * Fix invalid SQL syntax in V07_00_00_012__Dictionary
+
 
 ## [v7.0-beta.10] - 2019-12-04
 
@@ -2585,6 +2709,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1324** : Improved logging and added SSL options for HTTPAppender.
 
+
 ## [v7.0-beta.9] - 2019-11-20
 
 * Fix SSL connection failure on remote feed staus check.
@@ -2594,6 +2719,7 @@ Improve error handling during reference data initialisation.
 * Fix password masking in ProxyConfigHealthCheck.
 
 * Change servlet path of ProxyStatusServlet from `/config` to `/status`.
+
 
 ## [v7.0-beta.8] - 2019-11-20
 
@@ -2656,6 +2782,7 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1296** : Fixed NPE in StreamMapCreator caused when a stream can not be found.
 
+
 ## [v7.0-beta.7] - 2019-10-23
 
 * Issue **#1288** : Streams now show the name of the pipeline used to create them even if the user doesn't have
@@ -2669,6 +2796,7 @@ Improve error handling during reference data initialisation.
   terminated.
 
 * Fix problem of missing fallback config in docker image.
+
 
 ## [v7.0-beta.6] - 2019-10-15
 
@@ -2713,21 +2841,26 @@ Improve error handling during reference data initialisation.
 * Issue **#1258** : Fixed issue affecting search expressions against keyword fields using dictionaries containing
   carriage returns.
 
+
 ## [v7.0-beta.5] - 2019-09-23
 
 * Fixes to proxy
+
 
 ## [v7.0-beta.4] - 2019-09-16
 
 * Fix stroom-proxy Dockerfile
 
+
 ## [v7.0-beta.3] - 2019-09-16
 
 * Minor fixes, including an essential fix to config
 
+
 ## [v7.0-beta.2] - 2019-09-13
 
 * Fix docker build
+
 
 ## [v7.0-beta.1] - 2019-09-11
 
@@ -2958,17 +3091,21 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1136** : Remove recursive chown from stroom and proxy docker entrypoint scripts.
 
+
 ## [v7.0-alpha.5] - 2019-06-12
 
 * Fix YAML substitution.
+
 
 ## [v7.0-alpha.4] - 2019-06-11
 
 * Update API paths
 
+
 ## [v7.0-alpha.3] - 2019-05-10
 
 * Fix config
+
 
 ## [v7.0-alpha.2] - 2019-05-10
 
@@ -2985,6 +3122,7 @@ Improve error handling during reference data initialisation.
 * Issue **#1119** : StreamDumpTool will now dump data to zip files containing all data and associated meta and context
   data. This now behaves the same way as downloading data from the UI and can be used as an input to proxy aggregation
   or uploaded manually.
+
 
 ## [v7.0-alpha.1] - 2019-04-23
 
@@ -4744,7 +4882,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.4...HEAD
+[v7.2-alpha.4]: https://github.com/gchq/stroom/compare/v7.1-beta.14...v7.2-alpha.4
 
 [v7.1-beta.14]: https://github.com/gchq/stroom/compare/v7.1-beta.13...v7.1-beta.14
 
