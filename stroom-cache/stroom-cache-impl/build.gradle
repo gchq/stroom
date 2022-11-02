@@ -4,6 +4,8 @@ dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
 //    implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    // Seem to need this else it moans it can't see HasName in AbstractStroomCacheImpl
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')

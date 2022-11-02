@@ -18,6 +18,8 @@ package stroom.docstore.shared;
 
 import stroom.docref.DocRef;
 
+import java.util.Objects;
+
 public final class DocRefUtil {
 
     private DocRefUtil() {
@@ -25,11 +27,30 @@ public final class DocRefUtil {
     }
 
     public static DocRef create(final Doc doc) {
-        if (doc == null) {
-            return null;
-        }
+        return doc != null
+                ? new DocRef(doc.getType(), doc.getUuid(), doc.getName())
+                : null;
+    }
 
-        return new DocRef(doc.getType(), doc.getUuid(), doc.getName());
+    /**
+     * Return true if the docRef and doc have the same UUID and type.
+     * If either is null, returns false.
+     */
+    public static boolean isSameDocument(final Doc doc, final DocRef docRef) {
+        return isSameDocument(docRef, doc);
+    }
+
+    /**
+     * Return true if the docRef and doc have the same UUID and type.
+     * If either is null, returns false.
+     */
+    public static boolean isSameDocument(final DocRef docRef, final Doc doc) {
+        if (docRef == null || doc == null) {
+            return false;
+        } else {
+            return Objects.equals(docRef.getUuid(), doc.getUuid())
+                    && Objects.equals(docRef.getType(), doc.getType());
+        }
     }
 
     public static String createSimpleDocRefString(final DocRef docRef) {

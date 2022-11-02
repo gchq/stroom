@@ -26,10 +26,12 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.JobTypeCell;
+import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
@@ -39,6 +41,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 
@@ -73,6 +76,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
     private final MyDataGrid<JobNode> dataGrid;
 
     private String jobName;
+    private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
 
     @Inject
     public JobNodeListPresenter(final EventBus eventBus,
@@ -99,11 +103,12 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                                 final Consumer<ResultPage<JobNode>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<JobNode>> rest = restFactory.create();
+                findJobNodeCriteria.getJobName().setString(jobName);
                 rest
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
                         .call(JOB_NODE_RESOURCE)
-                        .list(jobName, null);
+                        .find(findJobNodeCriteria);
             }
 
             @Override
@@ -111,26 +116,39 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 // Ping each node.
                 data.getValues().forEach(row -> {
                     final Rest<JobNodeInfo> rest = restFactory.create();
-                    rest.onSuccess(info -> {
-                        latestNodeInfo.put(row, info);
-                        super.changeData(data);
-                    }).onFailure(throwable -> {
-                        latestNodeInfo.remove(row);
-                        super.changeData(data);
-                    }).call(JOB_NODE_RESOURCE).info(row.getJob().getName(), row.getNodeName());
+                    rest
+                            .onSuccess(info -> {
+                                latestNodeInfo.put(row, info);
+                                super.changeData(data);
+                            })
+                            .onFailure(throwable -> {
+                                latestNodeInfo.remove(row);
+                                super.changeData(data);
+                            })
+                            .call(JOB_NODE_RESOURCE)
+                            .info(row.getJob().getName(), row.getNodeName());
                 });
                 super.changeData(data);
             }
         };
     }
 
+    private void refresh() {
+        dataProvider.refresh();
+    }
+
     /**
      * Add the columns to the table.
      */
     private void initTable() {
+
+        DataGridUtil.addColumnSortHandler(dataGrid, findJobNodeCriteria, this::refresh);
+
         // Enabled.
-        final Column<JobNode, TickBoxState> enabledColumn = new Column<JobNode, TickBoxState>(TickBoxCell.create(false,
-                false)) {
+        final Column<JobNode, TickBoxState> enabledColumn = new OrderByColumn<JobNode, TickBoxState>(
+                TickBoxCell.create(false, false),
+                FindJobNodeCriteria.FIELD_ID_ENABLED,
+                true) {
             @Override
             public TickBoxState getValue(final JobNode row) {
                 return TickBoxState.fromBoolean(row.isEnabled());
@@ -185,7 +203,10 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         }, "<br/>", 20);
 
         // Node Name
-        final Column<JobNode, String> nodeColumn = new Column<JobNode, String>(new TextCell()) {
+        final Column<JobNode, String> nodeColumn = new OrderByColumn<JobNode, String>(
+                new TextCell(),
+                FindJobNodeCriteria.FIELD_ID_NODE,
+                true) {
             @Override
             public String getValue(final JobNode row) {
                 return row.getNodeName();

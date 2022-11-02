@@ -31,7 +31,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * A place where a indexUuid has been created.
@@ -333,6 +336,9 @@ public class IndexShard {
 
         private final String displayValue;
         private final byte primitiveValue;
+        private static final Map<String, IndexShardStatus> DISPLAY_NAME_TO_STATUS_MAP =
+                Arrays.stream(IndexShardStatus.values())
+                        .collect(Collectors.toMap(IndexShardStatus::getDisplayValue, Function.identity()));
 
         IndexShardStatus(final String displayValue, final int primitiveValue) {
             this.displayValue = displayValue;
@@ -347,6 +353,14 @@ public class IndexShard {
         @Override
         public byte getPrimitiveValue() {
             return primitiveValue;
+        }
+
+        public static IndexShardStatus fromDisplayValue(final String displayValue) {
+            final IndexShardStatus indexShardStatus = DISPLAY_NAME_TO_STATUS_MAP.get(displayValue);
+            if (indexShardStatus == null) {
+                throw new RuntimeException("Unknown status with displayValue " + displayValue);
+            }
+            return indexShardStatus;
         }
     }
 }

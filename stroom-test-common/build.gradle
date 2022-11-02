@@ -14,9 +14,11 @@ dependencies {
     implementation libs.guice5
     implementation libs.hikari
     implementation libs.junit_jupiter_api
+    implementation libs.junit_platform_launcher
     implementation libs.mockito_core
     implementation libs.mockito_junit_jupiter
     implementation libs.slf4j_api
+    implementation libs.vavr
     implementation libs.wix_embedded_mysql
 
     // The following logging libs are needed when running junits outside dropwizard

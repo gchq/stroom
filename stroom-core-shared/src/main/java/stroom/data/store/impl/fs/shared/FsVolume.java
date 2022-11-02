@@ -18,6 +18,8 @@ package stroom.data.store.impl.fs.shared;
 
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasCapacity;
+import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -29,15 +31,13 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
+import java.util.OptionalLong;
 
 /**
  * Some path on the network where we can store stuff.
  */
 @JsonInclude(Include.NON_NULL)
-public class FsVolume implements HasAuditInfo, HasIntegerId {
-
-    private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
-    private static final double NINETY_NINE_PERCENT = 0.99D;
+public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
 
     @JsonProperty
     private Integer id;
@@ -59,6 +59,9 @@ public class FsVolume implements HasAuditInfo, HasIntegerId {
     private Long byteLimit;
     @JsonProperty
     private FsVolumeState volumeState;
+
+    @JsonIgnore
+    private final HasCapacityInfo capacityInfo = new CapacityInfo();
 
     public FsVolume() {
         status = VolumeUseStatus.ACTIVE;
@@ -94,14 +97,29 @@ public class FsVolume implements HasAuditInfo, HasIntegerId {
     /**
      * Utility to create a volume.
      *
-     * @param node to use
      * @param path to use
      * @return volume
      */
     public static FsVolume create(final String path, final FsVolumeState volumeState) {
+        return create(path, volumeState, null);
+    }
+
+    /**
+     * Utility to create a volume.
+     *
+     * @param path to use
+     * @return volume
+     */
+    public static FsVolume create(final String path,
+                                  final FsVolumeState volumeState,
+                                  final Long byteLimit) {
         final FsVolume volume = new FsVolume();
         volume.setPath(path);
         volume.setVolumeState(volumeState);
+        if (byteLimit != null) {
+            volumeState.setBytesFree(byteLimit - volumeState.getBytesUsed());
+        }
+        volume.setByteLimit(byteLimit);
         return volume;
     }
 
@@ -158,6 +176,10 @@ public class FsVolume implements HasAuditInfo, HasIntegerId {
         this.updateUser = updateUser;
     }
 
+    /**
+     * @return The path the volume resides in. This may be a relative path in which case
+     * it should be resolved relative to stroom.home before use.
+     */
     public String getPath() {
         return path;
     }
@@ -191,33 +213,15 @@ public class FsVolume implements HasAuditInfo, HasIntegerId {
     }
 
     @JsonIgnore
-    public boolean isFull() {
-        // If we haven't established how many bytes are used on a volume then
-        // assume it is not full (could be dangerous but worst case we will get
-        // an IO error).
-        if (volumeState.getBytesUsed() == null || volumeState.getBytesTotal() == null) {
-            return false;
-        }
+    @Override
+    public HasCapacityInfo getCapacityInfo() {
+        return capacityInfo;
+    }
 
-        final long used = volumeState.getBytesUsed();
-        final long total = volumeState.getBytesTotal();
-
-        // If a byte limit has been set then ensure it is less than the total
-        // number of bytes on the volume and if it is return whether the number
-        // of bytes used are greater than this limit.
-        if (byteLimit != null && byteLimit < total) {
-            return volumeState.getBytesUsed() >= byteLimit;
-        }
-
-        // No byte limit has been set by the user so establish the maximum size
-        // that we will allow.
-        // Choose the higher limit of either the total storage minus 10Gb or 99%
-        // of total storage.
-        final long minusTenGig = total - TEN_GB;
-        final long percentage = (long) (total * NINETY_NINE_PERCENT);
-        final long max = Math.max(minusTenGig, percentage);
-
-        return used >= max;
+    @JsonIgnore
+    @Override
+    public String getIdentifier() {
+        return path;
     }
 
     @Override
@@ -288,6 +292,62 @@ public class FsVolume implements HasAuditInfo, HasIntegerId {
         @Override
         public byte getPrimitiveValue() {
             return primitiveValue;
+        }
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Essentially a read-only view of some parts of {@link FsVolume}
+     */
+    private class CapacityInfo implements HasCapacityInfo {
+
+        @Override
+        public OptionalLong getCapacityUsedBytes() {
+            if (volumeState == null) {
+                return OptionalLong.empty();
+            } else {
+                final Long bytesUsed = volumeState.getBytesUsed();
+                return bytesUsed != null
+                        ? OptionalLong.of(bytesUsed)
+                        : OptionalLong.empty();
+            }
+        }
+
+        @Override
+        public OptionalLong getCapacityLimitBytes() {
+            return byteLimit != null
+                    ? OptionalLong.of(byteLimit)
+                    : OptionalLong.empty();
+        }
+
+        @Override
+        public OptionalLong getTotalCapacityBytes() {
+            if (volumeState == null) {
+                return OptionalLong.empty();
+            } else {
+                final Long bytesTotal = volumeState.getBytesTotal();
+                return bytesTotal != null
+                        ? OptionalLong.of(bytesTotal)
+                        : OptionalLong.empty();
+            }
+        }
+
+        @Override
+        public OptionalLong getFreeCapacityBytes() {
+            if (volumeState == null) {
+                return OptionalLong.empty();
+            } else {
+                final Long bytesFree = volumeState.getBytesFree();
+                return bytesFree != null
+                        ? OptionalLong.of(bytesFree)
+                        : OptionalLong.empty();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return this.asString();
         }
     }
 }

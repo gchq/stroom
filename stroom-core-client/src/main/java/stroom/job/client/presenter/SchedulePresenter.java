@@ -22,7 +22,7 @@ import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
-import stroom.util.client.StroomCoreStringUtil;
+import stroom.util.shared.StringUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -70,8 +70,8 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
     }
 
     private void read() {
-//        getView().getScheduledType().setText(StroomCoreStringUtil.toString(jobType));
-        getView().getScheduledString().setText(StroomCoreStringUtil.toString(scheduleString));
+//        getView().getScheduledType().setText(StringUtil.toString(jobType));
+        getView().getScheduledString().setText(StringUtil.toString(scheduleString));
         calcTimes();
     }
 

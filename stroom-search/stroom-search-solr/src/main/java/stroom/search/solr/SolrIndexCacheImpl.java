@@ -18,7 +18,7 @@
 package stroom.search.solr;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -44,14 +45,17 @@ class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler, Clearab
     private static final String CACHE_NAME = "Solr Index Cache";
 
     private final SolrIndexStore solrIndexStore;
-    private final ICache<DocRef, CachedSolrIndex> cache;
+    private final LoadingStroomCache<DocRef, CachedSolrIndex> cache;
 
     @Inject
     SolrIndexCacheImpl(final CacheManager cacheManager,
                        final SolrIndexStore solrIndexStore,
-                       final SolrConfig solrConfig) {
+                       final Provider<SolrConfig> solrConfigProvider) {
         this.solrIndexStore = solrIndexStore;
-        cache = cacheManager.create(CACHE_NAME, solrConfig::getIndexCache, this::create);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> solrConfigProvider.get().getIndexCache(),
+                this::create);
     }
 
     private CachedSolrIndex create(final DocRef docRef) {

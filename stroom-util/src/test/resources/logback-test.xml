@@ -8,12 +8,12 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="debug" />
+    <logger name="stroom" level="debug"/>
 
-<!--    <logger name="stroom.util.filter" level="trace" />-->
+    <!--    <logger name="stroom.util.io.capacity" level="trace" />-->
 
     <root level="error">
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="STDOUT"/>
     </root>
 
 </configuration>

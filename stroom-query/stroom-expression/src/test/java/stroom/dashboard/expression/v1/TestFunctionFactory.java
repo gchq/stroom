@@ -35,7 +35,7 @@ class TestFunctionFactory {
 
         // Scan the class path to find all the classes with @FunctionDef
         try (ScanResult result = new ClassGraph()
-                .whitelistPackages(Function.class.getPackageName())
+                .acceptPackages(Function.class.getPackageName())
                 .enableClassInfo()
                 .ignoreClassVisibility()
                 .enableAnnotationInfo()
@@ -173,8 +173,8 @@ class TestFunctionFactory {
                 .isTrue();
 
         softAssertions.assertThat(Arrays.stream(signature.args())
-                .filter(FunctionArg::isVarargs)
-                .count())
+                        .filter(FunctionArg::isVarargs)
+                        .count())
                 .withFailMessage(classAndSigName +
                         " - Only one argument can be a varargs argument.")
                 .isLessThanOrEqualTo(1);

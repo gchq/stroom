@@ -8,7 +8,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation project(':stroom-docref')
-    
+
     implementation libs.gin
     implementation libs.guice3
     implementation libs.gwt_user
@@ -21,11 +21,13 @@ dependencies {
 
     //Needed only for the GwtCompilerWrapper
     compileOnly libs.gwt_dev
-    
+
     testImplementation project(':stroom-util')
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
+    testImplementation libs.gwt_dev
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.slf4j_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

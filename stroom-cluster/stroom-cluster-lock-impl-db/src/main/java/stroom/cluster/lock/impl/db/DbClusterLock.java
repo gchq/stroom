@@ -18,18 +18,25 @@ package stroom.cluster.lock.impl.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.time.StroomDuration;
 
+import com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException;
+import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.cluster.lock.impl.db.jooq.tables.ClusterLock.CLUSTER_LOCK;
@@ -41,10 +48,13 @@ class DbClusterLock implements Clearable {
     private final Set<String> registeredLockSet = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final ClusterLockDbConnProvider clusterLockDbConnProvider;
+    private final Provider<ClusterLockConfig> clusterLockConfigProvider;
 
     @Inject
-    DbClusterLock(final ClusterLockDbConnProvider clusterLockDbConnProvider) {
+    DbClusterLock(final ClusterLockDbConnProvider clusterLockDbConnProvider,
+                  final Provider<ClusterLockConfig> clusterLockConfigProvider) {
         this.clusterLockDbConnProvider = clusterLockDbConnProvider;
+        this.clusterLockConfigProvider = clusterLockConfigProvider;
     }
 
     public void lock(final String lockName, final Runnable runnable) {
@@ -63,12 +73,52 @@ class DbClusterLock implements Clearable {
         checkLockCreated(lockName);
 
         return JooqUtil.transactionResult(clusterLockDbConnProvider, context -> {
-            final Optional<Record> optional = context
-                    .select()
-                    .from(CLUSTER_LOCK)
-                    .where(CLUSTER_LOCK.NAME.eq(lockName))
-                    .forUpdate()
-                    .fetchOptional();
+            final Instant startTime = Instant.now();
+            final StroomDuration lockTimeout = clusterLockConfigProvider.get().getLockTimeout();
+            // This is not exact as we are at the mercy of the db timeout once we have passed this value,
+            // so could be 30s after this.
+            final Instant timeoutTime = startTime.plus(lockTimeout);
+            boolean acquiredLock = false;
+            Optional<Record> optional = Optional.empty();
+            int loopCount = 0;
+
+            while (!acquiredLock && !Thread.currentThread().isInterrupted()) {
+                if (Instant.now().isAfter(timeoutTime)) {
+                    throw new RuntimeException(LogUtil.message(
+                            "Gave up waiting for lock {} after {}. Current configured lockTimeout is {}",
+                            lockName, Duration.between(startTime, Instant.now()), lockTimeout));
+                }
+                loopCount++;
+                try {
+                    // This may timeout on the DB
+                    optional = getRecordLock(lockName, context);
+
+                    // Show info if we go beyond the db timeout, else a debug msg.
+                    if (loopCount > 1) {
+                        LOGGER.info("Acquired lock {}, waited {}",
+                                lockName, Duration.between(startTime, Instant.now()));
+                    } else {
+                        LOGGER.debug("Acquired lock {}, waited {}",
+                                lockName, Duration.between(startTime, Instant.now()));
+                    }
+                    acquiredLock = true;
+                } catch (Exception e) {
+                    // If the supplier takes a long time to run, especially if it has to run on multiple nodes
+                    // than we will get a lock timeout error from the DB so need to handle that and keep
+                    // trying to get the lock. This means this thread/node will join the back of the queue
+                    // so this lock mechanism does not ensure fairness.
+                    if (e.getCause() != null
+                            && e.getCause() instanceof MySQLTransactionRollbackException
+                            && e.getCause().getMessage().contains("Lock wait timeout exceeded")) {
+                        LOGGER.info("Still waiting for lock {}, waited {} so far. Will give up shortly after {}. " +
+                                        "Current configured lockTimeout is {}",
+                                lockName, Duration.between(startTime, Instant.now()), timeoutTime, lockTimeout);
+                    } else {
+                        LOGGER.error("Error getting lock {}: {}", lockName, e.getMessage(), e);
+                        throw e;
+                    }
+                }
+            }
 
             if (optional.isEmpty()) {
                 throw new IllegalStateException("No cluster lock has been found or created: " + lockName);
@@ -78,6 +128,18 @@ class DbClusterLock implements Clearable {
 
             return supplier.get();
         });
+    }
+
+    private Optional<Record> getRecordLock(final String lockName, final DSLContext context) {
+        Optional<Record> optional;
+        // Get the lock, waiting if not available, but this may time out
+        optional = context
+                .select()
+                .from(CLUSTER_LOCK)
+                .where(CLUSTER_LOCK.NAME.eq(lockName))
+                .forUpdate()
+                .fetchOptional();
+        return optional;
     }
 
     private void checkLockCreated(final String name) {

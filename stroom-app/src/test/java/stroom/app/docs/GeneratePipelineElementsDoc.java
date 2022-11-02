@@ -105,7 +105,7 @@ public class GeneratePipelineElementsDoc {
         try (ScanResult scanResult =
                 new ClassGraph()
                         .enableAllInfo()             // Scan classes, methods, fields, annotations
-                        .whitelistPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
+                        .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
                         .scan()) {                   // Start the scan
 
             scanResult.getClassesImplementing(Element.class.getName())
@@ -132,7 +132,7 @@ public class GeneratePipelineElementsDoc {
         try (ScanResult scanResult =
                 new ClassGraph()
                         .enableAllInfo()             // Scan classes, methods, fields, annotations
-                        .whitelistPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
+                        .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
                         .scan()) {                   // Start the scan
 
             scanResult.getClassesImplementing(Element.class.getName())

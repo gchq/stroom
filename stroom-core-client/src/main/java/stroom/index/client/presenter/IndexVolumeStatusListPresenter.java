@@ -26,6 +26,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
@@ -41,6 +42,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.OptionalDouble;
+import java.util.OptionalLong;
 import java.util.function.Consumer;
 
 public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
@@ -79,15 +82,6 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
      * Add the columns to the table.
      */
     private void initTableColumns() {
-        // Path.
-        final Column<IndexVolume, String> volumeColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                return volume.getPath();
-            }
-        };
-        dataGrid.addResizableColumn(volumeColumn, "Path", 300);
-
         // Node.
         final Column<IndexVolume, String> nodeColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
@@ -95,7 +89,16 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                 return volume.getNodeName();
             }
         };
-        dataGrid.addResizableColumn(nodeColumn, "Node", 90);
+        dataGrid.addResizableColumn(nodeColumn, IndexVolumeFields.FIELD_NODE_NAME, 90);
+
+        // Path.
+        final Column<IndexVolume, String> volumeColumn = new Column<IndexVolume, String>(new TextCell()) {
+            @Override
+            public String getValue(final IndexVolume volume) {
+                return volume.getPath();
+            }
+        };
+        dataGrid.addResizableColumn(volumeColumn, IndexVolumeFields.FIELD_PATH, 300);
 
         // State.
         final Column<IndexVolume, String> streamStatusColumn = new Column<IndexVolume, String>(new TextCell()) {
@@ -110,7 +113,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
         final Column<IndexVolume, String> totalColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
             public String getValue(final IndexVolume volume) {
-                return getSizeString(volume.getBytesTotal());
+                return getSizeString(volume.getCapacityInfo().getTotalCapacityBytes());
             }
         };
         dataGrid.addResizableColumn(totalColumn, "Total", ColumnSizeConstants.SMALL_COL);
@@ -122,7 +125,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                 if (volume.getBytesLimit() == null) {
                     return "";
                 }
-                return getSizeString(volume.getBytesLimit());
+                return getSizeString(volume.getCapacityInfo().getCapacityLimitBytes());
             }
         };
         dataGrid.addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);
@@ -131,7 +134,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
         final Column<IndexVolume, String> usedColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
             public String getValue(final IndexVolume volume) {
-                return getSizeString(volume.getBytesUsed());
+                return getSizeString(volume.getCapacityInfo().getCapacityUsedBytes());
             }
         };
         dataGrid.addResizableColumn(usedColumn, "Used", ColumnSizeConstants.SMALL_COL);
@@ -140,7 +143,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
         final Column<IndexVolume, String> freeColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
             public String getValue(final IndexVolume volume) {
-                return getSizeString(volume.getBytesFree());
+                return getSizeString(volume.getCapacityInfo().getFreeCapacityBytes());
             }
         };
         dataGrid.addResizableColumn(freeColumn, "Free", ColumnSizeConstants.SMALL_COL);
@@ -149,10 +152,24 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
         final Column<IndexVolume, String> usePercentColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
             public String getValue(final IndexVolume volume) {
-                return getPercentString(volume.getPercentUsed());
+                final OptionalDouble optUsedCapacityPercent = volume.getCapacityInfo().getUsedCapacityPercent();
+                return optUsedCapacityPercent.isPresent()
+                        ? ((long) optUsedCapacityPercent.getAsDouble()) + "%"
+                        : "?";
             }
         };
         dataGrid.addResizableColumn(usePercentColumn, "Use%", ColumnSizeConstants.SMALL_COL);
+
+        // Is Full
+        final Column<IndexVolume, String> isFullColumn = new Column<IndexVolume, String>(new TextCell()) {
+            @Override
+            public String getValue(final IndexVolume volume) {
+                return volume.getCapacityInfo().isFull()
+                        ? "Yes"
+                        : "No";
+            }
+        };
+        dataGrid.addResizableColumn(isFullColumn, "Full", ColumnSizeConstants.SMALL_COL);
 
         // Usage Date.
         final Column<IndexVolume, String> usageDateColumn = new Column<IndexVolume, String>(new TextCell()) {
@@ -162,24 +179,13 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
             }
         };
         dataGrid.addResizableColumn(usageDateColumn, "Usage Date", ColumnSizeConstants.DATE_COL);
-
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
-    private String getSizeString(final Long size) {
-        String string = "?";
-        if (size != null) {
-            string = ModelStringUtil.formatIECByteSizeString(size);
-        }
-        return string;
-    }
-
-    private String getPercentString(final Long percent) {
-        String string = "?";
-        if (percent != null) {
-            string = percent + "%";
-        }
-        return string;
+    private String getSizeString(final OptionalLong optSizeBytes) {
+        return optSizeBytes != null && optSizeBytes.isPresent()
+                ? ModelStringUtil.formatIECByteSizeString(optSizeBytes.getAsLong())
+                : "?";
     }
 
     public MultiSelectionModel<IndexVolume> getSelectionModel() {

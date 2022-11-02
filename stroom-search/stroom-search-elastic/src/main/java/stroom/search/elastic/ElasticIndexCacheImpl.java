@@ -18,7 +18,7 @@
 package stroom.search.elastic;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.entityevent.EntityAction;
@@ -36,11 +36,12 @@ import javax.inject.Singleton;
         EntityAction.UPDATE
 })
 public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Handler, Clearable {
+
     private static final String CACHE_NAME = "Elastic Index Cache";
 
     private final ElasticIndexStore elasticIndexStore;
     private final ElasticIndexService elasticIndexService;
-    private final ICache<DocRef, ElasticIndexDoc> cache;
+    private final LoadingStroomCache<DocRef, ElasticIndexDoc> cache;
 
     @Inject
     ElasticIndexCacheImpl(final CacheManager cacheManager,
@@ -50,7 +51,10 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Han
     ) {
         this.elasticIndexStore = elasticIndexStore;
         this.elasticIndexService = elasticIndexService;
-        this.cache = cacheManager.create(CACHE_NAME, elasticConfig::getIndexCache, this::create);
+        this.cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                elasticConfig::getIndexCache,
+                this::create);
     }
 
     private ElasticIndexDoc create(final DocRef docRef) {

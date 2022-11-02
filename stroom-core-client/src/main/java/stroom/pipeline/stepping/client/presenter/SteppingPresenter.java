@@ -48,7 +48,10 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
+import stroom.util.shared.DataRange;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.Severity;
+import stroom.util.shared.StoredError;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 
@@ -67,9 +70,12 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.SteppingView> implements
@@ -138,7 +144,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 request.getStepType(),
                 true,
                 showingData,
-                foundRecord);
+                foundRecord,
+                false);
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
         sourcePresenter.setClassificationUiHandlers(this);
@@ -406,6 +413,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     }
 
     private void readResult(final SteppingResult result) {
+        Optional<String> fatalErrors = Optional.empty();
         try {
             currentResult = result;
             foundRecord = result.isFoundRecord();
@@ -438,7 +446,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     final SourceLocation newSourceLocation = result.getStepData()
                             .getSourceLocation()
                             .copy()
-                            .withHighlight(null)
+                            .withHighlight((DataRange) null)
                             .build();
                     sourcePresenter.setSourceLocation(newSourceLocation);
                 } else {
@@ -467,16 +475,55 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                         "Some errors occurred during stepping",
                         sb.toString(),
                         null);
+            } else {
+                fatalErrors = getFatalErrors(result);
+                fatalErrors.ifPresent(errorText -> {
+                    AlertEvent.fireError(
+                            this,
+                            "One or more fatal errors occurred during stepping",
+                            errorText,
+                            null);
+                });
             }
-
         } finally {
             stepControlPresenter.setEnabledButtons(
                     true,
                     request.getStepType(),
                     true,
                     showingData,
-                    foundRecord);
+                    foundRecord,
+                    fatalErrors.isPresent());
             busyTranslating = false;
+        }
+    }
+
+    private Optional<String> getFatalErrors(final SteppingResult steppingResult) {
+        if (steppingResult.getStepData() != null
+                && steppingResult.getStepData().getElementMap() != null) {
+            final String txt = steppingResult.getStepData().getElementMap()
+                    .values()
+                    .stream()
+                    .flatMap(sharedElementData -> {
+                        final Set<StoredError> errors = new HashSet<>();
+                        if (sharedElementData.getCodeIndicators() != null
+                                && sharedElementData.getCodeIndicators().getUniqueErrorSet() != null) {
+                            errors.addAll(sharedElementData.getCodeIndicators().getUniqueErrorSet());
+                        }
+                        if (sharedElementData.getOutputIndicators() != null
+                                && sharedElementData.getOutputIndicators().getUniqueErrorSet() != null) {
+                            errors.addAll(sharedElementData.getOutputIndicators().getUniqueErrorSet());
+                        }
+                        return errors.stream();
+                    })
+                    .filter(error -> Severity.FATAL_ERROR.equals(error.getSeverity()))
+                    .map(StoredError::toString)
+                    .collect(Collectors.joining("\n"));
+
+            return !txt.isEmpty()
+                    ? Optional.of(txt)
+                    : Optional.empty();
+        } else {
+            return Optional.empty();
         }
     }
 

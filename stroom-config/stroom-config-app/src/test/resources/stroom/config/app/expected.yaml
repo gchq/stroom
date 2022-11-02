@@ -77,6 +77,7 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    lockTimeout: "PT10M"
   commonDbDetails:
     connection:
       jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
@@ -128,6 +129,8 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+      findOrphanedMetaBatchSize: 7000
+      maxVolumeStateAge: "PT30S"
       metaTypeExtensions:
         Detections: "dtxn"
         Error: "err"
@@ -418,8 +421,8 @@ appConfig:
     appender:
       maxActiveDestinations: 100
     documentPermissionCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
+      expireAfterAccess: null
+      expireAfterWrite: "PT30S"
       maximumSize: 1000
     httpClientCache:
       expireAfterAccess: "PT10M"
@@ -437,8 +440,8 @@ appConfig:
       maximumSize: 1000
     referenceData:
       effectiveStreamCache:
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
+        expireAfterAccess: null
+        expireAfterWrite: "PT10M"
         maximumSize: 1000
       lmdb:
         localDir: "reference_data"
@@ -563,9 +566,8 @@ appConfig:
         readAheadEnabled: true
       maxPayloadSize: "1G"
       maxPutsBeforeCommit: 100000
-      maxValueSize: "1M"
+      maxStringFieldLength: 1000
       minPayloadSize: "1M"
-      minValueSize: "1K"
       offHeapResults: true
       searchResultCache:
         expireAfterAccess: "PT10M"
@@ -901,7 +903,7 @@ appConfig:
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
-    applicationInstanceKeepAliveIntervalMs: 60000
+    applicationInstanceKeepAliveIntervalMs: 10000
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
     helpSubPathJobs: "/user-guide/jobs/"
@@ -956,3 +958,7 @@ appConfig:
     defaultIndexVolumeGroupPaths:
     - "volumes/default_index_volume"
     volumeSelector: "RoundRobin"
+    volumeSelectorCache:
+      expireAfterAccess: "P10D"
+      expireAfterWrite: null
+      maximumSize: 1000

@@ -16,10 +16,11 @@
 
 package stroom.alert.client.event;
 
+import stroom.util.client.SafeHtmlUtil;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public abstract class CommonAlertEvent<H extends EventHandler> extends GwtEvent<H> {
 
@@ -45,10 +46,7 @@ public abstract class CommonAlertEvent<H extends EventHandler> extends GwtEvent<
     }
 
     static SafeHtml fromString(final String string) {
-        if (string == null) {
-            return null;
-        }
-        return SafeHtmlUtils.fromString(string);
+        return SafeHtmlUtil.withLineBreaks(string);
     }
 
     public SafeHtml getMessage() {

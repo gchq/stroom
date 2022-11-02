@@ -77,7 +77,16 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
     @Test
     void testBasic() {
-        final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345", "Test Pipeline");
+        // DB should be empty at this point
+        assertThat(processorService.find(new ExpressionCriteria()).size())
+                .isEqualTo(0);
+        assertThat(processorFilterService.find(new ExpressionCriteria()).size())
+                .isEqualTo(0);
+
+        final DocRef pipelineRef = new DocRef(
+                PipelineDoc.DOCUMENT_TYPE,
+                "12345",
+                "Test Pipeline");
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
 
         processorFilterService.create(
@@ -87,8 +96,10 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                         .queryData(new QueryData())
                         .priority(1)
                         .build());
-        assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
-        assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(1);
+        assertThat(processorService.find(new ExpressionCriteria()).size())
+                .isEqualTo(1);
+        assertThat(processorFilterService.find(findProcessorFilterCriteria).size())
+                .isEqualTo(1);
 
         processorFilterService.create(
                 CreateProcessFilterRequest
@@ -96,22 +107,26 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                         .pipeline(pipelineRef)
                         .queryData(new QueryData())
                         .build());
-        assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
-        assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(2);
+        assertThat(processorService.find(new ExpressionCriteria()).size())
+                .isEqualTo(1);
+        assertThat(processorFilterService.find(findProcessorFilterCriteria).size())
+                .isEqualTo(2);
 
         final ExpressionOperator expression1 = ExpressionOperator.builder()
                 .addTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 10)
                 .build();
         findProcessorFilterCriteria.setExpression(expression1);
         //PriorityRange(new Range<>(10, null));
-        assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(1);
+        assertThat(processorFilterService.find(findProcessorFilterCriteria).size())
+                .isEqualTo(1);
 
         final ExpressionOperator expression2 = ExpressionOperator.builder()
                 .addTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
                 .build();
         findProcessorFilterCriteria.setExpression(expression2);
 //        findProcessorFilterCriteria.setPriorityRange(new Range<>(1, null));
-        assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(2);
+        assertThat(processorFilterService.find(findProcessorFilterCriteria).size())
+                .isEqualTo(2);
     }
 
     @Test
@@ -176,58 +191,66 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
     private String buildXML(final String[] include, final String[] exclude) {
         final StringBuilder sb = new StringBuilder();
-        String xml = "" +
-                "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
-                "<query>\n" +
-                "   <dataSource>\n" +
-                "      <type>StreamStore</type>\n" +
-                "      <uuid>0</uuid>\n" +
-                "      <name>StreamStore</name>\n" +
-                "   </dataSource>\n" +
-                "   <expression>\n" +
-                "      <children>\n";
+        sb.append("""
+                <?xml version="1.1" encoding="UTF-8"?>
+                <query>
+                   <dataSource>
+                      <type>StreamStore</type>
+                      <uuid>0</uuid>
+                      <name>StreamStore</name>
+                   </dataSource>
+                   <expression>
+                      <children>
+                """);
 
         if (include != null && include.length > 0) {
-            xml += "" +
-                    "         <operator>\n" +
-                    "            <op>OR</op>\n" +
-                    "            <children>\n";
+            sb.append("""
+                             <operator>
+                                <op>OR</op>
+                                <children>
+                    """);
             for (final String feed : include) {
-                xml += "" +
-                        "               <term>\n" +
-                        "                  <field>" + MetaFields.FEED + "</field>\n" +
-                        "                  <condition>EQUALS</condition>\n" +
-                        "                  <value>" + feed + "</value>\n" +
-                        "               </term>\n";
+                sb.append("               <term>\n");
+                sb.append("                  <field>")
+                        .append(MetaFields.FEED)
+                        .append("</field>\n");
+                sb.append("                  <condition>EQUALS</condition>\n");
+                sb.append("                  <value>")
+                        .append(feed)
+                        .append("</value>\n");
+                sb.append("               </term>\n");
             }
 
-            xml += "" +
-                    "            </children>\n" +
-                    "         </operator>\n";
+            sb.append("""
+                                </children>
+                             </operator>
+                    """);
         }
 
+        sb.append("         <operator>\n");
+        sb.append("            <op>OR</op>\n");
+        sb.append("            <children>\n");
+        sb.append("               <term>\n");
+        sb.append("                  <field>")
+                .append(MetaFields.TYPE)
+                .append("</field>\n");
+        sb.append("                  <condition>EQUALS</condition>\n");
+        sb.append("                  <value>Raw Events</value>\n");
+        sb.append("               </term>\n");
+        sb.append("               <term>\n");
+        sb.append("                  <field>")
+                .append(MetaFields.TYPE)
+                .append("</field>\n");
+        sb.append("                  <condition>EQUALS</condition>\n");
+        sb.append("                  <value>Raw Reference</value>\n");
+        sb.append("               </term>\n");
+        sb.append("            </children>\n");
+        sb.append("         </operator>\n");
+        sb.append("      </children>\n");
+        sb.append("   </expression>\n");
+        sb.append("</query>\n");
 
-        xml += "" +
-                "         <operator>\n" +
-                "            <op>OR</op>\n" +
-                "            <children>\n" +
-                "               <term>\n" +
-                "                  <field>" + MetaFields.TYPE + "</field>\n" +
-                "                  <condition>EQUALS</condition>\n" +
-                "                  <value>Raw Events</value>\n" +
-                "               </term>\n" +
-                "               <term>\n" +
-                "                  <field>" + MetaFields.TYPE + "</field>\n" +
-                "                  <condition>EQUALS</condition>\n" +
-                "                  <value>Raw Reference</value>\n" +
-                "               </term>\n" +
-                "            </children>\n" +
-                "         </operator>\n" +
-                "      </children>\n" +
-                "   </expression>\n" +
-                "</query>\n";
-
-        return xml;
+        return sb.toString();
     }
 
     @Test

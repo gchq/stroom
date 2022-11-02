@@ -3,6 +3,7 @@ package stroom.data.store.impl.fs;
 import stroom.data.shared.StreamTypeNames;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.io.capacity.HasCapacitySelectorFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
@@ -22,17 +23,6 @@ import javax.validation.constraints.Pattern;
 @JsonPropertyOrder(alphabetic = true)
 public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final String VOLUME_SELECTOR_PATTERN = "^(" +
-            RoundRobinVolumeSelector.NAME + "|" +
-            MostFreePercentVolumeSelector.NAME + "|" +
-            MostFreeVolumeSelector.NAME + "|" +
-            RandomVolumeSelector.NAME + "|" +
-            RoundRobinIgnoreLeastFreePercentVolumeSelector.NAME + "|" +
-            RoundRobinIgnoreLeastFreeVolumeSelector.NAME + "|" +
-            RoundRobinVolumeSelector.NAME + "|" +
-            WeightedFreePercentRandomVolumeSelector.NAME + "|" +
-            WeightedFreeRandomVolumeSelector.NAME + ")$";
-
     // TreeMap for consistent ordering in the yaml
     private static final Map<String, String> DEFAULT_META_TYPE_EXTENSIONS = new TreeMap<>(Map.of(
             StreamTypeNames.RAW_EVENTS, "revt",
@@ -51,19 +41,22 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
     private List<String> defaultStreamVolumePaths;
     private final double defaultStreamVolumeFilesystemUtilisation;
     private final boolean createDefaultStreamVolumesOnStart;
+    private final int findOrphanedMetaBatchSize;
 
     private final CacheConfig feedPathCache;
     private final CacheConfig typePathCache;
     // stream type name => legacy extension
     // e.g. 'Transient Raw' => '.trevt'
     private final Map<String, String> metaTypeExtensions;
-//    private final Map<String, String> metaTypeExtensionsReverseMap;
+    //    private final Map<String, String> metaTypeExtensionsReverseMap;
+    private final StroomDuration maxVolumeStateAge;
 
     public FsVolumeConfig() {
         volumeSelector = "RoundRobin";
         defaultStreamVolumePaths = List.of("volumes/default_stream_volume");
         defaultStreamVolumeFilesystemUtilisation = 0.9;
         createDefaultStreamVolumesOnStart = true;
+        findOrphanedMetaBatchSize = 7_000;
 
         feedPathCache = CacheConfig.builder()
                 .maximumSize(1000L)
@@ -75,6 +68,8 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         metaTypeExtensions = DEFAULT_META_TYPE_EXTENSIONS;
+        // 30s should be enough time for all nodes to check the state after one node has updated it.
+        maxVolumeStateAge = StroomDuration.ofSeconds(30);
     }
 
     @JsonCreator
@@ -86,7 +81,10 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
             @JsonProperty("createDefaultStreamVolumesOnStart") final boolean createDefaultStreamVolumesOnStart,
             @JsonProperty("feedPathCache") final CacheConfig feedPathCache,
             @JsonProperty("typePathCache") final CacheConfig typePathCache,
-            @JsonProperty("metaTypeExtensions") Map<String, String> metaTypeExtensions) {
+            @JsonProperty("metaTypeExtensions") final Map<String, String> metaTypeExtensions,
+            @JsonProperty("findOrphanedMetaBatchSize") final int findOrphanedMetaBatchSize,
+            @JsonProperty("maxVolumeStateAge") final StroomDuration maxVolumeStateAge) {
+
         this.volumeSelector = volumeSelector;
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
         this.defaultStreamVolumeFilesystemUtilisation = defaultStreamVolumeFilesystemUtilisation;
@@ -94,13 +92,15 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         this.feedPathCache = feedPathCache;
         this.typePathCache = typePathCache;
         this.metaTypeExtensions = metaTypeExtensions;
+        this.findOrphanedMetaBatchSize = findOrphanedMetaBatchSize;
+        this.maxVolumeStateAge = maxVolumeStateAge;
     }
 
     @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
             "'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') " +
             "default is 'RoundRobin'")
-    @Pattern(regexp = VOLUME_SELECTOR_PATTERN)
+    @Pattern(regexp = HasCapacitySelectorFactory.VOLUME_SELECTOR_PATTERN)
     public String getVolumeSelector() {
         return volumeSelector;
     }
@@ -137,7 +137,12 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         return defaultStreamVolumeFilesystemUtilisation;
     }
 
-    public FsVolumeConfig withDefaultStreamVolumePaths(List<String> defaultStreamVolumePaths) {
+    @JsonPropertyDescription("Number of meta records to check in each batch.")
+    public int getFindOrphanedMetaBatchSize() {
+        return findOrphanedMetaBatchSize;
+    }
+
+    public FsVolumeConfig withDefaultStreamVolumePaths(final List<String> defaultStreamVolumePaths) {
         return new FsVolumeConfig(
                 volumeSelector,
                 defaultStreamVolumePaths,
@@ -145,7 +150,22 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                 createDefaultStreamVolumesOnStart,
                 feedPathCache,
                 typePathCache,
-                metaTypeExtensions);
+                metaTypeExtensions,
+                findOrphanedMetaBatchSize,
+                maxVolumeStateAge);
+    }
+
+    public FsVolumeConfig withVolumeSelector(final String volumeSelector) {
+        return new FsVolumeConfig(
+                volumeSelector,
+                defaultStreamVolumePaths,
+                defaultStreamVolumeFilesystemUtilisation,
+                createDefaultStreamVolumesOnStart,
+                feedPathCache,
+                typePathCache,
+                metaTypeExtensions,
+                findOrphanedMetaBatchSize,
+                maxVolumeStateAge);
     }
 
     @JsonPropertyDescription("Map of meta type names to their file extension. " +
@@ -169,14 +189,25 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         }
     }
 
+    @JsonPropertyDescription("When refreshing the local cache of volumes, the state will only be updated in the " +
+            "database if it is older then this threshold age. Value must be less than the period of the job " +
+            "'File System Volume Status'.")
+    public StroomDuration getMaxVolumeStateAge() {
+        return maxVolumeStateAge;
+    }
+
     @Override
     public String toString() {
-        return "VolumeConfig{" +
+        return "FsVolumeConfig{" +
                 "volumeSelector='" + volumeSelector + '\'' +
+                ", defaultStreamVolumePaths=" + defaultStreamVolumePaths +
+                ", defaultStreamVolumeFilesystemUtilisation=" + defaultStreamVolumeFilesystemUtilisation +
                 ", createDefaultStreamVolumesOnStart=" + createDefaultStreamVolumesOnStart +
-                ", defaultStreamVolumePaths=" + "\"" + defaultStreamVolumePaths + "\"" +
-                ", defaultStreamVolumeFilesystemUtilisation=" + "\"" + defaultStreamVolumeFilesystemUtilisation + "\"" +
-                ", metaTypeExtensions=" + "\"" + metaTypeExtensions + "\"" +
+                ", findOrphanedMetaBatchSize=" + findOrphanedMetaBatchSize +
+                ", feedPathCache=" + feedPathCache +
+                ", typePathCache=" + typePathCache +
+                ", metaTypeExtensions=" + metaTypeExtensions +
+                ", maxVolumeStateAge=" + maxVolumeStateAge +
                 '}';
     }
 }

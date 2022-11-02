@@ -18,11 +18,13 @@ package stroom.pipeline.cache;
 
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 
 public class PipelineCacheModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(SchemaPool.class).to(SchemaPoolImpl.class);
@@ -37,8 +39,14 @@ public class PipelineCacheModule extends AbstractModule {
                 .addBinding(XsltPoolImpl.class)
                 .addBinding(DocumentPermissionCacheImpl.class);
 
+        HasSystemInfoBinder.create(binder())
+                .bind(SchemaPoolImpl.class)
+                .bind(ParserFactoryPoolImpl.class)
+                .bind(XsltPoolImpl.class);
+
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(ParserFactoryPoolImpl.class)
-                .addBinding(SchemaPoolImpl.class);
+                .addBinding(SchemaPoolImpl.class)
+                .addBinding(XsltPoolImpl.class);
     }
 }

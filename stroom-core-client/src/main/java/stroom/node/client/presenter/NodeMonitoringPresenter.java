@@ -26,11 +26,13 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.node.client.NodeManager;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
+import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.preferences.client.DateTimeFormatter;
@@ -70,6 +72,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
 
     private final Map<String, PingResult> latestPing = new HashMap<>();
+    private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
 
     @Inject
     public NodeMonitoringPresenter(final EventBus eventBus,
@@ -91,7 +94,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
             protected void exec(final Range range,
                                 final Consumer<FetchNodeStatusResponse> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
-                nodeManager.fetchNodeStatus(dataConsumer, throwableConsumer);
+                nodeManager.fetchNodeStatus(dataConsumer, throwableConsumer, findNodeStatusCriteria);
             }
 
             @Override
@@ -132,7 +135,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         dataGrid.addColumn(infoColumn, "<br/>", 20);
 
         // Name.
-        final Column<NodeStatusResult, String> nameColumn = new Column<NodeStatusResult, String>(new TextCell()) {
+        final Column<NodeStatusResult, String> nameColumn = new OrderByColumn<NodeStatusResult, String>(
+                new TextCell(),
+                FindNodeStatusCriteria.FIELD_ID_NAME,
+                true) {
             @Override
             public String getValue(final NodeStatusResult row) {
                 if (row == null) {
@@ -141,10 +147,14 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                 return row.getNode().getName();
             }
         };
+        DataGridUtil.addColumnSortHandler(dataGrid, findNodeStatusCriteria, this::refresh);
         dataGrid.addResizableColumn(nameColumn, "Name", 200);
 
         // Host Name.
-        final Column<NodeStatusResult, String> hostNameColumn = new Column<NodeStatusResult, String>(new TextCell()) {
+        final Column<NodeStatusResult, String> hostNameColumn = new OrderByColumn<NodeStatusResult, String>(
+                new TextCell(),
+                FindNodeStatusCriteria.FIELD_ID_URL,
+                true) {
             @Override
             public String getValue(final NodeStatusResult row) {
                 if (row == null) {
@@ -226,8 +236,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         dataGrid.addColumn(masterColumn, "Master", 50);
 
         // Priority.
-        final Column<NodeStatusResult, Number> priorityColumn = new Column<NodeStatusResult, Number>(
-                new ValueSpinnerCell(1, 100)) {
+        final Column<NodeStatusResult, Number> priorityColumn = new OrderByColumn<NodeStatusResult, Number>(
+                new ValueSpinnerCell(1, 100),
+                FindNodeStatusCriteria.FIELD_ID_PRIORITY,
+                true) {
             @Override
             public Number getValue(final NodeStatusResult row) {
                 if (row == null) {
@@ -241,11 +253,13 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                         row.getNode().getName(),
                         value.intValue(),
                         result -> refresh()));
-        dataGrid.addColumn(priorityColumn, "Priority", 55);
+        dataGrid.addColumn(priorityColumn, "Priority", 75);
 
         // Enabled
-        final Column<NodeStatusResult, TickBoxState> enabledColumn = new Column<NodeStatusResult, TickBoxState>(
-                TickBoxCell.create(false, false)) {
+        final Column<NodeStatusResult, TickBoxState> enabledColumn = new OrderByColumn<NodeStatusResult, TickBoxState>(
+                TickBoxCell.create(false, false),
+                FindNodeStatusCriteria.FIELD_ID_ENABLED,
+                true) {
             @Override
             public TickBoxState getValue(final NodeStatusResult row) {
                 if (row == null) {
@@ -261,7 +275,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                         value.toBoolean(),
                         result -> refresh()));
 
-        dataGrid.addColumn(enabledColumn, "Enabled", 60);
+        dataGrid.addColumn(enabledColumn, "Enabled", 70);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }

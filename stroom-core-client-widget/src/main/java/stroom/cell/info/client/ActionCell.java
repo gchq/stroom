@@ -35,12 +35,18 @@ import java.util.function.BiConsumer;
 public class ActionCell<R> extends AbstractCell<R> {
 
     private static Template template;
-    private final Preset svgPreset = SvgPresets.ELLIPSES_HORIZONTAL;
+    private final Preset svgPreset;
     private final BiConsumer<R, NativeEvent> action;
 
     public ActionCell(final BiConsumer<R, NativeEvent> action) {
+        this(SvgPresets.ELLIPSES_HORIZONTAL, action);
+    }
+
+    public ActionCell(final Preset svgPreset,
+                      final BiConsumer<R, NativeEvent> action) {
         super("click");
         this.action = action;
+        this.svgPreset = svgPreset;
 
         if (template == null) {
             template = GWT.create(Template.class);

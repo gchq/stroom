@@ -43,6 +43,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class TestFileSystemUtil {
+
     private static final String NO_WRITE_DIR1 = "/usr/bin/username";
     private static final String NO_WRITE_DIR2 = "/unable/to/create/this";
 
@@ -79,7 +80,7 @@ class TestFileSystemUtil {
 
     @Test
     void testCreateFileTypeRoot() {
-        final String root = FileUtil.getCanonicalPath(FileSystemUtil.createFileTypeRoot(buildTestVolume()));
+        final String root = FileUtil.getCanonicalPath(FileSystemUtil.createFileTypeRoot(buildTestVolume().getPath()));
         assertThat(root).isNotNull();
         assertThat(root).endsWith("store");
     }

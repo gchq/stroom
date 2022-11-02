@@ -29,13 +29,13 @@ configurations {
             force "com.fasterxml.jackson.core:jackson-datatype-jsr310:${versions.jackson_swagger}"
 
             //dependencySubstitution {
-                //// for some reason the DEBUG logging in the swagger plugin is being
-                //// output as part of the gradle build. This is a very crude hack to stop it
-                //// accepting that you will get no logging at all, even errors.
-                //substitute
-                    //module("ch.qos.logback:logback-classic")
-                    //using module("org.slf4j:slf4j-nop:1.7.30")
-                    //because "We don't want all the debug"
+            //// for some reason the DEBUG logging in the swagger plugin is being
+            //// output as part of the gradle build. This is a very crude hack to stop it
+            //// accepting that you will get no logging at all, even errors.
+            //substitute
+            //module("ch.qos.logback:logback-classic")
+            //using module("org.slf4j:slf4j-nop:1.7.30")
+            //because "We don't want all the debug"
             //}
         }
     }
@@ -288,6 +288,7 @@ dependencies {
     testImplementation libs.hikari
     testImplementation libs.jinjava
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.junit_platform_launcher
     testImplementation libs.lmdbjava
     testImplementation libs.lucene_core
     testImplementation libs.saxon_he
@@ -441,8 +442,8 @@ task copyFilesForStroomDockerBuild() {
 
         //Copy the downloaded content packs
         //copy {
-            //from "${contentPackDownloadDir}"
-            //into stroomDockerContentPacksDir
+        //from "${contentPackDownloadDir}"
+        //into stroomDockerContentPacksDir
         //}
     }
 }
@@ -639,8 +640,8 @@ task makeSendExecutable {
 }
 
 //task copyContentPackToDistribution(type: Copy) {
-    //from contentPackDownloadDir
-    //into "${releaseBuildDir}/contentPacks"
+//from contentPackDownloadDir
+//into "${releaseBuildDir}/contentPacks"
 //}
 
 // Create an example yaml config file from the compile-time defaults

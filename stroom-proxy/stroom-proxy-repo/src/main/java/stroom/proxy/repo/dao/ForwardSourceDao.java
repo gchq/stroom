@@ -115,6 +115,7 @@ public class ForwardSourceDao implements Flushable {
                                 FORWARD_SOURCE.SUCCESS,
                                 FORWARD_SOURCE.ERROR,
                                 FORWARD_SOURCE.TRIES,
+                                FORWARD_SOURCE.LAST_TRY_TIME_MS,
                                 positionField,
                                 FORWARD_DEST.NAME,
                                 SOURCE.FILE_STORE_ID,
@@ -142,7 +143,8 @@ public class ForwardSourceDao implements Flushable {
                             forwardDest,
                             r.get(FORWARD_SOURCE.SUCCESS),
                             r.get(FORWARD_SOURCE.ERROR),
-                            r.get(FORWARD_SOURCE.TRIES));
+                            r.get(FORWARD_SOURCE.TRIES),
+                            r.get(FORWARD_SOURCE.LAST_TRY_TIME_MS));
                     readQueue.add(forwardSource);
                 });
         return pos.get();
@@ -393,6 +395,7 @@ public class ForwardSourceDao implements Flushable {
                 .set(FORWARD_SOURCE.ERROR, forwardSource.getError())
                 .setNull(FORWARD_SOURCE.NEW_POSITION)
                 .set(FORWARD_SOURCE.TRIES, forwardSource.getTries())
+                .set(FORWARD_SOURCE.LAST_TRY_TIME_MS, forwardSource.getLastTryTimeMs())
                 .set(FORWARD_SOURCE.RETRY_POSITION, retryPosition)
                 .where(FORWARD_SOURCE.ID.eq(forwardSource.getId()))
                 .execute();

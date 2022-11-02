@@ -32,6 +32,7 @@ public class DataStoreModule extends AbstractModule {
                 .bind(ImportFileServlet.class);
 
         RestResourcesBinder.create(binder())
-                .bind(DataResourceImpl.class);
+                .bind(DataResourceImpl.class)
+                .bind(DataDownloadResourceImpl.class);
     }
 }

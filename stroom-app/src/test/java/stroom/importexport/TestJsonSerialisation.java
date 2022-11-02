@@ -73,7 +73,7 @@ class TestJsonSerialisation {
 //        try (ScanResult scanResult =
 //                     new ClassGraph()
 //                             .enableAllInfo()             // Scan classes, methods, fields, annotations
-//                             .whitelistPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to
+//                             .acceptPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to
 //                                                                      scan all packages)
 //                             .scan()) {                   // Start the scan
 //            for (ClassInfo routeClassInfo : scanResult.getClassesWithMethodAnnotation(routeAnnotation)) {
@@ -150,9 +150,9 @@ class TestJsonSerialisation {
                         Object o2 = objectMapper.readValue(json1, clazz);
                         json2 = objectMapper.writeValueAsString(o2);
                     } catch (InstantiationException
-                            | IllegalAccessException
-                            | InvocationTargetException
-                            | IOException e) {
+                             | IllegalAccessException
+                             | InvocationTargetException
+                             | IOException e) {
                         throw new RuntimeException(e);
                     }
 

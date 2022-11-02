@@ -49,15 +49,15 @@ class TestOrphanMetaFinder extends AbstractCoreIntegrationTest {
 
         final Meta meta = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
-        FsOrphanMetaFinderProgress progress = new FsOrphanMetaFinderProgress(new SimpleTaskContext());
+        final SimpleTaskContext taskContext = new SimpleTaskContext();
         final AtomicLong count = new AtomicLong();
         final Consumer<Meta> orphanConsumer = m -> count.incrementAndGet();
-        fsOrphanMetaFinder.scan(orphanConsumer, progress);
+        fsOrphanMetaFinder.scan(orphanConsumer, taskContext);
         assertThat(count.get()).isZero();
 
         final List<Path> paths = fileFinder.findAllStreamFile(meta);
         paths.forEach(FileUtil::deleteFile);
-        fsOrphanMetaFinder.scan(orphanConsumer, progress);
+        fsOrphanMetaFinder.scan(orphanConsumer, taskContext);
         assertThat(count.get()).isOne();
     }
 }

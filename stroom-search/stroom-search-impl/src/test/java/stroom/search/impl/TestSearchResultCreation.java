@@ -35,6 +35,7 @@ import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResponseCreator;
+import stroom.query.common.v2.SerialisersFactory;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionReceiver;
@@ -113,7 +114,10 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                new SerialisersFactory(),
+                sizesProvider,
+                dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
                 queryKey,
@@ -147,6 +151,7 @@ class TestSearchResultCreation {
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
+                new SerialisersFactory(),
                 "test_user_id",
                 sizesProvider,
                 collector);
@@ -223,7 +228,10 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                new SerialisersFactory(),
+                sizesProvider,
+                dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
                 queryKey,
@@ -278,6 +286,7 @@ class TestSearchResultCreation {
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
+                new SerialisersFactory(),
                 "test_user_id",
                 sizesProvider,
                 collector);
@@ -300,6 +309,7 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                new SerialisersFactory(),
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
@@ -358,6 +368,7 @@ class TestSearchResultCreation {
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
+                new SerialisersFactory(),
                 "test_user_id",
                 sizesProvider,
                 collector);
@@ -393,7 +404,8 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                new SerialisersFactory(), sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
                 queryKey,
@@ -733,7 +745,7 @@ class TestSearchResultCreation {
                 .extractValues(true)
                 .extractionPipeline(new DocRef("Pipeline",
                         "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-                        "Example extraction"))
+                        "Example Extraction"))
                 .addMaxResults(1000000)
                 .build();
     }
@@ -826,7 +838,7 @@ class TestSearchResultCreation {
                 .extractValues(true)
                 .extractionPipeline(new DocRef("Pipeline",
                         "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
-                        "Example extraction"))
+                        "Example Extraction"))
                 .addMaxResults(1000000)
                 .build();
     }

@@ -27,6 +27,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -42,6 +43,7 @@ public interface NodeResource extends RestResource, DirectRestService {
     String BASE_PATH = "/node" + ResourcePaths.V1;
     String PING_PATH_PART = "/ping";
     String INFO_PATH_PART = "/info";
+    String FIND_PATH_PART = "/find";
     String PRIORITY_PATH_PART = "/priority";
     String ENABLED_PATH_PART = "/enabled";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
@@ -67,11 +69,15 @@ public interface NodeResource extends RestResource, DirectRestService {
             operationId = "listEnabledNodes")
     List<String> listEnabledNodes();
 
-    @GET
+    @POST
+    @Path(FIND_PATH_PART)
     @Operation(
-            summary = "Lists nodes",
+            summary = "Finds nodes matching criteria and sort order",
             operationId = "findNodes")
-    FetchNodeStatusResponse find();
+    FetchNodeStatusResponse find(
+            @Parameter(
+                    description = "findNodeStatusCriteria",
+                    required = true) final FindNodeStatusCriteria findNodeStatusCriteria);
 
     @GET
     @Path(PING_PATH_PART + NODE_NAME_PATH_PARAM)

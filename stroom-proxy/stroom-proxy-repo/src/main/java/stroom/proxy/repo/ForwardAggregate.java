@@ -9,6 +9,7 @@ public class ForwardAggregate {
     private final boolean success;
     private final String error;
     private final long tries;
+    private final long lastTryTimeMs;
 
     public ForwardAggregate(final long id,
                             final long updateTimeMs,
@@ -16,7 +17,8 @@ public class ForwardAggregate {
                             final ForwardDest forwardDest,
                             final boolean success,
                             final String error,
-                            final long tries) {
+                            final long tries,
+                            final long lastTryTimeMs) {
         this.id = id;
         this.updateTimeMs = updateTimeMs;
         this.aggregate = aggregate;
@@ -24,6 +26,7 @@ public class ForwardAggregate {
         this.success = success;
         this.error = error;
         this.tries = tries;
+        this.lastTryTimeMs = lastTryTimeMs;
     }
 
     public long getId() {
@@ -54,6 +57,10 @@ public class ForwardAggregate {
         return tries;
     }
 
+    public long getLastTryTimeMs() {
+        return lastTryTimeMs;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -71,6 +78,7 @@ public class ForwardAggregate {
         private boolean success;
         private String error;
         private long tries;
+        private long lastTryTimeMs;
 
         public Builder() {
         }
@@ -83,6 +91,7 @@ public class ForwardAggregate {
             this.success = forwardAggregate.success;
             this.error = forwardAggregate.error;
             this.tries = forwardAggregate.tries;
+            this.lastTryTimeMs = forwardAggregate.lastTryTimeMs;
         }
 
         public Builder id(final long id) {
@@ -120,8 +129,13 @@ public class ForwardAggregate {
             return this;
         }
 
+        public Builder lastTryTimeMs(final long lastTryTimeMs) {
+            this.lastTryTimeMs = lastTryTimeMs;
+            return this;
+        }
+
         public ForwardAggregate build() {
-            return new ForwardAggregate(id, updateTimeMs, aggregate, forwardDest, success, error, tries);
+            return new ForwardAggregate(id, updateTimeMs, aggregate, forwardDest, success, error, tries, lastTryTimeMs);
         }
     }
 }

@@ -17,7 +17,7 @@
 package stroom.pipeline.xsltfunctions;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.NullSafe;
@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -57,15 +58,18 @@ public class HttpClientCache {
 
     private static final String CACHE_NAME = "Http Client Cache";
 
-    private final ICache<String, OkHttpClient> cache;
+    private final LoadingStroomCache<String, OkHttpClient> cache;
     private final PathCreator pathCreator;
 
     @Inject
     public HttpClientCache(final CacheManager cacheManager,
-                           final PipelineConfig pipelineConfig,
+                           final Provider<PipelineConfig> pipelineConfigProvider,
                            final PathCreator pathCreator) {
         this.pathCreator = pathCreator;
-        cache = cacheManager.create(CACHE_NAME, pipelineConfig::getHttpClientCache, this::create);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> pipelineConfigProvider.get().getHttpClientCache(),
+                this::create);
     }
 
     public OkHttpClient get(final String clientConfig) {

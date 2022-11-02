@@ -33,6 +33,7 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, FeedDoc> {
 
@@ -92,6 +93,12 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     @Override
     protected void onWrite(final FeedDoc feed) {
         tabContentProvider.write(feed);
+        // Something has changed, e.g. the encoding so refresh the meta presenter to reflect it
+        final PresenterWidget<?> presenter = tabContentProvider.getPresenter(DATA);
+        if (presenter instanceof MetaPresenter) {
+            final MetaPresenter metaPresenter = (MetaPresenter) presenter;
+            metaPresenter.refreshData();
+        }
     }
 
     @Override

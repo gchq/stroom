@@ -17,6 +17,7 @@
 package stroom.pipeline.cache;
 
 public class PoolKey<K> {
+
     private final K key;
 
     public PoolKey(final K key) {
@@ -26,4 +27,6 @@ public class PoolKey<K> {
     public K getKey() {
         return key;
     }
+
+    // Lack of hashcode is intentional so object instance id is used
 }

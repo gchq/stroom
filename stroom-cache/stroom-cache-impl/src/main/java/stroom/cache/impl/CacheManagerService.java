@@ -17,6 +17,7 @@
 
 package stroom.cache.impl;
 
+import stroom.cache.shared.CacheIdentity;
 import stroom.cache.shared.CacheInfo;
 
 import java.util.List;
@@ -28,9 +29,13 @@ public interface CacheManagerService {
 
     List<String> getCacheNames();
 
+    List<CacheIdentity> getCacheIdentities();
+
     List<CacheInfo> find(FindCacheInfoCriteria criteria);
 
     Long clear(FindCacheInfoCriteria criteria);
 
     void evictExpiredElements();
+
+    Long evictExpiredElements(FindCacheInfoCriteria criteria);
 }

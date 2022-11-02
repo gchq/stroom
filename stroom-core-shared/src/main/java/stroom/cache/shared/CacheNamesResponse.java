@@ -11,15 +11,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class CacheNamesResponse extends ResultPage<String> {
+public class CacheNamesResponse extends ResultPage<CacheIdentity> {
 
-    public CacheNamesResponse(final List<String> values) {
+    public CacheNamesResponse(final List<CacheIdentity> values) {
         super(values);
     }
 
     @JsonCreator
-    public CacheNamesResponse(@JsonProperty("values") final List<String> values,
+    public CacheNamesResponse(@JsonProperty("values") final List<CacheIdentity> values,
                               @JsonProperty("pageResponse") final PageResponse pageResponse) {
         super(values, pageResponse);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        return super.equals(o);
     }
 }

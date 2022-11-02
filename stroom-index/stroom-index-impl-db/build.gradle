@@ -14,6 +14,7 @@ dependencies {
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-index:stroom-index-impl-db-jooq')
     implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')

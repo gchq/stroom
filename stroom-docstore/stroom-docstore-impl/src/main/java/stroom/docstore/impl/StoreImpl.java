@@ -171,10 +171,12 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         Objects.requireNonNull(name);
         final D document = read(uuid);
 
+        final DocRef oldDocRef = createDocRef(document);
+
         // Only update the document if the name has actually changed.
         if (!Objects.equals(document.getName(), name)) {
             document.setName(name);
-            final D updated = update(document);
+            final D updated = update(document, oldDocRef);
             return createDocRef(updated);
         }
 
@@ -539,9 +541,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             document.setName(name);
             return document;
         } catch (final InstantiationException
-                | IllegalAccessException
-                | NoSuchMethodException
-                | InvocationTargetException e) {
+                       | IllegalAccessException
+                       | NoSuchMethodException
+                       | InvocationTargetException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -580,6 +582,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     private D update(final D document) {
+        return update(document, null);
+    }
+
+    private D update(final D document, final DocRef oldDocRef) {
         final DocRef docRef = createDocRef(document);
 
         // Check that the user has permission to update this item.
@@ -623,7 +629,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                     }
 
                     persistence.write(docRef, true, newData);
-                    EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE);
+                    EntityEvent.fire(entityEventBus, docRef, oldDocRef, EntityAction.UPDATE);
                     dirty.set(true);
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);

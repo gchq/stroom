@@ -10,44 +10,50 @@ import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 class LmdbValue {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbValue.class);
 
+    private final Serialisers serialisers;
     private CompiledField[] fields;
     private ByteBuffer byteBuffer;
     private Key key;
     private Generators generators;
 
-    LmdbValue(final byte[] fullKeyBytes,
+    LmdbValue(final Serialisers serialisers,
+              final byte[] fullKeyBytes,
               final Generators generators) {
-        this.key = new Key(fullKeyBytes);
+        this.serialisers = serialisers;
+        this.key = new Key(serialisers, fullKeyBytes);
         this.generators = generators;
     }
 
-    LmdbValue(final CompiledField[] fields,
+    LmdbValue(final Serialisers serialisers,
+              final CompiledField[] fields,
               final ByteBuffer byteBuffer) {
+        this.serialisers = serialisers;
         this.fields = fields;
         this.byteBuffer = byteBuffer;
     }
 
-    public LmdbValue(final CompiledField[] fields,
+    public LmdbValue(final Serialisers serialisers,
+                     final CompiledField[] fields,
                      final byte[] fullKeyBytes,
                      final byte[] generatorBytes) {
+        this.serialisers = serialisers;
         this.fields = fields;
-        this.key = new Key(fullKeyBytes);
-        this.generators = new Generators(fields, generatorBytes);
+        this.key = new Key(serialisers, fullKeyBytes);
+        this.generators = new Generators(serialisers, fields, generatorBytes);
     }
 
     private void unpack() {
         try (final UnsafeByteBufferInput input =
-                new UnsafeByteBufferInput(byteBuffer)) {
+                serialisers.getInputFactory().createByteBufferInput(byteBuffer)) {
             final int keyLength = input.readInt();
-            key = new Key(input.readBytes(keyLength));
+            key = new Key(serialisers, input.readBytes(keyLength));
             final int generatorLength = input.readInt();
-            generators = new Generators(fields, input.readBytes(generatorLength));
+            generators = new Generators(serialisers, fields, input.readBytes(generatorLength));
         }
     }
 
@@ -56,7 +62,8 @@ class LmdbValue {
         final byte[] generatorBytes = getGenerators().getBytes();
         final int requiredCapacity = calculateRequiredCapacity(keyBytes, generatorBytes);
 
-        try (final UnsafeByteBufferOutput output = new UnsafeByteBufferOutput(requiredCapacity)) {
+        try (final UnsafeByteBufferOutput output =
+                serialisers.getOutputFactory().createByteBufferOutput(requiredCapacity)) {
             write(output, keyBytes, generatorBytes);
             byteBuffer = output.getByteBuffer().flip();
         } catch (final IOException e) {
@@ -71,12 +78,14 @@ class LmdbValue {
                 generatorBytes.length;
     }
 
-    static LmdbValue read(final CompiledField[] fields, final Input input) {
+    static LmdbValue read(final Serialisers serialisers,
+                          final CompiledField[] fields,
+                          final Input input) {
         final int fullKeyLength = input.readInt();
         final byte[] fullKey = input.readBytes(fullKeyLength);
         final int generatorsLength = input.readInt();
         final byte[] generatorBytes = input.readBytes(generatorsLength);
-        return new LmdbValue(fields, fullKey, generatorBytes);
+        return new LmdbValue(serialisers, fields, fullKey, generatorBytes);
     }
 
     void write(final Output output) throws IOException {
@@ -84,16 +93,6 @@ class LmdbValue {
     }
 
     private void write(final Output output, final byte[] fullKeyBytes, final byte[] generatorBytes) throws IOException {
-        final int requiredCapacity = calculateRequiredCapacity(fullKeyBytes, generatorBytes);
-        final long remaining = output.getMaxCapacity() - output.total();
-        if (remaining < requiredCapacity) {
-            LOGGER.debug(() -> "Row size exceeds capacity: " +
-                    Arrays.toString(fullKeyBytes) +
-                    " " +
-                    Arrays.toString(generatorBytes));
-            throw new IOException("Row size exceeds capacity");
-        }
-
         output.writeInt(fullKeyBytes.length);
         output.writeBytes(fullKeyBytes, 0, fullKeyBytes.length);
         output.writeInt(generatorBytes.length);

@@ -3,9 +3,11 @@ package stroom.dashboard.impl;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.util.shared.IsWebSocket;
+import stroom.util.shared.WebSocketMessage;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
@@ -76,6 +78,24 @@ public abstract class AuthenticatedWebSocket implements IsWebSocket {
             });
         } catch (final UncheckedIOException e) {
             throw e.getCause();
+        }
+    }
+
+    <T> Optional<T> getWebSocketMsgValue(final WebSocketMessage webSocketMessage,
+                                         final String key,
+                                         final Class<T> clazz) {
+        final Object val = webSocketMessage.get(key);
+        if (val == null) {
+            return Optional.empty();
+        } else {
+            try {
+                return Optional.of(clazz.cast(val));
+            } catch (ClassCastException e) {
+                throw new RuntimeException("Unable to cast value to "
+                        + clazz.getSimpleName()
+                        + " (key: '" + key
+                        + "', value: '" + val + "')");
+            }
         }
     }
 

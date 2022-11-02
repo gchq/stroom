@@ -19,6 +19,7 @@ package stroom.job.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.job.api.ScheduledJob;
+import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
@@ -27,6 +28,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
 import java.util.HashSet;
@@ -184,7 +186,9 @@ class JobBootstrap {
 
             existingJobNodes.stream().filter(jobNode -> !validJobNames.contains(jobNode.getJob().getName()))
                     .forEach(jobNode -> {
-                        LOGGER.info(() -> "Removing old job node " + jobNode.getJob().getName());
+                        LOGGER.info(() -> LogUtil.message("Removing old job node '{}' on node '{}'",
+                                jobNode.getJob().getName(),
+                                jobNode.getNodeName()));
                         jobNodeDao.delete(jobNode.getId());
                     });
 

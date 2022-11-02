@@ -35,6 +35,7 @@ import javax.inject.Provider;
 
 @AutoLogged
 class SteppingResourceImpl implements SteppingResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingResourceImpl.class);
 
     private final Provider<SteppingService> steppingServiceProvider;
@@ -87,6 +88,7 @@ class SteppingResourceImpl implements SteppingResource {
                         request.getPipeline(),
                         e);
             }
+            throw e;
         }
 
         return result;

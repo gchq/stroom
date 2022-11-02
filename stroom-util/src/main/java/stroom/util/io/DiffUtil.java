@@ -62,6 +62,13 @@ public class DiffUtil {
         );
     }
 
+    /**
+     * @param originalContent The original text to diff
+     * @param revisedContent  The revised test to diff
+     * @param colouredOutput  True if you want ascii colour codes in the output
+     * @param contextLines    Number of lines of context before and after each difference
+     * @return True if any differences exist
+     */
     public static boolean unifiedDiff(final String originalContent,
                                       final String revisedContent,
                                       final boolean colouredOutput,
@@ -74,6 +81,14 @@ public class DiffUtil {
                 createDiffLinesConsumer("Original", "Revised"));
     }
 
+    /**
+     * @param originalContent   The original text to diff
+     * @param revisedContent    The revised test to diff
+     * @param colouredOutput    True if you want ascii colour codes in the output
+     * @param contextLines      Number of lines of context before and after each difference
+     * @param diffLinesConsumer A consumer of the diff output lines
+     * @return True if any differences exist
+     */
     public static boolean unifiedDiff(final String originalContent,
                                       final String revisedContent,
                                       final boolean colouredOutput,

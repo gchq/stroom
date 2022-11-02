@@ -33,7 +33,9 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
     private final CacheNodeListPresenter cacheNodeListPresenter;
 
     @Inject
-    public CachePresenter(final EventBus eventBus, final CacheView view, final CacheListPresenter cacheListPresenter,
+    public CachePresenter(final EventBus eventBus,
+                          final CacheView view,
+                          final CacheListPresenter cacheListPresenter,
                           final CacheNodeListPresenter cacheNodeListPresenter) {
         super(eventBus, view);
         this.cacheListPresenter = cacheListPresenter;
@@ -49,9 +51,13 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
 
         registerHandler(
                 cacheListPresenter.getSelectionModel().addSelectionHandler(event -> {
-                    final String row = cacheListPresenter.getSelectionModel().getSelected();
-                    cacheNodeListPresenter.read(row);
+                    final String cacheName = cacheListPresenter.getSelectionModel()
+                            .getSelected()
+                            .getCacheName();
+                    cacheNodeListPresenter.read(cacheName);
                 }));
+        // When a cache is cleared/evicted refresh the node list presenter
+        cacheListPresenter.setCacheUpdateHandler(cacheNodeListPresenter::read);
     }
 
     @Override

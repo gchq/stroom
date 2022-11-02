@@ -23,6 +23,7 @@ import stroom.util.pipeline.scope.PipelineScoped;
 
 @PipelineScoped
 public class MetaHolder implements Holder {
+
     private InputStreamProvider inputStreamProvider;
 
     private Meta meta;
@@ -42,7 +43,7 @@ public class MetaHolder implements Holder {
     }
 
     public void setChildDataType(final String childDataType) {
-        if (!StreamTypeNames.META.equals(childDataType) && !StreamTypeNames.CONTEXT.equals(childDataType)) {
+        if (!StreamTypeNames.META.equals(childDataType)) {
             this.childDataType = childDataType;
         }
     }

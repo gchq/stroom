@@ -27,12 +27,15 @@ class TestMapDataStore extends AbstractDataStoreTest {
     DataStore create(final TableSettings tableSettings, final Sizes maxResults, final Sizes storeSize) {
         final FieldIndex fieldIndex = new FieldIndex();
 
+        final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
+        final Serialisers serialisers = new SerialisersFactory().create(errorConsumer);
         return new MapDataStore(
+                serialisers,
                 tableSettings,
                 fieldIndex,
                 Collections.emptyMap(),
                 maxResults,
                 storeSize,
-                new ErrorConsumerImpl());
+                errorConsumer);
     }
 }

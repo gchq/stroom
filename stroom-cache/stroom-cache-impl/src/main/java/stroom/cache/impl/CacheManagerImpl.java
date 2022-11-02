@@ -17,245 +17,189 @@
 package stroom.cache.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
+import stroom.cache.api.StroomCache;
+import stroom.cache.shared.CacheIdentity;
+import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.SystemInfoResult;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.CacheLoader;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.github.benmanes.caffeine.cache.RemovalCause;
-import com.github.benmanes.caffeine.cache.RemovalListener;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Singleton;
 
 @Singleton
-public class CacheManagerImpl implements CacheManager {
+public class CacheManagerImpl implements CacheManager, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheManagerImpl.class);
 
-    private final Map<String, CacheHolder> caches = new ConcurrentHashMap<>();
+    private static final String PARAM_NAME_LIMIT = "limit";
+    private static final String PARAM_NAME_CACHE_NAME = "name";
+
+    private final Map<String, StroomCache<?, ?>> caches = new ConcurrentHashMap<>();
 
     @Override
     public synchronized void close() {
-        caches.forEach((k, v) -> CacheUtil.clear(v.getCache()));
+        caches.forEach((name, cache) -> cache.clear());
     }
 
     @Override
-    public <K, V> ICache<K, V> create(final String name, final Supplier<CacheConfig> cacheConfigSupplier) {
-        return create(name, cacheConfigSupplier, null, null);
+    public <K, V> StroomCache<K, V> create(final String name,
+                                           final Supplier<CacheConfig> cacheConfigSupplier,
+                                           final BiConsumer<K, V> removalNotificationConsumer) {
+        final StroomCache<K, V> cache = new StroomCacheImpl<>(
+                name,
+                cacheConfigSupplier,
+                removalNotificationConsumer);
+        registerCache(name, cache);
+        return cache;
     }
 
     @Override
-    public <K, V> ICache<K, V> create(final String name,
-                                      final Supplier<CacheConfig> cacheConfigSupplier,
-                                      final Function<K, V> loadFunction) {
-        return create(name, cacheConfigSupplier, loadFunction, null);
+    public <K, V> LoadingStroomCache<K, V> createLoadingCache(
+            final String name,
+            final Supplier<CacheConfig> cacheConfigSupplier,
+            final Function<K, V> loadFunction,
+            final BiConsumer<K, V> removalNotificationConsumer) {
+
+        Objects.requireNonNull(loadFunction);
+        final LoadingStroomCache<K, V> cache;
+        cache = new LoadingStroomCacheImpl<>(
+                name,
+                cacheConfigSupplier,
+                loadFunction,
+                removalNotificationConsumer);
+        registerCache(name, cache);
+        return cache;
     }
 
-    @Override
-    public <K, V> ICache<K, V> create(final String name,
-                                      final Supplier<CacheConfig> cacheConfigSupplier,
-                                      final Function<K, V> loadFunction,
-                                      final BiConsumer<K, V> removalNotificationConsumer) {
-        final CacheConfig cacheConfig = cacheConfigSupplier.get();
-
-        final Caffeine cacheBuilder = Caffeine.newBuilder();
-        cacheBuilder.recordStats();
-
-        if (cacheConfig.getMaximumSize() != null) {
-            cacheBuilder.maximumSize(cacheConfig.getMaximumSize());
-        }
-        if (cacheConfig.getExpireAfterAccess() != null) {
-            cacheBuilder.expireAfterAccess(cacheConfig.getExpireAfterAccess().getDuration());
-        }
-        if (cacheConfig.getExpireAfterWrite() != null) {
-            cacheBuilder.expireAfterWrite(cacheConfig.getExpireAfterWrite().getDuration());
-        }
-        if (removalNotificationConsumer != null) {
-            final RemovalListener<K, V> removalListener = (key, value, cause) -> {
-                final Supplier<String> messageSupplier = () -> "Removal notification for cache '" +
-                        name +
-                        "' (key=" +
-                        key +
-                        ", value=" +
-                        value +
-                        ", cause=" +
-                        cause + ")";
-
-                if (cause == RemovalCause.SIZE) {
-                    LOGGER.warn(() -> "Cache reached size limit '" + name + "'");
-                    LOGGER.debug(messageSupplier);
-                } else {
-                    LOGGER.trace(messageSupplier);
-                }
-                removalNotificationConsumer.accept(key, value);
-            };
-            cacheBuilder.removalListener(removalListener);
+    public void registerCache(final String name, final StroomCache<?, ?> cache) {
+        if (caches.containsKey(name)) {
+            throw new RuntimeException("A cache called '" + name + "' already exists");
         }
 
-        if (loadFunction != null) {
-            final CacheLoader<K, V> cacheLoader = loadFunction::apply;
-            final LoadingCache<K, V> cache = cacheBuilder.build(cacheLoader);
-            registerCache(name, cacheBuilder, cache);
-
-            return new ICache<K, V>() {
-                @Override
-                public V get(final K key) {
-                    LOGGER.trace(() -> "get() - " + key);
-                    return cache.get(key);
-                }
-
-                @Override
-                public void put(final K key, final V value) {
-                    LOGGER.trace(() -> "put() - " + key);
-                    cache.put(key, value);
-                }
-
-                @Override
-                public Optional<V> getOptional(final K key) {
-                    LOGGER.trace(() -> "getOptional() - " + key);
-                    return Optional.ofNullable(cache.getIfPresent(key));
-                }
-
-                @Override
-                public Map<K, V> asMap() {
-                    return cache.asMap();
-                }
-
-                @Override
-                public Collection<V> values() {
-                    return cache.asMap().values();
-                }
-
-                @Override
-                public void invalidate(final K key) {
-                    LOGGER.trace(() -> "invalidate() - " + key);
-                    cache.invalidate(key);
-                }
-
-                @Override
-                public void remove(final K key) {
-                    LOGGER.trace(() -> "remove() - " + key);
-                    cache.invalidate(key);
-                    cache.cleanUp();
-                }
-
-                @Override
-                public void evictExpiredElements() {
-                    LOGGER.trace(() -> "evictExpiredElements()");
-                    cache.cleanUp();
-                }
-
-                @Override
-                public long size() {
-                    return cache.estimatedSize();
-                }
-
-                @Override
-                public void clear() {
-                    LOGGER.trace(() -> "clear()");
-                    CacheUtil.clear(cache);
-                }
-            };
-
-        } else {
-
-            final Cache<K, V> cache = cacheBuilder.build();
-            registerCache(name, cacheBuilder, cache);
-
-            return new ICache<K, V>() {
-                @Override
-                public V get(final K key) {
-                    LOGGER.trace(() -> "get() - " + key);
-                    return cache.getIfPresent(key);
-                }
-
-                @Override
-                public void put(final K key, final V value) {
-                    LOGGER.trace(() -> "put() - " + key);
-                    cache.put(key, value);
-                }
-
-                @Override
-                public Optional<V> getOptional(final K key) {
-                    LOGGER.trace(() -> "getOptional() - " + key);
-                    return Optional.ofNullable(cache.getIfPresent(key));
-                }
-
-                @Override
-                public Map<K, V> asMap() {
-                    return cache.asMap();
-                }
-
-                @Override
-                public Collection<V> values() {
-                    return cache.asMap().values();
-                }
-
-                @Override
-                public void invalidate(final K key) {
-                    LOGGER.trace(() -> "invalidate() - " + key);
-                    cache.invalidate(key);
-                }
-
-                @Override
-                public void remove(final K key) {
-                    LOGGER.trace(() -> "remove() - " + key);
-                    cache.invalidate(key);
-                    cache.cleanUp();
-                }
-
-                @Override
-                public void evictExpiredElements() {
-                    LOGGER.trace(() -> "evictExpiredElements()");
-                    cache.cleanUp();
-                }
-
-                @Override
-                public long size() {
-                    return cache.estimatedSize();
-                }
-
-                @Override
-                public void clear() {
-                    LOGGER.trace(() -> "clear()");
-                    CacheUtil.clear(cache);
-                }
-            };
-        }
-    }
-
-//    @Override
-//    public void clear(final String name) {
-//        final CacheHolder cacheHolder = caches.get(name);
-//        if (cacheHolder != null) {
-//            CacheUtil.clear(cacheHolder.getCache());
-//        }
-//    }
-
-    //    @Override
-    public void registerCache(final String alias, final Caffeine cacheBuilder, final Cache cache) {
-        if (caches.containsKey(alias)) {
-            throw new RuntimeException("A cache called '" + alias + "' already exists");
-        }
-
-        final CacheHolder existing = caches.put(alias, new CacheHolder(cacheBuilder, cache));
+        final StroomCache<?, ?> existing = caches.put(name, cache);
         if (existing != null) {
-            CacheUtil.clear(existing.getCache());
+            cache.clear();
         }
     }
 
-    public Map<String, CacheHolder> getCaches() {
+    Map<String, StroomCache<?, ?>> getCaches() {
         return caches;
+    }
+
+    public Set<String> getCacheNames() {
+        return caches.keySet();
+    }
+
+    public Set<CacheIdentity> getCacheIdentities() {
+        // Note: it is possible to have two caches with the same config, e.g. StatisticsDataSourceCacheImpl
+        return caches.values()
+                .stream()
+                .map(cache ->
+                        new CacheIdentity(cache.name(), cache.getBasePropertyPath()))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public SystemInfoResult getSystemInfo(final Map<String, String> params) {
+        final Integer limit = NullSafe.getOrElse(
+                params.get(PARAM_NAME_LIMIT),
+                Integer::valueOf,
+                Integer.MAX_VALUE);
+
+        final String cacheName = params.get(PARAM_NAME_CACHE_NAME);
+
+        if (cacheName != null) {
+            final StroomCache<?, ?> cache = caches.get(cacheName);
+
+            if (cache != null) {
+                final Set<?> keySet = cache.keySet();
+
+                Stream<?> stream = keySet
+                        .stream()
+                        .limit(limit);
+
+                final List<?> keyList;
+                if (!keySet.isEmpty()) {
+                    final Object aKey = keySet.iterator().next();
+
+                    if (aKey instanceof Comparable) {
+                        stream = stream
+                                .sorted();
+                    }
+                    final ObjectMapper objectMapper = JsonUtil.getMapper();
+                    keyList = stream
+                            .map(key -> {
+                                try {
+                                    // Try and serialise it
+                                    objectMapper.writeValueAsString(key);
+                                } catch (Exception e) {
+                                    return "Unable to serialise Key as JSON, dumping as string: "
+                                            + key.toString().substring(0, 1_000);
+                                }
+                                return key;
+                            })
+                            .collect(Collectors.toList());
+
+                } else {
+                    keyList = Collections.emptyList();
+                }
+
+                return SystemInfoResult.builder(this)
+                        .description("List of cache keys")
+                        .addDetail("cacheName", cacheName)
+                        .addDetail("keys", keyList)
+                        .addDetail("keyCount", keySet.size())
+                        .build();
+            } else {
+                throw new RuntimeException(LogUtil.message("Unknown cache name {}", cacheName));
+            }
+        } else {
+            final List<String> cacheNames = caches.keySet()
+                    .stream()
+                    .sorted()
+                    .limit(limit)
+                    .collect(Collectors.toList());
+
+
+            return SystemInfoResult.builder(this)
+                    .description("List of cache names")
+                    .addDetail("cacheNames", cacheNames)
+                    .addDetail("cacheCount", caches.size())
+                    .build();
+        }
+    }
+
+    @Override
+    public SystemInfoResult getSystemInfo() {
+        return getSystemInfo(Collections.emptyMap());
+
+    }
+
+    @Override
+    public List<ParamInfo> getParamInfo() {
+        return List.of(
+                ParamInfo.optionalParam(PARAM_NAME_LIMIT,
+                        "A limit on the number of keys to return, default is unlimited."),
+                ParamInfo.optionalParam(PARAM_NAME_CACHE_NAME,
+                        "The name of the cache to see the list of keys for. " +
+                                "If not supplied a list of cache names will be returned"));
     }
 }

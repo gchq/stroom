@@ -19,10 +19,12 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.LocationHolder.FunctionType;
+import stroom.util.NullSafe;
 
 import javax.inject.Inject;
 
 class RecordNo extends AbstractLocationFunction {
+
     @Inject
     RecordNo(final LocationHolder locationHolder) {
         super(locationHolder);
@@ -30,7 +32,7 @@ class RecordNo extends AbstractLocationFunction {
 
     @Override
     String getValue(final SourceLocation location) {
-        return String.valueOf(location.getRecordIndex() + 1);
+        return NullSafe.get(location, SourceLocation::getRecordIndex, i -> String.valueOf(i + 1));
     }
 
     @Override

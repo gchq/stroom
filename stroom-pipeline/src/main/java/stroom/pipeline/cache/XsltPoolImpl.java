@@ -17,6 +17,7 @@
 package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
+import stroom.docref.DocRef;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
@@ -27,17 +28,21 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.xsltfunctions.StroomXsltFunctionLibrary;
 import stroom.security.api.SecurityContext;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -46,21 +51,29 @@ import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamSource;
 
 @Singleton
-class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implements XsltPool {
+@EntityEventHandler(
+        type = XsltDoc.DOCUMENT_TYPE,
+        action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
+class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implements XsltPool, EntityEvent.Handler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(XsltPoolImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XsltPoolImpl.class);
 
     private final URIResolver uriResolver;
     private final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider;
 
     @Inject
     XsltPoolImpl(final CacheManager cacheManager,
-                 final XsltConfig xsltConfig,
+                 final Provider<XsltConfig> xsltConfigProvider,
                  final DocumentPermissionCache documentPermissionCache,
                  final SecurityContext securityContext,
                  final URIResolver uriResolver,
                  final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider) {
-        super(cacheManager, "XSLT Pool", xsltConfig::getCacheConfig, documentPermissionCache, securityContext);
+        super(
+                cacheManager,
+                "XSLT Pool",
+                () -> xsltConfigProvider.get().getCacheConfig(),
+                documentPermissionCache,
+                securityContext);
         this.uriResolver = uriResolver;
         this.stroomXsltFunctionLibraryProvider = stroomXsltFunctionLibraryProvider;
     }
@@ -126,5 +139,42 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
         }
 
         return new StoredXsltExecutable(xsltExecutable, functionLibrary, errorReceiver);
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        // super deals with invalidating the affected doc
+        super.onChange(event);
+
+        // If the oldDocRef is present then use that as that is what would be in the pool
+        final DocRef changedXsltDocRef = event.getOldDocRef() != null
+                ? event.getOldDocRef()
+                : event.getDocRef();
+        final String changedXsltName = changedXsltDocRef.getName();
+
+        // An XSLT can have an xsl:include or xsl:import of other XSLTs (referenced by name)
+        // so we need to find any in the pool that reference our changed one and invalidate them too.
+        // E.g. if an imported XSLT is modified then we need to invalidate the one that uses
+        // it, so it picks up the updated import.
+        // href="...the.name..." is used for both import and include so search for that in the XSLT doc data.
+        // In the event that we get a false positive hit then it just means we invalidate something we didn't
+        // intend to but that is no biggie.
+        final String searchStr = "href=\"" + changedXsltName + "\"";
+        final Consumer<XsltDoc> loggingPeekFunc = LOGGER.createIfDebugConsumer(xsltDoc ->
+                LOGGER.debug("Invalidating XsltDoc {} with dependency on {}", xsltDoc, changedXsltDocRef));
+
+        // This xslt may be imported/included in other XSLTs, so we need to invalidate all of them as well
+        getKeys()
+                .stream()
+                .filter(xsltDoc -> {
+                    final String xsltData = xsltDoc.getData();
+                    return xsltData != null
+                            && !xsltData.isBlank()
+                            && xsltData.contains(searchStr);
+                })
+                .peek(loggingPeekFunc)
+                .forEach(this::invalidate);
+
+        LOGGER.debug("Completed event handler for {}", event);
     }
 }
