@@ -495,26 +495,6 @@ paths:
       summary: Unlinks an annotation from an event
       tags:
       - Annotations
-  /application-instance/v1/keepAlive:
-    post:
-      operationId: applicationInstanceKeepAlive
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplicationInstanceInfo'
-        description: applicationInstanceInfo
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Keep an application instance alive
-      tags:
-      - Application
   /application-instance/v1/register:
     get:
       operationId: applicationInstanceRegister
