@@ -19,9 +19,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.hibernate.validator.constraints.NotEmpty;
 
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
 
@@ -35,6 +33,7 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
     private final CacheConfig metaProcessorCache;
     private final CacheConfig metaTypeCache;
     private final Set<String> metaTypes;
+    private final Set<String> rawMetaTypes;
 
     public MetaServiceConfig() {
         dbConfig = new MetaServiceDbConfig();
@@ -51,7 +50,8 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
-        metaTypes = new HashSet<>(StreamTypeNames.ALL_TYPE_NAMES);
+        metaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
+        rawMetaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES);
     }
 
     @SuppressWarnings("unused")
@@ -61,13 +61,15 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
                              @JsonProperty("metaFeedCache") final CacheConfig metaFeedCache,
                              @JsonProperty("metaProcessorCache") final CacheConfig metaProcessorCache,
                              @JsonProperty("metaTypeCache") final CacheConfig metaTypeCache,
-                             @JsonProperty("metaTypes") final Set<String> metaTypes) {
+                             @JsonProperty("metaTypes") final Set<String> metaTypes,
+                             @JsonProperty("rawMetaTypes") final Set<String> rawMetaTypes) {
         this.dbConfig = dbConfig;
         this.metaValueConfig = metaValueConfig;
         this.metaFeedCache = metaFeedCache;
         this.metaProcessorCache = metaProcessorCache;
         this.metaTypeCache = metaTypeCache;
         this.metaTypes = metaTypes;
+        this.rawMetaTypes = rawMetaTypes;
     }
 
     @Override
@@ -106,11 +108,29 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
             StreamTypeNames.CONTEXT,
     }) // List should contain as a minimum all those types that the java code reference
     @JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
-            "in the default value for this property but can contain additional names.")
+            "in the default value for this property but can contain additional names. " +
+            "Any custom types added here that are used for raw data must also be " +
+            "added to the property 'rawMetaTypes'." +
+            "")
     public Set<String> getMetaTypes() {
         return metaTypes;
     }
 
+    @NotEmpty
+    @NotNull
+    @IsSupersetOf(requiredValues = {
+            StreamTypeNames.RAW_EVENTS,
+            StreamTypeNames.RAW_REFERENCE,
+    }) // List must match stroom.data.shared.StreamTypeNames#ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES
+    @JsonPropertyDescription("Set of meta type names that are used for received raw data. " +
+            "Types defined here will be read using the Data Encoding set on the Feed's settings." +
+            "Any custom types added to the 'metaTypes' property that are used for raw data must also be " +
+            "added here." +
+            "This set must contain all of the names in the default value for this property but can " +
+            "contain additional names.")
+    public Set<String> getRawMetaTypes() {
+        return rawMetaTypes;
+    }
 
     public MetaServiceConfig withMetaValueConfig(final MetaValueConfig metaValueConfig) {
         return new MetaServiceConfig(
@@ -119,7 +139,21 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
                 metaFeedCache,
                 metaProcessorCache,
                 metaTypeCache,
-                metaTypes);
+                metaTypes,
+                rawMetaTypes);
+    }
+
+    @Override
+    public String toString() {
+        return "MetaServiceConfig{" +
+                "dbConfig=" + dbConfig +
+                ", metaValueConfig=" + metaValueConfig +
+                ", metaFeedCache=" + metaFeedCache +
+                ", metaProcessorCache=" + metaProcessorCache +
+                ", metaTypeCache=" + metaTypeCache +
+                ", metaTypes=" + metaTypes +
+                ", rawMetaTypes=" + rawMetaTypes +
+                '}';
     }
 
     @BootStrapConfig

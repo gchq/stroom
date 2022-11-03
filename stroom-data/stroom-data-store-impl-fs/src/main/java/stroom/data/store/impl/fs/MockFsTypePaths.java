@@ -1,5 +1,7 @@
 package stroom.data.store.impl.fs;
 
+import stroom.data.shared.StreamTypeNames;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,17 +15,17 @@ class MockFsTypePaths implements FsTypePathDao {
 
     static {
         put("Manifest", "MANIFEST");
-        put("Raw Events", "RAW_EVENTS");
-        put("Raw Reference", "RAW_REFERENCE");
-        put("Events", "EVENTS");
-        put("Reference", "REFERENCE");
-        put("Test Events", "TEST_EVENTS");
-        put("Test Reference", "TEST_REFERENCE");
-        put("Segment Index", "SEGMENT_INDEX");
-        put("Boundary Index", "BOUNDARY_INDEX");
-        put("Meta Data", "META");
-        put("Error", "ERROR");
-        put("Context", "CONTEXT");
+        put(StreamTypeNames.RAW_EVENTS, "RAW_EVENTS");
+        put(StreamTypeNames.RAW_REFERENCE, "RAW_REFERENCE");
+        put(StreamTypeNames.EVENTS, "EVENTS");
+        put(StreamTypeNames.REFERENCE, "REFERENCE");
+        put(StreamTypeNames.TEST_EVENTS, "TEST_EVENTS");
+        put(StreamTypeNames.TEST_REFERENCE, "TEST_REFERENCE");
+        put(StreamTypeNames.META, "META");
+        put(StreamTypeNames.ERROR, "ERROR");
+        put(StreamTypeNames.CONTEXT, "CONTEXT");
+        put(InternalStreamTypeNames.SEGMENT_INDEX, "SEGMENT_INDEX");
+        put(InternalStreamTypeNames.BOUNDARY_INDEX, "BOUNDARY_INDEX");
     }
 
     private static void put(final String name, final String path) {

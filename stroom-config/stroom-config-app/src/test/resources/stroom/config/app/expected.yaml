@@ -188,6 +188,9 @@ appConfig:
         deleteAge: "P30D"
         deleteBatchSize: 500
         flushBatchSize: 500
+      rawMetaTypes:
+      - "Raw Reference"
+      - "Raw Events"
     retention:
       deleteBatchSize: 1000
       useQueryOptimisation: true
