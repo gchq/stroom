@@ -46,6 +46,7 @@ class ScriptDataMapConverter implements DataMapConverter {
                 document.setUpdateTimeMs(oldScript.getUpdateTime());
                 document.setCreateUser(oldScript.getCreateUser());
                 document.setUpdateUser(oldScript.getUpdateUser());
+                document.setData(oldScript.getResource());
 
                 final stroom.legacy.model_6_1.DocRefs docRefs = LegacyXmlSerialiser.getDocRefsFromLegacyXml(oldScript.getDependenciesXML());
                 document.setDependencies(MappingUtil.map(docRefs));
