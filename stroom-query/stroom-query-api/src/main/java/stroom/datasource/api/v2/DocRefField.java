@@ -34,9 +34,12 @@ public class DocRefField extends AbstractField {
 
     private static final long serialVersionUID = 1272545271946712570L;
 
-    private static List<Condition> DEFAULT_CONDITIONS_UUID = new ArrayList<>();
-    private static List<Condition> DEFAULT_CONDITIONS_NAME = new ArrayList<>();
-    private static List<Condition> DEFAULT_CONDITIONS_ALL = new ArrayList<>();
+    // Conditions suitable for use when referencing the DocRef by UUID
+    private static final List<Condition> DEFAULT_CONDITIONS_UUID = new ArrayList<>();
+    // Conditions suitable for use when referencing the DocRef by name
+    private static final List<Condition> DEFAULT_CONDITIONS_NAME = new ArrayList<>();
+    // Conditions suitable for use when referencing the DocRef by name only IF the name is unique
+    private static final List<Condition> DEFAULT_CONDITIONS_ALL = new ArrayList<>();
 
     static {
         DEFAULT_CONDITIONS_UUID.add(Condition.IS_DOC_REF);
