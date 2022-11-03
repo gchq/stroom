@@ -19,7 +19,7 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexShardDao;
-import stroom.index.impl.IndexShardFields;
+import stroom.index.shared.IndexShardFields;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -404,8 +404,8 @@ class IndexShardDaoImpl implements IndexShardDao {
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, value -> value);
         }
 
-        private List<String> getIndexUuids(final String indexName) {
-            return indexStore.findByName(indexName, true)
+        private List<String> getIndexUuids(final List<String> indexNames) {
+            return indexStore.findByNames(indexNames, true)
                     .stream()
                     .map(DocRef::getUuid)
                     .collect(Collectors.toList());

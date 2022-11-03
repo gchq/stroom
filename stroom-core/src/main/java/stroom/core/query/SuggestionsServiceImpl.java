@@ -2,11 +2,17 @@ package stroom.core.query;
 
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.api.FeedStore;
+import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexShardFields;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.ReferenceDataFields;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
@@ -14,6 +20,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.filter.QuickFilterPredicateFactory;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,15 +49,31 @@ public class SuggestionsServiceImpl implements SuggestionsService {
     private final PipelineStore pipelineStore;
     private final SecurityContext securityContext;
     private final FeedStore feedStore;
+    private final DocRefInfoService docRefInfoService;
     private final TaskContextFactory taskContextFactory;
 
-    // This may need changing if we have suggestions that are not for the stream store data source
-    private final Map<String, Function<String, List<String>>> fieldNameToFunctionMap = Map.of(
+    // TODO: 03/11/2022 Instead of having all these maps, we need a SuggestionsProvider iface
+    //  then each module can multi-bind an impl, keyed on the docref of the datasource.
+    //  Searchable can then extend SuggestionsProvider. This will remove the need for field names
+    //  to be in core-shared
+    private final Map<String, Function<String, List<String>>> metaFieldNameToFunctionMap = Map.of(
             MetaFields.FEED.getName(), this::createFeedList,
             MetaFields.PIPELINE.getName(), this::createPipelineList,
             MetaFields.PIPELINE_NAME.getName(), this::createPipelineList,
             MetaFields.TYPE.getName(), this::createStreamTypeList,
             MetaFields.STATUS.getName(), this::createStatusList);
+
+    private final Map<String, Function<String, List<String>>> indexShardsFieldNameToFunctionMap = Map.of(
+            IndexShardFields.FIELD_INDEX.getName(), filter ->
+                    getNonUniqueDocRefNames(IndexDoc.DOCUMENT_TYPE, filter));
+
+    private final Map<String, Function<String, List<String>>> processorTaskFieldNameToFunctionMap = Map.of(
+            ProcessorTaskFields.PIPELINE_NAME.getName(), filter ->
+                    getNonUniqueDocRefNames(PipelineDoc.DOCUMENT_TYPE, filter));
+
+    private final Map<String, Function<String, List<String>>> refDataFieldNameToFunctionMap = Map.of(
+            ReferenceDataFields.PIPELINE_FIELD.getName(), filter ->
+                    getNonUniqueDocRefNames(PipelineDoc.DOCUMENT_TYPE, filter));
 
     @SuppressWarnings("unused")
     @Inject
@@ -58,11 +81,13 @@ public class SuggestionsServiceImpl implements SuggestionsService {
                            final PipelineStore pipelineStore,
                            final SecurityContext securityContext,
                            final FeedStore feedStore,
+                           final DocRefInfoService docRefInfoService,
                            final TaskContextFactory taskContextFactory) {
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
         this.securityContext = securityContext;
         this.feedStore = feedStore;
+        this.docRefInfoService = docRefInfoService;
         this.taskContextFactory = taskContextFactory;
     }
 
@@ -70,21 +95,39 @@ public class SuggestionsServiceImpl implements SuggestionsService {
     public List<String> fetch(final FetchSuggestionsRequest request) {
         return securityContext.secureResult(() -> {
             List<String> result = Collections.emptyList();
+            final String fieldName = request.getField().getName();
 
             if (request.getDataSource() != null) {
-                if (MetaFields.STREAM_STORE_DOC_REF.equals(request.getDataSource())) {
-                    final String fieldName = request.getField().getName();
-                    final Function<String, List<String>> suggestionFunc = fieldNameToFunctionMap.get(fieldName);
-                    if (suggestionFunc != null) {
-                        result = suggestionFunc.apply(request.getText());
-                    }
+                final Function<String, List<String>> suggestionFunc = getSuggestionFunc(request, fieldName);
+
+                if (suggestionFunc != null) {
+                    result = suggestionFunc.apply(request.getText());
                 }
             }
             return result;
         });
     }
 
-    private boolean matchesMetaField(final FetchSuggestionsRequest request, final AbstractField fieldToMatch) {
+    @Nullable
+    private Function<String, List<String>> getSuggestionFunc(final FetchSuggestionsRequest request,
+                                                             final String fieldName) {
+        final Function<String, List<String>> suggestionFunc;
+        if (MetaFields.STREAM_STORE_DOC_REF.equals(request.getDataSource())) {
+            suggestionFunc = metaFieldNameToFunctionMap.get(fieldName);
+        } else if (IndexShardFields.INDEX_SHARDS_PSEUDO_DOC_REF.equals(request.getDataSource())) {
+            suggestionFunc = indexShardsFieldNameToFunctionMap.get(fieldName);
+        } else if (ProcessorTaskFields.PROCESSOR_TASK_PSEUDO_DOC_REF.equals(request.getDataSource())) {
+            suggestionFunc = processorTaskFieldNameToFunctionMap.get(fieldName);
+        } else if (ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF.equals(request.getDataSource())) {
+            suggestionFunc = refDataFieldNameToFunctionMap.get(fieldName);
+        } else {
+            suggestionFunc = null;
+        }
+        return suggestionFunc;
+    }
+
+    private boolean matchesMetaField(final FetchSuggestionsRequest request,
+                                     final AbstractField fieldToMatch) {
         Objects.requireNonNull(fieldToMatch);
         return fieldToMatch.getName().equals(request.getField().getName());
     }
@@ -143,9 +186,9 @@ public class SuggestionsServiceImpl implements SuggestionsService {
             return metaFeedsFuture
                     .thenCombine(docFeedsFuture, (metaFeedNames, docFeedNames) ->
                             QuickFilterPredicateFactory.filterStream(
-                                    userInput,
-                                    Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
-                                            .parallel())
+                                            userInput,
+                                            Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
+                                                    .parallel())
                                     .distinct()
                                     .limit(LIMIT)
                                     .collect(Collectors.toList()))
@@ -161,7 +204,17 @@ public class SuggestionsServiceImpl implements SuggestionsService {
 
     private List<String> createStreamTypeList(final String userInput) {
         return QuickFilterPredicateFactory.filterStream(
-                userInput, metaService.getTypes().stream())
+                        userInput, metaService.getTypes().stream())
+                .limit(LIMIT)
+                .collect(Collectors.toList());
+    }
+
+    private List<String> getNonUniqueDocRefNames(final String docRefType,
+                                                 final String userInput) {
+        return QuickFilterPredicateFactory.filterStream(
+                        userInput, docRefInfoService.findByType(docRefType)
+                                .stream()
+                                .map(DocRef::getName))
                 .limit(LIMIT)
                 .collect(Collectors.toList());
     }

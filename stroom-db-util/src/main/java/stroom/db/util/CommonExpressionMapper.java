@@ -1,6 +1,7 @@
 package stroom.db.util;
 
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DocRefField;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -89,8 +90,15 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                     // Fields are defined with a list of supported conditions but the code seems to be using
                     // un-supported conditions.
                     if (!abstractField.supportsCondition(term.getCondition())) {
-                        LOGGER.debug("Condition '{}' is not supported by field '{}' " +
-                                "of type {}. Term: {}", term.getCondition(), fieldName, abstractField.getType(), term);
+                        LOGGER.debug(() -> LogUtil.message("Condition '{}' is not supported by field '{}' of type {}. Term: {}",
+                                term.getCondition(), fieldName, abstractField.getType(), term));
+                        if (abstractField instanceof DocRefField) {
+                            // https://github.com/gchq/stroom/issues/3074 removed some conditions from DocRefField
+                            // instances so log an error
+                            final DocRefField docRefField = (DocRefField) abstractField;
+                            LOGGER.error("Condition '{}' is not supported by field '{}' of type {}. Term: {}",
+                                    term.getCondition(), fieldName, docRefField.getType(), term);
+                        }
                     }
 
                     result = Optional.of(termHandler.apply(term));

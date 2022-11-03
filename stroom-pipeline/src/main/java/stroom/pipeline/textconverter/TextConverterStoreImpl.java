@@ -174,8 +174,8 @@ class TextConverterStoreImpl implements TextConverterStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public List<DocRef> findByName(final String name, final boolean allowWildCards) {
-        return store.findByName(name, allowWildCards);
+    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
+        return store.findByNames(name, allowWildCards);
     }
 
     @Override

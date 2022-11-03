@@ -630,8 +630,8 @@ public final class JooqUtil {
      * '*' characters replaced by '%' and SQL wild cards '%' and '_' are escaped.
      * If filter is not wild carded it returns 'field.eq(filter)'
      */
-    public static Condition createWildCardedCondition(final Field<String> field, final String filter) {
-        return createWildCardedCondition(field, filter, true);
+    public static Condition createWildCardedStringCondition(final Field<String> field, final String filter) {
+        return createWildCardedStringCondition(field, filter, true);
     }
 
     /**
@@ -640,9 +640,9 @@ public final class JooqUtil {
      * '*' characters replaced by '%' and SQL wild cards '%' and '_' are escaped.
      * If filter is not wild carded it returns 'field.eq(filter)'
      */
-    public static Condition createWildCardedCondition(final Field<String> field,
-                                                      final String filter,
-                                                      final boolean allowWildCards) {
+    public static Condition createWildCardedStringCondition(final Field<String> field,
+                                                            final String filter,
+                                                            final boolean allowWildCards) {
         if (filter != null) {
             if (allowWildCards && filter.contains(PatternUtil.STROOM_WILD_CARD_CHAR)) {
                 final String likeStr = PatternUtil.createSqlLikeStringFromWildCardFilter(filter);
@@ -654,6 +654,32 @@ public final class JooqUtil {
         } else {
             LOGGER.debug("field.isNull()");
             return field.isNull();
+        }
+    }
+
+    /**
+     * Creates a single {@link Condition} containing an OR/AND of all the {@link Condition}s for
+     * each of the passed filters, e.g. {@code field like 'xxx%' OR field like '%yyy'}.
+     * If allowWildCards is true and filter is wild carded (i.e. contains a '*') then it
+     * returns 'field.like(x)' where x has
+     * '*' characters replaced by '%' and SQL wild cards '%' and '_' are escaped.
+     * If filter is not wild carded it returns 'field.eq(filter)'.
+     */
+    public static Condition createWildCardedStringsCondition(final Field<String> field,
+                                                             final List<String> filters,
+                                                             final boolean allowWildCards,
+                                                             final BooleanOperator booleanOperator) {
+        Objects.requireNonNull(booleanOperator);
+        if (filters == null || filters.isEmpty()) {
+            return DSL.noCondition();
+        } else {
+            final List<Condition> conditions = filters.stream()
+                    .map(filter -> createWildCardedStringCondition(field, filter, allowWildCards))
+                    .collect(Collectors.toList());
+
+            return BooleanOperator.AND.equals(booleanOperator)
+                    ? DSL.and(conditions)
+                    : DSL.or(conditions);
         }
     }
 
@@ -713,6 +739,13 @@ public final class JooqUtil {
 
     private static void releaseDataSource() {
         DATA_SOURCE_THREAD_LOCAL.set(null);
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static enum BooleanOperator {
+        AND,
+        OR;
     }
 
 }

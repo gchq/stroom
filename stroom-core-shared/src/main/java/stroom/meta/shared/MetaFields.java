@@ -8,10 +8,8 @@ import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -38,21 +36,19 @@ public class MetaFields {
     private static final Map<String, AbstractField> ALL_FIELD_MAP;
 
     // Non grouped fields
-    public static final DocRefField FEED = new DocRefField("Feed", "Feed");
-    public static final DocRefField PIPELINE = new DocRefField(
+    // Maps to the docref name (which is unique)
+    public static final DocRefField FEED = DocRefField.byUniqueName("Feed", "Feed");
+
+    // Maps to the docref uuid
+    public static final DocRefField PIPELINE = DocRefField.byUuid(
             PipelineDoc.DOCUMENT_TYPE,
-            "Pipeline",
-            true,
-            Arrays.asList(Condition.IS_DOC_REF,
-                    Condition.IN_FOLDER));
-    public static final DocRefField PIPELINE_NAME = new DocRefField(
+            "Pipeline");
+
+    // Maps to the docref name (which is not unique)
+    public static final DocRefField PIPELINE_NAME = DocRefField.byNonUniqueName(
             PipelineDoc.DOCUMENT_TYPE,
-            "Pipeline Name",
-            true,
-            Arrays.asList(Condition.CONTAINS,
-                    Condition.EQUALS,
-                    Condition.IN,
-                    Condition.IN_DICTIONARY));
+            "Pipeline Name");
+
     public static final TextField STATUS = new TextField("Status");
     public static final TextField TYPE = new TextField("Type");
 
@@ -83,7 +79,7 @@ public class MetaFields {
     public static final IdField PARENT_ID = new IdField("Parent Id");
     public static final TextField PARENT_STATUS = new TextField("Parent Status");
     public static final DateField PARENT_CREATE_TIME = new DateField("Parent Create Time");
-    public static final DocRefField PARENT_FEED = new DocRefField("Feed", FIELD_PARENT_FEED);
+    public static final DocRefField PARENT_FEED = DocRefField.byUniqueName("Feed", FIELD_PARENT_FEED);
 
     static {
         // Non grouped fields

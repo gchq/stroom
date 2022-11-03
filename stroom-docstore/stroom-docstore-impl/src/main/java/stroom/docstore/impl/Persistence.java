@@ -2,6 +2,8 @@ package stroom.docstore.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
+import stroom.util.NullSafe;
+import stroom.util.PredicateUtil;
 import stroom.util.string.PatternUtil;
 
 import java.io.IOException;
@@ -24,6 +26,8 @@ public interface Persistence {
 
     List<DocRef> list(String type);
 
+    RWLockFactory getLockFactory();
+
     /**
      * Find docRefs by name and type. Name can be optionally wild carded using '*' to match 0-many chars.
      */
@@ -31,25 +35,44 @@ public interface Persistence {
                               final String nameFilter,
                               final boolean allowWildCards) {
         // Default impl that does all filtering in java. Not efficient for DB impls.
-        if (nameFilter == null) {
+        return nameFilter == null
+                ? Collections.emptyList()
+                : find(type, List.of(nameFilter), allowWildCards);
+    }
+
+    /**
+     * Find docRefs by type and one or more nameFilters.
+     * nameFilters can be optionally wild carded using '*' to match 0-many chars.
+     */
+    default List<DocRef> find(final String type,
+                              final List<String> nameFilters,
+                              final boolean allowWildCards) {
+        // Default impl that does all filtering in java. Not efficient for DB impls.
+        if (NullSafe.isEmptyCollection(nameFilters)) {
             return Collections.emptyList();
         } else {
+            // Merge the filters into one predicate
+            final Predicate<DocRef> combinedPredicate = nameFilters.stream()
+                    .map(nameFilter -> {
+                        final Predicate<DocRef> predicate;
+                        if (allowWildCards && PatternUtil.containsWildCards(nameFilter)) {
+                            final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(
+                                    nameFilter, true);
+                            predicate = docRef ->
+                                    pattern.matcher(docRef.getName()).matches();
+                        } else {
+                            predicate = docRef ->
+                                    nameFilter.equals(docRef.getName());
+                        }
+                        return predicate;
+                    })
+                    .reduce(PredicateUtil::orPredicates)
+                    .orElse(val -> false); // no filters, no matches
 
-            final Predicate<DocRef> predicate;
-            if (allowWildCards && PatternUtil.containsWildCards(nameFilter)) {
-                final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(nameFilter);
-                predicate = docRef ->
-                        pattern.matcher(docRef.getName()).matches();
-            } else {
-                predicate = docRef ->
-                        nameFilter.equals(docRef.getName());
-            }
             return list(type)
                     .stream()
-                    .filter(predicate)
+                    .filter(combinedPredicate)
                     .collect(Collectors.toList());
         }
     }
-
-    RWLockFactory getLockFactory();
 }

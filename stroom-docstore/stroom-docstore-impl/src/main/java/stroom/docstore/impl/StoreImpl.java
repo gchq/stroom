@@ -652,8 +652,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public List<DocRef> findByName(final String name, final boolean allowWildCards) {
-        return persistence.find(type, name, allowWildCards)
+    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+        return persistence.find(type, names, allowWildCards)
                 .stream()
                 .filter(this::canRead)
                 .collect(Collectors.toList());

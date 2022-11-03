@@ -7,11 +7,13 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.jooq.Condition;
 import org.jooq.Field;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -23,6 +25,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class TermHandler<T> implements Function<ExpressionTerm, Condition> {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TermHandler.class);
 
     private static final String LIST_DELIMITER = ",";
     private static final String ASTERISK = "*";
@@ -98,12 +102,11 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 final String value = term.getValue().trim();
                 if (value.length() > 0) {
                     final String[] parts = value.split(LIST_DELIMITER);
-                    values = Arrays.stream(parts)
+                    final List<String> partsList = Arrays.stream(parts)
                             .map(String::trim)
                             .filter(part -> part.length() > 0)
-                            .map(this::getValues)
-                            .flatMap(List::stream)
                             .collect(Collectors.toList());
+                    values = getValues(partsList);
                 }
                 return field.in(values);
             }
@@ -142,6 +145,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     /**
      * Get an identifier for the passed docRef. term is only used for logging.
      * docRef may be the same as term.getDocRef() or a descendant of it, as in 'in folder'.
+     *
      * @return The name of the doc or its uuid depending on how the {@link TermHandler} is
      * configured.
      */
@@ -184,21 +188,19 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     }
 
     private List<T> getValues(final String value) {
-        return converter.apply(value);
+        return converter.apply(List.of(value));
+    }
+
+    private List<T> getValues(final List<String> values) {
+        return converter.apply(values);
     }
 
     private Condition isInDictionary(final DocRef docRef) {
         final String[] lines = loadWords(docRef);
         if (lines != null) {
-            final List<T> values = new ArrayList<>();
-            for (final String line : lines) {
-                // TODO: 01/11/2022 This may hit the DB for each line, so we may want to consider a
-                //  MultiConverter that accepts a varargs input so the impl can convert multiple inputs
-                //  at once. Would also require changes to HasFindDocRefsByName to accept multiple name
-                //  filters at once.
-                final List<T> list = converter.apply(line);
-                values.addAll(list);
-            }
+            final List<T> values = converter.apply(List.of(lines));
+            LOGGER.debug(() -> LogUtil.message("Converted {} lines into {} values",
+                    lines.length, values.size()));
             return field.in(values);
         }
         return field.in(Collections.emptyList());
@@ -212,16 +214,11 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
             if (type != null && collectionService != null) {
                 final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
                 if (descendants != null && descendants.size() > 0) {
-                    final Set<T> set = new HashSet<>();
-                    for (final DocRef descendant : descendants) {
-                        final String value = getDocValue(term, descendant);
-                        // TODO: 01/11/2022 This may hit the DB for each line, so we may want to consider a
-                        //  MultiConverter that accepts a varargs input so the impl can convert multiple inputs
-                        //  at once. Would also require changes to HasFindDocRefsByName to accept multiple name
-                        //  filters at once.
-                        final List<T> list = converter.apply(value);
-                        set.addAll(list);
-                    }
+                    final List<String> values = descendants.stream()
+                            .map(descendant ->
+                                    getDocValue(term, descendant))
+                            .collect(Collectors.toList());
+                    final Set<T> set = new HashSet<>(converter.apply(values));
                     condition = field.in(set);
                 }
             }

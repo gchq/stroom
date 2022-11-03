@@ -147,10 +147,18 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
 
 
     @Override
-    public List<DocRef> findByName(final String name, final boolean allowWildCards) {
-        return explorerTreeDao.findByName(name, allowWildCards)
+    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+        return explorerTreeDao.findByNames(names, allowWildCards)
                 .stream()
                 .map(ExplorerTreeNode::getDocRef)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Set<DocRef> listDocuments() {
+        return explorerTreeDao.findByType(FOLDER)
+                .stream()
+                .map(ExplorerTreeNode::getDocRef)
+                .collect(Collectors.toSet());
     }
 }

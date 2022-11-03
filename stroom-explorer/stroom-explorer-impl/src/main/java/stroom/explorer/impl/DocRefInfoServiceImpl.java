@@ -9,6 +9,7 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +31,16 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         this.docRefInfoCache = docRefInfoCache;
         this.securityContext = securityContext;
         this.explorerActionHandlers = explorerActionHandlers;
+    }
+
+    @Override
+    public List<DocRef> findByType(final String type) {
+        Objects.requireNonNull(type);
+        return securityContext.asProcessingUserResult(() -> {
+            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
+            Objects.requireNonNull(handler, () -> "No handler for type " + type);
+            return new ArrayList<>(handler.listDocuments());
+        });
     }
 
     @Override
@@ -56,6 +67,22 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                 final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
                 Objects.requireNonNull(handler, () -> "No handler for type " + type);
                 return handler.findByName(nameFilter, allowWildCards);
+            });
+        }
+    }
+
+    @Override
+    public List<DocRef> findByNames(final String type,
+                                    final List<String> nameFilters,
+                                    final boolean allowWildCards) {
+        Objects.requireNonNull(type);
+        if (NullSafe.isEmptyCollection(nameFilters)) {
+            return Collections.emptyList();
+        } else {
+            return securityContext.asProcessingUserResult(() -> {
+                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
+                Objects.requireNonNull(handler, () -> "No handler for type " + type);
+                return handler.findByNames(nameFilters, allowWildCards);
             });
         }
     }

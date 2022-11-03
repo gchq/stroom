@@ -101,9 +101,16 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
 
     @Override
-    public List<DocRef> findByName(final String name, final boolean allowWildCards) {
+    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
         throw new PermissionException(
                 securityContext.getUserId(),
-                "You cannot perform a findByName on the System node");
+                "You cannot perform findByNames on the System node handler");
+    }
+
+    @Override
+    public Set<DocRef> listDocuments() {
+        throw new PermissionException(
+                securityContext.getUserId(),
+                "You cannot perform listDocuments on the System node handler");
     }
 }

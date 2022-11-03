@@ -307,6 +307,8 @@ class TestNullSafe {
                 .isTrue();
         Assertions.assertThat(NullSafe.hasItems(list))
                 .isFalse();
+        Assertions.assertThat(NullSafe.size(list))
+                .isEqualTo(0);
     }
 
     @Test
@@ -316,6 +318,8 @@ class TestNullSafe {
                 .isTrue();
         Assertions.assertThat(NullSafe.hasItems(list))
                 .isFalse();
+        Assertions.assertThat(NullSafe.size(list))
+                .isEqualTo(0);
     }
 
     @Test
@@ -325,6 +329,8 @@ class TestNullSafe {
                 .isFalse();
         Assertions.assertThat(NullSafe.hasItems(list))
                 .isTrue();
+        Assertions.assertThat(NullSafe.size(list))
+                .isEqualTo(1);
     }
 
     @Test
@@ -349,6 +355,8 @@ class TestNullSafe {
                 .isTrue();
         Assertions.assertThat(NullSafe.hasEntries(map))
                 .isFalse();
+        Assertions.assertThat(NullSafe.size(map))
+                .isEqualTo(0);
     }
 
     @Test
@@ -358,6 +366,8 @@ class TestNullSafe {
                 .isTrue();
         Assertions.assertThat(NullSafe.hasEntries(map))
                 .isFalse();
+        Assertions.assertThat(NullSafe.size(map))
+                .isEqualTo(0);
     }
 
     @Test
@@ -367,6 +377,8 @@ class TestNullSafe {
                 .isFalse();
         Assertions.assertThat(NullSafe.hasEntries(map))
                 .isTrue();
+        Assertions.assertThat(NullSafe.size(map))
+                .isEqualTo(1);
     }
 
     @Test
@@ -436,6 +448,26 @@ class TestNullSafe {
                 .isFalse();
         Assertions.assertThat(NullSafe.isBlankString(str))
                 .isFalse();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testContains() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class)
+                .withOutputType(Boolean.class)
+                .withTestFunction(testCase -> {
+                    var str = testCase.getInput()._1;
+                    var subStr = testCase.getInput()._2;
+                    return NullSafe.contains(str, subStr);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), false)
+                .addCase(Tuple.of("foorbar", null), false)
+                .addCase(Tuple.of(null, "foobar"), false)
+                .addCase(Tuple.of("foobar", "foo"), true)
+                .addCase(Tuple.of("foobar", "ob"), true)
+                .addCase(Tuple.of("foobar", "foobar"), true)
+                .build();
     }
 
     @Test

@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionMatcher {
 
-    public static final DocRefField FEED = new DocRefField("Feed", "Feed");
+    public static final DocRefField FEED = DocRefField.byUniqueName("Feed", "Feed");
     private static final TextField TYPE = new TextField("Type");
     private static final Map<String, AbstractField> FIELD_MAP = Map.of(
             FEED.getName(),

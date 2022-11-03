@@ -34,7 +34,7 @@ class TestPatternUtil {
                 .withTestFunction(testCase -> {
                     final String filter = testCase.getInput();
                     // Case sensitive
-                    final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(filter);
+                    final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(filter, true);
 
                     return months.stream()
                             .filter(pattern.asPredicate())
@@ -64,7 +64,8 @@ class TestPatternUtil {
                 .withWrappedOutputType(new TypeLiteral<List<String>>() {})
                 .withTestFunction(testCase -> {
                     final String filter = testCase.getInput();
-                    final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(filter, false);
+                    final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(
+                            filter, true,  false);
 
                     return months.stream()
                             .filter(pattern.asPredicate())
@@ -99,7 +100,7 @@ class TestPatternUtil {
                 .withWrappedOutputType(new TypeLiteral<List<String>>() {})
                 .withTestFunction(testCase -> {
                     final String filter = testCase.getInput();
-                    final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(filter);
+                    final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(filter, true);
 
                     LOGGER.info("filter: '{}', pattern: '{}'", filter, pattern);
 

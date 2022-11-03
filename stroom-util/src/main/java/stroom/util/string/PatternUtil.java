@@ -25,29 +25,33 @@ public class PatternUtil {
      * escaped. Escaping the '*' is not supported. Pattern is case-sensitive and is for
      * a complete match.
      */
-    public static Pattern createPatternFromWildCardFilter(final String filter) {
-        return createPatternFromWildCardFilter(filter, true);
+    public static Pattern createPatternFromWildCardFilter(final String filter,
+                                                          final boolean isCompleteMatch) {
+        return createPatternFromWildCardFilter(filter, isCompleteMatch, true);
     }
 
     /**
      * Creates a regex {@link Pattern} from the supplied filter string that may include
      * '*' as a 0-many char whild card. E.g. 'Jan*ry`. Any regex meta/escape chars are
      * escaped. Escaping the '*' is not supported. Pattern is for a complete match.
+     *
      * @param isCaseSensitive False if case is to be ignored.
      */
     public static Pattern createPatternFromWildCardFilter(final String filter,
+                                                          final boolean isCompleteMatch,
                                                           final boolean isCaseSensitive) {
         Objects.requireNonNull(filter, "filter not supplied");
         final String[] parts = STROOM_WILD_CARD_CHAR_PATTERN.split(filter);
         final StringBuilder patternStringBuilder = new StringBuilder();
 
-        patternStringBuilder.append("^");
+        if (isCompleteMatch) {
+            patternStringBuilder.append("^");
+        }
         if (filter.startsWith(STROOM_WILD_CARD_CHAR)) {
             patternStringBuilder.append(WILD_CARD_REGEX);
         }
         int addedPartsCount = 0;
-        for (int i = 0; i < parts.length; i++) {
-            final String part = parts[i];
+        for (final String part : parts) {
             if (!part.isEmpty()) {
                 final String quotedPart = Pattern.quote(part);
                 if (addedPartsCount != 0) {
@@ -60,7 +64,9 @@ public class PatternUtil {
         if (filter.endsWith(STROOM_WILD_CARD_CHAR)) {
             patternStringBuilder.append(WILD_CARD_REGEX);
         }
-        patternStringBuilder.append("$");
+        if (isCompleteMatch) {
+            patternStringBuilder.append("$");
+        }
         final String patternStr = patternStringBuilder.toString();
         return isCaseSensitive
                 ? Pattern.compile(patternStr)

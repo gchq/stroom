@@ -164,7 +164,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
     private final Map<String, List<Integer>> feedNameToIdsMap = new ConcurrentHashMap<>();
     private final Map<String, List<Integer>> typeNameToIdsMap = new ConcurrentHashMap<>();
-    private final Map<String, List<String>> pipelineNameToUuidsMap = new ConcurrentHashMap<>();
 
     @Inject
     MetaDaoImpl(final MetaDbConnProvider metaDbConnProvider,
@@ -234,6 +233,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         valueMapper.map(MetaFields.FEED, metaFeed.NAME, ValString::create);
         valueMapper.map(MetaFields.TYPE, metaType.NAME, ValString::create);
         valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, this::getPipelineName);
+        valueMapper.map(MetaFields.PIPELINE_NAME, metaProcessor.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, ValLong::create);
         valueMapper.map(MetaFields.META_INTERNAL_PROCESSOR_ID, meta.PROCESSOR_ID, ValInteger::create);
         valueMapper.map(MetaFields.META_PROCESSOR_FILTER_ID, meta.PROCESSOR_FILTER_ID, ValInteger::create);
@@ -264,23 +264,28 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private Val getPipelineName(final String uuid) {
         String val = uuid;
         if (docRefInfoService != null) {
-            val = docRefInfoService.name(new DocRef("Pipeline", uuid)).orElse(uuid);
+            val = docRefInfoService.name(new DocRef(PipelineDoc.DOCUMENT_TYPE, uuid))
+                    .orElse(uuid);
         }
         return ValString.create(val);
     }
 
-    private List<Integer> getFeedIds(final String feedName) {
-        return getIds(feedName, feedNameToIdsMap, feedDao::find);
+    private List<Integer> getFeedIds(final List<String> feedNames) {
+        // Feeds cannot be renamed so is ok to cache them
+        return getIds(feedNames, feedNameToIdsMap, feedDao::find);
     }
 
-    private List<Integer> getTypeIds(final String typeName) {
-        return getIds(typeName, typeNameToIdsMap, metaTypeDao::find);
+    private List<Integer> getTypeIds(final List<String> typeNames) {
+        // In theory types could be renamed, e.g. changing the name of a custom meta type
+        // in config. This just means old names may linger in the cache until next reboot. An unlikely and low volume
+        // case so not worth worrying about.
+        return getIds(typeNames, typeNameToIdsMap, metaTypeDao::find);
     }
 
-    private List<String> getPipelineUuidsByName(final String pipelineName) {
+    private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
         // Can't cache this in a simple map due to pipes being renamed, but
         // docRefInfoService should cache most of this anyway.
-        return docRefInfoService.findByName(PipelineDoc.DOCUMENT_TYPE, pipelineName, true)
+        return docRefInfoService.findByNames(PipelineDoc.DOCUMENT_TYPE, pipelineNames, true)
                         .stream()
                         .map(DocRef::getUuid)
                         .collect(Collectors.toList());
@@ -294,29 +299,44 @@ class MetaDaoImpl implements MetaDao, Clearable {
      * THIS MIGHT LEAD TO A FEW DUPLICATE ATTEMPTS TO FIND THE SAME ID LIST BUT THAT IS PREFERRED TO SYNCHRONIZING ON
      * THE MAP KEY DURING DB QUERY.
      */
-    private <T> List<T> getIds(final String name,
+    private <T> List<T> getIds(final List<String> names,
                                final Map<String, List<T>> map,
-                               final Function<String, List<T>> function) {
-        final List<T> list;
+                               final Function<List<String>, Map<String, List<T>>> function) {
+        final List<T> list = new ArrayList<>();
 
-        // We can't cache wildcard names as we don't know what they will match in the DB.
-        if (PatternUtil.containsWildCards(name)) {
-            list = function.apply(name);
+        if (NullSafe.isEmptyCollection(names)) {
+            return Collections.emptyList();
         } else {
-            final List<T> mapResult = map.get(name);
-            if (NullSafe.hasItems(mapResult)) {
-                list = mapResult;
-            } else {
-                list = function.apply(name);
-                if (NullSafe.hasItems(list)) {
-                    map.put(name, list);
+            final List<String> namesNotInCache = new ArrayList<>();
+            for (final String name : names) {
+
+                // We can't cache wildcard names as we don't know what they will match in the DB.
+                if (PatternUtil.containsWildCards(name)) {
+                    namesNotInCache.add(name);
+                } else {
+                    final List<T> mapResult = map.get(name);
+                    if (NullSafe.hasItems(mapResult)) {
+                        list.addAll(mapResult);
+                    } else {
+                        namesNotInCache.add(name);
+                    }
                 }
             }
-        }
 
-        LOGGER.trace(() -> LogUtil.message("Mapped name {} to {} IDs {}",
-                name, list.size(), list));
-        return list;
+            if (!namesNotInCache.isEmpty()) {
+                // Use the function to get all the items that were not cached.
+                final Map<String, List<T>> functionResult = function.apply(namesNotInCache);
+                functionResult.forEach((name, items) -> {
+                    if (!PatternUtil.containsWildCards(name) && NullSafe.hasItems(items)) {
+                        map.put(name, items);
+                    }
+                    list.addAll(items);
+                });
+            }
+            LOGGER.trace(() -> LogUtil.message("Mapped names {} to {} IDs {}",
+                    names, list.size(), list));
+            return list;
+        }
     }
 
     @Override

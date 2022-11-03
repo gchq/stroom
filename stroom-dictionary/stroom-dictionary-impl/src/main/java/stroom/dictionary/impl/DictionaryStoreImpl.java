@@ -191,10 +191,9 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-
     @Override
-    public List<DocRef> findByName(final String name, final boolean allowWildCards) {
-        return store.findByName(name, allowWildCards);
+    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+        return store.findByNames(names, allowWildCards);
     }
 
     @Override

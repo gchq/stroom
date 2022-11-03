@@ -31,6 +31,18 @@ public class MockDocRefInfoModule extends AbstractModule {
             public List<DocRef> findByName(final String type, final String nameFilter, final boolean allowWildCards) {
                 return Collections.emptyList();
             }
+
+            @Override
+            public List<DocRef> findByNames(final String type,
+                                            final List<String> nameFilters,
+                                            final boolean allowWildCards) {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public List<DocRef> findByType(final String type) {
+                return Collections.emptyList();
+            }
         };
     }
 }
