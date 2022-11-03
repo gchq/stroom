@@ -90,7 +90,8 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                     // Fields are defined with a list of supported conditions but the code seems to be using
                     // un-supported conditions.
                     if (!abstractField.supportsCondition(term.getCondition())) {
-                        LOGGER.debug(() -> LogUtil.message("Condition '{}' is not supported by field '{}' of type {}. Term: {}",
+                        LOGGER.debug(() -> LogUtil.message(
+                                "Condition '{}' is not supported by field '{}' of type {}. Term: {}",
                                 term.getCondition(), fieldName, abstractField.getType(), term));
                         if (abstractField instanceof DocRefField) {
                             // https://github.com/gchq/stroom/issues/3074 removed some conditions from DocRefField
