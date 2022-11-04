@@ -113,7 +113,7 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
             StreamTypeNames.ERROR,
             StreamTypeNames.CONTEXT,
     }) // List should contain as a minimum all those types that the java code reference
-@JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
+    @JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
             "in the default value for this property but can contain additional names. " +
             "Any custom types added here that are used for raw data must also be " +
             "added to the property 'rawMetaTypes'." +
