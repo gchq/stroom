@@ -19,6 +19,8 @@ import javax.validation.constraints.NotNull;
  * so that we can extend {@link AbstractConfig} and have an equals method.
  * All uses of {@link io.dropwizard.util.Duration} have been replaced with {@link StroomDuration}
  * for consistency with the rest of the config.
+ * Values are extracted from this using reflection by {@link RestClientConfigConverter} so it is
+ * key that the method names match.
  */
 @NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
