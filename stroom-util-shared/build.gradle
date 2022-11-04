@@ -8,6 +8,7 @@ dependencies {
     compile libs.swagger_annotations
     compile libs.validation_api
 
+    testCompile project(':stroom-test-common')
     testCompile libs.assertj_core
     testCompile libs.jackson_databind
     testCompile libs.junit_jupiter_api

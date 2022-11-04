@@ -3,6 +3,7 @@ package stroom.util.validation;
 import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
+import stroom.util.config.ConfigValidator.Result;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
@@ -10,6 +11,7 @@ import stroom.util.shared.validation.ValidRegex;
 import stroom.util.shared.validation.ValidSimpleCron;
 import stroom.util.shared.validation.ValidationSeverity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -22,6 +24,7 @@ import java.nio.file.Path;
 import javax.inject.Inject;
 import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 public class TestAppConfigValidator {
 
@@ -134,6 +137,16 @@ public class TestAppConfigValidator {
         Assertions.assertThat(result.getWarningCount()).isEqualTo(4);
     }
 
+    @Test
+    void testMethodValidation() {
+        final NoddyPojoWithValidationMethod pojo = new NoddyPojoWithValidationMethod("foo", "bar");
+        final Result<AbstractConfig> result = appConfigValidator.validate(pojo);
+        result.handleViolations((violation, severity) -> LOGGER.error("Got {} violation {}",
+                severity, violation.getMessage()));
+
+        Assertions.assertThat(result.getErrorCount())
+                .isEqualTo(1);
+    }
 
     public static class MyPojoErrors extends AbstractConfig {
 
@@ -292,6 +305,41 @@ public class TestAppConfigValidator {
 
         public void setValue(final String value) {
             this.value = value;
+        }
+    }
+
+    public static class NoddyPojoWithValidationMethod extends AbstractConfig {
+
+        private String value1;
+        private String value2;
+
+        public NoddyPojoWithValidationMethod(final String value1, final String value2) {
+            this.value1 = value1;
+            this.value2 = value2;
+        }
+
+        @NotNull
+        public String getValue1() {
+            return value1;
+        }
+
+        public void setValue1(final String value1) {
+            this.value1 = value1;
+        }
+
+        @NotNull
+        public String getValue2() {
+            return value2;
+        }
+
+        public void setValue2(final String value2) {
+            this.value2 = value2;
+        }
+
+        @JsonIgnore
+        @AssertTrue(message = "value1 and value2 must be the same")
+        public boolean isValid() {
+            return value1.equals(value2);
         }
     }
 

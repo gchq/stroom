@@ -5,27 +5,34 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.data.shared.StreamTypeNames;
+import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.validation.IsSupersetOf;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.dropwizard.validation.ValidationMethod;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.HashSet;
 import java.util.Set;
-import javax.validation.constraints.NotNull;
+import javax.validation.Valid;
 
 
 @JsonPropertyOrder(alphabetic = true)
 public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaServiceConfig.class);
 
     private final MetaServiceDbConfig dbConfig;
     private final MetaValueConfig metaValueConfig;
@@ -97,7 +104,6 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
 
     @RequiresRestart(RestartScope.SYSTEM)
     @NotEmpty
-    @NotNull
     @IsSupersetOf(requiredValues = {
             StreamTypeNames.RAW_EVENTS,
             StreamTypeNames.RAW_REFERENCE,
@@ -107,7 +113,7 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
             StreamTypeNames.ERROR,
             StreamTypeNames.CONTEXT,
     }) // List should contain as a minimum all those types that the java code reference
-    @JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
+@JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
             "in the default value for this property but can contain additional names. " +
             "Any custom types added here that are used for raw data must also be " +
             "added to the property 'rawMetaTypes'." +
@@ -117,7 +123,6 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
     }
 
     @NotEmpty
-    @NotNull
     @IsSupersetOf(requiredValues = {
             StreamTypeNames.RAW_EVENTS,
             StreamTypeNames.RAW_REFERENCE,
@@ -154,6 +159,17 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
                 ", metaTypes=" + metaTypes +
                 ", rawMetaTypes=" + rawMetaTypes +
                 '}';
+    }
+
+    @SuppressWarnings("unused") // Used by javax.validation
+    @JsonIgnore
+    @ValidationMethod(message = "The 'rawMetaTypes' property must be a sub-set of the 'metaTypes' property.")
+    @Valid
+    // Seems to be ignored if not prefixed with 'is'
+    public boolean isValidRawTypesSet() {
+        LOGGER.debug("metaTypes: {}, rawMetaTypes: {}", metaTypes, rawMetaTypes);
+        return metaTypes != null
+                && metaTypes.containsAll(NullSafe.nonNullSet(rawMetaTypes));
     }
 
     @BootStrapConfig
