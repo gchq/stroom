@@ -21,6 +21,7 @@ package stroom.data.retention.impl;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.MetaFields;
@@ -38,7 +39,7 @@ class TestDataRetentionPolicySerialisation {
     @Test
     void test() throws Exception {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
-        builder.addTerm(MetaFields.TYPE, Condition.EQUALS, "Raw Events");
+        builder.addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         builder.addTerm(MetaFields.FEED, Condition.IS_DOC_REF, DocRef
                 .builder()
                 .type(FeedDoc.DOCUMENT_TYPE)
