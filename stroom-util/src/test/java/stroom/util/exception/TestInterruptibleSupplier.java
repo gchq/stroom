@@ -31,12 +31,10 @@ class TestInterruptibleSupplier {
         Assertions.assertThat(val)
                 .isEqualTo(0);
 
-        Assertions.assertThatThrownBy(() -> {
-                    //noinspection ResultOfMethodCallIgnored
-                    Objects.requireNonNullElseGet(
-                            null,
-                            InterruptibleSupplier.unchecked(this::getNext));
-                })
+        Assertions.assertThatThrownBy(() ->
+                        Objects.requireNonNullElseGet(
+                                null,
+                                InterruptibleSupplier.unchecked(this::getNext)))
                 .isInstanceOf(UncheckedInterruptedException.class)
                 .getCause()
                 .isInstanceOf(InterruptedException.class);
