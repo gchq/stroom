@@ -5,35 +5,34 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 @FunctionalInterface
-public interface InterruptibleFunction<T, R> {
+public interface InterruptibleSupplier<T> {
 
-    LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(InterruptibleFunction.class);
+    LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(InterruptibleSupplier.class);
 
-    R apply(T t) throws InterruptedException;
+    T get() throws InterruptedException;
 
     /**
-     * Wraps a function that throws an {@link InterruptedException} with a catch block that
+     * Wraps a supplier that throws an {@link InterruptedException} with a catch block that
      * will reset the interrupt flag and wrap the exception with a {@link UncheckedInterruptedException},
      * thus making it unchecked and usable in a lambda.
      */
-    static <T, R> Function<T, R> unchecked(final InterruptibleFunction<T, R> function) {
-        return unchecked(function, null);
+    static <T> Supplier<T> unchecked(final InterruptibleSupplier<T> supplier) {
+        return unchecked(supplier, null);
     }
 
     /**
-     * Wraps a function that throws an {@link InterruptedException} with a catch block that
+     * Wraps a supplier that throws an {@link InterruptedException} with a catch block that
      * will reset the interrupt flag and wrap the exception with a {@link UncheckedInterruptedException},
      * thus making it unchecked and usable in a lambda.
      */
-    static <T, R> Function<T, R> unchecked(final InterruptibleFunction<T, R> function,
-                                           final Supplier<String> debugMsgSupplier) {
-        return t -> {
+    static <T> Supplier<T> unchecked(final InterruptibleSupplier<T> supplier,
+                                     final Supplier<String> debugMsgSupplier) {
+        return () -> {
             try {
-                return function.apply(t);
+                return supplier.get();
             } catch (InterruptedException e) {
                 LOGGER.debug(() ->
                                 NullSafe.getOrElse(
