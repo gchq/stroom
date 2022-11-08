@@ -62,15 +62,6 @@ public class OutputFactory {
         return new PayloadOutput(minPayloadSize);
     }
 
-    public Output create(final OutputStream outputStream) {
-        return new Output(outputStream, -1) {
-            @Override
-            public void writeString(final String value) throws KryoException {
-                super.writeString(truncate(value));
-            }
-        };
-    }
-
     public UnsafeByteBufferOutput createByteBufferOutput(final int bufferSize) {
         return new UnsafeByteBufferOutput(bufferSize, -1) {
             @Override
