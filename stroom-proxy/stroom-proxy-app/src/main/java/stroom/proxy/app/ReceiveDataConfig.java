@@ -27,7 +27,7 @@ public class ReceiveDataConfig extends AbstractConfig implements IsProxyConfig {
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
-        metaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES);
+        metaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
         requireTokenAuthentication = false;
         publicKey = null;
         clientId = null;
