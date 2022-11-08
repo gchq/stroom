@@ -471,6 +471,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
+    public Set<String> getRawTypes() {
+        return metaServiceConfigProvider.get().getRawMetaTypes();
+    }
+
+    @Override
     public int getLockCount() {
         return metaDao.getLockCount();
     }

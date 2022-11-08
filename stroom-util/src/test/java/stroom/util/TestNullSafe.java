@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -466,6 +467,48 @@ class TestNullSafe {
                 .isFalse();
         Assertions.assertThat(NullSafe.isBlankString(nonNullStringWrapper, StringWrapper::getNonNullNonEmptyString))
                 .isFalse();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testList() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>(){})
+                .withWrappedOutputType(new TypeLiteral<List<String>>(){})
+                .withTestFunction(testCase ->
+                        NullSafe.nonNullList(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(List.of("foo"), List.of("foo"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testSet() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Set<String>>(){})
+                .withWrappedOutputType(new TypeLiteral<Set<String>>(){})
+                .withTestFunction(testCase ->
+                        NullSafe.nonNullSet(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptySet(), Collections.emptySet())
+                .addCase(Set.of("foo"), Set.of("foo"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testMap() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Map<String, String>>(){})
+                .withWrappedOutputType(new TypeLiteral<Map<String, String>>(){})
+                .withTestFunction(testCase ->
+                        NullSafe.nonNullMap(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyMap())
+                .addCase(Collections.emptyMap(), Collections.emptyMap())
+                .addCase(Map.of("foo", "bar"), Map.of("foo", "bar"))
+                .build();
     }
 
     @Test

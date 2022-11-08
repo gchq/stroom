@@ -1,5 +1,7 @@
 package stroom.util.exception;
 
+import stroom.util.concurrent.UncheckedInterruptedException;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +26,7 @@ class TestInterruptibleConsumer {
         Assertions.assertThatThrownBy(() ->
                         Stream.of(0)
                                 .forEach(InterruptibleConsumer.unchecked(this::consumeStuff)))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(UncheckedInterruptedException.class)
                 .getCause()
                 .isInstanceOf(InterruptedException.class);
 

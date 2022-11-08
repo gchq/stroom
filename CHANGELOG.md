@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#3073** : Add string truncation and value length protection for search result fields.
+
+* Issue **#3038** : Fix intermittent websocket alert.
+
+* Issue **#3087** : Stop URI generation adding port 443 unnecessarily.
+
+* Issue **#3090** : Fix import of documents from 5.5 that contain data.
+
+* Issue **#3084** : Add the config property `stroom.data.meta.rawMetaTypes` to allow custom stream types (as defined in `stroom.data.meta.metaTypes`) to be categorised as _raw_ types. Also add `Data Encoding` to the Info tab on the Data screen to show the Data Encoding value set on the feed's settings.
+
 * Issue **#3069** : Fix import of a Feed's Stream Type when the export was made in Stroom v5. Add validation to fail the import if the stream type in the export is not in `stroom.data.meta.metaTypes`. Fix word wrapping on the import error messages tooltip.
 
 * Remove duplicate guice binds.

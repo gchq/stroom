@@ -18,6 +18,7 @@
 package stroom.importexport;
 
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -188,7 +189,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
-                .addTerm(MetaFields.FIELD_TYPE, ExpressionTerm.Condition.EQUALS, "Raw Events")
+                .addTerm(MetaFields.FIELD_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                 .build();
         QueryData filterConstraints = new QueryData();
         filterConstraints.setExpression(expression);

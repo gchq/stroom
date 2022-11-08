@@ -4,6 +4,12 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * A set of constants for stream type names used in stroom. This is NOT an exhaustive list
+ * of stream type names. Addition stream types can be configured using
+ * MetaServiceConfig#getMetaTypes
+ * Some of the names in {@link StreamTypeNames} are referenced in code and logic is based around them.
+ */
 public class StreamTypeNames {
 
     // TODO 06/01/2022 AT: The ultimate aim is for stream types to be fully configurable and not baked in
@@ -13,10 +19,14 @@ public class StreamTypeNames {
     // TODO 06/01/2022 AT: This ought to be an enum but not going to take the risk of a refactor
     //  when we are about to deploy v7.0 and the resulting merge pain. A job for master.
 
-    // IMPORTANT: If you add/change this list of names consider changing the required values
+    // ********************************************************************************
+    //   IMPORTANT:
+    //
+    // If you add/change this list of names consider changing the required values
     // validation for stroom.meta.impl.MetaServiceConfig#getMetaTypes and
     // stroom.proxy.app.handler.ProxyRequestConfig#getMetaTypes
     // Type names in here that are referenced in the code should be required in the config.
+    // ********************************************************************************
 
     /**
      * Saved raw version for the archive.
@@ -63,12 +73,14 @@ public class StreamTypeNames {
      */
     public static final String DETECTIONS = "Detections";
 
-    // This list is NOT to be used for validation, see
-    // stroom.meta.impl.MetaServiceConfig#getMetaTypes and
-    // stroom.proxy.app.handler.ProxyRequestConfig#getMetaTypes for the source
-    // of type validation.
+    /**
+     * Must NOT be used for stream type name validation or getting a full list
+     * of stream types. Use MetaServiceConfig#getMetaTypes or
+     * ProxyRequestConfig#getMetaTypes to get a list of
+     * all configured stream types.
+     */
     // GWT so can't use Set.of() :-(
-    public static final Set<String> ALL_TYPE_NAMES = new HashSet<>(Arrays.asList(
+    public static final Set<String> ALL_HARD_CODED_STREAM_TYPE_NAMES = new HashSet<>(Arrays.asList(
             CONTEXT,
             DETECTIONS,
             ERROR,
@@ -80,4 +92,16 @@ public class StreamTypeNames {
             REFERENCE,
             TEST_EVENTS,
             TEST_REFERENCE));
+
+    /**
+     * Must NOT be used for stream type name validation or getting a full list
+     * of raw stream types. Use MetaServiceConfig#getMetaTypes to get a list of
+     * all configured raw stream types.
+     * Fine for use in mocks.
+     */
+    // GWT so can't use Set.of() :-(
+    // Set content must match the @IsSupersetOf anno on MetaServiceConfig#getRawMetaTypes
+    public static final Set<String> ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES = new HashSet<>(Arrays.asList(
+            RAW_EVENTS,
+            RAW_REFERENCE));
 }
