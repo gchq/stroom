@@ -16,7 +16,8 @@ import javax.websocket.Session;
 @Singleton
 public class ApplicationInstanceWebSocketSessions {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApplicationInstanceWebSocketSessions.class);
+    private static final LambdaLogger LOGGER =
+            LambdaLoggerFactory.getLogger(ApplicationInstanceWebSocketSessions.class);
 
     private final Map<Session, Optional<String>> activeSessions = new ConcurrentHashMap<>();
     private final ApplicationInstanceManager applicationInstanceManager;
