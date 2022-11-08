@@ -16,14 +16,8 @@ import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
@@ -32,7 +26,6 @@ import javax.websocket.server.ServerEndpoint;
 @Timed
 @ExceptionMetered
 @ServerEndpoint(ApplicationInstanceWebSocket.PATH)
-@Singleton
 public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket implements IsWebSocket {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApplicationInstanceWebSocket.class);
@@ -42,39 +35,15 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final SecurityContext securityContext;
-    private final ApplicationInstanceManager applicationInstanceManager;
-    private final Map<Session, Optional<String>> activeSessions = new ConcurrentHashMap<>();
+    private final ApplicationInstanceWebSocketSessions applicationInstanceWebSocketSessions;
 
     @Inject
     public ApplicationInstanceWebSocket(final SecurityContext securityContext,
-                                        final ApplicationInstanceManager applicationInstanceManager) {
+                                        final ApplicationInstanceWebSocketSessions
+                                                applicationInstanceWebSocketSessions) {
         super(securityContext);
         this.securityContext = securityContext;
-        this.applicationInstanceManager = applicationInstanceManager;
-
-        // Keep any active queries alive that have not aged off from the cache
-        Executors.newScheduledThreadPool(1)
-                .scheduleWithFixedDelay(
-                        this::keepAllActiveQueriesAlive,
-                        10,
-                        10,
-                        TimeUnit.SECONDS);
-    }
-
-    private void keepAllActiveQueriesAlive() {
-        applicationInstanceManager.evictExpiredElements();
-        for (final Entry<Session, Optional<String>> entry : activeSessions.entrySet()) {
-            entry.getValue().ifPresent(uuid -> {
-                LOGGER.debug(() -> "Keeping application instance alive with uuid = " + uuid);
-                applicationInstanceManager.keepAlive(uuid);
-                try {
-                    LOGGER.debug(() -> "sendText: 'Keep alive: " + uuid + "'");
-                    entry.getKey().getAsyncRemote().sendText("Keep alive: " + uuid);
-                } catch (final Exception exception) {
-                    LOGGER.debug(exception::getMessage, exception);
-                }
-            });
-        }
+        this.applicationInstanceWebSocketSessions = applicationInstanceWebSocketSessions;
     }
 
     public void onOpen(final Session session) throws IOException {
@@ -84,7 +53,7 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
 
         // Keep alive forever.
         session.setMaxIdleTimeout(0);
-        activeSessions.put(session, Optional.empty());
+        applicationInstanceWebSocketSessions.putSession(session, Optional.empty());
 
         // You can use this in dev to test handling of unexpected ws closure
 //        CompletableFuture.delayedExecutor(new Random().nextInt(5), TimeUnit.SECONDS)
@@ -114,10 +83,8 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
                 final String key = ApplicationInstanceResource.WEB_SOCKET_MSG_KEY_UUID;
                 // May just be an informational message
                 getWebSocketMsgValue(webSocketMessage, key, String.class)
-                        .ifPresent(uuid -> {
-                            activeSessions.put(session, Optional.of(uuid));
-                            applicationInstanceManager.keepAlive(uuid);
-                        });
+                        .ifPresent(uuid ->
+                                applicationInstanceWebSocketSessions.putSession(session, Optional.of(uuid)));
             } catch (IOException e) {
                 throw new RuntimeException(LogUtil.message(
                         "Unable to de-serialise web socket message: '{}'. Cause: {}",
@@ -132,7 +99,7 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
     }
 
     public void onClose(final Session session, final CloseReason closeReason) {
-        activeSessions.remove(session);
+        applicationInstanceWebSocketSessions.removeSession(session);
         LOGGER.debug(() ->
                 LogUtil.message("Web socket onClose() called at {}, sessionId: {}, user: {}, closeReason: {}",
                         PATH, session.getId(), securityContext.getUserId(), closeReason));
