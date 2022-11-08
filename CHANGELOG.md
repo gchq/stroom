@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.8] - 2022-11-08
+
+* Issue **#3038** : Fix number 2 for intermittent websocket alert.
+
+* Issue **#3097** : Fix Kryo output buffer size = -1 when writing to streams.
+
+
 ## [v7.0.7] - 2022-11-07
 
 * Issue **#3073** : Add string truncation and value length protection for search result fields.
@@ -4646,7 +4653,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.8...HEAD
+[v7.0.8]: https://github.com/gchq/stroom/compare/v7.0.7...v7.0.8
 [v7.0.7]: https://github.com/gchq/stroom/compare/v7.0.6...v7.0.7
 [v7.0.6]: https://github.com/gchq/stroom/compare/v7.0.5...v7.0.6
 [v7.0.5]: https://github.com/gchq/stroom/compare/v7.0.4...v7.0.5
