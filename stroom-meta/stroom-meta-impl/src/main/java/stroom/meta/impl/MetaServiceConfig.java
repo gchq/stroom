@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.dropwizard.validation.ValidationMethod;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -166,7 +167,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
 
     @SuppressWarnings("unused") // Used by javax.validation
     @JsonIgnore
-//    @ValidationMethod(message = "The 'rawMetaTypes' property must be a sub-set of the 'metaTypes' property.")
+    @ValidationMethod(message = "The 'rawMetaTypes' property must be a sub-set of the 'metaTypes' property.")
     @Valid
     // Seems to be ignored if not prefixed with 'is'
     public boolean isValidRawTypesSet() {
