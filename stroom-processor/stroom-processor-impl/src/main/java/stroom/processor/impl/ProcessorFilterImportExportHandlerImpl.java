@@ -80,12 +80,40 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     }
 
     @Override
+    public DocRef getOwnerDocument(final DocRef docRef,
+                                   final Map<String, byte[]> dataMap) {
+        if (dataMap.get(META) == null) {
+            throw new IllegalArgumentException("Unable to import Processor with no meta file. DocRef is " + docRef);
+        }
+
+        try {
+            final ProcessorFilter processorFilter = delegate.read(dataMap.get(META));
+            if (processorFilter != null) {
+                final Processor processor = processorFilter.getProcessor();
+                if (processor != null) {
+                    return new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                            processor.getPipelineUuid(),
+                            processor.getPipelineName());
+                } else {
+                    return new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                            processorFilter.getPipelineUuid(),
+                            processorFilter.getPipelineName());
+                }
+            }
+        } catch (final IOException ex) {
+            throw new RuntimeException("Unable to read meta file associated with processor " + docRef, ex);
+        }
+
+        return null;
+    }
+
+    @Override
     public ImpexDetails importDocument(final DocRef docRef,
                                        Map<String, byte[]> dataMap,
                                        ImportState importState,
                                        ImportState.ImportMode importMode) {
         if (dataMap.get(META) == null) {
-            throw new IllegalArgumentException("Unable to import Processor with no meta file.  Docref is " + docRef);
+            throw new IllegalArgumentException("Unable to import Processor with no meta file.  DocRef is " + docRef);
         }
 
         final ProcessorFilter processorFilter;
@@ -105,13 +133,13 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             processorFilter.setProcessor(findProcessorForFilter(processorFilter));
 
             if (ImportState.State.NEW.equals(importState.getState())) {
-                final boolean enable;
+                final boolean enableFilters;
                 final Long minMetaCreateTimeMs;
-                if (importState.getEnable() != null) {
-                    enable = importState.getEnable();
-                    minMetaCreateTimeMs = importState.getEnableTime();
+                if (importState.isEnableFilters()) {
+                    enableFilters = importState.isEnableFilters();
+                    minMetaCreateTimeMs = importState.getEnableFiltersFromTime();
                 } else {
-                    enable = processorFilter.isEnabled();
+                    enableFilters = processorFilter.isEnabled();
                     minMetaCreateTimeMs = null;
                 }
 
@@ -132,7 +160,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                                 .priority(processorFilter.getPriority())
                                 .autoPriority(false)
                                 .reprocess(processorFilter.isReprocess())
-                                .enabled(enable)
+                                .enabled(enableFilters)
                                 .minMetaCreateTimeMs(minMetaCreateTimeMs)
                                 .maxMetaCreateTimeMs(processorFilter.getMaxMetaCreateTimeMs())
                                 .build();
@@ -256,12 +284,11 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             ProcessorFilter processorFilter = findProcessorFilter(docRef);
 
             final String name = docRef.getUuid().substring(0, 7);
-
             final String pipelineName = processorFilter.getPipelineName();
             if (pipelineName != null) {
-                return pipelineName + " Pipeline-" + "Filter " + name;
+                return pipelineName + " " + ProcessorFilter.ENTITY_TYPE + " " + name;
             } else {
-                return "Unknown Pipeline-Filter " + name;
+                return "Unknown " + ProcessorFilter.ENTITY_TYPE + " " + name;
             }
         }
         return null;
@@ -269,12 +296,12 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
     @Override
     public boolean docExists(final DocRef docRef) {
-        DocRef associatedExplorerDocRef = findNearestExplorerDocRef(docRef);
-        if (associatedExplorerDocRef != null) {
-            return true;
-        } else {
-            return findProcessorFilter(docRef) != null;
-        }
+//        DocRef associatedExplorerDocRef = findNearestExplorerDocRef(docRef);
+//        if (associatedExplorerDocRef != null) {
+//            return true;
+//        } else {
+        return findProcessorFilter(docRef) != null;
+//        }
     }
 
     private Processor findProcessorForFilter(final ProcessorFilter filter) {

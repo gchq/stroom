@@ -541,9 +541,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             document.setName(name);
             return document;
         } catch (final InstantiationException
-                | IllegalAccessException
-                | NoSuchMethodException
-                | InvocationTargetException e) {
+                       | IllegalAccessException
+                       | NoSuchMethodException
+                       | InvocationTargetException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }

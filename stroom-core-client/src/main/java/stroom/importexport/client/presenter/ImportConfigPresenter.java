@@ -23,6 +23,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.shared.ContentResource;
+import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.popup.client.event.DisablePopupEvent;
@@ -43,6 +44,7 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ImportConfigPresenter
@@ -87,7 +89,7 @@ public class ImportConfigPresenter
                         })
                         .onFailure(caught -> error(caught.getMessage()))
                         .call(CONTENT_RESOURCE)
-                        .confirmImport(resourceKey);
+                        .confirmImport(new ImportConfigRequest(resourceKey, new ArrayList<>()));
             }
 
             @Override

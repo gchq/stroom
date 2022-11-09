@@ -68,6 +68,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView,
@@ -82,7 +83,7 @@ public class ImportConfigConfirmPresenter extends
     private final DataGridView<ImportState> dataGridView;
     private final RestFactory restFactory;
     private ResourceKey resourceKey;
-    private List<ImportState> confirmList;
+    private List<ImportState> confirmList = new ArrayList<>();
 
     @Inject
     public ImportConfigConfirmPresenter(final EventBus eventBus,
@@ -102,6 +103,20 @@ public class ImportConfigConfirmPresenter extends
 
         view.setDataGridView(this.dataGridView);
         view.setEnableFilters(true);
+        view.setUseImportNames(false);
+        view.setUseImportFolders(false);
+        view.onUseImportNames(useImportNames -> {
+            for (final ImportState importState : confirmList) {
+                importState.setUseImportNames(useImportNames);
+            }
+            refresh();
+        });
+        view.onUseImportFolders(useImportFolders -> {
+            for (final ImportState importState : confirmList) {
+                importState.setUseImportFolders(useImportFolders);
+            }
+            refresh();
+        });
 
         addColumns();
     }
@@ -111,21 +126,42 @@ public class ImportConfigConfirmPresenter extends
     public void onConfirmImport(final ImportConfigConfirmEvent event) {
         resourceKey = event.getResourceKey();
         confirmList = event.getConfirmList();
-
-        if (confirmList == null) {
-            dataGridView.setRowCount(0);
-        } else {
-            dataGridView.setRowData(0, confirmList);
-            dataGridView.setRowCount(confirmList.size());
-        }
+        dataGridView.setRowData(0, confirmList);
+        dataGridView.setRowCount(confirmList.size());
         forceReveal();
+    }
+
+    public void refresh() {
+        final Rest<List<ImportState>> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    confirmList = result;
+                    if (result.isEmpty()) {
+                        warning("The import package contains nothing that can be imported into " +
+                                "this version of Stroom.");
+                    } else {
+                        dataGridView.setRowData(0, confirmList);
+                        dataGridView.setRowCount(confirmList.size());
+                    }
+                })
+                .onFailure(caught -> error(caught.getMessage()))
+                .call(CONTENT_RESOURCE)
+                .confirmImport(new ImportConfigRequest(resourceKey, confirmList));
+    }
+
+    private void warning(final String message) {
+        AlertEvent.fireWarn(this, message, null);
+    }
+
+    private void error(final String message) {
+        AlertEvent.fireError(this, message, null);
     }
 
     @Override
     protected void revealInParent() {
         final PopupSize popupSize = new PopupSize(
                 800,
-                400,
+                600,
                 300,
                 300,
                 2000,
@@ -152,8 +188,8 @@ public class ImportConfigConfirmPresenter extends
             boolean warnings = false;
             int count = 0;
             for (final ImportState importState : confirmList) {
-                importState.setEnableTime(getView().getEnableFromDate());
-                importState.setEnable(getView().isEnableFilters());
+                importState.setEnableFilters(getView().isEnableFilters());
+                importState.setEnableFiltersFromTime(getView().getEnableFromDate());
                 if (importState.isAction()) {
                     count++;
                     if (importState.getSeverity().greaterThan(Severity.INFO)) {
@@ -473,6 +509,14 @@ public class ImportConfigConfirmPresenter extends
         boolean isEnableFilters();
 
         void setEnableFilters(boolean enableFilters);
+
+        void setUseImportNames(boolean useImportNames);
+
+        void onUseImportNames(Consumer<Boolean> consumer);
+
+        void setUseImportFolders(boolean useImportFolders);
+
+        void onUseImportFolders(Consumer<Boolean> consumer);
 
         Widget getDataGridViewWidget();
     }

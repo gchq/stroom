@@ -1370,14 +1370,16 @@ export interface ImportState {
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
-  enable?: boolean;
+  enableFilters?: boolean;
 
   /** @format int64 */
-  enableTime?: number;
+  enableFiltersFromTime?: number;
   messageList?: Message[];
   sourcePath?: string;
   state?: "NEW" | "UPDATE" | "EQUAL";
   updatedFieldList?: string[];
+  useImportFolders?: boolean;
+  useImportNames?: boolean;
 }
 
 export interface IndexDoc {
@@ -4562,7 +4564,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/content/v1/confirmImport
      * @secure
      */
-    confirmContentImport: (data: ResourceKey, params: RequestParams = {}) =>
+    confirmContentImport: (data: ImportConfigRequest, params: RequestParams = {}) =>
       this.request<any, ImportState[]>({
         path: `/content/v1/confirmImport`,
         method: "POST",
