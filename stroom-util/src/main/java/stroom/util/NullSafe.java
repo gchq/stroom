@@ -1,9 +1,12 @@
 package stroom.util;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -136,6 +139,33 @@ public class NullSafe {
             final Map<T2, T3> map = Objects.requireNonNull(mapGetter).apply(value);
             return map != null && !map.isEmpty();
         }
+    }
+
+    /**
+     * @return list or an empty list if list is null
+     */
+    public static <T> List<T> nonNullList(final List<T> list) {
+        return list != null
+                ? list
+                : Collections.emptyList();
+    }
+
+    /**
+     * @return set or an empty set if set is null
+     */
+    public static <T> Set<T> nonNullSet(final Set<T> set) {
+        return set != null
+                ? set
+                : Collections.emptySet();
+    }
+
+    /**
+     * @return map or an empty map if map is null
+     */
+    public static <K, V> Map<K, V> nonNullMap(final Map<K, V> map) {
+        return map != null
+                ? map
+                : Collections.emptyMap();
     }
 
     /**

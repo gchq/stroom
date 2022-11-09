@@ -20,6 +20,7 @@ package stroom.meta.impl;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
@@ -296,7 +297,7 @@ class TestMetaService extends StroomIntegrationTest {
     }
 
     private Meta createMeta(final String feedName) {
-        return createMeta(null, feedName, "Raw Events");
+        return createMeta(null, feedName, StreamTypeNames.RAW_EVENTS);
     }
 
     private Meta createMeta(final Meta parent, final String feedName, final String typeName) {

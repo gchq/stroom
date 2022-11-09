@@ -3,7 +3,6 @@ package stroom.proxy.app;
 import stroom.data.shared.StreamTypeNames;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
-import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.IsSupersetOf;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,7 +27,7 @@ public class ReceiveDataConfig extends AbstractConfig implements IsProxyConfig {
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
-        metaTypes = new HashSet<>(StreamTypeNames.ALL_TYPE_NAMES);
+        metaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
         requireTokenAuthentication = false;
         publicKey = null;
         clientId = null;

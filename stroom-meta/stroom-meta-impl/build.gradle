@@ -23,6 +23,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard_validation
     implementation libs.eventLogging
     implementation libs.guice5
     implementation libs.jackson_annotations

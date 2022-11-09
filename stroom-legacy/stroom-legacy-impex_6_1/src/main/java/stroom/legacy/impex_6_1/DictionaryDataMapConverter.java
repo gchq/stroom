@@ -77,7 +77,10 @@ class DictionaryDataMapConverter implements DataMapConverter {
 
                     if (dataMap.containsKey("data.xml")) {
                         document.setData(EncodingUtil.asString(dataMap.get("data.xml")));
+                    } else if (dataMap.containsKey("data.txt")) {
+                        document.setData(EncodingUtil.asString(dataMap.get("data.txt")));
                     }
+
 
                     result = serialiser.write(document);
                 }

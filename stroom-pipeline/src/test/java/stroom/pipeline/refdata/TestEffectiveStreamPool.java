@@ -54,6 +54,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
         final String refFeedName = "TEST_REF";
 
         final InnerStreamMetaService metaService = new InnerStreamMetaService() {
+
             @Override
             public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
