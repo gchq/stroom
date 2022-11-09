@@ -2,6 +2,7 @@ package stroom.proxy.app;
 
 import stroom.docref.DocRef;
 import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
+import stroom.util.config.AbstractConfigUtil;
 import stroom.util.config.ConfigValidator.Result;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
@@ -48,15 +49,24 @@ class TestProxyConfig {
 
         final ProxyConfigValidator proxyConfigValidator = injector.getInstance(ProxyConfigValidator.class);
 
-        final ProxyConfig proxyConfig = new ProxyConfig();
-        proxyConfig.getPathConfig()
-                .setHome(testingHomeAndTempProvidersModule.getHomeDir().toAbsolutePath().toString());
-        proxyConfig.getPathConfig()
-                .setTemp(tempDir.toAbsolutePath().toString());
+        final ProxyConfig vanillaAppConfig = new ProxyConfig();
+
+        final ProxyPathConfig modifiedPathConfig = vanillaAppConfig.getPathConfig()
+                .withHome(testingHomeAndTempProvidersModule.getHomeDir().toAbsolutePath().toString())
+                .withTemp(tempDir.toAbsolutePath().toString());
+
+        final ProxyConfig proxyConfig = AbstractConfigUtil.mutateTree(
+                vanillaAppConfig,
+                ProxyConfig.ROOT_PROPERTY_PATH,
+                Map.of(ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_PATH), modifiedPathConfig));
 
         // create the dirs so they validate ok
         Files.createDirectories(tempDir);
         Files.createDirectories(testingHomeAndTempProvidersModule.getHomeDir());
+        Files.createDirectories(testingHomeAndTempProvidersModule.getHomeDir()
+                .resolve(proxyConfig.getProxyRepositoryConfig().getRepoDir()));
+        Files.createDirectories(testingHomeAndTempProvidersModule.getHomeDir().resolve(
+                proxyConfig.getForwardRetry().getFailedForwardDir()));
 
         final Result<IsProxyConfig> result = proxyConfigValidator.validateRecursively(proxyConfig);
 

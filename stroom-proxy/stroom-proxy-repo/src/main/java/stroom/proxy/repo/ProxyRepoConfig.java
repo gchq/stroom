@@ -4,16 +4,21 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.validation.ValidDirectoryPath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.dropwizard.validation.ValidationMethod;
+
+import java.util.Objects;
 
 
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
 
-    protected static final boolean DEFAULT_STORING_ENABLED = false;
+    protected static final boolean DEFAULT_STORING_ENABLED = true;
     protected static final String DEFAULT_REPO_DIR = "repo";
 
     private final boolean storingEnabled;
@@ -31,6 +36,7 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
         this.repoDir = repoDir;
     }
 
+    @RequiresRestart(RestartScope.SYSTEM)
     @JsonProperty
     public boolean isStoringEnabled() {
         return storingEnabled;
@@ -40,9 +46,18 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */
     @RequiresRestart(value = RestartScope.SYSTEM)
+    @ValidDirectoryPath
     @JsonProperty
     public String getRepoDir() {
         return repoDir;
+    }
+
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message = "If storingEnabled is true, repoDir must be set.")
+    public boolean isRepoConfigValid() {
+        return !storingEnabled
+                || (repoDir != null && !repoDir.isEmpty());
     }
 
     public ProxyRepoConfig withRepoDir(final String repoDir) {
@@ -56,6 +71,35 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
     public static Builder builder() {
         return new Builder();
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ProxyRepoConfig that = (ProxyRepoConfig) o;
+        return storingEnabled == that.storingEnabled && Objects.equals(repoDir, that.repoDir);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(storingEnabled, repoDir);
+    }
+
+    @Override
+    public String toString() {
+        return "ProxyRepoConfig{" +
+                "storingEnabled=" + storingEnabled +
+                ", repoDir='" + repoDir + '\'' +
+                '}';
+    }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     public static class Builder {
 

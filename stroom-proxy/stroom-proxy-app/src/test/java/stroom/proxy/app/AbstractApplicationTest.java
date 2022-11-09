@@ -1,8 +1,12 @@
 package stroom.proxy.app;
 
+import stroom.proxy.app.forwarder.ForwardConfig;
 import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
+import stroom.util.NullSafe;
+import stroom.util.config.AbstractConfigUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PropertyPath;
 
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
@@ -17,10 +21,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public abstract class AbstractApplicationTest {
@@ -32,48 +38,58 @@ public abstract class AbstractApplicationTest {
     static {
         config = loadYamlFile("proxy-dev.yml");
 
-        // The key/trust store paths will not be available in travis so null them out
-        config.getProxyConfig()
-                .getForwardDestinations()
-                .forEach(forwardDestinationConfig -> {
-                    if (forwardDestinationConfig instanceof ForwardHttpPostConfig) {
-                        ((ForwardHttpPostConfig) forwardDestinationConfig).setSslConfig(null);
-                    }
-                });
-
-        config.getProxyConfig()
-                .getRestClientConfig()
-                .setTlsConfiguration(null);
-
         // If the home/temp paths don't exist then startup will exit, killing the rest of the tests
-        final ProxyPathConfig proxyPathConfig = config.getProxyConfig().getPathConfig();
+
+        final Path temp;
         try {
-            final Path temp = Files.createTempDirectory("stroom-proxy");
-            final Path homeDir = temp.resolve("home");
-            final Path tempDir = temp.resolve("temp");
-            Files.createDirectories(homeDir);
-            Files.createDirectories(tempDir);
-
-            proxyPathConfig.setHome(FileUtil.getCanonicalPath(homeDir));
-            proxyPathConfig.setTemp(FileUtil.getCanonicalPath(tempDir));
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-
-        final Path proxyHomeDir = Paths.get(proxyPathConfig.getHome());
-        final Path proxyTempDir = Paths.get(proxyPathConfig.getTemp());
-
-        try {
-            Files.createDirectories(proxyHomeDir);
+            temp = Files.createTempDirectory("stroom-proxy");
         } catch (IOException e) {
-            LOGGER.error("Error creating home directory {}", proxyHomeDir.toAbsolutePath(), e);
+            throw new RuntimeException(LogUtil.message("Error creating temp dir"), e);
         }
 
-        try {
-            Files.createDirectories(proxyTempDir);
-        } catch (IOException e) {
-            LOGGER.error("Error creating temp directory {}", proxyTempDir.toAbsolutePath(), e);
-        }
+        final Path homeDir = temp.resolve("home");
+        final Path tempDir = temp.resolve("temp");
+        FileUtil.ensureDirExists(homeDir);
+        FileUtil.ensureDirExists(tempDir);
+
+        final String homeDirStr = FileUtil.getCanonicalPath(homeDir);
+        final String tempDirStr = FileUtil.getCanonicalPath(tempDir);
+
+        final Path proxyHomeDir = Paths.get(homeDirStr);
+        final Path proxyTempDir = Paths.get(tempDirStr);
+        FileUtil.ensureDirExists(proxyHomeDir);
+        FileUtil.ensureDirExists(proxyTempDir);
+
+        final ProxyPathConfig modifiedPathConfig = config.getProxyConfig()
+                .getPathConfig()
+                .withHome(homeDirStr)
+                .withTemp(tempDirStr);
+
+        // The key/trust store paths will not be available in travis so null them out
+        final List<ForwardConfig> forwardConfigs = NullSafe.stream(config.getProxyConfig().getForwardDestinations())
+                .map(forwardConfig -> {
+                    if (forwardConfig instanceof ForwardHttpPostConfig) {
+                        return ((ForwardHttpPostConfig) forwardConfig).withSslConfig(null);
+                    } else {
+                        // keep unchanged
+                        return forwardConfig;
+                    }
+                }).toList();
+
+        // Can't use Map.of() due to null value
+        final Map<PropertyPath, Object> propValueMap = new HashMap<>();
+        propValueMap.put(ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_REST_CLIENT, "tls"), null);
+        propValueMap.put(
+                ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_FORWARD_DESTINATIONS),
+                forwardConfigs);
+        propValueMap.put(ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_PATH), modifiedPathConfig);
+
+        final ProxyConfig modifiedProxyConfig = AbstractConfigUtil.mutateTree(
+                config.getProxyConfig(),
+                ProxyConfig.ROOT_PROPERTY_PATH,
+                propValueMap);
+
+        config.setProxyConfig(modifiedProxyConfig);
     }
 
     static Config getConfig() {

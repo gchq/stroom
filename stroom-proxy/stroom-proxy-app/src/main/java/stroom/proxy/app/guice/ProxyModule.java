@@ -198,6 +198,7 @@ public class ProxyModule extends AbstractModule {
                 .addBinding(DictionaryStore.class);
     }
 
+    @SuppressWarnings("unused")
     @Provides
     @Singleton
     Persistence providePersistence(final PathCreator pathCreator) {
@@ -205,9 +206,10 @@ public class ProxyModule extends AbstractModule {
         return new FSPersistence(pathCreator.toAppPath(path));
     }
 
+    @SuppressWarnings("unused")
     @Provides
     @Singleton
-    Client provideJerseyClient(final RestClientConfig restClientConfig,
+    Client provideJerseyClient(final Provider<RestClientConfig> restClientConfigProvider,
                                final Environment environment,
                                final Provider<BuildInfo> buildInfoProvider,
                                final PathCreator pathCreator,
@@ -216,7 +218,7 @@ public class ProxyModule extends AbstractModule {
         // RestClientConfig is really just a copy of JerseyClientConfiguration
         // so do the conversion
         final JerseyClientConfiguration jerseyClientConfiguration = restClientConfigConverter.convert(
-                restClientConfig);
+                restClientConfigProvider.get());
 
         // If the userAgent has not been explicitly set in the config then set it based
         // on the build version
@@ -227,9 +229,9 @@ public class ProxyModule extends AbstractModule {
             jerseyClientConfiguration.setUserAgent(Optional.of(userAgent));
         }
 
-        // Mutating the TLS config is not ideal but I'm not sure there is another way.
+        // Mutating the TLS config is not ideal, but I'm not sure if there is another way.
         // We need to allow for relative paths (relative to proxy home), '~', and other system
-        // props in the path. Therefore if path creator produces a different path to what was
+        // props in the path. Therefore, if path creator produces a different path to what was
         // configured then update the config object.
         final TlsConfiguration tlsConfiguration = jerseyClientConfiguration.getTlsConfiguration();
         if (tlsConfiguration != null) {

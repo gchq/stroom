@@ -73,6 +73,8 @@ dependencies {
     testImplementation libs.guice_extension
     testImplementation libs.guice_grapher
     testImplementation libs.jinjava
+    testImplementation libs.jmh_core
+    testImplementation libs.jmh_generator_annprocess
     testImplementation libs.junit_jupiter_api
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mbknor_jackson_jsonSchema

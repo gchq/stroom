@@ -117,6 +117,7 @@ ext.versions = [
         gwt               : '2.9.0',
         hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
+        jmh               : '1.35',
         jooq              : '3.16.4',
         junit_jupiter     : '5.8.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
@@ -229,6 +230,8 @@ ext.libs = [
         jetty_servlet                  : "org.eclipse.jetty:jetty-servlet", // version controlled by dropwizard-dependencies
         jetty_servlets                 : "org.eclipse.jetty:jetty-servlets", // version controlled by dropwizard-dependencies
         jinjava                        : "com.hubspot.jinjava:jinjava:2.6.0",
+        jmh_core                       : "org.openjdk.jmh:jmh-core:$versions.jmh",
+        jmh_generator_annprocess       : "org.openjdk.jmh:jmh-generator-annprocess:$versions.jmh",
         jooq                           : "org.jooq:jooq:$versions.jooq",
         jooq_codegen                   : "org.jooq:jooq-codegen:$versions.jooq",
         jooq_meta                      : "org.jooq:jooq-meta:$versions.jooq",

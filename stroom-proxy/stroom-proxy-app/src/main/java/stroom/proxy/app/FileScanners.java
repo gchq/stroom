@@ -4,10 +4,12 @@ import stroom.proxy.repo.FileScanner;
 import stroom.proxy.repo.FileScannerConfig;
 import stroom.proxy.repo.FrequencyExecutor;
 import stroom.proxy.repo.store.SequentialFileStore;
+import stroom.util.NullSafe;
+import stroom.util.io.PathCreator;
 
 import io.dropwizard.lifecycle.Managed;
 
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -23,27 +25,34 @@ public class FileScanners implements Managed {
 
     @Inject
     public FileScanners(final ProxyConfig proxyConfig,
-                        final SequentialFileStore sequentialFileStore) {
-        if (proxyConfig.getFileScanners() != null && proxyConfig.getFileScanners().size() > 0) {
+                        final SequentialFileStore sequentialFileStore,
+                        final PathCreator pathCreator) {
+        if (NullSafe.hasItems(proxyConfig, ProxyConfig::getFileScanners)) {
             // Check that all dirs are unique.
-            final Set<String> all = proxyConfig
+            final Set<Path> allPaths = proxyConfig
                     .getFileScanners()
                     .stream()
                     .map(FileScannerConfig::getPath)
+                    .map(pathCreator::toAppPath)
                     .collect(Collectors.toSet());
-            all.add(proxyConfig.getProxyRepositoryConfig().getRepoDir());
-            if (all.size() != proxyConfig.getFileScanners().size() + 1) {
+
+            final Path repoDir = pathCreator.toAppPath(proxyConfig.getProxyRepositoryConfig().getRepoDir());
+            allPaths.add(repoDir);
+            if (allPaths.size() != proxyConfig.getFileScanners().size() + 1) {
+                // Can't do this validation with javax validation as it needs pathcreator
                 throw new RuntimeException("Config repo path and file scanner paths are not unique");
             }
 
-            proxyConfig.getFileScanners().forEach(fileScannerConfig -> {
-                final long frequency = fileScannerConfig.getScanFrequency().toMillis();
-                final FileScanner fileScanner =
-                        new FileScanner(Paths.get(fileScannerConfig.getPath()), sequentialFileStore);
-                addFrequencyExecutor("File scanner - " + fileScannerConfig.getPath(),
-                        () -> fileScanner::scan,
-                        frequency);
-            });
+            proxyConfig.getFileScanners()
+                    .forEach(fileScannerConfig -> {
+                        final long frequency = fileScannerConfig.getScanFrequency().toMillis();
+                        final FileScanner fileScanner = new FileScanner(
+                                pathCreator.toAppPath(fileScannerConfig.getPath()),
+                                sequentialFileStore);
+                        addFrequencyExecutor("File scanner - " + fileScanner.getSourceDir(),
+                                () -> fileScanner::scan,
+                                frequency);
+                    });
         }
     }
 

@@ -5,6 +5,7 @@ import stroom.proxy.app.ProxyConfigHolder;
 import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.Prop;
+import stroom.util.exception.ThrowingSupplier;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -46,7 +48,8 @@ public class ProxyConfigProvider {
     }
 
     ProxyConfigProvider(final ProxyConfig proxyConfig) {
-        rebuildConfigInstances(proxyConfig);
+        // Don't need to know about changes on first run as everything will be null to start with
+        rebuildConfigInstances(proxyConfig, false);
     }
 
     <T extends AbstractConfig> T getConfigObject(final Class<T> clazz) {
@@ -63,7 +66,7 @@ public class ProxyConfigProvider {
     }
 
     Set<Class<? extends AbstractConfig>> getInjectableClasses() {
-        return configInstanceMap.keySet();
+        return Collections.unmodifiableSet(configInstanceMap.keySet());
     }
 
     private void addConfigInstances(
@@ -71,63 +74,94 @@ public class ProxyConfigProvider {
             final Map<Class<? extends AbstractConfig>, AbstractConfig> configInstanceMap,
             final ObjectMapper objectMapper,
             final PropertyPath propertyPath,
-            final AtomicInteger changeCounter) {
+            final AtomicInteger changeCounter,
+            final boolean logChanges) {
 
         try {
             final Class<? extends AbstractConfig> clazz = config.getClass();
 
-            if (!clazz.isAnnotationPresent(NotInjectableConfig.class)) {
+            final Map<String, Prop> propMap = PropertyUtil.getProperties(objectMapper, config);
+            propMap.forEach((k, prop) -> {
+                final String childPropName = prop.getName();
+                final PropertyPath childPropPath = propertyPath.merge(childPropName);
+                final Class<?> valueType = prop.getValueClass();
+                if (AbstractConfig.class.isAssignableFrom(valueType)) {
 
-                final Map<String, Prop> propMap = PropertyUtil.getProperties(objectMapper, config);
-                propMap.forEach((k, prop) -> {
-                    final String childPropName = prop.getName();
-                    final PropertyPath childPropPath = propertyPath.merge(childPropName);
-                    final Class<?> valueType = prop.getValueClass();
-                    if (AbstractConfig.class.isAssignableFrom(valueType)) {
+                    final AbstractConfig childValue = (AbstractConfig) prop.getValueFromConfigObject();
 
-                        final AbstractConfig childValue = (AbstractConfig) prop.getValueFromConfigObject();
-
-                        if (childValue != null) {
-                            // recurse
-                            addConfigInstances(
-                                    childValue,
-                                    configInstanceMap,
-                                    objectMapper,
-                                    childPropPath,
-                                    changeCounter);
-                        } else {
-                            if (!prop.getValueClass().isAnnotationPresent(NotInjectableConfig.class)) {
-                                // We should not have null config objects that are meant to be injectable
-                                throw new RuntimeException(LogUtil.message("Prop {} is null but is injectable config"));
-                            }
+                    if (childValue != null) {
+                        // recurse
+                        addConfigInstances(
+                                childValue,
+                                configInstanceMap,
+                                objectMapper,
+                                childPropPath,
+                                changeCounter,
+                                logChanges);
+                    } else {
+                        if (!prop.getValueClass().isAnnotationPresent(NotInjectableConfig.class)) {
+                            // We should not have null config objects that are meant to be injectable
+                            throw new RuntimeException(LogUtil.message("Prop {} is null but is injectable config"));
                         }
                     }
-                });
+                }
+            });
 
-                final AbstractConfig existingConfig = NullSafe.get(this.configInstanceMap, map -> map.get(clazz));
-                if (existingConfig != null) {
-                    // This is an update so see what has changed
-                    propMap.forEach((k, prop) -> {
-                        final Object newValue = prop.getValueFromConfigObject();
-                        final Object existingValue = prop.getValueFromConfigObject(existingConfig);
-                        if (!Objects.equals(existingValue, newValue)) {
-                            changeCounter.incrementAndGet();
+            // Non-injectable config is only accessible by an injectable ancestor so no need to add
+            // it to the providers map
+            if (!clazz.isAnnotationPresent(NotInjectableConfig.class)) {
+                // Add the injectable config object to the instance map so the providers can get it
+                configInstanceMap.put(config.getClass(), config);
+            }
+
+            final AbstractConfig existingConfig = NullSafe.get(this.configInstanceMap, map -> map.get(clazz));
+//            if (existingConfig != null) {
+            // This is an update so see what has changed
+            propMap.forEach((k, prop) -> {
+                final Class<?> valueType = prop.getValueClass();
+                // Only log changes for values that are not config object
+                // Recursion into config objects will happen above
+                if (!AbstractConfig.class.isAssignableFrom(valueType)) {
+                    final Object newValue = prop.getValueFromConfigObject();
+                    final Object existingValue;
+                    if (existingConfig != null) {
+                        existingValue = prop.getValueFromConfigObject(existingConfig);
+                    } else {
+                        if (AbstractConfig.class.isAssignableFrom(valueType)) {
+                            LOGGER.info("valueType: {}", valueType);
+                            // Create a vanilla config obj with all defaults
+                            existingValue = ThrowingSupplier.unchecked(() ->
+                                            valueType.getConstructor().newInstance())
+                                    .get();
+                        } else {
+                            existingValue = null;
+                        }
+                    }
+
+                    if (!Objects.equals(existingValue, newValue)) {
+                        changeCounter.incrementAndGet();
+                        if (logChanges) {
                             LOGGER.info("Config property {} has changed from [{}] to [{}]",
                                     propertyPath.merge(prop.getName()),
                                     existingValue,
                                     newValue);
                         }
-                    });
+                    }
                 }
+            });
+//            }
 
-                configInstanceMap.put(config.getClass(), config);
-            }
         } catch (Exception e) {
             throw new RuntimeException("Error adding config instances for " + config.getClass().getName(), e);
         }
     }
 
-    public synchronized void rebuildConfigInstances(final ProxyConfig newProxyConfig) {
+    public void rebuildConfigInstances(final ProxyConfig newProxyConfig) {
+        rebuildConfigInstances(newProxyConfig, true);
+    }
+
+    private synchronized void rebuildConfigInstances(final ProxyConfig newProxyConfig,
+                                                     final boolean logChanges) {
         LOGGER.debug("Rebuilding object instance map");
         final Map<Class<? extends AbstractConfig>, AbstractConfig> newInstanceMap = new HashMap<>();
 
@@ -137,7 +171,8 @@ public class ProxyConfigProvider {
                 newInstanceMap,
                 createObjectMapper(),
                 ProxyConfig.ROOT_PROPERTY_PATH,
-                changeCounter);
+                changeCounter,
+                logChanges);
 
         if (configInstanceMap == null || changeCounter.get() > 0) {
             LOGGER.debug("Swapping out configInstanceMap, changeCounter {}", changeCounter);

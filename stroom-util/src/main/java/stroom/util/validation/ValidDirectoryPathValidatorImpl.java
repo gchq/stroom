@@ -55,12 +55,7 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
     public boolean isValid(final String dir, final ConstraintValidatorContext context) {
         final boolean isValid;
         if (dir != null) {
-            // Ideally here we would call PathCreator.replaceSystemProperties() and .makeAbsolute()
-            // but PathCreator needs to know the
-            // replace '~' with value of user.home
-//            final String modifiedDir = FileUtil.replaceHome(dir);
-
-            // Use the PathCreator so we can interpret relative paths and paths with '~' in.
+            // Use the PathCreator, so we can interpret relative paths and paths with '~' in.
             final Path modifiedDir = pathCreator.toAppPath(dir);
 
             LOGGER.debug("Validating dir {} (modified to {})", dir, modifiedDir);

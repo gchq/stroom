@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -52,7 +53,7 @@ public class AggregateForwarder {
     private final FailureDestinations failureDestinations;
     private final Sender sender;
     private final ProgressLog progressLog;
-    private final ForwardRetryConfig forwardRetryConfig;
+    private final Provider<ForwardRetryConfig> forwardRetryConfigProvider;
 
     private volatile String hostName = null;
 
@@ -66,7 +67,7 @@ public class AggregateForwarder {
                        final FailureDestinations failureDestinations,
                        final Sender sender,
                        final ProgressLog progressLog,
-                       final ForwardRetryConfig forwardRetryConfig) {
+                       final Provider<ForwardRetryConfig> forwardRetryConfigProvider) {
         this.feedDao = feedDao;
         this.sourceItemDao = sourceItemDao;
         this.aggregator = aggregator;
@@ -77,7 +78,7 @@ public class AggregateForwarder {
         this.forwarderDestinations = forwarderDestinations;
         this.sender = sender;
         this.progressLog = progressLog;
-        this.forwardRetryConfig = forwardRetryConfig;
+        this.forwardRetryConfigProvider = forwardRetryConfigProvider;
 
         init();
     }
@@ -134,7 +135,7 @@ public class AggregateForwarder {
     public void forwardRetry(final ForwardAggregate forwardAggregate) {
         progressLog.increment("AggregateForwarder - forwardRetry");
 
-        final long retryFrequency = forwardRetryConfig.getRetryFrequency().toMillis();
+        final long retryFrequency = forwardRetryConfigProvider.get().getRetryFrequency().toMillis();
         final long updateTimeMs = forwardAggregate.getUpdateTimeMs();
 
         // The current item will be the oldest so sleep if it isn't at least as old as the min retry frequency.
@@ -188,7 +189,7 @@ public class AggregateForwarder {
 
             final StreamHandlers streamHandlers;
             // If we have reached the max tried limit then send the data to the failure destination for this forwarder.
-            if (forwardAggregate.getTries() >= forwardRetryConfig.getMaxTries()) {
+            if (forwardAggregate.getTries() >= forwardRetryConfigProvider.get().getMaxTries()) {
                 attributeMap.put("ForwardError", forwardAggregate.getError());
                 streamHandlers = failureDestinations.getProvider(forwardAggregate.getForwardDest().getName());
             } else {

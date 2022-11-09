@@ -24,6 +24,8 @@ import javax.validation.constraints.NotNull;
 @JsonPropertyOrder(alphabetic = true)
 public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
 
+    public static final String PROP_NAME_TLS = "tls";
+
     @NotNull
     private final StroomDuration timeout;
 
@@ -68,9 +70,7 @@ public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
     private final StroomDuration validateAfterInactivityPeriod;
 
     //    @Valid
-    @Nullable
-    // TODO 03/12/2021 AT: Make final
-    private HttpClientTlsConfig tlsConfiguration;
+    private final HttpClientTlsConfig tlsConfiguration;
 
 
     public HttpClientConfig() {
@@ -102,7 +102,7 @@ public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty("retries") final int retries,
             @JsonProperty("userAgent") final String userAgent,
             @JsonProperty("validateAfterInactivityPeriod") final StroomDuration validateAfterInactivityPeriod,
-            @Nullable @JsonProperty("tls") final HttpClientTlsConfig tlsConfiguration) {
+            @Nullable @JsonProperty(PROP_NAME_TLS) final HttpClientTlsConfig tlsConfiguration) {
 
         this.timeout = timeout;
         this.connectionTimeout = connectionTimeout;
@@ -185,15 +185,10 @@ public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
         return validateAfterInactivityPeriod;
     }
 
-    @JsonProperty("tls")
+    @JsonProperty(PROP_NAME_TLS)
     @Nullable
     public HttpClientTlsConfig getTlsConfiguration() {
         return tlsConfiguration;
-    }
-
-    @Deprecated(forRemoval = true)
-    public void setTlsConfiguration(@Nullable final HttpClientTlsConfig tlsConfiguration) {
-        this.tlsConfiguration = tlsConfiguration;
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

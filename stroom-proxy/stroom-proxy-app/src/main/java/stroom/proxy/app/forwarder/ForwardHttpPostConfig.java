@@ -4,12 +4,14 @@ import stroom.util.cert.SSLConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
+import javax.validation.constraints.Min;
 
 @NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)
@@ -19,10 +21,10 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     private final String name;
     private final String userAgent;
     private final String forwardUrl;
-    private final Integer forwardTimeoutMs;
-    private final Integer forwardDelayMs;
+    private final StroomDuration forwardTimeout;
+    private final StroomDuration forwardDelay;
     private final Integer forwardChunkSize;
-    private SSLConfig sslConfig; // TODO : MAKE FINAL
+    private final SSLConfig sslConfig;
 
     @SuppressWarnings("unused")
     @JsonCreator
@@ -30,16 +32,16 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                                  @JsonProperty("name") final String name,
                                  @JsonProperty("userAgent") final String userAgent,
                                  @JsonProperty("forwardUrl") final String forwardUrl,
-                                 @JsonProperty("forwardTimeoutMs") final Integer forwardTimeoutMs,
-                                 @JsonProperty("forwardDelayMs") final Integer forwardDelayMs,
+                                 @JsonProperty("forwardTimeout") final StroomDuration forwardTimeout,
+                                 @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
                                  @JsonProperty("forwardChunkSize") final Integer forwardChunkSize,
                                  @JsonProperty("sslConfig") final SSLConfig sslConfig) {
         this.enabled = enabled;
         this.name = name;
         this.userAgent = userAgent;
         this.forwardUrl = forwardUrl;
-        this.forwardTimeoutMs = forwardTimeoutMs;
-        this.forwardDelayMs = forwardDelayMs;
+        this.forwardTimeout = forwardTimeout;
+        this.forwardDelay = forwardDelay;
         this.forwardChunkSize = forwardChunkSize;
         this.sslConfig = sslConfig;
     }
@@ -76,24 +78,26 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     }
 
     /**
-     * Time out when forwarding
+     * Time out when forwarding. A timeout of zero means an infinite timeout. If not a default
+     * timeout will be used.
      */
     @JsonProperty
-    public Integer getForwardTimeoutMs() {
-        return forwardTimeoutMs;
+    public StroomDuration getForwardTimeout() {
+        return forwardTimeout;
     }
 
     /**
      * Debug setting to add a delay
      */
     @JsonProperty
-    public Integer getForwardDelayMs() {
-        return forwardDelayMs;
+    public StroomDuration getForwardDelay() {
+        return forwardDelay;
     }
 
     /**
      * Chunk size to use over http(s) if not set requires buffer to be fully loaded into memory
      */
+    @Min(0)
     @JsonProperty
     public Integer getForwardChunkSize() {
         return forwardChunkSize;
@@ -104,8 +108,9 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         return sslConfig;
     }
 
-    public void setSslConfig(final SSLConfig sslConfig) {
-        this.sslConfig = sslConfig;
+    public ForwardHttpPostConfig withSslConfig(final SSLConfig sslConfig) {
+        return new ForwardHttpPostConfig(
+                enabled, name, userAgent, forwardUrl, forwardTimeout, forwardDelay, forwardChunkSize, sslConfig);
     }
 
     public static ForwardHttpPostConfig withForwardUrl(final String name,
@@ -115,7 +120,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                 name,
                 null,
                 forwardUrl,
-                30_000,
+                StroomDuration.ofSeconds(30),
                 null,
                 null,
                 null);
@@ -132,9 +137,9 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         final ForwardHttpPostConfig that = (ForwardHttpPostConfig) o;
         return enabled == that.enabled && Objects.equals(name, that.name) && Objects.equals(userAgent,
                 that.userAgent) && Objects.equals(forwardUrl, that.forwardUrl) && Objects.equals(
-                forwardTimeoutMs,
-                that.forwardTimeoutMs) && Objects.equals(forwardDelayMs,
-                that.forwardDelayMs) && Objects.equals(forwardChunkSize,
+                forwardTimeout,
+                that.forwardTimeout) && Objects.equals(forwardDelay,
+                that.forwardDelay) && Objects.equals(forwardChunkSize,
                 that.forwardChunkSize) && Objects.equals(sslConfig, that.sslConfig);
     }
 
@@ -144,8 +149,8 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                 name,
                 userAgent,
                 forwardUrl,
-                forwardTimeoutMs,
-                forwardDelayMs,
+                forwardTimeout,
+                forwardDelay,
                 forwardChunkSize,
                 sslConfig);
     }
@@ -157,8 +162,8 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                 ", name='" + name + '\'' +
                 ", userAgent='" + userAgent + '\'' +
                 ", forwardUrl='" + forwardUrl + '\'' +
-                ", forwardTimeoutMs=" + forwardTimeoutMs +
-                ", forwardDelayMs=" + forwardDelayMs +
+                ", forwardTimeout=" + forwardTimeout +
+                ", forwardDelay=" + forwardDelay +
                 ", forwardChunkSize=" + forwardChunkSize +
                 ", sslConfig=" + sslConfig +
                 '}';

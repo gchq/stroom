@@ -162,11 +162,22 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     /**
      * Merge part onto the end of this and return a new {@link PropertyPath}
      */
-    public PropertyPath merge(final String part) {
-        if (part == null || part.isEmpty()) {
+    public PropertyPath merge(final String otherPart) {
+        if (otherPart == null || otherPart.isEmpty()) {
             return this;
         } else {
-            return new PropertyPath(this.parts, part);
+            return new PropertyPath(this.parts, otherPart);
+        }
+    }
+
+    /**
+     * Merge parts onto the end of this and return a new {@link PropertyPath}
+     */
+    public PropertyPath merge(final String... parts) {
+        if (parts == null || parts.length == 0) {
+            return this;
+        } else {
+            return new PropertyPath(this.parts, Arrays.asList(parts));
         }
     }
 
@@ -260,6 +271,10 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     public String getName() {
         return this.toString();
     }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     public static final class Builder {
 

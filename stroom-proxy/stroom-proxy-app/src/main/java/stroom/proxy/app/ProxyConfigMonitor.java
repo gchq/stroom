@@ -51,7 +51,7 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
             if (result.hasErrors()) {
                 LOGGER.error("Unable to update application config from file {} because it failed validation. " +
                                 "Fix the errors and save the file.",
-                        configFile.toAbsolutePath().normalize().toString());
+                        configFile.toAbsolutePath().normalize());
             } else {
                 try {
                     LOGGER.info("Updating application config from file.");

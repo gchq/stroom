@@ -64,9 +64,9 @@ class EventAppender {
     }
 
     public synchronized boolean shouldRoll(final long addBytes) {
-        return createTime.isBefore(Instant.now().minus(eventStoreConfig.getMaxAge())) ||
-                eventCount >= eventStoreConfig.getMaxEventCount() ||
-                byteCount + addBytes > eventStoreConfig.getMaxByteCount();
+        return createTime.isBefore(Instant.now().minus(eventStoreConfig.getMaxAge()))
+                || eventCount >= eventStoreConfig.getMaxEventCount()
+                || byteCount + addBytes > eventStoreConfig.getMaxByteCount();
     }
 
     public synchronized Path closeAndGetFile() {

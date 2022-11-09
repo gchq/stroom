@@ -22,9 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class TestNullSafe {
@@ -466,6 +469,111 @@ class TestNullSafe {
                 .isFalse();
         Assertions.assertThat(NullSafe.isBlankString(nonNullStringWrapper, StringWrapper::getNonNullNonEmptyString))
                 .isFalse();
+    }
+
+    @Test
+    void testStream_null() {
+        final AtomicInteger counter = new AtomicInteger(0);
+        final List<String> list = null;
+        final List<String> output = NullSafe.stream(list)
+                .peek(str -> counter.incrementAndGet())
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(counter)
+                .hasValue(0);
+        Assertions.assertThat(output)
+                .isEmpty();
+    }
+
+    @Test
+    void testStream_empty() {
+        final AtomicInteger counter = new AtomicInteger(0);
+        final List<String> list = Collections.emptyList();
+        final List<String> output = NullSafe.stream(list)
+                .peek(str -> counter.incrementAndGet())
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(counter)
+                .hasValue(0);
+        Assertions.assertThat(output)
+                .isEmpty();
+    }
+
+    @Test
+    void testStream_nonNull() {
+        final AtomicInteger counter = new AtomicInteger(0);
+        final List<String> list = List.of("foo", "bar");
+        final List<String> output = NullSafe.stream(list)
+                .peek(str -> counter.incrementAndGet())
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(counter)
+                .hasValue(2);
+        Assertions.assertThat(output)
+                .containsExactlyElementsOf(list);
+    }
+
+    @Test
+    void testList_null() {
+        final List<String> input = null;
+        final List<String> output = NullSafe.list(input);
+
+        Assertions.assertThat(output)
+                .isNotNull()
+                .isEmpty();
+    }
+
+    @Test
+    void testList_nonNull() {
+        final List<String> input = List.of("foo", "bar");
+        final List<String> output = NullSafe.list(input);
+
+        Assertions.assertThat(output)
+                .isNotNull()
+                .isSameAs(input)
+                .containsExactlyElementsOf(input);
+    }
+
+    @Test
+    void testSet_null() {
+        final Set<String> input = null;
+        final Set<String> output = NullSafe.set(input);
+
+        Assertions.assertThat(output)
+                .isNotNull()
+                .isEmpty();
+    }
+
+    @Test
+    void testSet_nonNull() {
+        final Set<String> input = Set.of("foo", "bar");
+        final Set<String> output = NullSafe.set(input);
+
+        Assertions.assertThat(output)
+                .isNotNull()
+                .isSameAs(input)
+                .containsExactlyElementsOf(input);
+    }
+
+    @Test
+    void testMap_null() {
+        final Map<String, String> input = null;
+        final Map<String, String> output = NullSafe.map(input);
+
+        Assertions.assertThat(output)
+                .isNotNull()
+                .isEmpty();
+    }
+
+    @Test
+    void testMap_nonNull() {
+        final Map<String, String> input = Map.of("foo", "bar");
+        final Map<String, String> output = NullSafe.map(input);
+
+        Assertions.assertThat(output)
+                .isNotNull()
+                .isSameAs(input)
+                .containsExactlyEntriesOf(input);
     }
 
     @Test

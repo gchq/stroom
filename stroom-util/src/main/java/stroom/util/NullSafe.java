@@ -1,13 +1,17 @@
 package stroom.util;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Utility methods for safely getting properties (or properties of properties of ...) from
@@ -136,6 +140,44 @@ public class NullSafe {
             final Map<T2, T3> map = Objects.requireNonNull(mapGetter).apply(value);
             return map != null && !map.isEmpty();
         }
+    }
+
+    /**
+     * Returns a {@link Stream<T>} if collection is non-null else returns an empty {@link Stream<T>}
+     */
+    public static <T> Stream<T> stream(final Collection<T> collection) {
+        if (collection == null || collection.isEmpty()) {
+            return Stream.empty();
+        } else {
+            return collection.stream();
+        }
+    }
+
+    /**
+     * Returns the passed list if it is non-null else returns an empty list.
+     */
+    public static <L extends List<T>, T> List<T> list(final L list) {
+        return list != null
+                ? list
+                : Collections.emptyList();
+    }
+
+    /**
+     * Returns the passed set if it is non-null else returns an empty set.
+     */
+    public static <S extends Set<T>, T> Set<T> set(final S set) {
+        return set != null
+                ? set
+                : Collections.emptySet();
+    }
+
+    /**
+     * Returns the passed map if it is non-null else returns an empty map.
+     */
+    public static <M extends Map<K, V>, K, V> Map<K, V> map(final M map) {
+        return map != null
+                ? map
+                : Collections.emptyMap();
     }
 
     /**

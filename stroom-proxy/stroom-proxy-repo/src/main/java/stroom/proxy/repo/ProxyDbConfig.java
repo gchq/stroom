@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Objects;
+import javax.validation.constraints.Min;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
@@ -34,6 +36,7 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
 //    "pragma incremental_vacuum;""
 
     private static final StroomDuration DEFAULT_MAINTENANCE_PRAGMA_FREQUENCY = StroomDuration.ofMinutes(1);
+    // TODO: 08/11/2022 Is this meant to be 1mil or 10mil
     private static final int DEFAULT_BATCH_SIZE = 1_0000_000;
     protected static final StroomDuration DEFAULT_FLUSH_FREQUENCY = StroomDuration.ofSeconds(1);
     protected static final StroomDuration DEFAULT_CLEANUP_FREQUENCY = StroomDuration.ofSeconds(1);
@@ -74,11 +77,7 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
         this.connectionPragma = List.copyOf(connectionPragma);
         this.maintenancePragma = maintenancePragma;
         this.maintenancePragmaFrequency = maintenancePragmaFrequency;
-        if (batchSize > 9) {
-            this.batchSize = batchSize;
-        } else {
-            this.batchSize = DEFAULT_BATCH_SIZE;
-        }
+        this.batchSize = batchSize;
         this.flushFrequency = flushFrequency;
         this.cleanupFrequency = cleanupFrequency;
     }
@@ -118,9 +117,11 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
         return maintenancePragmaFrequency;
     }
 
+    // No idea why it needs to be >=10.  66 put this condition in when he wrote it and now can't remember why
+    @Min(10)
     @RequiresRestart(value = RestartScope.SYSTEM)
     @JsonProperty
-    @JsonPropertyDescription("Choose the batch processing size")
+    @JsonPropertyDescription("Choose the batch processing size. Batch size must be at least 10.")
     public int getBatchSize() {
         return batchSize;
     }
@@ -137,4 +138,47 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
         return cleanupFrequency;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ProxyDbConfig that = (ProxyDbConfig) o;
+        return batchSize == that.batchSize && Objects.equals(dbDir, that.dbDir) && Objects.equals(
+                globalPragma,
+                that.globalPragma) && Objects.equals(connectionPragma,
+                that.connectionPragma) && Objects.equals(maintenancePragma,
+                that.maintenancePragma) && Objects.equals(maintenancePragmaFrequency,
+                that.maintenancePragmaFrequency) && Objects.equals(flushFrequency,
+                that.flushFrequency) && Objects.equals(cleanupFrequency, that.cleanupFrequency);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dbDir,
+                globalPragma,
+                connectionPragma,
+                maintenancePragma,
+                maintenancePragmaFrequency,
+                batchSize,
+                flushFrequency,
+                cleanupFrequency);
+    }
+
+    @Override
+    public String toString() {
+        return "ProxyDbConfig{" +
+                "dbDir='" + dbDir + '\'' +
+                ", globalPragma=" + globalPragma +
+                ", connectionPragma=" + connectionPragma +
+                ", maintenancePragma=" + maintenancePragma +
+                ", maintenancePragmaFrequency=" + maintenancePragmaFrequency +
+                ", batchSize=" + batchSize +
+                ", flushFrequency=" + flushFrequency +
+                ", cleanupFrequency=" + cleanupFrequency +
+                '}';
+    }
 }
