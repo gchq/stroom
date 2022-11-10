@@ -41,11 +41,25 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
     }
 
     private void updateProxyConfigFromFile() {
-        final ProxyConfig newProxyConfig;
-        try {
-            LOGGER.info("Reading updated config file");
-            newProxyConfig = ProxyYamlUtil.readProxyConfig(configFile);
+        ProxyConfig newProxyConfig;
+        LOGGER.info("Reading updated config file");
 
+        try {
+            newProxyConfig = ProxyYamlUtil.readProxyConfig(configFile);
+        } catch (Exception e) {
+            // Swallow error as we don't want to break the app because the file is bad.
+            // Admin can fix file and try again.
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.error("{}\nThe config has not been updated. Fix the errors and save the file. " +
+                        "Use DEBUG for stacktrace.", e.getMessage(), e);
+            } else {
+                LOGGER.error("{}\nThe config has not been updated. Fix the errors and save the file.",
+                        e.getMessage());
+            }
+            newProxyConfig = null;
+        }
+
+        if (newProxyConfig != null) {
             final ConfigValidator.Result<IsProxyConfig> result = validateNewConfig(newProxyConfig);
 
             if (result.hasErrors()) {
@@ -63,13 +77,8 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
                             configFile.toAbsolutePath().normalize(), e);
                 }
             }
-        } catch (Throwable e) {
-            // Swallow error as we don't want to break the app because the file is bad.
-            LOGGER.error("Error parsing configuration from file {}",
-                    configFile.toAbsolutePath().normalize(), e);
         }
     }
-
 
     private ConfigValidator.Result<IsProxyConfig> validateNewConfig(final ProxyConfig newProxyConfig) {
         // Decorate the new config tree so it has all the paths,

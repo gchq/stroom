@@ -1,7 +1,6 @@
 package stroom.proxy.repo;
 
-import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;
@@ -82,35 +81,35 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
         this.cleanupFrequency = cleanupFrequency;
     }
 
-    @RequiresRestart(value = RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @JsonProperty
     @JsonPropertyDescription("The directory to use for the proxy repository DB")
     public String getDbDir() {
         return dbDir;
     }
 
-    @RequiresRestart(value = RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @JsonProperty
     @JsonPropertyDescription("A list of statements to run on the database on startup")
     public List<String> getGlobalPragma() {
         return globalPragma;
     }
 
-    @RequiresRestart(value = RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @JsonProperty
     @JsonPropertyDescription("A list of statements to run on the database for each connection")
     public List<String> getConnectionPragma() {
         return connectionPragma;
     }
 
-    @RequiresRestart(value = RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @JsonProperty
     @JsonPropertyDescription("A list of statements to run on the database according to the provided frequency")
     public List<String> getMaintenancePragma() {
         return maintenancePragma;
     }
 
-    @RequiresRestart(value = RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @JsonProperty
     @JsonPropertyDescription("A frequency that maintenance statements should be executed")
     public StroomDuration getMaintenancePragmaFrequency() {
@@ -119,20 +118,20 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
 
     // No idea why it needs to be >=10.  66 put this condition in when he wrote it and now can't remember why
     @Min(10)
-    @RequiresRestart(value = RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @JsonProperty
     @JsonPropertyDescription("Choose the batch processing size. Batch size must be at least 10.")
     public int getBatchSize() {
         return batchSize;
     }
 
-    @RequiresRestart(value = RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @JsonProperty
     public StroomDuration getFlushFrequency() {
         return flushFrequency;
     }
 
-    @RequiresRestart(value = RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @JsonProperty
     public StroomDuration getCleanupFrequency() {
         return cleanupFrequency;

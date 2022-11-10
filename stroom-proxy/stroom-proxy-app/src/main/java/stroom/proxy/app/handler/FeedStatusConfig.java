@@ -21,10 +21,7 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
     public FeedStatusConfig() {
         feedStatusUrl = null;
         apiKey = null;
-        feedStatusCache = CacheConfig
-                .builder()
-                .maximumSize(1000L)
-                .build();
+        feedStatusCache = buildDefaultCacheConfig();
     }
 
     @SuppressWarnings("unused")
@@ -35,14 +32,16 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
         this.feedStatusUrl = feedStatusUrl;
         this.apiKey = apiKey;
 
-        if (feedStatusCache == null) {
-            this.feedStatusCache = CacheConfig
-                    .builder()
-                    .maximumSize(1_000L)
-                    .build();
-        } else {
-            this.feedStatusCache = feedStatusCache;
-        }
+        this.feedStatusCache = feedStatusCache == null
+                ? buildDefaultCacheConfig()
+                : feedStatusCache;
+    }
+
+    private static CacheConfig buildDefaultCacheConfig() {
+        return CacheConfig
+                .builder()
+                .maximumSize(1_000L)
+                .build();
     }
 
     @JsonProperty("url")

@@ -23,6 +23,49 @@ public class NullSafe {
     }
 
     /**
+     * Return first non-null value or an empty {@link Optional} if all are null
+     */
+    public static <T> Optional<T> coalesce(final T val1, final T val2) {
+        return val1 != null
+                ? Optional.of(val1)
+                : (val2 != null
+                        ? Optional.of(val2)
+                        : Optional.empty());
+    }
+
+    /**
+     * Return first non-null value or an empty {@link Optional} if all are null
+     */
+    public static <T> Optional<T> coalesce(final T val1, final T val2, final T val3) {
+        return val1 != null
+                ? Optional.of(val1)
+                : (val2 != null
+                        ? Optional.of(val2)
+                        : (val3 != null
+                                ? Optional.of(val3)
+                                : Optional.empty()));
+    }
+
+    /**
+     * Return first non-null value or an empty {@link Optional} if all are null
+     */
+    public static <T> Optional<T> coalesce(final T val1,
+                                           final T val2,
+                                           final T val3,
+                                           final T val4) {
+        return val1 != null
+                ? Optional.of(val1)
+                : (val2 != null
+                        ? Optional.of(val2)
+                        : (val3 != null
+                                ? Optional.of(val3)
+                                : (val4 != null
+                                        ? Optional.of(val4)
+                                        : Optional.empty())));
+    }
+
+
+    /**
      * @return True if str is null or blank
      */
     public static boolean isBlankString(final String str) {

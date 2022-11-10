@@ -206,6 +206,11 @@ public class ProxyModule extends AbstractModule {
         return new FSPersistence(pathCreator.toAppPath(path));
     }
 
+    // Returning a singleton Client means we can't hot change the config.
+    // We could make it not a singleton and hold the last config object and Client used then
+    // compare the instance id of the old and new config to see if we need to create a new Client.
+    // However, this would mean users of Client would need to not hold it in a singleton, which some
+    // do, e.g.
     @SuppressWarnings("unused")
     @Provides
     @Singleton

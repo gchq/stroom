@@ -1,7 +1,6 @@
 package stroom.proxy.repo;
 
-import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.validation.ValidDirectoryPath;
 import stroom.util.time.StroomDuration;
@@ -34,7 +33,7 @@ public class FileScannerConfig {
         this.scanFrequency = scanFrequency;
     }
 
-    @RequiresRestart(RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @NotNull
     @ValidDirectoryPath
     @JsonProperty
@@ -42,7 +41,7 @@ public class FileScannerConfig {
         return path;
     }
 
-    @RequiresRestart(RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @NotNull
     @JsonProperty
     public StroomDuration getScanFrequency() {

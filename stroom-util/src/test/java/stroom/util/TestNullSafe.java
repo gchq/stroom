@@ -42,6 +42,61 @@ class TestNullSafe {
         return other;
     }
 
+    @TestFactory
+    Stream<DynamicTest> testCoalesce_twoValues() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class)
+                .withWrappedOutputType(new TypeLiteral<Optional<String>>(){})
+                .withTestFunction(testCase ->
+                        NullSafe.coalesce(testCase.getInput()._1, testCase.getInput()._2))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), Optional.empty())
+                .addCase(Tuple.of("foo", null), Optional.of("foo"))
+                .addCase(Tuple.of(null, "foo"), Optional.of("foo"))
+                .addCase(Tuple.of("foo", "bar"), Optional.of("foo"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCoalesce_threeValues() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class, String.class)
+                .withWrappedOutputType(new TypeLiteral<Optional<String>>(){})
+                .withTestFunction(testCase ->
+                        NullSafe.coalesce(
+                                testCase.getInput()._1,
+                                testCase.getInput()._2,
+                                testCase.getInput()._3))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null, null), Optional.empty())
+                .addCase(Tuple.of("foo", null, null), Optional.of("foo"))
+                .addCase(Tuple.of(null, "foo", null), Optional.of("foo"))
+                .addCase(Tuple.of(null, null, "foo"), Optional.of("foo"))
+                .addCase(Tuple.of("one", "two", "three"), Optional.of("one"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCoalesce_fourValues() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple4<String, String, String, String>>(){})
+                .withWrappedOutputType(new TypeLiteral<Optional<String>>(){})
+                .withTestFunction(testCase ->
+                        NullSafe.coalesce(
+                                testCase.getInput()._1,
+                                testCase.getInput()._2,
+                                testCase.getInput()._3,
+                                testCase.getInput()._4))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null, null, null), Optional.empty())
+                .addCase(Tuple.of("foo", null, null, null), Optional.of("foo"))
+                .addCase(Tuple.of(null, "foo", null, null), Optional.of("foo"))
+                .addCase(Tuple.of(null, null, "foo", null), Optional.of("foo"))
+                .addCase(Tuple.of(null, null, null, "foo"), Optional.of("foo"))
+                .addCase(Tuple.of("one", "two", "three", "four"), Optional.of("one"))
+                .build();
+    }
+
     @Test
     void testGet1Null() {
         Assertions.assertThat(NullSafe.get(

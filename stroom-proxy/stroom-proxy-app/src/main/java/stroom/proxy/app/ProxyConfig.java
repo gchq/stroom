@@ -10,8 +10,7 @@ import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
@@ -168,6 +167,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxyId;
     }
 
+    @RequiresProxyRestart
     @JsonProperty
     public String getContentDir() {
         return contentDir;
@@ -208,7 +208,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return aggregatorConfig;
     }
 
-    @RequiresRestart(RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @JsonProperty(PROP_NAME_FORWARD_DESTINATIONS)
     public List<ForwardConfig> getForwardDestinations() {
         return forwardDestinations;

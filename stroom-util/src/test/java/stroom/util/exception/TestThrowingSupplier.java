@@ -12,7 +12,6 @@ import java.util.Objects;
 class TestThrowingSupplier {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestThrowingSupplier.class);
-
     private final AtomicSequence atomicSequence = new AtomicSequence(2);
 
     @Test
@@ -33,12 +32,13 @@ class TestThrowingSupplier {
         Assertions.assertThat(val)
                 .isEqualTo(0);
 
-        Assertions.assertThatThrownBy(() -> {
-                    //noinspection ResultOfMethodCallIgnored
-                    Objects.requireNonNullElseGet(
-                            null,
-                            ThrowingSupplier.unchecked(this::getNext));
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            //noinspection ResultOfMethodCallIgnored
+                            Objects.requireNonNullElseGet(
+                                    null,
+                                    ThrowingSupplier.unchecked(this::getNext));
+                        })
                 .isInstanceOf(RuntimeException.class);
     }
 

@@ -1,7 +1,6 @@
 package stroom.proxy.app.forwarder;
 
-import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 
@@ -36,21 +35,21 @@ public class ThreadConfig extends AbstractConfig implements IsProxyConfig {
         this.forwardRetryThreadCount = forwardRetryThreadCount;
     }
 
-    @RequiresRestart(RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @Min(0)
     @JsonProperty
     public int getExamineSourceThreadCount() {
         return examineSourceThreadCount;
     }
 
-    @RequiresRestart(RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @Min(0)
     @JsonProperty
     public int getForwardThreadCount() {
         return forwardThreadCount;
     }
 
-    @RequiresRestart(RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @Min(0)
     @JsonProperty
     public int getForwardRetryThreadCount() {

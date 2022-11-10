@@ -1,7 +1,6 @@
 package stroom.proxy.app.event;
 
-import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;
@@ -77,13 +76,13 @@ public class EventStoreConfig extends AbstractConfig implements IsProxyConfig {
         return maxByteCount;
     }
 
-    @RequiresRestart(RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @Min(0)
     public int getMaxOpenFiles() {
         return maxOpenFiles;
     }
 
-    @RequiresRestart(RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @Min(0)
     public int getForwardQueueSize() {
         return forwardQueueSize;
@@ -98,9 +97,12 @@ public class EventStoreConfig extends AbstractConfig implements IsProxyConfig {
             return false;
         }
         final EventStoreConfig that = (EventStoreConfig) o;
-        return maxEventCount == that.maxEventCount && maxByteCount == that.maxByteCount && maxOpenFiles == that.maxOpenFiles && forwardQueueSize == that.forwardQueueSize && Objects.equals(
-                rollFrequency,
-                that.rollFrequency) && Objects.equals(maxAge, that.maxAge);
+        return maxEventCount == that.maxEventCount
+                && maxByteCount == that.maxByteCount
+                && maxOpenFiles == that.maxOpenFiles
+                && forwardQueueSize == that.forwardQueueSize
+                && Objects.equals(rollFrequency, that.rollFrequency)
+                && Objects.equals(maxAge, that.maxAge);
     }
 
     @Override

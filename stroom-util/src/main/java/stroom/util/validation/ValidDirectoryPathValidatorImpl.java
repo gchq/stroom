@@ -64,7 +64,7 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
             if (!isValid) {
                 String msg = context.getDefaultConstraintMessageTemplate();
                 if (!modifiedDir.toString().equals(dir)) {
-                    msg += " (as absolute path: [" + modifiedDir + "]";
+                    msg += " (as absolute path: " + modifiedDir + ")";
                 }
                 context.disableDefaultConstraintViolation();
                 context

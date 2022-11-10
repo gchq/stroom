@@ -156,7 +156,12 @@ public class RestClientConfig extends HttpClientConfig implements IsProxyConfig 
             return false;
         }
         final RestClientConfig that = (RestClientConfig) o;
-        return minThreads == that.minThreads && maxThreads == that.maxThreads && workQueueSize == that.workQueueSize && gzipEnabled == that.gzipEnabled && gzipEnabledForRequests == that.gzipEnabledForRequests && chunkedEncodingEnabled == that.chunkedEncodingEnabled;
+        return minThreads == that.minThreads
+                && maxThreads == that.maxThreads
+                && workQueueSize == that.workQueueSize
+                && gzipEnabled == that.gzipEnabled
+                && gzipEnabledForRequests == that.gzipEnabledForRequests
+                && chunkedEncodingEnabled == that.chunkedEncodingEnabled;
     }
 
     @Override

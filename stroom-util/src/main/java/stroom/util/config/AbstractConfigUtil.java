@@ -26,8 +26,9 @@ public class AbstractConfigUtil {
      * Modify one or more values in the config tree by rebuilding all the immutable {@link AbstractConfig}
      * branches as required. As the classes are all immutable any modified objects need to be rebuilt using
      * their constructors and then all ancestor objects have to be rebuilt in the same way.
-     * @param config The object to start walking the tree from.
-     * @param basePath The base {@link PropertyPath} of the config object
+     *
+     * @param config              The object to start walking the tree from.
+     * @param basePath            The base {@link PropertyPath} of the config object
      * @param replacementValueMap A map containing the values to update, key on their {@link PropertyPath}.
      * @param <T>
      * @return The new root object containing the mutated tree.
@@ -111,9 +112,10 @@ public class AbstractConfigUtil {
 
     }
 
-    private static <T extends AbstractConfig> T mutateBranch(final T config,
-                                                             final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap,
-                                                             final Map<PropertyPath, Object> replacementValueMap) {
+    private static <T extends AbstractConfig> T mutateBranch(
+            final T config,
+            final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap,
+            final Map<PropertyPath, Object> replacementValueMap) {
 
         final ObjectInfo<T> objectInfo = (ObjectInfo<T>) Objects.requireNonNull(
                 objectInfoMap.get(config.getBasePath()));

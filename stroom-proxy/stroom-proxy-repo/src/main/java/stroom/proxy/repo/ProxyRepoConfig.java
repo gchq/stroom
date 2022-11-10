@@ -1,7 +1,6 @@
 package stroom.proxy.repo;
 
-import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.validation.ValidDirectoryPath;
@@ -36,7 +35,7 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
         this.repoDir = repoDir;
     }
 
-    @RequiresRestart(RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @JsonProperty
     public boolean isStoringEnabled() {
         return storingEnabled;
@@ -45,7 +44,7 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
     /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */
-    @RequiresRestart(value = RestartScope.SYSTEM)
+    @RequiresProxyRestart
     @ValidDirectoryPath
     @JsonProperty
     public String getRepoDir() {

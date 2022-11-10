@@ -1,5 +1,6 @@
 package stroom.proxy.repo;
 
+import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -68,6 +69,7 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
         this.aggregationFrequency = aggregationFrequency;
     }
 
+    @RequiresProxyRestart
     @JsonPropertyDescription("If we are actually going to aggregate stored data or use it as is")
     @JsonProperty
     public boolean isEnabled() {
@@ -101,6 +103,7 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
         return maxAggregateAge;
     }
 
+    @RequiresProxyRestart
     @NotNull
     @JsonPropertyDescription("The the length of time that data is added to an aggregate for before the " +
             "aggregate is closed")
@@ -130,9 +133,11 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
             return false;
         }
         final AggregatorConfig that = (AggregatorConfig) o;
-        return enabled == that.enabled && maxItemsPerAggregate == that.maxItemsPerAggregate && maxUncompressedByteSize == that.maxUncompressedByteSize && Objects.equals(
-                maxAggregateAge,
-                that.maxAggregateAge) && Objects.equals(aggregationFrequency, that.aggregationFrequency);
+        return enabled == that.enabled
+                && maxItemsPerAggregate == that.maxItemsPerAggregate
+                && maxUncompressedByteSize == that.maxUncompressedByteSize
+                && Objects.equals(maxAggregateAge, that.maxAggregateAge)
+                && Objects.equals(aggregationFrequency, that.aggregationFrequency);
     }
 
     @Override
