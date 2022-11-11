@@ -36,12 +36,15 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
         if (widget == null) {
             if (input == null) {
                 final Widget outputWidget = output.asWidget();
+                outputWidget.addStyleName("dashboard-panel overflow-hidden");
                 widget = outputWidget;
 
             } else if (code == null) {
                 // Create layout.
                 final Widget inputWidget = input.asWidget();
                 final Widget outputWidget = output.asWidget();
+                inputWidget.addStyleName("dashboard-panel overflow-hidden");
+                outputWidget.addStyleName("dashboard-panel overflow-hidden");
                 final MySplitLayoutPanel layout = new MySplitLayoutPanel();
                 layout.setHSplits("0.5");
                 layout.setVSplits("0.66");
@@ -54,6 +57,9 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
                 final Widget codeWidget = code.asWidget();
                 final Widget inputWidget = input.asWidget();
                 final Widget outputWidget = output.asWidget();
+                codeWidget.addStyleName("dashboard-panel overflow-hidden");
+                inputWidget.addStyleName("dashboard-panel overflow-hidden");
+                outputWidget.addStyleName("dashboard-panel overflow-hidden");
                 final MySplitLayoutPanel layout = new MySplitLayoutPanel();
                 layout.setHSplits("0.5");
                 layout.setVSplits("0.66");
@@ -65,7 +71,6 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
         }
 
         widget.setSize("100%", "100%");
-
         return widget;
     }
 

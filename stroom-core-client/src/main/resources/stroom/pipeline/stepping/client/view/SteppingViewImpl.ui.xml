@@ -11,7 +11,7 @@
                 <g:ScrollPanel ui:field="treeContainer" addStyleNames="max"/>
             </g:north>
             <g:center>
-                <tab:LayerContainerImpl ui:field="layerContainer" styleName="max"/>
+                <tab:LayerContainerImpl ui:field="layerContainer" styleName="max control__padding-right control__padding-bottom"/>
             </g:center>
         </g:MySplitLayoutPanel>
     </g:FlowPanel>

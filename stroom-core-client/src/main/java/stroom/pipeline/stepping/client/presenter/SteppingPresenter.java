@@ -88,7 +88,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final PipelineStepRequest request;
     private final PipelineTreePresenter pipelineTreePresenter;
     private final SourcePresenter sourcePresenter;
-    private final Provider<ElementPresenter> editorProvider;
+    private final Provider<ElementPresenter> elementPresenterProvider;
     private final StepLocationPresenter stepLocationPresenter;
     private final StepControlPresenter stepControlPresenter;
     private final SteppingFilterPresenter steppingFilterPresenter;
@@ -111,7 +111,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                              final PipelineTreePresenter pipelineTreePresenter,
                              final RestFactory restFactory,
                              final SourcePresenter sourcePresenter,
-                             final Provider<ElementPresenter> editorProvider,
+                             final Provider<ElementPresenter> elementPresenterProvider,
                              final StepLocationPresenter stepLocationPresenter,
                              final StepControlPresenter stepControlPresenter,
                              final SteppingFilterPresenter steppingFilterPresenter) {
@@ -120,7 +120,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.sourcePresenter = sourcePresenter;
-        this.editorProvider = editorProvider;
+        this.elementPresenterProvider = elementPresenterProvider;
         this.stepLocationPresenter = stepLocationPresenter;
         this.stepControlPresenter = stepControlPresenter;
         this.steppingFilterPresenter = steppingFilterPresenter;
@@ -129,6 +129,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         view.addWidgetRight(stepControlPresenter.getView().asWidget());
         view.setTreeView(pipelineTreePresenter.getView());
 
+        sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
+        sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
         sourcePresenter.setSteppingSource(true);
 
         pipelineModel = new PipelineModel();
@@ -211,7 +213,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
-                final ElementPresenter presenter = editorProvider.get();
+                final ElementPresenter presenter = elementPresenterProvider.get();
                 presenter.setElement(element);
                 presenter.setProperties(properties);
                 presenter.setFeedName(meta.getFeedName());

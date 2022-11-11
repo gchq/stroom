@@ -795,10 +795,13 @@ input[type="file"]:disabled {
 	visibility: visible;
 }
 
+.control__padding-bottom {
+    padding-bottom: var(--control__padding--vertical);
+}
 
-
-
-
+.control__padding-right {
+    padding-right: var(--control__padding--vertical);
+}
 
 .dock-container-horizontal {
     display: flex;

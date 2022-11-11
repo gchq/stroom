@@ -534,10 +534,6 @@
     flex-grow: 1;
 }
 
-.control__padding-bottom {
-    padding-bottom: var(--control__gap--vertical);
-}
-
 .documentPermissionsViewImpl-copyPermissionsFromParentButton {
     width: 259px;
 }

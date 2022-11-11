@@ -1,32 +1,35 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.button.client">
-    <g:FlowPanel addStyleNames="dock-container-vertical">
-        <g:FlowPanel styleName="dock-min pipelineStructureViewImpl-bar stroom-border-bottom">
-            <g:FlowPanel styleName="pipelineStructureViewImpl-buttons">
-                <v:SvgButton ui:field="add"/>
-                <v:SvgButton ui:field="remove"/>
-                <v:SvgButton ui:field="restore"/>
-            </g:FlowPanel>
-            <g:Label text="Inherit From: " styleName="gwt-Label pipelineStructureViewImpl-label"/>
-            <g:SimplePanel ui:field="inherit"/>
-            <g:Hyperlink ui:field="viewSource" text="View Source"
-                         addStyleNames="pipelineStructureViewImpl-viewSource"/>
-        </g:FlowPanel>
+    <g:FlowPanel addStyleNames="dock-container-vertical control__padding-right control__padding-bottom">
         <g:MySplitLayoutPanel vSplits="0.4" styleName="dock-max">
             <g:north size="200">
-                <g:MaxScrollPanel ui:field="treeContainer"
-                                  addStyleNames="stroom-border-bottom pipelineStructureViewImpl-treeContainer"/>
+                <g:FlowPanel styleName="max dashboard-panel dock-container-vertical">
+                    <g:FlowPanel styleName="dock-min pipelineStructureViewImpl-bar">
+                        <g:FlowPanel styleName="pipelineStructureViewImpl-buttons">
+                            <v:SvgButton ui:field="add"/>
+                            <v:SvgButton ui:field="remove"/>
+                            <v:SvgButton ui:field="restore"/>
+                        </g:FlowPanel>
+                        <g:Label text="Inherit From: " styleName="gwt-Label pipelineStructureViewImpl-label"/>
+                        <g:SimplePanel ui:field="inherit"/>
+                        <g:Hyperlink ui:field="viewSource" text="View Source"
+                                     addStyleNames="pipelineStructureViewImpl-viewSource"/>
+                    </g:FlowPanel>
+                    <g:MaxScrollPanel ui:field="treeContainer"
+                                      addStyleNames="dock-max pipelineStructureViewImpl-treeContainer"/>
+
+                </g:FlowPanel>
             </g:north>
             <g:center>
-                <g:MySplitLayoutPanel vSplits="0.5" styleName="max stroom-border-top">
+                <g:MySplitLayoutPanel vSplits="0.5" styleName="max">
                     <g:north size="200">
                         <g:SimplePanel ui:field="properties"
-                                       styleName="stroom-border-bottom"/>
+                                       styleName="dashboard-panel"/>
                     </g:north>
                     <g:center>
                         <g:SimplePanel ui:field="pipelineReferences"
-                                       styleName="stroom-border-top"/>
+                                       styleName="dashboard-panel"/>
                     </g:center>
                 </g:MySplitLayoutPanel>
             </g:center>

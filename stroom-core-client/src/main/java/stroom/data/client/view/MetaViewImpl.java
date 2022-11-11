@@ -48,6 +48,7 @@ public class MetaViewImpl extends ViewImpl implements MetaView {
 
     @Override
     public void setInSlot(final Object slot, final Widget content) {
+        content.addStyleName("dashboard-panel overflow-hidden");
         if (MetaPresenter.STREAM_LIST.equals(slot)) {
             streamList.setWidget(content);
         } else if (MetaPresenter.STREAM_RELATION_LIST.equals(slot)) {

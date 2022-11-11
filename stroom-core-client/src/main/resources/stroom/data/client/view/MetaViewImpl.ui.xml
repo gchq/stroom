@@ -4,18 +4,18 @@
     <g:MySplitLayoutPanel styleName="max">
         <g:north size="200">
             <g:SimplePanel ui:field="streamList"
-                           styleName="max stroom-border-bottom"/>
+                           styleName="max control__padding-right"/>
         </g:north>
         <g:center>
             <g:MySplitLayoutPanel styleName="max">
                 <g:north size="150">
                     <g:SimplePanel ui:field="streamRelationList"
-                                   styleName="max stroom-border-top stroom-border-bottom">
+                                   styleName="max control__padding-right">
                     </g:SimplePanel>
                 </g:north>
                 <g:center>
                     <g:SimplePanel ui:field="data"
-                                   styleName="max stroom-border-top"/>
+                                   styleName="max control__padding-right control__padding-bottom"/>
                 </g:center>
             </g:MySplitLayoutPanel>
         </g:center>
