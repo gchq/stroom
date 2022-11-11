@@ -81,6 +81,11 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     }
 
     @Override
+    public void setEnableFromDate(final Long date) {
+        enableFrom.setMilliseconds(date);
+    }
+
+    @Override
     public boolean isEnableFilters() {
         return enableFilters.getValue().toBoolean();
     }

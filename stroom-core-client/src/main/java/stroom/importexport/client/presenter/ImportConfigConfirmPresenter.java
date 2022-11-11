@@ -102,7 +102,8 @@ public class ImportConfigConfirmPresenter extends
                 DataGridViewImpl.MASSIVE_LIST_PAGE_SIZE);
 
         view.setDataGridView(this.dataGridView);
-        view.setEnableFilters(true);
+        view.setEnableFilters(false);
+        view.setEnableFromDate(System.currentTimeMillis());
         view.setUseImportNames(false);
         view.setUseImportFolders(false);
         view.onUseImportNames(useImportNames -> {
@@ -505,6 +506,8 @@ public class ImportConfigConfirmPresenter extends
         void setDataGridView(View view);
 
         Long getEnableFromDate();
+
+        void setEnableFromDate(Long date);
 
         boolean isEnableFilters();
 
