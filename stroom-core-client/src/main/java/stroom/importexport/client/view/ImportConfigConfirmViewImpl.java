@@ -50,6 +50,8 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     TickBox useImportNames;
     @UiField
     TickBox useImportFolders;
+    @UiField
+    SimplePanel rootFolder;
 
     private Consumer<Boolean> useImportNamesConsumer;
     private Consumer<Boolean> useImportFoldersConsumer;
@@ -113,6 +115,11 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     @Override
     public void onUseImportFolders(final Consumer<Boolean> useImportFoldersConsumer) {
         this.useImportFoldersConsumer = useImportFoldersConsumer;
+    }
+
+    @Override
+    public void setRootFolderView(final View view) {
+        rootFolder.setWidget(view.asWidget());
     }
 
     @UiHandler("useImportNames")
