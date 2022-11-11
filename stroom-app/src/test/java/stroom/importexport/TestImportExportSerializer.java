@@ -272,7 +272,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         Files.createDirectories(outDir);
 
         // Read input.
-        Set<DocRef> exported = importExportSerializer.read(inDir, null, ImportMode.IGNORE_CONFIRMATION);
+        final Set<DocRef> exported =
+                importExportSerializer.read(inDir, null, ImportMode.IGNORE_CONFIRMATION);
 
         // Write to output.
         List<Message> messageList = new ArrayList<>();

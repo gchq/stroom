@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -53,7 +54,8 @@ class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
         assertThat(Files.isRegularFile(zipFile)).isTrue();
         assertThat(Files.isDirectory(importDir)).isTrue();
 
-        final List<ImportState> confirmList = importExportService.createImportConfirmationList(zipFile);
+        final List<ImportState> confirmList =
+                importExportService.createImportConfirmationList(zipFile, new ArrayList<>());
         assertThat(confirmList).isNotNull();
 
         importExportService.performImportWithoutConfirmation(zipFile);

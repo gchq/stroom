@@ -37,7 +37,9 @@ public interface ImportExportSerializer {
      * @return The set of all DocRef roots, typically this is the Explorer root DocRef plus any DocRefs
      * not held in the Explorer tree.
      */
-    Set<DocRef> read(Path dir, List<ImportState> importStateList, ImportMode importMode);
+    Set<DocRef> read(Path dir,
+                     List<ImportState> importStateList,
+                     ImportMode importMode);
 
     /**
      * Walk the supplied tree of DocRefs and export all to the given path
