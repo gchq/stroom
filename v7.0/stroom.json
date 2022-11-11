@@ -1434,11 +1434,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ResourceKey"
+                "$ref" : "#/components/schemas/ImportConfigRequest"
               }
             }
           },
-          "description" : "resourceKey",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -11331,10 +11331,10 @@
           "docRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "enable" : {
+          "enableFilters" : {
             "type" : "boolean"
           },
-          "enableTime" : {
+          "enableFiltersFromTime" : {
             "type" : "integer",
             "format" : "int64"
           },
@@ -11343,6 +11343,9 @@
             "items" : {
               "$ref" : "#/components/schemas/Message"
             }
+          },
+          "rootDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "sourcePath" : {
             "type" : "string"
@@ -11356,6 +11359,12 @@
             "items" : {
               "type" : "string"
             }
+          },
+          "useImportFolders" : {
+            "type" : "boolean"
+          },
+          "useImportNames" : {
+            "type" : "boolean"
           }
         }
       },
