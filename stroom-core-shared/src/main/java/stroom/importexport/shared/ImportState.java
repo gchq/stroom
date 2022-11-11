@@ -57,6 +57,8 @@ public class ImportState {
     @JsonProperty
     private boolean useImportFolders;
     @JsonProperty
+    private DocRef rootDocRef;
+    @JsonProperty
     private State state;
 
     @JsonCreator
@@ -70,6 +72,7 @@ public class ImportState {
                        @JsonProperty("enableFiltersFromTime") final Long enableFiltersFromTime,
                        @JsonProperty("useImportNames") final boolean useImportNames,
                        @JsonProperty("useImportFolders") final boolean useImportFolders,
+                       @JsonProperty("rootDocRef") final DocRef rootDocRef,
                        @JsonProperty("state") final State state) {
         this.docRef = docRef;
         this.sourcePath = sourcePath;
@@ -81,6 +84,7 @@ public class ImportState {
         this.enableFiltersFromTime = enableFiltersFromTime;
         this.useImportNames = useImportNames;
         this.useImportFolders = useImportFolders;
+        this.rootDocRef = rootDocRef;
         this.state = state;
     }
 
@@ -177,6 +181,14 @@ public class ImportState {
 
     public void setUseImportFolders(final boolean useImportFolders) {
         this.useImportFolders = useImportFolders;
+    }
+
+    public DocRef getRootDocRef() {
+        return rootDocRef;
+    }
+
+    public void setRootDocRef(final DocRef rootDocRef) {
+        this.rootDocRef = rootDocRef;
     }
 
     public State getState() {

@@ -249,9 +249,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final NonExplorerDocRefProvider nonExplorerDocRefProvider =
                 (NonExplorerDocRefProvider) importExportActionHandler;
 
+        final String importPath = resolvePath(path, importState);
+
         final DocRef ownerDocument = nonExplorerDocRefProvider.getOwnerDocument(docRef, dataMap);
         final Optional<ExplorerNode> existingExplorerNode = explorerNodeService.getNode(ownerDocument);
-        String destPath = path;
+        String destPath = importPath;
         String destName = ownerDocument.getName();
         if (existingExplorerNode.isPresent()) {
             final List<ExplorerNode> parents = explorerNodeService.getPath(ownerDocument);
@@ -341,6 +343,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                                      final ImportState importState,
                                      final Map<DocRef, ImportState> confirmMap,
                                      final ImportMode importMode) {
+        final String importPath = resolvePath(path, importState);
+
+        String destPath = importPath;
+        String destName = docRef.getName();
+
         // See if we have an existing node for this item.
         final Optional<ExplorerNode> existingNode = explorerNodeService.getNode(docRef);
         final boolean docExists = existingNode.isPresent();
@@ -357,23 +364,20 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
             importState.setState(State.UPDATE);
             final List<ExplorerNode> parents = explorerNodeService.getPath(docRef);
-            String destPath = getParentPath(parents);
-            String destName = existingNode.get().getName();
-
-            if (importState.isUseImportNames()) {
-                destName = docRef.getName();
+            final String currentPath = getParentPath(parents);
+            if (!importState.isUseImportNames()) {
+                destName = existingNode.get().getName();
             }
-            if (importState.isUseImportFolders() && !destPath.equals(path)) {
-                destPath = path;
+            if (!importState.isUseImportFolders()) {
+                destPath = currentPath;
+            }
+            if (!destPath.equals(currentPath)) {
                 moving = true;
             }
-
-            importState.setDestPath(createPath(destPath, destName));
-
         } else {
             importState.setState(State.NEW);
-            importState.setDestPath(importState.getSourcePath());
         }
+        importState.setDestPath(createPath(destPath, destName));
 
         // If we are creating a new node or moving an existing one then create the destination folders and check
         // permissions.
@@ -382,7 +386,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             // Create a parent folder for the new node.
             final ExplorerNode parent = explorerNodeService.getRoot().orElse(null);
             final ExplorerNode parentNode = getOrCreateParentFolder(parent,
-                    path,
+                    importPath,
                     importState.ok(importMode));
 
             // Check permissions on the parent folder.
@@ -459,6 +463,30 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
 
         return docRef;
+    }
+
+    private String resolvePath(final String path, final ImportState importState) {
+        String result = path;
+        if (importState.getRootDocRef() != null) {
+            final Optional<ExplorerNode> optionalExplorerNode =
+                    explorerNodeService.getNode(importState.getRootDocRef());
+            if (optionalExplorerNode.isPresent()) {
+                final ExplorerNode rootNode = optionalExplorerNode.get();
+                final List<ExplorerNode> nodes = explorerNodeService.getPath(importState.getRootDocRef());
+                nodes.add(rootNode);
+                // Remove root node.
+                explorerNodeService.getRoot().ifPresent(root -> {
+                    if (nodes.get(0).equals(root)) {
+                        nodes.remove(0);
+                    }
+                });
+                if (nodes.size() > 0) {
+                    final String rootPath = getParentPath(nodes);
+                    result = createPath(rootPath, path);
+                }
+            }
+        }
+        return result;
     }
 
     /**

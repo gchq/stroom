@@ -27,11 +27,16 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
+import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportState;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Message;
@@ -84,14 +89,22 @@ public class ImportConfigConfirmPresenter extends
     private final RestFactory restFactory;
     private ResourceKey resourceKey;
     private List<ImportState> confirmList = new ArrayList<>();
+    private final EntityDropDownPresenter rootFolderPresenter;
 
     @Inject
     public ImportConfigConfirmPresenter(final EventBus eventBus,
                                         final ImportConfigConfirmView view,
                                         final ImportConfirmProxy proxy,
                                         final TooltipPresenter tooltipPresenter,
+                                        final EntityDropDownPresenter rootFolderPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view, proxy);
+        this.rootFolderPresenter = rootFolderPresenter;
+
+        rootFolderPresenter.setSelectedEntityReference(ExplorerConstants.ROOT_DOC_REF);
+        rootFolderPresenter.setIncludedTypes(ExplorerConstants.FOLDER);
+        rootFolderPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        rootFolderPresenter.setAllowFolderSelection(true);
 
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
@@ -102,6 +115,7 @@ public class ImportConfigConfirmPresenter extends
                 DataGridViewImpl.MASSIVE_LIST_PAGE_SIZE);
 
         view.setDataGridView(this.dataGridView);
+        view.setRootFolderView(rootFolderPresenter.getView());
         view.setEnableFilters(false);
         view.setEnableFromDate(System.currentTimeMillis());
         view.setUseImportNames(false);
@@ -120,6 +134,29 @@ public class ImportConfigConfirmPresenter extends
         });
 
         addColumns();
+    }
+
+    private void setRootDocRef(final DocRef rootDocRef) {
+        for (final ImportState importState : confirmList) {
+            importState.setRootDocRef(rootDocRef);
+        }
+        refresh();
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        registerHandler(rootFolderPresenter.addDataSelectionHandler(event -> {
+            if (event.getSelectedItem() != null &&
+                    event.getSelectedItem().getDocRef().compareTo(ExplorerConstants.ROOT_DOC_REF) != 0 &&
+                    event.getSelectedItem().getDocRef().getUuid().length() > 1) {
+                final ExplorerNode entityData = event.getSelectedItem();
+                setRootDocRef(entityData.getDocRef());
+            } else {
+                setRootDocRef(null);
+            }
+        }));
     }
 
     @ProxyEvent
@@ -520,6 +557,8 @@ public class ImportConfigConfirmPresenter extends
         void setUseImportFolders(boolean useImportFolders);
 
         void onUseImportFolders(Consumer<Boolean> consumer);
+
+        void setRootFolderView(View view);
 
         Widget getDataGridViewWidget();
     }
