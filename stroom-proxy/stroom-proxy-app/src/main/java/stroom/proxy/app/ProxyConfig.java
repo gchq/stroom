@@ -258,6 +258,13 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return new Builder();
     }
 
+    /**
+     * Builds a {@link PropertyPath} by merging parts onto the root {@link PropertyPath}
+     */
+    public static PropertyPath buildPath(final String... parts) {
+        return ROOT_PROPERTY_PATH.merge(parts);
+    }
+
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

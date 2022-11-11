@@ -2,6 +2,7 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.forwarder.ForwardConfig;
 import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
+import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.util.NullSafe;
 import stroom.util.config.AbstractConfigUtil;
 import stroom.util.io.FileUtil;
@@ -78,11 +79,14 @@ public abstract class AbstractApplicationTest {
 
         // Can't use Map.of() due to null value
         final Map<PropertyPath, Object> propValueMap = new HashMap<>();
-        propValueMap.put(ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_REST_CLIENT, "tls"), null);
+        propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_REST_CLIENT, "tls"), null);
         propValueMap.put(
-                ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_FORWARD_DESTINATIONS),
+                ProxyConfig.buildPath(ProxyConfig.PROP_NAME_FORWARD_DESTINATIONS),
                 forwardConfigs);
-        propValueMap.put(ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_PATH), modifiedPathConfig);
+        propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), modifiedPathConfig);
+        propValueMap.put(ProxyConfig.buildPath(
+                ProxyConfig.PROP_NAME_REPOSITORY,
+                ProxyRepoConfig.PROP_NAME_STORING_ENABLED), false);
 
         final ProxyConfig modifiedProxyConfig = AbstractConfigUtil.mutateTree(
                 config.getProxyConfig(),

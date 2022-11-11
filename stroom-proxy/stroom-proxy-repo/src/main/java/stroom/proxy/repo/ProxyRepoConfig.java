@@ -17,6 +17,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
 
+    public static final String PROP_NAME_STORING_ENABLED = "storingEnabled";
     protected static final boolean DEFAULT_STORING_ENABLED = true;
     protected static final String DEFAULT_REPO_DIR = "repo";
 
@@ -29,7 +30,7 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
     }
 
     @JsonCreator
-    public ProxyRepoConfig(@JsonProperty("storingEnabled") final boolean storingEnabled,
+    public ProxyRepoConfig(@JsonProperty(PROP_NAME_STORING_ENABLED) final boolean storingEnabled,
                            @JsonProperty("repoDir") final String repoDir) {
         this.storingEnabled = storingEnabled;
         this.repoDir = repoDir;

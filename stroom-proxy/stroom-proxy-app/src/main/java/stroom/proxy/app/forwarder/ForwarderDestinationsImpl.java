@@ -50,7 +50,9 @@ public class ForwarderDestinationsImpl implements ForwarderDestinations {
             });
 
             // Filter out disabled.
-            forwardDestinations = forwardDestinations.stream().filter(ForwardConfig::isEnabled).toList();
+            forwardDestinations = forwardDestinations.stream()
+                    .filter(ForwardConfig::isEnabled)
+                    .toList();
         } else {
             forwardDestinations = Collections.emptyList();
         }

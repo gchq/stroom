@@ -151,7 +151,8 @@ public class ContentSyncService implements Managed, HasHealthCheck {
 
     private Invocation.Builder createClient(final String url, final String path) {
         final Client client = clientProvider.get();
-        final WebTarget webTarget = client.target(url).path(path);
+        final WebTarget webTarget = client.target(url)
+                .path(path);
         final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, getApiKey());
         return invocationBuilder;

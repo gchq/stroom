@@ -1,6 +1,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.util.cache.CacheConfig;
+import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 
@@ -54,6 +55,7 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
         return apiKey;
     }
 
+    @RequiresProxyRestart
     @NotNull
     @JsonProperty("feedStatusCache")
     public CacheConfig getFeedStatusCache() {

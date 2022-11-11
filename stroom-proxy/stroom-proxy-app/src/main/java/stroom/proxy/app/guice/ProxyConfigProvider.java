@@ -73,6 +73,7 @@ public class ProxyConfigProvider {
 
     private void addConfigInstances(
             final AbstractConfig config,
+            final Prop parentProp,
             final Map<Class<? extends AbstractConfig>, AbstractConfig> configInstanceMap,
             final ObjectMapper objectMapper,
             final PropertyPath propertyPath,
@@ -83,6 +84,7 @@ public class ProxyConfigProvider {
             final Class<? extends AbstractConfig> clazz = config.getClass();
 
             final Map<String, Prop> propMap = PropertyUtil.getProperties(objectMapper, config);
+
             propMap.forEach((k, prop) -> {
                 final String childPropName = prop.getName();
                 final PropertyPath childPropPath = propertyPath.merge(childPropName);
@@ -98,6 +100,7 @@ public class ProxyConfigProvider {
                         // recurse
                         addConfigInstances(
                                 childValue,
+                                prop,
                                 configInstanceMap,
                                 objectMapper,
                                 childPropPath,
@@ -129,17 +132,18 @@ public class ProxyConfigProvider {
                     map -> map.get(clazz));
 
             // This is an update so see what has changed
-            propMap.forEach((childPropName, childProp) -> {
-                final PropertyPath childPropertyPath = propertyPath.merge(childPropName);
-                final Class<?> valueType = childProp.getValueClass();
-                // Only log changes for values that are not config object
+            propMap.forEach((propName, prop) -> {
+                final PropertyPath childPropertyPath = propertyPath.merge(propName);
+                final Class<?> valueType = prop.getValueClass();
+                // Only log changes for values that are not config objects or config objects
+                // That can't be injected.
                 // Recursion into config objects will happen above
                 if (!AbstractConfig.class.isAssignableFrom(valueType)
                         || valueType.isAnnotationPresent(NotInjectableConfig.class)) {
-                    final Object newValue = childProp.getValueFromConfigObject();
+                    final Object newValue = prop.getValueFromConfigObject();
                     Object existingValue = null;
                     if (existingConfig != null) {
-                        existingValue = childProp.getValueFromConfigObject(existingConfig);
+                        existingValue = prop.getValueFromConfigObject(existingConfig);
                     }
 
                     if (existingValue == null && AbstractConfig.class.isAssignableFrom(valueType)) {
@@ -150,10 +154,12 @@ public class ProxyConfigProvider {
                                 .get();
                     }
 
+                    NullSafe.get(prop.getParentObject(), PropertyUtil::getProperties);
                     if (!Objects.equals(existingValue, newValue)) {
                         checkForValueChanges(
                                 childPropertyPath,
-                                childProp,
+                                prop,
+                                parentProp,
                                 newValue,
                                 existingValue, logChanges,
                                 changeCounter);
@@ -167,6 +173,7 @@ public class ProxyConfigProvider {
 
     private void checkForValueChanges(final PropertyPath propertyPath,
                                       final Prop prop,
+                                      final Prop parentProp,
                                       final Object newValue,
                                       final Object existingValue,
                                       final boolean logChanges,
@@ -187,6 +194,7 @@ public class ProxyConfigProvider {
                 checkForValueChanges(
                         propertyPath.merge(childPropName),
                         childProp,
+                        prop,
                         newChildVal,
                         existingChildVal,
                         logChanges,
@@ -196,15 +204,16 @@ public class ProxyConfigProvider {
             if (!Objects.equals(existingValue, newValue)) {
                 changeCounter.incrementAndGet();
                 if (logChanges) {
-                    final String additionalText = prop.hasAnnotation(RequiresProxyRestart.class)
-                            ? " NOTE: This property requires an application re-start to take effect."
+                    final String extraText = prop.hasAnnotation(RequiresProxyRestart.class)
+                            || NullSafe.test(parentProp, p -> p.hasAnnotation(RequiresProxyRestart.class))
+                            ? ". NOTE: This property requires an application re-start to take effect."
                             : "";
 
                     LOGGER.info("Config property {} has changed from [{}] to [{}]{}",
                             propertyPath.toString(),
                             existingValue,
                             newValue,
-                            additionalText);
+                            extraText);
                 }
             }
         }
@@ -221,7 +230,9 @@ public class ProxyConfigProvider {
 
         final AtomicInteger changeCounter = new AtomicInteger();
 
-        addConfigInstances(newProxyConfig,
+        addConfigInstances(
+                newProxyConfig,
+                null,
                 newInstanceMap,
                 createObjectMapper(),
                 ProxyConfig.ROOT_PROPERTY_PATH,

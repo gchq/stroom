@@ -170,6 +170,8 @@ public class AbstractConfigUtil {
             if (haveAnyPropsChanged.get()) {
                 // Create a replacement for this branch
                 mutatedConfig = objectInfo.createInstance(valueMap::get);
+                // Copy the basePath over in case it has been decorated with paths
+                mutatedConfig.setBasePath(config.getBasePath());
             } else {
                 // no props have change on this branch so just return what we had
                 mutatedConfig = config;
@@ -177,5 +179,4 @@ public class AbstractConfigUtil {
         }
         return mutatedConfig;
     }
-
 }
