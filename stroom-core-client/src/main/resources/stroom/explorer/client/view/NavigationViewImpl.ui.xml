@@ -2,14 +2,13 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
-    <g:FocusFlowPanel ui:field="layout" styleName="max dock-container-vertical navigation">
+    <g:FlowPanel ui:field="layout" styleName="max dock-container-vertical navigation">
         <g:FlowPanel styleName="dock-min navigation-title-bar">
             <g:Button ui:field="logo" title="Show Menu" styleName="navigation-logo focus-without-border"/>
-            <g:Button ui:field="menu" title="Hide Sidebar" styleName="navigation-menu-button focus-without-border"/>
         </g:FlowPanel>
         <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
         <g:FlowPanel ui:field="buttonContainer" styleName="dock-min navigation-header-buttons"/>
         <g:SimplePanel styleName="explorerTree-container" ui:field="explorerTreeContainer"/>
         <g:SimplePanel ui:field="activityPanel" styleName="dock-min"/>
-    </g:FocusFlowPanel>
+    </g:FlowPanel>
 </ui:UiBinder> 

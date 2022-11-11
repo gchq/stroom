@@ -48,6 +48,8 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
     @UiField
     LayerContainer layerContainer;
 
+    private boolean menuVisible;
+
     @Inject
     public CurveTabLayoutViewImpl(final Binder binder) {
         layout = new FocusFlowPanel() {
@@ -57,7 +59,8 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
             }
         };
         widget = binder.createAndBindUi(this);
-        menu.getElement().setInnerHTML(SvgImages.MONO_MENU);
+        menu.getElement().setInnerHTML(SvgImages.MONO_HIDE_MENU);
+        menuVisible = true;
     }
 
     @Override
@@ -82,6 +85,13 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
 
     @UiHandler("menu")
     void onMenu(final ClickEvent event) {
+        if (menuVisible) {
+            menuVisible = false;
+            menu.getElement().setInnerHTML(SvgImages.MONO_SHOW_MENU);
+        } else {
+            menuVisible = true;
+            menu.getElement().setInnerHTML(SvgImages.MONO_HIDE_MENU);
+        }
         getUiHandlers().maximise();
     }
 

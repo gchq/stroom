@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.presenter;
+package stroom.main.client.presenter;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface NavigationUiHandlers extends UiHandlers {
-
-    void changeQuickFilter(String name);
+public interface MainUiHandlers extends UiHandlers {
 
     void showMenu(NativeEvent event, Element target);
 }

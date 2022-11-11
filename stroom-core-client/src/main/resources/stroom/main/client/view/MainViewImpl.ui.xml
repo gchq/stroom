@@ -11,6 +11,7 @@
                                      styleName="mainViewImpl-contentPanel">
                 </g:ResizeLayoutPanel>
                 <s:Spinner ui:field="spinner" styleName="spinner mainViewImpl-spinner"/>
+                <g:Button ui:field="menu" title="Show Menu" styleName="mainViewImpl-menu navigation-menu-button focus-without-border"/>
             </g:FlowPanel>
         </g:FlowPanel>
     </g:FocusPanel>

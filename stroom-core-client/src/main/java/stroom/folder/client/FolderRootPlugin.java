@@ -22,7 +22,6 @@ import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
-import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
@@ -32,7 +31,6 @@ import stroom.svg.client.Icon;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SelectionType;
 
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -50,7 +48,6 @@ public class FolderRootPlugin extends Plugin implements TabData {
 
     @Inject
     public FolderRootPlugin(final EventBus eventBus,
-                            final ExplorerTreePresenter explorerTreePresenter,
                             final Provider<FolderRootPresenter> editorProvider,
                             final ClientSecurityContext securityContext,
                             final ContentManager contentManager,

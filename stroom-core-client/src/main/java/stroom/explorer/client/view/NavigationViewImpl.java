@@ -34,7 +34,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.FocusFlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -45,11 +44,9 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     private final Widget widget;
 
     @UiField(provided = true)
-    FocusFlowPanel layout;
+    FlowPanel layout;
     @UiField
     Button logo;
-    @UiField
-    Button menu;
     @UiField
     QuickFilter nameFilter;
     @UiField
@@ -62,34 +59,19 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @Inject
     public NavigationViewImpl(final NavigationViewImpl.Binder binder,
                               final UiConfigCache uiConfigCache) {
-        layout = new FocusFlowPanel() {
-            @Override
-            public void focus() {
-                menu.setFocus(true);
-            }
-        };
+        layout = new FlowPanel();
         widget = binder.createAndBindUi(this);
 
         final Element logoImage = DOM.createDiv();
         logoImage.setClassName("navigation-logo-image");
         logoImage.setInnerHTML(SvgImages.MONO_LOGO);
-        final Element arrowImage = DOM.createDiv();
-        arrowImage.setClassName("navigation-arrow-image");
-        arrowImage.setInnerHTML(SvgImages.MONO_ARROW_DOWN);
 
         final Element menuContent = DOM.createDiv();
         menuContent.setClassName("navigation-menu-content");
         menuContent.setTabIndex(-1);
         menuContent.appendChild(logoImage);
-        menuContent.appendChild(arrowImage);
 
         logo.getElement().appendChild(menuContent);
-
-        final Element menuContent2 = DOM.createDiv();
-        menuContent2.setClassName("navigation-menu-content");
-        menuContent2.setTabIndex(-1);
-        menuContent2.setInnerHTML(SvgImages.MONO_MENU);
-        menu.getElement().appendChild(menuContent2);
 
         uiConfigCache.get()
                 .onSuccess(uiConfig ->
@@ -114,13 +96,6 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     void onLogo(final ClickEvent event) {
         if (MouseUtil.isPrimary(event)) {
             getUiHandlers().showMenu(event.getNativeEvent(), logo.getElement());
-        }
-    }
-
-    @UiHandler("menu")
-    void onMenu(final ClickEvent event) {
-        if (MouseUtil.isPrimary(event)) {
-            getUiHandlers().maximise();
         }
     }
 

@@ -221,6 +221,11 @@
 */
 .curveTab .curveTab-close {
     display: flex;
+    opacity: 0;
+}
+
+.curveTab:hover .curveTab-close {
+	opacity: 1;
 }
 
 .curveTab .curveTab-close svg {
@@ -527,14 +532,6 @@
     height: 42px;
     margin-right: 42px;
     flex-grow: 1;
-}
-
-.tabBarContainer .navigation-menu-button {
-    display: none;
-}
-
-.maximised .tabBarContainer .navigation-menu-button {
-    display: initial;
 }
 
 .control__padding-bottom {
@@ -1118,6 +1115,15 @@
     overflow: hidden;
 }
 
+.mainViewImpl-menu {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 32px;
+    height: 32px;
+    z-index: 1;
+}
+
 .mainViewImpl-spinner {
     position: absolute;
     top: 2px;
@@ -1412,23 +1418,27 @@
 }
 */
 
+.top-right-menu {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 32px;
+    height: 32px;
+    z-index: 1;
+}
+
 .navigation-menu-button {
-    display: flex;
-    flex-shrink: 0;
-    padding: 10px;
-    padding-bottom: 6px;
     background-color: transparent;
-    color: var(--navigation__background-color);
 }
 
 .stroom-theme-dark .navigation-menu-button,
 .navigation-title-bar .navigation-menu-button {
-    color: white;
+    color: rgba(255,255,255,.8);
 }
 
 .navigation-menu-button svg {
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
 }
 
 /*
@@ -1522,15 +1532,15 @@
 }
 
 .navigation-header-button-add {
-    background-image: url("../images/add-white.svg");
+    color: rgba(255,255,255,.8);
 }
 
 .navigation-header-button-delete {
-    background-image: url("../images/delete-white.svg");
+    color: rgba(255,255,255,.8);
 }
 
 .navigation-header-button-filter {
-    background-image: url("../images/filter-white.svg");
+    color: rgba(255,255,255,.8);
 }
 
 /*

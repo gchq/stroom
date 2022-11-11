@@ -11,6 +11,6 @@
                               iconClassName="stepping-button-icon"
                               title="Enter Stepping Mode" visible="false"/>
         </g:FlowPanel>
-        <l:ClassificationLabel ui:field="classification" styleName="dock-min"/>
+        <l:ClassificationLabel ui:field="classification" styleName="dock-min classificationLabel"/>
     </g:FlowPanel>
 </ui:UiBinder>

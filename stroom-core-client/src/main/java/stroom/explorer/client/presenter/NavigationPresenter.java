@@ -34,15 +34,14 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.svg.client.Preset;
+import stroom.svg.client.SvgImages;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.tab.client.event.MaximiseEvent;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -80,9 +79,9 @@ public class NavigationPresenter
 
     private final MenuItems menuItems;
 
-    private final SvgButton add;
-    private final SvgButton delete;
-    private final SvgButton filter;
+    private final InlineSvgButton add;
+    private final InlineSvgButton delete;
+    private final InlineSvgButton filter;
 
     @Inject
     public NavigationPresenter(final EventBus eventBus,
@@ -100,15 +99,24 @@ public class NavigationPresenter
         this.typeFilterPresenter = typeFilterPresenter;
         this.currentActivity = currentActivity;
 
-        add = SvgButton.create(new Preset("navigation-header-button navigation-header-button-add",
-                "New",
-                false));
-        delete = SvgButton.create(new Preset("navigation-header-button navigation-header-button-delete",
-                "Delete",
-                false));
-        filter = SvgButton.create(new Preset("navigation-header-button navigation-header-button-filter",
-                "Filter",
-                true));
+        add = new InlineSvgButton();
+        add.setSvg(SvgImages.MONO_ADD);
+        add.getElement().addClassName("navigation-header-button navigation-header-button-add");
+        add.setTitle("New");
+        add.setEnabled(false);
+
+        delete = new InlineSvgButton();
+        delete.setSvg(SvgImages.MONO_DELETE);
+        delete.getElement().addClassName("navigation-header-button navigation-header-button-delete");
+        delete.setTitle("Delete");
+        delete.setEnabled(false);
+
+        filter = new InlineSvgButton();
+        filter.setSvg(SvgImages.MONO_FILTER);
+        filter.getElement().addClassName("navigation-header-button navigation-header-button-filter");
+        filter.setTitle("Filter");
+        filter.setEnabled(true);
+
         final FlowPanel buttons = getView().getButtonContainer();
         buttons.add(add);
         buttons.add(delete);
@@ -209,11 +217,6 @@ public class NavigationPresenter
     @Override
     public void changeQuickFilter(final String name) {
         explorerTree.changeNameFilter(name);
-    }
-
-    @Override
-    public void maximise() {
-        MaximiseEvent.fire(this, null);
     }
 
     @Override

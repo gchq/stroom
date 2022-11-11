@@ -18,12 +18,18 @@ package stroom.main.client.view;
 
 import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
+import stroom.main.client.presenter.MainUiHandlers;
+import stroom.svg.client.SvgImages;
 import stroom.util.shared.EqualsUtil;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.MySplitLayoutPanel;
@@ -32,9 +38,9 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
+public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements MainPresenter.MainView {
 
     private final Widget widget;
     @UiField
@@ -43,6 +49,8 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     FlowPanel main;
     @UiField
     Spinner spinner;
+    @UiField
+    Button menu;
     @UiField
     ResizeLayoutPanel contentPanel;
     private Widget maximisedWidget;
@@ -56,6 +64,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     public MainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
         banner.setVisible(false);
+        menu.getElement().setInnerHTML(SvgImages.MONO_THREE_DOTS_VERTICAL);
         widget.sinkEvents(Event.KEYEVENTS);
     }
 
@@ -183,6 +192,13 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
                 banner.setVisible(true);
                 banner.getElement().setInnerText(text);
             }
+        }
+    }
+
+    @UiHandler("menu")
+    void onMenu(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event)) {
+            getUiHandlers().showMenu(event.getNativeEvent(), menu.getElement());
         }
     }
 

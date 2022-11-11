@@ -18,16 +18,24 @@ package stroom.main.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
+import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.CorePresenter;
+import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UiConfig;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuItems;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.KeyBinding;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -38,6 +46,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ContentSlot;
@@ -46,7 +55,11 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 
-public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy> {
+import java.util.List;
+
+public class MainPresenter
+        extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy>
+        implements MainUiHandlers {
 
     //    @ContentSlot
 //    public static final Type<RevealContentHandler<?>> MENUBAR = new Type<>();
@@ -56,13 +69,17 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
     public static final Type<RevealContentHandler<?>> CONTENT = new Type<>();
     private final Timer refreshTimer;
     private boolean click;
+    private final MenuItems menuItems;
 
     @Inject
     public MainPresenter(final EventBus eventBus,
                          final MainView view,
                          final MainProxy proxy,
+                         final MenuItems menuItems,
                          final UiConfigCache uiConfigCache) {
         super(eventBus, view, proxy);
+        this.menuItems = menuItems;
+        view.setUiHandlers(this);
 
         // Handle key presses.
         view.asWidget().addDomHandler(event ->
@@ -143,6 +160,32 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
         startAutoRefresh();
     }
 
+    @Override
+    public void showMenu(final NativeEvent event, final Element target) {
+        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteRight(),
+                target.getAbsoluteBottom());
+        showMenuItems(
+                popupPosition,
+                target);
+    }
+
+    public void showMenuItems(final PopupPosition popupPosition,
+                              final Element autoHidePartner) {
+        // Clear the current menus.
+        menuItems.clear();
+        // Tell all plugins to add new menu items.
+        BeforeRevealMenubarEvent.fire(this, menuItems);
+        final List<Item> items = menuItems.getMenuItems(MenuKeys.MAIN_MENU);
+        if (items != null && items.size() > 0) {
+            ShowMenuEvent
+                    .builder()
+                    .items(items)
+                    .popupPosition(popupPosition)
+                    .addAutoHidePartner(autoHidePartner)
+                    .fire(this);
+        }
+    }
+
     private void startAutoRefresh() {
         refreshTimer.scheduleRepeating(30000); // 30 second default.
     }
@@ -166,7 +209,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
 
     }
 
-    public interface MainView extends View {
+    public interface MainView extends View, HasUiHandlers<MainUiHandlers> {
 
         SpinnerDisplay getSpinner();
 

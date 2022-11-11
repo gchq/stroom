@@ -25,10 +25,10 @@
 
 @import url("webkit-scrollbar.css");
 @import url("firefox-scrollbar.css");
+@import url("fa-button.css");
 @import url("stroom.css");
 @import url("stroom-control.css");
 @import url("stroom-button.css");
-@import url("fa-button.css");
 @import url("stroom-annotation.css");
 @import url("stroom-dashboard.css");
 @import url("../dynamic.css");

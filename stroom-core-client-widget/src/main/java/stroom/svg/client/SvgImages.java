@@ -89,19 +89,6 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
-    public static String ADD_WHITE = "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\">\n" +
-            "    <path style=\"fill:#fff\"\n" +
-            "          d=\"m 1600,800 0,192 q 0,40 -28,68 -28,28 -68,28 l -416,0 0,416 q 0,40 " +
-            "-28,68 -28,28 -68,28 l -192,0 q -40,0 -68,-28 -28,-28 -28,-68 l 0,-416 -416,0 q " +
-            "-40,0 -68,-28 -28,-28 -28,-68 l 0,-192 q 0,-40 28,-68 28,-28 68,-28 l 416,0 0,-4" +
-            "16 q 0,-40 28,-68 28,-28 68,-28 l 192,0 q 40,0 68,28 28,28 28,68 l 0,416 416,0 q" +
-            " 40,0 68,28 28,28 28,68 z\"/>\n" +
-            "</svg>\n" +
-            "";
-
     public static String ALERT = "" +
             "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 576 512\">\n" +
@@ -475,21 +462,6 @@ public class SvgImages {
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
             "    <path style=\"fill:#000\"\n" +
-            "          d=\"M704 1376v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 9 23t2" +
-            "3 9h64q14 0 23-9t9-23zm256 0v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 " +
-            "9 23t23 9h64q14 0 23-9t9-23zm256 0v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704" +
-            "q0 14 9 23t23 9h64q14 0 23-9t9-23zm-544-992h448l-48-117q-7-9-17-11h-317q-10 2-17" +
-            " 11zm928 32v64q0 14-9 23t-23 9h-96v948q0 83-47 143.5t-113 60.5h-832q-66 0-113-58" +
-            ".5t-47-141.5v-952h-96q-14 0-23-9t-9-23v-64q0-14 9-23t23-9h309l70-167q15-37 54-63" +
-            "t79-26h320q40 0 79 26t54 63l70 167h309q14 0 23 9t9 23z\"/>\n" +
-            "</svg>\n" +
-            "";
-
-    public static String DELETE_WHITE = "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\">\n" +
-            "    <path style=\"fill:#fff\"\n" +
             "          d=\"M704 1376v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 9 23t2" +
             "3 9h64q14 0 23-9t9-23zm256 0v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 " +
             "9 23t23 9h64q14 0 23-9t9-23zm256 0v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704" +
@@ -1586,23 +1558,17 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
-    public static String FILTER_WHITE = "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\">\n" +
-            "    <path style=\"fill:#fff\"\n" +
-            "          d=\"M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l" +
-            "-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z\"/>\n" +
-            "</svg>\n" +
-            "";
-
     public static String FOLDER = "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
-            "          d=\"M1728 608v704q0 92-66 158t-158 66h-1216q-92 0-158-66t-66-158v-960q0" +
-            "-92 66-158t158-66h320q92 0 158 66t66 158v32h672q92 0 158 66t66 158z\"/>\n" +
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+            "<svg xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=\"http://www.w" +
+            "3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"http://creati" +
+            "vecommons.org/ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" viewBox=\"0 0 1792" +
+            " 1792\">\n" +
+            " <path fill=\"#2196f3\" d=\"m1617.9 701.64v610.84q0 79.825-57.266 137.09-57.266 57." +
+            "266-137.09 57.266h-1055.1q-79.825 0-137.09-57.266-57.266-57.266-57.266-137.09v-8" +
+            "32.96q0-79.825 57.266-137.09 57.266-57.266 137.09-57.266h277.65q79.825 0 137.09 " +
+            "57.266 57.266 57.266 57.266 137.09v27.765h583.07q79.825 0 137.09 57.266 57.266 5" +
+            "7.266 57.266 137.09z\"/>\n" +
             "</svg>\n" +
             "";
 
@@ -3357,6 +3323,19 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
+    public static String MONO_ADD = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\">\n" +
+            "    <path style=\"fill:currentColor\"\n" +
+            "          d=\"m 1600,800 0,192 q 0,40 -28,68 -28,28 -68,28 l -416,0 0,416 q 0,40 " +
+            "-28,68 -28,28 -68,28 l -192,0 q -40,0 -68,-28 -28,-28 -28,-68 l 0,-416 -416,0 q " +
+            "-40,0 -68,-28 -28,-28 -28,-68 l 0,-192 q 0,-40 28,-68 28,-28 68,-28 l 416,0 0,-4" +
+            "16 q 0,-40 28,-68 28,-28 68,-28 l 192,0 q 40,0 68,28 28,28 28,68 l 0,416 416,0 q" +
+            " 40,0 68,28 28,28 28,68 z\"/>\n" +
+            "</svg>\n" +
+            "";
+
     public static String MONO_ARROW_DOWN = "" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1427.7665\" height=\"1427.7665\" vie" +
@@ -3424,6 +3403,21 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
+    public static String MONO_DELETE = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\">\n" +
+            "    <path style=\"fill:currentColor\"\n" +
+            "          d=\"M704 1376v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 9 23t2" +
+            "3 9h64q14 0 23-9t9-23zm256 0v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704q0 14 " +
+            "9 23t23 9h64q14 0 23-9t9-23zm256 0v-704q0-14-9-23t-23-9h-64q-14 0-23 9t-9 23v704" +
+            "q0 14 9 23t23 9h64q14 0 23-9t9-23zm-544-992h448l-48-117q-7-9-17-11h-317q-10 2-17" +
+            " 11zm928 32v64q0 14-9 23t-23 9h-96v948q0 83-47 143.5t-113 60.5h-832q-66 0-113-58" +
+            ".5t-47-141.5v-952h-96q-14 0-23-9t-9-23v-64q0-14 9-23t23-9h309l70-167q15-37 54-63" +
+            "t79-26h320q40 0 79 26t54 63l70 167h309q14 0 23 9t9 23z\"/>\n" +
+            "</svg>\n" +
+            "";
+
     public static String MONO_DOT = "" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1427.7665\" height=\"1427.7665\" vie" +
@@ -3467,6 +3461,30 @@ public class SvgImages {
             "        <circle cx=\"896\" cy=\"896\" r=\"208.83429\"/>\n" +
             "        <circle cx=\"1449.5682\" cy=\"896\" r=\"208.83429\"/>\n" +
             "    </g>\n" +
+            "</svg>\n" +
+            "";
+
+    public static String MONO_FILTER = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\">\n" +
+            "    <path style=\"fill:currentColor\"\n" +
+            "          d=\"M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l" +
+            "-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z\"/>\n" +
+            "</svg>\n" +
+            "";
+
+    public static String MONO_HIDE_MENU = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg height=\"16\" viewBox=\"0 0 16 16\" width=\"16\" xmlns=\"http://www.w3.org/2000/sv" +
+            "g\">\n" +
+            "    <path style=\"fill:currentColor\" fill-rule=\"evenodd\" d=\"M4.177 7.823l2.396-2." +
+            "396A.25.25 0 017 5.604v4.792a.25.25 0 01-.427.177L4.177 8.177a.25.25 0 010-.354z" +
+            "\"></path>\n" +
+            "    <path style=\"fill:currentColor\" fill-rule=\"evenodd\" d=\"M0 1.75C0 .784.784 0 " +
+            "1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0114.25 16H1.75A1.75 1.75 " +
+            "0 010 14.25V1.75zm1.75-.25a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25H9.5v-13H1" +
+            ".75zm12.5 13H11v-13h3.25a.25.25 0 01.25.25v12.5a.25.25 0 01-.25.25z\"></path>\n" +
             "</svg>\n" +
             "";
 
@@ -3577,6 +3595,20 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
+    public static String MONO_SHOW_MENU = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" xmlns=\"http://www." +
+            "w3.org/2000/svg\">\n" +
+            "    <path style=\"fill:currentColor\" fill-rule=\"evenodd\" d=\"M6.823 7.823L4.427 5." +
+            "427A.25.25 0 004 5.604v4.792c0 .223.27.335.427.177l2.396-2.396a.25.25 0 000-.354" +
+            "z\"></path>\n" +
+            "    <path style=\"fill:currentColor\" fill-rule=\"evenodd\" d=\"M1.75 0A1.75 1.75 0 0" +
+            "00 1.75v12.5C0 15.216.784 16 1.75 16h12.5A1.75 1.75 0 0016 14.25V1.75A1.75 1.75 " +
+            "0 0014.25 0H1.75zM1.5 1.75a.25.25 0 01.25-.25H9.5v13H1.75a.25.25 0 01-.25-.25V1." +
+            "75zM11 14.5v-13h3.25a.25.25 0 01.25.25v12.5a.25.25 0 01-.25.25H11z\"></path>\n" +
+            "</svg>\n" +
+            "";
+
     public static String MONO_STOP = "" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 448 512\">\n" +
@@ -3586,6 +3618,27 @@ public class SvgImages {
             "<path style=\"fill:currentColor\"\n" +
             "        d=\"M400 32H48C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h352c26.5 0 48" +
             "-21.5 48-48V80c0-26.5-21.5-48-48-48z\"/>\n" +
+            "</svg>\n" +
+            "";
+
+    public static String MONO_TAB_CLOSE = "" +
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" height=\"45\" width=\"45\" vie" +
+            "wBox=\"0 0 45 45\">\n" +
+            "    <g style=\"stroke:currentColor;stroke-width:4.5;stroke-linecap:round;\"\n" +
+            "       transform=\"translate(13.9661017,13.5677966)\">\n" +
+            "        <path d=\"M -2.5783352e-4,-0.00146808 17.435473,18.212367\"/>\n" +
+            "        <path d=\"M -2.5783352e-4,18.212367 17.435473,-0.00146808\"/>\n" +
+            "    </g>\n" +
+            "</svg>\n" +
+            "";
+
+    public static String MONO_THREE_DOTS_VERTICAL = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColo" +
+            "r\" viewBox=\"0 0 16 16\">\n" +
+            "    <path d=\"M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 " +
+            "1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z\"/>\n" +
             "</svg>\n" +
             "";
 
