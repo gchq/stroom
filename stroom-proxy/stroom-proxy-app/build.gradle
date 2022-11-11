@@ -69,6 +69,7 @@ dependencies {
 
     testImplementation libs.assertj_core
     testImplementation libs.classgraph
+    testImplementation libs.commons_compress
     testImplementation libs.dropwizard_testing
     testImplementation libs.guice_extension
     testImplementation libs.guice_grapher

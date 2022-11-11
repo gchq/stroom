@@ -31,7 +31,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.io.FilenameUtils;
 import org.assertj.core.api.Assertions;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
@@ -142,14 +141,12 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         waitForHealthyProxyApp(Duration.ofSeconds(30));
     }
 
-    @NotNull
     private static String getFeedStatusPath() {
         return ResourcePaths.buildAuthenticatedApiPath(
                 FeedStatusResource.BASE_RESOURCE_PATH,
                 FeedStatusResource.GET_FEED_STATUS_PATH_PART);
     }
 
-    @NotNull
     public static String getDataFeedPath() {
         return ResourcePaths.buildUnauthenticatedServletPath(ReceiveDataServlet.DATA_FEED_PATH_PART);
     }
