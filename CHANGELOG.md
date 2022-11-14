@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3091** : Add feature to optionally maintain import names and paths.
+
+* Issue **#3101** : Add sensible defaults to processor filter import.
+
+* Issue **#2491** : Add feature to allow a specific folder to be used as an import root folder destination.
+
+* Issue **#3038** : Fix number 2 for intermittent websocket alert.
+
+* Issue **#3097** : Fix Kryo output buffer size = -1 when writing to streams.
+
+
 ## [v7.2-alpha.4] - 2022-11-02
 
 * Issue **#3035** : Add API method to download matching stream store data as a ZIP.
@@ -30,6 +41,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3069** : Fix import of a Feed's Stream Type when the export was made in Stroom v5. Add validation to fail the
   import if the stream type in the export is not in `stroom.data.meta.metaTypes`. Fix word wrapping on the import error
   messages tooltip.
+* 
 * Issue **#3073** : Add string truncation and value length protection for search result fields.
 
 * Issue **#3038** : Fix intermittent websocket alert.

@@ -5,6 +5,7 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
+        <g:SimplePanel ui:field="dataGridView" styleName="dock-max stroom-control"/>
         <form:FormGroup identity="importConfigConfirmEnableProcessorFilters" label="Enable Processor Filters">
             <tickbox:CustomCheckBox ui:field="enableFilters"/>
         </form:FormGroup>
@@ -12,6 +13,14 @@
                         label="From this date (or leave blank to process from first stream)">
             <c:MyDateBox ui:field="enableFrom"/>
         </form:FormGroup>
-        <g:SimplePanel ui:field="dataGridView" styleName="dock-max stroom-control"/>
+        <form:FormGroup identity="importConfigConfirmUseImportNames" label="Use Import Names">
+            <tickbox:CustomCheckBox ui:field="useImportNames"/>
+        </form:FormGroup>
+        <form:FormGroup identity="importConfigConfirmUseImportFolders" label="Use Import Folders">
+            <tickbox:CustomCheckBox ui:field="useImportFolders"/>
+        </form:FormGroup>
+        <form:FormGroup identity="importConfigConfirmImportToRootFolder" label="Import To Root Folder">
+            <g:SimplePanel ui:field="rootFolder"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

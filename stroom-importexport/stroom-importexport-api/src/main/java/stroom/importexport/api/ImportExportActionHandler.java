@@ -21,8 +21,8 @@ public interface ImportExportActionHandler extends HasDependencies {
      */
     ImpexDetails importDocument(DocRef docRef,
                                 Map<String, byte[]> dataMap,
-                                final ImportState importState,
-                                final ImportMode importMode);
+                                ImportState importState,
+                                ImportMode importMode);
 
     Map<String, byte[]> exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
 

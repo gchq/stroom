@@ -28,9 +28,11 @@ import java.util.List;
 
 public interface ContentService {
 
-    ResourceKey performImport(final ResourceKey resourceKey, final List<ImportState> confirmList);
+    ResourceKey performImport(final ResourceKey resourceKey,
+                              final List<ImportState> confirmList);
 
-    List<ImportState> confirmImport(final ResourceKey resourceKey);
+    List<ImportState> confirmImport(final ResourceKey resourceKey,
+                                    final List<ImportState> confirmList);
 
     ResourceGeneration exportContent(final DocRefs docRefs);
 

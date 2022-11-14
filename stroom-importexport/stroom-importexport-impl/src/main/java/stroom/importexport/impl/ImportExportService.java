@@ -32,7 +32,7 @@ public interface ImportExportService {
     /**
      * Get a list of entities for Stroom to be able to import.
      */
-    List<ImportState> createImportConfirmationList(Path data);
+    List<ImportState> createImportConfirmationList(Path data, List<ImportState> confirmList);
 
     /**
      * Perform an import using a confirmation list.
