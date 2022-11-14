@@ -89,7 +89,7 @@ main() {
     test_args=( "test" )
   fi
 
-  // TODO remove this block, just here to diagnose issues.
+  # TODO remove this block, just here to diagnose issues.
   echo "::group::Proxy tests build"
   echo -e "${GREEN}Do the basic java build${NC}"
   ./gradlew \
