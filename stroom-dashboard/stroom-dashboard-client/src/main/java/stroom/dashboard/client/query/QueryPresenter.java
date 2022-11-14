@@ -27,7 +27,6 @@ import stroom.dashboard.client.main.DataSourceFieldsMap;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.client.main.SearchModel.Mode;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
@@ -164,27 +163,16 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         view.getQueryButtons().setUiHandlers(new QueryUiHandlers() {
             @Override
             public void start() {
-                switch (searchModel.getMode()) {
-                    case ACTIVE:
-                        QueryPresenter.this.pause();
-                        break;
-                    case INACTIVE:
-                        queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
-                            if (state.isOk()) {
-                                lastUsedQueryInfo = state.getQueryInfo();
-                                QueryPresenter.this.start();
-                            }
-                        });
-                        break;
-                    case PAUSED:
-                        QueryPresenter.this.resume();
-                        break;
+                if (searchModel.getMode()) {
+                    QueryPresenter.this.stop();
+                } else {
+                    queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
+                        if (state.isOk()) {
+                            lastUsedQueryInfo = state.getQueryInfo();
+                            QueryPresenter.this.start();
+                        }
+                    });
                 }
-            }
-
-            @Override
-            public void stop() {
-                QueryPresenter.this.stop();
             }
         });
 
@@ -387,12 +375,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public void addModeListener(final Consumer<Mode> consumer) {
+    public void addModeListener(final Consumer<Boolean> consumer) {
         searchModel.addModeListener(consumer);
     }
 
     @Override
-    public void removeModeListener(final Consumer<Mode> consumer) {
+    public void removeModeListener(final Consumer<Boolean> consumer) {
         searchModel.removeModeListener(consumer);
     }
 
@@ -598,16 +586,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public void pause() {
-        searchModel.pause();
-    }
-
-    @Override
-    public void resume() {
-        searchModel.resume();
-    }
-
-    @Override
     public void stop() {
         if (autoRefreshTimer != null) {
             autoRefreshTimer.cancel();
@@ -617,7 +595,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public Mode getMode() {
+    public boolean getMode() {
         return searchModel.getMode();
     }
 
@@ -743,11 +721,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         expressionPresenter.read(root);
     }
 
-    public void setMode(final SearchModel.Mode mode) {
+    public void setMode(final boolean mode) {
         getView().setMode(mode);
 
         // If this is the end of a query then schedule a refresh.
-        if (SearchModel.Mode.INACTIVE.equals(mode)) {
+        if (!mode) {
             scheduleRefresh();
         }
     }
@@ -775,7 +753,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                             stop();
                         } else {
                             // Make sure search is currently inactive before we attempt to execute a new query.
-                            if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
+                            if (!searchModel.getMode()) {
                                 QueryPresenter.this.run(false, false);
                             }
                         }
@@ -869,7 +847,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         void setExpressionView(View view);
 
-        void setMode(SearchModel.Mode mode);
+        void setMode(boolean mode);
 
         void setEnabled(boolean enabled);
 

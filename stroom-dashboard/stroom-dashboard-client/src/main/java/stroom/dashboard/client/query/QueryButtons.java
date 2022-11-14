@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.query;
 
-import stroom.dashboard.client.main.SearchModel.Mode;
 import stroom.svg.client.SvgImages;
 
 import com.google.gwt.core.client.GWT;
@@ -35,15 +34,15 @@ public class QueryButtons extends Composite implements HasUiHandlers<QueryUiHand
 
     @UiField
     Button start;
-    @UiField
-    Button stop;
+//    @UiField
+//    Button stop;
 
     private QueryUiHandlers uiHandlers;
 
     public QueryButtons() {
         initWidget(BINDER.createAndBindUi(this));
         start.getElement().setInnerHTML(SvgImages.MONO_PLAY);
-        stop.getElement().setInnerHTML(SvgImages.MONO_STOP);
+//        stop.getElement().setInnerHTML(SvgImages.MONO_STOP);
     }
 
     @Override
@@ -58,41 +57,18 @@ public class QueryButtons extends Composite implements HasUiHandlers<QueryUiHand
         }
     }
 
-    @UiHandler("stop")
-    public void onStopClick(final ClickEvent event) {
-        if (uiHandlers != null) {
-            uiHandlers.stop();
+    public void setMode(final boolean mode) {
+        if (mode) {
+            start.addStyleName("QueryButtons-stop");
+            start.removeStyleName("QueryButtons-play");
+            start.getElement().setInnerHTML(SvgImages.MONO_STOP);
+            start.setTitle("Stop Query");
+        } else {
+            start.addStyleName("QueryButtons-play");
+            start.removeStyleName("QueryButtons-stop");
+            start.getElement().setInnerHTML(SvgImages.MONO_PLAY);
+            start.setTitle("Execute Query");
         }
-    }
-
-    public void setMode(final Mode mode) {
-        switch (mode) {
-            case ACTIVE:
-                start.addStyleName("QueryButtons-pause");
-                start.removeStyleName("QueryButtons-play");
-                start.getElement().setInnerHTML(SvgImages.MONO_PAUSE);
-                start.setTitle("Pause Query");
-
-                stop.setEnabled(true);
-                break;
-            case INACTIVE:
-                start.addStyleName("QueryButtons-play");
-                start.removeStyleName("QueryButtons-pause");
-                start.getElement().setInnerHTML(SvgImages.MONO_PLAY);
-                start.setTitle("Execute Query");
-
-                stop.setEnabled(false);
-                break;
-            case PAUSED:
-                start.addStyleName("QueryButtons-play");
-                start.removeStyleName("QueryButtons-pause");
-                start.getElement().setInnerHTML(SvgImages.MONO_PLAY);
-                start.setTitle("Resume Query");
-
-                stop.setEnabled(true);
-                break;
-        }
-
     }
 
     public void setEnabled(final boolean enabled) {

@@ -17,24 +17,29 @@
 package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.vis.VisPresenter.VisView;
+import stroom.svg.client.SvgImages;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class VisViewImpl extends ViewImpl implements VisView {
+public class VisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
+        implements VisView {
 
     private final FlowPanel widget;
     private final SimplePanel visContainer;
     private final SpinnerSmall spinnerSmall;
+    private final Button pause;
     private final SimplePanel messagePanel;
     private final Label message;
 
@@ -55,7 +60,12 @@ public class VisViewImpl extends ViewImpl implements VisView {
 
         spinnerSmall = new SpinnerSmall();
         spinnerSmall.setStyleName("dashboardVis-smallSpinner");
-        spinnerSmall.setVisible(false);
+        spinnerSmall.setTitle("Pause Update");
+
+        pause = new Button();
+        pause.setStyleName("dashboardVis-pause svg-image-button");
+        pause.getElement().setInnerHTML(SvgImages.MONO_PAUSE);
+        pause.setTitle("Resume Update");
 
         widget = new FlowPanel() {
             @Override
@@ -83,7 +93,19 @@ public class VisViewImpl extends ViewImpl implements VisView {
         widget.setStyleName("dashboardVis-outerLayout");
         widget.add(visContainer);
         widget.add(spinnerSmall);
+        widget.add(pause);
         widget.add(messagePanel);
+
+        spinnerSmall.addDomHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onPause();
+            }
+        }, ClickEvent.getType());
+        pause.addDomHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onPause();
+            }
+        }, ClickEvent.getType());
     }
 
     @Override
@@ -93,7 +115,20 @@ public class VisViewImpl extends ViewImpl implements VisView {
 
     @Override
     public void setRefreshing(final boolean refreshing) {
-        spinnerSmall.setVisible(refreshing);
+        if (refreshing) {
+            widget.addStyleName("refreshing");
+        } else {
+            widget.removeStyleName("refreshing");
+        }
+    }
+
+    @Override
+    public void setPaused(final boolean paused) {
+        if (paused) {
+            widget.addStyleName("paused");
+        } else {
+            widget.removeStyleName("paused");
+        }
     }
 
     @Override

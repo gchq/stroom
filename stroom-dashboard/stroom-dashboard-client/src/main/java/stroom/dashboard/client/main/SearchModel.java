@@ -64,10 +64,10 @@ public class SearchModel {
     private DashboardSearchResponse currentResponse;
     private QueryKey currentQueryKey;
     private Search currentSearch;
-    private Mode mode = Mode.INACTIVE;
+    private Boolean mode = false;
     private boolean searching;
 
-    private final List<Consumer<Mode>> modeListeners = new ArrayList<>();
+    private final List<Consumer<Boolean>> modeListeners = new ArrayList<>();
     private final List<Consumer<List<String>>> errorListeners = new ArrayList<>();
 
     public SearchModel(final RestFactory restFactory,
@@ -98,12 +98,11 @@ public class SearchModel {
             destroy(currentQueryKey);
             currentQueryKey = null;
         }
-        setMode(Mode.INACTIVE);
+        setMode(false);
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
         for (final ResultComponent resultComponent : componentMap.values()) {
-            resultComponent.setWantsData(false);
             resultComponent.endSearch();
         }
 
@@ -119,23 +118,7 @@ public class SearchModel {
     public void reset() {
         // Stop previous search.
         stop();
-
-        // Tell every component that it should want data.
-        setWantsData(true);
     }
-
-    public void pause() {
-        // Tell every component not to want data.
-        setWantsData(false);
-        setMode(Mode.PAUSED);
-    }
-
-    public void resume() {
-        // Tell every component that it should want data.
-        setWantsData(true);
-        setMode(Mode.ACTIVE);
-    }
-
 
     /**
      * Begin executing a new search using the supplied query expression.
@@ -149,9 +132,6 @@ public class SearchModel {
                                final String queryInfo) {
         // Destroy the previous search and ready all components for a new search to begin.
         stop();
-
-        // Tell every component that it should want data.
-        setWantsData(true);
 
         GWT.log("SearchModel - startNewSearch()");
 
@@ -181,7 +161,7 @@ public class SearchModel {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
                 // Let the query presenter know search is active.
-                setMode(Mode.ACTIVE);
+                setMode(true);
 
                 // Reset all result components and tell them that search is
                 // starting.
@@ -201,7 +181,7 @@ public class SearchModel {
     /**
      * Refresh the search data for the specified component.
      */
-    public void refresh(final String componentId) {
+    public void refresh(final String componentId, final Consumer<Result> resultConsumer) {
         final QueryKey queryKey = currentQueryKey;
         final ResultComponent resultComponent = componentMap.get(componentId);
         if (resultComponent != null && queryKey != null) {
@@ -210,7 +190,6 @@ public class SearchModel {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
                     // Tell the refreshing component that it should want data.
-                    resultComponent.setWantsData(true);
                     resultComponent.startSearch();
 
                     final Search search = Search
@@ -223,7 +202,7 @@ public class SearchModel {
                             .build();
 
                     final List<ComponentResultRequest> requests = new ArrayList<>();
-                    final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest();
+                    final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest(true);
                     requests.add(componentResultRequest);
 
                     final DashboardSearchRequest request = DashboardSearchRequest
@@ -240,11 +219,20 @@ public class SearchModel {
                     final Rest<DashboardSearchResponse> rest = restFactory.create();
                     rest
                             .onSuccess(response -> {
+                                Result result = null;
                                 try {
-                                    update(response);
+
+                                    if (response != null && response.getResults() != null) {
+                                        for (final Result componentResult : response.getResults()) {
+                                            if (componentId.equals(componentResult.getComponentId())) {
+                                                result = componentResult;
+                                            }
+                                        }
+                                    }
                                 } catch (final RuntimeException e) {
                                     GWT.log(e.getMessage());
                                 }
+                                resultConsumer.accept(result);
                             })
                             .onFailure(throwable -> {
                                 try {
@@ -254,6 +242,7 @@ public class SearchModel {
                                 } catch (final RuntimeException e) {
                                     GWT.log(e.getMessage());
                                 }
+                                resultConsumer.accept(null);
                             })
                             .call(DASHBOARD_RESOURCE)
                             .search(request);
@@ -288,7 +277,7 @@ public class SearchModel {
             final List<ComponentResultRequest> requests = new ArrayList<>();
             for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
                 final ResultComponent resultComponent = entry.getValue();
-                final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest();
+                final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest(false);
                 requests.add(componentResultRequest);
             }
             final DashboardSearchRequest request = DashboardSearchRequest
@@ -369,19 +358,6 @@ public class SearchModel {
     }
 
     /**
-     * Method to update the wantsData state for all interested components.
-     *
-     * @param wantsData True if you want all components to be ready to receive data.
-     */
-    private void setWantsData(final boolean wantsData) {
-        // Tell every component that it should want data.
-        for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
-            final ResultComponent resultComponent = entry.getValue();
-            resultComponent.setWantsData(wantsData);
-        }
-    }
-
-    /**
      * On receiving a search result from the server update all interested
      * components with new data.
      *
@@ -402,19 +378,16 @@ public class SearchModel {
 
         // Tell all components if we are complete.
         if (response.isComplete()) {
-            componentMap.values().forEach(resultComponent -> {
-                // Stop the spinner from spinning and tell components that they
-                // no longer want data.
-                resultComponent.setWantsData(false);
-                resultComponent.endSearch();
-            });
+            // Stop the spinner from spinning and tell components that they
+            // no longer want data.
+            componentMap.values().forEach(ResultComponent::endSearch);
         }
 
         setErrors(response.getErrors());
 
         if (response.isComplete()) {
             // Let the query presenter know search is inactive.
-            setMode(Mode.INACTIVE);
+            setMode(false);
 
             // If we have completed search then stop the task spinner.
             searching = false;
@@ -425,11 +398,11 @@ public class SearchModel {
         errorListeners.forEach(listener -> listener.accept(errors));
     }
 
-    public Mode getMode() {
+    public Boolean getMode() {
         return mode;
     }
 
-    private void setMode(final Mode mode) {
+    private void setMode(final Boolean mode) {
         this.mode = mode;
         modeListeners.forEach(listener -> listener.accept(mode));
     }
@@ -528,11 +501,11 @@ public class SearchModel {
         this.componentMap = componentMap;
     }
 
-    public void addModeListener(final Consumer<Mode> consumer) {
+    public void addModeListener(final Consumer<Boolean> consumer) {
         modeListeners.add(consumer);
     }
 
-    public void removeModeListener(final Consumer<Mode> consumer) {
+    public void removeModeListener(final Consumer<Boolean> consumer) {
         modeListeners.remove(consumer);
     }
 
@@ -542,11 +515,5 @@ public class SearchModel {
 
     public void removeErrorListener(final Consumer<List<String>> consumer) {
         errorListeners.remove(consumer);
-    }
-
-    public enum Mode {
-        ACTIVE,
-        INACTIVE,
-        PAUSED
     }
 }
