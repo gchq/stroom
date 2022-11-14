@@ -16,6 +16,7 @@
 
 package stroom.index.shared;
 
+import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
 
@@ -72,6 +73,8 @@ public class IndexDoc extends Doc {
     private List<IndexField> fields;
     @JsonProperty
     private String volumeGroupName;
+    @JsonProperty
+    private DocRef defaultExtractionPipeline;
 
     public IndexDoc() {
         maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
@@ -96,7 +99,8 @@ public class IndexDoc extends Doc {
                     @JsonProperty("shardsPerPartition") final Integer shardsPerPartition,
                     @JsonProperty("retentionDayAge") final Integer retentionDayAge,
                     @JsonProperty("fields") final List<IndexField> fields,
-                    @JsonProperty("volumeGroupName") final String volumeGroupName) {
+                    @JsonProperty("volumeGroupName") final String volumeGroupName,
+                    @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.maxDocsPerShard = maxDocsPerShard;
@@ -106,6 +110,7 @@ public class IndexDoc extends Doc {
         this.retentionDayAge = retentionDayAge;
         this.fields = fields;
         this.volumeGroupName = volumeGroupName;
+        this.defaultExtractionPipeline = defaultExtractionPipeline;
 
         if (this.maxDocsPerShard == null) {
             this.maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
@@ -188,6 +193,14 @@ public class IndexDoc extends Doc {
         this.volumeGroupName = volumeGroupName;
     }
 
+    public DocRef getDefaultExtractionPipeline() {
+        return defaultExtractionPipeline;
+    }
+
+    public void setDefaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
+        this.defaultExtractionPipeline = defaultExtractionPipeline;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -207,7 +220,8 @@ public class IndexDoc extends Doc {
                 partitionBy == indexDoc.partitionBy &&
                 Objects.equals(retentionDayAge, indexDoc.retentionDayAge) &&
                 Objects.equals(fields, indexDoc.fields) &&
-                Objects.equals(volumeGroupName, indexDoc.volumeGroupName);
+                Objects.equals(volumeGroupName, indexDoc.volumeGroupName) &&
+                Objects.equals(defaultExtractionPipeline, indexDoc.defaultExtractionPipeline);
     }
 
     @Override
@@ -221,7 +235,8 @@ public class IndexDoc extends Doc {
                 shardsPerPartition,
                 retentionDayAge,
                 fields,
-                volumeGroupName);
+                volumeGroupName,
+                defaultExtractionPipeline);
     }
 
     public enum PartitionBy implements HasDisplayValue {

@@ -126,7 +126,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             PART_NO_FIELD,
             PIPELINE_VERSION_FIELD);
 
-    private static final DataSource DATA_SOURCE = new DataSource(FIELDS);
+    private static final DataSource DATA_SOURCE = DataSource.builder().fields(FIELDS).build();
 
     private static final Map<String, AbstractField> FIELD_NAME_TO_FIELD_MAP = FIELDS.stream()
             .collect(Collectors.toMap(AbstractField::getName, Function.identity()));

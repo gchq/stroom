@@ -26,5 +26,8 @@
         <form:FormGroup identity="indexSettingsVolumeGroup" label="Volume Group">
             <l:StringListBox ui:field="volumeGroups"/>
         </form:FormGroup>
+        <form:FormGroup identity="indexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline">
+            <g:SimplePanel ui:field="defaultExtractionPipeline"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -16,7 +16,7 @@
 
 package stroom.datasource.shared;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -26,7 +26,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
-import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -44,5 +43,5 @@ public interface DataSourceResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Fetch data source fields",
             operationId = "fetchDataSourceFields")
-    List<AbstractField> fetchFields(@Parameter(description = "dataSourceRef", required = true) DocRef dataSourceRef);
+    DataSource fetch(@Parameter(description = "dataSourceRef", required = true) DocRef dataSourceRef);
 }

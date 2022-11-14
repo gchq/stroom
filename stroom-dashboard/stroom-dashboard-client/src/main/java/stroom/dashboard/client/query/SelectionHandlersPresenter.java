@@ -298,7 +298,7 @@ public class SelectionHandlersPresenter
                                 () -> consumer.accept(currentFields));
                     })
                     .call(DATA_SOURCE_RESOURCE)
-                    .fetchFields(dataSource);
+                    .fetch(dataSource);
 
         } else {
             consumer.accept(currentFields);

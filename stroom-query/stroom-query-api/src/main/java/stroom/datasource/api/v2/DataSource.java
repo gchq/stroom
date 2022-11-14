@@ -16,6 +16,8 @@
 
 package stroom.datasource.api.v2;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -33,37 +35,47 @@ public final class DataSource implements Serializable {
 
     @JsonProperty
     private final List<AbstractField> fields;
+    @JsonProperty
+    private final DocRef defaultExtractionPipeline;
 
     @JsonCreator
-    public DataSource(@JsonProperty("fields") final List<AbstractField> fields) {
+    public DataSource(@JsonProperty("fields") final List<AbstractField> fields,
+                      @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
         this.fields = fields;
+        this.defaultExtractionPipeline = defaultExtractionPipeline;
     }
 
     public List<AbstractField> getFields() {
         return fields;
     }
 
+    public DocRef getDefaultExtractionPipeline() {
+        return defaultExtractionPipeline;
+    }
+
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        DataSource that = (DataSource) o;
-        return Objects.equals(fields, that.fields);
+        final DataSource that = (DataSource) o;
+        return Objects.equals(fields, that.fields) && Objects.equals(defaultExtractionPipeline,
+                that.defaultExtractionPipeline);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fields);
+        return Objects.hash(fields, defaultExtractionPipeline);
     }
 
     @Override
     public String toString() {
         return "DataSource{" +
                 "fields=" + fields +
+                ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                 '}';
     }
 
@@ -78,6 +90,7 @@ public final class DataSource implements Serializable {
     public static final class Builder {
 
         private List<AbstractField> fields = new ArrayList<>();
+        private DocRef defaultExtractionPipeline;
 
         private Builder() {
         }
@@ -91,13 +104,13 @@ public final class DataSource implements Serializable {
             return this;
         }
 
-//        public Builder addFields(final AbstractField... values) {
-//            this.fields.addAll(Arrays.asList(values));
-//            return this;
-//        }
+        public Builder defaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
+            this.defaultExtractionPipeline = defaultExtractionPipeline;
+            return this;
+        }
 
         public DataSource build() {
-            return new DataSource(fields);
+            return new DataSource(fields, defaultExtractionPipeline);
         }
     }
 }

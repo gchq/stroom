@@ -35,7 +35,11 @@ public class SolrIndexServiceImpl implements SolrIndexService {
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
-            return new DataSource(SolrIndexDataSourceFieldUtil.getDataSourceFields(index));
+            return DataSource
+                    .builder()
+                    .fields(SolrIndexDataSourceFieldUtil.getDataSourceFields(index))
+                    .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
+                    .build();
         });
     }
 

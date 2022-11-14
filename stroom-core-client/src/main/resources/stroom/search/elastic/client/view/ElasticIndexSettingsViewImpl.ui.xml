@@ -19,6 +19,9 @@
         <form:FormGroup identity="elasticIndexSettingsSearchScrollSize" label="Search Scroll Size">
             <valuespinner:ValueSpinner ui:field="searchScrollSize" width="80px"/>
         </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline">
+            <g:SimplePanel ui:field="defaultExtractionPipeline"/>
+        </form:FormGroup>
 
         <g:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
 

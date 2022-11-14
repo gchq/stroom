@@ -76,7 +76,7 @@ class SearchableTaskProgress implements Searchable {
 
     @Override
     public DataSource getDataSource() {
-        return new DataSource(TaskManagerFields.getFields());
+        return DataSource.builder().fields(TaskManagerFields.getFields()).build();
     }
 
     @Override

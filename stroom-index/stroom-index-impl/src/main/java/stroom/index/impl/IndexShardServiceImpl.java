@@ -142,7 +142,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Override
     public DataSource getDataSource() {
-        return new DataSource(IndexShardFields.getFields());
+        return DataSource.builder().fields(IndexShardFields.getFields()).build();
     }
 
     @Override

@@ -55,7 +55,7 @@ class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
 
         final List<AbstractField> fields = buildFields(entity);
 
-        return new DataSource(fields);
+        return DataSource.builder().fields(fields).build();
     }
 
     /**

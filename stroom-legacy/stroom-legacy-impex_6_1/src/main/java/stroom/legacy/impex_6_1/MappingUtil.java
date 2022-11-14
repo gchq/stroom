@@ -186,6 +186,7 @@ public final class MappingUtil {
 
         return new stroom.dashboard.shared.TableComponentSettings(
                 value.getQueryId(),
+                null,
                 mapList(value.getFields(), MappingUtil::map),
                 value.getExtractValues(),
                 map(value.getExtractionPipeline()),

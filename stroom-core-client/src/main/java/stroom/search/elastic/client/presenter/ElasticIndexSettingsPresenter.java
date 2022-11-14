@@ -25,6 +25,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
@@ -42,6 +43,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
+
 public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<ElasticIndexSettingsView, ElasticIndexDoc>
         implements ElasticIndexSettingsUiHandlers {
 
@@ -49,7 +52,10 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
     private final EntityDropDownPresenter clusterPresenter;
     private final EditExpressionPresenter editExpressionPresenter;
+    private final EntityDropDownPresenter pipelinePresenter;
     private final RestFactory restFactory;
+
+    private DocRef defaultExtractionPipeline;
 
     @Inject
     public ElasticIndexSettingsPresenter(
@@ -57,18 +63,24 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
             final ElasticIndexSettingsView view,
             final EntityDropDownPresenter clusterPresenter,
             final EditExpressionPresenter editExpressionPresenter,
+            final EntityDropDownPresenter pipelinePresenter,
             final RestFactory restFactory
     ) {
         super(eventBus, view);
 
         this.clusterPresenter = clusterPresenter;
         this.editExpressionPresenter = editExpressionPresenter;
+        this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
 
         clusterPresenter.setIncludedTypes(ElasticClusterDoc.DOCUMENT_TYPE);
         clusterPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
+        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+
         view.setUiHandlers(this);
+        view.setDefaultExtractionPipelineView(pipelinePresenter.getView());
         view.setClusterView(clusterPresenter.getView());
         view.setRetentionExpressionView(editExpressionPresenter.getView());
     }
@@ -83,6 +95,13 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
         }));
 
         registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
+
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> {
+            if (!Objects.equals(pipelinePresenter.getSelectedEntityReference(), defaultExtractionPipeline)) {
+                setDirty(true);
+                defaultExtractionPipeline = pipelinePresenter.getSelectedEntityReference();
+            }
+        }));
     }
 
     @Override
@@ -128,6 +147,9 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
         editExpressionPresenter.init(restFactory, docRef, ElasticIndexDataSourceFieldUtil.getDataSourceFields(index));
         editExpressionPresenter.read(index.getRetentionExpression());
+
+        defaultExtractionPipeline = index.getDefaultExtractionPipeline();
+        pipelinePresenter.setSelectedEntityReference(defaultExtractionPipeline);
     }
 
     @Override
@@ -146,10 +168,12 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
         index.setSearchScrollSize(getView().getSearchScrollSize());
 
         index.setRetentionExpression(editExpressionPresenter.write());
+        index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
     }
 
     public interface ElasticIndexSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<ElasticIndexSettingsUiHandlers> {
+
         String getDescription();
 
         void setDescription(String description);
@@ -169,5 +193,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
         void setSearchScrollSize(final int searchScrollSize);
 
         void setRetentionExpressionView(final View view);
+
+        void setDefaultExtractionPipelineView(View view);
     }
 }

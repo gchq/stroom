@@ -52,7 +52,11 @@ public class StroomIndexQueryService implements DataSourceProvider {
                     TerminateHandlerFactory.NOOP_FACTORY,
                     taskContext -> {
                         final IndexDoc index = indexStore.readDocument(docRef);
-                        return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext));
+                        return DataSource
+                                .builder()
+                                .fields(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext))
+                                .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
+                                .build();
                     });
             final Executor executor = executorProvider.get();
             final CompletableFuture<DataSource> completableFuture = CompletableFuture.supplyAsync(supplier, executor);

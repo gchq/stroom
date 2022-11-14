@@ -52,6 +52,8 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     Button testConnection;
     @UiField
     SimplePanel retentionExpressionPanel;
+    @UiField
+    SimplePanel defaultExtractionPipeline;
 
     @Inject
     public ElasticIndexSettingsViewImpl(final Binder binder) {
@@ -128,6 +130,11 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @Override
     public void setRetentionExpressionView(final View view) {
         retentionExpressionPanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setDefaultExtractionPipelineView(final View view) {
+        this.defaultExtractionPipeline.setWidget(view.asWidget());
     }
 
     @Override

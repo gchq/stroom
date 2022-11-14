@@ -52,6 +52,7 @@ import stroom.datasource.api.v2.TextField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -794,6 +795,21 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private void updateFields() {
         if (getTableSettings().getFields() == null) {
             setSettings(getTableSettings().copy().fields(new ArrayList<>()).build());
+        }
+
+        // Update the extraction pipeline if the loaded data source has changed.
+        if (currentSearchModel != null) {
+            final IndexLoader indexLoader = currentSearchModel.getIndexLoader();
+            if (!Objects.equals(getTableSettings().getDataSourceRef(),
+                    indexLoader.getLoadedDataSourceRef())) {
+                TableComponentSettings.Builder builder = getTableSettings().copy();
+                builder.dataSourceRef(indexLoader.getLoadedDataSourceRef());
+                DocRef docRef = indexLoader.getDefaultExtractionPipeline();
+                if (docRef != null) {
+                    builder.extractionPipeline(docRef).extractValues(true);
+                }
+                setSettings(builder.build());
+            }
         }
 
         // Update columns.

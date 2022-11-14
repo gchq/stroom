@@ -18,6 +18,7 @@ package stroom.dashboard.client.main;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -26,6 +27,7 @@ import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
@@ -44,6 +46,7 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     private DocRef loadedDataSourceRef;
     private List<String> indexFieldNames;
+    private DocRef defaultExtractionPipeline;
     private DataSourceFieldsMap dataSourceFieldsMap;
 
     public IndexLoader(final EventBus eventBus, final RestFactory restFactory) {
@@ -63,18 +66,20 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     public void loadDataSource(final DocRef dataSourceRef) {
         if (dataSourceRef != null) {
-            final Rest<List<AbstractField>> rest = restFactory.create();
+            final Rest<DataSource> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
                         loadedDataSourceRef = dataSourceRef;
 
                         if (result != null) {
-                            dataSourceFieldsMap = new DataSourceFieldsMap(result);
+                            dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
                             indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
+                            defaultExtractionPipeline = result.getDefaultExtractionPipeline();
                             Collections.sort(indexFieldNames);
                         } else {
                             dataSourceFieldsMap = new DataSourceFieldsMap();
                             indexFieldNames = new ArrayList<>();
+                            defaultExtractionPipeline = null;
                         }
 
                         ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
@@ -82,6 +87,7 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
                     .onFailure(caught -> {
                         loadedDataSourceRef = null;
                         indexFieldNames = null;
+                        defaultExtractionPipeline = null;
                         dataSourceFieldsMap = null;
 
                         AlertEvent.fireError(IndexLoader.this,
@@ -91,10 +97,11 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
                     })
                     .call(DATA_SOURCE_RESOURCE)
-                    .fetchFields(dataSourceRef);
+                    .fetch(dataSourceRef);
         } else {
             loadedDataSourceRef = null;
             indexFieldNames = null;
+            defaultExtractionPipeline = null;
             dataSourceFieldsMap = null;
             ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
         }
@@ -106,6 +113,10 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     public List<String> getIndexFieldNames() {
         return indexFieldNames;
+    }
+
+    public DocRef getDefaultExtractionPipeline() {
+        return defaultExtractionPipeline;
     }
 
     public DataSourceFieldsMap getDataSourceFieldsMap() {

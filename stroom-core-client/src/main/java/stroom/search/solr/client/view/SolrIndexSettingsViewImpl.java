@@ -60,6 +60,8 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @UiField
     TextArea zkPath;
     @UiField
+    SimplePanel defaultExtractionPipeline;
+    @UiField
     Button testConnection;
     @UiField
     SimplePanel retentionExpressionPanel;
@@ -184,6 +186,11 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @Override
     public void setRetentionExpressionView(final View view) {
         retentionExpressionPanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setDefaultExtractionPipelineView(final View view) {
+        this.defaultExtractionPipeline.setWidget(view.asWidget());
     }
 
     @Override

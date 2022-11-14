@@ -60,7 +60,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
                                 MetaFields.STREAM_STORE_DOC_REF,
                                 result))
                 .call(DATA_SOURCE_RESOURCE)
-                .fetchFields(MetaFields.STREAM_STORE_DOC_REF);
+                .fetch(MetaFields.STREAM_STORE_DOC_REF);
     }
 
     @Override

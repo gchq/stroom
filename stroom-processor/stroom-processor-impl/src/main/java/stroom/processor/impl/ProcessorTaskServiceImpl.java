@@ -97,6 +97,6 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
 
     @Override
     public DataSource getDataSource() {
-        return new DataSource(ProcessorTaskFields.getFields());
+        return DataSource.builder().fields(ProcessorTaskFields.getFields()).build();
     }
 }

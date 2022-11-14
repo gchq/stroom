@@ -53,6 +53,9 @@ public class TableComponentSettings implements ComponentSettings {
     @JsonProperty
     private final String queryId;
 
+    @JsonProperty
+    private final DocRef dataSourceRef;
+
     @Schema(required = true)
     @JsonProperty
     private final List<Field> fields;
@@ -89,6 +92,7 @@ public class TableComponentSettings implements ComponentSettings {
     @JsonCreator
     public TableComponentSettings(
             @JsonProperty("queryId") final String queryId,
+            @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
             @JsonProperty("fields") final List<Field> fields,
             @JsonProperty("extractValues") final Boolean extractValues,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
@@ -99,6 +103,7 @@ public class TableComponentSettings implements ComponentSettings {
             @JsonProperty("modelVersion") final String modelVersion) {
 
         this.queryId = queryId;
+        this.dataSourceRef = dataSourceRef;
         this.fields = fields;
         this.extractValues = extractValues;
         this.extractionPipeline = extractionPipeline;
@@ -110,6 +115,10 @@ public class TableComponentSettings implements ComponentSettings {
 
     public String getQueryId() {
         return queryId;
+    }
+
+    public DocRef getDataSourceRef() {
+        return dataSourceRef;
     }
 
     public List<Field> getFields() {
@@ -164,6 +173,7 @@ public class TableComponentSettings implements ComponentSettings {
         }
         final TableComponentSettings that = (TableComponentSettings) o;
         return Objects.equals(queryId, that.queryId) &&
+                Objects.equals(dataSourceRef, that.dataSourceRef) &&
                 Objects.equals(fields, that.fields) &&
                 Objects.equals(extractValues, that.extractValues) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
@@ -177,6 +187,7 @@ public class TableComponentSettings implements ComponentSettings {
     public int hashCode() {
         return Objects.hash(
                 queryId,
+                dataSourceRef,
                 fields,
                 extractValues,
                 extractionPipeline,
@@ -190,6 +201,7 @@ public class TableComponentSettings implements ComponentSettings {
     public String toString() {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
+                ", dataSourceRef=" + dataSourceRef +
                 ", fields=" + fields +
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
@@ -214,6 +226,7 @@ public class TableComponentSettings implements ComponentSettings {
     public static final class Builder {
 
         protected String queryId;
+        protected DocRef dataSourceRef;
         protected List<Field> fields;
         protected Boolean extractValues;
         protected DocRef extractionPipeline;
@@ -227,6 +240,7 @@ public class TableComponentSettings implements ComponentSettings {
 
         private Builder(final TableComponentSettings tableSettings) {
             this.queryId = tableSettings.getQueryId();
+            this.dataSourceRef = tableSettings.getDataSourceRef();
             this.fields = tableSettings.getFields() == null
                     ? null
                     : new ArrayList<>(tableSettings.getFields());
@@ -248,6 +262,11 @@ public class TableComponentSettings implements ComponentSettings {
          */
         public Builder queryId(final String value) {
             this.queryId = value;
+            return this;
+        }
+
+        public Builder dataSourceRef(final DocRef dataSourceRef) {
+            this.dataSourceRef = dataSourceRef;
             return this;
         }
 
@@ -367,6 +386,7 @@ public class TableComponentSettings implements ComponentSettings {
         public TableComponentSettings build() {
             return new TableComponentSettings(
                     queryId,
+                    dataSourceRef,
                     fields,
                     extractValues,
                     extractionPipeline,

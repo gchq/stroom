@@ -26,6 +26,9 @@
         <form:FormGroup identity="solrIndexSettingsZKPath" label="ZK Path">
             <g:TextArea ui:field="zkPath" width="400px"/>
         </form:FormGroup>
+        <form:FormGroup identity="solrIndexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline">
+            <g:SimplePanel ui:field="defaultExtractionPipeline"/>
+        </form:FormGroup>
         <g:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
         <form:FormGroup identity="solrIndexSettingsDataRetention"
                         label="Data Retention Expression (matching data will be deleted)"

@@ -16,13 +16,12 @@
 
 package stroom.dashboard.impl.datasource;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.meta.shared.MetaFields;
 
-import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -37,14 +36,14 @@ class DataSourceResourceImpl implements DataSourceResource {
     }
 
     @Override
-    public List<AbstractField> fetchFields(final DocRef dataSourceRef) {
+    public DataSource fetch(final DocRef dataSourceRef) {
         if (dataSourceRef.equals(MetaFields.STREAM_STORE_DOC_REF)) {
-            return MetaFields.getFields();
+            return DataSource.builder().fields(MetaFields.getFields()).build();
         }
 
         return dataSourceProviderRegistryProvider.get()
                 .getDataSourceProvider(dataSourceRef)
-                .map(provider -> provider.getDataSource(dataSourceRef).getFields())
+                .map(provider -> provider.getDataSource(dataSourceRef))
                 .orElse(null);
     }
 }

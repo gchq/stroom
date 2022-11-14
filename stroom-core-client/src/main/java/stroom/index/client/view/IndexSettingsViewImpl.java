@@ -28,9 +28,11 @@ import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHandlers>
@@ -52,6 +54,8 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     ItemListBox<SupportedRetentionAge> retentionAge;
     @UiField
     StringListBox volumeGroups;
+    @UiField
+    SimplePanel defaultExtractionPipeline;
 
     @Inject
     public IndexSettingsViewImpl(final Binder binder) {
@@ -158,6 +162,11 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     @Override
     public StringListBox getVolumeGroups() {
         return volumeGroups;
+    }
+
+    @Override
+    public void setDefaultExtractionPipelineView(final View view) {
+        this.defaultExtractionPipeline.setWidget(view.asWidget());
     }
 
     @Override

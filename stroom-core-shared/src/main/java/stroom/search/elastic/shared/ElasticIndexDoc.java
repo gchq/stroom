@@ -87,6 +87,8 @@ public class ElasticIndexDoc extends Doc {
      */
     @JsonProperty
     private List<ElasticIndexField> fields;
+    @JsonProperty
+    private DocRef defaultExtractionPipeline;
 
     /**
      * Criteria determining which documents should be deleted periodically by the `Elastic Index Retention`
@@ -117,8 +119,8 @@ public class ElasticIndexDoc extends Doc {
             @JsonProperty("searchSlices") final Integer searchSlices,
             @JsonProperty("searchScrollSize") final Integer searchScrollSize,
             @JsonProperty("fields") final List<ElasticIndexField> fields,
-            @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression
-    ) {
+            @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline,
+            @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.clusterRef = clusterRef;
@@ -126,6 +128,7 @@ public class ElasticIndexDoc extends Doc {
         this.searchSlices = searchSlices;
         this.searchScrollSize = searchScrollSize;
         this.fields = fields;
+        this.defaultExtractionPipeline = defaultExtractionPipeline;
         this.retentionExpression = retentionExpression;
 
         if (this.searchSlices == null) {
@@ -188,6 +191,14 @@ public class ElasticIndexDoc extends Doc {
         this.fields = fields;
     }
 
+    public DocRef getDefaultExtractionPipeline() {
+        return defaultExtractionPipeline;
+    }
+
+    public void setDefaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
+        this.defaultExtractionPipeline = defaultExtractionPipeline;
+    }
+
     public ExpressionOperator getRetentionExpression() {
         return retentionExpression;
     }
@@ -219,13 +230,14 @@ public class ElasticIndexDoc extends Doc {
                 Objects.equals(indexName, elasticIndex.indexName) &&
                 Objects.equals(searchSlices, elasticIndex.searchSlices) &&
                 Objects.equals(searchScrollSize, elasticIndex.searchScrollSize) &&
-                Objects.equals(fields, elasticIndex.fields);
+                Objects.equals(fields, elasticIndex.fields) &&
+                Objects.equals(defaultExtractionPipeline, elasticIndex.defaultExtractionPipeline);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, indexName, searchSlices, searchScrollSize, clusterRef,
-                fields);
+                fields, defaultExtractionPipeline);
     }
 
     @Override
@@ -237,6 +249,7 @@ public class ElasticIndexDoc extends Doc {
                 ", searchSlices=" + searchSlices +
                 ", searchScrollSize=" + searchScrollSize +
                 ", fields=" + fields +
+                ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                 '}';
     }
 }

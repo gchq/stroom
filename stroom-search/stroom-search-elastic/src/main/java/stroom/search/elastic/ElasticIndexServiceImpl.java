@@ -84,7 +84,10 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
-            return new DataSource(getDataSourceFields(index));
+            return DataSource.builder()
+                    .fields(getDataSourceFields(index))
+                    .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
+                    .build();
         });
     }
 
@@ -208,7 +211,9 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             if (fieldKey.isPresent()) {
                 @SuppressWarnings("unchecked") // Need to get at the field mapping properties
                 final Map<String, Object> mappingProperties = (Map<String, Object>) fieldMap.get(fieldKey.get());
-                return mappingProperties.containsKey("index") ? (Boolean) fieldMap.get("index") : true;
+                return mappingProperties.containsKey("index")
+                        ? (Boolean) fieldMap.get("index")
+                        : true;
             } else {
                 return false;
             }
