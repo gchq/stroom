@@ -30,16 +30,35 @@
 	padding-top: 5px;
 }
 
+.alert-showHide a {
+	color: var(--link__text-color) !important;
+}
+
 .alert-detail {
-	width: 500px;
-	height: 400px;
-	margin-left: 10px;
-	margin-right: 0;
-	margin-top: 5px;
-	margin-bottom: 0;
-	padding: 0;
-	background-color: white;
-	border: 1px solid #C5CDE2;
+    width: 500px;
+    height: 400px;
+    margin-left: 10px;
+    margin-right: 0;
+    margin-top: 5px;
+    margin-bottom: 0;
+    padding: 2px;
+    overflow: auto;
+
+	border: solid 1px var(--control__border-color);
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
+	border-radius: .25rem;
+
+    -webkit-user-select: text;  /* Chrome 49+ */
+    -moz-user-select: text;     /* Firefox 43+ */
+    -ms-user-select: text;      /* No support yet */
+    user-select: text;          /* Likely future */
+}
+
+.alert-detail-text {
+    font-family: monospace, Courier New;
+    /*font-size: 10px;*/
+    white-space: pre;
 }
 
 .alert-icon-question {

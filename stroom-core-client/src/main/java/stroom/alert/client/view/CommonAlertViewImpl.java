@@ -44,7 +44,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
     private final SimplePanel image = new SimplePanel();
     private final HTML message = new HTML();
     private final Hyperlink showHideDetail = new Hyperlink();
-    private final RichTextArea detail = new RichTextArea();
+    private final SimplePanel detail = new SimplePanel();
     private boolean detailVisible = false;
 
     @Inject
@@ -59,20 +59,11 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
         messageArea.add(message);
         messageArea.add(showHideDetail);
         messageArea.add(detail);
-        detail.setEnabled(false);
 
         layout.addStyleName("alert-table");
         message.addStyleName("alert-message");
         showHideDetail.addStyleName("alert-showHide");
         detail.addStyleName("alert-detail");
-
-        detail.addInitializeHandler(event -> {
-            final Element e = detail.getElement();
-            final IFrameElement ife = IFrameElement.as(e);
-            final Document doc = ife.getContentDocument();
-            doc.getBody().getStyle().setPadding(3, Unit.PX);
-            doc.getBody().getStyle().setMargin(0, Unit.PX);
-        });
 
         showHideDetail.setVisible(false);
         setDetailVisible(false);
@@ -130,10 +121,10 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
     public void setDetail(final SafeHtml html) {
         if (html != null && html.asString().length() > 0) {
             final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-            builder.appendHtmlConstant("<div style=\"font-family: Courier New; font-size: 10px; white-space: pre;\">");
+            builder.appendHtmlConstant("<div class=\"alert-detail-text\">");
             builder.append(html);
             builder.appendHtmlConstant("</div>");
-            detail.setHTML(builder.toSafeHtml());
+            detail.getElement().setInnerHTML(builder.toSafeHtml().asString());
             showDetail(true);
         } else {
             showHideDetail.setVisible(false);
