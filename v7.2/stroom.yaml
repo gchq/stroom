@@ -1158,8 +1158,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResourceKey'
-        description: resourceKey
+              $ref: '#/components/schemas/ImportConfigRequest'
+        description: request
         required: true
       responses:
         default:
@@ -8396,15 +8396,17 @@ components:
           type: string
         docRef:
           $ref: '#/components/schemas/DocRef'
-        enable:
+        enableFilters:
           type: boolean
-        enableTime:
+        enableFiltersFromTime:
           type: integer
           format: int64
         messageList:
           type: array
           items:
             $ref: '#/components/schemas/Message'
+        rootDocRef:
+          $ref: '#/components/schemas/DocRef'
         sourcePath:
           type: string
         state:
@@ -8417,6 +8419,10 @@ components:
           type: array
           items:
             type: string
+        useImportFolders:
+          type: boolean
+        useImportNames:
+          type: boolean
     IndexDoc:
       type: object
       properties:
