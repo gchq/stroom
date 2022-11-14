@@ -1426,6 +1426,11 @@
 .navigation-menu-button {
     background-color: transparent;
     opacity: 0.6;
+
+    display: flex;
+    align-items: center;
+    height: 42px;
+    justify-content: center;
 }
 
 .stroom-theme-dark .navigation-menu-button,

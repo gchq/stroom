@@ -162,14 +162,13 @@
 	cursor: default;
 	overflow: hidden;
 	z-index: 5;
-	padding: .5rem 0 0 .5rem;
 }
 
 .tabLayout .tabLayout-barInner {
     display: flex;
     flex-grow: 1;
 	position: relative;
-	padding-top: 2px;
+	margin: 0.25rem;
 }
 
 .tabLayout .tabLayout-content {
