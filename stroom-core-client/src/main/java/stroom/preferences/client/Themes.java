@@ -12,7 +12,7 @@ public class Themes {
     static {
         themeMap.put("Light", "stroom-theme-light");
         themeMap.put("Dark", "stroom-theme-dark");
-        themeMap.put("Dark 2", "stroom-theme-dark stroom-theme-dark2");
+//        themeMap.put("Dark 2", "stroom-theme-dark stroom-theme-dark2");
     }
 
     public static List<String> getThemeNames() {

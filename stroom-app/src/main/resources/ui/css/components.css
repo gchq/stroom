@@ -1425,11 +1425,13 @@
 
 .navigation-menu-button {
     background-color: transparent;
+    opacity: 0.6;
 }
 
 .stroom-theme-dark .navigation-menu-button,
 .navigation-title-bar .navigation-menu-button {
-    color: rgba(255,255,255,.8);
+    color: white;
+    opacity: 0.8;
 }
 
 .navigation-menu-button svg {

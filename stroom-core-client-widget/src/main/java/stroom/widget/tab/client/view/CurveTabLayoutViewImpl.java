@@ -17,11 +17,14 @@
 package stroom.widget.tab.client.view;
 
 import stroom.svg.client.SvgImages;
+import stroom.widget.tab.client.event.ShowTabMenuEvent.Handler;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabBar;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -81,6 +84,16 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
     @Override
     public void setRightIndent(final int indent) {
         tabBarOuter.getElement().getStyle().setRight(indent, Unit.PX);
+    }
+
+    @Override
+    public HandlerRegistration addShowTabMenuHandler(final Handler handler) {
+        return tabBar.addShowTabMenuHandler(handler);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        tabBar.fireEvent(event);
     }
 
     @UiHandler("menu")

@@ -117,6 +117,12 @@ public class ContentTabPanePresenter
     }
 
     @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(getView().addShowTabMenuHandler(event -> getEventBus().fireEvent(event)));
+    }
+
+    @Override
     public void maximise() {
         MaximiseEvent.fire(this, null);
     }

@@ -22,7 +22,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
-import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -80,7 +79,9 @@ import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
+import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
+import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
@@ -422,6 +423,22 @@ public class DocumentPluginEventManager extends Plugin {
                 );
             }
         }));
+        registerHandler(getEventBus().addHandler(ShowTabMenuEvent.getType(), event -> {
+            final List<Item> menuItems = new ArrayList<>();
+
+            menuItems.add(createCloseMenuItem(1, event.getTabData()));
+            menuItems.add(createCloseOthersMenuItem(2, event.getTabData()));
+            menuItems.add(createCloseAllMenuItem(3, event.getTabData()));
+            menuItems.add(new Separator(5));
+            menuItems.add(createSaveMenuItem(6, event.getTabData()));
+            menuItems.add(createSaveAllMenuItem(8));
+
+            ShowMenuEvent
+                    .builder()
+                    .items(menuItems)
+                    .popupPosition(event.getPopupPosition())
+                    .fire(this);
+        }));
     }
 
 
@@ -587,39 +604,39 @@ public class DocumentPluginEventManager extends Plugin {
     public void onReveal(final BeforeRevealMenubarEvent event) {
         super.onReveal(event);
 
-        final FutureImpl<List<Item>> future = new FutureImpl<>();
-        final List<ExplorerNode> selectedItems = getSelectedItems();
-        final boolean singleSelection = selectedItems.size() == 1;
-        final ExplorerNode primarySelection = getPrimarySelection();
-
-        fetchPermissions(selectedItems,
-                documentPermissionMap -> documentTypeCache.fetch(documentTypes -> {
-                    final List<Item> menuItems = new ArrayList<>();
-
-                    // Only allow the new menu to appear if we have a single selection.
-                    addNewMenuItem(menuItems,
-                            singleSelection,
-                            documentPermissionMap,
-                            primarySelection,
-                            documentTypes);
-                    menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
-                    menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
-                    menuItems.add(new Separator(5));
-                    menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
-                    menuItems.add(createSaveAllMenuItem(8, hasSaveRegistry.isDirty()));
-                    menuItems.add(new Separator(9));
-                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
-
-                    future.setResult(menuItems);
-                }));
-
-        // Add menu bar item menu.
-        event.getMenuItems()
-                .addMenuItem(MenuKeys.MAIN_MENU, new IconParentMenuItem.Builder()
-                        .priority(1)
-                        .text("Item")
-                        .children(future)
-                        .build());
+//        final FutureImpl<List<Item>> future = new FutureImpl<>();
+//        final List<ExplorerNode> selectedItems = getSelectedItems();
+//        final boolean singleSelection = selectedItems.size() == 1;
+//        final ExplorerNode primarySelection = getPrimarySelection();
+//
+//        fetchPermissions(selectedItems,
+//                documentPermissionMap -> documentTypeCache.fetch(documentTypes -> {
+//                    final List<Item> menuItems = new ArrayList<>();
+//
+////                    // Only allow the new menu to appear if we have a single selection.
+////                    addNewMenuItem(menuItems,
+////                            singleSelection,
+////                            documentPermissionMap,
+////                            primarySelection,
+////                            documentTypes);
+////                    menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
+//                    menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
+////                    menuItems.add(new Separator(5));
+////                    menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
+//                    menuItems.add(createSaveAllMenuItem(8, hasSaveRegistry.isDirty()));
+////                    menuItems.add(new Separator(9));
+////                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+//
+//                    future.setResult(menuItems);
+//                }));
+//
+//        // Add menu bar item menu.
+//        event.getMenuItems()
+//                .addMenuItem(MenuKeys.MAIN_MENU, new IconParentMenuItem.Builder()
+//                        .priority(11)
+//                        .text("Item")
+//                        .children(future)
+//                        .build());
     }
 
     private Future<List<Item>> getNewMenuItems(final ExplorerNode explorerNode) {
@@ -801,47 +818,62 @@ public class DocumentPluginEventManager extends Plugin {
         }
     }
 
-    private MenuItem createCloseMenuItem(final boolean enabled) {
+    private MenuItem createCloseMenuItem(final int priority, final TabData selectedTab) {
         return new IconMenuItem.Builder()
-                .priority(3)
+                .priority(priority)
                 .icon(SvgPresets.CLOSE)
                 .text("Close")
                 .action(Action.ITEM_CLOSE)
-                .enabled(enabled)
-                .command(itemCloseCommand)
+                .enabled(isTabItemSelected(selectedTab))
+                .command(() -> RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab))
                 .build();
     }
 
-    private MenuItem createCloseAllMenuItem(final boolean enabled) {
+    private MenuItem createCloseOthersMenuItem(final int priority, final TabData selectedTab) {
         return new IconMenuItem.Builder()
-                .priority(4)
+                .priority(priority)
+                .icon(SvgPresets.CLOSE)
+                .text("Close Others")
+                .enabled(isTabItemSelected(selectedTab))
+                .command(() -> RequestCloseOtherTabsEvent.fire(DocumentPluginEventManager.this, selectedTab))
+                .build();
+    }
+
+    private MenuItem createCloseAllMenuItem(final int priority, final TabData selectedTab) {
+        return new IconMenuItem.Builder()
+                .priority(priority)
                 .icon(SvgPresets.CLOSE)
                 .text("Close All")
                 .action(Action.ITEM_CLOSE_ALL)
-                .enabled(enabled)
-                .command(itemCloseAllCommand)
+                .enabled(isTabItemSelected(selectedTab))
+                .command(() -> RequestCloseAllTabsEvent.fire(DocumentPluginEventManager.this))
                 .build();
     }
 
-    private MenuItem createSaveMenuItem(final int priority, final boolean enabled) {
+    private MenuItem createSaveMenuItem(final int priority, final TabData selectedTab) {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgPresets.SAVE)
                 .text("Save")
                 .action(Action.ITEM_SAVE)
-                .enabled(enabled)
-                .command(itemSaveCommand)
+                .enabled(isDirty(selectedTab))
+                .command(() -> {
+                    if (isDirty(selectedTab)) {
+                        final HasSave hasSave = (HasSave) selectedTab;
+                        hasSave.save();
+                    }
+                })
                 .build();
     }
 
-    private MenuItem createSaveAllMenuItem(final int priority, final boolean enabled) {
+    private MenuItem createSaveAllMenuItem(final int priority) {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgPresets.SAVE)
                 .text("Save All")
                 .action(Action.ITEM_SAVE_ALL)
-                .enabled(enabled)
-                .command(itemSaveAllCommand)
+                .enabled(hasSaveRegistry.isDirty())
+                .command(hasSaveRegistry::save)
                 .build();
     }
 

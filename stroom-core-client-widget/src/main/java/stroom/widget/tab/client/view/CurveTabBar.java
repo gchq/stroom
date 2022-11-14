@@ -16,12 +16,16 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.widget.tab.client.event.HasShowTabMenuHandlers;
+import stroom.widget.tab.client.event.ShowTabMenuEvent;
+import stroom.widget.tab.client.event.ShowTabMenuEvent.Handler;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 
-public class CurveTabBar extends AbstractTabBar {
+public class CurveTabBar extends AbstractTabBar implements HasShowTabMenuHandlers {
 
     private final Element element;
 
@@ -57,5 +61,10 @@ public class CurveTabBar extends AbstractTabBar {
     @Override
     protected int getTabGap() {
         return 0;
+    }
+
+    @Override
+    public HandlerRegistration addShowTabMenuHandler(final Handler handler) {
+        return addHandler(handler, ShowTabMenuEvent.getType());
     }
 }

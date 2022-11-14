@@ -21,6 +21,7 @@ import stroom.content.client.event.OpenContentTabEvent;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
+import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabData;
 
@@ -32,6 +33,7 @@ import com.gwtplatform.mvp.client.Layer;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ContentManager implements HasHandlers {
 
@@ -46,6 +48,16 @@ public class ContentManager implements HasHandlers {
             final TabData tabData = event.getTabData();
             final CloseHandler closeHandler = handlerMap.get(tabData);
             close(closeHandler, tabData, false);
+        });
+        eventBus.addHandler(RequestCloseOtherTabsEvent.getType(), event -> {
+            final TabData tabData = event.getTabData();
+            final TabData[] arr = handlerMap
+                    .keySet()
+                    .stream()
+                    .filter(td -> !td.equals(tabData))
+                    .collect(Collectors.toList())
+                    .toArray(new TabData[0]);
+            closeAll(arr, false);
         });
         eventBus.addHandler(
                 RequestCloseAllTabsEvent.getType(),
@@ -65,13 +77,16 @@ public class ContentManager implements HasHandlers {
         } else {
             // Stick the keys in an array to prevent comod exception.
             final TabData[] arr = handlerMap.keySet().toArray(new TabData[0]);
+            closeAll(arr, logoffAfterClose);
+        }
+    }
 
-            // If there are tabs then iterate around them trying
-            // to close each one.
-            for (final TabData tabData : arr) {
-                final CloseHandler closeHandler = handlerMap.get(tabData);
-                close(closeHandler, tabData, logoffAfterClose);
-            }
+    private void closeAll(final TabData[] arr, final boolean logoffAfterClose) {
+        // If there are tabs then iterate around them trying
+        // to close each one.
+        for (final TabData tabData : arr) {
+            final CloseHandler closeHandler = handlerMap.get(tabData);
+            close(closeHandler, tabData, logoffAfterClose);
         }
     }
 

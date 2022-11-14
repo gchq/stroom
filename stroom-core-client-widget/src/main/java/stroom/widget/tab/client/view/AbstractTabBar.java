@@ -23,6 +23,7 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.ShowMenuEvent.Handler;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
+import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.KeyBinding;
@@ -444,6 +445,14 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                     } else {
                         select(target);
                     }
+                }
+            } else {
+                final Element target = event.getEventTarget().cast();
+                final TabData targetTabData = getTargetTabData(target);
+                if (targetTabData != null) {
+                    ShowTabMenuEvent.fire(this,
+                            targetTabData,
+                            new PopupPosition(event.getClientX(), event.getClientY()));
                 }
             }
         } else if (Event.ONMOUSEOVER == event.getTypeInt()) {
