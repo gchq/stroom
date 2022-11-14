@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.query;
 
-import stroom.dashboard.client.main.SearchModel.Mode;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
@@ -69,7 +68,7 @@ public class QueryViewImpl extends ViewImpl implements QueryView, RequiresResize
     }
 
     @Override
-    public void setMode(final Mode mode) {
+    public void setMode(final boolean mode) {
         queryButtons.setMode(mode);
     }
 

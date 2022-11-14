@@ -24,7 +24,6 @@ import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
-import stroom.dashboard.client.main.SearchModel.Mode;
 import stroom.dashboard.client.query.QueryButtons;
 import stroom.dashboard.client.query.QueryInfoPresenter;
 import stroom.dashboard.client.query.QueryUiHandlers;
@@ -75,7 +74,7 @@ import java.util.logging.Logger;
 
 public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
         implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, QueryUiHandlers, HasSave,
-        Consumer<Mode> {
+        Consumer<Boolean> {
 
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final ButtonView saveButton;
@@ -329,18 +328,16 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    public void accept(final Mode mode) {
+    public void accept(final Boolean mode) {
         getView().getQueryButtons().setMode(getCombinedMode());
     }
 
-    private Mode getCombinedMode() {
+    private boolean getCombinedMode() {
         final List<Queryable> queryableComponents = getQueryableComponents();
-        Mode combinedMode = Mode.INACTIVE;
+        boolean combinedMode = false;
         for (final Queryable queryable : queryableComponents) {
-            if (queryable.getMode() == Mode.ACTIVE) {
-                combinedMode = Mode.ACTIVE;
-            } else if (combinedMode == Mode.INACTIVE && queryable.getMode() == Mode.PAUSED) {
-                combinedMode = Mode.PAUSED;
+            if (queryable.getMode()) {
+                combinedMode = true;
             }
         }
         return combinedMode;
@@ -416,7 +413,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             }
         }
 
-        // If all remaining tabs are hidden the we can't allow removal.
+        // If all remaining tabs are hidden then we can't allow removal.
         if (totalCount > 0 && totalCount == hiddenCount) {
             AlertEvent.fireError(this, "You cannot remove or hide all tabs", null);
         } else {
@@ -456,39 +453,28 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     public void start() {
         // Get a sub list of components that can be queried.
         final List<Queryable> queryableComponents = getQueryableComponents();
+        final boolean combinedMode = getCombinedMode();
 
-        // If we have some queryable components then make sure we get query info for them.
-        if (queryableComponents.size() > 0) {
-            queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
-                if (state.isOk()) {
-                    lastUsedQueryInfo = state.getQueryInfo();
-                    final Mode combinedMode = getCombinedMode();
-                    for (final Queryable queryable : queryableComponents) {
-                        queryable.setParams(currentParams);
-                        queryable.setQueryInfo(lastUsedQueryInfo);
+        if (combinedMode) {
+            for (final Queryable queryable : getQueryableComponents()) {
+                queryable.stop();
+            }
+        } else {
 
-                        switch (combinedMode) {
-                            case ACTIVE:
-                                queryable.pause();
-                                break;
-                            case INACTIVE:
-                                queryable.start();
-                                break;
-                            case PAUSED:
-                                queryable.resume();
-                                break;
+            // If we have some queryable components then make sure we get query info for them.
+            if (queryableComponents.size() > 0) {
+                queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
+                    if (state.isOk()) {
+                        lastUsedQueryInfo = state.getQueryInfo();
+
+                        for (final Queryable queryable : queryableComponents) {
+                            queryable.setParams(currentParams);
+                            queryable.setQueryInfo(lastUsedQueryInfo);
+                            queryable.start();
                         }
                     }
-                }
-            });
-        }
-    }
-
-    @Override
-    public void stop() {
-        // If we have some queryable components then make sure we get query info for them.
-        for (final Queryable queryable : getQueryableComponents()) {
-            queryable.stop();
+                });
+            }
         }
     }
 

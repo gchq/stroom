@@ -108,6 +108,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -123,7 +124,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
-        implements HasDirtyHandlers, ResultComponent, HasSelection {
+        implements HasDirtyHandlers, ResultComponent, HasSelection, TableUiHandlers {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
@@ -155,6 +156,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private boolean ignoreRangeChange;
     private int[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private final Set<String> usedFieldIds = new HashSet<>();
+    private boolean pause;
+    private int currentRequestCount;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -188,6 +191,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         pagerView.setDataWidget(dataGrid);
 
         view.setTableView(pagerView);
+        view.setUiHandlers(this);
 
         // Add the 'add field' button.
         addFieldButton = pagerView.addButton(SvgPresets.ADD);
@@ -298,6 +302,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     protected void onUnbind() {
         super.onUnbind();
         cleanupSearchModelAssociation();
+    }
+
+    @Override
+    public void onPause() {
+        if (pause) {
+            this.pause = false;
+            refresh();
+        } else {
+            this.pause = true;
+        }
+        getView().setPaused(this.pause);
     }
 
     private void onAddField(final ClickEvent event) {
@@ -513,30 +528,23 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .copy()
                 .tableSettings(tableSettings)
                 .build();
+
+        getView().setRefreshing(true);
     }
 
     @Override
     public void endSearch() {
-    }
-
-    @Override
-    public void setWantsData(final boolean wantsData) {
-        getView().setRefreshing(wantsData);
-        if (wantsData) {
-            tableResultRequest = tableResultRequest
-                    .copy()
-                    .fetch(Fetch.CHANGES)
-                    .build();
-        } else {
-            tableResultRequest = tableResultRequest
-                    .copy()
-                    .fetch(Fetch.NONE)
-                    .build();
-        }
+        getView().setRefreshing(false);
     }
 
     @Override
     public void setData(final Result componentResult) {
+        if (!pause) {
+            setDataInternal(componentResult);
+        }
+    }
+
+    private void setDataInternal(final Result componentResult) {
         ignoreRangeChange = true;
 
         try {
@@ -957,8 +965,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public ComponentResultRequest getResultRequest() {
-        return tableResultRequest;
+    public ComponentResultRequest getResultRequest(final boolean ignorePause) {
+        Fetch fetch = Fetch.CHANGES;
+        if (pause && !ignorePause) {
+            fetch = Fetch.NONE;
+        }
+        return tableResultRequest.copy().fetch(fetch).build();
     }
 
     @Override
@@ -1016,11 +1028,25 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void refresh() {
-        currentSearchModel.refresh(getComponentConfig().getId());
+        currentRequestCount++;
+        getView().setPaused(pause && currentRequestCount == 0);
+        getView().setRefreshing(true);
+        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
+            try {
+                if (result != null) {
+                    setDataInternal(result);
+                }
+            } catch (final Exception e) {
+                GWT.log(e.getMessage());
+            }
+            currentRequestCount--;
+            getView().setPaused(pause && currentRequestCount == 0);
+            getView().setRefreshing(currentSearchModel.getMode());
+        });
     }
 
     void clear() {
-        setData(null);
+        setDataInternal(null);
     }
 
     public List<TableRow> getSelectedRows() {
@@ -1047,11 +1073,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return null;
     }
 
-    public interface TableView extends View {
+    public interface TableView extends View, HasUiHandlers<TableUiHandlers> {
 
         void setTableView(View view);
 
         void setRefreshing(boolean refreshing);
+
+        void setPaused(boolean paused);
     }
 
     private MenuItem createFieldMenuItem(final int priority, final Field field) {

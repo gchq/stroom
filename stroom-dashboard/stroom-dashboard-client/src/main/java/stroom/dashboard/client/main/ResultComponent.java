@@ -24,7 +24,7 @@ public interface ResultComponent {
 
     ComponentSettings getSettings();
 
-    ComponentResultRequest getResultRequest();
+    ComponentResultRequest getResultRequest(boolean ignorePause);
 
     ComponentResultRequest createDownloadQueryRequest();
 
@@ -33,8 +33,6 @@ public interface ResultComponent {
     void startSearch();
 
     void endSearch();
-
-    void setWantsData(boolean wantsData);
 
     void setData(Result componentResult);
 }

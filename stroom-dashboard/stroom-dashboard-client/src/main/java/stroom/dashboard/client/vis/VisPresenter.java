@@ -68,6 +68,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 
@@ -77,7 +78,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
-        implements ResultComponent, StatusHandler, SelectionUiHandlers, HasSelection {
+        implements ResultComponent, StatusHandler, SelectionUiHandlers, HasSelection, VisUiHandlers {
 
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
@@ -104,11 +105,12 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private Timer updateTimer;
     private JavaScriptObject lastData;
     private double opacity = 0;
-    private Fetch fetch;
     private TablePresenter linkedTablePresenter;
 
     private final Timer timer;
     private List<Map<String, String>> currentSelection;
+    private boolean pause;
+    private int currentRequestCount;
 
     @Inject
     public VisPresenter(final EventBus eventBus, final VisView view,
@@ -125,6 +127,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         visPane = visFrame;
         visFrame.setUiHandlers(this);
         view.setVisPane(visPane);
+        view.setUiHandlers(this);
 
         final Style style = visFrame.getElement().getStyle();
         style.setPosition(Position.ABSOLUTE);
@@ -139,6 +142,17 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 getComponents().fireComponentChangeEvent(VisPresenter.this);
             }
         };
+    }
+
+    @Override
+    public void onPause() {
+        if (pause) {
+            this.pause = false;
+            refresh();
+        } else {
+            this.pause = true;
+        }
+        getView().setPaused(this.pause);
     }
 
     @Override
@@ -282,13 +296,14 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         currentSettings = null;
         currentData = null;
         lastData = null;
-        fetch = null;
 
         if (!searching) {
             searching = true;
             visPane.start();
             updateStatusMessage();
         }
+
+        getView().setRefreshing(true);
     }
 
     @Override
@@ -298,16 +313,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
             visPane.end();
             updateStatusMessage();
         }
-    }
-
-    @Override
-    public void setWantsData(final boolean wantsData) {
-        getView().setRefreshing(wantsData);
-        if (wantsData) {
-            this.fetch = Fetch.CHANGES;
-        } else {
-            this.fetch = Fetch.NONE;
-        }
+        getView().setRefreshing(false);
     }
 
     private void cleanupSearchModelAssociation() {
@@ -319,8 +325,36 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         }
     }
 
+    private void refresh() {
+        currentRequestCount++;
+        getView().setPaused(pause && currentRequestCount == 0);
+        getView().setRefreshing(true);
+        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
+            try {
+                if (result != null) {
+                    setDataInternal(result);
+                }
+            } catch (final Exception e) {
+                GWT.log(e.getMessage());
+            }
+            currentRequestCount--;
+            getView().setPaused(pause && currentRequestCount == 0);
+            getView().setRefreshing(currentSearchModel.getMode());
+        });
+    }
+
+    void clear() {
+        setDataInternal(null);
+    }
+
     @Override
     public void setData(final Result componentResult) {
+        if (!pause) {
+            setDataInternal(componentResult);
+        }
+    }
+
+    private void setDataInternal(final Result componentResult) {
         try {
             if (getVisSettings() != null && getVisSettings().getVisualisation() != null) {
                 if (componentResult != null) {
@@ -611,9 +645,14 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public ComponentResultRequest getResultRequest() {
+    public ComponentResultRequest getResultRequest(final boolean ignorePause) {
         // Update table settings.
         updateLinkedTableSettings();
+
+        Fetch fetch = Fetch.CHANGES;
+        if (pause && !ignorePause) {
+            fetch = Fetch.NONE;
+        }
         return VisResultRequest
                 .builder()
                 .componentId(getId())
@@ -701,9 +740,11 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         return currentSelection;
     }
 
-    public interface VisView extends View, RequiresResize {
+    public interface VisView extends View, RequiresResize, HasUiHandlers<VisUiHandlers> {
 
         void setRefreshing(boolean refreshing);
+
+        void setPaused(boolean paused);
 
         void showMessage(String message);
 
