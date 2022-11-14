@@ -74,7 +74,8 @@ public class ContentResourceImpl implements ContentResource {
                 .withDefaultEventAction(buildImportEventAction(request))
                 .withSimpleLoggedResult(() ->
                         contentServiceProvider.get()
-                                .performImport(request.getResourceKey(), request.getConfirmList()))
+                                .performImport(request.getResourceKey(),
+                                        request.getConfirmList()))
                 .getResultAndLog();
     }
 
@@ -102,8 +103,10 @@ public class ContentResourceImpl implements ContentResource {
 
     @AutoLogged(OperationType.IMPORT)
     @Override
-    public List<ImportState> confirmImport(final ResourceKey resourceKey) {
-        return contentServiceProvider.get().confirmImport(resourceKey);
+    public List<ImportState> confirmImport(final ImportConfigRequest importConfigRequest) {
+        return contentServiceProvider.get().confirmImport(
+                importConfigRequest.getResourceKey(),
+                importConfigRequest.getConfirmList());
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)

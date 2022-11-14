@@ -3,21 +3,39 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:c="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="importConfigContainer max default-min-sizes dock-container-vertical">
+        <g:SimplePanel ui:field="dataGridView" styleName="dock-max itemCheckList"/>
         <g:Grid ui:field="grid" styleName="dock-min stroom-control-grid">
             <g:row>
                 <g:cell>Enable Processor Filters:</g:cell>
                 <g:customCell>
-                    <g:CheckBox styleName="itemCheckList" ui:field="enableFilters"/>
+                    <g:CheckBox ui:field="enableFilters"/>
                 </g:customCell>
             </g:row>
             <g:row>
-                <g:cell>From this date</g:cell>
+                <g:cell>Enable Processor Filters From:</g:cell>
                 <g:customCell>
                     <c:MyDateBox ui:field="enableFrom"/>
                 </g:customCell>
+                <g:cell>from this date (or leave blank to process from first stream)</g:cell>
+            </g:row>
+            <g:row>
+                <g:cell>Use Import Names:</g:cell>
+                <g:customCell>
+                    <g:CheckBox ui:field="useImportNames"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Use Import Folders:</g:cell>
+                <g:customCell>
+                    <g:CheckBox ui:field="useImportFolders"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Import To Root Folder:</g:cell>
+                <g:customCell>
+                    <g:SimplePanel ui:field="rootFolder"/>
+                </g:customCell>
             </g:row>
         </g:Grid>
-        <g:Label text="(or leave blank to process from first stream)" addStyleNames="dock-min"/>
-        <g:SimplePanel ui:field="dataGridView" styleName="dock-max itemCheckList"/>
     </g:FlowPanel>
 </ui:UiBinder> 

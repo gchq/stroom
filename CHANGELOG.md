@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+* Issue **#3091** : Add feature to optionally maintain import names and paths.
+
+* Issue **#3101** : Add sensible defaults to processor filter import.
+
+* Issue **#2491** : Add feature to allow a specific folder to be used as an import root folder destination.
+
+* Issue **#3038** : Fix number 2 for intermittent websocket alert.
+
+* Issue **#3097** : Fix Kryo output buffer size = -1 when writing to streams.
+
 * Issue **#3073** : Add string truncation and value length protection for search result fields.
 
 * Issue **#3038** : Fix intermittent websocket alert.

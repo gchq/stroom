@@ -39,7 +39,7 @@ public class ImportState {
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
-    private final String sourcePath;
+    private String sourcePath;
     @JsonProperty
     private String destPath;
     @JsonProperty
@@ -49,11 +49,17 @@ public class ImportState {
     @JsonProperty
     private final List<String> updatedFieldList;
     @JsonProperty
+    private boolean enableFilters;
+    @JsonProperty
+    private Long enableFiltersFromTime;
+    @JsonProperty
+    private boolean useImportNames;
+    @JsonProperty
+    private boolean useImportFolders;
+    @JsonProperty
+    private DocRef rootDocRef;
+    @JsonProperty
     private State state;
-    @JsonProperty
-    private Long enableTime;
-    @JsonProperty
-    private Boolean enable;
 
     @JsonCreator
     public ImportState(@JsonProperty("docRef") final DocRef docRef,
@@ -62,8 +68,11 @@ public class ImportState {
                        @JsonProperty("action") final boolean action,
                        @JsonProperty("messageList") final List<Message> messageList,
                        @JsonProperty("updatedFieldList") final List<String> updatedFieldList,
-                       @JsonProperty("enable") final Boolean enable,
-                       @JsonProperty("enableTime") final Long enableTime,
+                       @JsonProperty("enableFilters") final boolean enableFilters,
+                       @JsonProperty("enableFiltersFromTime") final Long enableFiltersFromTime,
+                       @JsonProperty("useImportNames") final boolean useImportNames,
+                       @JsonProperty("useImportFolders") final boolean useImportFolders,
+                       @JsonProperty("rootDocRef") final DocRef rootDocRef,
                        @JsonProperty("state") final State state) {
         this.docRef = docRef;
         this.sourcePath = sourcePath;
@@ -71,8 +80,11 @@ public class ImportState {
         this.action = action;
         this.messageList = messageList;
         this.updatedFieldList = updatedFieldList;
-        this.enableTime = enableTime;
-        this.enable = enable;
+        this.enableFilters = enableFilters;
+        this.enableFiltersFromTime = enableFiltersFromTime;
+        this.useImportNames = useImportNames;
+        this.useImportFolders = useImportFolders;
+        this.rootDocRef = rootDocRef;
         this.state = state;
     }
 
@@ -89,6 +101,10 @@ public class ImportState {
 
     public String getSourcePath() {
         return sourcePath;
+    }
+
+    public void setSourcePath(final String sourcePath) {
+        this.sourcePath = sourcePath;
     }
 
     public String getDestPath() {
@@ -135,20 +151,44 @@ public class ImportState {
         return updatedFieldList;
     }
 
-    public Long getEnableTime() {
-        return enableTime;
+    public boolean isEnableFilters() {
+        return enableFilters;
     }
 
-    public Boolean getEnable() {
-        return enable;
+    public void setEnableFilters(final boolean enableFilters) {
+        this.enableFilters = enableFilters;
     }
 
-    public void setEnable(Boolean enable) {
-        this.enable = enable;
+    public Long getEnableFiltersFromTime() {
+        return enableFiltersFromTime;
     }
 
-    public void setEnableTime(Long enableTime) {
-        this.enableTime = enableTime;
+    public void setEnableFiltersFromTime(final Long enableFiltersFromTime) {
+        this.enableFiltersFromTime = enableFiltersFromTime;
+    }
+
+    public boolean isUseImportNames() {
+        return useImportNames;
+    }
+
+    public void setUseImportNames(final boolean useImportNames) {
+        this.useImportNames = useImportNames;
+    }
+
+    public boolean isUseImportFolders() {
+        return useImportFolders;
+    }
+
+    public void setUseImportFolders(final boolean useImportFolders) {
+        this.useImportFolders = useImportFolders;
+    }
+
+    public DocRef getRootDocRef() {
+        return rootDocRef;
+    }
+
+    public void setRootDocRef(final DocRef rootDocRef) {
+        this.rootDocRef = rootDocRef;
     }
 
     public State getState() {

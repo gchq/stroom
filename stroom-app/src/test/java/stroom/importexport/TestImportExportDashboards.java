@@ -240,7 +240,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         // Import All
         final List<ImportState> confirmations = importExportService
-                .createImportConfirmationList(resourceStore.getTempFile(file));
+                .createImportConfirmationList(resourceStore.getTempFile(file), new ArrayList<>());
 
         for (final ImportState confirmation : confirmations) {
             confirmation.setAction(true);
