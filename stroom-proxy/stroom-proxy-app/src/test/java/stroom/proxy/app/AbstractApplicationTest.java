@@ -9,6 +9,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PropertyPath;
 
+import io.dropwizard.Application;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationFactoryFactory;
@@ -16,8 +17,10 @@ import io.dropwizard.configuration.ConfigurationSourceProvider;
 import io.dropwizard.configuration.DefaultConfigurationFactoryFactory;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.jackson.Jackson;
-import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
-import org.junit.jupiter.api.extension.ExtendWith;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,18 +28,43 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.client.Client;
 
-@ExtendWith(DropwizardExtensionsSupport.class)
+//@ExtendWith(DropwizardExtensionsSupport.class)
 public abstract class AbstractApplicationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractApplicationTest.class);
 
-    private static final Config config;
+    private Config config;
+    private Client client = null;
 
-    static {
+    // This is needed by DropwizardExtensionsSupport to fire up the proxy app
+    @RegisterExtension
+    private final DropwizardAppExtension<Config> dropwizard = new DropwizardAppExtension<>(
+            getAppClass(),
+            getConfig());
+
+    @BeforeEach
+    void beforeEach() throws Exception {
+        dropwizard.before();
+        client = dropwizard.client();
+    }
+
+    @AfterEach
+    void tearDown() {
+        dropwizard.after();
+    }
+
+    // Subclasses can override this
+    protected Class<? extends Application<Config>> getAppClass() {
+        return App.class;
+    }
+
+    private void setupConfig() {
         config = loadYamlFile("proxy-dev.yml");
 
         // If the home/temp paths don't exist then startup will exit, killing the rest of the tests
@@ -80,13 +108,17 @@ public abstract class AbstractApplicationTest {
         // Can't use Map.of() due to null value
         final Map<PropertyPath, Object> propValueMap = new HashMap<>();
         propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_REST_CLIENT, "tls"), null);
+        propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), modifiedPathConfig);
+
         propValueMap.put(
                 ProxyConfig.buildPath(ProxyConfig.PROP_NAME_FORWARD_DESTINATIONS),
                 forwardConfigs);
-        propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), modifiedPathConfig);
         propValueMap.put(ProxyConfig.buildPath(
                 ProxyConfig.PROP_NAME_REPOSITORY,
                 ProxyRepoConfig.PROP_NAME_STORING_ENABLED), false);
+
+        // Add any overrides from the sub-classes
+        propValueMap.putAll(getPropertyValueOverrides());
 
         final ProxyConfig modifiedProxyConfig = AbstractConfigUtil.mutateTree(
                 config.getProxyConfig(),
@@ -96,8 +128,25 @@ public abstract class AbstractApplicationTest {
         config.setProxyConfig(modifiedProxyConfig);
     }
 
-    static Config getConfig() {
+    protected Map<PropertyPath, Object> getPropertyValueOverrides() {
+        // Override this method if you want to add more prop overrides
+        return Collections.emptyMap();
+    }
+
+
+    Config getConfig() {
+        if (config == null) {
+            setupConfig();
+        }
         return config;
+    }
+
+    Client getClient() {
+        return client;
+    }
+
+    public DropwizardAppExtension<Config> getDropwizard() {
+        return dropwizard;
     }
 
     private static Config readConfig(final Path configFile) {

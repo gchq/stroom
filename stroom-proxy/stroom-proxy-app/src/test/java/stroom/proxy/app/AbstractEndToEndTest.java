@@ -21,12 +21,10 @@ import com.github.tomakehurst.wiremock.extension.PostServeAction;
 import com.github.tomakehurst.wiremock.http.HttpHeaders;
 import com.github.tomakehurst.wiremock.http.LoggedResponse;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
-import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import io.dropwizard.server.DefaultServerFactory;
-import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.io.FilenameUtils;
@@ -50,7 +48,6 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.Response;
@@ -65,21 +62,17 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
     static final int DEFAULT_STROOM_PORT = 8080;
 
     // Can be changed by subclasses, e.g. if one test is noisy but others are not
-    protected static volatile boolean IS_REQUEST_LOGGING_ENABLED = true;
-    protected static volatile boolean IS_HEADER_LOGGING_ENABLED = true;
+    protected volatile boolean isRequestLoggingEnabled = true;
+    protected volatile boolean isHeaderLoggingEnabled = true;
 
-    // This is needed by DropwizardExtensionsSupport to fire up the proxy app
-    private static final DropwizardAppExtension<Config> DROPWIZARD = new DropwizardAppExtension<Config>(
-            App.class,
-            getConfig());
 
     // Hold all requests send to the wiremock stroom datafeed endpoint
-    private static final List<DataFeedRequest> DATA_FEED_REQUESTS = new ArrayList<>();
+    private final List<DataFeedRequest> dataFeedRequests = new ArrayList<>();
 
     // Use RegisterExtension instead of @WireMockTest so we can set up the req listener
     @SuppressWarnings("unused")
     @RegisterExtension
-    private static final WireMockExtension WIRE_MOCK_EXTENSION = WireMockExtension.newInstance()
+    private final WireMockExtension wireMockExtension = WireMockExtension.newInstance()
             .options(WireMockConfiguration.wireMockConfig().port(DEFAULT_STROOM_PORT))
             .options(WireMockConfiguration.wireMockConfig().extensions(new PostServeAction() {
                 @Override
@@ -90,7 +83,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
                 @Override
                 public void doGlobalAction(final ServeEvent serveEvent, final Admin admin) {
                     super.doGlobalAction(serveEvent, admin);
-                    if (IS_REQUEST_LOGGING_ENABLED) {
+                    if (isRequestLoggingEnabled) {
                         dumpWireMockEvent(serveEvent);
                     }
                     if (serveEvent.getRequest().getUrl().equals(getDataFeedPath())) {
@@ -101,13 +94,11 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
             .build();
 
     final LongAdder postToProxyCount = new LongAdder();
-    final Client client = DROPWIZARD.client();
 
     @BeforeEach
-    void beforeEach(final WireMockRuntimeInfo wmRuntimeInfo) {
-        DATA_FEED_REQUESTS.clear();
+    void setUp() {
+        dataFeedRequests.clear();
         postToProxyCount.reset();
-        LOGGER.info("WireMock running on: {}", wmRuntimeInfo.getHttpBaseUrl());
     }
 
     void setupStroomStubs(Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
@@ -151,8 +142,8 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         return ResourcePaths.buildUnauthenticatedServletPath(ReceiveDataServlet.DATA_FEED_PATH_PART);
     }
 
-    public static void dumpAllWireMockEvents() {
-        WireMock.getAllServeEvents().forEach(AbstractEndToEndTest::dumpWireMockEvent);
+    public void dumpAllWireMockEvents() {
+        WireMock.getAllServeEvents().forEach(this::dumpWireMockEvent);
     }
 
     public static String getRequestBodyAsString(final LoggedRequest loggedRequest) {
@@ -193,7 +184,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         return requestBody;
     }
 
-    private static void captureDataFeedRequest(final ServeEvent serveEvent) {
+    private void captureDataFeedRequest(final ServeEvent serveEvent) {
         final LoggedRequest request = serveEvent.getRequest();
 
         final byte[] body = request.getBody();
@@ -228,7 +219,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
             stroomStreamProcessor.processInputStream(new ByteArrayInputStream(body), "");
 
             final DataFeedRequest dataFeedRequest = new DataFeedRequest(attributeMap, nameToItemMap);
-            DATA_FEED_REQUESTS.add(dataFeedRequest);
+            dataFeedRequests.add(dataFeedRequest);
         }
     }
 
@@ -241,15 +232,15 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         return attributeMap;
     }
 
-    private static String getHeaders(final HttpHeaders headers) {
-        return IS_HEADER_LOGGING_ENABLED
+    private String getHeaders(final HttpHeaders headers) {
+        return isHeaderLoggingEnabled
                 ? headers.all().stream()
                 .map(httpHeader -> "  * " + httpHeader.toString())
                 .collect(Collectors.joining("\n"))
                 : "[Header logging disabled using IS_HEADER_LOGGING_ENABLED]";
     }
 
-    public static void dumpWireMockEvent(final ServeEvent serveEvent) {
+    public void dumpWireMockEvent(final ServeEvent serveEvent) {
         final LoggedRequest request = serveEvent.getRequest();
         final String requestHeaders = getHeaders(request.getHeaders());
         final String requestBody = getRequestBodyAsString(request);
@@ -288,7 +279,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         final String url = buildProxyAppPath(ResourcePaths.buildUnauthenticatedServletPath("datafeed"));
         try {
 
-            final Builder builder = client.target(url)
+            final Builder builder = getClient().target(url)
                     .request()
                     .header("Feed", feed)
                     .header("System", system)
@@ -310,7 +301,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         return status;
     }
 
-    static void waitForHealthyProxyApp(final Duration timeout) {
+    void waitForHealthyProxyApp(final Duration timeout) {
 
         final Instant startTime = Instant.now();
         final String healthCheckUrl = buildProxyAdminPath("/healthcheck");
@@ -320,7 +311,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         LOGGER.info("Waiting for proxy to start using " + healthCheckUrl);
         while (startTime.plus(timeout).isAfter(Instant.now())) {
             try {
-                Response response = DROPWIZARD.client().target(healthCheckUrl)
+                Response response = getClient().target(healthCheckUrl)
                         .request()
                         .get();
                 if (Family.SUCCESSFUL.equals(response.getStatusInfo().toEnum().getFamily())) {
@@ -346,21 +337,21 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         }
     }
 
-    static String getProxyBaseAppUrl() {
+    String getProxyBaseAppUrl() {
         final String appPath = ((DefaultServerFactory) getConfig().getServerFactory()).getApplicationContextPath();
-        return "http://localhost:" + DROPWIZARD.getLocalPort() + appPath;
+        return "http://localhost:" + getDropwizard().getLocalPort() + appPath;
     }
 
-    static String getProxyBaseAdminUrl() {
+    String getProxyBaseAdminUrl() {
         final String adminPath = ((DefaultServerFactory) getConfig().getServerFactory()).getAdminContextPath();
-        return "http://localhost:" + DROPWIZARD.getAdminPort() + adminPath;
+        return "http://localhost:" + getDropwizard().getAdminPort() + adminPath;
     }
 
-    static String buildProxyAppPath(final String path) {
+    String buildProxyAppPath(final String path) {
         return getProxyBaseAppUrl().replaceAll("/$", "") + path;
     }
 
-    static String buildProxyAdminPath(final String path) {
+    String buildProxyAdminPath(final String path) {
         return getProxyBaseAdminUrl().replaceAll("/$", "") + path;
     }
 
@@ -400,8 +391,8 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
     /**
      * @return All requests received by the /datafeed endpoint
      */
-    public static List<DataFeedRequest> getDataFeedRequests() {
-        return DATA_FEED_REQUESTS;
+    public List<DataFeedRequest> getDataFeedRequests() {
+        return dataFeedRequests;
     }
 
     private static <T> T extractContent(final LoggedRequest loggedRequest, final Class<T> clazz) {

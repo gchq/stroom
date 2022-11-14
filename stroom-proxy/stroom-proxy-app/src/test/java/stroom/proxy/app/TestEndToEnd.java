@@ -8,7 +8,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
-@Disabled // TODO: 11/11/2022 Temporary to see if this class is breaking GitHub Actions :-(
 public class TestEndToEnd extends AbstractEndToEndTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestEndToEnd.class);
@@ -26,11 +25,26 @@ public class TestEndToEnd extends AbstractEndToEndTest {
     protected static final String SYSTEM_TEST_SYSTEM = "TEST SYSTEM";
     protected static final String ENVIRONMENT_DEV = "DEV";
 
+    @BeforeEach
+    void beforeEach(final WireMockRuntimeInfo wmRuntimeInfo) {
+        LOGGER.info("WireMock running on: {}", wmRuntimeInfo.getHttpBaseUrl());
+    }
+
+//    @Override
+//    protected Map<PropertyPath, Object> getPropertyValueOverrides() {
+//        return Map.of(
+//                ProxyConfig.buildPath(
+//                        ProxyConfig.PROP_NAME_REPOSITORY,
+//                        ProxyRepoConfig.PROP_NAME_STORING_ENABLED), false,
+//
+//        );
+//    }
+
     @Test
     void testBasicEndToEnd(final WireMockRuntimeInfo wireMockRuntimeInfo) {
         LOGGER.info("Starting basic end-end test");
 
-        AbstractEndToEndTest.IS_REQUEST_LOGGING_ENABLED = true;
+        super.isRequestLoggingEnabled = true;
 
         setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
@@ -78,7 +92,7 @@ public class TestEndToEnd extends AbstractEndToEndTest {
                 .extracting(req -> req.getHeader(StandardHeaderArguments.FEED))
                 .containsExactly(FEED_TEST_EVENTS_1, FEED_TEST_EVENTS_2);
 
-        final List<DataFeedRequest> dataFeedRequests = AbstractEndToEndTest.getDataFeedRequests();
+        final List<DataFeedRequest> dataFeedRequests = getDataFeedRequests();
         Assertions.assertThat(dataFeedRequests)
                 .hasSize(2);
 
