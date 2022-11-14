@@ -98,41 +98,26 @@ public abstract class AbstractApplicationTest {
     private void setupConfig() {
         config = loadYamlFile("proxy-dev.yml");
 
-        // The key/trust store paths will not be available in travis so null them out
-//        final List<ForwardConfig> forwardConfigs = NullSafe.stream(config.getProxyConfig().getForwardDestinations())
-//                .map(forwardConfig -> {
-//                    if (forwardConfig instanceof ForwardHttpPostConfig) {
-//                        return ((ForwardHttpPostConfig) forwardConfig).withSslConfig(null);
-//                    } else {
-//                        // keep unchanged
-//                        return forwardConfig;
-//                    }
-//                }).toList();
-
-        // Can't use Map.of() due to null value
-        final Map<PropertyPath, Object> propValueMap = new HashMap<>();
-        propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_REST_CLIENT, "tls"), null);
-        propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), createProxyPathConfig());
-
-//        propValueMap.put(
-//                ProxyConfig.buildPath(ProxyConfig.PROP_NAME_FORWARD_DESTINATIONS),
-//                forwardConfigs);
-        propValueMap.put(ProxyConfig.buildPath(
-                ProxyConfig.PROP_NAME_REPOSITORY,
-                ProxyRepoConfig.PROP_NAME_STORING_ENABLED), false);
-
-        // Add any overrides from the sub-classes
-        propValueMap.putAll(getPropertyValueOverrides());
-
-        final ProxyConfig modifiedProxyConfig = AbstractConfigUtil.mutateTree(
-                config.getProxyConfig(),
-                ProxyConfig.ROOT_PROPERTY_PATH,
-                propValueMap);
-
         final ProxyConfig proxyConfigOverride = getProxyConfigOverride();
         if (proxyConfigOverride != null ) {
             config.setProxyConfig(proxyConfigOverride);
         } else {
+            // Can't use Map.of() due to null value
+            final Map<PropertyPath, Object> propValueMap = new HashMap<>();
+            propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_REST_CLIENT, "tls"), null);
+            propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), createProxyPathConfig());
+            propValueMap.put(ProxyConfig.buildPath(
+                    ProxyConfig.PROP_NAME_REPOSITORY,
+                    ProxyRepoConfig.PROP_NAME_STORING_ENABLED), false);
+
+            // Add any overrides from the sub-classes
+            propValueMap.putAll(getPropertyValueOverrides());
+
+            final ProxyConfig modifiedProxyConfig = AbstractConfigUtil.mutateTree(
+                    config.getProxyConfig(),
+                    ProxyConfig.ROOT_PROPERTY_PATH,
+                    propValueMap);
+
             config.setProxyConfig(modifiedProxyConfig);
         }
 
@@ -141,13 +126,14 @@ public abstract class AbstractApplicationTest {
 
     private void ensureDirectories(final ProxyConfig proxyConfig) {
 
+        LOGGER.info("Ensuring configured directories exist");
         final HomeDirProvider homeDirProvider = new HomeDirProviderImpl(proxyConfig.getPathConfig());
         final TempDirProvider tempDirProvider = new TempDirProviderImpl(proxyConfig.getPathConfig(), homeDirProvider);
         final PathCreator pathCreator = new SimplePathCreator(homeDirProvider, tempDirProvider);
 
         final Consumer<String> createDirConsumer = ThrowingConsumer.unchecked(dirStr -> {
             final Path path = pathCreator.toAppPath(dirStr);
-            LOGGER.debug("Ensuring dir {} exists", path.toAbsolutePath().normalize());
+            LOGGER.info("Ensuring dir {} exists", path.toAbsolutePath().normalize());
             Files.createDirectories(path);
         });
 
