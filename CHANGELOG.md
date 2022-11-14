@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-alpha.5] - 2022-11-14
+
 * Issue **#3091** : Add feature to optionally maintain import names and paths.
 
 * Issue **#3101** : Add sensible defaults to processor filter import.
@@ -41,7 +43,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3069** : Fix import of a Feed's Stream Type when the export was made in Stroom v5. Add validation to fail the
   import if the stream type in the export is not in `stroom.data.meta.metaTypes`. Fix word wrapping on the import error
   messages tooltip.
+
 * 
+
 * Issue **#3073** : Add string truncation and value length protection for search result fields.
 
 * Issue **#3038** : Fix intermittent websocket alert.
@@ -4905,7 +4909,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.5...HEAD
+[v7.2-alpha.5]: https://github.com/gchq/stroom/compare/v7.2-alpha.4...v7.2-alpha.5
 [v7.2-alpha.4]: https://github.com/gchq/stroom/compare/v7.1-beta.14...v7.2-alpha.4
 
 [v7.1-beta.14]: https://github.com/gchq/stroom/compare/v7.1-beta.13...v7.1-beta.14
