@@ -186,9 +186,9 @@ public class NullSafe {
     }
 
     /**
-     * Returns a {@link Stream<T>} if collection is non-null else returns an empty {@link Stream<T>}
+     * Returns a {@link Stream< E >} if collection is non-null else returns an empty {@link Stream< E >}
      */
-    public static <T> Stream<T> stream(final Collection<T> collection) {
+    public static <E> Stream<E> stream(final Collection<E> collection) {
         if (collection == null || collection.isEmpty()) {
             return Stream.empty();
         } else {

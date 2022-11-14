@@ -1,6 +1,8 @@
 package stroom.proxy.app;
 
 import stroom.meta.api.AttributeMap;
+import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusResource;
@@ -8,6 +10,8 @@ import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.util.NullSafe;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 
@@ -20,7 +24,9 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.extension.PostServeAction;
 import com.github.tomakehurst.wiremock.http.HttpHeaders;
 import com.github.tomakehurst.wiremock.http.LoggedResponse;
+import com.github.tomakehurst.wiremock.http.MultiValue;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
@@ -41,15 +47,16 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
 
@@ -96,7 +103,8 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
     final LongAdder postToProxyCount = new LongAdder();
 
     @BeforeEach
-    void setUp() {
+    void setUp(final WireMockRuntimeInfo wmRuntimeInfo) {
+        LOGGER.info("WireMock running on: {}", wmRuntimeInfo.getHttpBaseUrl());
         dataFeedRequests.clear();
         postToProxyCount.reset();
     }
@@ -128,7 +136,8 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
                                 .withHeader("Allow", "POST")));
         LOGGER.info("Setup WireMock OPTIONS stub for any URL");
 
-        // now the stubs are set up wait for proxy to be ready as proxy needs to stubs to be healthy
+        // now the stubs are set up wait for proxy to be ready as proxy needs the
+        // stubs to be available to be healthy
         waitForHealthyProxyApp(Duration.ofSeconds(30));
     }
 
@@ -136,6 +145,26 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         return ResourcePaths.buildAuthenticatedApiPath(
                 FeedStatusResource.BASE_RESOURCE_PATH,
                 FeedStatusResource.GET_FEED_STATUS_PATH_PART);
+    }
+
+    public static ForwardHttpPostConfig createForwardHttpPostConfig() {
+        return ForwardHttpPostConfig.builder()
+                .enabled(true)
+                .forwardUrl("http://localhost:"
+                        + DEFAULT_STROOM_PORT
+                        + getDataFeedPath())
+                .name("Stroom datafeed")
+                .userAgent("Junit test")
+                .build();
+    }
+
+    public static FeedStatusConfig createFeedStatusConfig() {
+        return new FeedStatusConfig(
+                "http://localhost:"
+                        + DEFAULT_STROOM_PORT
+                        + ResourcePaths.buildAuthenticatedApiPath(FeedStatusResource.BASE_RESOURCE_PATH),
+                null,
+                null);
     }
 
     public static String getDataFeedPath() {
@@ -160,7 +189,8 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
                                           final Supplier<byte[]> bodyAsBytesSupplier) {
         final String requestBody;
         if (NullSafe.test(
-                headers.getHeader("Compression"),
+                headers,
+                headers2 -> headers2.getHeader("Compression"),
                 header -> header.containsValue("ZIP"))) {
 
             final byte[] body = bodyAsBytesSupplier.get();
@@ -233,11 +263,21 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
     }
 
     private String getHeaders(final HttpHeaders headers) {
-        return isHeaderLoggingEnabled
-                ? headers.all().stream()
-                .map(httpHeader -> "  * " + httpHeader.toString())
-                .collect(Collectors.joining("\n"))
-                : "[Header logging disabled using IS_HEADER_LOGGING_ENABLED]";
+        if (headers != null) {
+            if (isHeaderLoggingEnabled) {
+                return AsciiTable.builder(headers.all()
+                                .stream()
+                                .sorted(Comparator.comparing(MultiValue::key))
+                                .toList())
+                        .withColumn(Column.of("Header", MultiValue::key))
+                        .withColumn(Column.of("Value", MultiValue::firstValue))
+                        .build();
+            } else {
+                return "[Header logging disabled using IS_HEADER_LOGGING_ENABLED]";
+            }
+        } else {
+            return "";
+        }
     }
 
     public void dumpWireMockEvent(final ServeEvent serveEvent) {
@@ -254,10 +294,12 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
                         --------------------------------------------------------------------------------
                         request: {} {}
                         {}
+                        Body:
                         {}
                         --------------------------------------------------------------------------------
                         response: {}
                         {}
+                        Body:
                         {}
                         --------------------------------------------------------------------------------""",
                 request.getMethod(),
@@ -307,11 +349,12 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         final String healthCheckUrl = buildProxyAdminPath("/healthcheck");
 
         boolean didTimeout = true;
+        Response response = null;
 
         LOGGER.info("Waiting for proxy to start using " + healthCheckUrl);
         while (startTime.plus(timeout).isAfter(Instant.now())) {
             try {
-                Response response = getClient().target(healthCheckUrl)
+                response = getClient().target(healthCheckUrl)
                         .request()
                         .get();
                 if (Family.SUCCESSFUL.equals(response.getStatusInfo().toEnum().getFamily())) {
@@ -326,14 +369,18 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
                 // Expected, so sleep and go round again
             }
             try {
-                Thread.sleep(50);
+                Thread.sleep(100);
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("Interrupted while sleeping");
             }
         }
         if (didTimeout) {
-            throw new RuntimeException("Timed out waiting for proxy to start");
+            // Get the healtcheck content so we can see what is wrong. Likely a feed status check issue
+            final Map<String, Object> map = response.readEntity(new GenericType<Map<String, Object>>() {
+            });
+            throw new RuntimeException(LogUtil.message(
+                    "Timed out waiting for proxy to start. Last response: {}", map));
         }
     }
 

@@ -21,6 +21,9 @@ import javax.validation.constraints.NotNull;
 @JsonPropertyOrder(alphabetic = true)
 public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, IsProxyConfig {
 
+    public static final String PROP_NAME_ENABLED = "enabled";
+    public static final String PROP_NAME_MAX_ITEMS_PER_AGGREGATE = "maxItemsPerAggregate";
+
     protected static final boolean DEFAULT_ENABLED = true;
     protected static final int DEFAULT_MAX_ITEMS_PER_AGGREGATE = 1_000;
     protected static final String DEFAULT_MAX_UNCOMPRESSED_SIZE_STR = "1G";
@@ -45,8 +48,8 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public AggregatorConfig(@JsonProperty("enabled") final boolean enabled,
-                            @JsonProperty("maxItemsPerAggregate") final int maxItemsPerAggregate,
+    public AggregatorConfig(@JsonProperty(PROP_NAME_ENABLED) final boolean enabled,
+                            @JsonProperty(PROP_NAME_MAX_ITEMS_PER_AGGREGATE) final int maxItemsPerAggregate,
                             @JsonProperty("maxUncompressedByteSize") final String maxUncompressedByteSizeString,
                             @JsonProperty("maxAggregateAge") final StroomDuration maxAggregateAge,
                             @JsonProperty("aggregationFrequency") final StroomDuration aggregationFrequency) {

@@ -1,9 +1,6 @@
 package stroom.proxy.app;
 
-import stroom.proxy.app.forwarder.ForwardConfig;
-import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.util.NullSafe;
 import stroom.util.config.AbstractConfigUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
@@ -30,7 +27,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.ws.rs.client.Client;
 
@@ -64,11 +60,7 @@ public abstract class AbstractApplicationTest {
         return App.class;
     }
 
-    private void setupConfig() {
-        config = loadYamlFile("proxy-dev.yml");
-
-        // If the home/temp paths don't exist then startup will exit, killing the rest of the tests
-
+    protected ProxyPathConfig createProxyPathConfig() {
         final Path temp;
         try {
             temp = Files.createTempDirectory("stroom-proxy");
@@ -89,30 +81,31 @@ public abstract class AbstractApplicationTest {
         FileUtil.ensureDirExists(proxyHomeDir);
         FileUtil.ensureDirExists(proxyTempDir);
 
-        final ProxyPathConfig modifiedPathConfig = config.getProxyConfig()
-                .getPathConfig()
-                .withHome(homeDirStr)
-                .withTemp(tempDirStr);
+        return new ProxyPathConfig(homeDirStr, tempDirStr);
+    }
+
+    private void setupConfig() {
+        config = loadYamlFile("proxy-dev.yml");
 
         // The key/trust store paths will not be available in travis so null them out
-        final List<ForwardConfig> forwardConfigs = NullSafe.stream(config.getProxyConfig().getForwardDestinations())
-                .map(forwardConfig -> {
-                    if (forwardConfig instanceof ForwardHttpPostConfig) {
-                        return ((ForwardHttpPostConfig) forwardConfig).withSslConfig(null);
-                    } else {
-                        // keep unchanged
-                        return forwardConfig;
-                    }
-                }).toList();
+//        final List<ForwardConfig> forwardConfigs = NullSafe.stream(config.getProxyConfig().getForwardDestinations())
+//                .map(forwardConfig -> {
+//                    if (forwardConfig instanceof ForwardHttpPostConfig) {
+//                        return ((ForwardHttpPostConfig) forwardConfig).withSslConfig(null);
+//                    } else {
+//                        // keep unchanged
+//                        return forwardConfig;
+//                    }
+//                }).toList();
 
         // Can't use Map.of() due to null value
         final Map<PropertyPath, Object> propValueMap = new HashMap<>();
         propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_REST_CLIENT, "tls"), null);
-        propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), modifiedPathConfig);
+        propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), createProxyPathConfig());
 
-        propValueMap.put(
-                ProxyConfig.buildPath(ProxyConfig.PROP_NAME_FORWARD_DESTINATIONS),
-                forwardConfigs);
+//        propValueMap.put(
+//                ProxyConfig.buildPath(ProxyConfig.PROP_NAME_FORWARD_DESTINATIONS),
+//                forwardConfigs);
         propValueMap.put(ProxyConfig.buildPath(
                 ProxyConfig.PROP_NAME_REPOSITORY,
                 ProxyRepoConfig.PROP_NAME_STORING_ENABLED), false);
@@ -125,7 +118,16 @@ public abstract class AbstractApplicationTest {
                 ProxyConfig.ROOT_PROPERTY_PATH,
                 propValueMap);
 
-        config.setProxyConfig(modifiedProxyConfig);
+        final ProxyConfig proxyConfigOverride = getProxyConfigOverride();
+        if (proxyConfigOverride != null ) {
+            config.setProxyConfig(proxyConfigOverride);
+        } else {
+            config.setProxyConfig(modifiedProxyConfig);
+        }
+    }
+
+    protected ProxyConfig getProxyConfigOverride() {
+        return null;
     }
 
     protected Map<PropertyPath, Object> getPropertyValueOverrides() {

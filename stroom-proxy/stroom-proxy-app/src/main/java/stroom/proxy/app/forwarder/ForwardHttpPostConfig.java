@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 @NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)
@@ -25,6 +26,17 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     private final StroomDuration forwardDelay;
     private final Integer forwardChunkSize;
     private final SSLConfig sslConfig;
+
+    public ForwardHttpPostConfig() {
+        enabled = true;
+        name = null;
+        userAgent = null;
+        forwardUrl = null;
+        forwardTimeout = StroomDuration.ofSeconds(30);
+        forwardDelay = StroomDuration.ZERO;
+        forwardChunkSize = null;
+        sslConfig = null;
+    }
 
     @SuppressWarnings("unused")
     @JsonCreator
@@ -55,6 +67,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         return enabled;
     }
 
+    @NotNull
     @JsonProperty
     @Override
     public String getName() {
@@ -63,6 +76,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
 
     /**
      * The string to use for the User-Agent request property when forwarding data.
+     * If a user-agent is not defined a default user-agent will be used instead.
      */
     @JsonProperty
     public String getUserAgent() {
@@ -72,6 +86,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     /**
      * The URL's to forward onto. This is pass-through mode if repoDir is not set
      */
+    @NotNull
     @JsonProperty
     public String getForwardUrl() {
         return forwardUrl;
@@ -114,7 +129,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     }
 
     public static ForwardHttpPostConfig withForwardUrl(final String name,
-                                                final String forwardUrl) {
+                                                       final String forwardUrl) {
         return new ForwardHttpPostConfig(
                 true,
                 name,
@@ -124,6 +139,10 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                 null,
                 null,
                 null);
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -167,5 +186,82 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                 ", forwardChunkSize=" + forwardChunkSize +
                 ", sslConfig=" + sslConfig +
                 '}';
+    }
+
+    public static class Builder {
+
+        private boolean enabled;
+        private String name;
+        private String userAgent;
+        private String forwardUrl;
+        private StroomDuration forwardTimeout;
+        private StroomDuration forwardDelay;
+        private Integer forwardChunkSize;
+        private SSLConfig sslConfig;
+
+        public Builder() {
+            final ForwardHttpPostConfig forwardHttpPostConfig = new ForwardHttpPostConfig();
+
+            this.enabled = forwardHttpPostConfig.enabled;
+            this.name = forwardHttpPostConfig.name;
+            this.userAgent = forwardHttpPostConfig.userAgent;
+            this.forwardUrl = forwardHttpPostConfig.forwardUrl;
+            this.forwardTimeout = forwardHttpPostConfig.forwardTimeout;
+            this.forwardDelay = forwardHttpPostConfig.forwardDelay;
+            this.forwardChunkSize = forwardHttpPostConfig.forwardChunkSize;
+            this.sslConfig = forwardHttpPostConfig.sslConfig;
+        }
+
+        public Builder enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder userAgent(final String userAgent) {
+            this.userAgent = userAgent;
+            return this;
+        }
+
+        public Builder forwardUrl(final String forwardUrl) {
+            this.forwardUrl = forwardUrl;
+            return this;
+        }
+
+        public Builder forwardTimeout(final StroomDuration forwardTimeout) {
+            this.forwardTimeout = forwardTimeout;
+            return this;
+        }
+
+        public Builder forwardDelay(final StroomDuration forwardDelay) {
+            this.forwardDelay = forwardDelay;
+            return this;
+        }
+
+        public Builder forwardChunkSize(final Integer forwardChunkSize) {
+            this.forwardChunkSize = forwardChunkSize;
+            return this;
+        }
+
+        public Builder sslConfig(final SSLConfig sslConfig) {
+            this.sslConfig = sslConfig;
+            return this;
+        }
+
+        public ForwardHttpPostConfig build() {
+            return new ForwardHttpPostConfig(
+                    enabled,
+                    name,
+                    userAgent,
+                    forwardUrl,
+                    forwardTimeout,
+                    forwardDelay,
+                    forwardChunkSize,
+                    sslConfig);
+        }
     }
 }
