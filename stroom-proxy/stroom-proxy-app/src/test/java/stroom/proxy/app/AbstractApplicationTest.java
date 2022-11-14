@@ -1,8 +1,18 @@
 package stroom.proxy.app;
 
+import stroom.proxy.repo.ForwardRetryConfig;
+import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.util.NullSafe;
 import stroom.util.config.AbstractConfigUtil;
+import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.FileUtil;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
+import stroom.util.io.TempDirProvider;
+import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PropertyPath;
 
@@ -28,6 +38,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import javax.ws.rs.client.Client;
 
 //@ExtendWith(DropwizardExtensionsSupport.class)
@@ -124,6 +135,26 @@ public abstract class AbstractApplicationTest {
         } else {
             config.setProxyConfig(modifiedProxyConfig);
         }
+
+        ensureDirectories(config.getProxyConfig());
+    }
+
+    private void ensureDirectories(final ProxyConfig proxyConfig) {
+
+        final HomeDirProvider homeDirProvider = new HomeDirProviderImpl(proxyConfig.getPathConfig());
+        final TempDirProvider tempDirProvider = new TempDirProviderImpl(proxyConfig.getPathConfig(), homeDirProvider);
+        final PathCreator pathCreator = new SimplePathCreator(homeDirProvider, tempDirProvider);
+
+        final Consumer<String> createDirConsumer = ThrowingConsumer.unchecked(dirStr -> {
+            final Path path = pathCreator.toAppPath(dirStr);
+            LOGGER.debug("Ensuring dir {} exists", path.toAbsolutePath().normalize());
+            Files.createDirectories(path);
+        });
+
+        NullSafe.consume(proxyConfig.getProxyRepositoryConfig(), ProxyRepoConfig::getRepoDir, createDirConsumer);
+        NullSafe.consume(proxyConfig.getContentDir(), createDirConsumer);
+        NullSafe.consume(proxyConfig.getProxyDbConfig(), ProxyDbConfig::getDbDir, createDirConsumer);
+        NullSafe.consume(proxyConfig.getForwardRetry(), ForwardRetryConfig::getFailedForwardDir, createDirConsumer);
     }
 
     protected ProxyConfig getProxyConfigOverride() {
