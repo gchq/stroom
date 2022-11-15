@@ -25,7 +25,6 @@ import io.dropwizard.configuration.DefaultConfigurationFactoryFactory;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -54,7 +53,6 @@ public abstract class AbstractApplicationTest {
     @RegisterExtension
     private final DropwizardAppExtension<Config> dropwizard = getDropwizardAppExtension();
 
-    @NotNull
     private DropwizardAppExtension<Config> getDropwizardAppExtension() {
         final Config config = getConfig();
 
