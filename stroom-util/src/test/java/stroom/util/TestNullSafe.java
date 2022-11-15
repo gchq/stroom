@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
 import org.apache.commons.lang3.mutable.MutableLong;
@@ -27,7 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class TestNullSafe {
@@ -46,7 +46,8 @@ class TestNullSafe {
     Stream<DynamicTest> testCoalesce_twoValues() {
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(String.class, String.class)
-                .withWrappedOutputType(new TypeLiteral<Optional<String>>(){})
+                .withWrappedOutputType(new TypeLiteral<Optional<String>>() {
+                })
                 .withTestFunction(testCase ->
                         NullSafe.coalesce(testCase.getInput()._1, testCase.getInput()._2))
                 .withSimpleEqualityAssertion()
@@ -61,7 +62,8 @@ class TestNullSafe {
     Stream<DynamicTest> testCoalesce_threeValues() {
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(String.class, String.class, String.class)
-                .withWrappedOutputType(new TypeLiteral<Optional<String>>(){})
+                .withWrappedOutputType(new TypeLiteral<Optional<String>>() {
+                })
                 .withTestFunction(testCase ->
                         NullSafe.coalesce(
                                 testCase.getInput()._1,
@@ -79,8 +81,10 @@ class TestNullSafe {
     @TestFactory
     Stream<DynamicTest> testCoalesce_fourValues() {
         return TestUtil.buildDynamicTestStream()
-                .withWrappedInputType(new TypeLiteral<Tuple4<String, String, String, String>>(){})
-                .withWrappedOutputType(new TypeLiteral<Optional<String>>(){})
+                .withWrappedInputType(new TypeLiteral<Tuple4<String, String, String, String>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<Optional<String>>() {
+                })
                 .withTestFunction(testCase ->
                         NullSafe.coalesce(
                                 testCase.getInput()._1,
@@ -358,277 +362,323 @@ class TestNullSafe {
                 .isFalse();
     }
 
-    @Test
-    void testIsEmpty_Null() {
-        final List<String> list = null;
-        Assertions.assertThat(NullSafe.isEmptyCollection(list))
-                .isTrue();
-        Assertions.assertThat(NullSafe.hasItems(list))
-                .isFalse();
+    @TestFactory
+    Stream<DynamicTest> testIsEmptyCollection() {
+        final List<String> emptyList = Collections.emptyList();
+        final List<String> nonEmptyList = List.of("foo", "bar");
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.isEmptyCollection(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase(emptyList, true)
+                .addCase(nonEmptyList, false)
+                .build();
     }
 
-    @Test
-    void testIsEmpty_Empty() {
-        final List<String> list = Collections.emptyList();
-        Assertions.assertThat(NullSafe.isEmptyCollection(list))
-                .isTrue();
-        Assertions.assertThat(NullSafe.hasItems(list))
-                .isFalse();
+    @TestFactory
+    Stream<DynamicTest> testHasItems() {
+        final List<String> emptyList = Collections.emptyList();
+        final List<String> nonEmptyList = List.of("foo", "bar");
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.hasItems(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(emptyList, false)
+                .addCase(nonEmptyList, true)
+                .build();
     }
 
-    @Test
-    void testIsEmpty_NotEmpty() {
-        final List<String> list = List.of("X");
-        Assertions.assertThat(NullSafe.isEmptyCollection(list))
-                .isFalse();
-        Assertions.assertThat(NullSafe.hasItems(list))
-                .isTrue();
-    }
-
-    @Test
-    void testIsEmpty2_Null() {
+    @TestFactory
+    Stream<DynamicTest> testIsEmptyCollection2() {
         final ListWrapper nullListWrapper = null;
-        Assertions.assertThat(NullSafe.isEmptyCollection(nullListWrapper, ListWrapper::getNonNullNonEmptyList))
-                .isTrue();
-        Assertions.assertThat(NullSafe.hasItems(nullListWrapper, ListWrapper::getNonNullNonEmptyList))
-                .isFalse();
-
         final ListWrapper nonNullListWrapper = new ListWrapper();
-        Assertions.assertThat(NullSafe.isEmptyCollection(nonNullListWrapper, ListWrapper::getNullList))
-                .isTrue();
-        Assertions.assertThat(NullSafe.hasItems(nonNullListWrapper, ListWrapper::getNullList))
-                .isFalse();
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<ListWrapper, Function<ListWrapper, List<Integer>>>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final ListWrapper listWrapper = testCase.getInput()._1;
+                    final Function<ListWrapper, List<Integer>> getter = testCase.getInput()._2;
+                    return NullSafe.isEmptyCollection(listWrapper, getter);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(nullListWrapper, ListWrapper::getNullList), true)
+                .addCase(Tuple.of(nullListWrapper, ListWrapper::getNonNullEmptyList), true)
+                .addCase(Tuple.of(nullListWrapper, ListWrapper::getNonNullNonEmptyList), true)
+                .addCase(Tuple.of(nonNullListWrapper, ListWrapper::getNullList), true)
+                .addCase(Tuple.of(nonNullListWrapper, ListWrapper::getNonNullEmptyList), true)
+                .addCase(Tuple.of(nonNullListWrapper, ListWrapper::getNonNullNonEmptyList), false)
+                .build();
     }
 
-    @Test
-    void testIsEmptyMap_Null() {
-        final Map<String, String> map = null;
-        Assertions.assertThat(NullSafe.isEmptyMap(map))
-                .isTrue();
-        Assertions.assertThat(NullSafe.hasEntries(map))
-                .isFalse();
+    @TestFactory
+    Stream<DynamicTest> testHasItems2() {
+        final ListWrapper nullListWrapper = null;
+        final ListWrapper nonNullListWrapper = new ListWrapper();
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<ListWrapper, Function<ListWrapper, List<Integer>>>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final ListWrapper listWrapper = testCase.getInput()._1;
+                    final Function<ListWrapper, List<Integer>> getter = testCase.getInput()._2;
+                    return NullSafe.hasItems(listWrapper, getter);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(nullListWrapper, ListWrapper::getNullList), false)
+                .addCase(Tuple.of(nullListWrapper, ListWrapper::getNonNullEmptyList), false)
+                .addCase(Tuple.of(nullListWrapper, ListWrapper::getNonNullNonEmptyList), false)
+                .addCase(Tuple.of(nonNullListWrapper, ListWrapper::getNullList), false)
+                .addCase(Tuple.of(nonNullListWrapper, ListWrapper::getNonNullEmptyList), false)
+                .addCase(Tuple.of(nonNullListWrapper, ListWrapper::getNonNullNonEmptyList), true)
+                .build();
     }
 
-    @Test
-    void testIsEmptyMap_Empty() {
-        final Map<String, String> map = Collections.emptyMap();
-        Assertions.assertThat(NullSafe.isEmptyMap(map))
-                .isTrue();
-        Assertions.assertThat(NullSafe.hasEntries(map))
-                .isFalse();
+    @TestFactory
+    Stream<DynamicTest> testIsEmptyMap() {
+        final Map<String, String> emptyMap = Collections.emptyMap();
+        final Map<String, String> nonEmptyMap = Map.of("foo", "bar");
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Map<String, String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.isEmptyMap(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase(emptyMap, true)
+                .addCase(nonEmptyMap, false)
+                .build();
     }
 
-    @Test
-    void testIsEmptyMap_NotEmpty() {
-        final Map<String, String> map = Map.of("foo", "bar");
-        Assertions.assertThat(NullSafe.isEmptyMap(map))
-                .isFalse();
-        Assertions.assertThat(NullSafe.hasEntries(map))
-                .isTrue();
+    @TestFactory
+    Stream<DynamicTest> testHasEntries() {
+        final Map<String, String> emptyMap = Collections.emptyMap();
+        final Map<String, String> nonEmptyMap = Map.of("foo", "bar");
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Map<String, String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.hasEntries(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(emptyMap, false)
+                .addCase(nonEmptyMap, true)
+                .build();
     }
 
-    @Test
-    void testIsEmptyMap2_Null() {
+    @TestFactory
+    Stream<DynamicTest> testIsEmptyMap2() {
         final MapWrapper nullMapWrapper = null;
-        Assertions.assertThat(NullSafe.isEmptyMap(nullMapWrapper, MapWrapper::getNonNullNonEmptyMap))
-                .isTrue();
-        Assertions.assertThat(NullSafe.hasEntries(nullMapWrapper, MapWrapper::getNonNullNonEmptyMap))
-                .isFalse();
-
         final MapWrapper nonNullMapWrapper = new MapWrapper();
-        Assertions.assertThat(NullSafe.isEmptyMap(nonNullMapWrapper, MapWrapper::getNullMap))
-                .isTrue();
-        Assertions.assertThat(NullSafe.hasEntries(nonNullMapWrapper, MapWrapper::getNullMap))
-                .isFalse();
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(
+                        new TypeLiteral<Tuple2<MapWrapper, Function<MapWrapper, Map<Integer, Integer>>>>() {
+                        })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    var mapWrapper = testCase.getInput()._1;
+                    var getter = testCase.getInput()._2;
+                    return NullSafe.isEmptyMap(mapWrapper, getter);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(nullMapWrapper, MapWrapper::getNullMap), true)
+                .addCase(Tuple.of(nullMapWrapper, MapWrapper::getNonNullEmptyMap), true)
+                .addCase(Tuple.of(nullMapWrapper, MapWrapper::getNonNullNonEmptyMap), true)
+                .addCase(Tuple.of(nonNullMapWrapper, MapWrapper::getNullMap), true)
+                .addCase(Tuple.of(nonNullMapWrapper, MapWrapper::getNonNullEmptyMap), true)
+                .addCase(Tuple.of(nonNullMapWrapper, MapWrapper::getNonNullNonEmptyMap), false)
+                .build();
     }
 
-    @Test
-    void testIsEmptyMap2_Empty() {
+    @TestFactory
+    Stream<DynamicTest> testHasEntries2() {
+        final MapWrapper nullMapWrapper = null;
         final MapWrapper nonNullMapWrapper = new MapWrapper();
-        Assertions.assertThat(NullSafe.isEmptyMap(nonNullMapWrapper, MapWrapper::getNonNullEmptyMap))
-                .isTrue();
-        Assertions.assertThat(NullSafe.hasEntries(nonNullMapWrapper, MapWrapper::getNonNullEmptyMap))
-                .isFalse();
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(
+                        new TypeLiteral<Tuple2<MapWrapper, Function<MapWrapper, Map<Integer, Integer>>>>() {
+                        })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    var mapWrapper = testCase.getInput()._1;
+                    var getter = testCase.getInput()._2;
+                    return NullSafe.hasEntries(mapWrapper, getter);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(nullMapWrapper, MapWrapper::getNullMap), false)
+                .addCase(Tuple.of(nullMapWrapper, MapWrapper::getNonNullEmptyMap), false)
+                .addCase(Tuple.of(nullMapWrapper, MapWrapper::getNonNullNonEmptyMap), false)
+                .addCase(Tuple.of(nonNullMapWrapper, MapWrapper::getNullMap), false)
+                .addCase(Tuple.of(nonNullMapWrapper, MapWrapper::getNonNullEmptyMap), false)
+                .addCase(Tuple.of(nonNullMapWrapper, MapWrapper::getNonNullNonEmptyMap), true)
+                .build();
     }
 
-    @Test
-    void testIsEmptyMap2_NotEmpty() {
-        final MapWrapper nonNullMapWrapper = new MapWrapper();
-        Assertions.assertThat(NullSafe.isEmptyMap(nonNullMapWrapper, MapWrapper::getNonNullNonEmptyMap))
-                .isFalse();
-        Assertions.assertThat(NullSafe.hasEntries(nonNullMapWrapper, MapWrapper::getNonNullNonEmptyMap))
-                .isTrue();
+    @TestFactory
+    Stream<DynamicTest> testIsEmptyString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.isEmptyString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase("", true)
+                .addCase(" ", false)
+                .addCase("\n", false)
+                .addCase("\t", false)
+                .addCase("foo", false)
+                .build();
     }
 
-    @Test
-    void testIsEmptyString_Null() {
-        final String str = null;
-        Assertions.assertThat(NullSafe.isEmptyString(str))
-                .isTrue();
-        Assertions.assertThat(NullSafe.isBlankString(str))
-                .isTrue();
+    @TestFactory
+    Stream<DynamicTest> testIsBlankString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.isBlankString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase("", true)
+                .addCase(" ", true)
+                .addCase("\n", true)
+                .addCase("\t", true)
+                .addCase("foo", false)
+                .build();
     }
 
-    @Test
-    void testIsEmptyString_Empty() {
-        final String str = "";
-        Assertions.assertThat(NullSafe.isEmptyString(str))
-                .isTrue();
-        Assertions.assertThat(NullSafe.isBlankString(str))
-                .isTrue();
-    }
-
-    @Test
-    void testIsEmptyString_Blank() {
-        final String str = " ";
-        Assertions.assertThat(NullSafe.isEmptyString(str))
-                .isFalse();
-        Assertions.assertThat(NullSafe.isBlankString(str))
-                .isTrue();
-    }
-
-    @Test
-    void testIsEmptyString_NotEmpty() {
-        final String str = "foobar";
-        Assertions.assertThat(NullSafe.isEmptyString(str))
-                .isFalse();
-        Assertions.assertThat(NullSafe.isBlankString(str))
-                .isFalse();
-    }
-
-    @Test
-    void testIsEmptyString2() {
+    @TestFactory
+    Stream<DynamicTest> testIsEmptyString2() {
         final StringWrapper nullStringWrapper = null;
-        Assertions.assertThat(NullSafe.isEmptyString(nullStringWrapper, StringWrapper::getNonNullNonEmptyString))
-                .isTrue();
-        Assertions.assertThat(NullSafe.isBlankString(nullStringWrapper, StringWrapper::getNonNullNonEmptyString))
-                .isTrue();
-
         final StringWrapper nonNullStringWrapper = new StringWrapper();
-        Assertions.assertThat(NullSafe.isEmptyString(nonNullStringWrapper, StringWrapper::getNullString))
-                .isTrue();
-        Assertions.assertThat(NullSafe.isBlankString(nonNullStringWrapper, StringWrapper::getNullString))
-                .isTrue();
 
-        Assertions.assertThat(NullSafe.isEmptyString(nonNullStringWrapper, StringWrapper::getNonNullEmptyString))
-                .isTrue();
-        Assertions.assertThat(NullSafe.isBlankString(nonNullStringWrapper, StringWrapper::getNonNullEmptyString))
-                .isTrue();
-
-        Assertions.assertThat(NullSafe.isEmptyString(nonNullStringWrapper, StringWrapper::getNonNullBlankString))
-                .isFalse();
-        Assertions.assertThat(NullSafe.isBlankString(nonNullStringWrapper, StringWrapper::getNonNullBlankString))
-                .isTrue();
-
-        Assertions.assertThat(NullSafe.isEmptyString(nonNullStringWrapper, StringWrapper::getNonNullNonEmptyString))
-                .isFalse();
-        Assertions.assertThat(NullSafe.isBlankString(nonNullStringWrapper, StringWrapper::getNonNullNonEmptyString))
-                .isFalse();
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<StringWrapper, Function<StringWrapper, String>>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    var stringWrapper = testCase.getInput()._1;
+                    var getter = testCase.getInput()._2;
+                    return NullSafe.isEmptyString(stringWrapper, getter);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(nullStringWrapper, StringWrapper::getNullString), true)
+                .addCase(Tuple.of(nullStringWrapper, StringWrapper::getNonNullEmptyString), true)
+                .addCase(Tuple.of(nullStringWrapper, StringWrapper::getNonNullBlankString), true)
+                .addCase(Tuple.of(nullStringWrapper, StringWrapper::getNonNullNonEmptyString), true)
+                .addCase(Tuple.of(nonNullStringWrapper, StringWrapper::getNullString), true)
+                .addCase(Tuple.of(nonNullStringWrapper, StringWrapper::getNonNullEmptyString), true)
+                .addCase(Tuple.of(nonNullStringWrapper, StringWrapper::getNonNullBlankString), false)
+                .addCase(Tuple.of(nonNullStringWrapper, StringWrapper::getNonNullNonEmptyString), false)
+                .build();
     }
 
-    @Test
-    void testStream_null() {
+    @TestFactory
+    Stream<DynamicTest> testIsBlankString2() {
+        final StringWrapper nullStringWrapper = null;
+        final StringWrapper nonNullStringWrapper = new StringWrapper();
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<StringWrapper, Function<StringWrapper, String>>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    var stringWrapper = testCase.getInput()._1;
+                    var getter = testCase.getInput()._2;
+                    return NullSafe.isBlankString(stringWrapper, getter);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(nullStringWrapper, StringWrapper::getNullString), true)
+                .addCase(Tuple.of(nullStringWrapper, StringWrapper::getNonNullEmptyString), true)
+                .addCase(Tuple.of(nullStringWrapper, StringWrapper::getNonNullBlankString), true)
+                .addCase(Tuple.of(nullStringWrapper, StringWrapper::getNonNullNonEmptyString), true)
+                .addCase(Tuple.of(nonNullStringWrapper, StringWrapper::getNullString), true)
+                .addCase(Tuple.of(nonNullStringWrapper, StringWrapper::getNonNullEmptyString), true)
+                .addCase(Tuple.of(nonNullStringWrapper, StringWrapper::getNonNullBlankString), true)
+                .addCase(Tuple.of(nonNullStringWrapper, StringWrapper::getNonNullNonEmptyString), false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testStream() {
         final AtomicInteger counter = new AtomicInteger(0);
-        final List<String> list = null;
-        final List<String> output = NullSafe.stream(list)
-                .peek(str -> counter.incrementAndGet())
-                .collect(Collectors.toList());
-
-        Assertions.assertThat(counter)
-                .hasValue(0);
-        Assertions.assertThat(output)
-                .isEmpty();
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<Tuple2<Integer, List<String>>>() {
+                })
+                .withTestFunction(testCase -> {
+                    final List<String> newList = NullSafe.stream(testCase.getInput())
+                            .peek(item -> counter.incrementAndGet())
+                            .toList();
+                    return Tuple.of(counter.get(), newList);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(null, Tuple.of(0, Collections.emptyList()))
+                .addCase(Collections.emptyList(), Tuple.of(0, Collections.emptyList()))
+                .addCase(List.of("foo", "bar"), Tuple.of(2, List.of("foo", "bar")))
+                .build();
     }
 
-    @Test
-    void testStream_empty() {
-        final AtomicInteger counter = new AtomicInteger(0);
-        final List<String> list = Collections.emptyList();
-        final List<String> output = NullSafe.stream(list)
-                .peek(str -> counter.incrementAndGet())
-                .collect(Collectors.toList());
-
-        Assertions.assertThat(counter)
-                .hasValue(0);
-        Assertions.assertThat(output)
-                .isEmpty();
+    @TestFactory
+    Stream<DynamicTest> testList() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.list(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .build();
     }
 
-    @Test
-    void testStream_nonNull() {
-        final AtomicInteger counter = new AtomicInteger(0);
-        final List<String> list = List.of("foo", "bar");
-        final List<String> output = NullSafe.stream(list)
-                .peek(str -> counter.incrementAndGet())
-                .collect(Collectors.toList());
-
-        Assertions.assertThat(counter)
-                .hasValue(2);
-        Assertions.assertThat(output)
-                .containsExactlyElementsOf(list);
+    @TestFactory
+    Stream<DynamicTest> testSet() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.set(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptySet(), Collections.emptySet())
+                .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
+                .build();
     }
 
-    @Test
-    void testList_null() {
-        final List<String> input = null;
-        final List<String> output = NullSafe.list(input);
-
-        Assertions.assertThat(output)
-                .isNotNull()
-                .isEmpty();
-    }
-
-    @Test
-    void testList_nonNull() {
-        final List<String> input = List.of("foo", "bar");
-        final List<String> output = NullSafe.list(input);
-
-        Assertions.assertThat(output)
-                .isNotNull()
-                .isSameAs(input)
-                .containsExactlyElementsOf(input);
-    }
-
-    @Test
-    void testSet_null() {
-        final Set<String> input = null;
-        final Set<String> output = NullSafe.set(input);
-
-        Assertions.assertThat(output)
-                .isNotNull()
-                .isEmpty();
-    }
-
-    @Test
-    void testSet_nonNull() {
-        final Set<String> input = Set.of("foo", "bar");
-        final Set<String> output = NullSafe.set(input);
-
-        Assertions.assertThat(output)
-                .isNotNull()
-                .isSameAs(input)
-                .containsExactlyElementsOf(input);
-    }
-
-    @Test
-    void testMap_null() {
-        final Map<String, String> input = null;
-        final Map<String, String> output = NullSafe.map(input);
-
-        Assertions.assertThat(output)
-                .isNotNull()
-                .isEmpty();
-    }
-
-    @Test
-    void testMap_nonNull() {
-        final Map<String, String> input = Map.of("foo", "bar");
-        final Map<String, String> output = NullSafe.map(input);
-
-        Assertions.assertThat(output)
-                .isNotNull()
-                .isSameAs(input)
-                .containsExactlyEntriesOf(input);
+    @TestFactory
+    Stream<DynamicTest> testMap() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Map<String, String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.map(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Collections.emptyMap())
+                .addCase(Collections.emptyMap(), Collections.emptyMap())
+                .addCase(Map.of("foo", "bar"), Map.of("foo", "bar"))
+                .build();
     }
 
     @Test

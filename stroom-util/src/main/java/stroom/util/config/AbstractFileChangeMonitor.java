@@ -1,13 +1,14 @@
 package stroom.util.config;
 
 import stroom.util.HasHealthCheck;
+import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil.Prop;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasPropertyPath;
 
 import com.codahale.metrics.health.HealthCheck;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -19,7 +20,6 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,7 +31,7 @@ import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileChangeMonitor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractFileChangeMonitor.class);
 
     private final Path monitoredFile;
     private final Path dirToWatch;
@@ -46,9 +46,9 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
     private static final long DELAY_BEFORE_FILE_READ_MS = 2_000;
 
     public AbstractFileChangeMonitor(final Path monitoredFile) {
-        this.monitoredFile = Objects.requireNonNull(monitoredFile);
+        this.monitoredFile = monitoredFile;
 
-        if (Files.isRegularFile(monitoredFile)) {
+        if (NullSafe.test(monitoredFile, Files::isRegularFile)) {
             isValidFile = true;
 
             dirToWatch = monitoredFile.toAbsolutePath().getParent();
@@ -82,8 +82,8 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
                         e);
             }
         } else {
-            LOGGER.error("Unable to start watcher as {} is not a valid file",
-                    monitoredFile.toAbsolutePath().normalize());
+            LOGGER.error(() -> LogUtil.message("Unable to start watcher as {} is not a valid file",
+                    NullSafe.toString(monitoredFile, path -> path.toAbsolutePath().normalize())));
         }
     }
 

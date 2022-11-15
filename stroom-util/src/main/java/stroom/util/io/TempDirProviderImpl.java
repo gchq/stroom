@@ -1,11 +1,13 @@
 package stroom.util.io;
 
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,12 +35,24 @@ public class TempDirProviderImpl implements TempDirProvider {
         if (tempDir == null) {
             Path path = null;
 
-            String dir = pathConfig.getTemp();
+            // This is to allow system tests to function as they don't have a yaml file to read the home/temp
+            // from, but the validator is set up before the config object is passed in.
+            path = NullSafe.get(
+                    System.getProperty(TempDirProvider.PROP_STROOM_TEMP),
+                    Paths::get);
+            if (path != null) {
+                LOGGER.info("Using system property {} for stroom temp: {}. " +
+                                "This overrides the value in the config file.",
+                        TempDirProvider.PROP_STROOM_TEMP, path);
+            }
 
-            if (dir != null && !dir.isEmpty()) {
-                LOGGER.info("Using temp path configuration property: {}", dir);
-                dir = FileUtil.replaceHome(dir);
-                path = Paths.get(dir);
+            if (path == null) {
+                String dir = pathConfig.getTemp();
+                if (dir != null && !dir.isEmpty()) {
+                    LOGGER.info("Using temp path from configuration file property: {}", dir);
+                    dir = FileUtil.replaceHome(dir);
+                    path = Paths.get(dir);
+                }
             }
 
             if (path == null) {
@@ -47,7 +61,11 @@ public class TempDirProviderImpl implements TempDirProvider {
             }
 
             if (path == null) {
-                path = homeDirProvider.get()
+                final Path stroomHomeDir = Objects.requireNonNull(
+                        homeDirProvider.get(),
+                        "Stroom home directory is not set");
+
+                path = stroomHomeDir
                         .resolve("temp");
                 LOGGER.info("Using stroom home sub directory for temp path {}",
                         path.toAbsolutePath().normalize());
@@ -57,6 +75,7 @@ public class TempDirProviderImpl implements TempDirProvider {
             if (!path.isAbsolute()) {
                 path = homeDirProvider.get()
                         .resolve(path);
+                LOGGER.info("Stroom temp is not absolute so making it relative to stroom home: {}", path);
             }
 
             path = path.toAbsolutePath();
@@ -80,7 +99,8 @@ public class TempDirProviderImpl implements TempDirProvider {
                         ? "stroom-proxy"
                         : "stroom";
 
-                final Path dir = Paths.get(systemTempDirStr).resolve(subDirName);
+                final Path dir = Paths.get(systemTempDirStr)
+                        .resolve(subDirName);
                 LOGGER.info("Using system temp path {}", dir.toAbsolutePath().normalize());
                 return Optional.of(dir);
             } else {

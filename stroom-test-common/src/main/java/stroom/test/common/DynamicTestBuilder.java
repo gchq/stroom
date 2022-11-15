@@ -68,11 +68,29 @@ class DynamicTestBuilder {
          * {@link TypeLiteral}, e.g.
          * <pre>{@code withWrappedInputType(new TypeLiteral<List<String>>(){})}</pre>
          * <pre>{@code withWrappedInputType(new TypeLiteral<Tuple2<Integer, String>>(){})}</pre>
-         * If you have multiple wrapped inputs then wrap them in a {@link io.vavr.Tuple} or similar.
+         * If you have multiple inputs (at least one of which is a generic type) then wrap them
+         * in a {@link io.vavr.Tuple} or similar.
          */
         @SuppressWarnings("unused")
         public <I> InputBuilder<I> withWrappedInputType(final TypeLiteral<I> inputType) {
             return new InputBuilder<>(inputType);
+        }
+
+        /**
+         * Define the type of both the input and output for the dynamic tests, where the type uses generics,
+         * e.g. a {@link Collection <?>} or a {@link io.vavr.Tuple}. Specify the type using a
+         * {@link TypeLiteral}, e.g.
+         * <pre>{@code withWrappedInputAndOutputType(new TypeLiteral<List<String>>(){})}</pre>
+         * <pre>{@code withWrappedInputAndOutputType(new TypeLiteral<Tuple2<Integer, String>>(){})}</pre>
+         * If you have multiple inputs/outputs (at least one of which is a generic type) then wrap them
+         * in a {@link io.vavr.Tuple} or similar.
+         */
+        @SuppressWarnings("unused")
+        public <T> OutputBuilder<T, T> withWrappedInputAndOutputType(final TypeLiteral<T> inputType) {
+            final InputBuilder<T> inputBuilder = new InputBuilder<>(inputType);
+            final TypeLiteral<T> typeLiteral = new TypeLiteral<T>() {
+            };
+            return new OutputBuilder<T, T>(inputBuilder, typeLiteral);
         }
 
         /**

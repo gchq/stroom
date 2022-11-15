@@ -25,6 +25,7 @@ import io.dropwizard.configuration.DefaultConfigurationFactoryFactory;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -51,9 +52,16 @@ public abstract class AbstractApplicationTest {
 
     // This is needed by DropwizardExtensionsSupport to fire up the proxy app
     @RegisterExtension
-    private final DropwizardAppExtension<Config> dropwizard = new DropwizardAppExtension<>(
-            getAppClass(),
-            getConfig());
+    private final DropwizardAppExtension<Config> dropwizard = getDropwizardAppExtension();
+
+    @NotNull
+    private DropwizardAppExtension<Config> getDropwizardAppExtension() {
+        final Config config = getConfig();
+
+        return new DropwizardAppExtension<>(
+                getAppClass(),
+                config);
+    }
 
     @BeforeEach
     void beforeEach() throws Exception {
@@ -79,23 +87,25 @@ public abstract class AbstractApplicationTest {
             throw new RuntimeException(LogUtil.message("Error creating temp dir"), e);
         }
 
-        final Path homeDir = temp.resolve("home");
-        final Path tempDir = temp.resolve("temp");
+        final Path homeDir = temp.resolve("home").toAbsolutePath().normalize();
+        final Path tempDir = temp.resolve("temp").toAbsolutePath().normalize();
         FileUtil.ensureDirExists(homeDir);
         FileUtil.ensureDirExists(tempDir);
 
-        final String homeDirStr = FileUtil.getCanonicalPath(homeDir);
-        final String tempDirStr = FileUtil.getCanonicalPath(tempDir);
+        final String homeDirStr = homeDir.toString();
+        final String tempDirStr = tempDir.toString();
 
-        final Path proxyHomeDir = Paths.get(homeDirStr);
-        final Path proxyTempDir = Paths.get(tempDirStr);
-        FileUtil.ensureDirExists(proxyHomeDir);
-        FileUtil.ensureDirExists(proxyTempDir);
+        // Set the home/temp sys props so the validator in App can validate paths relative to these.
+        System.setProperty(HomeDirProvider.PROP_STROOM_HOME, homeDirStr);
+        System.setProperty(TempDirProvider.PROP_STROOM_TEMP, tempDirStr);
 
         return new ProxyPathConfig(homeDirStr, tempDirStr);
     }
 
     private void setupConfig() {
+        // Need to run this first as it sets up the system props for stroom home/temp
+        final ProxyPathConfig proxyPathConfig = createProxyPathConfig();
+
         config = loadYamlFile("proxy-dev.yml");
 
         final ProxyConfig proxyConfigOverride = getProxyConfigOverride();
@@ -105,7 +115,7 @@ public abstract class AbstractApplicationTest {
             // Can't use Map.of() due to null value
             final Map<PropertyPath, Object> propValueMap = new HashMap<>();
             propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_REST_CLIENT, "tls"), null);
-            propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), createProxyPathConfig());
+            propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), proxyPathConfig);
             propValueMap.put(ProxyConfig.buildPath(
                     ProxyConfig.PROP_NAME_REPOSITORY,
                     ProxyRepoConfig.PROP_NAME_STORING_ENABLED), false);

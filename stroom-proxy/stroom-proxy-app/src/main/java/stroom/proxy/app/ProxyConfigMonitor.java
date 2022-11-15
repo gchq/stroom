@@ -37,7 +37,11 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
 
     @Override
     protected void onFileChange() {
-        updateProxyConfigFromFile();
+        if (configFile != null) {
+            updateProxyConfigFromFile();
+        } else {
+            LOGGER.warn("configFile is null, unable to update config from file");
+        }
     }
 
     private void updateProxyConfigFromFile() {
