@@ -48,6 +48,11 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
     public AbstractFileChangeMonitor(final Path monitoredFile) {
         this.monitoredFile = monitoredFile;
 
+        // AbstractEndToEndTest runs with no physical file, so allow for that
+        if (monitoredFile == null) {
+            LOGGER.warn("No file supplied to monitor, this should only be the case in testing");
+        }
+
         if (NullSafe.test(monitoredFile, Files::isRegularFile)) {
             isValidFile = true;
 
@@ -268,7 +273,10 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
         HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
 
         // isRunning will only be true if the file is also present and valid
-        if (isRunning.get()) {
+        if (monitoredFile == null) {
+            resultBuilder.healthy()
+                    .withMessage("No file provided to monitor");
+        } else if (isRunning.get()) {
             resultBuilder.healthy();
         } else {
             resultBuilder

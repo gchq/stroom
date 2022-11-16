@@ -70,6 +70,10 @@ public abstract class AbstractApplicationTest {
     @AfterEach
     void tearDown() {
         dropwizard.after();
+
+        // make sure these get cleared else they may break other tests that don't use system props
+        System.clearProperty(HomeDirProvider.PROP_STROOM_HOME);
+        System.clearProperty(TempDirProvider.PROP_STROOM_TEMP);
     }
 
     // Subclasses can override this
