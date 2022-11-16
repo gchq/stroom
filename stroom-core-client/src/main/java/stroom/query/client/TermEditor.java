@@ -25,6 +25,7 @@ import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.StringUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.GWT;
@@ -217,7 +218,10 @@ public class TermEditor extends Composite {
                 sb.setLength(sb.length() - 1);
             }
 
-            term.setValue(sb.toString());
+            // Remove, then add whitespace quoting so the un-focused term value shows the user
+            // the value with the correct quoting based on what they have entered
+            term.setValue(StringUtil.addWhitespaceQuoting(
+                    StringUtil.removeWhitespaceQuoting(sb.toString())));
             term.setDocRef(docRef);
         }
     }
@@ -589,6 +593,7 @@ public class TermEditor extends Composite {
     }
 
     private Label createLabel(final String text) {
+        GWT.log("label: " + text);
         final Label label = new Label(text, false);
         label.addStyleName(resources.style().label());
         return label;
