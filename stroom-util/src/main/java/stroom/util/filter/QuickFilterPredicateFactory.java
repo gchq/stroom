@@ -264,6 +264,7 @@ public class QuickFilterPredicateFactory {
 
         final Map<MatchToken, Function<T, MatchInfo>> matchInfoEvaluators;
         matchInfoEvaluators = matchTokens.stream()
+                .distinct() // dup matchTokens break the collector and add no benefit
                 .collect(Collectors.toMap(
                         Function.identity(),
                         matchToken -> {
@@ -424,7 +425,8 @@ public class QuickFilterPredicateFactory {
         return defaultFieldMappers;
     }
 
-    static List<MatchToken> extractMatchTokens(final String userInput, final FilterFieldMappers<?> filterFieldMappers) {
+    static List<MatchToken> extractMatchTokens(final String userInput,
+                                               final FilterFieldMappers<?> filterFieldMappers) {
         if (userInput == null || userInput.isBlank()) {
             return Collections.emptyList();
         } else {
