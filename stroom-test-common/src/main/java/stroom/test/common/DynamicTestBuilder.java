@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
+import com.google.common.base.Strings;
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -284,7 +286,7 @@ class DynamicTestBuilder {
         private final List<TestCase<I, O>> testCases = new ArrayList<>();
         // Use a default name function but let the user override it
         // TestCase.name takes precedence though.
-        private Function<TestCase<I, O>, String> nameFunction = this::buildTestNameFromInput;
+        private Function<TestCase<I, O>, String> nameFunction = null;
 
         private CasesBuilder(final Function<TestCase<I, O>, O> testAction,
                              final Consumer<TestOutcome<I, O>> testOutcomeConsumer) {
@@ -443,24 +445,21 @@ class DynamicTestBuilder {
 
         private Stream<DynamicTest> createDynamicTestStream() {
 
+            AtomicInteger caseCounter = new AtomicInteger();
+
             return testCases.stream()
+                    .sequential()
                     .map(testCase -> {
 
                         // Name defined in the testCase overrides the name function
-                        final String testName = Objects.requireNonNullElseGet(
-                                testCase.getName(),
-                                () -> nameFunction.apply(testCase));
+                        final String testName = buildTestName(
+                                testCase,
+                                caseCounter.incrementAndGet(),
+                                testCases.size());
 
                         return DynamicTest.dynamicTest(testName, () -> {
                             if (LOGGER.isDebugEnabled()) {
-                                if (testCase.isExpectedToThrow()) {
-                                    LOGGER.debug(() -> LogUtil.message("Input: '{}', expected to throw: '{}'",
-                                            testCase.getInput(),
-                                            testCase.getExpectedThrowableType().getSimpleName()));
-                                } else {
-                                    LOGGER.debug(() -> LogUtil.message("Input: '{}', expectedOutput: '{}'",
-                                            testCase.getInput(), testCase.getExpectedOutput()));
-                                }
+                                logCaseToDebug(testCase);
                             }
                             O actualOutput = null;
                             Throwable actualThrowable = null;
@@ -481,6 +480,36 @@ class DynamicTestBuilder {
                             testOutcomeConsumer.accept(testOutcome);
                         });
                     });
+        }
+
+        private String buildTestName(final TestCase<I, O> testCase,
+                                     final int caseNo,
+                                     final int casesCount) {
+
+            final Function<TestCase<I, O>, String> nameFunc;
+            if (!NullSafe.isBlankString(testCase.getName())) {
+                nameFunc = TestCase::getName;
+            } else if (nameFunction != null) {
+                nameFunc = nameFunction;
+            } else {
+                // No name or namefunc provided so build a name from the case number and the input
+                // Case number may help in linking a failed test to the source
+                final int padLen = Integer.toString(casesCount).length();
+                final String paddedCaseNo = Strings.padStart(Integer.toString(caseNo), padLen, '0');
+                nameFunc = testCase2 -> paddedCaseNo + " " + buildTestNameFromInput(testCase2);
+            }
+            return nameFunc.apply(testCase);
+        }
+
+        private void logCaseToDebug(final TestCase<I, O> testCase) {
+            if (testCase.isExpectedToThrow()) {
+                LOGGER.debug(() -> LogUtil.message("Input: '{}', expected to throw: '{}'",
+                        testCase.getInput(),
+                        testCase.getExpectedThrowableType().getSimpleName()));
+            } else {
+                LOGGER.debug(() -> LogUtil.message("Input: '{}', expectedOutput: '{}'",
+                        testCase.getInput(), testCase.getExpectedOutput()));
+            }
         }
     }
 }
