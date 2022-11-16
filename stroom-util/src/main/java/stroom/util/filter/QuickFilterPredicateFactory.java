@@ -264,7 +264,6 @@ public class QuickFilterPredicateFactory {
 
         final Map<MatchToken, Function<T, MatchInfo>> matchInfoEvaluators;
         matchInfoEvaluators = matchTokens.stream()
-                .distinct() // dup matchTokens break the collector and add no benefit
                 .collect(Collectors.toMap(
                         Function.identity(),
                         matchToken -> {
@@ -475,6 +474,7 @@ public class QuickFilterPredicateFactory {
             } else {
                 return tokens.stream()
                         .filter(token -> !token.isTermBlank()) // no point doing anything with 'name:'
+                        .distinct() // dup matchTokens break collectors downstream and add no benefit
                         .collect(Collectors.toList());
             }
         }
