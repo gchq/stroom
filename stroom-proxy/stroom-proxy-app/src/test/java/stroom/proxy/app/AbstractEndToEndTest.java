@@ -533,7 +533,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
     }
 
     public int getDataFeedPostsToStroomCount() {
-        return getPostsToStroomDataFeed().size();
+        return dataFeedRequests.size();
     }
 
     public List<LoggedRequest> getPostsToStroomDataFeed() {
