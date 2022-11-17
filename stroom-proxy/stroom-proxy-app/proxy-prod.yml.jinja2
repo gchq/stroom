@@ -173,7 +173,15 @@ proxyConfig:
         {% endif %}
 
   logStream:
-    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
+    metaKeys:
+      - "guid"
+      - "feed"
+      - "system"
+      - "environment"
+      - "remotehost"
+      - "remoteaddress"
+      - "remotedn"
+      - "remotecertexpiry"
 
   contentDir: "{{ (rootPath + 'content') | envVar('CONTENT_DIR') }}"
 #  contentSync:
