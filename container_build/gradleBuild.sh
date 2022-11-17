@@ -89,17 +89,17 @@ main() {
     test_args=( "test" )
   fi
 
-  # TODO remove this block, just here to diagnose issues.
-  echo "::group::Proxy tests build"
-  echo -e "${GREEN}Do the basic java build${NC}"
-  ./gradlew \
-    "${GRADLE_ARGS[@]}" \
-    --info \
-    --scan \
-    --stacktrace \
-    -PdumpFailedTestXml=true \
-    :stroom-proxy:stroom-proxy-app:test
-  echo "::endgroup::"
+  # TODO remove this block, just here to diagnose issues in proxy tests
+  #echo "::group::Proxy tests build"
+  #echo -e "${GREEN}Do the basic java build${NC}"
+  #./gradlew \
+    #"${GRADLE_ARGS[@]}" \
+    #--info \
+    #--scan \
+    #--stacktrace \
+    #-PdumpFailedTestXml=true \
+    #:stroom-proxy:stroom-proxy-app:test
+  #echo "::endgroup::"
 
   # Do the gradle build
   # Use custom gwt compile jvm settings to avoid blowing the ram limit in
