@@ -148,7 +148,8 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                 proxyConfig,
                 proxyRepoConfig,
                 forwardHttpPostHandlersFactory,
-                null);
+                null,
+                pathCreator);
 
         return new ReceiveStreamHandlers(
                 proxyRepoConfig,

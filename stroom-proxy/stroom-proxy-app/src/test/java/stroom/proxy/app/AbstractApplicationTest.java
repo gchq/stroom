@@ -1,5 +1,6 @@
 package stroom.proxy.app;
 
+import stroom.proxy.app.forwarder.ForwardFileConfig;
 import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
@@ -41,15 +42,20 @@ import java.util.Map;
 import java.util.function.Consumer;
 import javax.ws.rs.client.Client;
 
-//@ExtendWith(DropwizardExtensionsSupport.class)
 public abstract class AbstractApplicationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractApplicationTest.class);
 
     private Config config;
     private Client client = null;
+    private Path homeDir = null;
+    private HomeDirProvider homeDirProvider;
+    private TempDirProvider tempDirProvider;
+    private PathCreator pathCreator;
 
     // This is needed by DropwizardExtensionsSupport to fire up the proxy app
+    // If we were always using the same config or all config was hot changable then we could
+    // make this static which would be much faster as we would only need to spin it up once.
     @RegisterExtension
     private final DropwizardAppExtension<Config> dropwizard = getDropwizardAppExtension();
 
@@ -81,6 +87,10 @@ public abstract class AbstractApplicationTest {
         return App.class;
     }
 
+    public Path getHomeDir() {
+        return homeDir;
+    }
+
     protected ProxyPathConfig createProxyPathConfig() {
         final Path temp;
         try {
@@ -90,6 +100,7 @@ public abstract class AbstractApplicationTest {
         }
 
         final Path homeDir = temp.resolve("home").toAbsolutePath().normalize();
+        this.homeDir = homeDir;
         final Path tempDir = temp.resolve("temp").toAbsolutePath().normalize();
         FileUtil.ensureDirExists(homeDir);
         FileUtil.ensureDirExists(tempDir);
@@ -139,9 +150,9 @@ public abstract class AbstractApplicationTest {
     private void ensureDirectories(final ProxyConfig proxyConfig) {
 
         LOGGER.info("Ensuring configured directories exist");
-        final HomeDirProvider homeDirProvider = new HomeDirProviderImpl(proxyConfig.getPathConfig());
-        final TempDirProvider tempDirProvider = new TempDirProviderImpl(proxyConfig.getPathConfig(), homeDirProvider);
-        final PathCreator pathCreator = new SimplePathCreator(homeDirProvider, tempDirProvider);
+        homeDirProvider = new HomeDirProviderImpl(proxyConfig.getPathConfig());
+        tempDirProvider = new TempDirProviderImpl(proxyConfig.getPathConfig(), homeDirProvider);
+        pathCreator = new SimplePathCreator(homeDirProvider, tempDirProvider);
 
         final Consumer<String> createDirConsumer = ThrowingConsumer.unchecked(dirStr -> {
             final Path path = pathCreator.toAppPath(dirStr);
@@ -153,6 +164,16 @@ public abstract class AbstractApplicationTest {
         NullSafe.consume(proxyConfig.getContentDir(), createDirConsumer);
         NullSafe.consume(proxyConfig.getProxyDbConfig(), ProxyDbConfig::getDbDir, createDirConsumer);
         NullSafe.consume(proxyConfig.getForwardRetry(), ForwardRetryConfig::getFailedForwardDir, createDirConsumer);
+
+        if (NullSafe.hasItems(proxyConfig.getForwardDestinations())) {
+            proxyConfig.getForwardDestinations().forEach(forwardConfig -> {
+                if (forwardConfig instanceof final ForwardFileConfig forwardFileConfig) {
+                    if (!NullSafe.isBlankString(forwardFileConfig.getPath())) {
+                        createDirConsumer.accept(forwardFileConfig.getPath());
+                    }
+                }
+            });
+        }
     }
 
     protected ProxyConfig getProxyConfigOverride() {
@@ -174,6 +195,10 @@ public abstract class AbstractApplicationTest {
 
     Client getClient() {
         return client;
+    }
+
+    public PathCreator getPathCreator() {
+        return pathCreator;
     }
 
     public DropwizardAppExtension<Config> getDropwizard() {

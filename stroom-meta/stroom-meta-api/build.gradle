@@ -12,6 +12,7 @@ dependencies {
     implementation libs.jaxb_api
     implementation libs.slf4j_api
 
+    testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
 

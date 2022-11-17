@@ -25,14 +25,6 @@ public class TestEndToEndNoStoreForward extends AbstractEndToEndTest {
     protected static final String SYSTEM_TEST_SYSTEM = "TEST SYSTEM";
     protected static final String ENVIRONMENT_DEV = "DEV";
 
-//    @Override
-//    protected Map<PropertyPath, Object> getPropertyValueOverrides() {
-//        return Map.of(
-//                ProxyConfig.buildPath(
-//                        ProxyConfig.PROP_NAME_REPOSITORY,
-//                        ProxyRepoConfig.PROP_NAME_STORING_ENABLED), false);
-//    }
-
     @Override
     protected ProxyConfig getProxyConfigOverride() {
         return ProxyConfig.builder()

@@ -40,8 +40,8 @@ public class HomeDirProviderImpl implements HomeDirProvider {
                     System.getProperty(HomeDirProvider.PROP_STROOM_HOME),
                     Paths::get);
             if (path != null) {
-                LOGGER.info("Using system property {} for stroom home: {}. " +
-                        "This overrides the value in the config file.",
+                LOGGER.warn("Using system property {} for stroom home: {}. " +
+                        "This overrides the value in the config file and is only intended for testing.",
                         HomeDirProvider.PROP_STROOM_HOME, path);
             }
 

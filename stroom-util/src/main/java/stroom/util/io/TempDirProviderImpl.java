@@ -41,8 +41,8 @@ public class TempDirProviderImpl implements TempDirProvider {
                     System.getProperty(TempDirProvider.PROP_STROOM_TEMP),
                     Paths::get);
             if (path != null) {
-                LOGGER.info("Using system property {} for stroom temp: {}. " +
-                                "This overrides the value in the config file.",
+                LOGGER.warn("Using system property {} for stroom temp: {}. " +
+                                "This overrides the value in the config file and is only intended for testing.",
                         TempDirProvider.PROP_STROOM_TEMP, path);
             }
 

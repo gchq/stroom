@@ -1,10 +1,16 @@
 package stroom.proxy.app;
 
+import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
+import stroom.proxy.app.forwarder.ForwardConfig;
+import stroom.proxy.app.forwarder.ForwardFileConfig;
 import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
+import stroom.proxy.repo.store.FileSet;
+import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.receive.common.FeedStatusResource;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.common.StroomStreamProcessor;
@@ -33,6 +39,7 @@ import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import io.dropwizard.server.DefaultServerFactory;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.FilenameUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,16 +51,21 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.GenericType;
@@ -71,7 +83,6 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
     // Can be changed by subclasses, e.g. if one test is noisy but others are not
     protected volatile boolean isRequestLoggingEnabled = true;
     protected volatile boolean isHeaderLoggingEnabled = true;
-
 
     // Hold all requests send to the wiremock stroom datafeed endpoint
     private final List<DataFeedRequest> dataFeedRequests = new ArrayList<>();
@@ -158,6 +169,13 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
                 .build();
     }
 
+    public ForwardFileConfig createForwardFileConfig() {
+        return new ForwardFileConfig(
+                true,
+                "My forward file",
+                "forward_dest");
+    }
+
     public static FeedStatusConfig createFeedStatusConfig() {
         return new FeedStatusConfig(
                 "http://localhost:"
@@ -165,6 +183,111 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
                         + ResourcePaths.buildAuthenticatedApiPath(FeedStatusResource.BASE_RESOURCE_PATH),
                 null,
                 null);
+    }
+
+    /**
+     * A count of all the meta files in the {@link ForwardFileConfig} locations.
+     */
+    public long getForwardFileMetaCount() {
+        final List<ForwardConfig> forwardConfigs = NullSafe.getOrElseGet(
+                getConfig(),
+                Config::getProxyConfig,
+                ProxyConfig::getForwardDestinations,
+                Collections::emptyList);
+
+        if (!forwardConfigs.isEmpty()) {
+            return forwardConfigs.stream()
+                    .filter(forwardConfig -> forwardConfig instanceof ForwardFileConfig)
+                    .map(ForwardFileConfig.class::cast)
+                    .mapToLong(forwardConfig -> {
+                        if (!forwardConfig.getPath().isBlank()) {
+                            try (Stream<Path> pathStream = Files.walk(
+                                    getPathCreator().toAppPath(forwardConfig.getPath()))) {
+                                return pathStream
+                                        .filter(path -> path.toString().endsWith(".meta"))
+                                        .count();
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        } else {
+                            return 0L;
+                        }
+                    })
+                    .sum();
+        } else {
+            return 0L;
+        }
+    }
+
+    /**
+     * Get all the files in the directories specified in {@link ForwardFileConfig}.
+     * The dir will contain .meta and .zip pairs. Each pair is one item in the returned list.
+     */
+    public List<ForwardFileItem> getForwardFiles() {
+
+        final List<ForwardConfig> forwardConfigs = NullSafe.getOrElseGet(
+                getConfig(),
+                Config::getProxyConfig,
+                ProxyConfig::getForwardDestinations,
+                Collections::emptyList);
+
+        final List<ForwardFileItem> allForwardFileItems = forwardConfigs.stream()
+                .filter(forwardConfig -> forwardConfig instanceof ForwardFileConfig)
+                .map(ForwardFileConfig.class::cast)
+                .flatMap(forwardFileConfig -> {
+                    final Path forwardDir = getPathCreator().toAppPath(forwardFileConfig.getPath());
+                    final SequentialFileStore sequentialFileStore = new SequentialFileStore(() -> forwardDir);
+                    int id = 1;
+                    final List<ForwardFileItem> forwardFileItems = new ArrayList<>();
+                    while (true) {
+                        final FileSet fileSet = sequentialFileStore.getStoreFileSet(id);
+                        if (!Files.exists(fileSet.getMeta())) {
+                            LOGGER.info("id {} does not exist. dir: {}", id, fileSet.getDir());
+                            break;
+                        }
+                        final String zipFileName = fileSet.getZipFileName();
+                        final String baseName = zipFileName.substring(0, zipFileName.indexOf('.'));
+                        final List<ZipItem> zipItems = new ArrayList<>();
+                        final String metaContent;
+                        try {
+                            metaContent = Files.readString(fileSet.getMeta());
+
+                            try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileSet.getZip()))) {
+                                final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+                                while (entries.hasMoreElements()) {
+                                    final ZipArchiveEntry entry = entries.nextElement();
+                                    if (!entry.isDirectory()) {
+                                        final String zipEntryName = entry.getName();
+                                        final String zipEntryBaseName = zipEntryName.substring(
+                                                0, zipEntryName.indexOf('.'));
+                                        final String zipEntryExt = FilenameUtils.getExtension(zipEntryName);
+                                        final StroomZipFileType zipEntryType =
+                                                StroomZipFileType.fromExtension("." + zipEntryExt);
+                                        final String zipEntryContent = new String(
+                                                zipFile.getInputStream(entry).readAllBytes(),
+                                                StandardCharsets.UTF_8);
+                                        zipItems.add(new ZipItem(
+                                                zipEntryType,
+                                                zipEntryBaseName,
+                                                zipEntryContent));
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        id++;
+                        forwardFileItems.add(new ForwardFileItem(
+                                zipFileName,
+                                baseName,
+                                metaContent,
+                                zipItems));
+                    }
+                    return forwardFileItems.stream();
+                })
+                .toList();
+
+        return allForwardFileItems;
     }
 
     public static String getDataFeedPath() {
@@ -511,5 +634,33 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
                                       String type,
                                       String content) {
 
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public record ForwardFileItem(String name,
+                                  String basePath,
+                                  String metaContent,
+                                  List<ZipItem> zipItems) {
+
+        public AttributeMap getMetaAttributeMap() {
+            return AttributeMapUtil.create(metaContent);
+        }
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public record ZipItem(StroomZipFileType type,
+                          String baseName,
+                          String content) {
+
+        public AttributeMap getContentAsAttributeMap() {
+            if (StroomZipFileType.META.equals(type)) {
+                return AttributeMapUtil.create(content);
+            } else {
+                throw new UnsupportedOperationException(LogUtil.message(
+                        "Can't convert {} to an AttributeMap", type));
+            }
+        }
     }
 }
