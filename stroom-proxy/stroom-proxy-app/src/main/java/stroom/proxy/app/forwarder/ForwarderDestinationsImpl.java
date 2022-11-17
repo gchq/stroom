@@ -62,7 +62,7 @@ public class ForwarderDestinationsImpl implements ForwarderDestinations {
         }
 
         if (forwardDestinations.size() > 0) {
-            this.providers = forwardDestinations
+            providers = forwardDestinations
                     .stream()
                     .collect(Collectors.toMap(ForwardConfig::getName, f -> {
                         if (f instanceof final ForwardHttpPostConfig forwardHttpPostConfig) {

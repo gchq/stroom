@@ -650,7 +650,7 @@ subprojects {
     checkstyle {
         ignoreFailures false
         showViolations true
-        toolVersion = "8.40"
+        toolVersion = "10.4"
     }
 
     // These work in tandem with the suppression.xml

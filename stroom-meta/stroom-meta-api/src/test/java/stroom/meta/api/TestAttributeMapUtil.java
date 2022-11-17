@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestAttributeMapUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAttributeMapUtil.class);
 
     @Test
@@ -76,7 +77,7 @@ class TestAttributeMapUtil {
                 .addCase("""
 
                          FOO : 123
-                         
+
                         """, attributeMap1)
                 .addCase("""
                          foo:123
@@ -92,10 +93,10 @@ class TestAttributeMapUtil {
                           BAR : 456
                         foo:123""", attributeMap2) // dup key
                 .addCase("""
-                        
+
                         FOO:123
                         BAR:456
-                        
+
                         """, attributeMap2) // empty lines
                 .build();
     }
