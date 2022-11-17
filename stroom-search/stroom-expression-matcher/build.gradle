@@ -11,6 +11,8 @@ dependencies {
     implementation libs.javax_inject
     implementation libs.jaxb_api
 
+    testImplementation project(':stroom-core-shared')
+
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
 

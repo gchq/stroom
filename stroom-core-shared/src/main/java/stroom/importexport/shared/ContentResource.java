@@ -56,7 +56,7 @@ public interface ContentResource extends RestResource, DirectRestService {
             summary = "Get import confirmation state",
             operationId = "confirmContentImport")
     List<ImportState> confirmImport(
-            @Parameter(description = "resourceKey", required = true) ResourceKey resourceKey);
+            @NotNull @Parameter(description = "request", required = true) ImportConfigRequest request);
 
     @POST
     @Path("export")

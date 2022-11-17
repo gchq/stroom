@@ -50,7 +50,9 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.SourceConfig;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -362,6 +364,7 @@ class DataServiceImpl implements DataService {
         entries.add(new DataInfoSection.Entry("Effective", getDateTimeString(meta.getEffectiveMs())));
         entries.add(new DataInfoSection.Entry("Stream Type", meta.getTypeName()));
         entries.add(new DataInfoSection.Entry("Feed", meta.getFeedName()));
+        addEncodingInfo(meta, entries);
 
         if (meta.getProcessorUuid() != null) {
             entries.add(new DataInfoSection.Entry("Processor", meta.getProcessorUuid()));
@@ -381,6 +384,27 @@ class DataServiceImpl implements DataService {
         }
         return entries;
     }
+
+    private void addEncodingInfo(final Meta meta, final List<Entry> entries) {
+        feedStore.findByName(meta.getFeedName())
+                .stream()
+                .findFirst()
+                .map(feedStore::readDocument)
+                .ifPresentOrElse(
+                        feedDoc -> {
+                            // If this is the received stream type then show the encoding
+                            if (metaService.isRaw(meta.getTypeName())) {
+                                NullSafe.consume(feedDoc.getEncoding(), encoding -> {
+                                    entries.add(new DataInfoSection.Entry("Data Encoding", encoding));
+                                });
+                            } else {
+                                entries.add(new DataInfoSection.Entry(
+                                        "Data Encoding", StreamUtil.DEFAULT_CHARSET_NAME));
+                            }
+                        },
+                        () -> LOGGER.error("Can't find feed doc with name " + meta.getFeedName()));
+    }
+
 
     private String getDateTimeString(final Long ms) {
         if (ms == null) {

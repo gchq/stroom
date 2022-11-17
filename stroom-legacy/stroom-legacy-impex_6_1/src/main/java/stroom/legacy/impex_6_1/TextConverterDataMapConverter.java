@@ -6,6 +6,7 @@ import stroom.legacy.model_6_1.TextConverter;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.textconverter.TextConverterSerialiser;
 import stroom.util.shared.Severity;
+import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -47,6 +48,7 @@ class TextConverterDataMapConverter implements DataMapConverter {
 
                 document.setDescription(oldTextConverter.getDescription());
                 document.setConverterType(MappingUtil.map(oldTextConverter.getConverterType()));
+                document.setData(oldTextConverter.getData());
 
                 result = serialiser.write(document);
                 if (dataMap.containsKey("data.xml")) {

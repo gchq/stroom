@@ -12,6 +12,7 @@ import java.util.Objects;
 class TestThrowingSupplier {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestThrowingSupplier.class);
+
     private final AtomicSequence atomicSequence = new AtomicSequence(2);
 
     @Test

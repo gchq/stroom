@@ -19,8 +19,13 @@ package stroom.importexport.api;
 
 import stroom.docref.DocRef;
 
+import java.util.Map;
+
 
 public interface NonExplorerDocRefProvider {
+
+    DocRef getOwnerDocument(DocRef docRef,
+                            Map<String, byte[]> dataMap);
 
     /**
      * Find a docref in the explorer tree that is nearest to the provided non-explorer based docref,

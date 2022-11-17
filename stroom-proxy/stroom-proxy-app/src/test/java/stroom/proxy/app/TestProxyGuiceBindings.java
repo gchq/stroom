@@ -1,6 +1,7 @@
 package stroom.proxy.app;
 
 import stroom.proxy.app.guice.ProxyModule;
+import stroom.util.logging.LogUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -8,6 +9,7 @@ import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +56,8 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
                         // TODO At the moment we can only log an error and not fail the test as not all
                         //   visible classes are meant to be injectable. Leaving this test here in  case
                         //   this changes.
+                        Assertions.fail(LogUtil.message(
+                                "Unable to get instance of {} due to; ", clazz.getCanonicalName()), e);
                         LOGGER.error("    Unable to get instance of {} due to; ", clazz.getCanonicalName(), e);
                     }
                 });
