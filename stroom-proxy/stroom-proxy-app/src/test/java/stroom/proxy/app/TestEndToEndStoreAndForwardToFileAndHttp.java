@@ -18,9 +18,9 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
-public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
+public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTest {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestEndToEndStoreAndForwardToFile.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestEndToEndStoreAndForwardToFileAndHttp.class);
 
     protected static final String FEED_TEST_EVENTS_1 = "TEST-EVENTS_1";
     protected static final String FEED_TEST_EVENTS_2 = "TEST-EVENTS_2";
@@ -43,13 +43,14 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                         .aggregationFrequency(StroomDuration.ofSeconds(1))
                         .maxItemsPerAggregate(3)
                         .build())
-                .addForwardDestination(createForwardFileConfig())
+                .addForwardDestination(createForwardFileConfig()) // forward to file and http
+                .addForwardDestination(createForwardHttpPostConfig())
                 .feedStatusConfig(createFeedStatusConfig())
                 .build();
     }
 
     @Test
-    void testBasicEndToEnd() {
+    void test() {
         LOGGER.info("Starting basic end-end test");
 
         super.isRequestLoggingEnabled = true;
@@ -80,6 +81,9 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
         Assertions.assertThat(getPostsToProxyCount())
                 .isEqualTo(8);
 
+        // ---------------------------------
+        // Check the file forwarding
+
         TestUtil.waitForIt(
                 this::getForwardFileMetaCount,
                 4L,
@@ -90,10 +94,8 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
 
         final List<ForwardFileItem> forwardFiles = getForwardFiles();
 
-
         Assertions.assertThat(forwardFiles)
                         .hasSize(4);
-
 
         Assertions.assertThat(forwardFiles)
                 .extracting(forwardFileItem ->
@@ -107,7 +109,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
         // Can't be sure of the order they are written in
         Assertions.assertThat(forwardFiles.stream()
                         .map(forwardFileItem -> forwardFileItem.zipItems().size())
-                                .toList())
+                        .toList())
                 .containsExactlyInAnyOrder(6, 6, 2, 2);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
@@ -116,9 +118,47 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                 .filteredOn(feed -> !"DUMMY_FEED".equals(feed))
                 .containsExactly(FEED_TEST_EVENTS_1, FEED_TEST_EVENTS_2);
 
-        // No http forwarders set up so nothing goes to stroom
+        // ---------------------------------
+        // Check the HTTP forwarding
+
+        TestUtil.waitForIt(
+                this::getDataFeedPostsToStroomCount,
+                4,
+                () -> "Forward to stroom datafeed count",
+                Duration.ofSeconds(10),
+                Duration.ofMillis(50),
+                Duration.ofSeconds(1));
+
+        WireMock.verify((int) 4, WireMock.postRequestedFor(
+                WireMock.urlPathEqualTo(getDataFeedPath())));
+
         final List<LoggedRequest> postsToStroomDataFeed = getPostsToStroomDataFeed();
+
         Assertions.assertThat(postsToStroomDataFeed)
-                .hasSize(0);
+                .extracting(req -> req.getHeader(StandardHeaderArguments.FEED))
+                .containsExactlyInAnyOrder(
+                        FEED_TEST_EVENTS_1,
+                        FEED_TEST_EVENTS_2,
+                        FEED_TEST_EVENTS_1,
+                        FEED_TEST_EVENTS_2);
+
+        final List<DataFeedRequest> dataFeedRequests = getDataFeedRequests();
+
+        Assertions.assertThat(dataFeedRequests)
+                .hasSize(4);
+
+        // Can't be sure of the order they are sent,
+        Assertions.assertThat(dataFeedRequests.stream()
+                        .map(dataFeedRequest -> dataFeedRequest.getNameToItemMap().size())
+                        .toList())
+                .containsExactlyInAnyOrder(6, 6, 2, 2);
+
+        // ---------------------------------
+        // Check the feed status checking
+
+        Assertions.assertThat(getPostsToFeedStatusCheck())
+                .extracting(GetFeedStatusRequest::getFeedName)
+                .filteredOn(feed -> !"DUMMY_FEED".equals(feed))
+                .containsExactly(FEED_TEST_EVENTS_1, FEED_TEST_EVENTS_2);
     }
 }

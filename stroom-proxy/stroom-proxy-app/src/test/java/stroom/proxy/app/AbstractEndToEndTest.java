@@ -638,6 +638,13 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    /**
+     * Represents a meta + zip pair as created by the file forwarder
+     * @param name
+     * @param basePath
+     * @param metaContent
+     * @param zipItems One for each item in the zip
+     */
     public record ForwardFileItem(String name,
                                   String basePath,
                                   String metaContent,
@@ -650,6 +657,9 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    /**
+     * Represents an item in a zip file. May be meta or data
+     */
     public record ZipItem(StroomZipFileType type,
                           String baseName,
                           String content) {

@@ -107,15 +107,11 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
         Assertions.assertThat(dataFeedRequests)
                 .hasSize(4);
 
-        Assertions.assertThat(dataFeedRequests.get(0).getNameToItemMap())
-                .hasSize(6);
-        Assertions.assertThat(dataFeedRequests.get(1).getNameToItemMap())
-                .hasSize(6);
-        Assertions.assertThat(dataFeedRequests.get(2).getNameToItemMap())
-                .hasSize(2);
-        Assertions.assertThat(dataFeedRequests.get(3).getNameToItemMap())
-                .hasSize(2);
-
+        // Can't be sure of the order they are sent,
+        Assertions.assertThat(dataFeedRequests.stream()
+                        .map(dataFeedRequest -> dataFeedRequest.getNameToItemMap().size())
+                        .toList())
+                .containsExactlyInAnyOrder(6, 6, 2, 2);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         Assertions.assertThat(getPostsToFeedStatusCheck())
