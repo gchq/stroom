@@ -122,7 +122,7 @@ public abstract class AbstractApplicationTest {
         config = loadYamlFile("proxy-dev.yml");
 
         final ProxyConfig proxyConfigOverride = getProxyConfigOverride();
-        if (proxyConfigOverride != null ) {
+        if (proxyConfigOverride != null) {
             config.setProxyConfig(proxyConfigOverride);
         } else {
             // Can't use Map.of() due to null value

@@ -20,7 +20,8 @@ import java.util.List;
 
 public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTest {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestEndToEndStoreAndForwardToFileAndHttp.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
+            TestEndToEndStoreAndForwardToFileAndHttp.class);
 
     protected static final String FEED_TEST_EVENTS_1 = "TEST-EVENTS_1";
     protected static final String FEED_TEST_EVENTS_2 = "TEST-EVENTS_2";
@@ -95,7 +96,7 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
         final List<ForwardFileItem> forwardFiles = getForwardFiles();
 
         Assertions.assertThat(forwardFiles)
-                        .hasSize(4);
+                .hasSize(4);
 
         Assertions.assertThat(forwardFiles)
                 .extracting(forwardFileItem ->
