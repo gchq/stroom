@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = ForwardFileConfig.class, name = "file")
 })
 public interface ForwardConfig {
+
     boolean isEnabled();
 
     String getName();

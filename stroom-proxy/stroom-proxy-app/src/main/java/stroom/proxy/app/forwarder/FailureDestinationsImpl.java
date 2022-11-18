@@ -32,12 +32,14 @@ public class FailureDestinationsImpl implements FailureDestinations {
     private static final Logger LOGGER = LoggerFactory.getLogger(FailureDestinationsImpl.class);
 
     private final Map<String, StreamHandlers> providers;
+    private final PathCreator pathCreator;
 
     @Inject
     public FailureDestinationsImpl(final ProxyConfig proxyConfig,
                                    final ForwardRetryConfig forwardRetryConfig,
                                    final PathCreator pathCreator,
                                    final ForwardFileHandlersFactory forwardFileHandlersFactory) {
+        this.pathCreator = pathCreator;
         // Get forwarding destinations.
         List<ForwardConfig> forwardDestinations = proxyConfig.getForwardDestinations();
         if (forwardDestinations != null) {
@@ -84,7 +86,7 @@ public class FailureDestinationsImpl implements FailureDestinations {
                         f.getName(),
                         FileUtil.getCanonicalPath(path));
 
-                return forwardFileHandlersFactory.create(forwardFileConfig);
+                return forwardFileHandlersFactory.create(forwardFileConfig, pathCreator);
             }));
         } else {
             this.providers = Collections.emptyMap();

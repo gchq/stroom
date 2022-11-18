@@ -11,6 +11,8 @@ import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.time.StroomDuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.Duration;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -37,7 +40,7 @@ public class ForwardStreamHandler implements StreamHandler {
     private final LogStream logStream;
     private final AttributeMap attributeMap;
     private final String forwardUrl;
-    private final Integer forwardDelayMs;
+    private final StroomDuration forwardDelay;
     private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
     private HttpURLConnection connection;
     private final ZipOutputStream zipOutputStream;
@@ -51,10 +54,10 @@ public class ForwardStreamHandler implements StreamHandler {
                                 final AttributeMap attributeMap) throws IOException {
         this.logStream = logStream;
         this.forwardUrl = config.getForwardUrl();
-        this.forwardDelayMs = config.getForwardDelayMs();
+        this.forwardDelay = config.getForwardDelay();
         this.attributeMap = attributeMap;
 
-        final Integer forwardTimeoutMs = config.getForwardTimeoutMs();
+        final StroomDuration forwardTimeout = config.getForwardTimeout();
         final Integer forwardChunkSize = config.getForwardChunkSize();
 
         startTimeMs = System.currentTimeMillis();
@@ -70,11 +73,15 @@ public class ForwardStreamHandler implements StreamHandler {
             SSLUtil.applySSLConfiguration(connection, sslSocketFactory, config.getSslConfig());
         }
 
-        if (forwardTimeoutMs != null) {
-            connection.setConnectTimeout(forwardTimeoutMs);
+        if (forwardTimeout != null) {
+            connection.setConnectTimeout((int) forwardTimeout.toMillis());
             connection.setReadTimeout(0);
             // Don't set a read time out else big files will fail
             // connection.setReadTimeout(forwardTimeoutMs);
+        } else {
+            LOGGER.debug(() ->
+                    LogUtil.message("Using default connect timeout: {}",
+                            Duration.ofMillis(connection.getConnectTimeout())));
         }
 
         connection.setRequestMethod("POST");
@@ -107,9 +114,9 @@ public class ForwardStreamHandler implements StreamHandler {
         final long bytesSent = StreamUtil.streamToStream(inputStream, zipOutputStream, buffer, progressHandler);
         totalBytesSent += bytesSent;
 
-        if (forwardDelayMs != null) {
-            LOGGER.debug(() -> "handleEntryData() - adding delay " + forwardDelayMs);
-            ThreadUtil.sleep(forwardDelayMs);
+        if (forwardDelay != null) {
+            LOGGER.debug(() -> "handleEntryData() - adding delay " + forwardDelay);
+            ThreadUtil.sleep(forwardDelay);
         }
 
         zipOutputStream.closeEntry();

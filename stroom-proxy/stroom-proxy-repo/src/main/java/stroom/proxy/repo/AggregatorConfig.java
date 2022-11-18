@@ -1,5 +1,6 @@
 package stroom.proxy.repo;
 
+import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -13,9 +14,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.time.Duration;
+import java.util.Objects;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
 public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, IsProxyConfig {
+
+    public static final String PROP_NAME_ENABLED = "enabled";
+    public static final String PROP_NAME_MAX_ITEMS_PER_AGGREGATE = "maxItemsPerAggregate";
 
     protected static final boolean DEFAULT_ENABLED = true;
     protected static final int DEFAULT_MAX_ITEMS_PER_AGGREGATE = 1_000;
@@ -41,8 +48,8 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public AggregatorConfig(@JsonProperty("enabled") final boolean enabled,
-                            @JsonProperty("maxItemsPerAggregate") final int maxItemsPerAggregate,
+    public AggregatorConfig(@JsonProperty(PROP_NAME_ENABLED) final boolean enabled,
+                            @JsonProperty(PROP_NAME_MAX_ITEMS_PER_AGGREGATE) final int maxItemsPerAggregate,
                             @JsonProperty("maxUncompressedByteSize") final String maxUncompressedByteSizeString,
                             @JsonProperty("maxAggregateAge") final StroomDuration maxAggregateAge,
                             @JsonProperty("aggregationFrequency") final StroomDuration aggregationFrequency) {
@@ -65,18 +72,21 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
         this.aggregationFrequency = aggregationFrequency;
     }
 
+    @RequiresProxyRestart
     @JsonPropertyDescription("If we are actually going to aggregate stored data or use it as is")
     @JsonProperty
     public boolean isEnabled() {
         return enabled;
     }
 
+    @Min(0)
     @JsonPropertyDescription("Maximum number of data items to add to an aggregate before a new one is created")
     @JsonProperty
     public int getMaxItemsPerAggregate() {
         return maxItemsPerAggregate;
     }
 
+    @Min(0)
     @JsonIgnore
     public long getMaxUncompressedByteSize() {
         return maxUncompressedByteSize;
@@ -89,12 +99,15 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
         return ModelStringUtil.formatIECByteSizeString(maxUncompressedByteSize);
     }
 
+    @NotNull
     @JsonPropertyDescription("What is the maximum age of an aggregate before it no longer accepts new items")
     @JsonProperty("maxAggregateAge")
     public StroomDuration getMaxAggregateAge() {
         return maxAggregateAge;
     }
 
+    @RequiresProxyRestart
+    @NotNull
     @JsonPropertyDescription("The the length of time that data is added to an aggregate for before the " +
             "aggregate is closed")
     @JsonProperty("aggregationFrequency")
@@ -113,6 +126,46 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
                 this.maxAggregateAge,
                 this.aggregationFrequency);
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final AggregatorConfig that = (AggregatorConfig) o;
+        return enabled == that.enabled
+                && maxItemsPerAggregate == that.maxItemsPerAggregate
+                && maxUncompressedByteSize == that.maxUncompressedByteSize
+                && Objects.equals(maxAggregateAge, that.maxAggregateAge)
+                && Objects.equals(aggregationFrequency, that.aggregationFrequency);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(enabled,
+                maxItemsPerAggregate,
+                maxUncompressedByteSize,
+                maxAggregateAge,
+                aggregationFrequency);
+    }
+
+    @Override
+    public String toString() {
+        return "AggregatorConfig{" +
+                "enabled=" + enabled +
+                ", maxItemsPerAggregate=" + maxItemsPerAggregate +
+                ", maxUncompressedByteSize=" + maxUncompressedByteSize +
+                ", maxAggregateAge=" + maxAggregateAge +
+                ", aggregationFrequency=" + aggregationFrequency +
+                '}';
+    }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     public static class Builder {
 

@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Utility methods for safely getting properties (or properties of properties of ...) from
@@ -20,6 +21,49 @@ public class NullSafe {
 
     private NullSafe() {
     }
+
+    /**
+     * Return first non-null value or an empty {@link Optional} if all are null
+     */
+    public static <T> Optional<T> coalesce(final T val1, final T val2) {
+        return val1 != null
+                ? Optional.of(val1)
+                : (val2 != null
+                        ? Optional.of(val2)
+                        : Optional.empty());
+    }
+
+    /**
+     * Return first non-null value or an empty {@link Optional} if all are null
+     */
+    public static <T> Optional<T> coalesce(final T val1, final T val2, final T val3) {
+        return val1 != null
+                ? Optional.of(val1)
+                : (val2 != null
+                        ? Optional.of(val2)
+                        : (val3 != null
+                                ? Optional.of(val3)
+                                : Optional.empty()));
+    }
+
+    /**
+     * Return first non-null value or an empty {@link Optional} if all are null
+     */
+    public static <T> Optional<T> coalesce(final T val1,
+                                           final T val2,
+                                           final T val3,
+                                           final T val4) {
+        return val1 != null
+                ? Optional.of(val1)
+                : (val2 != null
+                        ? Optional.of(val2)
+                        : (val3 != null
+                                ? Optional.of(val3)
+                                : (val4 != null
+                                        ? Optional.of(val4)
+                                        : Optional.empty())));
+    }
+
 
     /**
      * @return True if str is null or blank
@@ -78,12 +122,13 @@ public class NullSafe {
     /**
      * @return True if value is null or the collection is null or empty
      */
-    public static <T1, T2> boolean isEmptyCollection(final T1 value,
-                                                     final Function<T1, Collection<T2>> collectionGetter) {
+    public static <T1, T2 extends Collection<E>, E> boolean isEmptyCollection(final T1 value,
+                                                                              final Function<T1, T2> collectionGetter) {
         if (value == null) {
             return true;
         } else {
-            final Collection<T2> collection = Objects.requireNonNull(collectionGetter).apply(value);
+            final T2 collection = Objects.requireNonNull(collectionGetter)
+                    .apply(value);
             return collection == null || collection.isEmpty();
         }
     }
@@ -91,12 +136,13 @@ public class NullSafe {
     /**
      * @return True if value is null or the map is null or empty
      */
-    public static <T1, T2, T3> boolean isEmptyMap(final T1 value,
-                                                  final Function<T1, Map<T2, T3>> mapGetter) {
+    public static <T1, T2 extends Map<K, V>, K, V> boolean isEmptyMap(final T1 value,
+                                                                      final Function<T1, T2> mapGetter) {
         if (value == null) {
             return true;
         } else {
-            final Map<T2, T3> map = Objects.requireNonNull(mapGetter).apply(value);
+            final T2 map = Objects.requireNonNull(mapGetter)
+                    .apply(value);
             return map == null || map.isEmpty();
         }
     }
@@ -118,12 +164,15 @@ public class NullSafe {
     /**
      * @return True if value is non-null and the collection is non-null and not empty
      */
-    public static <T1, T2> boolean hasItems(final T1 value,
-                                            final Function<T1, Collection<T2>> collectionGetter) {
+    public static <T1, T2 extends Collection<E>, E> boolean hasItems(
+            final T1 value,
+            final Function<T1, T2> collectionGetter) {
+
         if (value == null) {
             return false;
         } else {
-            final Collection<T2> collection = Objects.requireNonNull(collectionGetter).apply(value);
+            final T2 collection = Objects.requireNonNull(collectionGetter)
+                    .apply(value);
             return collection != null && !collection.isEmpty();
         }
     }
@@ -131,38 +180,52 @@ public class NullSafe {
     /**
      * @return True if value is non-null and the map is non-null and not empty
      */
-    public static <T1, T2, T3> boolean hasEntries(final T1 value,
-                                                  final Function<T1, Map<T2, T3>> mapGetter) {
+    public static <T1, T2 extends Map<K, V>, K, V> boolean hasEntries(
+            final T1 value,
+            final Function<T1, T2> mapGetter) {
+
         if (value == null) {
             return false;
         } else {
-            final Map<T2, T3> map = Objects.requireNonNull(mapGetter).apply(value);
+            final T2 map = Objects.requireNonNull(mapGetter)
+                    .apply(value);
             return map != null && !map.isEmpty();
         }
     }
 
     /**
-     * @return list or an empty list if list is null
+     * Returns a {@link Stream<E>} if collection is non-null else returns an empty {@link Stream< E >}
      */
-    public static <T> List<T> nonNullList(final List<T> list) {
+    public static <E> Stream<E> stream(final Collection<E> collection) {
+        if (collection == null || collection.isEmpty()) {
+            return Stream.empty();
+        } else {
+            return collection.stream();
+        }
+    }
+
+    /**
+     * Returns the passed list if it is non-null else returns an empty list.
+     */
+    public static <L extends List<T>, T> List<T> list(final L list) {
         return list != null
                 ? list
                 : Collections.emptyList();
     }
 
     /**
-     * @return set or an empty set if set is null
+     * Returns the passed set if it is non-null else returns an empty set.
      */
-    public static <T> Set<T> nonNullSet(final Set<T> set) {
+    public static <S extends Set<T>, T> Set<T> set(final S set) {
         return set != null
                 ? set
                 : Collections.emptySet();
     }
 
     /**
-     * @return map or an empty map if map is null
+     * Returns the passed map if it is non-null else returns an empty map.
      */
-    public static <K, V> Map<K, V> nonNullMap(final Map<K, V> map) {
+    public static <M extends Map<K, V>, K, V> Map<K, V> map(final M map) {
         return map != null
                 ? map
                 : Collections.emptyMap();
@@ -249,7 +312,8 @@ public class NullSafe {
         if (value == null) {
             return false;
         } else {
-            return predicate.test(value);
+            return Objects.requireNonNull(predicate)
+                    .test(value);
         }
     }
 
