@@ -16,6 +16,12 @@
 
 package stroom.dashboard.client.input.gin;
 
+import stroom.dashboard.client.input.BasicKeyValueInputSettingsPresenter;
+import stroom.dashboard.client.input.BasicKeyValueInputSettingsPresenter.BasicKeyValueInputSettingsView;
+import stroom.dashboard.client.input.BasicKeyValueInputSettingsViewImpl;
+import stroom.dashboard.client.input.BasicListInputSettingsPresenter;
+import stroom.dashboard.client.input.BasicListInputSettingsPresenter.BasicListInputSettingsView;
+import stroom.dashboard.client.input.BasicListInputSettingsViewImpl;
 import stroom.dashboard.client.input.KeyValueInputPlugin;
 import stroom.dashboard.client.input.KeyValueInputPresenter;
 import stroom.dashboard.client.input.KeyValueInputPresenter.KeyValueInputView;
@@ -36,5 +42,13 @@ public class InputModule extends AbstractPresenterModule {
 
         bind(ListInputPlugin.class).asEagerSingleton();
         bindPresenterWidget(ListInputPresenter.class, ListInputView.class, ListInputViewImpl.class);
+
+        bindPresenterWidget(BasicListInputSettingsPresenter.class,
+                BasicListInputSettingsView.class,
+                BasicListInputSettingsViewImpl.class);
+
+        bindPresenterWidget(BasicKeyValueInputSettingsPresenter.class,
+                BasicKeyValueInputSettingsView.class,
+                BasicKeyValueInputSettingsViewImpl.class);
     }
 }

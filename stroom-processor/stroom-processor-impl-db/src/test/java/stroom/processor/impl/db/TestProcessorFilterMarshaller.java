@@ -37,7 +37,7 @@ class TestProcessorFilterMarshaller {
                         .build()
 
         );
-        queryData.setParams("");
+        queryData.setParams(null);
 
         final ProcessorFilter processorFilter = new ProcessorFilter();
         // Blank tracker

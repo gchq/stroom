@@ -2383,7 +2383,7 @@ export interface QueryData {
   /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   limits?: Limits;
-  params?: string;
+  params?: Param[];
   timeRange?: TimeRange;
 }
 
@@ -9157,6 +9157,24 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchWelcome: (params: RequestParams = {}) =>
       this.request<any, Welcome>({
         path: `/welcome/v1`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+  };
+  wordList = {
+    /**
+     * No description
+     *
+     * @tags Word List (v1)
+     * @name GetWords
+     * @summary Fetch a list of words from a dictionary by its UUID
+     * @request GET:/wordList/v1/{uuid}
+     * @secure
+     */
+    getWords: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/wordList/v1/${uuid}`,
         method: "GET",
         secure: true,
         ...params,

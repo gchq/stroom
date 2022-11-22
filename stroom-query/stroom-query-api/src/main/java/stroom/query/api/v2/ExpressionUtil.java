@@ -220,7 +220,7 @@ public class ExpressionUtil {
         if (query != null) {
             ExpressionOperator expression = query.getExpression();
             if (query.getParams() != null && expression != null) {
-                final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
+                final Map<String, String> paramMap = ParamUtil.createParamMap(query.getParams());
                 expression = replaceExpressionParameters(expression, paramMap);
             }
             result = query.copy().expression(expression).build();
@@ -229,7 +229,7 @@ public class ExpressionUtil {
     }
 
     public static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
-                                                                  final Map<String, String> paramMap) {
+                                                                 final Map<String, String> paramMap) {
         final ExpressionOperator.Builder builder = ExpressionOperator
                 .builder()
                 .enabled(operator.getEnabled())
@@ -243,7 +243,7 @@ public class ExpressionUtil {
                 } else if (child instanceof ExpressionTerm) {
                     final ExpressionTerm term = (ExpressionTerm) child;
                     final String value = term.getValue();
-                    final String replaced = ExpressionParamUtil.replaceParameters(value, paramMap);
+                    final String replaced = ParamUtil.replaceParameters(value, paramMap);
                     builder.addTerm(ExpressionTerm.builder()
                             .enabled(term.enabled())
                             .field(term.getField())

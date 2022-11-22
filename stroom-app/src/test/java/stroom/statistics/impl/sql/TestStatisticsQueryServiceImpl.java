@@ -22,7 +22,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
-import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
@@ -423,7 +423,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
     private void addField(String name, final TableSettings.Builder tableSettingsBuilder) {
         final Field field = Field.builder()
                 .name(name)
-                .expression(ParamUtil.makeParam(name))
+                .expression(ParamSubstituteUtil.makeParam(name))
                 .build();
         tableSettingsBuilder.addFields(field);
     }

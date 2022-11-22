@@ -48,7 +48,12 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
 
     @Override
     public void setValues(final List<String> values) {
-        value.addItems(values);
+        final String selected = value.getSelectedValue();
+        value.clear();
+        if (values != null) {
+            value.addItems(values);
+        }
+        value.setSelected(selected);
     }
 
     @Override

@@ -2,7 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionParamUtil;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
@@ -77,7 +77,7 @@ public class CoprocessorsFactory {
         final FieldIndex fieldIndex = new FieldIndex();
 
         // Create a parameter map.
-        final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(params);
+        final Map<String, String> paramMap = ParamUtil.createParamMap(params);
 
         // Create error consumer.
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();

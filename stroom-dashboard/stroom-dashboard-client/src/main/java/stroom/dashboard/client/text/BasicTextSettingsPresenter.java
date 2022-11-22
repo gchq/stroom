@@ -18,6 +18,7 @@ package stroom.dashboard.client.text;
 
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TextComponentSettings;
@@ -230,7 +231,7 @@ public class BasicTextSettingsPresenter
     }
 
     public interface BasicTextSettingsView extends
-            BasicSettingsTabPresenter.SettingsView,
+            BasicSettingsView,
             HasUiHandlers<BasicTextSettingsUiHandlers> {
 
         void setTableList(List<Component> tableList);

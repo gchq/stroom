@@ -27,13 +27,16 @@ import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.WordListResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.query.api.v2.Param;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ListInputPresenter extends AbstractComponentPresenter<ListInputView> implements
@@ -48,25 +51,35 @@ public class ListInputPresenter extends AbstractComponentPresenter<ListInputView
     @Inject
     public ListInputPresenter(final EventBus eventBus,
                               final ListInputView view,
+                              final Provider<ListInputSettingsPresenter> settingsPresenterProvider,
                               final RestFactory restFactory) {
-        super(eventBus, view, null);
+        super(eventBus, view, settingsPresenterProvider);
         this.restFactory = restFactory;
         view.setUiHandlers(this);
     }
 
     @Override
     public void onValueChanged(final String value) {
-//        String trimmed = "";
-//        if (params != null && params.trim().length() > 0) {
-//            trimmed = params.trim();
-//        }
-//
+        setSettings(getListInputSettings().copy().value(value).build());
+        updateParams(value);
+
 //        if (!EqualsUtil.isEquals(currentParams, trimmed)) {
 //            setDirty(true);
 //
 //            currentParams = trimmed;
 //            start();
 //        }
+    }
+
+    private void updateParams(final String value) {
+        final String key = getListInputSettings().getKey();
+        final String componentId = getComponentConfig().getId();
+        getDashboardContext().removeParams(componentId);
+
+        if (key != null && key.trim().length() > 0 && value != null && value.trim().length() > 0) {
+            final Param param = new Param(key.trim(), value.trim());
+            getDashboardContext().addParams(componentId, Collections.singletonList(param));
+        }
     }
 
     @Override
@@ -98,28 +111,43 @@ public class ListInputPresenter extends AbstractComponentPresenter<ListInputView
     @Override
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
-        final ComponentSettings settings = componentConfig.getSettings();
-        if (settings instanceof ListInputComponentSettings) {
-            final ListInputComponentSettings componentSettings =
-                    (ListInputComponentSettings) settings;
 
-            if (componentSettings.isUseDictionary() &&
-                    componentSettings.getDictionary() != null) {
-                final Rest<List<String>> rest = restFactory.create();
-                rest.onSuccess(words -> {
-                            if (words != null) {
-                                getView().setValues(words);
-                                getView().setSelectedValue(componentSettings.getValue());
-                            }
-                        })
-                        .call(WORD_LIST_RESOURCE)
-                        .getWords(componentSettings.getDictionary().getUuid());
-            } else {
-                getView().setValues(componentSettings.getValues());
-                getView().setSelectedValue(componentSettings.getValue());
-            }
+        ComponentSettings settings = componentConfig.getSettings();
+        if (!(settings instanceof ListInputComponentSettings)) {
+            setSettings(createSettings());
         }
+
+        update(getListInputSettings());
     }
+
+    private void update(final ListInputComponentSettings settings) {
+        if (settings.isUseDictionary() &&
+                settings.getDictionary() != null) {
+            final Rest<List<String>> rest = restFactory.create();
+            rest.onSuccess(words -> {
+                        if (words != null) {
+                            getView().setValues(words);
+                            getView().setSelectedValue(settings.getValue());
+                        }
+                    })
+                    .call(WORD_LIST_RESOURCE)
+                    .getWords(settings.getDictionary().getUuid());
+        } else {
+            getView().setValues(settings.getValues());
+            getView().setSelectedValue(settings.getValue());
+        }
+
+        updateParams(settings.getValue());
+    }
+
+    public ListInputComponentSettings getListInputSettings() {
+        return (ListInputComponentSettings) getSettings();
+    }
+
+    private ListInputComponentSettings createSettings() {
+        return ListInputComponentSettings.builder().build();
+    }
+
 
     @Override
     public void link() {
@@ -127,8 +155,8 @@ public class ListInputPresenter extends AbstractComponentPresenter<ListInputView
 
     @Override
     public void changeSettings() {
-//        super.changeSettings();
-//        update(currentTablePresenter);
+        super.changeSettings();
+        update(getListInputSettings());
     }
 
     @Override

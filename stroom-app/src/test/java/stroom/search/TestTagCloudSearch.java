@@ -27,7 +27,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
@@ -43,7 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -82,7 +81,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
         // Create text field.
         final Field fldText = Field.builder()
                 .name("Text")
-                .expression(ParamUtil.makeParam("Text"))
+                .expression(ParamSubstituteUtil.makeParam("Text"))
                 .group(0)
                 .format(Format.TEXT)
                 .build();

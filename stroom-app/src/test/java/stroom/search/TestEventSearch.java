@@ -27,7 +27,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
@@ -42,7 +42,6 @@ import stroom.query.api.v2.TableSettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -188,12 +187,12 @@ class TestEventSearch extends AbstractSearchTest {
     private TableSettings createTableSettings(final IndexDoc index, final boolean extractValues) {
         final Field idField = Field.builder()
                 .name("IdTreeNode")
-                .expression(ParamUtil.makeParam("StreamId"))
+                .expression(ParamSubstituteUtil.makeParam("StreamId"))
                 .build();
 
         final Field timeField = Field.builder()
                 .name("Event Time")
-                .expression(ParamUtil.makeParam("EventTime"))
+                .expression(ParamSubstituteUtil.makeParam("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 

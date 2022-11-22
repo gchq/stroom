@@ -43,7 +43,6 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.ExpressionValidator;
@@ -1071,14 +1070,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     }
 
     private List<Param> getParams(final QueryData queryData) {
-        // Create a parameter map.
-        final Map<String, String> parameterMap = ExpressionParamUtil.parse(queryData.getParams());
-
-        final List<Param> params = new ArrayList<>();
-        for (final Entry<String, String> entry : parameterMap.entrySet()) {
-            params.add(new Param(entry.getKey(), entry.getValue()));
+        if (queryData.getParams() == null) {
+            return Collections.emptyList();
         }
-        return params;
+        return queryData.getParams();
     }
 
     private void createTasksFromCriteria(final ProcessorFilter filter,

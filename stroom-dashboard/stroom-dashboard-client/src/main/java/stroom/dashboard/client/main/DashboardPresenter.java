@@ -41,6 +41,8 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.shared.DocumentType;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.TimeRange;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
@@ -76,8 +78,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private String customTitle;
     private DocRef docRef;
 
-    private TimeRange currentTimeRange;
-    private String currentParams;
+    private final DashboardContext dashboardContext = new DashboardContext();
     private String lastUsedQueryInfo;
     private boolean embedded;
     private boolean queryOnOpen;
@@ -154,19 +155,14 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     private void setTimeRange(final TimeRange timeRange) {
-        currentTimeRange = timeRange;
+        dashboardContext.setTimeRange(timeRange);
         getView().setTimeRange(timeRange);
-        for (final Component component : components) {
-            if (component instanceof Queryable) {
-                final Queryable queryable = (Queryable) component;
-                queryable.setTimeRange(timeRange);
-            }
-        }
     }
 
     public void setParams(final String params) {
         logger.log(Level.INFO, "Dashboard Presenter setParams " + params);
-        this.currentParams = params;
+        final List<Param> coreParams = ParamUtil.parse(params);
+        dashboardContext.setCoreParams(coreParams);
     }
 
     void setEmbedded(final boolean embedded) {
@@ -190,16 +186,16 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
             final DashboardConfig dashboardConfig = dashboard.getDashboardConfig();
             if (dashboardConfig != null) {
-                if (null == currentParams) {
-                    currentParams = "";
+                if (dashboardContext.getCoreParams() == null ||
+                        dashboardContext.getCoreParams().size() == 0) {
                     if (dashboardConfig.getParameters() != null
                             && dashboardConfig.getParameters().trim().length() > 0) {
-                        currentParams = dashboardConfig.getParameters().trim();
+                        setParams(dashboardConfig.getParameters().trim());
                     }
                 }
 //                getView().setParams(currentParams);
 
-                if (currentTimeRange == null) {
+                if (dashboardContext.getTimeRange() == null) {
                     if (dashboardConfig.getTimeRange() != null) {
                         setTimeRange(dashboardConfig.getTimeRange());
                     }
@@ -287,6 +283,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private Component addComponent(final String type, final ComponentConfig componentData) {
         final Component component = components.add(type, componentData.getId());
         if (component != null) {
+            component.setDashboardContext(dashboardContext);
+
             if (component instanceof HasDirtyHandlers) {
                 ((HasDirtyHandlers) component).addDirtyHandler(event -> setDirty(true));
             }
@@ -294,8 +292,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             // Set params on the component if it needs them.
             if (component instanceof Queryable) {
                 final Queryable queryable = (Queryable) component;
-                queryable.setParams(currentParams);
-                queryable.setTimeRange(currentTimeRange);
                 queryable.addModeListener(this);
             }
 
@@ -330,20 +326,21 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     protected void onWrite(final DashboardDoc dashboard) {
-        String params = null;//getView().getParams();
-        if (params != null && params.trim().length() == 0) {
-            params = null;
-        }
-
         final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
         for (final Component component : components) {
             final ComponentConfig componentConfig = component.write();
             componentDataList.add(componentConfig);
         }
 
+        final List<Param> params = dashboardContext.getCoreParams();
+        String paramString = null;
+        if (params != null) {
+            paramString = ParamUtil.getCombinedParameterString(params);
+        }
+
         final DashboardConfig dashboardConfig = new DashboardConfig();
-        dashboardConfig.setParameters(params);
-        dashboardConfig.setTimeRange(currentTimeRange);
+        dashboardConfig.setParameters(paramString);
+        dashboardConfig.setTimeRange(dashboardContext.getTimeRange());
         dashboardConfig.setComponents(componentDataList);
         dashboardConfig.setLayout(layoutPresenter.getLayoutData());
         dashboardConfig.setTabVisibility(TabVisibility.SHOW_ALL);
@@ -427,8 +424,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                         lastUsedQueryInfo = state.getQueryInfo();
 
                         for (final Queryable queryable : queryableComponents) {
-                            queryable.setParams(currentParams);
-                            queryable.setTimeRange(currentTimeRange);
+                            queryable.setDashboardContext(dashboardContext);
                             queryable.setQueryInfo(lastUsedQueryInfo);
                             queryable.start();
                         }

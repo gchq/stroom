@@ -18,6 +18,7 @@ package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableComponentSettings;
@@ -192,7 +193,7 @@ public class BasicTableSettingsPresenter
         return list;
     }
 
-    public interface BasicTableSettingsView extends BasicSettingsTabPresenter.SettingsView {
+    public interface BasicTableSettingsView extends BasicSettingsView {
 
         void setQueryList(List<Component> queryList);
 

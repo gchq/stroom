@@ -123,9 +123,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ButtonView favouriteButton;
     private final ButtonView downloadQueryButton;
     private final ButtonView warningsButton;
-
-    private String params;
-    private TimeRange timeRange;
     private List<String> currentWarnings;
     private ButtonView processButton;
     private long defaultProcessorTimeLimit;
@@ -496,8 +493,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final QueryData queryData = new QueryData();
         queryData.setDataSource(getQuerySettings().getDataSource());
         queryData.setExpression(root);
-        queryData.setParams(params);
-        queryData.setTimeRange(timeRange);
+        queryData.setParams(getDashboardContext().getCombinedParams());
+        queryData.setTimeRange(getDashboardContext().getTimeRange());
 
         final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
@@ -570,16 +567,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public void setParams(final String params) {
-        this.params = params;
-    }
-
-    @Override
-    public void setTimeRange(final TimeRange timeRange) {
-        this.timeRange = timeRange;
-    }
-
-    @Override
     public void setQueryInfo(final String queryInfo) {
         lastUsedQueryInfo = queryInfo;
     }
@@ -632,7 +619,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
             // Start search.
             searchModel.reset();
-            searchModel.startNewSearch(decorated, params, timeRange, incremental, storeHistory, lastUsedQueryInfo);
+            searchModel.startNewSearch(
+                    decorated,
+                    getDashboardContext().getCombinedParams(),
+                    getDashboardContext().getTimeRange(),
+                    incremental,
+                    storeHistory,
+                    lastUsedQueryInfo);
         }
     }
 
@@ -839,8 +832,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
             final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionPresenter.write(),
-                    params,
-                    timeRange);
+                    getDashboardContext().getCombinedParams(),
+                    getDashboardContext().getTimeRange());
 
             final Rest<ResourceGeneration> rest = restFactory.create();
             rest

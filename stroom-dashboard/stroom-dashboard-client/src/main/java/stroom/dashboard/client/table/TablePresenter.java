@@ -70,7 +70,7 @@ import stroom.query.api.v2.Field.Builder;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -334,7 +334,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         // the annotation:Id field so Annotations datasource results can link back.
                         expression = buildAnnotationFieldExpression(indexFieldsMap, indexFieldName);
                     } else {
-                        expression = ParamUtil.makeParam(indexFieldName);
+                        expression = ParamSubstituteUtil.makeParam(indexFieldName);
                     }
                     fieldBuilder.expression(expression);
 
@@ -404,7 +404,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private String buildAnnotationFieldExpression(final DataSourceFieldsMap indexFieldsMap,
                                                   final String indexFieldName) {
         final AbstractField dataSourceField = indexFieldsMap.get(indexFieldName);
-        String fieldParam = ParamUtil.makeParam(indexFieldName);
+        String fieldParam = ParamSubstituteUtil.makeParam(indexFieldName);
         if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
             fieldParam = "formatDate(" + fieldParam + ")";
         }
@@ -424,7 +424,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                    final Set<String> allFields,
                                    final String fieldName) {
         if (allFields.contains(fieldName)) {
-            params.add(ParamUtil.makeParam(fieldName));
+            params.add(ParamSubstituteUtil.makeParam(fieldName));
         }
     }
 
@@ -877,7 +877,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return Field.builder()
                 .id(obfuscatedColumnName)
                 .name(obfuscatedColumnName)
-                .expression(ParamUtil.makeParam(indexFieldName))
+                .expression(ParamSubstituteUtil.makeParam(indexFieldName))
                 .visible(false)
                 .special(true)
                 .build();

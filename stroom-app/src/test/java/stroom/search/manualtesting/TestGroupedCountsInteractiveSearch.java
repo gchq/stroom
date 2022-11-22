@@ -25,7 +25,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
-import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchResponseCreatorManager;
@@ -178,7 +178,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
 
         final Field groupedUserId = Field.builder()
                 .name("User")
-                .expression(ParamUtil.makeParam("User"))
+                .expression(ParamSubstituteUtil.makeParam("User"))
                 .group(0)
                 .build();
 

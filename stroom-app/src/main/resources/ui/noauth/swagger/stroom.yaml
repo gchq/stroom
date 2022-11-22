@@ -5836,6 +5836,27 @@ paths:
       summary: Get the configured HTML welcome message
       tags:
       - Welcome
+  /wordList/v1/{uuid}:
+    get:
+      operationId: getWords
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+          description: default response
+      summary: Fetch a list of words from a dictionary by its UUID
+      tags:
+      - Word List (v1)
   /xmlSchema/v1/{uuid}:
     get:
       operationId: fetchXmlSchema
@@ -9760,7 +9781,9 @@ components:
         limits:
           $ref: '#/components/schemas/Limits'
         params:
-          type: string
+          type: array
+          items:
+            $ref: '#/components/schemas/Param'
         timeRange:
           $ref: '#/components/schemas/TimeRange'
       xml:

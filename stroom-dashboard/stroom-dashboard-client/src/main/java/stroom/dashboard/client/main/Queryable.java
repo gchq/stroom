@@ -16,8 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.query.api.v2.TimeRange;
-
 import java.util.function.Consumer;
 
 public interface Queryable {
@@ -32,11 +30,9 @@ public interface Queryable {
 
     void stop();
 
-    void setParams(String params);
-
-    void setTimeRange(TimeRange timeRange);
-
     void setQueryInfo(String queryInfo);
 
     void setQueryOnOpen(boolean queryOnOpen);
+
+    void setDashboardContext(DashboardContext dashboardContext);
 }

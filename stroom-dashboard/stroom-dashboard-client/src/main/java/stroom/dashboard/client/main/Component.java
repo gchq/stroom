@@ -65,4 +65,6 @@ public interface Component extends TabData, Layer, HasDisplayValue {
     void read(ComponentConfig componentConfig);
 
     ComponentConfig write();
+
+    void setDashboardContext(DashboardContext dashboardContext);
 }

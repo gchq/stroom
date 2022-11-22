@@ -21,7 +21,7 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.Sort;
@@ -58,7 +58,7 @@ abstract class AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamUtil.makeParam("Text"))
+                        .expression(ParamSubstituteUtil.makeParam("Text"))
                         .format(Format.TEXT)
                         .build())
                 .build();
@@ -115,14 +115,14 @@ abstract class AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamUtil.makeParam("Text"))
+                        .expression(ParamSubstituteUtil.makeParam("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
                 .addFields(Field.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression(ParamUtil.makeParam("Text2"))
+                        .expression(ParamSubstituteUtil.makeParam("Text2"))
                         .format(Format.TEXT)
                         .build())
                 .showDetail(true)
@@ -200,7 +200,7 @@ abstract class AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamUtil.makeParam("Text"))
+                        .expression(ParamSubstituteUtil.makeParam("Text"))
                         .sort(sort)
                         .build())
                 .build();
@@ -238,7 +238,7 @@ abstract class AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("Number")
                         .name("Number")
-                        .expression(ParamUtil.makeParam("Number"))
+                        .expression(ParamSubstituteUtil.makeParam("Number"))
                         .sort(sort)
                         .build())
                 .build();
@@ -283,7 +283,7 @@ abstract class AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamUtil.makeParam("Text"))
+                        .expression(ParamSubstituteUtil.makeParam("Text"))
                         .group(0)
                         .build())
                 .build();
@@ -327,7 +327,7 @@ abstract class AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamUtil.makeParam("Text"))
+                        .expression(ParamSubstituteUtil.makeParam("Text"))
                         .sort(sort)
                         .group(0)
                         .build())
@@ -372,7 +372,7 @@ abstract class AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamUtil.makeParam("Text"))
+                        .expression(ParamSubstituteUtil.makeParam("Text"))
                         .sort(sort)
                         .group(0)
                         .build())

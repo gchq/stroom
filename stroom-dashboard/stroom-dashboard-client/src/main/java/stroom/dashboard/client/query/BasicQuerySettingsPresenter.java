@@ -18,6 +18,7 @@ package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
+import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.QueryComponentSettings;
@@ -140,7 +141,7 @@ public class BasicQuerySettingsPresenter
         return !equal;
     }
 
-    public interface BasicQuerySettingsView extends BasicSettingsTabPresenter.SettingsView {
+    public interface BasicQuerySettingsView extends BasicSettingsView {
 
         void setDataSourceSelectionView(View view);
 

@@ -31,7 +31,6 @@ import stroom.instance.client.ClientApplicationInstance;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
@@ -127,7 +126,7 @@ public class SearchModel {
      * @param expression The expression to search with.
      */
     public void startNewSearch(final ExpressionOperator expression,
-                               final String params,
+                               final List<Param> params,
                                final TimeRange timeRange,
                                final boolean incremental,
                                final boolean storeHistory,
@@ -141,9 +140,6 @@ public class SearchModel {
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
-                // Create a parameter map.
-                Map<String, String> currentParameterMap = ExpressionParamUtil.parse(params);
-
                 // Copy the expression.
                 ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
 
@@ -152,7 +148,7 @@ public class SearchModel {
                         .dataSourceRef(dataSourceRef)
                         .expression(currentExpression)
                         .componentSettingsMap(resultComponentMap)
-                        .params(getParams(currentParameterMap))
+                        .params(params)
                         .timeRange(timeRange)
                         .incremental(incremental)
                         .queryInfo(queryInfo)
@@ -353,14 +349,6 @@ public class SearchModel {
         return null;
     }
 
-    private List<Param> getParams(final Map<String, String> parameterMap) {
-        final List<Param> params = new ArrayList<>();
-        for (final Entry<String, String> entry : parameterMap.entrySet()) {
-            params.add(new Param(entry.getKey(), entry.getValue()));
-        }
-        return params;
-    }
-
     /**
      * On receiving a search result from the server update all interested
      * components with new data.
@@ -426,16 +414,13 @@ public class SearchModel {
      * the corresponding {@link DashboardSearchRequest} object
      */
     public DashboardSearchRequest createDownloadQueryRequest(final ExpressionOperator expression,
-                                                             final String params,
+                                                             final List<Param> params,
                                                              final TimeRange timeRange) {
         Search search = null;
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
-                // Create a parameter map.
-                final Map<String, String> currentParameterMap = ExpressionParamUtil.parse(params);
-
                 // Copy the expression.
                 final ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
 
@@ -444,7 +429,7 @@ public class SearchModel {
                         .dataSourceRef(dataSourceRef)
                         .expression(currentExpression)
                         .componentSettingsMap(resultComponentMap)
-                        .params(getParams(currentParameterMap))
+                        .params(params)
                         .timeRange(timeRange)
                         .build();
             }

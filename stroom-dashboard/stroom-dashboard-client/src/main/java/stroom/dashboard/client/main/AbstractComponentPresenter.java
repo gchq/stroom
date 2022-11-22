@@ -45,6 +45,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     private ComponentConfig componentConfig;
     private TabConfig tabConfig;
     private SettingsPresenter settingsPresenter;
+    private DashboardContext dashboardContext;
 
     public AbstractComponentPresenter(final EventBus eventBus,
                                       final V view,
@@ -208,4 +209,14 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     //###############
     //# End TabData
     //###############
+
+
+    @Override
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        this.dashboardContext = dashboardContext;
+    }
+
+    protected DashboardContext getDashboardContext() {
+        return dashboardContext;
+    }
 }
